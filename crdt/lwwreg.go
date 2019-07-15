@@ -1,7 +1,9 @@
 package crdt
 
 import (
-	"time"
+	// "time"
+
+	ds "github.com/ipfs/go-datastore"
 )
 
 var (
@@ -26,9 +28,10 @@ type LWWRegistry struct {
 // }
 
 // LWWRegDelta is a single delta operation for an LWWRegistry
+// TODO: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
+	ts   int64
 	data []byte
-	ts   time.Time
 }
 
 // NewLWWRegistry returns a new instance of the LWWReg with the given ID
@@ -45,12 +48,24 @@ func (reg LWWRegistry) value() []byte {
 	return reg.data
 }
 
-func (reg LWWRegistry) set(value []byte) LWWRegistry {
-	return NewLWWRegistry(reg.id, value, reg.clock.Apply(), reg.clock)
+func (reg LWWRegistry) set(value []byte) LWWRegDelta {
+	// return NewLWWRegistry(reg.id, value, reg.clock.Apply(), reg.clock)
+	return LWWRegDelta{
+		ts:   reg.clock.Apply(),
+		data: value,
+	}
 }
 
-func (reg LWWRegistry) setWithClock(value []byte, clock Clock) LWWRegistry {
-	return NewLWWRegistry(reg.id, value, clock.Apply(), clock)
+func (reg LWWRegistry) setWithClock(value []byte, clock Clock) LWWRegDelta {
+	// return NewLWWRegistry(reg.id, value, clock.Apply(), clock)
+	return LWWRegDelta{
+		ts:   clock.Apply(),
+		data: value,
+	}
+}
+
+func (reg LWWRegistry) Persist(store ds.Datastore) error {
+	return nil
 }
 
 // Merge implements ReplicatedData interface
