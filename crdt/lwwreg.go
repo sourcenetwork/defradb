@@ -44,10 +44,12 @@ func NewLWWRegistry(id string, data []byte, ts int64, clock Clock) LWWRegistry {
 	}
 }
 
+// RETURN STATE
 func (reg LWWRegistry) value() []byte {
 	return reg.data
 }
 
+// RETURN DELTA
 func (reg LWWRegistry) set(value []byte) LWWRegDelta {
 	// return NewLWWRegistry(reg.id, value, reg.clock.Apply(), reg.clock)
 	return LWWRegDelta{
@@ -56,6 +58,7 @@ func (reg LWWRegistry) set(value []byte) LWWRegDelta {
 	}
 }
 
+// RETURN DELTA
 func (reg LWWRegistry) setWithClock(value []byte, clock Clock) LWWRegDelta {
 	// return NewLWWRegistry(reg.id, value, clock.Apply(), clock)
 	return LWWRegDelta{
@@ -64,6 +67,8 @@ func (reg LWWRegistry) setWithClock(value []byte, clock Clock) LWWRegDelta {
 	}
 }
 
+// Persist writes the current LWWRegistry state to the given datastore
+// MUTATE STATE
 func (reg LWWRegistry) Persist(store ds.Datastore) error {
 	return nil
 }
@@ -71,6 +76,7 @@ func (reg LWWRegistry) Persist(store ds.Datastore) error {
 // Merge implements ReplicatedData interface
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
+// MUTATE STATE
 func (reg LWWRegistry) Merge(other ReplicatedData) (ReplicatedData, error) {
 	otherReg, ok := other.(LWWRegistry)
 	if !ok {
