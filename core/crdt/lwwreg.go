@@ -3,11 +3,11 @@ package crdt
 import (
 	// "time"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 var (
-	_ ReplicatedData = (*LWWRegistry)(nil)
+	_ core.ReplicatedData = (*LWWRegistry)(nil)
 )
 
 // LWWRegistry Last-Writer-Wins Registry
@@ -44,13 +44,15 @@ func NewLWWRegistry(id string, data []byte, ts int64, clock Clock) LWWRegistry {
 	}
 }
 
+// Value gets the current register value
 // RETURN STATE
-func (reg LWWRegistry) value() []byte {
+func (reg LWWRegistry) Value() []byte {
 	return reg.data
 }
 
+// Set generates a new delta with the supplied value
 // RETURN DELTA
-func (reg LWWRegistry) set(value []byte) LWWRegDelta {
+func (reg LWWRegistry) Set(value []byte) LWWRegDelta {
 	// return NewLWWRegistry(reg.id, value, reg.clock.Apply(), reg.clock)
 	return LWWRegDelta{
 		ts:   reg.clock.Apply(),
@@ -67,29 +69,20 @@ func (reg LWWRegistry) setWithClock(value []byte, clock Clock) LWWRegDelta {
 	}
 }
 
-// Persist writes the current LWWRegistry state to the given datastore
-// MUTATE STATE
-func (reg LWWRegistry) Persist(store ds.Datastore) error {
-	return nil
-}
-
 // Merge implements ReplicatedData interface
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg LWWRegistry) Merge(other ReplicatedData) (ReplicatedData, error) {
-	otherReg, ok := other.(LWWRegistry)
+func (reg LWWRegistry) Merge(delta core.Delta, id string) error {
+	d, ok := delta.(LWWRegDelta)
 	if !ok {
-		return nil, ErrMismatchedMergeType
+		return core.ErrMismatchedMergeType
 	}
 
-	if otherReg.ts < reg.ts {
-		return reg, nil
-	} else if reg.ts < otherReg.ts {
-		return otherReg, nil
-	} else if otherReg.id < reg.id {
-		return otherReg, nil
-	} else {
-		return reg, nil
-	}
+	return reg.putValue(d.GetValue(), id, d.GetPriority())
+}
+
+// @TODO
+func (reg LWWRegistry) putValue(val []byte, id string, priority uint64) error {
+	return nil
 }

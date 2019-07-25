@@ -1,4 +1,4 @@
-package crdt
+package core
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ var (
 // to deterministicly merge other replicated data so as to
 // converge on the same state
 type ReplicatedData interface {
-	Merge(other ReplicatedData) (ReplicatedData, error)
+	Merge(other ReplicatedData) error
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore
