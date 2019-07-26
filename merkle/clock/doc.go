@@ -1,4 +1,4 @@
-package merkleclock
+package clock
 
 // CRDTs are composed of two structures, the payload and a clock. The
 // payload is the actual CRDT data which abides by the merge semantics.

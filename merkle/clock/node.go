@@ -1,4 +1,4 @@
-package merkleclock
+package clock
 
 import (
 	cid "github.com/ipfs/go-cid"
