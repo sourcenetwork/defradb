@@ -1,4 +1,4 @@
-package crdt
+package clock
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 
 // IPLD related things
 
-var _ ipld.NodeGetter = (*crdtNodeGetter)(nil)
+var _ core.NodeGetter = (*crdtNodeGetter)(nil)
 
 func init() {
 	ipld.Register(cid.DagProtobuf, dag.DecodeProtobufBlock)
