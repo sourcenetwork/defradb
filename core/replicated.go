@@ -15,7 +15,7 @@ var (
 // to deterministicly merge other replicated data so as to
 // converge on the same state
 type ReplicatedData interface {
-	Merge(other ReplicatedData) error
+	Merge(other Delta, id string) error
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore

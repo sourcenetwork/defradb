@@ -1,3 +1,5 @@
 package core
 
-type Delta interface{}
+type Delta interface {
+	GetPriority() uint64
+}

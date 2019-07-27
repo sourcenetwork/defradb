@@ -1,54 +1,49 @@
 package crdt
 
 import (
+	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/merkle/clock"
 
-	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
 // using MerkleClocks
 type MerkleLWWRegister struct {
+	baseMerkleCRDT
 	core.ReplicatedData
 
-	mclock clock.MerkleClock
-	reg    corecrdt.LWWRegister
+	clock clock.MerkleClock
+	reg   corecrdt.LWWRegister
 }
 
 // NewMerkleLWWRegisterContainer
-func NewMerkleLWWRegisterContainer(key ds.Key) *MerkleLWWRegister {
-	// todo
-	return nil
+func NewMerkleLWWRegister(ns, key ds.Key) *MerkleLWWRegister {
+	// New Clock
+	clk := clock.NewMerkleClock( /*stuff like extractDeltaFn*/ )
+	// New Register
+	reg := corecrdt.NewLWWRegister( /*stuff like namespace and ID */ )
+	// newBaseMerkleCRDT(clock, register)
+	base := newBaseMerkleCRDT(clk, reg, store)
+	// instatiate MerkleLWWRegister
+	// return
+	return &MerkleLWWRegister{
+		baseMerkleCRDT: base,
+		clock:          clk,
+		reg:            reg,
+	}
 }
 
-func MerkleLWWRegisterFromKey(key ds.Key) *MerkleLWWRegister {
-	//todo
-	return nil
-}
-
+// Set the value of the register
 func (mlww *MerkleLWWRegister) Set(value []byte) error {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlww.reg.Set(value)
-	return mlww.clock.persist(delta)
+	return mlww.publish(delta)
 }
 
+// Value will retrieve the current value from the db
 func (mlww *MerkleLWWRegister) Value() []byte {
-	return mlww.Value()
-}
-
-func (mlww *MerkleLWWRegister) Merge(other core.ReplicatedData) error {
-	return mlww.Merge(other)
-}
-
-func (mlww *MerkleLWWRegister) ProcessNode(ng *crdtNodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
-	current := node.Cid()
-	err := mlww.Merge(delta, dshelp.CidToDsKey(current).String())
-	if err != nil {
-		return nil, errors.Wrapf(eff, "error merging delta from %s", current)
-	}
-	
-	return mlww.clock.ProcessNode(ng *crdtNodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node)
+	return mlww.reg.Value()
 }
