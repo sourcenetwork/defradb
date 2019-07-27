@@ -107,7 +107,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	var data []byte
 	var err error
 	if delta != nil {
-		data, err = proto.Marshal(delta)
+		data, err = delta.Marshal()
 		if err != nil {
 			return nil, err
 		}

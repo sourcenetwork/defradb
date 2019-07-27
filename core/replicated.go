@@ -2,8 +2,6 @@ package core
 
 import (
 	"errors"
-
-	ds "github.com/ipfs/go-datastore"
 )
 
 var (
@@ -21,5 +19,5 @@ type ReplicatedData interface {
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore
 type PersistedReplicatedData interface {
 	ReplicatedData
-	Persist(ds.Datastore)
+	Publish(Delta) (cid, error)
 }

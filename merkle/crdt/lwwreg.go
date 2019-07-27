@@ -12,18 +12,18 @@ import (
 // using MerkleClocks
 type MerkleLWWRegister struct {
 	baseMerkleCRDT
-	core.ReplicatedData
+	// core.ReplicatedData
 
-	clock clock.MerkleClock
 	reg   corecrdt.LWWRegister
+	clock clock.MerkleClock
 }
 
-// NewMerkleLWWRegisterContainer
-func NewMerkleLWWRegister(ns, key ds.Key) *MerkleLWWRegister {
-	// New Clock
-	clk := clock.NewMerkleClock( /*stuff like extractDeltaFn*/ )
+// NewMerkleLWWRegister
+func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister( /*stuff like namespace and ID */ )
+	reg := corecrdt.NewLWWRegister( /* stuff like namespace and ID */ )
+	// New Clock
+	clk := clock.NewMerkleClock(reg /* + stuff like extractDeltaFn*/)
 	// newBaseMerkleCRDT(clock, register)
 	base := newBaseMerkleCRDT(clk, reg, store)
 	// instatiate MerkleLWWRegister
@@ -40,10 +40,16 @@ func (mlww *MerkleLWWRegister) Set(value []byte) error {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlww.reg.Set(value)
-	return mlww.publish(delta)
+	return mlww.Publish(delta)
 }
 
 // Value will retrieve the current value from the db
 func (mlww *MerkleLWWRegister) Value() []byte {
 	return mlww.reg.Value()
+}
+
+// Merge writes the provided delta to state using a supplied
+// merge semantic
+func (mlww *MerkleLWWRegister) Merge(other core.Delta, id string) error {
+	return mlww.reg.Merge(other, id)
 }
