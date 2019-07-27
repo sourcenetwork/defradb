@@ -27,6 +27,7 @@ func init() {
 // crdtNodeGetter wraps an ipld.NodeGetter with some additional utility methods
 type crdtNodeGetter struct {
 	ipld.NodeGetter
+	deltaExtractor func(ipld.Node) core.Delta
 }
 
 func (ng *crdtNodeGetter) GetDelta(ctx context.Context, c cid.Cid) (ipld.Node, core.Delta, error) {
@@ -44,7 +45,7 @@ func (ng *crdtNodeGetter) GetPriority(ctx context.Context, c cid.Cid) (uint64, e
 	if err != nil {
 		return 0, err
 	}
-	return delta.Priority, nil
+	return delta.GetPriority(), nil
 }
 
 type deltaEntry struct {
