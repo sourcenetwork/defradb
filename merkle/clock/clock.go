@@ -1,27 +1,27 @@
 package clock
 
 import (
-	"context"
-
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
 type merkleClock struct {
-	store          ds.Datstore
+	store ds.Datastore
+	// daySyncer
 	heads          *heads
 	crdt           core.ReplicatedData
-	extractDeltaFn func(ipld.Node) core.Delta
+	extractDeltaFn func(ipld.Node) (core.Delta, error)
 }
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(store ds.Datastore, ns ds.Key, deltaFn func(ipld.Node) core.Delta) core.MerkleClock {
+func NewMerkleClock(store ds.Datastore, ns ds.Key, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error)) core.MerkleClock {
 	return nil
 }
 
@@ -35,17 +35,18 @@ func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 		return nil, errors.Wrap(err, "error creating block")
 	}
 
-	ctx := context.Background()
-	err = mc.store.dagSyncer.Add(ctx, node)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
-	}
+	// @TODO
+	// ctx := context.Background()
+	// err = mc.store.dagSyncer.Add(ctx, node)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
+	// }
 
 	return node, nil
 }
 
 func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
-	heads, height, err := mc.Heads.List()
+	heads, height, err := mc.heads.List()
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "error getting heads")
 	}
@@ -56,12 +57,12 @@ func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	// write the delta and heads to a new block
 	nd, err := mc.putBlock(heads, height, delta)
 	if err != nil {
-		return cid.Undef
+		return cid.Undef, errors.Wrap(err, "Error adding block")
 	}
 
 	// apply the new node and merge the delta with state
 	_, err = mc.ProcessNode(
-		&NodeGetter{mc.store.dagSyncer, mc.extractDeltaFn},
+		&crdtNodeGetter{deltaExtractor: mc.extractDeltaFn},
 		nd.Cid(),
 		height,
 		delta,
@@ -76,7 +77,7 @@ func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 
 // ProcessNode processes an already merged delta into a crdt
 // by
-func (mc *merkleclock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
+func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
 	current := node.Cid()
 	err := mc.crdt.Merge(delta, dshelp.CidToDsKey(current).String())
 	if err != nil {
@@ -91,7 +92,7 @@ func (mc *merkleclock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 
 	links := node.Links()
 	if len(links) == 0 { // reached the bottom, at a leaf
-		err := store.heads.Add(root, rootPrio)
+		err := mc.heads.Add(root, rootPrio)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error adding head %s", root)
 		}
@@ -102,7 +103,7 @@ func (mc *merkleclock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 
 	for _, l := range links {
 		child := l.Cid
-		isHead, _, err := mc.headsIsHead(child)
+		isHead, _, err := mc.heads.IsHead(child)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error checking if %s is head", child)
 		}
@@ -118,16 +119,17 @@ func (mc *merkleclock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 			continue
 		}
 
-		known, err := mc.store.dagSyncer.HasBlock(child)
-		if err != nil {
-			return nil, errors.Wrapf(err, "error checking for know block %s", child)
-		}
-		if known {
-			// we reached a non-head node in the known tree.
-			// This means our root block is a new head
-			mc.heads.Add(root, rootPrio)
-			continue
-		}
+		// @TODO: add dagSyncer
+		// known, err := mc.store.dagSyncer.HasBlock(child)
+		// if err != nil {
+		// 	return nil, errors.Wrapf(err, "error checking for know block %s", child)
+		// }
+		// if known {
+		// 	// we reached a non-head node in the known tree.
+		// 	// This means our root block is a new head
+		// 	mc.heads.Add(root, rootPrio)
+		// 	continue
+		// }
 
 		children = append(children, child)
 	}

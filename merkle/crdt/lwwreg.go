@@ -2,6 +2,7 @@ package crdt
 
 import (
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
@@ -11,21 +12,21 @@ import (
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
 // using MerkleClocks
 type MerkleLWWRegister struct {
-	baseMerkleCRDT
+	*baseMerkleCRDT
 	// core.ReplicatedData
 
 	reg   corecrdt.LWWRegister
-	clock clock.MerkleClock
+	clock core.MerkleClock
 }
 
 // NewMerkleLWWRegister
 func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister( /* stuff like namespace and ID */ )
+	reg := corecrdt.NewLWWRegister(store, key.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(reg /* + stuff like extractDeltaFn*/)
+	clk := clock.NewMerkleClock(store, ns, reg, crdt.LWWRegDeltaExtractorFn /* + stuff like extractDeltaFn*/)
 	// newBaseMerkleCRDT(clock, register)
-	base := newBaseMerkleCRDT(clk, reg, store)
+	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{
@@ -40,7 +41,8 @@ func (mlww *MerkleLWWRegister) Set(value []byte) error {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlww.reg.Set(value)
-	return mlww.Publish(delta)
+	_, err := mlww.Publish(&delta)
+	return err
 }
 
 // Value will retrieve the current value from the db
