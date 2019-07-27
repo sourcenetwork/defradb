@@ -2,7 +2,6 @@ package crdt
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -35,7 +34,7 @@ var (
 // functions. It handles creating and publishing the crdt DAG with
 // the help of the MerkleClock
 type baseMerkleCRDT struct {
-	clock clock.MerkleClock
+	clock core.MerkleClock
 	crdt  core.ReplicatedData
 }
 
@@ -55,6 +54,6 @@ func (base *baseMerkleCRDT) Merge(other core.Delta, id string) error {
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(delta core.Delta) (cid.Cid, error) {
-	return base.clock.addDAGNode(delta)
+	return base.clock.AddDAGNode(delta)
 	// and broadcast
 }

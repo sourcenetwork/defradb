@@ -2,6 +2,8 @@ package core
 
 import (
 	"errors"
+
+	cid "github.com/ipfs/go-cid"
 )
 
 var (
@@ -19,5 +21,5 @@ type ReplicatedData interface {
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore
 type PersistedReplicatedData interface {
 	ReplicatedData
-	Publish(Delta) (cid, error)
+	Publish(Delta) (cid.Cid, error)
 }

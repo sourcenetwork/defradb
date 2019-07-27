@@ -2,11 +2,9 @@ package clock
 
 import (
 	"context"
-	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
-	"github.com/gogo/protobuf/proto"
 	cid "github.com/ipfs/go-cid"
 
 	// pb "github.com/ipfs/go-ds-crdt/pb"
@@ -27,7 +25,7 @@ func init() {
 // crdtNodeGetter wraps an ipld.NodeGetter with some additional utility methods
 type crdtNodeGetter struct {
 	ipld.NodeGetter
-	deltaExtractor func(ipld.Node) core.Delta
+	deltaExtractor func(ipld.Node) (core.Delta, error)
 }
 
 func (ng *crdtNodeGetter) GetDelta(ctx context.Context, c cid.Cid) (ipld.Node, core.Delta, error) {
@@ -35,7 +33,7 @@ func (ng *crdtNodeGetter) GetDelta(ctx context.Context, c cid.Cid) (ipld.Node, c
 	if err != nil {
 		return nil, nil, err
 	}
-	delta, err := extractDelta(nd)
+	delta, err := ng.deltaExtractor(nd)
 	return nd, delta, err
 }
 
@@ -63,12 +61,12 @@ func (de deltaEntry) GetDelta() core.Delta {
 }
 
 func (de deltaEntry) Error() error {
-	return de.error
+	return de.err
 }
 
 // GetDeltas uses GetMany to obtain many deltas.
-func (ng *crdtNodeGetter) GetDeltas(ctx context.Context, cids []cid.Cid) <-chan *deltaEntry {
-	deltaOpts := make(chan *deltaEntry, 1)
+func (ng *crdtNodeGetter) GetDeltas(ctx context.Context, cids []cid.Cid) <-chan core.NodeDeltaPair {
+	deltaOpts := make(chan core.NodeDeltaPair, 1)
 	go func() {
 		defer close(deltaOpts)
 		nodeOpts := ng.GetMany(ctx, cids)
@@ -77,7 +75,7 @@ func (ng *crdtNodeGetter) GetDeltas(ctx context.Context, cids []cid.Cid) <-chan 
 				deltaOpts <- &deltaEntry{err: nodeOpt.Err}
 				continue
 			}
-			delta, err := extractDelta(nodeOpt.Node)
+			delta, err := ng.deltaExtractor(nodeOpt.Node)
 			if err != nil {
 				deltaOpts <- &deltaEntry{err: err}
 				continue
@@ -93,15 +91,15 @@ func (ng *crdtNodeGetter) GetDeltas(ctx context.Context, cids []cid.Cid) <-chan 
 
 // add this as a field to a NodeGetter so it can be typed to a specific
 // delta type (ie. LWWRegisterDelta)
-func extractDelta(nd ipld.Node) (core.Delta, error) {
-	protonode, ok := nd.(*dag.ProtoNode)
-	if !ok {
-		return nil, errors.New("node is not a ProtoNode")
-	}
-	d := &pb.Delta{}
-	err := proto.Unmarshal(protonode.Data(), d)
-	return d, err
-}
+// func extractDelta(nd ipld.Node) (core.Delta, error) {
+// 	protonode, ok := nd.(*dag.ProtoNode)
+// 	if !ok {
+// 		return nil, errors.New("node is not a ProtoNode")
+// 	}
+// 	d := &pb.Delta{}
+// 	err := proto.Unmarshal(protonode.Data(), d)
+// 	return d, err
+// }
 
 func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	var data []byte

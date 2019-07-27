@@ -3,7 +3,8 @@ package core
 import (
 	"context"
 
-	"github.com/ipld/go-ipld"
+	cid "github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 )
 
 // NodeDeltaPair is a Node with its underlying delta
