@@ -46,7 +46,7 @@ func (mlww *MerkleLWWRegister) Set(value []byte) error {
 }
 
 // Value will retrieve the current value from the db
-func (mlww *MerkleLWWRegister) Value() []byte {
+func (mlww *MerkleLWWRegister) Value() ([]byte, error) {
 	return mlww.reg.Value()
 }
 

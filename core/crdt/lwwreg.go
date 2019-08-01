@@ -54,16 +54,15 @@ func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	store ds.Datastore
-	id    string
 	key   string
 	data  []byte
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store ds.Datastore, id string) LWWRegister {
+func NewLWWRegister(store ds.Datastore, key string) LWWRegister {
 	return LWWRegister{
 		store: store,
-		id:    id,
+		key:   key,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -105,11 +104,11 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 		return core.ErrMismatchedMergeType
 	}
 
-	return reg.setValue(d.data, id, d.GetPriority())
+	return reg.setValue(d.data, d.GetPriority())
 }
 
 // @TODO
-func (reg LWWRegister) setValue(val []byte, id string, priority uint64) error {
+func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
 		return err
