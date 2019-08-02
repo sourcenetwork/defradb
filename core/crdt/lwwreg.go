@@ -4,8 +4,6 @@ import (
 	// "time"
 
 	"bytes"
-	"encoding/binary"
-	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
@@ -53,16 +51,16 @@ func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
 // a simple CRDT type that allows set/get of an
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
-	store ds.Datastore
-	key   string
-	data  []byte
+	baseCRDT
+	key  string
+	data []byte
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store ds.Datastore, key string) LWWRegister {
+func NewLWWRegister(store ds.Datastore, namespace ds.Key, key string) LWWRegister {
 	return LWWRegister{
-		store: store,
-		key:   key,
+		baseCRDT: newBaseCRDT(store, namespace),
+		key:      key,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -107,7 +105,6 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 	return reg.setValue(d.data, d.GetPriority())
 }
 
-// @TODO
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
@@ -133,44 +130,4 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	}
 
 	return reg.setPriority(reg.key, priority)
-}
-
-func (reg LWWRegister) setPriority(key string, priority uint64) error {
-	prioK := reg.priorityKey(key)
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, priority+1)
-	if n == 0 {
-		return errors.New("error encoding priority")
-	}
-
-	return reg.store.Put(prioK, buf[0:n])
-}
-
-// get the current priority for given key
-func (reg LWWRegister) getPriority(key string) (uint64, error) {
-	pKey := reg.priorityKey(key)
-	pbuf, err := reg.store.Get(pKey)
-	if err != nil {
-		return 0, err
-	}
-
-	prio, num := binary.Uvarint(pbuf)
-	if num <= 0 {
-		return 0, errors.New("failed to decode priority")
-	}
-	return prio, nil
-}
-
-// @TODO return the formatted priority key from the given key
-// ex /namespace/db/key/priority
-// Note: Since Registers can be embedded inside a map container
-// the supplied key will most likely already contain the correct
-// key heigharchy.
-func (reg LWWRegister) priorityKey(key string) ds.Key {
-	return ds.NewKey("")
-}
-
-// @TODO
-func (reg LWWRegister) valueKey(key string) ds.Key {
-	return ds.NewKey("")
 }
