@@ -9,18 +9,15 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+
+	"github.com/ugorji/go/codec"
 )
 
 var (
+	// ensure types implements core interfaces
 	_ core.ReplicatedData = (*LWWRegister)(nil)
+	_ core.Delta          = (*LWWRegDelta)(nil)
 )
-
-// LWWRegState is a loaded LWWRegister with its state loaded into memory
-// type LWWRegState struct {
-// 	id   string
-// 	data []byte
-// 	ts   time.Time
-// }
 
 // LWWRegDelta is a single delta operation for an LWWRegister
 // TODO: Expand delta metadata (investigate if needed)
@@ -29,22 +26,42 @@ type LWWRegDelta struct {
 	data     []byte
 }
 
+// GetPriority gets the current priority for this delta
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.priority
 }
 
+// SetPriority will set the priority for this delta
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.priority = prio
 }
 
-// @TODO proto or cbor
+// Marshal encodes the delta using CBOR
+// for now lets do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {
-	return nil, nil
+	h := &codec.CborHandle{}
+	buf := bytes.NewBuffer(nil)
+	enc := codec.NewEncoder(buf, h)
+	err := enc.Encode(delta)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
-// @TODO
+// LWWRegDeltaExtractorFn is a typed helper to extract
+// a LWWRegDelta from a ipld.Node
+// for now lets do cbor (quick to implement)
 func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
-	return nil, nil
+	var delta *LWWRegDelta
+	data := node.RawData()
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(data, h)
+	err := dec.Decode(delta)
+	if err != nil {
+		return nil, err
+	}
+	return delta, nil
 }
 
 // LWWRegister Last-Writer-Wins Register
