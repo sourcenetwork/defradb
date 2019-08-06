@@ -5,6 +5,8 @@ import (
 
 	"bytes"
 
+	"github.com/pkg/errors"
+
 	"github.com/sourcenetwork/defradb/core"
 
 	ds "github.com/ipfs/go-datastore"
@@ -94,9 +96,9 @@ func (reg LWWRegister) Value() ([]byte, error) {
 
 // Set generates a new delta with the supplied value
 // RETURN DELTA
-func (reg LWWRegister) Set(value []byte) LWWRegDelta {
+func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
-	return LWWRegDelta{
+	return &LWWRegDelta{
 		data: value,
 	}
 }
@@ -125,7 +127,7 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to get priority for Set")
 	}
 
 	// if the current priority is higher ignore put
@@ -143,7 +145,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 
 	err = reg.store.Put(valueK, val)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to store new value")
 	}
 
 	return reg.setPriority(reg.key, priority)

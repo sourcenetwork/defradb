@@ -64,6 +64,9 @@ func (base baseCRDT) getPriority(key string) (uint64, error) {
 	pKey := base.priorityKey(key)
 	pbuf, err := base.store.Get(pKey)
 	if err != nil {
+		if err == ds.ErrNotFound {
+			return 0, nil
+		}
 		return 0, err
 	}
 
