@@ -44,7 +44,10 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
-	err := enc.Encode(delta)
+	err := enc.Encode(struct {
+		Priority uint64
+		Data     []byte
+	}{delta.priority, delta.data})
 	if err != nil {
 		return nil, err
 	}
