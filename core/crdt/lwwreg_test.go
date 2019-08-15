@@ -1,10 +1,13 @@
 package crdt
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/ugorji/go/codec"
 )
 
 func newMockStore() ds.Datastore {
@@ -84,5 +87,72 @@ func TestLWWRegisterOldMerge(t *testing.T) {
 
 	if string(val) != string([]byte("test")) {
 		t.Errorf("Incorrect merge state, want %s, have %s", []byte("test"), val)
+	}
+}
+
+func TestLWWRegisterDeltaInit(t *testing.T) {
+	delta := &LWWRegDelta{
+		data: []byte("test"),
+	}
+
+	var _ core.Delta = delta // checks if LWWRegDelta implements core.Delta (also checked in the implementation code, but w.e)
+}
+
+func TestLWWRegosterDeltaGetPriority(t *testing.T) {
+	delta := &LWWRegDelta{
+		data:     []byte("test"),
+		priority: uint64(10),
+	}
+
+	if delta.GetPriority() != uint64(10) {
+		t.Errorf("LWWRegDelta: GetPriority returned incorrect value, want %v, have %v", uint64(10), delta.GetPriority())
+	}
+}
+
+func TestLWWRegisterDeltaSetPriority(t *testing.T) {
+	delta := &LWWRegDelta{
+		data: []byte("test"),
+	}
+
+	delta.SetPriority(10)
+
+	if delta.GetPriority() != uint64(10) {
+		t.Errorf("LWWRegDelta: SetPriority incorrect value, want %v, have %v", uint64(10), delta.GetPriority())
+	}
+}
+
+func TestLWWRegisterDeltaMarshal(t *testing.T) {
+	delta := &LWWRegDelta{
+		data:     []byte("test"),
+		priority: uint64(10),
+	}
+	bytes, err := delta.Marshal()
+	if err != nil {
+		t.Errorf("Marshal returned an error: %v", err)
+		return
+	}
+	if len(bytes) == 0 {
+		t.Error("Expected Marhsal to return serialized bytes, but output is empty")
+		return
+	}
+
+	fmt.Println(bytes)
+
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(bytes, h)
+	unmarshaledDelta := &LWWRegDelta{}
+	err = dec.Decode(unmarshaledDelta)
+	if err != nil {
+		t.Errorf("Decode returned an error: %v", err)
+		return
+	}
+
+	if !reflect.DeepEqual(delta.data, unmarshaledDelta.data) {
+		t.Errorf("Unmarhsalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.data)
+		return
+	}
+
+	if delta.priority != unmarshaledDelta.priority {
+		t.Errorf("Unmarshalled priority value doesn't match. Want %v, have %v", uint64(10), unmarshaledDelta.priority)
 	}
 }
