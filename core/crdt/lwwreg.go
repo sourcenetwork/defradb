@@ -44,7 +44,7 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return nil, nil
 }
 
-// @TODO
+// @TODO, proto or cbor?
 func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
 	return nil, nil
 }
