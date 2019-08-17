@@ -4,25 +4,22 @@ import (
 	// "time"
 
 	"bytes"
-	"encoding/binary"
-	"errors"
+
+	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+
+	"github.com/ugorji/go/codec"
 )
 
 var (
+	// ensure types implements core interfaces
 	_ core.ReplicatedData = (*LWWRegister)(nil)
+	_ core.Delta          = (*LWWRegDelta)(nil)
 )
-
-// LWWRegState is a loaded LWWRegister with its state loaded into memory
-// type LWWRegState struct {
-// 	id   string
-// 	data []byte
-// 	ts   time.Time
-// }
 
 // LWWRegDelta is a single delta operation for an LWWRegister
 // TODO: Expand delta metadata (investigate if needed)
@@ -31,39 +28,61 @@ type LWWRegDelta struct {
 	data     []byte
 }
 
+// GetPriority gets the current priority for this delta
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.priority
 }
 
+// SetPriority will set the priority for this delta
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.priority = prio
 }
 
-// @TODO proto or cbor
+// Marshal encodes the delta using CBOR
+// for now lets do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {
-	return nil, nil
+	h := &codec.CborHandle{}
+	buf := bytes.NewBuffer(nil)
+	enc := codec.NewEncoder(buf, h)
+	err := enc.Encode(struct {
+		Priority uint64
+		Data     []byte
+	}{delta.priority, delta.data})
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
-// @TODO, proto or cbor?
+// LWWRegDeltaExtractorFn is a typed helper to extract
+// a LWWRegDelta from a ipld.Node
+// for now lets do cbor (quick to implement)
 func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
-	return nil, nil
+	var delta *LWWRegDelta
+	data := node.RawData()
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(data, h)
+	err := dec.Decode(delta)
+	if err != nil {
+		return nil, err
+	}
+	return delta, nil
 }
 
 // LWWRegister Last-Writer-Wins Register
 // a simple CRDT type that allows set/get of an
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
-	store ds.Datastore
-	id    string
-	key   string
-	data  []byte
+	baseCRDT
+	key  string
+	data []byte
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store ds.Datastore, id string) LWWRegister {
+func NewLWWRegister(store ds.Datastore, namespace ds.Key, key string) LWWRegister {
 	return LWWRegister{
-		store: store,
-		id:    id,
+		baseCRDT: newBaseCRDT(store, namespace),
+		key:      key,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -80,9 +99,9 @@ func (reg LWWRegister) Value() ([]byte, error) {
 
 // Set generates a new delta with the supplied value
 // RETURN DELTA
-func (reg LWWRegister) Set(value []byte) LWWRegDelta {
+func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
-	return LWWRegDelta{
+	return &LWWRegDelta{
 		data: value,
 	}
 }
@@ -105,14 +124,13 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 		return core.ErrMismatchedMergeType
 	}
 
-	return reg.setValue(d.data, id, d.GetPriority())
+	return reg.setValue(d.data, d.GetPriority())
 }
 
-// @TODO
-func (reg LWWRegister) setValue(val []byte, id string, priority uint64) error {
+func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to get priority for Set")
 	}
 
 	// if the current priority is higher ignore put
@@ -130,48 +148,8 @@ func (reg LWWRegister) setValue(val []byte, id string, priority uint64) error {
 
 	err = reg.store.Put(valueK, val)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to store new value")
 	}
 
 	return reg.setPriority(reg.key, priority)
-}
-
-func (reg LWWRegister) setPriority(key string, priority uint64) error {
-	prioK := reg.priorityKey(key)
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, priority+1)
-	if n == 0 {
-		return errors.New("error encoding priority")
-	}
-
-	return reg.store.Put(prioK, buf[0:n])
-}
-
-// get the current priority for given key
-func (reg LWWRegister) getPriority(key string) (uint64, error) {
-	pKey := reg.priorityKey(key)
-	pbuf, err := reg.store.Get(pKey)
-	if err != nil {
-		return 0, err
-	}
-
-	prio, num := binary.Uvarint(pbuf)
-	if num <= 0 {
-		return 0, errors.New("failed to decode priority")
-	}
-	return prio, nil
-}
-
-// @TODO return the formatted priority key from the given key
-// ex /namespace/db/key/priority
-// Note: Since Registers can be embedded inside a map container
-// the supplied key will most likely already contain the correct
-// key heigharchy.
-func (reg LWWRegister) priorityKey(key string) ds.Key {
-	return ds.NewKey("")
-}
-
-// @TODO
-func (reg LWWRegister) valueKey(key string) ds.Key {
-	return ds.NewKey("")
 }
