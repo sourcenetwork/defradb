@@ -22,7 +22,7 @@ type MerkleLWWRegister struct {
 // NewMerkleLWWRegister
 func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister(store, key.String() /* stuff like namespace and ID */)
+	reg := corecrdt.NewLWWRegister(store, ns, key.String() /* stuff like namespace and ID */)
 	// New Clock
 	clk := clock.NewMerkleClock(store, ns, reg, crdt.LWWRegDeltaExtractorFn /* + stuff like extractDeltaFn*/)
 	// newBaseMerkleCRDT(clock, register)
@@ -41,7 +41,7 @@ func (mlww *MerkleLWWRegister) Set(value []byte) error {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlww.reg.Set(value)
-	_, err := mlww.Publish(&delta)
+	_, err := mlww.Publish(delta)
 	return err
 }
 

@@ -1,13 +1,16 @@
 package crdt
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/ugorji/go/codec"
+
+	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
 )
 
 func newMockStore() ds.Datastore {
@@ -32,8 +35,8 @@ func TestLWWRegisterAddDelta(t *testing.T) {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
 
-	if !reflect.DeepEqual(addDelta.data, []byte("test")) {
-		t.Errorf("Delta unexpected value, was %s want %s", addDelta.data, []byte("test"))
+	if !reflect.DeepEqual(addDelta.Data, []byte("test")) {
+		t.Errorf("Delta unexpected value, was %s want %s", addDelta.Data, []byte("test"))
 	}
 }
 
@@ -92,7 +95,7 @@ func TestLWWRegisterOldMerge(t *testing.T) {
 
 func TestLWWRegisterDeltaInit(t *testing.T) {
 	delta := &LWWRegDelta{
-		data: []byte("test"),
+		Data: []byte("test"),
 	}
 
 	var _ core.Delta = delta // checks if LWWRegDelta implements core.Delta (also checked in the implementation code, but w.e)
@@ -100,8 +103,8 @@ func TestLWWRegisterDeltaInit(t *testing.T) {
 
 func TestLWWRegosterDeltaGetPriority(t *testing.T) {
 	delta := &LWWRegDelta{
-		data:     []byte("test"),
-		priority: uint64(10),
+		Data:     []byte("test"),
+		Priority: uint64(10),
 	}
 
 	if delta.GetPriority() != uint64(10) {
@@ -111,7 +114,7 @@ func TestLWWRegosterDeltaGetPriority(t *testing.T) {
 
 func TestLWWRegisterDeltaSetPriority(t *testing.T) {
 	delta := &LWWRegDelta{
-		data: []byte("test"),
+		Data: []byte("test"),
 	}
 
 	delta.SetPriority(10)
@@ -123,8 +126,8 @@ func TestLWWRegisterDeltaSetPriority(t *testing.T) {
 
 func TestLWWRegisterDeltaMarshal(t *testing.T) {
 	delta := &LWWRegDelta{
-		data:     []byte("test"),
-		priority: uint64(10),
+		Data:     []byte("test"),
+		Priority: uint64(10),
 	}
 	bytes, err := delta.Marshal()
 	if err != nil {
@@ -136,7 +139,7 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 		return
 	}
 
-	fmt.Println(bytes)
+	// fmt.Println(bytes)
 
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(bytes, h)
@@ -147,12 +150,65 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 		return
 	}
 
-	if !reflect.DeepEqual(delta.data, unmarshaledDelta.data) {
-		t.Errorf("Unmarhsalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.data)
+	if !reflect.DeepEqual(delta.Data, unmarshaledDelta.Data) {
+		t.Errorf("Unmarhsalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.Data)
 		return
 	}
 
-	if delta.priority != unmarshaledDelta.priority {
-		t.Errorf("Unmarshalled priority value doesn't match. Want %v, have %v", uint64(10), unmarshaledDelta.priority)
+	if delta.Priority != unmarshaledDelta.Priority {
+		t.Errorf("Unmarshalled priority value doesn't match. Want %v, have %v", uint64(10), unmarshaledDelta.Priority)
+	}
+}
+
+func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
+	var data []byte
+	var err error
+	if delta != nil {
+		data, err = delta.Marshal()
+		if err != nil {
+			return nil, err
+		}
+	}
+	// data = []byte("test")
+	// fmt.Println("PRE", data)
+	nd := dag.NodeWithData(data)
+	for _, h := range heads {
+		err = nd.AddRawLink("", &ipld.Link{Cid: h})
+		if err != nil {
+			return nil, err
+		}
+	}
+	// data2 := nd.Data()
+	// fmt.Println("POST", data2)
+	return nd, nil
+}
+
+func TestLWWRegisterDeltaExtractDeltaFn(t *testing.T) {
+	delta := &LWWRegDelta{
+		Data:     []byte("test"),
+		Priority: uint64(10),
+	}
+
+	node, err := makeNode(delta, []cid.Cid{})
+	if err != nil {
+		t.Errorf("Received errors while creating node: %v", err)
+		return
+	}
+
+	extractedDelta, err := LWWRegDeltaExtractorFn(node)
+	if err != nil {
+		t.Errorf("Recieved error while extracing node: %v", err)
+		return
+	}
+
+	typedExtractedDelta, ok := extractedDelta.(*LWWRegDelta)
+	if !ok {
+		t.Error("Extracted delta from node is NOT a LWWRegDelta type")
+		return
+	}
+
+	if !reflect.DeepEqual(typedExtractedDelta, delta) {
+		t.Errorf("Extracted delta is not the same value as the original. Expected %v, have %v", delta, typedExtractedDelta)
+		return
 	}
 }
