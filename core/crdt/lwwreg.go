@@ -11,6 +11,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/ugorji/go/codec"
 )
@@ -24,18 +25,18 @@ var (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // TODO: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
-	priority uint64
-	data     []byte
+	Priority uint64
+	Data     []byte
 }
 
 // GetPriority gets the current priority for this delta
 func (delta *LWWRegDelta) GetPriority() uint64 {
-	return delta.priority
+	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
-	delta.priority = prio
+	delta.Priority = prio
 }
 
 // Marshal encodes the delta using CBOR
@@ -47,7 +48,7 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	err := enc.Encode(struct {
 		Priority uint64
 		Data     []byte
-	}{delta.priority, delta.data})
+	}{delta.Priority, delta.Data})
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +59,13 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 // a LWWRegDelta from a ipld.Node
 // for now lets do cbor (quick to implement)
 func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
-	var delta *LWWRegDelta
-	data := node.RawData()
+	delta := &LWWRegDelta{}
+	pbNode, ok := node.(*dag.ProtoNode)
+	if !ok {
+		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
+	}
+	data := pbNode.Data()
+	// fmt.Println(data)
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(data, h)
 	err := dec.Decode(delta)
@@ -102,7 +108,7 @@ func (reg LWWRegister) Value() ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
-		data: value,
+		Data: value,
 	}
 }
 
@@ -124,7 +130,7 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 		return core.ErrMismatchedMergeType
 	}
 
-	return reg.setValue(d.data, d.GetPriority())
+	return reg.setValue(d.Data, d.GetPriority())
 }
 
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
