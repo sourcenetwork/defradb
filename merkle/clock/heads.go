@@ -3,9 +3,11 @@ package clock
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
+	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -116,6 +118,7 @@ func (hh *heads) Add(c cid.Cid, height uint64) error {
 }
 
 // List returns the list of current heads plus the max height.
+// @todo Document Heads.List function
 func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	q := query.Query{
 		Prefix:   hh.namespace.String(),
@@ -132,12 +135,13 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, r.Error
+			return nil, 0, errors.Wrap(r.Error, "Failed to get next query result")
 		}
+		fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, errors.Wrap(err, "Failed to get CID from key")
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {

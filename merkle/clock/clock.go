@@ -1,28 +1,46 @@
 package clock
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/store"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
+	logging "github.com/ipfs/go-log"
+)
+
+var (
+	headsNS = "h"
 )
 
 type merkleClock struct {
-	store ds.Datastore
+	store    ds.Datastore
+	dagstore *store.DAGStore
 	// daySyncer
+	namespace      ds.Key
 	heads          *heads
 	crdt           core.ReplicatedData
 	extractDeltaFn func(ipld.Node) (core.Delta, error)
+	logger         logging.StandardLogger
 }
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(store ds.Datastore, ns ds.Key, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error)) core.MerkleClock {
-	return nil
+func NewMerkleClock(store ds.Datastore, dagstore *store.DAGStore, ns ds.Key, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
+	return &merkleClock{
+		store:          store,
+		dagstore:       dagstore,
+		namespace:      ns,
+		heads:          newHeads(store, ns.ChildString("heads"), logger), //TODO: Config logger param package wide
+		crdt:           crdt,
+		extractDeltaFn: deltaFn,
+	}
 }
 
 func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
@@ -35,16 +53,30 @@ func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 		return nil, errors.Wrap(err, "error creating block")
 	}
 
-	// @TODO
+	// @todo Add a DagSyncer instance to the MerkleCRDT structure
+	// @body At the moment there is no configured DagSyncer so MerkleClock
+	// blocks are not persisted into the database.
+	// The following is an example implementation of how it might work:
+	//
 	// ctx := context.Background()
 	// err = mc.store.dagSyncer.Add(ctx, node)
 	// if err != nil {
 	// 	return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
 	// }
+	ctx := context.Background()
+	err = mc.dagstore.Add(ctx, node)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
+	}
 
 	return node, nil
 }
 
+// @todo Change AddDAGNode to AddDelta
+
+// AddDAGNode adds a new delta to the existing DAG for this MerkleClock
+// It checks the current heads, sets the delta priority in the merkle dag
+// adds it to the blockstore the runs ProcessNode
 func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	heads, height, err := mc.heads.List()
 	if err != nil {
@@ -61,6 +93,7 @@ func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	}
 
 	// apply the new node and merge the delta with state
+	// @todo Remove NodeGetter as a paramter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
 		&crdtNodeGetter{deltaExtractor: mc.extractDeltaFn},
 		nd.Cid(),

@@ -7,6 +7,7 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	ds "github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log"
 )
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
@@ -19,12 +20,13 @@ type MerkleLWWRegister struct {
 	clock core.MerkleClock
 }
 
-// NewMerkleLWWRegister
-func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key) *MerkleLWWRegister {
+// NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
+// backed by a LWWRegister CRDT
+func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister(store, ns, key.String() /* stuff like namespace and ID */)
+	reg := corecrdt.NewLWWRegister(store, ns.ChildString("data"), key.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(store, ns, reg, crdt.LWWRegDeltaExtractorFn /* + stuff like extractDeltaFn*/)
+	clk := clock.NewMerkleClock(store, ns.ChildString("heads").Child(key), reg, crdt.LWWRegDeltaExtractorFn, log)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister
