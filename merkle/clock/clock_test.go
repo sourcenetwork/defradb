@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	log = logging.Logger("defrabd.tests")
+	log = logging.Logger("defrabd.tests.clock")
 )
 
 func NewDS() ds.Datastore {

@@ -5,6 +5,7 @@ import (
 	"github.com/sourcenetwork/defradb/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
@@ -22,11 +23,11 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(store ds.Datastore, ns, key ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
+func NewMerkleLWWRegister(store ds.Datastore, dagstore *store.DAGStore, ns, key ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(store, ns.ChildString("data"), key.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(store, ns.ChildString("heads").Child(key), reg, crdt.LWWRegDeltaExtractorFn, log)
+	clk := clock.NewMerkleClock(store, dagstore, ns.ChildString("heads").Child(key), reg, crdt.LWWRegDeltaExtractorFn, log)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister

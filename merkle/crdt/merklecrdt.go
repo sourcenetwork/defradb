@@ -26,7 +26,8 @@ const (
 )
 
 var (
-	defaultMerkleCRDTs = make(map[Type]MerkleCRDTFactory)
+	defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
+	_                  core.ReplicatedData = (*baseMerkleCRDT)(nil)
 )
 
 // The baseMerkleCRDT handles the merkle crdt overhead functions
