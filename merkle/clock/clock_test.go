@@ -1,6 +1,7 @@
 package clock
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ipfs/go-datastore/namespace"
@@ -141,12 +142,41 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 
 	// fmt.Println(delta.GetPriority())
 	// fmt.Println(delta2.GetPriority())
+	if delta.GetPriority() != 1 && delta2.GetPriority() != 2 {
+		t.Errorf("AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)", 1, 2, delta.GetPriority(), delta2.GetPriority())
+	}
+
+	// check if lww state is correct (val is test2)
+	// check if head/blockstore state is correct (one head, two blocks)
+	nHeads, err := clk.heads.Len()
+	if err != nil {
+		t.Error("Error getting MerkleClock heads size:", err)
+		return
+	}
+	if nHeads != 1 {
+		t.Errorf("Incorrect number of heads of current clock state, have %v, want %v", nHeads, 1)
+		return
+	}
+
+	numBlocks := 0
+	cids, err := clk.dagstore.Blockstore().AllKeysChan(context.Background())
+	if err != nil {
+		t.Error("Failed to get blockstore content for merkle clock:", err)
+		return
+	}
+	for range cids {
+		numBlocks++
+	}
+	if numBlocks != 2 {
+		t.Errorf("Incorrect number of blocks in clock state, have %v, want %v", numBlocks, 2)
+		return
+	}
 }
 
-func TestMerkleClockProcessNode(t *testing.T) {
-	t.Error("Test not implemented")
-}
+// func TestMerkleClockProcessNode(t *testing.T) {
+// 	t.Error("Test not implemented")
+// }
 
-func TestMerkleClockProcessNodeWithHeads(t *testing.T) {
-	t.Error("Test not implemented")
-}
+// func TestMerkleClockProcessNodeWithHeads(t *testing.T) {
+// 	t.Error("Test not implemented")
+// }

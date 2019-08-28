@@ -65,3 +65,7 @@ func (d *DAGStore) setupDAGService() error {
 	d.DAGService = dag.NewDAGService(d.bserv)
 	return nil
 }
+
+func (d *DAGStore) Blockstore() blockstore.Blockstore {
+	return d.bstore
+}
