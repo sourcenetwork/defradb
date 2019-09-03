@@ -27,8 +27,9 @@ func newTestBaseMerkleCRDT() *baseMerkleCRDT {
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
 	ns := ds.NewKey("/test/db")
-	reg := corecrdt.NewLWWRegister(store, ns, "mydockey")
-	clk := clock.NewMerkleClock(store, dagstore, ns, reg, crdt.LWWRegDeltaExtractorFn, log)
+	id := "mydockey"
+	reg := corecrdt.NewLWWRegister(store, ns, id)
+	clk := clock.NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log)
 	return &baseMerkleCRDT{clk, reg}
 }
 
