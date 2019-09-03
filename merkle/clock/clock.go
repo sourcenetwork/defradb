@@ -32,12 +32,12 @@ type merkleClock struct {
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(store ds.Datastore, dagstore *store.DAGStore, ns ds.Key, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
+func NewMerkleClock(store ds.Datastore, dagstore *store.DAGStore, ns ds.Key, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
 	return &merkleClock{
 		store:          store,
 		dagstore:       dagstore,
 		namespace:      ns,
-		heads:          newHeads(store, ns.ChildString("heads"), logger), //TODO: Config logger param package wide
+		heads:          newHeads(store, ns.ChildString("heads").ChildString(id), logger), //TODO: Config logger param package wide
 		crdt:           crdt,
 		extractDeltaFn: deltaFn,
 	}

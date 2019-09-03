@@ -15,30 +15,32 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-var (
-	log = logging.Logger("defrabd.tests.clock")
-)
+// var ()
 
-func NewDS() ds.Datastore {
+func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
 func NewTestMerkleClock() *merkleClock {
-	store := NewDS()
+	log := logging.Logger("defrabd.tests.clock")
+	store := newDS()
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
 	ns := ds.NewKey("/test/db")
-	reg := crdt.NewLWWRegister(store, ns, "mydockey")
-	return NewMerkleClock(store, dagstore, ns, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	id := "mydockey"
+	reg := crdt.NewLWWRegister(store, ns, id)
+	return NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	store := NewDS()
+	log := logging.Logger("defrabd.tests.clock")
+	store := newDS()
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
 	ns := ds.NewKey("/test/db")
-	reg := crdt.NewLWWRegister(store, ns, "mydockey")
-	clk := NewMerkleClock(store, dagstore, ns, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	id := "mydockey"
+	reg := crdt.NewLWWRegister(store, ns, id)
+	clk := NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 
 	if clk.store != store {
 		t.Error("MerkleClock store not correctly set")
