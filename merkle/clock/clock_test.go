@@ -21,7 +21,7 @@ func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func NewTestMerkleClock() *merkleClock {
+func newTestMerkleClock() *merkleClock {
 	log := logging.Logger("defrabd.tests.clock")
 	store := newDS()
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
@@ -56,7 +56,7 @@ func TestNewMerkleClock(t *testing.T) {
 }
 
 func TestMerkleClockPutBlock(t *testing.T) {
-	clk := NewTestMerkleClock()
+	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -76,7 +76,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 }
 
 func TetMerkleClockPutBlockWithHeads(t *testing.T) {
-	clk := NewTestMerkleClock()
+	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -106,7 +106,7 @@ func TetMerkleClockPutBlockWithHeads(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNode(t *testing.T) {
-	clk := NewTestMerkleClock()
+	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -121,7 +121,7 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
-	clk := NewTestMerkleClock()
+	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test1"),
 	}
