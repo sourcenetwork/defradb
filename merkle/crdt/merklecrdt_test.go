@@ -1,6 +1,7 @@
 package crdt
 
 import (
+	"fmt"
 	"testing"
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -10,31 +11,33 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
+	"github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log"
 	"github.com/sourcenetwork/defradb/core/crdt"
 )
 
 var (
 	log = logging.Logger("defrabd.tests.merklecrdt")
+	// store ds.Datastore
 )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestBaseMerkleCRDT() *baseMerkleCRDT {
+func newTestBaseMerkleCRDT() (*baseMerkleCRDT, ds.Datastore) {
 	store := newDS()
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
 	ns := ds.NewKey("/test/db")
-	id := "mydockey"
+	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(store, ns, id)
 	clk := clock.NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log)
-	return &baseMerkleCRDT{clk, reg}
+	return &baseMerkleCRDT{clk, reg}, store
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
-	bCRDT := newTestBaseMerkleCRDT()
+	bCRDT, store := newTestBaseMerkleCRDT()
 	delta := &corecrdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
@@ -48,5 +51,24 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	if c == cid.Undef {
 		t.Error("Published returned invalid CID Undef:", c)
 		return
+	}
+
+	printStore(store)
+}
+
+func printStore(store ds.Datastore) {
+	q := query.Query{
+		Prefix:   "",
+		KeysOnly: false,
+	}
+
+	results, err := store.Query(q)
+	defer results.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	for r := range results.Next() {
+		fmt.Println(r.Key, ": ", r.Value)
 	}
 }
