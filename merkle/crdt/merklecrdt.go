@@ -23,6 +23,7 @@ type Type byte
 
 const (
 	LWW_REGISTER = Type(iota)
+	OBJECT
 )
 
 var (

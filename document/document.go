@@ -30,27 +30,98 @@ import (
 // Fields are Key names that point to values
 // Values are literal or complex objects such as strings, integers, or sub documents (objects)
 //
+// Note: Documents represent the serialized state of the underlying MerkleCRDTs
 type Document struct {
 	key    key.DocKey
 	fields map[string]Field
-	values map[Field]Value
+	values map[Field]interface{}
 	// TODO: schemaInfo schema.Info
 }
 
-// Field is an interface to interact with Fields inside a document
-type Field interface {
-	Name() string
-	Type() FieldType
+func newEmptyDoc() *Document {
+	return &Document{
+		fields: make(map[string]Field),
+		values: make(map[Field]interface{}),
+	}
 }
 
-// FieldType is an abstraction of managing the types associated with the Value of a Field
-// This may or may not be schema enforced, but it always have a value.
-type FieldType struct {
-	Type crdt.Type
+// NewFromJSON creates a new instance of a Document from a Unmarshaled JSON object in
+// the form of a map[string]interface{}
+func NewFromJSON(data map[string]interface{}) (*Document, error) {
+	doc := &Document{
+		fields: make(map[string]Field),
+		values: make(map[Field]interface{}),
+	}
+
+	err := parseJSONObject(doc, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, nil
 }
 
-// Value is an interface that points to a concrete Value implementation
-// May collapse this down without an interface
-type Value interface {
-	Value() interface{}
+// loops through a parsed JSON object of the form map[string]interface{}
+// and fills in the Document with each field it finds in the JSON object.
+// Automatically handles sub objects and arrays.
+// Does not allow anonymous fields, error is thrown in this case
+// Eg. The JSON value [1,2,3,4] by itself is a valid JSON Object, but has no
+// field name.
+func parseJSONObject(doc *Document, data map[string]interface{}) error {
+	for k, v := range data {
+		switch v.(type) {
+
+		// int (any number)
+		case int:
+			field := newField(k, crdt.LWW_REGISTER)
+			doc.fields[k] = field
+			doc.values[field] = v
+			break
+
+		// string
+		case string:
+			break
+
+		// array
+		case []interface{}:
+			break
+
+		// sub object, recurse down.
+		// TODO: Object Definitions
+		// You can use an object as a way to override defults
+		// and types for JSON literals.
+		// Eg.
+		// Instead of { "Timestamp": 123 }
+		//			- which is parsed as an int
+		// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
+		//			- Which is parsed as an uint64
+		case map[string]interface{}:
+			subDoc := newEmptyDoc()
+			err := parseJSONObject(subDoc, v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+
+			field := newField(k, crdt.OBJECT)
+			doc.fields[k] = field
+			doc.values[field] = subDoc
+			break
+
+		}
+	}
+	return nil
 }
+
+// Exmaple Usage: Create/Insert new object
+/*
+
+obj := `{
+	Hello: "World"
+}`
+objData := make(map[string]interface{})
+err := json.Unmarshal(&objData, obj)
+
+docA := document.New(objData)
+err := docA.Create()
+
+*/
