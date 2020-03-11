@@ -1,6 +1,11 @@
 package document
 
 import (
+	"encoding/json"
+
+	"github.com/ipfs/go-cid"
+	mh "github.com/multiformats/go-multihash"
+
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
@@ -45,15 +50,34 @@ func newEmptyDoc() *Document {
 	}
 }
 
-// NewFromJSON creates a new instance of a Document from a Unmarshaled JSON object in
-// the form of a map[string]interface{}
-func NewFromJSON(data map[string]interface{}) (*Document, error) {
+// NewFromJSON creates a new instance of a Document from a raw JSON object byte array
+func NewFromJSON(obj []byte) (*Document, error) {
+	pref := cid.Prefix{
+		Version:  1,
+		Codec:    cid.Raw,
+		MhType:   mh.SHA2_256,
+		MhLength: -1, // default length
+	}
+
+	// And then feed it some data
+	c, err := pref.Sum(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(map[string]interface{})
+	err = json.Unmarshal(obj, &data)
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &Document{
+		key:    key.NewDocKey(c, ""),
 		fields: make(map[string]Field),
 		values: make(map[Field]interface{}),
 	}
 
-	err := parseJSONObject(doc, data)
+	err = parseJSONObject(doc, data)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +104,9 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 
 		// string
 		case string:
+			field := newField(k, crdt.LWW_REGISTER)
+			doc.fields[k] = field
+			doc.values[field] = v
 			break
 
 		// array
