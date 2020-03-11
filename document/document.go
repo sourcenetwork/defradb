@@ -40,7 +40,7 @@ type Document struct {
 	key    key.DocKey
 	fields map[string]Field
 	values map[Field]interface{}
-	// TODO: schemaInfo schema.Info
+	// @TODO: schemaInfo schema.Info
 }
 
 func newEmptyDoc() *Document {
@@ -114,7 +114,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 			break
 
 		// sub object, recurse down.
-		// TODO: Object Definitions
+		// @TODO: Object Definitions
 		// You can use an object as a way to override defults
 		// and types for JSON literals.
 		// Eg.
