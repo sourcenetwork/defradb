@@ -3,10 +3,16 @@ package key
 import (
 	// "github.com/google/uuid"
 	"context"
+	"encoding/binary"
 	"strings"
 
 	"github.com/ipfs/go-cid"
 	uuid "github.com/satori/go.uuid"
+)
+
+// Key Versions
+const (
+	V0 = 0x01
 )
 
 var (
@@ -17,21 +23,30 @@ var (
 	NamespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 )
 
-// DocKey is the root key identifier for documents in DefraDB
-type DocKey struct {
-	uuid   uuid.UUID
-	cid    cid.Cid
-	peerID string
+// VersionToNamespace is a convenience for mapping between Version number and its UUID Namespace
+var VersionToNamespace = map[uint64]uuid.UUID{
+	V0: NamespaceSDNDocKeyV0,
 }
 
-// NewDocKey creates a new doc key identified by the root data CID, peer ID, and
+// DocKey is the root key identifier for documents in DefraDB
+type DocKey struct {
+	version uint64
+	uuid    uuid.UUID
+	cid     cid.Cid
+	peerID  string
+}
+
+// Undef can be defined to be a nil like DocKey
+var Undef = DocKey{}
+
+// NewDocKeyV0 creates a new doc key identified by the root data CID, peer ID, and
 // namespaced by the versionNS
 // TODO: Parameterize namespace Version
-func NewDocKey(dataCID cid.Cid, peerID string) DocKey {
+func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
-		uuid:   uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
-		cid:    dataCID,
-		peerID: peerID,
+		version: V0,
+		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
+		cid:     dataCID,
 	}
 }
 
@@ -42,7 +57,16 @@ func (key DocKey) UUID() uuid.UUID {
 
 // UUID returns the doc key in string form
 func (key DocKey) String() string {
-	return key.uuid.String()
+	buf := make([]byte, binary.MaxVarintLen64)
+	binary.PutUvarint(buf, key.version)
+	return string(buf) + "-" + key.uuid.String()
+}
+
+// Bytes returns the DocKey in Byte format
+func (key DocKey) Bytes() []byte {
+	buf := make([]byte, binary.MaxVarintLen64)
+	binary.PutUvarint(buf, key.version)
+	return append(buf, key.uuid.Bytes()...)
 }
 
 // Verify ensures that the given DocKey is valid as per the DefraDB spec
@@ -71,6 +95,7 @@ func (key DocKey) Sub(subname string) DocKey {
 	return key.subrec(subParts)
 }
 
+// recursive Sub call
 // prerequisite, subparts needs to be at least 1 element long
 func (key DocKey) subrec(subparts []string) DocKey {
 	if len(subparts) > 1 {
