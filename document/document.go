@@ -2,6 +2,8 @@ package document
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
@@ -39,14 +41,14 @@ import (
 type Document struct {
 	key    key.DocKey
 	fields map[string]Field
-	values map[Field]interface{}
+	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
 }
 
 func newEmptyDoc() *Document {
 	return &Document{
 		fields: make(map[string]Field),
-		values: make(map[Field]interface{}),
+		values: make(map[Field]Value),
 	}
 }
 
@@ -72,9 +74,9 @@ func NewFromJSON(obj []byte) (*Document, error) {
 	}
 
 	doc := &Document{
-		key:    key.NewDocKey(c, ""),
+		key:    key.NewDocKeyV0(c),
 		fields: make(map[string]Field),
-		values: make(map[Field]interface{}),
+		values: make(map[Field]Value),
 	}
 
 	err = parseJSONObject(doc, data)
@@ -83,6 +85,11 @@ func NewFromJSON(obj []byte) (*Document, error) {
 	}
 
 	return doc, nil
+}
+
+// Key returns the generated DocKey for this document
+func (doc *Document) Key() key.DocKey {
+	return doc.key
 }
 
 // loops through a parsed JSON object of the form map[string]interface{}
@@ -96,17 +103,18 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 		switch v.(type) {
 
 		// int (any number)
-		case int:
+		case float64:
+			// case int64:
 			field := newField(k, crdt.LWW_REGISTER)
 			doc.fields[k] = field
-			doc.values[field] = v
+			doc.values[field] = newValue(v)
 			break
 
 		// string
 		case string:
 			field := newField(k, crdt.LWW_REGISTER)
 			doc.fields[k] = field
-			doc.values[field] = v
+			doc.values[field] = newValue(v)
 			break
 
 		// array
@@ -131,8 +139,11 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 
 			field := newField(k, crdt.OBJECT)
 			doc.fields[k] = field
-			doc.values[field] = subDoc
+			doc.values[field] = newValue(subDoc)
 			break
+
+		default:
+			return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", k, v))
 
 		}
 	}
