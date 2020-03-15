@@ -16,6 +16,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.6
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/stretchr/testify v1.3.0
 	github.com/ugorji/go/codec v1.1.7
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
