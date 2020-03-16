@@ -23,29 +23,31 @@ func newDS() ds.Datastore {
 
 func newTestMerkleClock() *merkleClock {
 	log := logging.Logger("defrabd.tests.clock")
+	ns := ds.NewKey("/test/db")
 	store := newDS()
+	// datastore := namespace.Wrap(store, ns.ChildString("data"))
+	headstore := namespace.Wrap(store, ns.ChildString("heads"))
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
-	ns := ds.NewKey("/test/db")
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(store, ns, id)
-	return NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	return NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
 	log := logging.Logger("defrabd.tests.clock")
+	ns := ds.NewKey("/test/db")
 	store := newDS()
+	// datastore := namespace.Wrap(store, ns.ChildString("data"))
+	headstore := namespace.Wrap(store, ns.ChildString("heads"))
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
-	ns := ds.NewKey("/test/db")
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(store, ns, id)
-	clk := NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	clk := NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 
-	if clk.store != store {
+	if clk.store != headstore {
 		t.Error("MerkleClock store not correctly set")
-	} else if clk.namespace != ns {
-		t.Error("MerkleClock namespace not correctly set")
 	} else if clk.heads.store == nil {
 		t.Error("MerkleClock head set not correctly set")
 	} else if clk.crdt == nil {
