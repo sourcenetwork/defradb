@@ -1,5 +1,9 @@
 package document
 
+import (
+	"github.com/sourcenetwork/defradb/merkle/crdt"
+)
+
 // Value is an interface that points to a concrete Value implementation
 // May collapse this down without an interface
 type Value interface {
@@ -24,4 +28,8 @@ func (val simpleValue) Value() interface{} {
 func (val simpleValue) IsDocument() bool {
 	_, ok := val.value.(*Document)
 	return ok
+}
+
+type merkleCRDTValue struct {
+	crdt crdt.MerkleCRDT
 }

@@ -23,34 +23,34 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(store ds.Datastore, dagstore *store.DAGStore, ns, dockey ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
+func NewMerkleLWWRegister(store ds.Datastore, headstore ds.Datastore, dagstore *store.DAGStore, ns, dockey ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister(store, ns.ChildString("data"), dockey.String() /* stuff like namespace and ID */)
+	reg := corecrdt.NewLWWRegister(store, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(store, dagstore, ns, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn, log)
+	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn, log)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,
-		clock:          clk,
-		reg:            reg,
+		// clock:          clk,
+		reg: reg,
 	}
 }
 
 // Set the value of the register
-func (mlww *MerkleLWWRegister) Set(value []byte) error {
+func (mlwwreg *MerkleLWWRegister) Set(value []byte) error {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
-	delta := mlww.reg.Set(value)
-	_, err := mlww.Publish(delta)
+	delta := mlwwreg.reg.Set(value)
+	_, err := mlwwreg.Publish(delta)
 	return err
 }
 
 // Value will retrieve the current value from the db
-func (mlww *MerkleLWWRegister) Value() ([]byte, error) {
-	return mlww.reg.Value()
+func (mlwwreg *MerkleLWWRegister) Value() ([]byte, error) {
+	return mlwwreg.reg.Value()
 }
 
 // Merge writes the provided delta to state using a supplied

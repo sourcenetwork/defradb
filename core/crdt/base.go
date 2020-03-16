@@ -41,11 +41,11 @@ func (base baseCRDT) keyPrefix(key string) ds.Key {
 }
 
 func (base baseCRDT) valueKey(key string) ds.Key {
-	return base.keyPrefix(base.keysNs).ChildString(key).ChildString(base.valueSuffix)
+	return base.namespace.ChildString(key).ChildString(base.valueSuffix)
 }
 
 func (base baseCRDT) priorityKey(key string) ds.Key {
-	return base.keyPrefix(base.keysNs).ChildString(key).ChildString(base.prioritySuffix)
+	return base.namespace.ChildString(key).ChildString(base.prioritySuffix)
 }
 
 func (base baseCRDT) setPriority(key string, priority uint64) error {

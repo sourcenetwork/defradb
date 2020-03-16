@@ -2,7 +2,6 @@ package document
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ipfs/go-cid"
@@ -143,7 +142,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 			break
 
 		default:
-			return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", k, v))
+			return fmt.Errorf("Unhandled type in raw JSON: %v => %T", k, v)
 
 		}
 	}

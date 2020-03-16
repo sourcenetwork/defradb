@@ -26,13 +26,16 @@ func newDS() ds.Datastore {
 }
 
 func newTestBaseMerkleCRDT() (*baseMerkleCRDT, ds.Datastore) {
+	ns := ds.NewKey("/test/db")
 	store := newDS()
+	datastore := namespace.Wrap(store, ns.ChildString("data"))
+	headstore := namespace.Wrap(store, ns.ChildString("heads"))
 	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
 	dagstore := dagstore.NewDAGStore(batchStore)
-	ns := ds.NewKey("/test/db")
+
 	id := "MyKey"
-	reg := corecrdt.NewLWWRegister(store, ns, id)
-	clk := clock.NewMerkleClock(store, dagstore, ns, id, reg, crdt.LWWRegDeltaExtractorFn, log)
+	reg := corecrdt.NewLWWRegister(datastore, ns, id)
+	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log)
 	return &baseMerkleCRDT{clk, reg}, store
 }
 
