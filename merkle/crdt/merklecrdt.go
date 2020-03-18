@@ -4,7 +4,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 )
 
 type MerkleCRDT interface {
@@ -16,8 +15,8 @@ type MerkleCRDT interface {
 	// NewObject() error
 }
 
-type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
-type MerkleCRDTFactory func(store ds.Datastore, namespace ds.Key) MerkleCRDTInitFn
+// type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
+// type MerkleCRDTFactory func(store ds.Datastore, namespace ds.Key) MerkleCRDTInitFn
 
 type Type byte
 
@@ -27,8 +26,8 @@ const (
 )
 
 var (
-	defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
-	_                  core.ReplicatedData = (*baseMerkleCRDT)(nil)
+	// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
+	_ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 )
 
 // The baseMerkleCRDT handles the merkle crdt overhead functions
