@@ -11,6 +11,14 @@ import (
 	logging "github.com/ipfs/go-log"
 )
 
+func init() {
+	DefaultFactory.Register(LWW_REGISTER, func(mstore core.MultiStore) MerkleCRDTInitFn {
+		return func(key ds.Key) MerkleCRDT {
+			return NewMerkleLWWRegister(mstore.Data(), mstore.Head(), mstore.Dag(), ds.NewKey(""), key, mstore.Log())
+		}
+	})
+}
+
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
 // using MerkleClocks
 type MerkleLWWRegister struct {
