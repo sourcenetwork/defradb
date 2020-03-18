@@ -34,7 +34,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, ds.Datastore) {
 	dagstore := dagstore.NewDAGStore(batchStore)
 
 	id := "MyKey"
-	reg := corecrdt.NewLWWRegister(datastore, ns, id)
+	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
 	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log)
 	return &baseMerkleCRDT{clk, reg}, store
 }
