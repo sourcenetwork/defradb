@@ -44,7 +44,7 @@ func TestBaseCRDTKeyPrefix(t *testing.T) {
 func TestBaseCRDTvalueKey(t *testing.T) {
 	base := exampleBaseCRDT()
 	vk := base.valueKey("mykey")
-	if vk.String() != "/test/mykey/v" {
+	if vk.String() != "/test/mykey:v" {
 		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.String(), "/test/k/mykey/v")
 	}
 }
@@ -52,7 +52,7 @@ func TestBaseCRDTvalueKey(t *testing.T) {
 func TestBaseCRDTprioryKey(t *testing.T) {
 	base := exampleBaseCRDT()
 	pk := base.priorityKey("mykey")
-	if pk.String() != "/test/mykey/p" {
+	if pk.String() != "/test/mykey:p" {
 		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.String(), "/test/k/mykey/p")
 	}
 }
