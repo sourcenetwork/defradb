@@ -2,6 +2,7 @@ package crdt
 
 import (
 	ds "github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 )
@@ -17,6 +18,7 @@ type Factory struct {
 	datastore ds.Datastore
 	headstore ds.Datastore
 	dagstore  *store.DAGStore
+	log       logging.StandardLogger
 }
 
 var (
@@ -46,10 +48,11 @@ func (factory *Factory) Register(t Type, fn MerkleCRDTFactory) error {
 
 // Get and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a core.MultiStore object)
-func (factory Factory) Get(t Type) MerkleCRDT {
+func (factory Factory) Get(t Type, key ds.Key) MerkleCRDT {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
-	return factory.crdts[t](factory)
+	fn := factory.crdts[t]
+	return fn(factory)(key)
 }
 
 // SetStores sets all the current stores on the Factory in one call
@@ -117,6 +120,10 @@ func (factory Factory) Head() ds.Datastore {
 // Dag implements core.MultiStore and returns the current Dagstore
 func (factory Factory) Dag() *store.DAGStore {
 	return factory.dagstore
+}
+
+func (factory Factory) Log() logging.StandardLogger {
+	return factory.log
 }
 
 /* API Example
