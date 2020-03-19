@@ -46,9 +46,9 @@ func (factory *Factory) Register(t Type, fn MerkleCRDTFactory) error {
 	return nil
 }
 
-// Get and execute the registered factory function for a given MerkleCRDT type
+// Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a core.MultiStore object)
-func (factory Factory) Get(t Type, key ds.Key) MerkleCRDT {
+func (factory Factory) Instance(t Type, key ds.Key) MerkleCRDT {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
 	fn := factory.crdts[t]
@@ -122,6 +122,8 @@ func (factory Factory) Dag() *store.DAGStore {
 	return factory.dagstore
 }
 
+// Log implements core.MultiStore
+// @todo Look into abstracting Log from MutliStore
 func (factory Factory) Log() logging.StandardLogger {
 	return factory.log
 }
