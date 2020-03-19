@@ -2,7 +2,9 @@ package document
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
@@ -25,6 +27,11 @@ import (
 // Note: These actions on the outside are deceivingly simple, but require a number
 // of complex interactions with the underlying KV Datastore, as well as the
 // Merkle CRDT semantics.
+
+var (
+	ErrFieldNotExist  = errors.New("The given field does not exist")
+	ErrFieldNotObject = errors.New("Trying to access field on a non object type")
+)
 
 // Document is a generalized struct referring to a stored document in the database.
 //
@@ -91,6 +98,31 @@ func (doc *Document) Key() key.DocKey {
 	return doc.key
 }
 
+// Get returns the value for a given field
+// Since Documents are objects with potentially sub objects
+// a supplied field string can be of the form "A/B/C"
+// Where field A is an object containing a object B which has
+// a field C
+// If no matching field exists then return an empty interface
+// and an error.
+func (doc *Document) Get(field string) (interface{}, error) {
+	splitKeys := strings.SplitN(field, "/", 2)
+	hasChildKeys := len(splitKeys) > 1
+	f, exists := doc.fields[splitKeys[0]]
+	if !exists {
+		return nil, ErrFieldNotExist
+	}
+
+	val := doc.values[f]
+	if !hasChildKeys {
+		return val.Value(), nil
+	} else if hasChildKeys && !val.IsDocument() {
+		return nil, ErrFieldNotObject
+	} else {
+		return val.Value().(*Document).Get(splitKeys[1])
+	}
+}
+
 // loops through a parsed JSON object of the form map[string]interface{}
 // and fills in the Document with each field it finds in the JSON object.
 // Automatically handles sub objects and arrays.
@@ -104,16 +136,24 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 		// int (any number)
 		case float64:
 			// case int64:
-			field := newField(k, crdt.LWW_REGISTER)
+
+			// Check if its actually a float or just an int
+			val := v.(float64)
+			// var val interface{}
+			if float64(int64(val)) == val {
+				v = int64(val)
+			}
+
+			field := doc.newField(crdt.LWW_REGISTER, k)
 			doc.fields[k] = field
-			doc.values[field] = newValue(v)
+			doc.values[field] = newValue(crdt.LWW_REGISTER, v)
 			break
 
 		// string
 		case string:
-			field := newField(k, crdt.LWW_REGISTER)
+			field := doc.newField(crdt.LWW_REGISTER, k)
 			doc.fields[k] = field
-			doc.values[field] = newValue(v)
+			doc.values[field] = newValue(crdt.LWW_REGISTER, v)
 			break
 
 		// array
@@ -136,9 +176,9 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 				return err
 			}
 
-			field := newField(k, crdt.OBJECT)
+			field := subDoc.newField(crdt.OBJECT, k)
 			doc.fields[k] = field
-			doc.values[field] = newValue(subDoc)
+			doc.values[field] = newValue(crdt.OBJECT, subDoc)
 			break
 
 		default:
@@ -158,7 +198,12 @@ obj := `{
 objData := make(map[string]interface{})
 err := json.Unmarshal(&objData, obj)
 
-docA := document.New(objData)
-err := docA.Create()
+docA := document.NewFromJSON(objData)
+err := db.Save(document)
+		=> New batch transaction/store
+		=> Loop through doc values
+		=> 		instanciate MerkleCRDT objects
+		=> 		Set/Publish new CRDT values
+
 
 */
