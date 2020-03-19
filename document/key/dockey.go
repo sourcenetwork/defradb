@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -34,6 +35,7 @@ type DocKey struct {
 	uuid    uuid.UUID
 	cid     cid.Cid
 	peerID  string
+	ds.Key
 }
 
 // Undef can be defined to be a nil like DocKey
@@ -43,11 +45,13 @@ var Undef = DocKey{}
 // namespaced by the versionNS
 // TODO: Parameterize namespace Version
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
-	return DocKey{
+	dc := DocKey{
 		version: V0,
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
+	dc.Key = ds.NewKey(dc.String())
+	return dc
 }
 
 // UUID returns the doc key in UUID form
