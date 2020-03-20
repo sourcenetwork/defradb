@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 
 	"github.com/sourcenetwork/defradb/core/crdt"
-	dagstore "github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/store"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -24,26 +24,26 @@ func newDS() ds.Datastore {
 func newTestMerkleClock() *merkleClock {
 	log := logging.Logger("defrabd.tests.clock")
 	ns := ds.NewKey("/test/db")
-	store := newDS()
+	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
-	headstore := namespace.Wrap(store, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
-	dagstore := dagstore.NewDAGStore(batchStore)
+	headstore := namespace.Wrap(s, ns.ChildString("heads"))
+	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
+	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
-	reg := crdt.NewLWWRegister(store, ns, id)
+	reg := crdt.NewLWWRegister(s, ns, id)
 	return NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
 	log := logging.Logger("defrabd.tests.clock")
 	ns := ds.NewKey("/test/db")
-	store := newDS()
+	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
-	headstore := namespace.Wrap(store, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
-	dagstore := dagstore.NewDAGStore(batchStore)
+	headstore := namespace.Wrap(s, ns.ChildString("heads"))
+	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
+	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
-	reg := crdt.NewLWWRegister(store, ns, id)
+	reg := crdt.NewLWWRegister(s, ns, id)
 	clk := NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
 
 	if clk.store != headstore {

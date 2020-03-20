@@ -9,14 +9,14 @@ import (
 type MerkleCRDT interface {
 	core.ReplicatedData
 	// core.MerkleClock
-	// WithStore(ds.Datastore)
+	// WithStore(store.DSReaderWriter)
 	// WithNS(ds.Key)
 	// ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error)
 	// NewObject() error
 }
 
 // type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
-// type MerkleCRDTFactory func(store ds.Datastore, namespace ds.Key) MerkleCRDTInitFn
+// type MerkleCRDTFactory func(store store.DSReaderWriter, namespace ds.Key) MerkleCRDTInitFn
 
 type Type byte
 

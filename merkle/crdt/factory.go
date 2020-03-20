@@ -1,10 +1,11 @@
 package crdt
 
 import (
-	ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
+	
+	ds "github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log"
 )
 
 type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
@@ -15,8 +16,8 @@ type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
 	crdts     map[Type]MerkleCRDTFactory
-	datastore ds.Datastore
-	headstore ds.Datastore
+	datastore store.DSReaderWriter
+	headstore store.DSReaderWriter
 	dagstore  *store.DAGStore
 	log       logging.StandardLogger
 }
@@ -30,7 +31,7 @@ var (
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil
-func NewFactory(datastore, headstore ds.Datastore, dagstore *store.DAGStore) *Factory {
+func NewFactory(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) *Factory {
 	return &Factory{
 		crdts:     make(map[Type]MerkleCRDTFactory),
 		datastore: datastore,
@@ -56,7 +57,7 @@ func (factory Factory) Instance(t Type, key ds.Key) MerkleCRDT {
 }
 
 // SetStores sets all the current stores on the Factory in one call
-func (factory *Factory) SetStores(datastore, headstore ds.Datastore, dagstore *store.DAGStore) error {
+func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) error {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -64,7 +65,7 @@ func (factory *Factory) SetStores(datastore, headstore ds.Datastore, dagstore *s
 }
 
 // WithStores returns a new instance of the Factory with all the stores set
-func (factory Factory) WithStores(datastore, headstore ds.Datastore, dagstore *store.DAGStore) Factory {
+func (factory Factory) WithStores(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) Factory {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -72,25 +73,25 @@ func (factory Factory) WithStores(datastore, headstore ds.Datastore, dagstore *s
 }
 
 // SetDatastore sets the current datastore
-func (factory *Factory) SetDatastore(datastore ds.Datastore) error {
+func (factory *Factory) SetDatastore(datastore store.DSReaderWriter) error {
 	factory.datastore = datastore
 	return nil
 }
 
 // WithDatastore returns a new Factory instance with a new Datastore
-func (factory Factory) WithDatastore(datastore ds.Datastore) Factory {
+func (factory Factory) WithDatastore(datastore store.DSReaderWriter) Factory {
 	factory.datastore = datastore
 	return factory
 }
 
 // SetHeadstore sets the current headstore
-func (factory *Factory) SetHeadstore(headstore ds.Datastore) error {
+func (factory *Factory) SetHeadstore(headstore store.DSReaderWriter) error {
 	factory.headstore = headstore
 	return nil
 }
 
 // WithHeadstore returns a new Factory with a new Headstore
-func (factory Factory) WithHeadstore(headstore ds.Datastore) Factory {
+func (factory Factory) WithHeadstore(headstore store.DSReaderWriter) Factory {
 	factory.headstore = headstore
 	return factory
 }
@@ -108,12 +109,12 @@ func (factory Factory) WithDagstore(dagstore *store.DAGStore) Factory {
 }
 
 // Data implements core.MultiStore and returns the current Datastore
-func (factory Factory) Data() ds.Datastore {
+func (factory Factory) Data() store.DSReaderWriter {
 	return factory.datastore
 }
 
 // Head implements core.MultiStore and returns the current Headstore
-func (factory Factory) Head() ds.Datastore {
+func (factory Factory) Head() store.DSReaderWriter {
 	return factory.headstore
 }
 
@@ -131,6 +132,6 @@ func (factory Factory) Log() logging.StandardLogger {
 /* API Example
 
 factory.RegisterCRDT(LWW_REGISTER, store, InitFn)
-lww := factory.Get(LWW_REGISTER)(ds.NewKey("MeyKey")).(*MerkleLWWRegister)
+lww := factory.Instance(LWW_REGISTER, key).(*MerkleLWWRegister)
 
 */

@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -85,7 +86,7 @@ type LWWRegister struct {
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store ds.Datastore, namespace ds.Key, key string) LWWRegister {
+func NewLWWRegister(store store.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, namespace),
 		key:      key,

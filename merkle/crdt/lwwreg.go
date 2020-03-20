@@ -31,7 +31,7 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(store ds.Datastore, headstore ds.Datastore, dagstore *store.DAGStore, ns, dockey ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
+func NewMerkleLWWRegister(store store.DSReaderWriter, headstore store.DSReaderWriter, dagstore *store.DAGStore, ns, dockey ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(store, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
