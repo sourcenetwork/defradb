@@ -123,6 +123,25 @@ func (doc *Document) Get(field string) (interface{}, error) {
 	}
 }
 
+// Set the value of a field
+func (doc *Document) Set(field string, value interface{}) error {
+	return nil
+}
+
+// SetAsType Sets the value of a field along with a specific type
+func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) error {
+	return doc.set(t, field, value)
+}
+
+// set implementation
+// @todo Apply locking on  Document field/value operations
+func (doc *Document) set(t crdt.Type, field string, value interface{}) error {
+	f := doc.newField(t, field)
+	doc.fields[field] = f
+	doc.values[f] = newValue(t, value)
+	return nil
+}
+
 // loops through a parsed JSON object of the form map[string]interface{}
 // and fills in the Document with each field it finds in the JSON object.
 // Automatically handles sub objects and arrays.
@@ -143,17 +162,12 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 			if float64(int64(val)) == val {
 				v = int64(val)
 			}
-
-			field := doc.newField(crdt.LWW_REGISTER, k)
-			doc.fields[k] = field
-			doc.values[field] = newValue(crdt.LWW_REGISTER, v)
+			doc.set(crdt.LWW_REGISTER, k, v)
 			break
 
 		// string
 		case string:
-			field := doc.newField(crdt.LWW_REGISTER, k)
-			doc.fields[k] = field
-			doc.values[field] = newValue(crdt.LWW_REGISTER, v)
+			doc.set(crdt.LWW_REGISTER, k, v)
 			break
 
 		// array
@@ -176,9 +190,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 				return err
 			}
 
-			field := subDoc.newField(crdt.OBJECT, k)
-			doc.fields[k] = field
-			doc.values[field] = newValue(crdt.OBJECT, subDoc)
+			doc.set(crdt.OBJECT, k, subDoc)
 			break
 
 		default:
@@ -204,6 +216,5 @@ err := db.Save(document)
 		=> Loop through doc values
 		=> 		instanciate MerkleCRDT objects
 		=> 		Set/Publish new CRDT values
-
 
 */
