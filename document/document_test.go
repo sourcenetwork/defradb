@@ -60,7 +60,7 @@ func TestNewFromJSON(t *testing.T) {
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "John")
 	assert.Equal(t, doc.values[doc.fields["Name"]].IsDocument(), false)
-	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), float64(26))
+	assert.Equal(t, doc.values[doc.fields["Age"]].Value(), int64(26))
 	assert.Equal(t, doc.values[doc.fields["Age"]].IsDocument(), false)
 	assert.Equal(t, doc.values[doc.fields["Address"]].IsDocument(), true)
 
