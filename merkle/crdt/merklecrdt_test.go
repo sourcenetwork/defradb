@@ -6,7 +6,7 @@ import (
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-	dagstore "github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -18,25 +18,25 @@ import (
 
 var (
 	log = logging.Logger("defrabd.tests.merklecrdt")
-	// store ds.Datastore
+	// store store.DSReaderWriter
 )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestBaseMerkleCRDT() (*baseMerkleCRDT, ds.Datastore) {
+func newTestBaseMerkleCRDT() (*baseMerkleCRDT, store.DSReaderWriter) {
 	ns := ds.NewKey("/test/db")
-	store := newDS()
-	datastore := namespace.Wrap(store, ns.ChildString("data"))
-	headstore := namespace.Wrap(store, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(store, ds.NewKey("blockstore"))
-	dagstore := dagstore.NewDAGStore(batchStore)
+	s := newDS()
+	datastore := namespace.Wrap(s, ns.ChildString("data"))
+	headstore := namespace.Wrap(s, ns.ChildString("heads"))
+	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
+	dagstore := store.NewDAGStore(batchStore)
 
 	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
 	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log)
-	return &baseMerkleCRDT{clk, reg}, store
+	return &baseMerkleCRDT{clk, reg}, s
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
@@ -59,7 +59,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	printStore(store)
 }
 
-func printStore(store ds.Datastore) {
+func printStore(store store.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

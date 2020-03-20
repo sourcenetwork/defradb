@@ -20,7 +20,7 @@ var (
 )
 
 type merkleClock struct {
-	store    ds.Datastore
+	store    store.DSReaderWriter
 	dagstore *store.DAGStore
 	// daySyncer
 	heads          *heads
@@ -31,7 +31,7 @@ type merkleClock struct {
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(store ds.Datastore, dagstore *store.DAGStore, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
+func NewMerkleClock(store store.DSReaderWriter, dagstore *store.DAGStore, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
 	return &merkleClock{
 		store:          store,
 		dagstore:       dagstore,

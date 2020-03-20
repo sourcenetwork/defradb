@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/store"
 )
 
-func newDS() ds.Datastore {
+func newDS() store.DSReaderWriter {
 	return ds.NewMapDatastore()
 }
 
-func newSeededDS() ds.Datastore {
+func newSeededDS() store.DSReaderWriter {
 	return newDS()
 }
 
