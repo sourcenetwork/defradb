@@ -132,9 +132,9 @@ func (doc *Document) Set(field string, value interface{}) error {
 }
 
 // SetAsType Sets the value of a field along with a specific type
-func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) error {
-	return doc.set(t, field, value)
-}
+// func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) error {
+// 	return doc.set(t, field, value)
+// }
 
 // set implementation
 // @todo Apply locking on  Document field/value operations
