@@ -6,6 +6,9 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
+// MerkleCRDT is the implementation of a Merkle Clock along with a
+// CRDT payload. It implements the ReplicatedData interface
+// so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
 	// core.MerkleClock
@@ -18,9 +21,11 @@ type MerkleCRDT interface {
 // type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
 // type MerkleCRDTFactory func(store store.DSReaderWriter, namespace ds.Key) MerkleCRDTInitFn
 
+// Type indicates MerkleCRDT type
 type Type byte
 
 const (
+	//no lint
 	LWW_REGISTER = Type(iota)
 	OBJECT
 )
