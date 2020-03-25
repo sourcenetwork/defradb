@@ -28,9 +28,11 @@ import (
 // of complex interactions with the underlying KV Datastore, as well as the
 // Merkle CRDT semantics.
 
+// errors
 var (
-	ErrFieldNotExist  = errors.New("The given field does not exist")
-	ErrFieldNotObject = errors.New("Trying to access field on a non object type")
+	ErrFieldNotExist     = errors.New("The given field does not exist")
+	ErrFieldNotObject    = errors.New("Trying to access field on a non object type")
+	ErrValueTypeMismatch = errors.New("Value does not match indicated type")
 )
 
 // Document is a generalized struct referring to a stored document in the database.
@@ -125,6 +127,7 @@ func (doc *Document) Get(field string) (interface{}, error) {
 
 // Set the value of a field
 func (doc *Document) Set(field string, value interface{}) error {
+	//todo
 	return nil
 }
 
@@ -135,11 +138,45 @@ func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) err
 
 // set implementation
 // @todo Apply locking on  Document field/value operations
-func (doc *Document) set(t crdt.Type, field string, value interface{}) error {
+func (doc *Document) set(t crdt.Type, field string, value Value) error {
 	f := doc.newField(t, field)
 	doc.fields[field] = f
-	doc.values[f] = newValue(t, value)
+	doc.values[f] = value
 	return nil
+}
+
+func (doc *Document) setString(t crdt.Type, field string, val string) error {
+	value := NewStringValue(t, val)
+	return doc.set(t, field, value)
+}
+
+func (doc *Document) setInt64(t crdt.Type, field string, val int64) error {
+	value := NewInt64Value(t, val)
+	return doc.set(t, field, value)
+}
+
+func (doc *Document) setObject(t crdt.Type, field string, val *Document) error {
+	value := newValue(t, val)
+	return doc.set(t, field, value)
+}
+
+// Fields gets the document fields as a map
+func (doc *Document) Fields() map[string]Field {
+	return doc.fields
+}
+
+// Values gets the document values as a map
+func (doc *Document) Values() map[Field]Value {
+	return doc.values
+}
+
+// ValueOfField gets the Value type from a given Field type
+func (doc *Document) ValueOfField(f Field) (Value, error) {
+	v, exists := doc.values[f]
+	if !exists {
+		return nil, ErrFieldNotExist
+	}
+	return v, nil
 }
 
 // loops through a parsed JSON object of the form map[string]interface{}
@@ -158,16 +195,16 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 
 			// Check if its actually a float or just an int
 			val := v.(float64)
-			// var val interface{}
-			if float64(int64(val)) == val {
-				v = int64(val)
+			if float64(int64(val)) == val { //int
+				doc.setInt64(crdt.LWW_REGISTER, k, int64(val))
+			} else { //float
+				panic("todo")
 			}
-			doc.set(crdt.LWW_REGISTER, k, v)
 			break
 
 		// string
 		case string:
-			doc.set(crdt.LWW_REGISTER, k, v)
+			doc.setString(crdt.LWW_REGISTER, k, v.(string))
 			break
 
 		// array
@@ -190,7 +227,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 				return err
 			}
 
-			doc.set(crdt.OBJECT, k, subDoc)
+			doc.setObject(crdt.OBJECT, k, subDoc)
 			break
 
 		default:
