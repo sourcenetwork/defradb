@@ -6,7 +6,8 @@ require (
 	github.com/gogo/protobuf v1.2.1
 	github.com/ipfs/go-blockservice v0.1.0
 	github.com/ipfs/go-cid v0.0.3
-	github.com/ipfs/go-datastore v0.0.5
+	github.com/ipfs/go-datastore v0.4.0
+	github.com/ipfs/go-ds-badger v0.2.1 // indirect
 	github.com/ipfs/go-ipfs-blockstore v0.0.1
 	github.com/ipfs/go-ipfs-ds-help v0.0.1
 	github.com/ipfs/go-ipfs-exchange-offline v0.0.1
