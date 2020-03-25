@@ -3,12 +3,16 @@ package crdt
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
-	
+
 	ds "github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
 )
 
+// MerkleCRDTInitFn intanciates a MerkleCRDT with a given key
 type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
+
+// MerkleCRDTFactory instanciates a MerkleCRDTInitFn with a MultiStore
+// returns a MerkleCRDTInitFn with all the necessary stores set
 type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
 
 // Factory is a helper utility for intanciating new MerkleCRDTs.
