@@ -1,11 +1,17 @@
 package crdt
 
 import (
+	"errors"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
+)
+
+var (
+	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
 )
 
 // MerkleCRDTInitFn intanciates a MerkleCRDT with a given key
@@ -19,7 +25,7 @@ type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
-	crdts     map[Type]MerkleCRDTFactory
+	crdts     map[Type]*MerkleCRDTFactory
 	datastore store.DSReaderWriter
 	headstore store.DSReaderWriter
 	dagstore  *store.DAGStore
@@ -37,7 +43,7 @@ var (
 // It may be called with all stores set to nil
 func NewFactory(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) *Factory {
 	return &Factory{
-		crdts:     make(map[Type]MerkleCRDTFactory),
+		crdts:     make(map[Type]*MerkleCRDTFactory),
 		datastore: datastore,
 		headstore: headstore,
 		dagstore:  dagstore,
@@ -46,18 +52,21 @@ func NewFactory(datastore, headstore store.DSReaderWriter, dagstore *store.DAGSt
 
 // Register creates a new entry in the crdts map to register a factory function
 // to a MerkleCRDT Type.
-func (factory *Factory) Register(t Type, fn MerkleCRDTFactory) error {
+func (factory *Factory) Register(t Type, fn *MerkleCRDTFactory) error {
 	factory.crdts[t] = fn
 	return nil
 }
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a core.MultiStore object)
-func (factory Factory) Instance(t Type, key ds.Key) MerkleCRDT {
+func (factory Factory) Instance(t Type, key ds.Key) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
-	fn := factory.crdts[t]
-	return fn(factory)(key)
+	fn, exists := factory.crdts[t]
+	if !exists {
+		return nil, ErrFactoryTypeNoExist
+	}
+	return (*fn)(factory)(key), nil
 }
 
 // SetStores sets all the current stores on the Factory in one call
@@ -82,7 +91,7 @@ func (factory *Factory) SetDatastore(datastore store.DSReaderWriter) error {
 	return nil
 }
 
-// WithDatastore returns a new Factory instance with a new Datastore
+// WithDatastore returns a new copy of the Factory instance with a new Datastore
 func (factory Factory) WithDatastore(datastore store.DSReaderWriter) Factory {
 	factory.datastore = datastore
 	return factory
@@ -94,7 +103,7 @@ func (factory *Factory) SetHeadstore(headstore store.DSReaderWriter) error {
 	return nil
 }
 
-// WithHeadstore returns a new Factory with a new Headstore
+// WithHeadstore returns a new copy of the Factory with a new Headstore
 func (factory Factory) WithHeadstore(headstore store.DSReaderWriter) Factory {
 	factory.headstore = headstore
 	return factory
@@ -106,9 +115,21 @@ func (factory *Factory) SetDagstore(dagstore *store.DAGStore) error {
 	return nil
 }
 
-// WithDagstore returns a new Factory with a new Dagstore
+// WithDagstore returns a new copy of the Factory with a new Dagstore
 func (factory Factory) WithDagstore(dagstore *store.DAGStore) Factory {
 	factory.dagstore = dagstore
+	return factory
+}
+
+// SetLogger sets the current logger
+func (factory *Factory) SetLogger(l logging.StandardLogger) error {
+	factory.log = l
+	return nil
+}
+
+// WithLogger returns a new copy of the Factory with a new logger
+func (factory Factory) WithLogger(l logging.StandardLogger) Factory {
+	factory.log = l
 	return factory
 }
 
