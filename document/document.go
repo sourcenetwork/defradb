@@ -100,7 +100,7 @@ func (doc *Document) Key() key.DocKey {
 	return doc.key
 }
 
-// Get returns the value for a given field
+// Get returns the raw value for a given field
 // Since Documents are objects with potentially sub objects
 // a supplied field string can be of the form "A/B/C"
 // Where field A is an object containing a object B which has
@@ -108,6 +108,15 @@ func (doc *Document) Key() key.DocKey {
 // If no matching field exists then return an empty interface
 // and an error.
 func (doc *Document) Get(field string) (interface{}, error) {
+	val, err := doc.GetValue(field)
+	if err != nil {
+		return nil, err
+	}
+	return val.Value(), nil
+}
+
+// GetValue given a field as a string, return the Value type
+func (doc *Document) GetValue(field string) (Value, error) {
 	splitKeys := strings.SplitN(field, "/", 2)
 	hasChildKeys := len(splitKeys) > 1
 	f, exists := doc.fields[splitKeys[0]]
@@ -115,20 +124,33 @@ func (doc *Document) Get(field string) (interface{}, error) {
 		return nil, ErrFieldNotExist
 	}
 
-	val := doc.values[f]
+	val, err := doc.GetValueWithField(f)
+	if err != nil {
+		return nil, err
+	}
+
 	if !hasChildKeys {
-		return val.Value(), nil
+		return val, nil
 	} else if hasChildKeys && !val.IsDocument() {
 		return nil, ErrFieldNotObject
 	} else {
-		return val.Value().(*Document).Get(splitKeys[1])
+		return val.Value().(*Document).GetValue(splitKeys[1])
 	}
+}
+
+// GetValueWithField gets the Value type from a given Field type
+func (doc *Document) GetValueWithField(f Field) (Value, error) {
+	v, exists := doc.values[f]
+	if !exists {
+		return nil, ErrFieldNotExist
+	}
+	return v, nil
 }
 
 // Set the value of a field
 func (doc *Document) Set(field string, value interface{}) error {
-	//todo
-	return nil
+	panic("todo")
+	// return nil
 }
 
 // SetAsType Sets the value of a field along with a specific type
@@ -168,15 +190,6 @@ func (doc *Document) Fields() map[string]Field {
 // Values gets the document values as a map
 func (doc *Document) Values() map[Field]Value {
 	return doc.values
-}
-
-// ValueOfField gets the Value type from a given Field type
-func (doc *Document) ValueOfField(f Field) (Value, error) {
-	v, exists := doc.values[f]
-	if !exists {
-		return nil, ErrFieldNotExist
-	}
-	return v, nil
 }
 
 // loops through a parsed JSON object of the form map[string]interface{}
