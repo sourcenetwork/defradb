@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	log = logging.Logger("defrabd.tests.merklecrdt")
+	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
 	// store store.DSReaderWriter
 )
 
@@ -35,7 +35,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, store.DSReaderWriter) {
 
 	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
-	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log)
+	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, merklecrdtlog)
 	return &baseMerkleCRDT{clk, reg}, s
 }
 
