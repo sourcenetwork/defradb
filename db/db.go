@@ -1,10 +1,13 @@
 package db
 
 import (
+	"fmt"
+
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
+	"github.com/ipfs/go-datastore/query"
 	badgerds "github.com/ipfs/go-ds-badger"
-	"github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log"
 
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -23,7 +26,7 @@ type DB struct {
 
 	factory *crdt.Factory
 
-	log log.StandardLogger
+	log logging.StandardLogger
 }
 
 // Options for database
@@ -57,10 +60,12 @@ func NewDB(options *Options) (*DB, error) {
 		rootstore = ds.NewMapDatastore()
 	}
 
+	log := logging.Logger("defradb")
 	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
 	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
 	dagstore := store.NewDAGStore(namespace.Wrap(rootstore, ds.NewKey("/db/blocks")))
 	factory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
+	factory.SetLogger(log)
 
 	return &DB{
 		rootstore: rootstore,
@@ -68,7 +73,7 @@ func NewDB(options *Options) (*DB, error) {
 		headstore: headstore,
 		dagstore:  dagstore,
 		factory:   &factory,
-		log:       log.Logger("defra.db"),
+		log:       log,
 	}, nil
 }
 
@@ -88,30 +93,57 @@ func (db *DB) Save(doc *document.Document) error {
 	//	=> 		Set/Publish new CRDT values
 
 	for k, v := range doc.Fields() {
-		val, _ := doc.ValueOfField(v)
-		_ = db.commitValueToMerkleCRDT(doc.Key().ChildString(k), val)
+		val, _ := doc.GetValueWithField(v)
+		err := db.saveValueToMerkleCRDT(doc.Key().ChildString(k), val)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (db *DB) commitValueToMerkleCRDT(key ds.Key, val document.Value) error {
+func (db *DB) saveValueToMerkleCRDT(key ds.Key, val document.Value) error {
 	switch val.Type() {
 	case crdt.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
 		if !ok {
 			return document.ErrValueTypeMismatch
 		}
-		datatype := db.factory.Instance(crdt.LWW_REGISTER, key).(*crdt.MerkleLWWRegister)
+		datatype, err := db.factory.Instance(crdt.LWW_REGISTER, key)
+		if err != nil {
+			return err
+		}
+		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		bytes, err := wval.Bytes()
 		if err != nil {
 			return err
 		}
-		return datatype.Set(bytes)
-		// data.Set()
+		return lwwreg.Set(bytes)
 	case crdt.OBJECT:
 		db.log.Debug("Sub objects not yet supported")
 		break
 	}
 	return nil
+}
+
+func (db *DB) printDebugDB() {
+	printStore(db.rootstore)
+}
+
+func printStore(store store.DSReaderWriter) {
+	q := query.Query{
+		Prefix:   "",
+		KeysOnly: false,
+	}
+
+	results, err := store.Query(q)
+	defer results.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	for r := range results.Next() {
+		fmt.Println(r.Key, ": ", r.Value)
+	}
 }
