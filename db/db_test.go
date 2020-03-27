@@ -36,7 +36,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 
 	testJSONObj := []byte(`{
 		"Name": "John",
-		"Age": 21
+		"Ages": 21
 	}`)
 
 	doc, err := document.NewFromJSON(testJSONObj)

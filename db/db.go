@@ -24,7 +24,7 @@ type DB struct {
 	headstore ds.Batching     // wrapped store for heads
 	dagstore  *store.DAGStore // wrapped store for dags
 
-	factory *crdt.Factory
+	crdtFactory *crdt.Factory
 
 	log logging.StandardLogger
 }
@@ -64,16 +64,16 @@ func NewDB(options *Options) (*DB, error) {
 	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
 	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
 	dagstore := store.NewDAGStore(namespace.Wrap(rootstore, ds.NewKey("/db/blocks")))
-	factory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
-	factory.SetLogger(log)
+	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
+	crdtFactory.SetLogger(log)
 
 	return &DB{
-		rootstore: rootstore,
-		datastore: datastore,
-		headstore: headstore,
-		dagstore:  dagstore,
-		factory:   &factory,
-		log:       log,
+		rootstore:   rootstore,
+		datastore:   datastore,
+		headstore:   headstore,
+		dagstore:    dagstore,
+		crdtFactory: &crdtFactory,
+		log:         log,
 	}, nil
 }
 
@@ -82,6 +82,21 @@ func NewDB(options *Options) (*DB, error) {
 db.newTx
 
 */
+
+// Create a new document
+// Will verify the DocKey/CID to ensure that the new document is correctly
+// formatted.
+func (db *DB) Create(doc *document.Document) error {
+	return nil
+}
+
+// Updates an existing document with the new values
+// Any field that needs to be removed or cleared
+// should call doc.Clear(field) before. Any field that
+// is nil/empty that hasn't called Clear will be ignored
+func (db *DB) Update(doc *document.Document) error {
+	return nil
+}
 
 // Save a document into the db
 // Either by creating a new document
@@ -110,7 +125,7 @@ func (db *DB) saveValueToMerkleCRDT(key ds.Key, val document.Value) error {
 		if !ok {
 			return document.ErrValueTypeMismatch
 		}
-		datatype, err := db.factory.Instance(crdt.LWW_REGISTER, key)
+		datatype, err := db.crdtFactory.Instance(crdt.LWW_REGISTER, key)
 		if err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package key
 import (
 	// "github.com/google/uuid"
 	"context"
+	"encoding/base64"
 	"encoding/binary"
 	"strings"
 
@@ -63,7 +64,8 @@ func (key DocKey) UUID() uuid.UUID {
 func (key DocKey) String() string {
 	buf := make([]byte, binary.MaxVarintLen64)
 	binary.PutUvarint(buf, key.version)
-	return string(buf) + "-" + key.uuid.String()
+	versionStr := base64.StdEncoding.EncodeToString(buf)
+	return versionStr + "-" + key.uuid.String()
 }
 
 // Bytes returns the DocKey in Byte format

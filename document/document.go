@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 
@@ -51,6 +52,9 @@ type Document struct {
 	fields map[string]Field
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
+
+	// marks if document has unsaved changes
+	isDirty bool
 }
 
 func newEmptyDoc() *Document {
@@ -117,9 +121,8 @@ func (doc *Document) Get(field string) (interface{}, error) {
 
 // GetValue given a field as a string, return the Value type
 func (doc *Document) GetValue(field string) (Value, error) {
-	splitKeys := strings.SplitN(field, "/", 2)
-	hasChildKeys := len(splitKeys) > 1
-	f, exists := doc.fields[splitKeys[0]]
+	path, subPaths, hasSubPaths := parseFieldPath(field)
+	f, exists := doc.fields[path]
 	if !exists {
 		return nil, ErrFieldNotExist
 	}
@@ -129,12 +132,12 @@ func (doc *Document) GetValue(field string) (Value, error) {
 		return nil, err
 	}
 
-	if !hasChildKeys {
+	if !hasSubPaths {
 		return val, nil
-	} else if hasChildKeys && !val.IsDocument() {
+	} else if hasSubPaths && !val.IsDocument() {
 		return nil, ErrFieldNotObject
 	} else {
-		return val.Value().(*Document).GetValue(splitKeys[1])
+		return val.Value().(*Document).GetValue(subPaths)
 	}
 }
 
@@ -153,6 +156,16 @@ func (doc *Document) Set(field string, value interface{}) error {
 	// return nil
 }
 
+// SetAs is the same as set, but you can manually set the CRDT type
+func (doc *Document) SetAs(field string, value interface{}, t crdt.Type) error {
+	panic("todo")
+}
+
+// Clear removes a field, and marks it to be deleted on the following db.Save() call
+func (doc *Document) Clear(field string) error {
+	panic("todo")
+}
+
 // SetAsType Sets the value of a field along with a specific type
 // func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) error {
 // 	return doc.set(t, field, value)
@@ -164,9 +177,16 @@ func (doc *Document) set(t crdt.Type, field string, value Value) error {
 	f := doc.newField(t, field)
 	doc.fields[field] = f
 	doc.values[f] = value
+	doc.isDirty = true
 	return nil
 }
 
+func (doc *Document) setCBOR(t crdt.Type, field string, val interface{}) error {
+	value := newCBORValue(t, val)
+	return doc.set(t, field, value)
+}
+
+// @todo Create interface for Value marshalling/encoding to bytes
 func (doc *Document) setString(t crdt.Type, field string, val string) error {
 	value := NewStringValue(t, val)
 	return doc.set(t, field, value)
@@ -192,12 +212,55 @@ func (doc *Document) Values() map[Field]Value {
 	return doc.values
 }
 
+// Bytes returns the document as a serialzed byte array
+// using CBOR encoding
+func (doc *Document) Bytes() ([]byte, error) {
+	docMap, err := doc.toMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return cbor.Marshal(docMap)
+}
+
+func (doc *Document) toMap() (map[string]interface{}, error) {
+	docMap := make(map[string]interface{})
+	for k, v := range doc.fields {
+		value, exists := doc.values[v]
+		if !exists {
+			return nil, ErrFieldNotExist
+		}
+
+		if value.IsDocument() {
+			subDoc := value.Value().(*Document)
+			subDocMap, err := subDoc.toMap()
+			if err != nil {
+				return nil, err
+			}
+			docMap[k] = subDocMap
+		} else {
+
+		}
+		docMap[k] = value.Value()
+	}
+
+	return docMap, nil
+}
+
 // loops through a parsed JSON object of the form map[string]interface{}
 // and fills in the Document with each field it finds in the JSON object.
 // Automatically handles sub objects and arrays.
 // Does not allow anonymous fields, error is thrown in this case
 // Eg. The JSON value [1,2,3,4] by itself is a valid JSON Object, but has no
 // field name.
+//
+// @todo Convert JSON to CBOR before CID generation to ensure determinism
+// @body Currently creating documents from JSON generates a CID from the JSON byte
+// array, however JSON is not deterministic. We make heavy use of the CBOR encoding
+// format in DefraDB, so lets use it here since it is deterministic. This means we
+// need to convert from JSON to CBOR before we generate the CID.
+// This will obviously be a performance hit, so it is recomended to use CBOR intially
+// when creating documents, not JSON.
 func parseJSONObject(doc *Document, data map[string]interface{}) error {
 	for k, v := range data {
 		switch v.(type) {
@@ -209,7 +272,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 			// Check if its actually a float or just an int
 			val := v.(float64)
 			if float64(int64(val)) == val { //int
-				doc.setInt64(crdt.LWW_REGISTER, k, int64(val))
+				doc.setCBOR(crdt.LWW_REGISTER, k, int64(val))
 			} else { //float
 				panic("todo")
 			}
@@ -217,7 +280,7 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 
 		// string
 		case string:
-			doc.setString(crdt.LWW_REGISTER, k, v.(string))
+			doc.setCBOR(crdt.LWW_REGISTER, k, v)
 			break
 
 		// array
@@ -249,6 +312,13 @@ func parseJSONObject(doc *Document, data map[string]interface{}) error {
 		}
 	}
 	return nil
+}
+
+// parses a document field path, can have sub elements if we have embedded objects.
+// Returns the first path, the remaining split paths, and a bool indicating if there are sub paths
+func parseFieldPath(path string) (string, string, bool) {
+	splitKeys := strings.SplitN(path, "/", 2)
+	return splitKeys[0], strings.Join(splitKeys[1:], ""), len(splitKeys) > 1
 }
 
 // Exmaple Usage: Create/Insert new object
