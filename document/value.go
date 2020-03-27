@@ -3,6 +3,8 @@ package document
 import (
 	"encoding/binary"
 
+	"github.com/fxamacker/cbor/v2"
+
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -92,6 +94,18 @@ func (s Int64Value) Bytes() ([]byte, error) {
 	n := binary.PutVarint(buf, i)
 	b := buf[:n]
 	return b, nil
+}
+
+type cborValue struct {
+	simpleValue
+}
+
+func newCBORValue(t crdt.Type, val interface{}) WriteableValue {
+	return cborValue{newValue(t, val)}
+}
+
+func (v cborValue) Bytes() ([]byte, error) {
+	return cbor.Marshal(v.value)
 }
 
 // func (val simpleValue) GetCRDT() crdt.MerkleCRDT {
