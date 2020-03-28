@@ -3,12 +3,12 @@ package key
 import (
 	// "github.com/google/uuid"
 	"context"
-	"encoding/base64"
 	"encoding/binary"
 	"strings"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -62,9 +62,9 @@ func (key DocKey) UUID() uuid.UUID {
 
 // UUID returns the doc key in string form
 func (key DocKey) String() string {
-	buf := make([]byte, binary.MaxVarintLen64)
+	buf := make([]byte, 1)
 	binary.PutUvarint(buf, key.version)
-	versionStr := base64.StdEncoding.EncodeToString(buf)
+	versionStr, _ := mbase.Encode(mbase.Base32, buf)
 	return versionStr + "-" + key.uuid.String()
 }
 
