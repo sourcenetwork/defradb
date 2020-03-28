@@ -3,6 +3,8 @@ package db
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/document/key"
+
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
@@ -12,6 +14,10 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/store"
+)
+
+const (
+	objectMarker = byte(0xff) // @todo: Investigate object marker values
 )
 
 // DB is the main interface for interacting with the
@@ -63,7 +69,7 @@ func NewDB(options *Options) (*DB, error) {
 	log := logging.Logger("defradb")
 	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
 	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
-	dagstore := store.NewDAGStore(namespace.Wrap(rootstore, ds.NewKey("/db/blocks")))
+	dagstore := store.NewDAGStore(namespace.Wrap(rootstore, ds.NewKey("/db")))
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 	crdtFactory.SetLogger(log)
 
@@ -87,10 +93,10 @@ db.newTx
 // Will verify the DocKey/CID to ensure that the new document is correctly
 // formatted.
 func (db *DB) Create(doc *document.Document) error {
-	return nil
+	return db.save(doc)
 }
 
-// Updates an existing document with the new values
+// Update an existing document with the new values
 // Any field that needs to be removed or cleared
 // should call doc.Clear(field) before. Any field that
 // is nil/empty that hasn't called Clear will be ignored
@@ -99,14 +105,28 @@ func (db *DB) Update(doc *document.Document) error {
 }
 
 // Save a document into the db
-// Either by creating a new document
-// or by updating an existing one
+// Either by creating a new document or by updating an existing one
 func (db *DB) Save(doc *document.Document) error {
-	// New batch transaction/store
+	// Check if document already exists with key
+	exists, err := db.exists(doc.Key())
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return db.Update(doc)
+	}
+	return db.Create(doc)
+}
+
+func (db *DB) save(doc *document.Document) error {
+	// New batch transaction/store (optional/todo)
+	// Ensute/Set doc object marker
 	// Loop through doc values
 	//	=> 		instanciate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
 
+	db.writeObjectMarker(db.datastore, doc.Key().Instance("v"))
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		err := db.saveValueToMerkleCRDT(doc.Key().ChildString(k), val)
@@ -136,10 +156,23 @@ func (db *DB) saveValueToMerkleCRDT(key ds.Key, val document.Value) error {
 		}
 		return lwwreg.Set(bytes)
 	case crdt.OBJECT:
+		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
 		db.log.Debug("Sub objects not yet supported")
 		break
 	}
 	return nil
+}
+
+func (db *DB) writeObjectMarker(store ds.Write, key ds.Key) error {
+	if key.Name() != "v" {
+		key = key.Instance("v")
+	}
+	return store.Put(key, []byte{objectMarker})
+}
+
+// check if a document exists with the given key
+func (db *DB) exists(key key.DocKey) (bool, error) {
+	return db.datastore.Has(key.Key.Instance("v"))
 }
 
 func (db *DB) printDebugDB() {

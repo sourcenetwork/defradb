@@ -14,6 +14,8 @@ type Value interface {
 	Value() interface{}
 	IsDocument() bool
 	Type() crdt.Type
+	IsDirty() bool
+	Clean()
 }
 
 // WriteableValue defines a simple interface with a Bytes() method
@@ -28,9 +30,10 @@ type WriteableValue interface {
 }
 
 type simpleValue struct {
-	t     crdt.Type
-	value interface{}
-	crdt  crdt.MerkleCRDT
+	t       crdt.Type
+	value   interface{}
+	crdt    crdt.MerkleCRDT
+	isDirty bool
 }
 
 func newValue(t crdt.Type, val interface{}) simpleValue {
@@ -55,14 +58,29 @@ func (val simpleValue) IsDocument() bool {
 	return ok
 }
 
+// IsDirty returns if the value is marked as dirty (unsaved/changed)
+func (val simpleValue) IsDirty() bool {
+	return val.isDirty
+}
+
+func (val *simpleValue) Clean() {
+	val.isDirty = false
+}
+
+// // MakeDirty sets the value as
+// func (val *simpleValue) MakeDirty() {
+// 	val.isDirty = true
+// }
+
 // StringValue is a String wrapper for a simple Value
 type StringValue struct {
-	simpleValue
+	*simpleValue
 }
 
 // NewStringValue creates a new typed String Value
 func NewStringValue(t crdt.Type, val string) WriteableValue {
-	return StringValue{newValue(t, val)}
+	v := newValue(t, val)
+	return StringValue{&v}
 }
 
 // Bytes implements WriteableValue and encodes a string into a byte array
@@ -76,12 +94,13 @@ func (s StringValue) Bytes() ([]byte, error) {
 
 // Int64Value is a String wrapper for a simple Value
 type Int64Value struct {
-	simpleValue
+	*simpleValue
 }
 
 // NewInt64Value creates a new typed int64 value
 func NewInt64Value(t crdt.Type, val int64) WriteableValue {
-	return Int64Value{newValue(t, val)}
+	v := newValue(t, val)
+	return Int64Value{&v}
 }
 
 // Bytes implements WriteableValue and encodes an int64 into a byte array
@@ -97,11 +116,12 @@ func (s Int64Value) Bytes() ([]byte, error) {
 }
 
 type cborValue struct {
-	simpleValue
+	*simpleValue
 }
 
 func newCBORValue(t crdt.Type, val interface{}) WriteableValue {
-	return cborValue{newValue(t, val)}
+	v := newValue(t, val)
+	return cborValue{&v}
 }
 
 func (v cborValue) Bytes() ([]byte, error) {

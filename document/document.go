@@ -73,14 +73,20 @@ func NewFromJSON(obj []byte) (*Document, error) {
 		MhLength: -1, // default length
 	}
 
-	// And then feed it some data
-	c, err := pref.Sum(obj)
+	data := make(map[string]interface{})
+	err := json.Unmarshal(obj, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	data := make(map[string]interface{})
-	err = json.Unmarshal(obj, &data)
+	// Use CBOR encoding to get deterministic serialization before CID generation
+	buf, err := cbor.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// And then feed it some data
+	c, err := pref.Sum(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +97,7 @@ func NewFromJSON(obj []byte) (*Document, error) {
 		values: make(map[Field]Value),
 	}
 
-	err = parseJSONObject(doc, data)
+	err = doc.setAndParseObjectType(data)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +159,6 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 // Set the value of a field
 func (doc *Document) Set(field string, value interface{}) error {
 	panic("todo")
-	// return nil
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
@@ -161,7 +166,7 @@ func (doc *Document) SetAs(field string, value interface{}, t crdt.Type) error {
 	panic("todo")
 }
 
-// Clear removes a field, and marks it to be deleted on the following db.Save() call
+// Clear removes a field, and marks it to be deleted on the following db.Update() call
 func (doc *Document) Clear(field string) error {
 	panic("todo")
 }
@@ -186,7 +191,6 @@ func (doc *Document) setCBOR(t crdt.Type, field string, val interface{}) error {
 	return doc.set(t, field, value)
 }
 
-// @todo Create interface for Value marshalling/encoding to bytes
 func (doc *Document) setString(t crdt.Type, field string, val string) error {
 	value := NewStringValue(t, val)
 	return doc.set(t, field, value)
@@ -199,7 +203,68 @@ func (doc *Document) setInt64(t crdt.Type, field string, val int64) error {
 
 func (doc *Document) setObject(t crdt.Type, field string, val *Document) error {
 	value := newValue(t, val)
-	return doc.set(t, field, value)
+	return doc.set(t, field, &value)
+}
+
+func (doc *Document) setAndParseType(field string, value interface{}) error {
+	switch value.(type) {
+
+	// int (any number)
+	case float64:
+		// case int64:
+
+		// Check if its actually a float or just an int
+		val := value.(float64)
+		if float64(int64(val)) == val { //int
+			doc.setCBOR(crdt.LWW_REGISTER, field, int64(val))
+		} else { //float
+			doc.setCBOR(crdt.LWW_REGISTER, field, value)
+		}
+		break
+
+	// string
+	case string:
+		doc.setCBOR(crdt.LWW_REGISTER, field, value)
+		break
+
+	// array
+	case []interface{}:
+		break
+
+	// sub object, recurse down.
+	// @TODO: Object Definitions
+	// You can use an object as a way to override defults
+	// and types for JSON literals.
+	// Eg.
+	// Instead of { "Timestamp": 123 }
+	//			- which is parsed as an int
+	// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
+	//			- Which is parsed as an uint64
+	case map[string]interface{}:
+		subDoc := newEmptyDoc()
+		err := subDoc.setAndParseObjectType(value.(map[string]interface{}))
+		if err != nil {
+			return err
+		}
+
+		doc.setObject(crdt.OBJECT, field, subDoc)
+		break
+
+	default:
+		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, value)
+
+	}
+	return nil
+}
+
+func (doc *Document) setAndParseObjectType(value map[string]interface{}) error {
+	for k, v := range value {
+		err := doc.setAndParseType(k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Fields gets the document fields as a map
@@ -223,6 +288,8 @@ func (doc *Document) Bytes() ([]byte, error) {
 	return cbor.Marshal(docMap)
 }
 
+// converts the document into a map[string]interface{}
+// including any sub documents
 func (doc *Document) toMap() (map[string]interface{}, error) {
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
@@ -247,72 +314,64 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 	return docMap, nil
 }
 
-// loops through a parsed JSON object of the form map[string]interface{}
-// and fills in the Document with each field it finds in the JSON object.
+// loops through an object of the form map[string]interface{}
+// and fills in the Document with each field it finds in the object.
 // Automatically handles sub objects and arrays.
 // Does not allow anonymous fields, error is thrown in this case
 // Eg. The JSON value [1,2,3,4] by itself is a valid JSON Object, but has no
 // field name.
-//
-// @todo Convert JSON to CBOR before CID generation to ensure determinism
-// @body Currently creating documents from JSON generates a CID from the JSON byte
-// array, however JSON is not deterministic. We make heavy use of the CBOR encoding
-// format in DefraDB, so lets use it here since it is deterministic. This means we
-// need to convert from JSON to CBOR before we generate the CID.
-// This will obviously be a performance hit, so it is recomended to use CBOR intially
-// when creating documents, not JSON.
-func parseJSONObject(doc *Document, data map[string]interface{}) error {
-	for k, v := range data {
-		switch v.(type) {
+// func parseJSONObject(doc *Document, data map[string]interface{}) error {
+// 	for k, v := range data {
+// 		switch v.(type) {
 
-		// int (any number)
-		case float64:
-			// case int64:
+// 		// int (any number)
+// 		case float64:
+// 			// case int64:
 
-			// Check if its actually a float or just an int
-			val := v.(float64)
-			if float64(int64(val)) == val { //int
-				doc.setCBOR(crdt.LWW_REGISTER, k, int64(val))
-			} else { //float
-				panic("todo")
-			}
-			break
+// 			// Check if its actually a float or just an int
+// 			val := v.(float64)
+// 			if float64(int64(val)) == val { //int
+// 				doc.setCBOR(crdt.LWW_REGISTER, k, int64(val))
+// 			} else { //float
+// 				panic("todo")
+// 			}
+// 			break
 
-		// string
-		case string:
-			doc.setCBOR(crdt.LWW_REGISTER, k, v)
-			break
+// 		// string
+// 		case string:
+// 			doc.setCBOR(crdt.LWW_REGISTER, k, v)
+// 			break
 
-		// array
-		case []interface{}:
-			break
+// 		// array
+// 		case []interface{}:
+// 			break
 
-		// sub object, recurse down.
-		// @TODO: Object Definitions
-		// You can use an object as a way to override defults
-		// and types for JSON literals.
-		// Eg.
-		// Instead of { "Timestamp": 123 }
-		//			- which is parsed as an int
-		// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
-		//			- Which is parsed as an uint64
-		case map[string]interface{}:
-			subDoc := newEmptyDoc()
-			err := parseJSONObject(subDoc, v.(map[string]interface{}))
-			if err != nil {
-				return err
-			}
+// 		// sub object, recurse down.
+// 		// @TODO: Object Definitions
+// 		// You can use an object as a way to override defults
+// 		// and types for JSON literals.
+// 		// Eg.
+// 		// Instead of { "Timestamp": 123 }
+// 		//			- which is parsed as an int
+// 		// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
+// 		//			- Which is parsed as an uint64
+// 		case map[string]interface{}:
+// 			subDoc := newEmptyDoc()
+// 			err := parseJSONObject(subDoc, v.(map[string]interface{}))
+// 			if err != nil {
+// 				return err
+// 			}
 
-			doc.setObject(crdt.OBJECT, k, subDoc)
-			break
+// 			doc.setObject(crdt.OBJECT, k, subDoc)
+// 			break
 
-		default:
-			return fmt.Errorf("Unhandled type in raw JSON: %v => %T", k, v)
+// 		default:
+// 			return fmt.Errorf("Unhandled type in raw JSON: %v => %T", k, v)
 
-		}
-	}
-	return nil
-}
+// 		}
+// 	}
+// 	return nil
+// }
 
 // parses a document field path, can have sub elements if we have embedded objects.
 // Returns the first path, the remaining split paths, and a bool indicating if there are sub paths
