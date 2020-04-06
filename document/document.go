@@ -290,7 +290,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 
 // converts the document into a map[string]interface{}
 // including any sub documents
-func (doc *Document) toMap() (map[string]interface{}, error) {
+func (doc *Document) toMap() (*map[string]interface{}, error) {
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
@@ -311,7 +311,7 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 		docMap[k] = value.Value()
 	}
 
-	return docMap, nil
+	return &docMap, nil
 }
 
 // loops through an object of the form map[string]interface{}

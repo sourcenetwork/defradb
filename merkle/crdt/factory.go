@@ -62,11 +62,30 @@ func (factory *Factory) Register(t Type, fn *MerkleCRDTFactory) error {
 func (factory Factory) Instance(t Type, key ds.Key) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
+	fn, err := factory.getRegisteredFactory(t)
+	if err != nil {
+		return nil, err
+	}
+	return (*fn)(factory)(key), nil
+}
+
+// InstanceWithStore executes the registered factory function for the given MerkleCRDT type
+// with the additional supplied core.MultiStore instead of the saved one on the main Factory.
+func (factory Factory) InstanceWithStore(store core.MultiStore, t Type, key ds.Key) (MerkleCRDT, error) {
+	fn, err := factory.getRegisteredFactory(t)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*fn)(store)(key), nil
+}
+
+func (factory Factory) getRegisteredFactory(t Type) (*MerkleCRDTFactory, error) {
 	fn, exists := factory.crdts[t]
 	if !exists {
 		return nil, ErrFactoryTypeNoExist
 	}
-	return (*fn)(factory)(key), nil
+	return fn, nil
 }
 
 // SetStores sets all the current stores on the Factory in one call
