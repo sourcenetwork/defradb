@@ -1,8 +1,6 @@
 package clock
 
 import (
-	"context"
-
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -60,8 +58,7 @@ func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 	// if err != nil {
 	// 	return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
 	// }
-	ctx := context.Background()
-	err = mc.dagstore.Add(ctx, node)
+	err = mc.dagstore.Put(node)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error writing new block %s", node.Cid())
 	}

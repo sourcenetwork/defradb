@@ -163,7 +163,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	}
 
 	numBlocks := 0
-	cids, err := clk.dagstore.Blockstore().AllKeysChan(context.Background())
+	cids, err := clk.dagstore.AllKeysChan(context.Background())
 	if err != nil {
 		t.Error("Failed to get blockstore content for merkle clock:", err)
 		return
