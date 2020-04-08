@@ -18,14 +18,14 @@ import (
 
 var (
 	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-	// store store.DSReaderWriter
+	// store core.DSReaderWriter
 )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestBaseMerkleCRDT() (*baseMerkleCRDT, store.DSReaderWriter) {
+func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 	ns := ds.NewKey("/test/db")
 	s := newDS()
 	datastore := namespace.Wrap(s, ns.ChildString("data"))
@@ -59,7 +59,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	printStore(store)
 }
 
-func printStore(store store.DSReaderWriter) {
+func printStore(store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

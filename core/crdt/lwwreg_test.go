@@ -14,7 +14,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 )
 
-func newMockStore() store.DSReaderWriter {
+func newMockStore() core.DSReaderWriter {
 	return ds.NewMapDatastore()
 }
 
