@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
 
 	ds "github.com/ipfs/go-datastore"
@@ -26,9 +27,9 @@ const (
 type DB struct {
 	rootstore ds.Batching // main storage interface
 
-	datastore ds.Batching     // wrapped store for data
-	headstore ds.Batching     // wrapped store for heads
-	dagstore  *store.DAGStore // wrapped store for dags
+	datastore ds.Batching   // wrapped store for data
+	headstore ds.Batching   // wrapped store for heads
+	dagstore  core.DAGStore // wrapped store for dags
 
 	crdtFactory *crdt.Factory
 
@@ -69,9 +70,10 @@ func NewDB(options *Options) (*DB, error) {
 	log := logging.Logger("defradb")
 	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
 	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
+	// only use /db namespace since internal blockstore adds /blocks namespace
+	// otherwise we'd set the full namespace to /db/blocks to match the above two stores
 	dagstore := store.NewDAGStore(namespace.Wrap(rootstore, ds.NewKey("/db")))
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
-	crdtFactory.SetLogger(log)
 
 	return &DB{
 		rootstore:   rootstore,
@@ -163,6 +165,21 @@ func (db *DB) saveValueToMerkleCRDT(key ds.Key, val document.Value) error {
 	return nil
 }
 
+// func (db *DB) newTxn(readonly bool) (Txn, error) {
+// 	var txn Txn
+// 	var err error
+// 	txnStore, ok := db.rootstore.(ds.TxnDatastore)
+// 	if ok { // we support transactions
+// 		dstxn, err = txnStore.NewTransaction(readonly)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return txnToDsShim(txn), nil
+// 	} else { // no txn
+
+// 	}
+// }
+
 func (db *DB) writeObjectMarker(store ds.Write, key ds.Key) error {
 	if key.Name() != "v" {
 		key = key.Instance("v")
@@ -174,6 +191,16 @@ func (db *DB) writeObjectMarker(store ds.Write, key ds.Key) error {
 func (db *DB) exists(key key.DocKey) (bool, error) {
 	return db.datastore.Has(key.Key.Instance("v"))
 }
+
+// type basicMultiStore struct {
+// 	datastore ds.Datastore
+// 	headstore ds.Datastore
+// 	dagstore  core.DAGStore
+// }
+
+// func (db *DB) stores() core.MultiStore {
+
+// }
 
 func (db *DB) printDebugDB() {
 	printStore(db.rootstore)

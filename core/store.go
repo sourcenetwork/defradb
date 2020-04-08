@@ -1,17 +1,25 @@
 package core
 
 import (
-	"github.com/sourcenetwork/defradb/store"
-
-	// ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
+	ds "github.com/ipfs/go-datastore"
 )
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
 // MerkleCRDTs
 type MultiStore interface {
-	Data() store.DSReaderWriter
-	Head() store.DSReaderWriter
-	Dag() *store.DAGStore
-	Log() logging.StandardLogger
+	Data() DSReaderWriter
+	Head() DSReaderWriter
+	Dag() DAGStore
+}
+
+// DSReaderWriter simplifies the interface that is exposed by a
+// store.DSReaderWriter into its subcomponents Reader and Writer.
+// Using this simplified interface means that both store.DSReaderWriter
+// and ds.Txn satisy the interface. Due to go-datastore#113 and
+// go-datastore#114 ds.Txn no longer implements store.DSReaderWriter
+// Which means we can't swap between the two for Datastores that
+// support TxnDatastore.
+type DSReaderWriter interface {
+	ds.Read
+	ds.Write
 }

@@ -16,26 +16,26 @@ import (
 )
 
 var (
+	log     = logging.Logger("defradb.merkle.clock")
 	headsNS = "h"
 )
 
 type merkleClock struct {
-	store    store.DSReaderWriter
-	dagstore *store.DAGStore
+	headstore store.DSReaderWriter
+	dagstore  core.DAGStore
 	// daySyncer
-	heads          *heads
+	headset        *heads
 	crdt           core.ReplicatedData
 	extractDeltaFn func(ipld.Node) (core.Delta, error)
-	logger         logging.StandardLogger
 }
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(store store.DSReaderWriter, dagstore *store.DAGStore, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error), logger logging.StandardLogger) core.MerkleClock {
+func NewMerkleClock(headstore store.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error)) core.MerkleClock {
 	return &merkleClock{
-		store:          store,
+		headstore:      headstore,
 		dagstore:       dagstore,
-		heads:          newHeads(store, ds.NewKey(id), logger), //TODO: Config logger param package wide
+		headset:        newHeadset(headstore, ds.NewKey(id)), //TODO: Config logger param package wide
 		crdt:           crdt,
 		extractDeltaFn: deltaFn,
 	}
@@ -76,7 +76,7 @@ func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 // It checks the current heads, sets the delta priority in the merkle dag
 // adds it to the blockstore the runs ProcessNode
 func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
-	heads, height, err := mc.heads.List()
+	heads, height, err := mc.headset.List()
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "error getting heads")
 	}
@@ -123,7 +123,7 @@ func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 
 	links := node.Links()
 	if len(links) == 0 { // reached the bottom, at a leaf
-		err := mc.heads.Add(root, rootPrio)
+		err := mc.headset.Add(root, rootPrio)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error adding head %s", root)
 		}
@@ -134,7 +134,7 @@ func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 
 	for _, l := range links {
 		child := l.Cid
-		isHead, _, err := mc.heads.IsHead(child)
+		isHead, _, err := mc.headset.IsHead(child)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error checking if %s is head", child)
 		}
@@ -142,7 +142,7 @@ func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err := mc.heads.Replace(child, root, rootPrio)
+			err := mc.headset.Replace(child, root, rootPrio)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error replacing head: %s->%s", child, root)
 			}

@@ -13,21 +13,18 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
-	logging "github.com/ipfs/go-log"
 )
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     store.DSReaderWriter
 	namespace ds.Key
-	logger    logging.StandardLogger
 }
 
-func newHeads(store store.DSReaderWriter, namespace ds.Key, logger logging.StandardLogger) *heads {
+func newHeadset(store store.DSReaderWriter, namespace ds.Key) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
-		logger:    logger,
 	}
 }
 
@@ -81,7 +78,7 @@ func (hh *heads) Len() (int, error) {
 
 // Replace replaces a head with a new cid.
 func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
-	hh.logger.Infof("replacing DAG head: %s -> %s (new height: %d)", h, c, height)
+	log.Infof("replacing DAG head: %s -> %s (new height: %d)", h, c, height)
 	var store ds.Write = hh.store
 	var err error
 
@@ -113,7 +110,7 @@ func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
 }
 
 func (hh *heads) Add(c cid.Cid, height uint64) error {
-	hh.logger.Infof("adding new DAG head: %s (height: %d)", c, height)
+	log.Infof("adding new DAG head: %s (height: %d)", c, height)
 	return hh.write(hh.store, c, height)
 }
 

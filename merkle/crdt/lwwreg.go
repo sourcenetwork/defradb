@@ -8,13 +8,12 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
 )
 
 var (
 	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleLWWRegister(mstore.Data(), mstore.Head(), mstore.Dag(), ds.NewKey(""), key, mstore.Log())
+			return NewMerkleLWWRegister(mstore.Data(), mstore.Head(), mstore.Dag(), ds.NewKey(""), key)
 		}
 	})
 )
@@ -35,11 +34,11 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(store store.DSReaderWriter, headstore store.DSReaderWriter, dagstore *store.DAGStore, ns, dockey ds.Key, log logging.StandardLogger) *MerkleLWWRegister {
+func NewMerkleLWWRegister(store store.DSReaderWriter, headstore store.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(store, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn, log)
+	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister

@@ -31,7 +31,7 @@ func newTestMerkleClock() *merkleClock {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	return NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	return NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn).(*merkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
@@ -44,11 +44,11 @@ func TestNewMerkleClock(t *testing.T) {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	clk := NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, log).(*merkleClock)
+	clk := NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn).(*merkleClock)
 
-	if clk.store != headstore {
+	if clk.headstore != headstore {
 		t.Error("MerkleClock store not correctly set")
-	} else if clk.heads.store == nil {
+	} else if clk.headset.store == nil {
 		t.Error("MerkleClock head set not correctly set")
 	} else if clk.crdt == nil {
 		t.Error("MerkleClock CRDT not correctly set")
@@ -152,7 +152,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 
 	// check if lww state is correct (val is test2)
 	// check if head/blockstore state is correct (one head, two blocks)
-	nHeads, err := clk.heads.Len()
+	nHeads, err := clk.headset.Len()
 	if err != nil {
 		t.Error("Error getting MerkleClock heads size:", err)
 		return
