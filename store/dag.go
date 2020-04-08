@@ -23,7 +23,7 @@ type dagStore struct {
 // Batching datastore
 func NewDAGStore(store core.DSReaderWriter) core.DAGStore {
 	dstore := &dagStore{
-		Blockstore: blockstore.NewBlockstore(store),
+		Blockstore: NewBlockstore(store),
 		store:      store,
 	}
 

@@ -95,6 +95,11 @@ db.newTx
 // Will verify the DocKey/CID to ensure that the new document is correctly
 // formatted.
 func (db *DB) Create(doc *document.Document) error {
+	// txn, err := db.newTxn(false)
+	err := writeObjectMarker(db.datastore, doc.Key().Instance("v"))
+	if err != nil {
+		return err
+	}
 	return db.save(doc)
 }
 
@@ -127,8 +132,6 @@ func (db *DB) save(doc *document.Document) error {
 	// Loop through doc values
 	//	=> 		instanciate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-
-	db.writeObjectMarker(db.datastore, doc.Key().Instance("v"))
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		err := db.saveValueToMerkleCRDT(doc.Key().ChildString(k), val)
@@ -165,22 +168,7 @@ func (db *DB) saveValueToMerkleCRDT(key ds.Key, val document.Value) error {
 	return nil
 }
 
-// func (db *DB) newTxn(readonly bool) (Txn, error) {
-// 	var txn Txn
-// 	var err error
-// 	txnStore, ok := db.rootstore.(ds.TxnDatastore)
-// 	if ok { // we support transactions
-// 		dstxn, err = txnStore.NewTransaction(readonly)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		return txnToDsShim(txn), nil
-// 	} else { // no txn
-
-// 	}
-// }
-
-func (db *DB) writeObjectMarker(store ds.Write, key ds.Key) error {
+func writeObjectMarker(store ds.Write, key ds.Key) error {
 	if key.Name() != "v" {
 		key = key.Instance("v")
 	}

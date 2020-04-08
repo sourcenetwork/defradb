@@ -5,7 +5,8 @@ import (
 	"github.com/sourcenetwork/defradb/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-	"github.com/sourcenetwork/defradb/store"
+
+	// "github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 )
