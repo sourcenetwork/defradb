@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 var (

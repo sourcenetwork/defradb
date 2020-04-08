@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/store"
+	// "github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 )
