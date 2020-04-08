@@ -19,7 +19,7 @@ var (
 // duplcation, and better manage the overhead
 // tasks that all the CRDTs need to implement anyway
 type baseCRDT struct {
-	store          store.DSReaderWriter
+	store          core.DSReaderWriter
 	namespace      ds.Key
 	keysNs         string
 	valueSuffix    string
@@ -27,7 +27,7 @@ type baseCRDT struct {
 }
 
 // @TODO paramaterize ns/suffix
-func newBaseCRDT(store store.DSReaderWriter, namespace ds.Key) baseCRDT {
+func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
 	return baseCRDT{
 		store:          store,
 		namespace:      namespace,

@@ -25,8 +25,8 @@ type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
 	crdts     map[Type]*MerkleCRDTFactory
-	datastore store.DSReaderWriter
-	headstore store.DSReaderWriter
+	datastore core.DSReaderWriter
+	headstore core.DSReaderWriter
 	dagstore  core.DAGStore
 }
 
@@ -39,7 +39,7 @@ var (
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil
-func NewFactory(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) *Factory {
+func NewFactory(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) *Factory {
 	return &Factory{
 		crdts:     make(map[Type]*MerkleCRDTFactory),
 		datastore: datastore,
@@ -87,7 +87,7 @@ func (factory Factory) getRegisteredFactory(t Type) (*MerkleCRDTFactory, error) 
 }
 
 // SetStores sets all the current stores on the Factory in one call
-func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) error {
+func (factory *Factory) SetStores(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) error {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -95,7 +95,7 @@ func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dag
 }
 
 // WithStores returns a new instance of the Factory with all the stores set
-func (factory Factory) WithStores(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) Factory {
+func (factory Factory) WithStores(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) Factory {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -103,25 +103,25 @@ func (factory Factory) WithStores(datastore, headstore store.DSReaderWriter, dag
 }
 
 // SetDatastore sets the current datastore
-func (factory *Factory) SetDatastore(datastore store.DSReaderWriter) error {
+func (factory *Factory) SetDatastore(datastore core.DSReaderWriter) error {
 	factory.datastore = datastore
 	return nil
 }
 
 // WithDatastore returns a new copy of the Factory instance with a new Datastore
-func (factory Factory) WithDatastore(datastore store.DSReaderWriter) Factory {
+func (factory Factory) WithDatastore(datastore core.DSReaderWriter) Factory {
 	factory.datastore = datastore
 	return factory
 }
 
 // SetHeadstore sets the current headstore
-func (factory *Factory) SetHeadstore(headstore store.DSReaderWriter) error {
+func (factory *Factory) SetHeadstore(headstore core.DSReaderWriter) error {
 	factory.headstore = headstore
 	return nil
 }
 
 // WithHeadstore returns a new copy of the Factory with a new Headstore
-func (factory Factory) WithHeadstore(headstore store.DSReaderWriter) Factory {
+func (factory Factory) WithHeadstore(headstore core.DSReaderWriter) Factory {
 	factory.headstore = headstore
 	return factory
 }

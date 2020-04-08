@@ -10,7 +10,12 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	ipld "github.com/ipfs/go-ipld-format"
+	logging "github.com/ipfs/go-log"
 	dag "github.com/ipfs/go-merkledag"
+)
+
+var (
+	log = logging.Logger("defradb.merkle.crdt")
 )
 
 // DAGStore is the interface to the underlying BlockStore and BlockService

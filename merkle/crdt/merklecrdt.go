@@ -4,6 +4,11 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	"github.com/ipfs/go-cid"
+	logging "github.com/ipfs/go-log"
+)
+
+var (
+	log = logging.Logger("defradb.merkle.crdt")
 )
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
@@ -12,14 +17,14 @@ import (
 type MerkleCRDT interface {
 	core.ReplicatedData
 	// core.MerkleClock
-	// WithStore(store.DSReaderWriter)
+	// WithStore(core.DSReaderWriter)
 	// WithNS(ds.Key)
 	// ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error)
 	// NewObject() error
 }
 
 // type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
-// type MerkleCRDTFactory func(store store.DSReaderWriter, namespace ds.Key) MerkleCRDTInitFn
+// type MerkleCRDTFactory func(store core.DSReaderWriter, namespace ds.Key) MerkleCRDTInitFn
 
 // Type indicates MerkleCRDT type
 type Type byte

@@ -86,7 +86,7 @@ type LWWRegister struct {
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store store.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, namespace),
 		key:      key,

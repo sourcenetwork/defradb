@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -17,11 +17,11 @@ import (
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
-	store     store.DSReaderWriter
+	store     core.DSReaderWriter
 	namespace ds.Key
 }
 
-func newHeadset(store store.DSReaderWriter, namespace ds.Key) *heads {
+func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,

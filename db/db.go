@@ -206,7 +206,7 @@ func (db *DB) printDebugDB() {
 	printStore(db.rootstore)
 }
 
-func printStore(store store.DSReaderWriter) {
+func printStore(store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

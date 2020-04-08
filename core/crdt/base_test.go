@@ -7,11 +7,11 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 )
 
-func newDS() store.DSReaderWriter {
+func newDS() core.DSReaderWriter {
 	return ds.NewMapDatastore()
 }
 
-func newSeededDS() store.DSReaderWriter {
+func newSeededDS() core.DSReaderWriter {
 	return newDS()
 }
 
