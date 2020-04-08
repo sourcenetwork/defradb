@@ -39,7 +39,7 @@ func newHeadSet() *heads {
 	log := logging.Logger("defrabd.tests.clock")
 	store := newDS()
 
-	return newHeads(store, ds.NewKey("/test/db/heads/mydockey"), log)
+	return newHeadset(store, ds.NewKey("/test/db/heads/mydockey"))
 }
 
 func TestHeadsWrite(t *testing.T) {

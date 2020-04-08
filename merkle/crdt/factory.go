@@ -7,7 +7,6 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
 )
 
 var (
@@ -28,8 +27,7 @@ type Factory struct {
 	crdts     map[Type]*MerkleCRDTFactory
 	datastore store.DSReaderWriter
 	headstore store.DSReaderWriter
-	dagstore  *store.DAGStore
-	log       logging.StandardLogger
+	dagstore  core.DAGStore
 }
 
 var (
@@ -41,7 +39,7 @@ var (
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil
-func NewFactory(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) *Factory {
+func NewFactory(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) *Factory {
 	return &Factory{
 		crdts:     make(map[Type]*MerkleCRDTFactory),
 		datastore: datastore,
@@ -89,7 +87,7 @@ func (factory Factory) getRegisteredFactory(t Type) (*MerkleCRDTFactory, error) 
 }
 
 // SetStores sets all the current stores on the Factory in one call
-func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) error {
+func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) error {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -97,7 +95,7 @@ func (factory *Factory) SetStores(datastore, headstore store.DSReaderWriter, dag
 }
 
 // WithStores returns a new instance of the Factory with all the stores set
-func (factory Factory) WithStores(datastore, headstore store.DSReaderWriter, dagstore *store.DAGStore) Factory {
+func (factory Factory) WithStores(datastore, headstore store.DSReaderWriter, dagstore core.DAGStore) Factory {
 	factory.datastore = datastore
 	factory.headstore = headstore
 	factory.dagstore = dagstore
@@ -129,49 +127,49 @@ func (factory Factory) WithHeadstore(headstore store.DSReaderWriter) Factory {
 }
 
 // SetDagstore sets the current dagstore
-func (factory *Factory) SetDagstore(dagstore *store.DAGStore) error {
+func (factory *Factory) SetDagstore(dagstore core.DAGStore) error {
 	factory.dagstore = dagstore
 	return nil
 }
 
 // WithDagstore returns a new copy of the Factory with a new Dagstore
-func (factory Factory) WithDagstore(dagstore *store.DAGStore) Factory {
+func (factory Factory) WithDagstore(dagstore core.DAGStore) Factory {
 	factory.dagstore = dagstore
 	return factory
 }
 
 // SetLogger sets the current logger
-func (factory *Factory) SetLogger(l logging.StandardLogger) error {
-	factory.log = l
-	return nil
-}
+// func (factory *Factory) SetLogger(l logging.StandardLogger) error {
+// 	factory.log = l
+// 	return nil
+// }
 
 // WithLogger returns a new copy of the Factory with a new logger
-func (factory Factory) WithLogger(l logging.StandardLogger) Factory {
-	factory.log = l
-	return factory
-}
+// func (factory Factory) WithLogger(l logging.StandardLogger) Factory {
+// 	factory.log = l
+// 	return factory
+// }
 
 // Data implements core.MultiStore and returns the current Datastore
-func (factory Factory) Data() store.DSReaderWriter {
+func (factory Factory) Data() core.DSReaderWriter {
 	return factory.datastore
 }
 
 // Head implements core.MultiStore and returns the current Headstore
-func (factory Factory) Head() store.DSReaderWriter {
+func (factory Factory) Head() core.DSReaderWriter {
 	return factory.headstore
 }
 
 // Dag implements core.MultiStore and returns the current Dagstore
-func (factory Factory) Dag() *store.DAGStore {
+func (factory Factory) Dag() core.DAGStore {
 	return factory.dagstore
 }
 
 // Log implements core.MultiStore
 // @todo Look into abstracting Log from MutliStore
-func (factory Factory) Log() logging.StandardLogger {
-	return factory.log
-}
+// func (factory Factory) Log() logging.StandardLogger {
+// 	return factory.log
+// }
 
 /* API Example
 
