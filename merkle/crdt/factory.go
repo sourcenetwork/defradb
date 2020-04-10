@@ -69,7 +69,7 @@ func (factory Factory) Instance(t Type, key ds.Key) (MerkleCRDT, error) {
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied core.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStore(store core.MultiStore, t Type, key ds.Key) (MerkleCRDT, error) {
+func (factory Factory) InstanceWithStores(store core.MultiStore, t Type, key ds.Key) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
@@ -151,17 +151,17 @@ func (factory Factory) WithDagstore(dagstore core.DAGStore) Factory {
 // }
 
 // Data implements core.MultiStore and returns the current Datastore
-func (factory Factory) Data() core.DSReaderWriter {
+func (factory Factory) Datastore() core.DSReaderWriter {
 	return factory.datastore
 }
 
 // Head implements core.MultiStore and returns the current Headstore
-func (factory Factory) Head() core.DSReaderWriter {
+func (factory Factory) Headstore() core.DSReaderWriter {
 	return factory.headstore
 }
 
 // Dag implements core.MultiStore and returns the current Dagstore
-func (factory Factory) Dag() core.DAGStore {
+func (factory Factory) DAGstore() core.DAGStore {
 	return factory.dagstore
 }
 
