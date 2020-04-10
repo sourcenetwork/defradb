@@ -146,17 +146,16 @@ func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 			continue
 		}
 
-		// @TODO: add dagSyncer
-		// known, err := mc.store.dagSyncer.HasBlock(child)
-		// if err != nil {
-		// 	return nil, errors.Wrapf(err, "error checking for know block %s", child)
-		// }
-		// if known {
-		// 	// we reached a non-head node in the known tree.
-		// 	// This means our root block is a new head
-		// 	mc.heads.Add(root, rootPrio)
-		// 	continue
-		// }
+		known, err := mc.dagstore.Has(child)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error checking for know block %s", child)
+		}
+		if known {
+			// we reached a non-head node in the known tree.
+			// This means our root block is a new head
+			mc.headset.Add(root, rootPrio)
+			continue
+		}
 
 		children = append(children, child)
 	}
