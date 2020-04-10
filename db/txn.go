@@ -11,6 +11,8 @@ import (
 )
 
 var (
+	// ErrNoTxnSupport occurs when a new transaction is trying to be created from a
+	// root datastore that doesn't support ds.TxnDatastore or ds.Batching 8885
 	ErrNoTxnSupport = errors.New("The given store has no transaction or batching support")
 )
 
@@ -24,19 +26,9 @@ type Txn struct {
 	ds.Txn
 
 	// wrapped DS
-	datastore core.DSReaderWriter // wrapped /data namespace
-	headstore core.DSReaderWriter // wrapped /heads namespace
-	dagstore  core.DAGStore       // wrapped /blocks namespace
-}
-
-// fascade to implement the ds.Txn interface using ds.Batcher
-type dummyBatcherTxn struct {
-	ds.Read
-	ds.Batch
-}
-
-func (rb dummyBatcherTxn) Discard() {
-	// noop
+	datastore core.DSReaderWriter // wrapped txn /data namespace
+	headstore core.DSReaderWriter // wrapped txn /heads namespace
+	dagstore  core.DAGStore       // wrapped txn /blocks namespace
 }
 
 // readonly is only for datastores that support ds.TxnDatastore
@@ -53,30 +45,30 @@ func (db *DB) newTxn(readonly bool) (*Txn, error) {
 
 		txn.Txn = dstxn
 
-	} else if batchStore, ok := db.rootstore.(ds.Batching); ok { // no txn
+	} else if batchStore, ok := db.rootstore.(ds.Batching); ok { // we support Batching
 		batcher, err := batchStore.Batch()
 		if err != nil {
 			return nil, err
 		}
 
 		// hide a ds.Batching store as a ds.Txn
-		rb := dummyBatcherTxn{
+		rb := shimBatcherTxn{
 			Read:  batchStore,
 			Batch: batcher,
 		}
 		txn.Txn = rb
 	} else {
-		// our datastore implements neither TxnDatastore or Batching
+		// our datastore supports neither TxnDatastore or Batching
 		// for now return error
 		return nil, ErrNoTxnSupport
 	}
 
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand
-	dummyStore := dummyTxnStore{txn.Txn}
-	txn.datastore = ktds.Wrap(dummyStore, db.dsKeyTransform)
-	txn.headstore = ktds.Wrap(dummyStore, db.dsKeyTransform)
-	batchstore := ktds.Wrap(dummyStore, db.dagKeyTransform)
+	shimStore := shimTxnStore{txn.Txn}
+	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
+	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)
+	batchstore := ktds.Wrap(shimStore, db.dagKeyTransform)
 	txn.dagstore = store.NewDAGStore(batchstore)
 
 	return txn, nil
@@ -92,21 +84,31 @@ func (txn *Txn) Headstore() core.DSReaderWriter {
 	return txn.headstore
 }
 
-// DAGStore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
+// DAGstore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
 func (txn *Txn) DAGstore() core.DAGStore {
 	return txn.dagstore
 }
 
-// Shim to ensure the Txn
-type dummyTxnStore struct {
+// Shim to make ds.Txn support ds.Datastore
+type shimTxnStore struct {
 	ds.Txn
 }
 
-func (ts dummyTxnStore) Sync(prefix ds.Key) error {
+func (ts shimTxnStore) Sync(prefix ds.Key) error {
 	return ts.Txn.Commit()
 }
 
-func (ts dummyTxnStore) Close() error {
+func (ts shimTxnStore) Close() error {
 	ts.Discard()
 	return nil
+}
+
+// shim to make ds.Batch implement ds.Datastore
+type shimBatcherTxn struct {
+	ds.Read
+	ds.Batch
+}
+
+func (rb shimBatcherTxn) Discard() {
+	// noop
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -36,7 +35,6 @@ func newRandomCID() cid.Cid {
 }
 
 func newHeadSet() *heads {
-	log := logging.Logger("defrabd.tests.clock")
 	store := newDS()
 
 	return newHeadset(store, ds.NewKey("/test/db/heads/mydockey"))

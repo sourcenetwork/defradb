@@ -11,7 +11,6 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -22,7 +21,6 @@ func newDS() ds.Datastore {
 }
 
 func newTestMerkleClock() *merkleClock {
-	log := logging.Logger("defrabd.tests.clock")
 	ns := ds.NewKey("/test/db")
 	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
@@ -35,7 +33,6 @@ func newTestMerkleClock() *merkleClock {
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	log := logging.Logger("defrabd.tests.clock")
 	ns := ds.NewKey("/test/db")
 	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))

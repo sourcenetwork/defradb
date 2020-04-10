@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/store"
@@ -35,7 +36,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 
 	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
-	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn, merklecrdtlog)
+	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn)
 	return &baseMerkleCRDT{clk, reg}, s
 }
 

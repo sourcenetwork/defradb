@@ -79,8 +79,17 @@ func NewFromJSON(obj []byte) (*Document, error) {
 		return nil, err
 	}
 
-	// Use CBOR encoding to get deterministic serialization before CID generation
-	buf, err := cbor.Marshal(data)
+	doc := &Document{
+		fields: make(map[string]Field),
+		values: make(map[Field]Value),
+	}
+
+	err = doc.setAndParseObjectType(data)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := doc.Bytes()
 	if err != nil {
 		return nil, err
 	}
@@ -90,17 +99,7 @@ func NewFromJSON(obj []byte) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	doc := &Document{
-		key:    key.NewDocKeyV0(c),
-		fields: make(map[string]Field),
-		values: make(map[Field]Value),
-	}
-
-	err = doc.setAndParseObjectType(data)
-	if err != nil {
-		return nil, err
-	}
+	doc.key = key.NewDocKeyV0(c)
 
 	return doc, nil
 }

@@ -16,7 +16,7 @@ var (
 	factoryTestLog = logging.Logger("defradb.tests.factory")
 )
 
-func newStores() (ds.Datastore, ds.Datastore, *store.DAGStore) {
+func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 	root := ds.NewMapDatastore()
 	data := namespace.Wrap(root, ds.NewKey("/test/db/data"))
 	heads := namespace.Wrap(root, ds.NewKey("/test/db/heads"))
@@ -55,10 +55,9 @@ func TestFactoryMultiStoreInterface(t *testing.T) {
 	// ms = f
 
 	// check interface functions
-	assert.Equal(t, d, f.Data())
-	assert.Equal(t, h, f.Head())
-	assert.Equal(t, s, f.Dag())
-	assert.Equal(t, nil, f.Log())
+	assert.Equal(t, d, f.Datastore())
+	assert.Equal(t, h, f.Headstore())
+	assert.Equal(t, s, f.DAGstore())
 }
 
 func TestFactorySetStores(t *testing.T) {
@@ -67,10 +66,9 @@ func TestFactorySetStores(t *testing.T) {
 	err := f.SetStores(d, h, s)
 	assert.Nil(t, err)
 
-	assert.Equal(t, d, f.Data())
-	assert.Equal(t, h, f.Head())
-	assert.Equal(t, s, f.Dag())
-	assert.Equal(t, nil, f.Log())
+	assert.Equal(t, d, f.Datastore())
+	assert.Equal(t, h, f.Headstore())
+	assert.Equal(t, s, f.DAGstore())
 }
 
 func TestFactoryWithStores(t *testing.T) {
@@ -79,15 +77,13 @@ func TestFactoryWithStores(t *testing.T) {
 	f2 := f.WithStores(d, h, s)
 	// assert.NotEmpty
 
-	assert.Nil(t, f.Data())
-	assert.Nil(t, f.Head())
-	assert.Nil(t, f.Dag())
-	assert.Nil(t, f.Log())
+	assert.Nil(t, f.Datastore())
+	assert.Nil(t, f.Headstore())
+	assert.Nil(t, f.DAGstore())
 
-	assert.Equal(t, d, f2.Data())
-	assert.Equal(t, h, f2.Head())
-	assert.Equal(t, s, f2.Dag())
-	assert.Equal(t, nil, f2.Log())
+	assert.Equal(t, d, f2.Datastore())
+	assert.Equal(t, h, f2.Headstore())
+	assert.Equal(t, s, f2.DAGstore())
 }
 
 func TestFullFactoryRegister(t *testing.T) {
@@ -155,7 +151,6 @@ func TestFullFactoryInstance(t *testing.T) {
 func TestLWWRegisterFactoryFn(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
-	f.SetLogger(factoryTestLog)
 	crdt := lwwFactoryFn(f)(ds.NewKey("MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)

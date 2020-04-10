@@ -139,10 +139,14 @@ func (db *DB) CreateMany(docs []*document.Document) error {
 
 func (db *DB) create(txn *Txn, doc *document.Document) error {
 	// add DocKey verification
+
+	// check if DocKey exists in DB
+	// write object marker
 	err := writeObjectMarker(txn.datastore, doc.Key().Instance("v"))
 	if err != nil {
 		return err
 	}
+	// write data to DB via MerkleClock/CRDT
 	return db.save(txn, doc)
 }
 
