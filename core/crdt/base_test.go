@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 func newDS() core.DSReaderWriter {

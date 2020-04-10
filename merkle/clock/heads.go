@@ -82,13 +82,13 @@ func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
 	var store ds.Write = hh.store
 	var err error
 
-	batchingDs, batching := store.(ds.Batching)
-	if batching {
-		store, err = batchingDs.Batch()
-		if err != nil {
-			return err
-		}
-	}
+	// batchingDs, batching := store.(ds.Batching)
+	// if batching {
+	// 	store, err = batchingDs.Batch()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	err = hh.delete(store, h)
 	if err != nil {
@@ -100,12 +100,12 @@ func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
 		return err
 	}
 
-	if batching {
-		err := store.(ds.Batch).Commit()
-		if err != nil {
-			return err
-		}
-	}
+	// if batching {
+	// 	err := store.(ds.Batch).Commit()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 

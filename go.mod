@@ -3,11 +3,13 @@ module github.com/sourcenetwork/defradb
 go 1.12
 
 require (
+	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/gogo/protobuf v1.2.1
+	github.com/ipfs/go-block-format v0.0.2
 	github.com/ipfs/go-blockservice v0.1.0
 	github.com/ipfs/go-cid v0.0.3
 	github.com/ipfs/go-datastore v0.4.4
-	github.com/ipfs/go-ds-badger v0.2.1 // indirect
+	github.com/ipfs/go-ds-badger v0.2.1
 	github.com/ipfs/go-ipfs-blockstore v0.0.1
 	github.com/ipfs/go-ipfs-ds-help v0.0.1
 	github.com/ipfs/go-ipfs-exchange-offline v0.0.1
@@ -17,6 +19,7 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/multiformats/go-multibase v0.0.1
 	github.com/multiformats/go-multihash v0.0.6
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0

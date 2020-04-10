@@ -36,13 +36,18 @@ func TestNewFromJSON(t *testing.T) {
 		return
 	}
 
-	c, err := pref.Sum(testJSONObj)
+	buf, err := doc.Bytes()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
+	// And then feed it some data
+	c, err := pref.Sum(buf)
+	if err != nil {
+		t.Error(err)
+	}
 	objKey := key.NewDocKeyV0(c)
+
 	if objKey.String() != doc.Key().String() {
 		t.Errorf("Incorrect doc key. Want %v, have %v", objKey.String(), doc.Key().String())
 		return

@@ -7,7 +7,8 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/store"
+
+	// "github.com/sourcenetwork/defradb/store"
 	"github.com/ugorji/go/codec"
 
 	ipld "github.com/ipfs/go-ipld-format"
