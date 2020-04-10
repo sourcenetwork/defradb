@@ -2,14 +2,15 @@ package core
 
 import (
 	ds "github.com/ipfs/go-datastore"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
 // MerkleCRDTs
 type MultiStore interface {
-	Data() DSReaderWriter
-	Head() DSReaderWriter
-	Dag() DAGStore
+	Datastore() DSReaderWriter
+	Headstore() DSReaderWriter
+	DAGstore() DAGStore
 }
 
 // DSReaderWriter simplifies the interface that is exposed by a
@@ -22,4 +23,9 @@ type MultiStore interface {
 type DSReaderWriter interface {
 	ds.Read
 	ds.Write
+}
+
+// DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing
+type DAGStore interface {
+	blockstore.Blockstore
 }

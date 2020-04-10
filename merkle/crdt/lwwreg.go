@@ -14,7 +14,7 @@ import (
 var (
 	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleLWWRegister(mstore.Data(), mstore.Head(), mstore.Dag(), ds.NewKey(""), key)
+			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
 		}
 	})
 )
@@ -35,9 +35,9 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(store core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
+func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister(store, ns, dockey.String() /* stuff like namespace and ID */)
+	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
 	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn)
 	// newBaseMerkleCRDT(clock, register)
