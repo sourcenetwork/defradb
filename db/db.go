@@ -1,21 +1,30 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
 
+	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log"
+	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/store"
+)
+
+var (
+	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
+	// call against the supplied Document Key
+	ErrDocVerification = errors.New("The document verificatioin failed")
 )
 
 const (
@@ -138,11 +147,32 @@ func (db *DB) CreateMany(docs []*document.Document) error {
 }
 
 func (db *DB) create(txn *Txn, doc *document.Document) error {
-	// add DocKey verification
+	// DocKey verification
+	buf, err := doc.Bytes()
+	if err != nil {
+		return err
+	}
+
+	// @todo: grab the cid Prefix from the DocKey internal CID if available
+	pref := cid.Prefix{
+		Version:  1,
+		Codec:    cid.Raw,
+		MhType:   mh.SHA2_256,
+		MhLength: -1, // default length
+	}
+	// And then feed it some data
+	c, err := pref.Sum(buf)
+	if err != nil {
+		return err
+	}
+	dockey := key.NewDocKeyV0(c)
+	if !dockey.Equal(doc.Key().Key) {
+		return ErrDocVerification
+	}
 
 	// check if DocKey exists in DB
 	// write object marker
-	err := writeObjectMarker(txn.datastore, doc.Key().Instance("v"))
+	err = writeObjectMarker(txn.datastore, doc.Key().Instance("v"))
 	if err != nil {
 		return err
 	}
