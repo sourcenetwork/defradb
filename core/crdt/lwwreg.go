@@ -55,26 +55,6 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// LWWRegDeltaExtractorFn is a typed helper to extract
-// a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
-func LWWRegDeltaExtractorFn(node ipld.Node) (core.Delta, error) {
-	delta := &LWWRegDelta{}
-	pbNode, ok := node.(*dag.ProtoNode)
-	if !ok {
-		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
-	}
-	data := pbNode.Data()
-	// fmt.Println(data)
-	h := &codec.CborHandle{}
-	dec := codec.NewDecoderBytes(data, h)
-	err := dec.Decode(delta)
-	if err != nil {
-		return nil, err
-	}
-	return delta, nil
-}
-
 // LWWRegister Last-Writer-Wins Register
 // a simple CRDT type that allows set/get of an
 // arbitrary data type that ensures convergence
@@ -158,4 +138,24 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	}
 
 	return reg.setPriority(reg.key, priority)
+}
+
+// DeltaDecode is a typed helper to extract
+// a LWWRegDelta from a ipld.Node
+// for now lets do cbor (quick to implement)
+func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
+	delta := &LWWRegDelta{}
+	pbNode, ok := node.(*dag.ProtoNode)
+	if !ok {
+		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
+	}
+	data := pbNode.Data()
+	// fmt.Println(data)
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(data, h)
+	err := dec.Decode(delta)
+	if err != nil {
+		return nil, err
+	}
+	return delta, nil
 }
