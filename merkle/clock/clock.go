@@ -21,20 +21,18 @@ type merkleClock struct {
 	headstore core.DSReaderWriter
 	dagstore  core.DAGStore
 	// daySyncer
-	headset        *heads
-	crdt           core.ReplicatedData
-	extractDeltaFn func(ipld.Node) (core.Delta, error)
+	headset *heads
+	crdt    core.ReplicatedData
 }
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData, deltaFn func(ipld.Node) (core.Delta, error)) core.MerkleClock {
+func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData) core.MerkleClock {
 	return &merkleClock{
-		headstore:      headstore,
-		dagstore:       dagstore,
-		headset:        newHeadset(headstore, ds.NewKey(id)), //TODO: Config logger param package wide
-		crdt:           crdt,
-		extractDeltaFn: deltaFn,
+		headstore: headstore,
+		dagstore:  dagstore,
+		headset:   newHeadset(headstore, ds.NewKey(id)), //TODO: Config logger param package wide
+		crdt:      crdt,
 	}
 }
 
@@ -89,7 +87,7 @@ func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	// apply the new node and merge the delta with state
 	// @todo Remove NodeGetter as a paramter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
-		&crdtNodeGetter{deltaExtractor: mc.extractDeltaFn},
+		&crdtNodeGetter{deltaExtractor: mc.crdt.DeltaDecode},
 		nd.Cid(),
 		height,
 		delta,

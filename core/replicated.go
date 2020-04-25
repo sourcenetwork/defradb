@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	cid "github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 // converge on the same state
 type ReplicatedData interface {
 	Merge(other Delta, id string) error
+	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore

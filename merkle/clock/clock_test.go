@@ -29,7 +29,7 @@ func newTestMerkleClock() *merkleClock {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	return NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn).(*merkleClock)
+	return NewMerkleClock(headstore, dagstore, id, reg).(*merkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
@@ -41,7 +41,7 @@ func TestNewMerkleClock(t *testing.T) {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	clk := NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn).(*merkleClock)
+	clk := NewMerkleClock(headstore, dagstore, id, reg).(*merkleClock)
 
 	if clk.headstore != headstore {
 		t.Error("MerkleClock store not correctly set")
@@ -49,8 +49,6 @@ func TestNewMerkleClock(t *testing.T) {
 		t.Error("MerkleClock head set not correctly set")
 	} else if clk.crdt == nil {
 		t.Error("MerkleClock CRDT not correctly set")
-	} else if clk.extractDeltaFn == nil {
-		t.Error("MerkleClock DeltaFn not correctly set")
 	}
 }
 

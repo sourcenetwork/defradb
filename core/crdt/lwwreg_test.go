@@ -185,7 +185,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	return nd, nil
 }
 
-func TestLWWRegisterDeltaExtractDeltaFn(t *testing.T) {
+func TestLWWRegisterDeltaDecode(t *testing.T) {
 	delta := &LWWRegDelta{
 		Data:     []byte("test"),
 		Priority: uint64(10),
@@ -197,7 +197,8 @@ func TestLWWRegisterDeltaExtractDeltaFn(t *testing.T) {
 		return
 	}
 
-	extractedDelta, err := LWWRegDeltaExtractorFn(node)
+	reg := LWWRegister{}
+	extractedDelta, err := reg.DeltaDecode(node)
 	if err != nil {
 		t.Errorf("Recieved error while extracing node: %v", err)
 		return
