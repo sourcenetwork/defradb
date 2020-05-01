@@ -1,5 +1,5 @@
 <p align="center"> 
-<img src="docs/DefraDB_Logo_Full.png">
+<img width="60%" src="docs/DefraDB_Logo_Full-cropped.png">
 </p>
 
 #
