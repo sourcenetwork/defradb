@@ -18,6 +18,7 @@ var (
 type ReplicatedData interface {
 	Merge(other Delta, id string) error
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
+	Value() ([]byte, error)
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore
@@ -25,3 +26,8 @@ type PersistedReplicatedData interface {
 	ReplicatedData
 	Publish(Delta) (cid.Cid, error)
 }
+
+// type EmbedableReplicatedData interface {
+// 	ReplicatedData
+// 	Apply(Operation) error
+// }

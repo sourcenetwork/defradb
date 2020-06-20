@@ -110,9 +110,10 @@ You'll notice that despite the PNCounter constructed from two GCounter, they use
 
 ### OR-Set - Add-Wins Observe-Remove Set
 
-### LWW-Map - Add-Wins Observe-Remove Map
+### LWW-Map - Last-Write-Wins Map
 
 ### OR-Map - Add-Wins Observe-Remove Map
 An AWORMap is a Map like CRDT structure, in that we store keys and values. The values are themselves CRDTs of any kind (more on this later), and in the face of a conflict, the addition of a key wins. Keys are basic string identifiers, and values are CRDTs, so any further conflict can be handled by their respective CRDT semantics of the Value.
+
 
 

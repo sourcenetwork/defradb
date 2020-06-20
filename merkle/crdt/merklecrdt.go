@@ -4,6 +4,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 )
 
@@ -52,6 +53,14 @@ type baseMerkleCRDT struct {
 
 func (base *baseMerkleCRDT) Merge(other core.Delta, id string) error {
 	return base.crdt.Merge(other, id)
+}
+
+func (base *baseMerkleCRDT) DeltaDecode(node ipld.Node) (core.Delta, error) {
+	return base.crdt.DeltaDecode(node)
+}
+
+func (base *baseMerkleCRDT) Value() ([]byte, error) {
+	return base.crdt.Value()
 }
 
 // func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
