@@ -2,7 +2,6 @@ package crdt
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
@@ -39,7 +38,7 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg, crdt.LWWRegDeltaExtractorFn)
+	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister

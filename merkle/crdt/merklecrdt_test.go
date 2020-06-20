@@ -14,7 +14,6 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log"
-	"github.com/sourcenetwork/defradb/core/crdt"
 )
 
 var (
@@ -36,7 +35,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 
 	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
-	clk := clock.NewMerkleClock(headstore, dagstore, id, reg, crdt.LWWRegDeltaExtractorFn)
+	clk := clock.NewMerkleClock(headstore, dagstore, id, reg)
 	return &baseMerkleCRDT{clk, reg}, s
 }
 
