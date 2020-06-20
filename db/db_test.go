@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/document"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func newMemoryDB() (*DB, error) {
@@ -36,7 +38,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 
 	testJSONObj := []byte(`{
 		"Name": "John",
-		"Ages": 21,
+		"Age": 21,
 		"Weight": 154.1
 	}`)
 
@@ -51,5 +53,63 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 		t.Error(err)
 	}
 
-	db.printDebugDB()
+	// value check
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	age, err := doc.Get("Age")
+	assert.NoError(t, err)
+	weight, err := doc.Get("Weight")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, int64(21), age)
+	assert.Equal(t, 154.1, weight)
+
+	_, err = doc.Get("DoesntExist")
+	assert.Error(t, err)
+
+	// db.printDebugDB()
+}
+
+func TestDBUpdateDocument(t *testing.T) {
+	db, _ := newMemoryDB()
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21,
+		"Weight": 154.1
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = db.Save(doc)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// update fields
+	doc.Set("Name", "Pete")
+	doc.Delete("Weight")
+
+	weightField := doc.Fields()["Weight"]
+	weightVal, _ := doc.GetValueWithField(weightField)
+	assert.True(t, weightVal.IsDelete())
+
+	err = db.Save(doc)
+
+	// value check
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	age, err := doc.Get("Age")
+	assert.NoError(t, err)
+	weight, err := doc.Get("Weight")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Pete", name)
+	assert.Equal(t, int64(21), age)
+	assert.Nil(t, weight)
 }

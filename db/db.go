@@ -1,8 +1,9 @@
 package db
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -152,8 +153,7 @@ func (db *DB) create(txn *Txn, doc *document.Document) error {
 	if err != nil {
 		return err
 	}
-
-	// @todo: grab the cid Prefix from the DocKey internal CID if available
+	// @todo:  grab the cid Prefix from the DocKey internal CID if available
 	pref := cid.Prefix{
 		Version:  1,
 		Codec:    cid.Raw,
@@ -165,9 +165,10 @@ func (db *DB) create(txn *Txn, doc *document.Document) error {
 	if err != nil {
 		return err
 	}
+	// fmt.Println(c)
 	dockey := key.NewDocKeyV0(c)
-	if !dockey.Equal(doc.Key().Key) {
-		return ErrDocVerification
+	if !dockey.Key.Equal(doc.Key().Key) {
+		return errors.Wrap(ErrDocVerification, fmt.Sprintf("Expected %s, got %s", doc.Key().UUID(), dockey.UUID()))
 	}
 
 	// check if DocKey exists in DB
@@ -185,7 +186,14 @@ func (db *DB) create(txn *Txn, doc *document.Document) error {
 // should call doc.Clear(field) before. Any field that
 // is nil/empty that hasn't called Clear will be ignored
 func (db *DB) Update(doc *document.Document) error {
-	return nil
+	exists, err := db.exists(doc.Key())
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrDocumentNotExists
+	}
+	return db.update(doc)
 }
 
 // Save a document into the db
@@ -198,9 +206,28 @@ func (db *DB) Save(doc *document.Document) error {
 	}
 
 	if exists {
-		return db.Update(doc)
+		return db.update(doc)
 	}
 	return db.Create(doc)
+}
+
+// Contract: DB Exists check is already perfomed, and a doc with the given key exists
+// Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
+// or, just update everything regardless.
+// Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
+// add to the bloat.
+func (db *DB) update(doc *document.Document) error {
+	txn, err := db.newTxn(false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	err = db.save(txn, doc)
+	if err != nil {
+		return err
+	}
+	return txn.Commit()
 }
 
 func (db *DB) save(txn *Txn, doc *document.Document) error {
@@ -211,9 +238,16 @@ func (db *DB) save(txn *Txn, doc *document.Document) error {
 	//	=> 		Set/Publish new CRDT values
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
-		err := db.saveValueToMerkleCRDT(txn, doc.Key().ChildString(k), val)
-		if err != nil {
-			return err
+		if val.IsDirty() {
+			err := db.saveValueToMerkleCRDT(txn, doc.Key().ChildString(k), val)
+			if err != nil {
+				return err
+			}
+			if val.IsDelete() {
+				doc.SetAs(v.Name(), nil, v.Type())
+			}
+			// set value as clean
+			val.Clean()
 		}
 	}
 
@@ -242,9 +276,14 @@ func (db *DB) saveValueToMerkleCRDT(txn *Txn, key ds.Key, val document.Value) er
 			return err
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
-		bytes, err := wval.Bytes()
-		if err != nil {
-			return err
+		var bytes []byte
+		if val.IsDelete() { // empty byte array
+			bytes = []byte{}
+		} else {
+			bytes, err = wval.Bytes()
+			if err != nil {
+				return err
+			}
 		}
 		return lwwreg.Set(bytes)
 

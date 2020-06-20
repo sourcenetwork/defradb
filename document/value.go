@@ -16,6 +16,8 @@ type Value interface {
 	Type() crdt.Type
 	IsDirty() bool
 	Clean()
+	IsDelete() bool //todo: Update IsDelete naming
+	Delete()
 }
 
 // WriteableValue defines a simple interface with a Bytes() method
@@ -34,12 +36,14 @@ type simpleValue struct {
 	value   interface{}
 	crdt    crdt.MerkleCRDT
 	isDirty bool
+	delete  bool
 }
 
 func newValue(t crdt.Type, val interface{}) simpleValue {
 	return simpleValue{
-		t:     t,
-		value: val,
+		t:       t,
+		value:   val,
+		isDirty: true,
 	}
 }
 
@@ -65,6 +69,16 @@ func (val simpleValue) IsDirty() bool {
 
 func (val *simpleValue) Clean() {
 	val.isDirty = false
+	val.delete = false
+}
+
+func (val *simpleValue) Delete() {
+	val.delete = true
+	val.isDirty = true
+}
+
+func (val simpleValue) IsDelete() bool {
+	return val.delete
 }
 
 // // MakeDirty sets the value as

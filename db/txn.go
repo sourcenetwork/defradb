@@ -109,6 +109,6 @@ type shimBatcherTxn struct {
 	ds.Batch
 }
 
-func (rb shimBatcherTxn) Discard() {
+func (shimBatcherTxn) Discard() {
 	// noop
 }

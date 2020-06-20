@@ -99,6 +99,7 @@ func NewFromJSON(obj []byte) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	// fmt.Println(c)
 	doc.key = key.NewDocKeyV0(c)
 
 	return doc, nil
@@ -157,17 +158,26 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 
 // Set the value of a field
 func (doc *Document) Set(field string, value interface{}) error {
-	panic("todo")
+	return doc.setAndParseType(field, value)
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
 func (doc *Document) SetAs(field string, value interface{}, t crdt.Type) error {
-	panic("todo")
+	return doc.setCBOR(t, field, value)
 }
 
-// Clear removes a field, and marks it to be deleted on the following db.Update() call
-func (doc *Document) Clear(field string) error {
-	panic("todo")
+// Delete removes a field, and marks it to be deleted on the following db.Update() call
+func (doc *Document) Delete(fields ...string) error {
+	for _, f := range fields {
+		field, exists := doc.fields[f]
+		if !exists {
+			return ErrFieldNotExist
+		}
+
+		val := doc.values[field]
+		val.Delete()
+	}
+	return nil
 }
 
 // SetAsType Sets the value of a field along with a specific type
@@ -178,8 +188,13 @@ func (doc *Document) Clear(field string) error {
 // set implementation
 // @todo Apply locking on  Document field/value operations
 func (doc *Document) set(t crdt.Type, field string, value Value) error {
-	f := doc.newField(t, field)
-	doc.fields[field] = f
+	var f Field
+	if v, exists := doc.fields[field]; exists {
+		f = v
+	} else {
+		f = doc.newField(t, field)
+		doc.fields[field] = f
+	}
 	doc.values[f] = value
 	doc.isDirty = true
 	return nil
@@ -221,8 +236,8 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 		break
 
-	// string
-	case string:
+	// string, bool, and more
+	case string, bool:
 		doc.setCBOR(crdt.LWW_REGISTER, field, value)
 		break
 
@@ -284,7 +299,13 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	return cbor.Marshal(docMap)
+	// Important: CannonicalEncOpionts ensures consistent serialization of
+	// indeterministic datastructures, like Go Maps
+	em, err := cbor.CanonicalEncOptions().EncMode()
+	if err != nil {
+		return nil, err
+	}
+	return em.Marshal(*docMap)
 }
 
 // converts the document into a map[string]interface{}
