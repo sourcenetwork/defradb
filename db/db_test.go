@@ -205,7 +205,7 @@ func TestDBGetDocument(t *testing.T) {
 	weight, err := doc.Get("Weight")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "Pete", name)
-	assert.Equal(t, int64(31), age)
+	assert.Equal(t, "John", name)
+	assert.Equal(t, uint64(21), age) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
 	assert.Equal(t, 154.1, weight)
 }

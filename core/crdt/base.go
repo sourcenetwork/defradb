@@ -9,6 +9,7 @@ import (
 )
 
 // Type indicates MerkleCRDT type
+// @todo: Migrate core/crdt.Type and merkle/crdt.Type to unifiied /core.CRDTType
 type Type byte
 
 const (
@@ -19,10 +20,10 @@ const (
 )
 
 var (
-	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
-	valueSuffix    = "v" // value key
-	prioritySuffix = "p" // priority key
-	crdtTypeSuffix = "ct"
+	keysNs         = "k"  // /keys namespace /set/k/<key>/{v,p}
+	valueSuffix    = "v"  // value key
+	prioritySuffix = "p"  // priority key
+	crdtTypeSuffix = "ct" // crdt-type key
 	dataTypeSuffix = "dt"
 )
 
