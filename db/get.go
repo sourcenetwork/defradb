@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/document"
@@ -14,10 +13,26 @@ import (
 	"github.com/jbenet/goprocess"
 )
 
+// GetterOpts is an options struct used to pass
+// preferences, congiurations, and preferences to
+// alter the beviour of a `Get(...)` call
+//
+type GetterOpts struct {
+	Fields []string
+}
+
+// Think about the possibility of using Option Functions, instead of a public struct.
+// This approach creates an interface for exposed options, along with a typed function
+// signature used to 'mutate' the options
+
+// DefaultGetterOpts are defualt configuraion settings for a Get
+// It will be used, if no others are specified.
+var DefaultGetterOpts = GetterOpts{}
+
 // Get a document from the given DocKey, return an error if we fail to retrieve
 // the specified document.
 // If the Key doesn't exist, return ErrDocumentNotFound
-func (db *DB) Get(key key.DocKey) (*document.Document, error) {
+func (db *DB) Get(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
 	found, err := db.Exists(key)
 	if err != nil {
 		return nil, err
@@ -26,11 +41,19 @@ func (db *DB) Get(key key.DocKey) (*document.Document, error) {
 		return nil, ErrDocumentNotFound
 	}
 
-	return db.get(key)
+	var opt GetterOpts
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	return db.get(key, opt)
 }
 
+func (db *DB) getAllFields() {}
+
+func (db *DB) getSomeFields() {}
+
 // scans the database for the given document and all associated fields, returns document
-func (db *DB) get(key key.DocKey) (*document.Document, error) {
+func (db *DB) get(key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	// To get the entire document, we dispatch a Query request to get all
 	// keys with the prefix for the given DocKey.
 	// This will return any and all keys under that prefix, which all fields
@@ -64,10 +87,10 @@ func (db *DB) get(key key.DocKey) (*document.Document, error) {
 
 	done := make(chan struct{})
 	go func() {
-		fmt.Println("-- Waiting for all queue processes to close --")
+		// fmt.Println("-- Waiting for all queue processes to close --")
 		collector.wg.Wait()
 		close(done)
-		fmt.Println("-- All process have completed and closed --")
+		// fmt.Println("-- All process have completed and closed --")
 	}()
 
 	// waits for the collector to collate the necessary
@@ -75,14 +98,14 @@ func (db *DB) get(key key.DocKey) (*document.Document, error) {
 	for {
 		select {
 		case fr := <-collector.results():
-			fmt.Println("New field result:", fr)
+			// fmt.Println("New field result:", fr)
 			err = doc.SetAs(fr.name, fr.value, fr.ctype)
 			if err != nil {
 				return nil, err // wrap
 			}
 
 		case <-done:
-			fmt.Println("Collector process closed")
+			// fmt.Println("Collector process closed")
 			return doc, nil
 		}
 	}
@@ -124,7 +147,7 @@ func (c *fieldCollector) dispatch(field string, entry query.Entry) {
 	if !ok {
 		q = make(chan query.Entry)
 		c.queues[field] = q
-		fmt.Println("running new queue process")
+		// fmt.Println("running new queue process")
 		// c.process.Go(func(p goprocess.Process) { // run queue inside its own process so we can control its exit condition
 		// 	c.runQueue(p, q)
 		// })
@@ -142,7 +165,7 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 	collected := 0
 	res := fieldResult{}
 	for entry := range q {
-		fmt.Println("Got a new entry on queue")
+		// fmt.Println("Got a new entry on queue")
 		k := ds.NewKey(entry.Key)
 		// new entry, parse and insert
 		if len(res.name) == 0 {
@@ -164,12 +187,12 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 
 		// if weve completed all our tasks, close this queue/process down
 		collected++
-		fmt.Printf("Collected status: %d/3\n", collected)
+		// fmt.Printf("Collected status: %d/3\n", collected)
 		if collected == 3 { // maybe parameterize this constant
-			fmt.Printf("Closing queue and process for %s...\n", res.name)
+			// fmt.Printf("Closing queue and process for %s...\n", res.name)
 			c.fieldResultsCh <- res
 			close(q)
-			fmt.Println("Closed queue and process for", res.name)
+			// fmt.Println("Closed queue and process for", res.name)
 		}
 	}
 }
