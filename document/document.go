@@ -335,6 +335,24 @@ func (doc *Document) Bytes() ([]byte, error) {
 	return em.Marshal(*docMap)
 }
 
+// String returns the document as a strinified JSON Object.
+// Note: This representation should not be used for any
+// cryptographic operations, such as signatures, or hashes
+// as it does not gurantee cannonical representation or
+// ordering.
+func (doc *Document) String() string {
+	docMap, err := doc.toMap()
+	if err != nil {
+		panic(err) //should we return (string, error)?
+	}
+
+	j, err := json.MarshalIndent(docMap, "", "\t")
+	if err != nil {
+		panic(err) // same as above
+	}
+	return string(j)
+}
+
 // converts the document into a map[string]interface{}
 // including any sub documents
 func (doc *Document) toMap() (*map[string]interface{}, error) {

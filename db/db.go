@@ -247,6 +247,60 @@ func (db *DB) save(txn *Txn, doc *document.Document) error {
 	return nil
 }
 
+// Delete will attempt to delete a document by key
+// will return true if a deltion is successful, and
+// return false, along with an error, if it cannot.
+// If the document doesn't exist, then it will return
+// false, and a ErrDocumentNotFound error.
+// This operation will all state relating to the given
+// DocKey. This includes data, block, and head storage.
+func (db *DB) Delete(key key.DocKey) (bool, error) {
+	exists, err := db.Exists(key)
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, ErrDocumentNotFound
+	}
+
+	// create txn
+	txn, err := db.newTxn(false)
+	if err != nil {
+		return false, err
+	}
+	defer txn.Discard()
+
+	// run delete, commit if successful
+	deleted, err := db.delete(txn, key)
+	if err != nil {
+		return false, err
+	}
+	return deleted, txn.Commit()
+}
+
+// at the moment, delete only does data storage delete.
+// Dag, and head store will soon follow.
+func (db *DB) delete(txn *Txn, key key.DocKey) (bool, error) {
+	q := query.Query{
+		Prefix:   key.Key.String(),
+		KeysOnly: true,
+	}
+	res, err := txn.datastore.Query(q)
+
+	for e := range res.Next() {
+		if e.Error != nil {
+			return false, err
+		}
+
+		err = txn.datastore.Delete(ds.NewKey(e.Key))
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
 // Exists checks if a given document exists with supplied DocKey
 func (db *DB) Exists(key key.DocKey) (bool, error) {
 	return db.exists(key)
