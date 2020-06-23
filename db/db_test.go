@@ -196,4 +196,16 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 	doc, err = db.Get(key)
 	assert.NoError(t, err)
+
+	// value check
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	age, err := doc.Get("Age")
+	assert.NoError(t, err)
+	weight, err := doc.Get("Weight")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Pete", name)
+	assert.Equal(t, int64(31), age)
+	assert.Equal(t, 154.1, weight)
 }
