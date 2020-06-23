@@ -137,6 +137,12 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 		return errors.Wrap(err, "Failed to store new value")
 	}
 
+	typeK := reg.typeKey(reg.key)
+	err = reg.store.Put(typeK, []byte{byte(LWW_REGISTER)})
+	if err != nil {
+		return errors.Wrap(err, "Failed to write crdt type value")
+	}
+
 	return reg.setPriority(reg.key, priority)
 }
 

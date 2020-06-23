@@ -8,10 +8,22 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
+// Type indicates MerkleCRDT type
+type Type byte
+
+const (
+	//no lint
+	none = Type(iota) // reserved none type
+	LWW_REGISTER
+	OBJECT
+)
+
 var (
 	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
 	valueSuffix    = "v" // value key
 	prioritySuffix = "p" // priority key
+	crdtTypeSuffix = "ct"
+	dataTypeSuffix = "dt"
 )
 
 // baseCRDT is embedded as a base layer into all
@@ -48,6 +60,14 @@ func (base baseCRDT) valueKey(key string) ds.Key {
 func (base baseCRDT) priorityKey(key string) ds.Key {
 	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
 }
+
+func (base baseCRDT) typeKey(key string) ds.Key {
+	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
+}
+
+// func (base baseCRDT) dataTypeKey(key string) ds.Key {
+// 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)
+// }
 
 func (base baseCRDT) setPriority(key string, priority uint64) error {
 	prioK := base.priorityKey(key)

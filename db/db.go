@@ -6,7 +6,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -16,10 +19,6 @@ import (
 	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log"
 	mh "github.com/multiformats/go-multihash"
-
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/store"
 )
 
 var (
@@ -107,12 +106,6 @@ func NewDB(options *Options) (*DB, error) {
 	}, nil
 }
 
-/*
-
-db.newTx
-
-*/
-
 // Create a new document
 // Will verify the DocKey/CID to ensure that the new document is correctly formatted.
 func (db *DB) Create(doc *document.Document) error {
@@ -191,24 +184,9 @@ func (db *DB) Update(doc *document.Document) error {
 		return err
 	}
 	if !exists {
-		return ErrDocumentNotExists
+		return ErrDocumentNotFound
 	}
 	return db.update(doc)
-}
-
-// Save a document into the db
-// Either by creating a new document or by updating an existing one
-func (db *DB) Save(doc *document.Document) error {
-	// Check if document already exists with key
-	exists, err := db.exists(doc.Key())
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return db.update(doc)
-	}
-	return db.Create(doc)
 }
 
 // Contract: DB Exists check is already perfomed, and a doc with the given key exists
@@ -228,6 +206,21 @@ func (db *DB) update(doc *document.Document) error {
 		return err
 	}
 	return txn.Commit()
+}
+
+// Save a document into the db
+// Either by creating a new document or by updating an existing one
+func (db *DB) Save(doc *document.Document) error {
+	// Check if document already exists with key
+	exists, err := db.exists(doc.Key())
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return db.update(doc)
+	}
+	return db.Create(doc)
 }
 
 func (db *DB) save(txn *Txn, doc *document.Document) error {

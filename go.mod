@@ -16,7 +16,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.0.2
 	github.com/ipfs/go-log v0.0.1
 	github.com/ipfs/go-merkledag v0.2.3
-	github.com/jbenet/goprocess v0.1.4 // indirect
+	github.com/jbenet/goprocess v0.1.4
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/multiformats/go-multibase v0.0.1
