@@ -62,9 +62,11 @@ func (db *DB) get(key key.DocKey) (*document.Document, error) {
 		}
 	}
 
+	done := make(chan struct{})
 	go func() {
 		fmt.Println("-- Waiting for all queue processes to close --")
-		collector.process.Close()
+		collector.wg.Wait()
+		close(done)
 		fmt.Println("-- All process have completed and closed --")
 	}()
 
@@ -78,7 +80,8 @@ func (db *DB) get(key key.DocKey) (*document.Document, error) {
 			if err != nil {
 				return nil, err // wrap
 			}
-		case <-collector.process.Closed():
+
+		case <-done:
 			fmt.Println("Collector process closed")
 			return doc, nil
 		}
@@ -102,6 +105,7 @@ type fieldCollector struct {
 	queues         map[string]chan query.Entry
 	fieldResultsCh chan fieldResult
 	process        goprocess.Process
+	wg             sync.WaitGroup
 	sync.Mutex     // lock for queues map
 }
 
@@ -109,7 +113,7 @@ func newFieldCollector() *fieldCollector {
 	fc := fieldCollector{
 		queues:         make(map[string]chan query.Entry),
 		fieldResultsCh: make(chan fieldResult),
-		process:        goprocess.Background(),
+		// process:        goprocess.WithParent(goprocess.Background()),
 	}
 	return &fc
 }
@@ -121,9 +125,11 @@ func (c *fieldCollector) dispatch(field string, entry query.Entry) {
 		q = make(chan query.Entry)
 		c.queues[field] = q
 		fmt.Println("running new queue process")
-		c.process.Go(func(p goprocess.Process) { // run queue inside its own process so we can control its exit condition
-			c.runQueue(p, q)
-		})
+		// c.process.Go(func(p goprocess.Process) { // run queue inside its own process so we can control its exit condition
+		// 	c.runQueue(p, q)
+		// })
+		c.wg.Add(1)
+		go c.runQueue(q)
 	}
 	c.Unlock()
 	q <- entry
@@ -131,7 +137,8 @@ func (c *fieldCollector) dispatch(field string, entry query.Entry) {
 
 // runs the loop for a given queue
 // @todo: Handle subobject for fieldCollector
-func (c *fieldCollector) runQueue(p goprocess.Process, q chan query.Entry) {
+func (c *fieldCollector) runQueue(q chan query.Entry) {
+	defer c.wg.Done()
 	collected := 0
 	res := fieldResult{}
 	for entry := range q {
@@ -150,7 +157,6 @@ func (c *fieldCollector) runQueue(p goprocess.Process, q chan query.Entry) {
 				res.err = err
 				c.fieldResultsCh <- res
 				close(q)
-				p.Close()
 			}
 		case "ct": // cached crdt type, which is only a single byte, hence [0]
 			res.ctype = crdt.Type(entry.Value[0])
@@ -163,7 +169,6 @@ func (c *fieldCollector) runQueue(p goprocess.Process, q chan query.Entry) {
 			fmt.Printf("Closing queue and process for %s...\n", res.name)
 			c.fieldResultsCh <- res
 			close(q)
-			p.Close()
 			fmt.Println("Closed queue and process for", res.name)
 		}
 	}
