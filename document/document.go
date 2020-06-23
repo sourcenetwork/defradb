@@ -57,6 +57,17 @@ type Document struct {
 	isDirty bool
 }
 
+// New returns a newly instanciated Document
+func New() *Document {
+	return newEmptyDoc()
+}
+
+func NewWithKey(key key.DocKey) *Document {
+	doc := newEmptyDoc()
+	doc.key = key
+	return doc
+}
+
 func newEmptyDoc() *Document {
 	return &Document{
 		fields: make(map[string]Field),
@@ -66,13 +77,6 @@ func newEmptyDoc() *Document {
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array
 func NewFromJSON(obj []byte) (*Document, error) {
-	pref := cid.Prefix{
-		Version:  1,
-		Codec:    cid.Raw,
-		MhType:   mh.SHA2_256,
-		MhLength: -1, // default length
-	}
-
 	data := make(map[string]interface{})
 	err := json.Unmarshal(obj, &data)
 	if err != nil {
@@ -84,23 +88,46 @@ func NewFromJSON(obj []byte) (*Document, error) {
 		values: make(map[Field]Value),
 	}
 
+	// check if document contains special _key field
+	k, hasKey := data["_key"]
+	if hasKey {
+		delete(data, "_key") // remove the key so it isn't parsed further
+		kstr, ok := k.(string)
+		if !ok {
+			return nil, errors.New("Provided _key in document must be a string type")
+		}
+		if doc.key, err = key.NewFromString(kstr); err != nil {
+			return nil, err
+		}
+	}
+
 	err = doc.setAndParseObjectType(data)
 	if err != nil {
 		return nil, err
 	}
 
-	buf, err := doc.Bytes()
-	if err != nil {
-		return nil, err
-	}
+	// if no key was specified, then we assume it doesn't exist and we generate it.
+	if !hasKey {
+		pref := cid.Prefix{
+			Version:  1,
+			Codec:    cid.Raw,
+			MhType:   mh.SHA2_256,
+			MhLength: -1, // default length
+		}
 
-	// And then feed it some data
-	c, err := pref.Sum(buf)
-	if err != nil {
-		return nil, err
+		buf, err := doc.Bytes()
+		if err != nil {
+			return nil, err
+		}
+
+		// And then feed it some data
+		c, err := pref.Sum(buf)
+		if err != nil {
+			return nil, err
+		}
+		// fmt.Println(c)
+		doc.key = key.NewDocKeyV0(c)
 	}
-	// fmt.Println(c)
-	doc.key = key.NewDocKeyV0(c)
 
 	return doc, nil
 }
