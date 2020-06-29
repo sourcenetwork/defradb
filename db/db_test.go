@@ -209,3 +209,44 @@ func TestDBGetDocument(t *testing.T) {
 	assert.Equal(t, uint64(21), age) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
 	assert.Equal(t, 154.1, weight)
 }
+
+func TestDBGetNotFoundDocument(t *testing.T) {
+	db, _ := newMemoryDB()
+
+	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	assert.NoError(t, err)
+	_, err = db.Get(key)
+	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+}
+
+func TestDBDeleteDocument(t *testing.T) {
+	db, _ := newMemoryDB()
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21,
+		"Weight": 154.1
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	assert.NoError(t, err)
+
+	err = db.Save(doc)
+	assert.NoError(t, err)
+
+	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	assert.NoError(t, err)
+	deleted, err := db.Delete(key)
+	assert.NoError(t, err)
+	assert.True(t, deleted)
+}
+
+func TestDBDeleteNotFoundDocument(t *testing.T) {
+	db, _ := newMemoryDB()
+
+	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	assert.NoError(t, err)
+	deleted, err := db.Delete(key)
+	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+	assert.False(t, deleted)
+}
