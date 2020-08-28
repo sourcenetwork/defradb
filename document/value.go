@@ -148,6 +148,8 @@ func (v cborValue) Bytes() ([]byte, error) {
 	return cbor.Marshal(v.value)
 }
 
+// func ReadCBORValue()
+
 // func (val simpleValue) GetCRDT() crdt.MerkleCRDT {
 // 	return val.crdt
 // }
