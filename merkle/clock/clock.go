@@ -17,7 +17,7 @@ var (
 	headsNS = "h"
 )
 
-type merkleClock struct {
+type MerkleClock struct {
 	headstore core.DSReaderWriter
 	dagstore  core.DAGStore
 	// daySyncer
@@ -28,7 +28,7 @@ type merkleClock struct {
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
 func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData) core.MerkleClock {
-	return &merkleClock{
+	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
 		headset:   newHeadset(headstore, ds.NewKey(id)), //TODO: Config logger param package wide
@@ -36,7 +36,7 @@ func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id st
 	}
 }
 
-func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
+func (mc *MerkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
 	if delta != nil {
 		delta.SetPriority(height)
 	}
@@ -69,7 +69,7 @@ func (mc *merkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 // AddDAGNode adds a new delta to the existing DAG for this MerkleClock
 // It checks the current heads, sets the delta priority in the merkle dag
 // adds it to the blockstore the runs ProcessNode
-func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
+func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	heads, height, err := mc.headset.List()
 	if err != nil {
 		return cid.Undef, errors.Wrap(err, "error getting heads")
@@ -102,7 +102,7 @@ func (mc *merkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 
 // ProcessNode processes an already merged delta into a crdt
 // by
-func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
+func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
 	current := node.Cid()
 	err := mc.crdt.Merge(delta, dshelp.CidToDsKey(current).String())
 	if err != nil {
@@ -159,4 +159,8 @@ func (mc *merkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 	}
 
 	return children, nil
+}
+
+func (mc *MerkleClock) Heads() *heads {
+	return mc.headset
 }
