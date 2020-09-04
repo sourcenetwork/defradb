@@ -12,8 +12,8 @@ enum {TYPE_NAME}Fields {
 #  {TYPE_NAME} filters with conditionals and relations
 input {TYPE_NAME}FilterArg {
     # condiationals
-    _and: [{TYPE_NAME}FilterArg]
-    _or: [{TYPE_NAME}FilterArg]
+    _and: [{TYPE_NAME}FilterArg]!
+    _or: [{TYPE_NAME}FilterArg!]
     _not: {TYPE_NAME}FilterArg
 
     # fields
@@ -50,6 +50,7 @@ input {TYPE_NAME}HavingArg {
     _avg: {TYPE_NAME}HavingBlock
 }
 
+# // @todo: _count supports no selection set, so the input type for Having should match.
 input {TYPE_NAME}HavingBlock {
     {FOR field in TYPE_NAME}
         {if field is scalar}
