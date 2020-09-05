@@ -3,6 +3,7 @@ package graphql
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
@@ -18,11 +19,42 @@ type Type struct {
 	Object *gql.Object
 }
 
+// Generator creates all the necessary typed schema definitions from an AST Document
+// and adds them to the Schema via the SchemaManager
+type Generator struct {
+	typeDefs []*gql.Object
+	manager  *SchemaManager
+}
+
+// NewGenerator creates a new instance of the Generator
+// from a given SchemaManager
+func NewGenerator(manager *SchemaManager) *Generator {
+	return &Generator{
+		manager: manager,
+	}
+}
+
+// FromString generates the query type definitions from a
+// encoded GraphQL Schema Definition Lanaguage string
+func (g *Generator) FromString(source string) error {
+	return nil
+}
+
+// FromAST generates the query type definitions from a
+// parsed GraphQL Schema Definition Language AST document
+func (g *Generator) FromAST(document *ast.Document) error {
+	return nil
+}
+
 // @todo: Add Schema Directives (IE: relation, etc..)
+
+// @todo: Add validation support for the AST
+// @body: Type generation is only supported for Object type definitions.
+// Unions, Interfaces, etc are not currently supported.
 
 // Given a parsed AST of a developer defined types
 // extract and return the correct objectType(s)
-func (s *SchemaManager) buildTypesFromAST(document *ast.Document) error {
+func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	for _, def := range document.Definitions {
@@ -48,7 +80,7 @@ func (s *SchemaManager) buildTypesFromAST(document *ast.Document) error {
 				}
 
 				t := field.Type
-				ttype, err := astNodeToGqlType(s.typeMap, t)
+				ttype, err := astNodeToGqlType(g.manager.schema.TypeMap(), t)
 				if err != nil {
 					return err
 				}
@@ -58,7 +90,7 @@ func (s *SchemaManager) buildTypesFromAST(document *ast.Document) error {
 			objconf.Fields = fields
 
 			obj := gql.NewObject(objconf)
-			s.typeMap[obj.Name()] = obj
+			g.manager.schema.TypeMap()[obj.Name()] = obj
 			// s.types = append(s.types, obj)
 		}
 	}
@@ -106,13 +138,23 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	return ttype, nil
 }
 
+// type SchemaObject
+
 // GenerateSchemaForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
-func (s *SchemaManager) GenerateSchemaForGQLType(obj *gql.Object) {}
+func (g *Generator) GenerateSchemaForGQLType(obj *gql.Object) {
+	types := queryInputTypeConfig{}
+	types.filter = g.genTypeFilterArgInput(*obj)
+	types.groupBy = g.genTypeFieldsEnum(*obj)
+	types.having = g.genTypeHavingArgInput(*obj)
+	types.order = g.genTypeOrderArgInput(*obj)
+
+	// @attention: return something lol
+}
 
 // enum {Type.Name}Fields { ... }
-func (s *SchemaManager) genTypeFieldsEnum(obj gql.Object) *gql.Enum {
+func (g *Generator) genTypeFieldsEnum(obj gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "Fields"),
 		Values: gql.EnumValueConfigMap{},
@@ -126,52 +168,51 @@ func (s *SchemaManager) genTypeFieldsEnum(obj gql.Object) *gql.Enum {
 }
 
 // input {Type.Name}FilterArg { ... }
-func (s *SchemaManager) genTypeFilterArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeFilterArgInput(obj gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterArg"),
 	}
-	fields := gql.InputObjectConfigFieldMap{}
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+		fields := gql.InputObjectConfigFieldMap{}
 
-	filterBaseArgType := s.genTypeFilterBaseArgInput(obj)
+		// @attention: do we need to explicity add our "sub types" to the TypeMap
+		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
+		g.manager.schema.TypeMap()[filterBaseArgType.Name()] = filterBaseArgType
 
-	// conditionals
-	fields["_and"] = &gql.InputObjectFieldConfig{
-		Type: gql.NewList(gql.NewNonNull(filterBaseArgType)),
-	}
-	fields["_or"] = &gql.InputObjectFieldConfig{
-		Type: gql.NewList(gql.NewNonNull(filterBaseArgType)),
-	}
-	fields["_not"] = &gql.InputObjectFieldConfig{
-		Type: filterBaseArgType,
-	}
+		// conditionals
+		fields["_and"] = &gql.InputObjectFieldConfig{
+			Type: gql.NewList(gql.NewNonNull(filterBaseArgType)),
+		}
+		fields["_or"] = &gql.InputObjectFieldConfig{
+			Type: gql.NewList(gql.NewNonNull(filterBaseArgType)),
+		}
+		fields["_not"] = &gql.InputObjectFieldConfig{
+			Type: filterBaseArgType,
+		}
 
-	// @todo: Handle Sub Object relational types using type indirection
-	// @body: Currently, we can't support embedded types or relations in
-	// our generation code because the GraphQL lib requires defined types
-	// to exist before referencing them. However, if we define type A,
-	// with another type embedded type B inside of it, when we generate the
-	// schema types for A, we don't have the necessary matching types
-	// for B yet. Need to implement some kind of type indirection that can
-	// be effectiently resolved at a later time.
-
-	// generate basic filter operator blocks for all the Leaf types
-	// (scalars + enums)
-	// @todo: Extract object field loop into its own utility func
-	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: s.typeMap[field.Type.Name()+"OperatorBlock"],
+		// generate basic filter operator blocks for all the Leaf types
+		// (scalars + enums)
+		// @todo: Extract object field loop into its own utility func
+		for _, field := range obj.Fields() {
+			if gql.IsLeafType(field.Type) { // only Scalars, and enums
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"],
+				}
 			}
 		}
-	}
 
-	// add objects (relations)
+		// add objects (relations)
 
+		return fields
+	})
+
+	// add the fields thunker
+	inputCfg.Fields = fieldThunk
 	return gql.NewInputObject(inputCfg)
 }
 
 // input {Type.Name}FilterBaseArg { ... }
-func (s *SchemaManager) genTypeFilterBaseArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeFilterBaseArgInput(obj gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterBaseArg"),
 	}
@@ -181,21 +222,22 @@ func (s *SchemaManager) genTypeFilterBaseArgInput(obj gql.Object) *gql.InputObje
 	for _, field := range obj.Fields() {
 		if gql.IsLeafType(field.Type) { // only Scalars, and enums
 			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: s.typeMap[field.Type.Name()+"OperatorBlock"],
+				Type: g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"],
 			}
 		}
 	}
 
+	inputCfg.Fields = fields
 	return gql.NewInputObject(inputCfg)
 }
 
 // query spec - sec N
-func (s *SchemaManager) genTypeHavingArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeHavingArgInput(obj gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "HavingArg"),
 	}
 	fields := gql.InputObjectConfigFieldMap{}
-	havingBlock := s.genTypeHavingBlockInput(obj)
+	havingBlock := g.genTypeHavingBlockInput(obj)
 
 	for _, field := range obj.Fields() {
 		if gql.IsLeafType(field.Type) { // only Scalars, and enums
@@ -205,10 +247,11 @@ func (s *SchemaManager) genTypeHavingArgInput(obj gql.Object) *gql.InputObject {
 		}
 	}
 
+	inputCfg.Fields = fields
 	return gql.NewInputObject(inputCfg)
 }
 
-func (s *SchemaManager) genTypeHavingBlockInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeHavingBlockInput(obj gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "HavingBlock"),
 	}
@@ -217,20 +260,69 @@ func (s *SchemaManager) genTypeHavingBlockInput(obj gql.Object) *gql.InputObject
 	for _, field := range obj.Fields() {
 		if gql.IsLeafType(field.Type) { // only Scalars, and enums
 			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: s.typeMap["FloatOperatorBlock"],
+				Type: g.manager.schema.TypeMap()["FloatOperatorBlock"],
 			}
 		}
 	}
 
+	inputCfg.Fields = fields
 	return gql.NewInputObject(inputCfg)
 }
 
-func (s *SchemaManager) genTypeOrderArgInput(obj gql.Object) *gql.InputObject {
-	return nil
+func (g *Generator) genTypeOrderArgInput(obj gql.Object) *gql.InputObject {
+	inputCfg := gql.InputObjectConfig{
+		Name: genTypeName(obj, "OrderArg"),
+	}
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		for _, field := range obj.Fields() {
+			if gql.IsLeafType(field.Type) { // only Scalars, and enums
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: g.manager.schema.TypeMap()["Ordering"],
+				}
+			}
+		}
+
+		// add sub objects
+
+		return fields
+	})
+
+	inputCfg.Fields = fieldThunk
+	return gql.NewInputObject(inputCfg)
 }
 
-func (s *SchemaManager) genTypeQueryCollectionField(obj gql.Object) *gql.Object {
-	return nil
+type queryInputTypeConfig struct {
+	filter  *gql.InputObject
+	groupBy *gql.Enum
+	having  *gql.InputObject
+	order   *gql.InputObject
+}
+
+// generate the type Query { ... }  field for the given type
+func (g *Generator) genTypeQueryCollectionField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
+	collectionName := strings.ToLower(obj.Name())
+	fieldConfig := &gql.Field{
+		Name: collectionName,
+		Type: gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			"filter":  newArgConfig(config.filter),
+			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"having":  newArgConfig(config.having),
+			"order":   newArgConfig(config.order),
+			"limit":   newArgConfig(gql.Int),
+			"offset":  newArgConfig(gql.Int),
+		},
+	}
+
+	return fieldConfig
+}
+
+func newArgConfig(t gql.Input) *gql.ArgumentConfig {
+	return &gql.ArgumentConfig{
+		Type: t,
+	}
 }
 
 func genTypeName(obj gql.Object, name string) string {
