@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/gogo/protobuf v1.2.1
+	github.com/graphql-go/graphql v0.7.9
 	github.com/ipfs/go-block-format v0.0.2
 	github.com/ipfs/go-blockservice v0.1.0
 	github.com/ipfs/go-cid v0.0.3
