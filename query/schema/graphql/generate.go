@@ -36,9 +36,9 @@ func NewGenerator(manager *SchemaManager) *Generator {
 	}
 }
 
-// FromString generates the query type definitions from a
+// FromSDL generates the query type definitions from a
 // encoded GraphQL Schema Definition Lanaguage string
-func (g *Generator) FromString(schema string) error {
+func (g *Generator) FromSDL(schema string) error {
 	// parse to AST
 	source := source.NewSource(&source.Source{
 		Body: []byte(schema),
@@ -75,7 +75,7 @@ func (g *Generator) FromAST(document *ast.Document) error {
 			return err
 		}
 	}
-	// reolve types
+	// resolve types
 	return g.manager.ResolveTypes()
 }
 
@@ -187,11 +187,14 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 // for creating the full DefraDB Query schema for a given
 // developer defined type
 func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) error {
+	if obj.Error() != nil {
+		return obj.Error()
+	}
 	types := queryInputTypeConfig{}
-	types.filter = g.genTypeFilterArgInput(*obj)
-	types.groupBy = g.genTypeFieldsEnum(*obj)
-	types.having = g.genTypeHavingArgInput(*obj)
-	types.order = g.genTypeOrderArgInput(*obj)
+	types.filter = g.genTypeFilterArgInput(obj)
+	types.groupBy = g.genTypeFieldsEnum(obj)
+	types.having = g.genTypeHavingArgInput(obj)
+	types.order = g.genTypeOrderArgInput(obj)
 
 	queryField := g.genTypeQueryCollectionField(obj, types)
 	queryType := g.manager.schema.QueryType()
@@ -201,9 +204,9 @@ func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) error {
 }
 
 // enum {Type.Name}Fields { ... }
-func (g *Generator) genTypeFieldsEnum(obj gql.Object) *gql.Enum {
+func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 	enumFieldsCfg := gql.EnumConfig{
-		Name:   genTypeName(&obj, "Fields"),
+		Name:   genTypeName(obj, "Fields"),
 		Values: gql.EnumValueConfigMap{},
 	}
 
@@ -215,9 +218,9 @@ func (g *Generator) genTypeFieldsEnum(obj gql.Object) *gql.Enum {
 }
 
 // input {Type.Name}FilterArg { ... }
-func (g *Generator) genTypeFilterArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(&obj, "FilterArg"),
+		Name: genTypeName(obj, "FilterArg"),
 	}
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
 		fields := gql.InputObjectConfigFieldMap{}
@@ -227,7 +230,7 @@ func (g *Generator) genTypeFilterArgInput(obj gql.Object) *gql.InputObject {
 		g.manager.schema.TypeMap()[filterBaseArgType.Name()] = filterBaseArgType
 
 		// conditionals
-		selfRefType := g.manager.schema.TypeMap()[genTypeName(&obj, "FilterArg")]
+		selfRefType := g.manager.schema.TypeMap()[genTypeName(obj, "FilterArg")]
 		fields["_and"] = &gql.InputObjectFieldConfig{
 			Type: gql.NewList(selfRefType),
 		}
@@ -264,9 +267,9 @@ func (g *Generator) genTypeFilterArgInput(obj gql.Object) *gql.InputObject {
 }
 
 // input {Type.Name}FilterBaseArg { ... }
-func (g *Generator) genTypeFilterBaseArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(&obj, "FilterBaseArg"),
+		Name: genTypeName(obj, "FilterBaseArg"),
 	}
 	fields := gql.InputObjectConfigFieldMap{}
 	// generate basic filter operator blocks for all the Leaf types
@@ -284,9 +287,9 @@ func (g *Generator) genTypeFilterBaseArgInput(obj gql.Object) *gql.InputObject {
 }
 
 // query spec - sec N
-func (g *Generator) genTypeHavingArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeHavingArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(&obj, "HavingArg"),
+		Name: genTypeName(obj, "HavingArg"),
 	}
 	fields := gql.InputObjectConfigFieldMap{}
 	havingBlock := g.genTypeHavingBlockInput(obj)
@@ -303,9 +306,9 @@ func (g *Generator) genTypeHavingArgInput(obj gql.Object) *gql.InputObject {
 	return gql.NewInputObject(inputCfg)
 }
 
-func (g *Generator) genTypeHavingBlockInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeHavingBlockInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(&obj, "HavingBlock"),
+		Name: genTypeName(obj, "HavingBlock"),
 	}
 	fields := gql.InputObjectConfigFieldMap{}
 
@@ -321,9 +324,9 @@ func (g *Generator) genTypeHavingBlockInput(obj gql.Object) *gql.InputObject {
 	return gql.NewInputObject(inputCfg)
 }
 
-func (g *Generator) genTypeOrderArgInput(obj gql.Object) *gql.InputObject {
+func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(&obj, "OrderArg"),
+		Name: genTypeName(obj, "OrderArg"),
 	}
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
 		fields := gql.InputObjectConfigFieldMap{}
