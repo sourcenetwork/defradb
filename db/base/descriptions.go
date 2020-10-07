@@ -1,0 +1,71 @@
+package base
+
+import "github.com/sourcenetwork/defradb/core/crdt"
+
+// CollectionDescription describes a Collection and
+// all its associated metadata
+type CollectionDescription struct {
+	Name    string
+	ID      uint32
+	Schema  SchemaDesrcription
+	Indexes []IndexDescription
+}
+
+// IDString returns the collection ID as a string
+func (col CollectionDescription) IDString() string {
+	return string(col.ID)
+}
+
+// IndexDescription describes an Index on a Collection
+// and its assocatied metadata.
+type IndexDescription struct {
+	Name     string
+	ID       uint32
+	Primary  bool
+	Unique   bool
+	FieldIDs []uint32
+}
+
+func (index IndexDescription) IDString() string {
+	return string(index.ID)
+}
+
+type SchemaDesrcription struct {
+	ID  uint32
+	Key []byte
+	// Schema schema.Schema
+	FieldIDs []uint32
+	Fields   []FieldDescription
+}
+
+func (sd SchemaDesrcription) IsEmpty() bool {
+	if sd.ID == 0 &&
+		len(sd.Key) == 0 &&
+		len(sd.FieldIDs) == 0 &&
+		len(sd.Fields) == 0 {
+		return true
+	}
+	return false
+}
+
+type FieldKind uint8
+
+const (
+	FieldKind_None FieldKind = iota
+	FieldKind_DocKey
+	FieldKind_BOOL
+	FieldKind_INT
+	FieldKind_FLOAT
+	FieldKind_DECIMNAL
+	FieldKind_DATE
+	FieldKind_TIMESTAMP
+	FieldKind_STRING
+	FieldKind_BYTES
+)
+
+type FieldDescription struct {
+	Name string
+	ID   uint32
+	Kind FieldKind
+	Typ  crdt.Type
+}
