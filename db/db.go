@@ -37,6 +37,9 @@ const (
 type DB struct {
 	rootstore ds.Batching // main storage interface
 
+	systemstore    ds.Batching // wrapped store for system data
+	ssKeyTransform ktds.KeyTransform
+
 	datastore      ds.Batching // wrapped store for data
 	dsKeyTransform ktds.KeyTransform
 
@@ -83,6 +86,7 @@ func NewDB(options *Options) (*DB, error) {
 	}
 
 	log := logging.Logger("defradb")
+	systemstore := namespace.Wrap(rootstore, ds.NewKey("/db/system"))
 	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
 	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
 	blockstore := namespace.Wrap(rootstore, ds.NewKey("/db/blocks"))
@@ -91,6 +95,9 @@ func NewDB(options *Options) (*DB, error) {
 
 	return &DB{
 		rootstore: rootstore,
+
+		systemstore:    systemstore,
+		ssKeyTransform: systemstore.KeyTransform,
 
 		datastore:      datastore,
 		dsKeyTransform: datastore.KeyTransform,
