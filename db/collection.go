@@ -16,6 +16,7 @@ var (
 
 type Collection struct {
 	db   *DB
+	txn  *Txn
 	desc base.CollectionDescription
 }
 
@@ -86,6 +87,17 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 	var col *Collection
 	err = json.Unmarshal(buf, col)
 	return col, err
+}
+
+func (c *Collection) ValidDescription() bool {
+	return false
+}
+
+func (c *Collection) WithTxn(txn *Txn) *Collection {
+	return &Collection{
+		txn:  txn,
+		desc: c.desc,
+	}
 }
 
 func (c *Collection) Create() {}
