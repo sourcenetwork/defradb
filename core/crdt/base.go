@@ -14,7 +14,7 @@ type Type byte
 
 const (
 	//no lint
-	none = Type(iota) // reserved none type
+	NONE_CRDT = Type(iota) // reserved none type
 	LWW_REGISTER
 	OBJECT
 )
