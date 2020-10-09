@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -25,6 +26,13 @@ var (
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key
 	ErrDocVerification = errors.New("The document verificatioin failed")
+
+	// Individual Store Keys
+	rootStoreKey   = ds.NewKey("/db")
+	systemStoreKey = rootStoreKey.ChildString("/system")
+	dataStoreKey   = rootStoreKey.ChildString("/data")
+	headStoreKey   = rootStoreKey.ChildString("/heads")
+	blockStoreKey  = rootStoreKey.ChildString("/blocks")
 )
 
 const (
@@ -35,6 +43,8 @@ const (
 // DefraDB storage system.
 //
 type DB struct {
+	glock sync.RWMutex
+
 	rootstore ds.Batching // main storage interface
 
 	systemstore    ds.Batching // wrapped store for system data
@@ -50,6 +60,9 @@ type DB struct {
 	dagKeyTransform ktds.KeyTransform
 
 	crdtFactory *crdt.Factory
+
+	// indicates if this references an initalized database
+	initialized bool
 
 	log logging.StandardLogger
 }
@@ -86,14 +99,14 @@ func NewDB(options *Options) (*DB, error) {
 	}
 
 	log := logging.Logger("defradb")
-	systemstore := namespace.Wrap(rootstore, ds.NewKey("/db/system"))
-	datastore := namespace.Wrap(rootstore, ds.NewKey("/db/data"))
-	headstore := namespace.Wrap(rootstore, ds.NewKey("/db/heads"))
-	blockstore := namespace.Wrap(rootstore, ds.NewKey("/db/blocks"))
+	systemstore := namespace.Wrap(rootstore, systemStoreKey)
+	datastore := namespace.Wrap(rootstore, dataStoreKey)
+	headstore := namespace.Wrap(rootstore, headStoreKey)
+	blockstore := namespace.Wrap(rootstore, blockStoreKey)
 	dagstore := store.NewDAGStore(blockstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 
-	return &DB{
+	db := &DB{
 		rootstore: rootstore,
 
 		systemstore:    systemstore,
@@ -110,7 +123,31 @@ func NewDB(options *Options) (*DB, error) {
 
 		crdtFactory: &crdtFactory,
 		log:         log,
-	}, nil
+	}
+
+	err = db.Initialize()
+	return db, err
+}
+
+// Initialize is called when a database is first run and creates all the db global meta data
+// like Collection ID counters
+func (db *DB) Initialize() error {
+	db.glock.Lock()
+	defer db.glock.Unlock()
+
+	if db.initialized { // skip
+		return nil
+	}
+
+	exists, err := db.systemstore.Has(ds.NewKey("init"))
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	return nil
 }
 
 // Create a new document

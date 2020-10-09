@@ -31,8 +31,15 @@ type Txn struct {
 	dagstore  core.DAGStore       // wrapped txn /blocks namespace
 }
 
+// Txn creates a new transaction which can be set to readonly mode
+func (db *DB) NewTxn(readonly bool) (*Txn, error) {
+	return db.newTxn(readonly)
+}
+
 // readonly is only for datastores that support ds.TxnDatastore
 func (db *DB) newTxn(readonly bool) (*Txn, error) {
+	db.glock.RLock()
+	defer db.glock.RUnlock()
 	txn := new(Txn)
 
 	// check if our datastore natively supports transactions or Batching
@@ -112,3 +119,7 @@ type shimBatcherTxn struct {
 func (shimBatcherTxn) Discard() {
 	// noop
 }
+
+// txn := db.NewTxn()
+// users := db.GetCollection("users")
+// usersTxn := users.WithTxn(txn)
