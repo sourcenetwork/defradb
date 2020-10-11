@@ -55,7 +55,7 @@ func (seq *sequence) update() error {
 }
 
 func (seq *sequence) next() (uint64, error) {
-	val, err := seq.get()
+	_, err := seq.get()
 	if err != nil {
 		return 0, err
 	}
