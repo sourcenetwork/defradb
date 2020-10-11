@@ -25,7 +25,7 @@ func (db *DB) getSequence(key string) (*sequence, error) {
 	}
 
 	_, err := seq.get()
-	if err != ds.ErrNotFound {
+	if err == ds.ErrNotFound {
 		seq.update()
 	} else if err != nil {
 		return nil, err

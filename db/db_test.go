@@ -193,15 +193,23 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = db.Save(doc)
+	fmt.Println(doc.Get("Name"))
 	assert.NoError(t, err)
+
+	fmt.Printf("-------\n")
+	db.printDebugDB()
+	fmt.Printf("-------\n")
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	doc, err = db.Get(key)
+	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	// value check
 	name, err := doc.Get("Name")
+	fmt.Println("-----------------------------------------------")
+	fmt.Println(name)
 	assert.NoError(t, err)
 	age, err := doc.Get("Age")
 	assert.NoError(t, err)
