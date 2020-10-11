@@ -1,6 +1,7 @@
 package db
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/document"
@@ -60,6 +61,7 @@ func (db *DB) get(key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	// of the document exist, as well as any sub documents, etc
 	q := query.Query{
 		Prefix:   key.Key.String(),
+		Filters:  []query.Filter{filterPriorityEntry{}},
 		KeysOnly: false,
 	}
 
@@ -80,9 +82,7 @@ func (db *DB) get(key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	collector := newFieldCollector()
 	for r := range res.Next() {
 		// do we need to check r.Error here?
-		if k := ds.NewKey(r.Key); k.Name() != "p" { // ignore priority key
-			collector.dispatch(k.Type(), r.Entry)
-		}
+		collector.dispatch(ds.NewKey(r.Key).Type(), r.Entry)
 	}
 
 	done := make(chan struct{})
@@ -175,7 +175,10 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 
 		switch k.Name() {
 		case "v": // main cbor encoded value
-			err := cbor.Unmarshal(entry.Value, &res.value)
+			crdtByte := entry.Value[0]
+			res.ctype = crdt.Type(crdtByte)
+			buf := entry.Value[1:]
+			err := cbor.Unmarshal(buf, &res.value)
 			if err != nil {
 				res.err = err
 				c.fieldResultsCh <- res
@@ -188,7 +191,7 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 		// if weve completed all our tasks, close this queue/process down
 		collected++
 		// fmt.Printf("Collected status: %d/3\n", collected)
-		if collected == 3 { // maybe parameterize this constant
+		if collected == 2 { // maybe parameterize this constant
 			// fmt.Printf("Closing queue and process for %s...\n", res.name)
 			c.fieldResultsCh <- res
 			close(q)
@@ -199,4 +202,10 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 
 func (c *fieldCollector) results() <-chan fieldResult {
 	return c.fieldResultsCh
+}
+
+type filterPriorityEntry struct{}
+
+func (f filterPriorityEntry) Filter(e query.Entry) bool {
+	return !strings.HasSuffix(e.Key, ":p")
 }

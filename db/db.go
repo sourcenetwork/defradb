@@ -140,11 +140,18 @@ func (db *DB) Initialize() error {
 	}
 
 	exists, err := db.systemstore.Has(ds.NewKey("init"))
-	if err != nil {
+	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
 	if exists {
 		return nil
+	}
+
+	//init meta data
+	// collection sequence
+	_, err = db.getSequence("collection")
+	if err != nil {
+		return err
 	}
 
 	return nil
