@@ -8,17 +8,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-// Type indicates MerkleCRDT type
-// @todo: Migrate core/crdt.Type and merkle/crdt.Type to unifiied /core.CRDTType
-type Type byte
-
-const (
-	//no lint
-	NONE_CRDT = Type(iota) // reserved none type
-	LWW_REGISTER
-	OBJECT
-)
-
 var (
 	keysNs         = "k"  // /keys namespace /set/k/<key>/{v,p}
 	valueSuffix    = "v"  // value key

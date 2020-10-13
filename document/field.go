@@ -1,25 +1,24 @@
 package document
 
 import (
-	"github.com/sourcenetwork/defradb/merkle/crdt"
-
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 // Field is an interface to interact with Fields inside a document
 type Field interface {
 	Key() ds.Key
 	Name() string
-	Type() crdt.Type //TODO Abstract into a Field Type interface
+	Type() core.CType //TODO Abstract into a Field Type interface
 }
 
 type simpleField struct {
 	name     string
 	key      ds.Key
-	crdtType crdt.Type
+	crdtType core.CType
 }
 
-func (doc *Document) newField(t crdt.Type, name string) Field {
+func (doc *Document) newField(t core.CType, name string) Field {
 	return simpleField{
 		name:     name,
 		key:      doc.Key().ChildString(name),
@@ -31,7 +30,7 @@ func (field simpleField) Name() string {
 	return field.name
 }
 
-func (field simpleField) Type() crdt.Type {
+func (field simpleField) Type() core.CType {
 	return field.crdtType
 }
 

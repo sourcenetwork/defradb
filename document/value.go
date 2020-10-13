@@ -5,6 +5,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -13,7 +14,7 @@ import (
 type Value interface {
 	Value() interface{}
 	IsDocument() bool
-	Type() crdt.Type
+	Type() core.CType
 	IsDirty() bool
 	Clean()
 	IsDelete() bool //todo: Update IsDelete naming
@@ -38,14 +39,14 @@ type ReadableValue interface {
 }
 
 type simpleValue struct {
-	t       crdt.Type
+	t       core.CType
 	value   interface{}
 	crdt    crdt.MerkleCRDT
 	isDirty bool
 	delete  bool
 }
 
-func newValue(t crdt.Type, val interface{}) simpleValue {
+func newValue(t core.CType, val interface{}) simpleValue {
 	return simpleValue{
 		t:       t,
 		value:   val,
@@ -59,7 +60,7 @@ func (val simpleValue) Value() interface{} {
 	return val.value
 }
 
-func (val simpleValue) Type() crdt.Type {
+func (val simpleValue) Type() core.CType {
 	return val.t
 }
 
@@ -98,7 +99,7 @@ type StringValue struct {
 }
 
 // NewStringValue creates a new typed String Value
-func NewStringValue(t crdt.Type, val string) WriteableValue {
+func NewStringValue(t core.CType, val string) WriteableValue {
 	v := newValue(t, val)
 	return StringValue{&v}
 }
@@ -118,7 +119,7 @@ type Int64Value struct {
 }
 
 // NewInt64Value creates a new typed int64 value
-func NewInt64Value(t crdt.Type, val int64) WriteableValue {
+func NewInt64Value(t core.CType, val int64) WriteableValue {
 	v := newValue(t, val)
 	return Int64Value{&v}
 }
@@ -139,7 +140,7 @@ type cborValue struct {
 	*simpleValue
 }
 
-func newCBORValue(t crdt.Type, val interface{}) WriteableValue {
+func newCBORValue(t core.CType, val interface{}) WriteableValue {
 	v := newValue(t, val)
 	return cborValue{&v}
 }
@@ -155,7 +156,7 @@ func (v cborValue) Bytes() ([]byte, error) {
 // }
 
 // func (val *simpleValue) SetCRDT(crdt crdt.MerkleCRDT) error {
-// 	// if val.Type() != crdt.Type() {
+// 	// if val.Type() != core.CType() {
 
 // 	// } else {
 
