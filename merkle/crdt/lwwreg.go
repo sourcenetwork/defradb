@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	DefaultFactory.Register(LWW_REGISTER, &lwwFactoryFn)
+	DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
 }
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
