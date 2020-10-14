@@ -7,8 +7,8 @@ import (
 	mh "github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 var (
@@ -56,11 +56,11 @@ func TestNewFromJSON(t *testing.T) {
 	// check field/value
 	// fields
 	assert.Equal(t, doc.fields["Name"].Name(), "Name")
-	assert.Equal(t, doc.fields["Name"].Type(), crdt.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Name"].Type(), core.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Age"].Name(), "Age")
-	assert.Equal(t, doc.fields["Age"].Type(), crdt.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Age"].Type(), core.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Address"].Name(), "Address")
-	assert.Equal(t, doc.fields["Address"].Type(), crdt.OBJECT)
+	assert.Equal(t, doc.fields["Address"].Type(), core.OBJECT)
 
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "John")
@@ -72,9 +72,9 @@ func TestNewFromJSON(t *testing.T) {
 	//subdoc fields
 	subDoc := doc.values[doc.fields["Address"]].Value().(*Document)
 	assert.Equal(t, subDoc.fields["Street"].Name(), "Street")
-	assert.Equal(t, subDoc.fields["Street"].Type(), crdt.LWW_REGISTER)
+	assert.Equal(t, subDoc.fields["Street"].Type(), core.LWW_REGISTER)
 	assert.Equal(t, subDoc.fields["City"].Name(), "City")
-	assert.Equal(t, subDoc.fields["City"].Type(), crdt.LWW_REGISTER)
+	assert.Equal(t, subDoc.fields["City"].Type(), core.LWW_REGISTER)
 
 	//subdoc values
 	assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")
