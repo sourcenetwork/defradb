@@ -20,7 +20,7 @@ func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestMerkleClock() *merkleClock {
+func newTestMerkleClock() *MerkleClock {
 	ns := ds.NewKey("/test/db")
 	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
@@ -29,7 +29,7 @@ func newTestMerkleClock() *merkleClock {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	return NewMerkleClock(headstore, dagstore, id, reg).(*merkleClock)
+	return NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
@@ -41,7 +41,7 @@ func TestNewMerkleClock(t *testing.T) {
 	dagstore := store.NewDAGStore(batchStore)
 	id := "mydockey"
 	reg := crdt.NewLWWRegister(s, ns, id)
-	clk := NewMerkleClock(headstore, dagstore, id, reg).(*merkleClock)
+	clk := NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
 
 	if clk.headstore != headstore {
 		t.Error("MerkleClock store not correctly set")

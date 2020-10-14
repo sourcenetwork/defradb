@@ -10,8 +10,9 @@ import (
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 // This is the main implementation stating point for accessing the internal Document API
@@ -47,7 +48,12 @@ var (
 // Values are literal or complex objects such as strings, integers, or sub documents (objects)
 //
 // Note: Documents represent the serialized state of the underlying MerkleCRDTs
+//
+// @todo: Extract Document into a Interface
+// @body: A document interface can be implemented by both a TypedDocument and a
+// UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
+	schema base.SchemaDesrcription
 	key    key.DocKey
 	fields map[string]Field
 	values map[Field]Value
@@ -189,7 +195,7 @@ func (doc *Document) Set(field string, value interface{}) error {
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
-func (doc *Document) SetAs(field string, value interface{}, t crdt.Type) error {
+func (doc *Document) SetAs(field string, value interface{}, t core.CType) error {
 	return doc.setCBOR(t, field, value)
 }
 
@@ -208,13 +214,13 @@ func (doc *Document) Delete(fields ...string) error {
 }
 
 // SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t crdt.Type, field string, value interface{}) error {
+// func (doc *Document) SetAsType(t core.CType, field string, value interface{}) error {
 // 	return doc.set(t, field, value)
 // }
 
 // set implementation
 // @todo Apply locking on  Document field/value operations
-func (doc *Document) set(t crdt.Type, field string, value Value) error {
+func (doc *Document) set(t core.CType, field string, value Value) error {
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
@@ -227,22 +233,22 @@ func (doc *Document) set(t crdt.Type, field string, value Value) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t crdt.Type, field string, val interface{}) error {
+func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error {
 	value := newCBORValue(t, val)
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setString(t crdt.Type, field string, val string) error {
+func (doc *Document) setString(t core.CType, field string, val string) error {
 	value := NewStringValue(t, val)
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setInt64(t crdt.Type, field string, val int64) error {
+func (doc *Document) setInt64(t core.CType, field string, val int64) error {
 	value := NewInt64Value(t, val)
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setObject(t crdt.Type, field string, val *Document) error {
+func (doc *Document) setObject(t core.CType, field string, val *Document) error {
 	value := newValue(t, val)
 	return doc.set(t, field, &value)
 }
@@ -257,15 +263,15 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		// Check if its actually a float or just an int
 		val := value.(float64)
 		if float64(int64(val)) == val { //int
-			doc.setCBOR(crdt.LWW_REGISTER, field, int64(val))
+			doc.setCBOR(core.LWW_REGISTER, field, int64(val))
 		} else { //float
-			doc.setCBOR(crdt.LWW_REGISTER, field, value)
+			doc.setCBOR(core.LWW_REGISTER, field, value)
 		}
 		break
 
 	// string, bool, and more
 	case string, bool:
-		doc.setCBOR(crdt.LWW_REGISTER, field, value)
+		doc.setCBOR(core.LWW_REGISTER, field, value)
 		break
 
 	// array
@@ -288,7 +294,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 			return err
 		}
 
-		doc.setObject(crdt.OBJECT, field, subDoc)
+		doc.setObject(core.OBJECT, field, subDoc)
 		break
 
 	default:
