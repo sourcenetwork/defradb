@@ -40,6 +40,7 @@ func (db *DB) NewTxn(readonly bool) (*Txn, error) {
 func (db *DB) newTxn(readonly bool) (*Txn, error) {
 	db.glock.RLock()
 	defer db.glock.RUnlock()
+	
 	txn := new(Txn)
 
 	// check if our datastore natively supports transactions or Batching
