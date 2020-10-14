@@ -1,6 +1,6 @@
 package base
 
-import "github.com/sourcenetwork/defradb/core/crdt"
+import "github.com/sourcenetwork/defradb/core"
 
 // CollectionDescription describes a Collection and
 // all its associated metadata
@@ -38,6 +38,7 @@ type SchemaDesrcription struct {
 	Fields   []FieldDescription
 }
 
+//IsEmpty returns true if the SchemaDescription is empty and unitialized
 func (sd SchemaDesrcription) IsEmpty() bool {
 	if sd.ID == 0 &&
 		len(sd.Key) == 0 &&
@@ -67,5 +68,5 @@ type FieldDescription struct {
 	Name string
 	ID   uint32
 	Kind FieldKind
-	Typ  crdt.Type
+	Typ  core.CType
 }
