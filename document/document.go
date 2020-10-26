@@ -53,7 +53,7 @@ var (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	schema base.SchemaDesrcription
+	schema base.SchemaDescription
 	key    key.DocKey
 	fields map[string]Field
 	values map[Field]Value

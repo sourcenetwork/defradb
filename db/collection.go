@@ -121,6 +121,26 @@ func (c *Collection) ValidDescription() bool {
 	return false
 }
 
+func (c *Collection) Name() string {
+	return c.desc.Name
+}
+
+func (c *Collection) Schema() base.SchemaDescription {
+	return c.desc.Schema
+}
+
+func (c *Collection) ID() uint32 {
+	return c.colID
+}
+
+func (c *Collection) Indexes() []base.IndexDescription {
+	return c.desc.Indexes
+}
+
+func (c *Collection) Description() base.CollectionDescription {
+	return c.desc
+}
+
 func (c *Collection) WithTxn(txn *Txn) *Collection {
 	return &Collection{
 		txn:      txn,

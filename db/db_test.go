@@ -26,7 +26,7 @@ func newMemoryDB() (*DB, error) {
 	return NewDB(opts)
 }
 
-func newCollection(db *DB) (*Collection, error) {
+func newTestCollection(db *DB) (*Collection, error) {
 	return db.CreateCollection(base.CollectionDescription{
 		Name: "test",
 	})
@@ -71,7 +71,7 @@ func TestNewDBWithCollection(t *testing.T) {
 func TestDBSaveSimpleDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -112,7 +112,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 func TestDBUpdateDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -161,7 +161,7 @@ func TestDBUpdateDocument(t *testing.T) {
 func TestDBUpdateNonExistingDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -183,7 +183,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 func TestDBUpdateExistingDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -225,7 +225,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 func TestDBGetDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -269,7 +269,7 @@ func TestDBGetDocument(t *testing.T) {
 func TestDBGetNotFoundDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
@@ -281,7 +281,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 func TestDBDeleteDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
@@ -306,7 +306,7 @@ func TestDBDeleteDocument(t *testing.T) {
 func TestDBDeleteNotFoundDocument(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
@@ -319,7 +319,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 func TestDocumentMerkleDAG(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
-	col, err := newCollection(db)
+	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
