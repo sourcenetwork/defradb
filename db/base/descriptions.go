@@ -7,7 +7,7 @@ import "github.com/sourcenetwork/defradb/core"
 type CollectionDescription struct {
 	Name    string
 	ID      uint32
-	Schema  SchemaDesrcription
+	Schema  SchemaDescription
 	Indexes []IndexDescription
 }
 
@@ -30,7 +30,7 @@ func (index IndexDescription) IDString() string {
 	return string(index.ID)
 }
 
-type SchemaDesrcription struct {
+type SchemaDescription struct {
 	ID  uint32
 	Key []byte
 	// Schema schema.Schema
@@ -39,7 +39,7 @@ type SchemaDesrcription struct {
 }
 
 //IsEmpty returns true if the SchemaDescription is empty and unitialized
-func (sd SchemaDesrcription) IsEmpty() bool {
+func (sd SchemaDescription) IsEmpty() bool {
 	if sd.ID == 0 &&
 		len(sd.Key) == 0 &&
 		len(sd.FieldIDs) == 0 &&
