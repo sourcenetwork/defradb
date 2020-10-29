@@ -32,6 +32,12 @@ type Collection struct {
 	desc base.CollectionDescription
 }
 
+// @todo: Move the base Descriptions to an internal API within the db/ package.
+// @body: Currently, the New/Create Collection APIs accept CollectionDescriptions
+// as params. We want these Descriptions objects to be low level descriptions, and
+// to be auto generated based on a more controllable and user friendly
+// CollectionOptions object.
+
 // NewCollection returns a pointer to a newly instanciated DB Collection
 func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error) {
 	if desc.Name == "" {
@@ -64,6 +70,17 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 			desc.Schema.FieldIDs = append(desc.Schema.FieldIDs, uint32(i))
 			desc.Schema.Fields[i].ID = uint32(i)
 		}
+	}
+
+	// for now, ignore any defined indexes, and overwrite the entire IndexDescription
+	// property with the correct default one.
+	desc.Indexes = []base.IndexDescription{
+		{
+			Name:    "primary",
+			ID:      uint32(0),
+			Primary: true,
+			Unique:  true,
+		},
 	}
 
 	return &Collection{
