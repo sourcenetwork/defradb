@@ -107,11 +107,12 @@ func (db *DB) CreateCollection(desc base.CollectionDescription) (*Collection, er
 	if err != nil {
 		return nil, err
 	}
-	buf, err := json.Marshal(desc)
+
+	buf, err := json.Marshal(col.desc)
 	if err != nil {
 		return nil, err
 	}
-	key := makeCollectionSystemKey(desc.Name)
+	key := makeCollectionSystemKey(col.desc.Name)
 
 	//write the collection metadata to the system store
 	err = db.systemstore.Put(key, buf)
@@ -129,9 +130,19 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 	if err != nil {
 		return nil, err
 	}
-	var col *Collection
-	err = json.Unmarshal(buf, col)
-	return col, err
+
+	var desc base.CollectionDescription
+	err = json.Unmarshal(buf, &desc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Collection{
+		db:       db,
+		desc:     desc,
+		colID:    desc.ID,
+		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
+	}, nil
 }
 
 func (c *Collection) ValidDescription() bool {
