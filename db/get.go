@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/core"
+	_ "github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 

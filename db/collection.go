@@ -64,7 +64,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 			if field.Kind == base.FieldKind_None {
 				return nil, errors.New("Collection schema field missing FieldKind")
 			}
-			if field.Typ == core.NONE_CRDT {
+			if field.Kind != base.FieldKind_DocKey && field.Typ == core.NONE_CRDT {
 				return nil, errors.New("Collection schema field missing CRDT type")
 			}
 			desc.Schema.FieldIDs = append(desc.Schema.FieldIDs, uint32(i))
@@ -145,22 +145,30 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 	}, nil
 }
 
-func (c *Collection) ValidDescription() bool {
-	return false
-}
+// ValidDescription
+// func (c *Collection) ValidDescription() bool {
+// 	return false
+// }
 
+// Name returns the collection name
 func (c *Collection) Name() string {
 	return c.desc.Name
 }
 
+// Schema returns the Schema of the collection
 func (c *Collection) Schema() base.SchemaDescription {
 	return c.desc.Schema
 }
 
+// ID returns the ID of the collection
 func (c *Collection) ID() uint32 {
 	return c.colID
 }
 
+// Indexes returns the defined indexes on the Collection
+// @todo: Properly handle index creation/management
+
+//
 func (c *Collection) Indexes() []base.IndexDescription {
 	return c.desc.Indexes
 }

@@ -16,6 +16,9 @@ var (
 	ErrNoTxnSupport = errors.New("The given store has no transaction or batching support")
 )
 
+// implement interface check
+var _ core.Txn = (*Txn)(nil)
+
 // Txn is a transaction interface for interacting with the Database.
 // It carries over the semantics of the underlying datastore regarding
 // transactions.
@@ -40,7 +43,7 @@ func (db *DB) NewTxn(readonly bool) (*Txn, error) {
 func (db *DB) newTxn(readonly bool) (*Txn, error) {
 	db.glock.RLock()
 	defer db.glock.RUnlock()
-	
+
 	txn := new(Txn)
 
 	// check if our datastore natively supports transactions or Batching
