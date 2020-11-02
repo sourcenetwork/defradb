@@ -13,34 +13,21 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
-			ID:       uint32(1),
-			FieldIDs: []uint32{1, 2, 3},
 			Fields: []base.FieldDescription{
 				base.FieldDescription{
 					Name: "_key",
-					ID:   uint32(1),
 					Kind: base.FieldKind_DocKey,
 				},
 				base.FieldDescription{
 					Name: "Name",
-					ID:   uint32(2),
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name: "Age",
-					ID:   uint32(3),
 					Kind: base.FieldKind_INT,
 					Typ:  core.LWW_REGISTER,
 				},
-			},
-		},
-		Indexes: []base.IndexDescription{
-			{
-				Name:    "primary",
-				ID:      uint32(0),
-				Primary: true,
-				Unique:  true,
 			},
 		},
 	}
@@ -52,23 +39,6 @@ func TestNewCollection(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	_, err = newTestCollection(db)
-	assert.NoError(t, err)
-}
-
-func TestNewCollectionWithSchema(t *testing.T) {
-	db, err := newMemoryDB()
-	assert.NoError(t, err)
-
-	_, err = newTestCollectionWithSchema(db)
-	assert.NoError(t, err)
-
-}
-
-func TestCollectionProperties(t *testing.T) {
-	db, err := newMemoryDB()
-	assert.NoError(t, err)
-
 	col, err := newTestCollection(db)
 	assert.NoError(t, err)
 
@@ -77,6 +47,33 @@ func TestCollectionProperties(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(col.Schema(), base.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
 }
+
+func TestNewCollectionWithSchema(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	desc := col.Description()
+	schema := col.Schema()
+	// indexes := col.Indexes()
+
+	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
+	assert.Equal(t, "users", col.Name())
+	assert.Equal(t, uint32(1), col.ID())
+	assert.False(t, reflect.DeepEqual(schema, base.SchemaDescription{}))
+	assert.Equal(t, 1, len(col.Indexes()))
+	assert.Equal(t, 3, len(schema.Fields))
+	assert.Equal(t, 3, len(schema.FieldIDs))
+
+	for i := 0; i < 3; i++ {
+		assert.Equal(t, uint32(i), schema.FieldIDs[i])
+		assert.Equal(t, uint32(i), schema.Fields[i].ID)
+	}
+}
+
+// func TestCollectionIndexes
 
 func TestGetCollection(t *testing.T) {
 	db, err := newMemoryDB()

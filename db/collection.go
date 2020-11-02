@@ -22,6 +22,8 @@ var (
 	collectionNs     = ds.NewKey("/collection")
 )
 
+// Collection stores data records at Documents, which are gathered
+// together under a collection name. This is analgeous to SQL Tables.
 type Collection struct {
 	db  *DB
 	txn *Txn
@@ -29,7 +31,8 @@ type Collection struct {
 	colID    uint32
 	colIDKey core.Key
 
-	desc base.CollectionDescription
+	desc      base.CollectionDescription
+	hasSchema bool
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -49,6 +52,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 	}
 
 	if !desc.Schema.IsEmpty() {
+		fmt.Println()
 		if len(desc.Schema.Fields) == 0 {
 			return nil, errors.New("Collection schema has no fields")
 		}
@@ -67,7 +71,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 			if field.Kind != base.FieldKind_DocKey && field.Typ == core.NONE_CRDT {
 				return nil, errors.New("Collection schema field missing CRDT type")
 			}
-			desc.Schema.FieldIDs = append(desc.Schema.FieldIDs, uint32(i))
+			desc.Schema.FieldIDs[i] = uint32(i)
 			desc.Schema.Fields[i].ID = uint32(i)
 		}
 	}
@@ -84,10 +88,11 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 	}
 
 	return &Collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
+		db:        db,
+		desc:      desc,
+		colID:     desc.ID,
+		colIDKey:  core.NewKey(fmt.Sprint(desc.ID)),
+		hasSchema: !desc.Schema.IsEmpty(),
 	}, nil
 }
 
@@ -150,6 +155,11 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 // 	return false
 // }
 
+// Description returns the base.CollectionDescription
+func (c *Collection) Description() base.CollectionDescription {
+	return c.desc
+}
+
 // Name returns the collection name
 func (c *Collection) Name() string {
 	return c.desc.Name
@@ -167,16 +177,35 @@ func (c *Collection) ID() uint32 {
 
 // Indexes returns the defined indexes on the Collection
 // @todo: Properly handle index creation/management
-
-//
 func (c *Collection) Indexes() []base.IndexDescription {
 	return c.desc.Indexes
 }
 
-func (c *Collection) Description() base.CollectionDescription {
-	return c.desc
+// PrimaryIndex returns the primary index for the given collection
+func (c *Collection) PrimaryIndex() base.IndexDescription {
+	return c.desc.Indexes[0]
 }
 
+// Index returns the index with the given index ID
+func (c *Collection) Index(id uint32) (base.IndexDescription, error) {
+	for _, index := range c.desc.Indexes {
+		if index.ID == id {
+			return index, nil
+		}
+	}
+
+	return base.IndexDescription{}, errors.New("No index found for given ID")
+}
+
+// CreateIndex creates a new index on the collection. Custom indexes
+// are always "Secondary indexes". Primary indexes are automatically created
+// on Collection creation, and cannot be changed.
+func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
+	panic("not implemented")
+}
+
+// WithTxn returns a new instance of the collection, with a transaction
+// handle instead of a raw DB handle
 func (c *Collection) WithTxn(txn *Txn) *Collection {
 	return &Collection{
 		txn:      txn,
@@ -329,7 +358,8 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			err := c.saveValueToMerkleCRDT(txn, c.getDocKey(doc.Key().ChildString(k)), val)
+			fieldKey := c.getFieldKey(doc, k)
+			err := c.saveValueToMerkleCRDT(txn, c.getDocKey(fieldKey), val)
 			if err != nil {
 				return err
 			}
@@ -479,6 +509,25 @@ func (c *Collection) commitImplicitTxn(txn *Txn) error {
 
 func (c *Collection) getDocKey(key ds.Key) ds.Key {
 	return c.colIDKey.Child(key)
+}
+
+func (c *Collection) getFieldKey(doc *document.Document, fieldName string) ds.Key {
+	if c.hasSchema {
+		return doc.Key().ChildString(fmt.Sprint(c.getSchemaFieldID(fieldName)))
+	}
+	return doc.Key().ChildString(fieldName)
+}
+
+// getSchemaFieldID returns the FieldID of the given fieldName.
+// It assumes a schema exists for the collection, and that the
+// field exists in the schema.
+func (c *Collection) getSchemaFieldID(fieldName string) uint32 {
+	for _, field := range c.desc.Schema.Fields {
+		if field.Name == fieldName {
+			return field.ID
+		}
+	}
+	return uint32(0)
 }
 
 func writeObjectMarker(store ds.Write, key ds.Key) error {
