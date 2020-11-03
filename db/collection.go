@@ -275,7 +275,7 @@ func (c *Collection) create(txn *Txn, doc *document.Document) error {
 
 	// check if DocKey exists in DB
 	// write object marker
-	err = writeObjectMarker(txn.datastore, c.getDocKey(doc.Key().Instance("v")))
+	err = writeObjectMarker(txn.datastore, c.getPrimaryIndexDocKey(doc.Key().Instance("v")))
 	if err != nil {
 		return err
 	}
@@ -359,7 +359,7 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
 			fieldKey := c.getFieldKey(doc, k)
-			err := c.saveValueToMerkleCRDT(txn, c.getDocKey(fieldKey), val)
+			err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(fieldKey), val)
 			if err != nil {
 				return err
 			}
@@ -409,7 +409,7 @@ func (c *Collection) Delete(key key.DocKey) (bool, error) {
 // Dag, and head store will soon follow.
 func (c *Collection) delete(txn *Txn, key key.DocKey) (bool, error) {
 	q := query.Query{
-		Prefix:   c.getDocKey(key.Key).String(),
+		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
 		KeysOnly: true,
 	}
 	res, err := txn.datastore.Query(q)
@@ -419,7 +419,7 @@ func (c *Collection) delete(txn *Txn, key key.DocKey) (bool, error) {
 			return false, err
 		}
 
-		err = txn.datastore.Delete(c.getDocKey(ds.NewKey(e.Key)))
+		err = txn.datastore.Delete(c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
 		if err != nil {
 			return false, err
 		}
@@ -446,7 +446,7 @@ func (c *Collection) Exists(key key.DocKey) (bool, error) {
 
 // check if a document exists with the given key
 func (c *Collection) exists(txn *Txn, key key.DocKey) (bool, error) {
-	return txn.datastore.Has(c.getDocKey(key.Key.Instance("v")))
+	return txn.datastore.Has(c.getPrimaryIndexDocKey(key.Key.Instance("v")))
 }
 
 func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, val document.Value) error {
@@ -507,8 +507,12 @@ func (c *Collection) commitImplicitTxn(txn *Txn) error {
 	return nil
 }
 
-func (c *Collection) getDocKey(key ds.Key) ds.Key {
-	return c.colIDKey.Child(key)
+func (c *Collection) getIndexDocKey(key ds.Key, indexID uint32) ds.Key {
+	return c.colIDKey.ChildString(fmt.Sprint(indexID)).Child(key)
+}
+
+func (c *Collection) getPrimaryIndexDocKey(key ds.Key) ds.Key {
+	return c.getIndexDocKey(key, c.PrimaryIndex().ID)
 }
 
 func (c *Collection) getFieldKey(doc *document.Document, fieldName string) ds.Key {
@@ -534,7 +538,7 @@ func writeObjectMarker(store ds.Write, key ds.Key) error {
 	if key.Name() != "v" {
 		key = key.Instance("v")
 	}
-	return store.Put(key, []byte{objectMarker})
+	return store.Put(key, []byte{base.ObjectMarker})
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.
