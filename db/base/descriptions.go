@@ -1,6 +1,14 @@
 package base
 
-import "github.com/sourcenetwork/defradb/core"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/core"
+)
+
+const (
+	ObjectMarker = byte(0xff) // @todo: Investigate object marker values
+)
 
 // CollectionDescription describes a Collection and
 // all its associated metadata
@@ -13,7 +21,7 @@ type CollectionDescription struct {
 
 // IDString returns the collection ID as a string
 func (col CollectionDescription) IDString() string {
-	return string(col.ID)
+	return fmt.Sprint(col.ID)
 }
 
 // IndexDescription describes an Index on a Collection
@@ -27,7 +35,7 @@ type IndexDescription struct {
 }
 
 func (index IndexDescription) IDString() string {
-	return string(index.ID)
+	return fmt.Sprint(index.ID)
 }
 
 type SchemaDescription struct {
