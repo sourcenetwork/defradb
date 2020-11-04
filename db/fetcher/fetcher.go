@@ -3,6 +3,7 @@ package fetcher
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	dsq "github.com/ipfs/go-datastore/query"
 
@@ -54,14 +55,20 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
-
+	df.doc = new(document.EncodedDocument)
+	if !col.Schema.IsEmpty() {
+		df.doc.Schema = &col.Schema
+	}
 	return nil
 }
 
 // Start implements DocumentFetcher
 func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	if df.col == nil {
-		return errors.New("DocumentFetcher cannot be started without a ColletionDescription")
+		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
+	}
+	if df.doc == nil {
+		return errors.New("DocumentFetcher cannot be started without an initialized document obect")
 	}
 	if df.index == nil {
 		return errors.New("DocumentFetcher cannot be started without a IndexDescription")
@@ -93,26 +100,58 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	return err
 }
 
+func (df *DocumentFetcher) KVEnd() bool {
+	return df.kvEnd
+}
+
+func (df *DocumentFetcher) KV() *core.KeyValue {
+	return df.kv
+}
+
+func (df *DocumentFetcher) NextKey() (docDone bool, err error) {
+	return df.nextKey()
+}
+
+func (df *DocumentFetcher) NextKV() (iterDone bool, kv *core.KeyValue, err error) {
+	return df.nextKV()
+}
+
+func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
+	return df.processKV(kv)
+}
+
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
 func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 	// get the next kv from nextKV()
-	docDone, df.kv, err = df.nextKV()
-	// handle any internal errors
-	if err != nil {
-		return false, err
-	}
-	df.kvEnd = docDone
-	if df.kvEnd {
-		return true, nil
-	}
+	for {
+		docDone, df.kv, err = df.nextKV()
+		// handle any internal errors
+		if err != nil {
+			return false, err
+		}
+		df.kvEnd = docDone
+		if df.kvEnd {
+			return true, nil
+		}
 
-	// check if we've crossed document boundries
-	if df.indexKey != nil && !bytes.HasPrefix(df.kv.Key.Bytes(), df.indexKey) {
-		df.indexKey = nil
-		return true, nil
+		// skip if we are iterating through a non value kv pair
+		if df.kv.Key.Name() != "v" {
+			continue
+		}
+
+		// skip object markers
+		if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
+			continue
+		}
+
+		// check if we've crossed document boundries
+		if df.indexKey != nil && !bytes.HasPrefix(df.kv.Key.Bytes(), df.indexKey) {
+			df.indexKey = nil
+			return true, nil
+		}
+		return false, nil
 	}
-	return false, nil
 }
 
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
@@ -141,13 +180,19 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// skip MerkleCRDT meta-data priority key-value pair
 	// implement here <--
-	instance := kv.Key.Name()
-	if instance != "v" {
-		return nil
-	}
+	// instance := kv.Key.Name()
+	// if instance != "v" {
+	// 	return nil
+	// }
 
 	if df.indexKey == nil {
-		df.indexKey = df.ReadIndexKey(kv.Key)
+		// thihs is the first key for the document
+		ik := df.ReadIndexKey(kv.Key)
+		df.indexKey = ik.Bytes()
+		df.doc.Reset()
+		fmt.Println("index key")
+		fmt.Println(ik.List())
+		df.doc.Key = []byte(ik.BaseNamespace())
 	}
 
 	// extract the FieldID and update the encoded doc properties map
@@ -164,7 +209,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.Properties[fieldID] = &document.EncProperty{
+	df.doc.Properties[fmt.Sprint(fieldID)] = &document.EncProperty{
 		Raw: kv.Value,
 	}
 	// @todo: Extract Index implicit/stored keys
@@ -219,11 +264,11 @@ func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
 
 // ReadIndexKey extracts and returns the index key from the given KV key.
 // @todo: Generalize ReadIndexKey to handle secondary indexes
-func (df *DocumentFetcher) ReadIndexKey(key core.Key) []byte {
+func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 	// currently were only support primary index keys
 	// which have the following structure:
 	// /db/data/<collection_id>/<index_id = 0>/<dockey>/<field_id>
 	// We only care about the data up to /<dockey>
 	// so were just going to do a quick hack
-	return key.Parent().Bytes()
+	return core.Key{key.Parent()}
 }
