@@ -14,6 +14,7 @@ import (
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log"
 )
@@ -29,10 +30,6 @@ var (
 	dataStoreKey   = rootStoreKey.ChildString("/data")
 	headStoreKey   = rootStoreKey.ChildString("/heads")
 	blockStoreKey  = rootStoreKey.ChildString("/blocks")
-)
-
-const (
-	objectMarker = byte(0xff) // @todo: Investigate object marker values
 )
 
 // DB is the main interface for interacting with the
@@ -166,6 +163,7 @@ func printStore(store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
+		Orders:   []dsq.Order{dsq.OrderByKey{}},
 	}
 
 	results, err := store.Query(q)
