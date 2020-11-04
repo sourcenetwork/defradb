@@ -38,7 +38,9 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg)
+	// strip collection/index identifier from docKey
+	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
+	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister
