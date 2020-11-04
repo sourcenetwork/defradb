@@ -5,10 +5,10 @@ import (
 )
 
 var (
-	SYSTEM = "/system"
-	DATA   = "/data"
-	BLOCK  = "/block"
-	HEAD   = "/head"
+	SYSTEM = "/db/system"
+	DATA   = "/db/data"
+	BLOCK  = "/db/block"
+	HEAD   = "/db/head"
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
