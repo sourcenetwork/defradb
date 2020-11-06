@@ -391,5 +391,39 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		lwwdelta := delta.(*corecrdt.LWWRegDelta)
 		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
+}
 
+// collection with schema
+func TestDBSchemaSaveSimpleDocument(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = col.Save(doc)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// value check
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	age, err := doc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, int64(21), age)
+
+	db.printDebugDB()
 }
