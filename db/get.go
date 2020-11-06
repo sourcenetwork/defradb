@@ -72,7 +72,7 @@ func (c *Collection) get(txn *Txn, key key.DocKey, opt GetterOpts) (*document.Do
 	// This will return any and all keys under that prefix, which all fields
 	// of the document exist, as well as any sub documents, etc
 	q := query.Query{
-		Prefix:   c.getDocKey(key.Key).String(),
+		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
 		Filters:  []query.Filter{filterPriorityEntry{}},
 		KeysOnly: false,
 	}
