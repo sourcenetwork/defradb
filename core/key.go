@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
@@ -46,7 +45,7 @@ func (k Key) PrefixEnd() Key {
 // An error is returned if it can't correct convert the
 // field to a uint32.
 func (k Key) FieldID() (uint32, error) {
-	fmt.Println(k.String())
+	// fmt.Println(k.String())
 	fieldIDStr := k.Type()
 	fieldID, err := strconv.Atoi(fieldIDStr)
 	if err != nil {
