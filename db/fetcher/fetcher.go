@@ -3,7 +3,6 @@ package fetcher
 import (
 	"bytes"
 	"errors"
-	"fmt"
 
 	dsq "github.com/ipfs/go-datastore/query"
 
@@ -28,16 +27,19 @@ DocumentFetcher.Init()
 // )
 
 type DocumentFetcher struct {
-	col     *base.CollectionDescription
-	index   *base.IndexDescription
-	reverse bool
+	col       *base.CollectionDescription
+	index     *base.IndexDescription
+	reverse   bool
+	hasSchema bool
 
 	txn   core.Txn
 	spans core.Spans
 
-	fields []*base.FieldDescription
+	schemaFields map[uint32]base.FieldDescription
+	fields       []*base.FieldDescription
 
 	doc         *document.EncodedDocument
+	decodedDoc  *document.Document
 	initialized bool
 
 	kv     *core.KeyValue
@@ -57,7 +59,13 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.initialized = true
 	df.doc = new(document.EncodedDocument)
 	if !col.Schema.IsEmpty() {
+		df.hasSchema = true
 		df.doc.Schema = &col.Schema
+
+		df.schemaFields = make(map[uint32]base.FieldDescription)
+		for _, field := range col.Schema.Fields {
+			df.schemaFields[field.ID] = field
+		}
 	}
 	return nil
 }
@@ -184,32 +192,43 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// if instance != "v" {
 	// 	return nil
 	// }
+	if df.doc == nil {
+		return errors.New("Failed to process KV, uninitialized document object")
+	}
 
 	if df.indexKey == nil {
 		// thihs is the first key for the document
 		ik := df.ReadIndexKey(kv.Key)
 		df.indexKey = ik.Bytes()
 		df.doc.Reset()
-		fmt.Println("index key")
-		fmt.Println(ik.List())
 		df.doc.Key = []byte(ik.BaseNamespace())
 	}
 
-	// extract the FieldID and update the encoded doc properties map
-	fieldID, err := kv.Key.FieldID()
-	if err != nil {
-		return err
+	var fieldDesc base.FieldDescription
+	if df.hasSchema {
+		// extract the FieldID and update the encoded doc properties map
+		fieldID, err := kv.Key.FieldID()
+		if err != nil {
+			return err
+		}
+		var exists bool
+		fieldDesc, exists = df.schemaFields[fieldID]
+		if !exists {
+			return errors.New("Found field with no matching FieldDescription")
+		}
+	} else {
+		fieldName := kv.Key.Type()
+		fieldDesc = base.FieldDescription{
+			Name: fieldName,
+		}
 	}
 
-	if df.doc == nil {
-		return errors.New("Failed to process KV, uninitialized document object")
-	}
 	// @todo: Secondary Index might not have encoded FieldIDs
 	// @body: Need to generalized the processKV, and overall Fetcher architecture
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.Properties[fmt.Sprint(fieldID)] = &document.EncProperty{
+	df.doc.Properties[fieldDesc] = &document.EncProperty{
 		Raw: kv.Value,
 	}
 	// @todo: Extract Index implicit/stored keys

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -123,21 +122,18 @@ func TestMakeIndexPrefixKey(t *testing.T) {
 	assert.Equal(t, "/db/data/1/0", key.String())
 }
 
-func TestFetcherGetAllEncodedDoc(t *testing.T) {
+func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
-	testJSONObj := []byte(`{
+	doc, err := document.NewFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
-	}`)
-
-	doc, err := document.NewFromJSON(testJSONObj)
+	}`))
 	assert.NoError(t, err)
-
 	err = col.Save(doc)
 	assert.NoError(t, err)
 
@@ -147,7 +143,7 @@ func TestFetcherGetAllEncodedDoc(t *testing.T) {
 		return
 	}
 
-	db.printDebugDB()
+	// db.printDebugDB()
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
@@ -158,9 +154,9 @@ func TestFetcherGetAllEncodedDoc(t *testing.T) {
 	assert.NoError(t, err)
 
 	// assert.False(t, df.KVEnd())
-	kv := df.KV()
-	assert.NotNil(t, kv)
-	fmt.Println(kv)
+	// kv := df.KV()
+	// assert.NotNil(t, kv)
+	// fmt.Println(kv)
 	// // err = df.ProcessKV(kv)
 	// // assert.Nil(t, err)
 	// // err = df.NextKey()
@@ -168,7 +164,67 @@ func TestFetcherGetAllEncodedDoc(t *testing.T) {
 
 	// var _ []*document.EncodedDocument
 	encdoc, err := df.FetchNext()
+	assert.NoError(t, err)
+	assert.NotNil(t, encdoc)
 
+	// fmt.Println(encdoc)
+	// assert.True(t, false)
+}
+
+func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	doc, err = document.NewFromJSON([]byte(`{
+		"Name": "Alice",
+		"Age": 27
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// db.printDebugDB()
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	assert.NoError(t, err)
+
+	err = df.Start(txn, core.Spans{})
+	assert.NoError(t, err)
+
+	// assert.False(t, df.KVEnd())
+	// kv := df.KV()
+	// assert.NotNil(t, kv)
+	// fmt.Println(kv)
+	// // err = df.ProcessKV(kv)
+	// // assert.Nil(t, err)
+	// // err = df.NextKey()
+	// assert.True(t, false)
+
+	// var _ []*document.EncodedDocument
+	encdoc, err := df.FetchNext()
+	assert.NoError(t, err)
+	assert.NotNil(t, encdoc)
+	// fmt.Println(encdoc)
+	encdoc, err = df.FetchNext()
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
 
