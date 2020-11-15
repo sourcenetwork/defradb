@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -229,5 +230,165 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	assert.NotNil(t, encdoc)
 
 	// fmt.Println(encdoc)
+	// assert.True(t, false)
+}
+
+func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	assert.NoError(t, err)
+
+	err = df.Start(txn, core.Spans{})
+	assert.NoError(t, err)
+
+	ddoc, err := df.FetchNextDecoded()
+	assert.NoError(t, err)
+	assert.NotNil(t, ddoc)
+
+	// value check
+	name, err := ddoc.Get("Name")
+	assert.NoError(t, err)
+	age, err := ddoc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, uint64(21), age)
+	fmt.Println(age)
+}
+
+func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	doc, err = document.NewFromJSON([]byte(`{
+		"Name": "Alice",
+		"Age": 27
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	assert.NoError(t, err)
+
+	err = df.Start(txn, core.Spans{})
+	assert.NoError(t, err)
+
+	ddoc, err := df.FetchNextDecoded()
+	assert.NoError(t, err)
+	assert.NotNil(t, ddoc)
+
+	// value check
+	name, err := ddoc.Get("Name")
+	assert.NoError(t, err)
+	age, err := ddoc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, uint64(21), age)
+
+	ddoc, err = df.FetchNextDecoded()
+	assert.NoError(t, err)
+	assert.NotNil(t, ddoc)
+
+	// value check
+	name, err = ddoc.Get("Name")
+	assert.NoError(t, err)
+	age, err = ddoc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Alice", name)
+	assert.Equal(t, uint64(27), age)
+}
+
+func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	df := new(fetcher.DocumentFetcher)
+	desc := col.Description()
+	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	assert.NoError(t, err)
+
+	// create a span for our document we wish to find
+	docKey := core.Key{base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
+	spans := core.Spans{
+		core.NewSpan(docKey, docKey.PrefixEnd()),
+	}
+	err = df.Start(txn, spans)
+	assert.NoError(t, err)
+
+	ddoc, err := df.FetchNextDecoded()
+	assert.NoError(t, err)
+	assert.NotNil(t, ddoc)
+
+	// value check
+	name, err := ddoc.Get("Name")
+	assert.NoError(t, err)
+	age, err := ddoc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, uint64(21), age)
+	// fmt.Println(age)
+
+	// db.printDebugDB()
 	// assert.True(t, false)
 }

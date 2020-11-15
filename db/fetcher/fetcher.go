@@ -278,7 +278,20 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 
 // FetchNextDecoded implements DocumentFetcher
 func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
-	panic("not implemented") // TODO: Implement
+	encdoc, err := df.FetchNext()
+	if err != nil {
+		return nil, err
+	}
+	if encdoc == nil {
+		return nil, nil
+	}
+
+	df.decodedDoc, err = encdoc.Decode()
+	if err != nil {
+		return nil, err
+	}
+
+	return df.decodedDoc, nil
 }
 
 // ReadIndexKey extracts and returns the index key from the given KV key.
