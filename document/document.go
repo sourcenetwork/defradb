@@ -359,6 +359,12 @@ func (doc *Document) String() string {
 	return string(j)
 }
 
+// ToMap returns the document as a map[string]interface{}
+// object.
+func (doc *Document) ToMap() (*map[string]interface{}, error) {
+	return doc.toMap()
+}
+
 // converts the document into a map[string]interface{}
 // including any sub documents
 func (doc *Document) toMap() (*map[string]interface{}, error) {
