@@ -72,9 +72,11 @@ const (
 	FieldKind_BYTES
 )
 
+type FieldID uint32
+
 type FieldDescription struct {
 	Name string
-	ID   uint32
+	ID   FieldID
 	Kind FieldKind
 	Typ  core.CType
 }
