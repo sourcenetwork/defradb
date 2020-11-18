@@ -64,7 +64,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 
 		df.schemaFields = make(map[uint32]base.FieldDescription)
 		for _, field := range col.Schema.Fields {
-			df.schemaFields[field.ID] = field
+			df.schemaFields[uint32(field.ID)] = field
 		}
 	}
 	return nil
@@ -292,6 +292,24 @@ func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
 	}
 
 	return df.decodedDoc, nil
+}
+
+// FetchNextMap returns the next document as a map[string]interface{}
+// The first return value is the parsed document key
+func (df *DocumentFetcher) FetchNextMap() ([]byte, map[string]interface{}, error) {
+	encdoc, err := df.FetchNext()
+	if err != nil {
+		return nil, nil, err
+	}
+	if encdoc == nil {
+		return nil, nil, nil
+	}
+
+	doc, err := encdoc.DecodeToMap()
+	if err != nil {
+		return nil, nil, err
+	}
+	return encdoc.Key, doc, err
 }
 
 // ReadIndexKey extracts and returns the index key from the given KV key.
