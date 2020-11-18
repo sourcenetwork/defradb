@@ -8,6 +8,8 @@ import (
 	"github.com/fxamacker/cbor/v2"
 )
 
+type EPTuple []EncProperty
+
 // EncProperty is an encoded property of a EncodedDocument
 type EncProperty struct {
 	Desc base.FieldDescription
@@ -42,6 +44,7 @@ func (encdoc *EncodedDocument) Reset() {
 	encdoc.Key = nil
 }
 
+// Decode returns a properly decoded document object
 func (encdoc *EncodedDocument) Decode() (*Document, error) {
 	key, err := key.NewFromString(string(encdoc.Key))
 	if err != nil {
@@ -59,5 +62,19 @@ func (encdoc *EncodedDocument) Decode() (*Document, error) {
 		}
 	}
 
+	return doc, nil
+}
+
+// DecodeToMap returns a decoded document as a
+// map of field/value pairs
+func (encdoc *EncodedDocument) DecodeToMap() (map[string]interface{}, error) {
+	doc := make(map[string]interface{})
+	for fieldDesc, prop := range encdoc.Properties {
+		_, val, err := prop.Decode()
+		if err != nil {
+			return nil, err
+		}
+		doc[fieldDesc.Name] = val
+	}
 	return doc, nil
 }
