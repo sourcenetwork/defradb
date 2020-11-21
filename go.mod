@@ -3,6 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.12
 
 require (
+	github.com/SierraSoftworks/connor v1.0.2
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/gogo/protobuf v1.2.1
 	github.com/graphql-go/graphql v0.7.9
