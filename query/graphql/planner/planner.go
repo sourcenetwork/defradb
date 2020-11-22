@@ -40,6 +40,10 @@ type planNode interface {
 	Close()
 }
 
+type ExecutionContext struct {
+	context.Context
+
+
 type PlanContext struct {
 	context.Context
 	RequestString string
