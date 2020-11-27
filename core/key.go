@@ -28,6 +28,10 @@ func NewKeyFromBytes(b []byte) Key {
 	return Key{ds.NewKey(string(b))}
 }
 
+func (k Key) ToDS() ds.Key {
+	return k.Key
+}
+
 // PrefixEnd determines the end key given key as a prefix, that is the
 // key that sorts precisely behind all keys starting with prefix: "1"
 // is added to the final byte and the carry propagated. The special

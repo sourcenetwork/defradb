@@ -39,10 +39,10 @@ type Select struct {
 	Name  string
 	Alias string
 
-	Filter  Filter
-	Limit   Limit
-	OrderBy OrderBy
-	GroupBy GroupBy
+	Filter  *Filter
+	Limit   *Limit
+	OrderBy *OrderBy
+	GroupBy *GroupBy
 
 	Fields []Selection
 

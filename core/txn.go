@@ -8,4 +8,5 @@ import (
 type Txn interface {
 	ds.Txn
 	MultiStore
+	Systemstore() DSReaderWriter
 }

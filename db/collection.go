@@ -117,10 +117,10 @@ func (db *DB) CreateCollection(desc base.CollectionDescription) (*Collection, er
 	if err != nil {
 		return nil, err
 	}
-	key := makeCollectionSystemKey(col.desc.Name)
+	key := core.MakeCollectionSystemKey(col.desc.Name)
 
 	//write the collection metadata to the system store
-	err = db.systemstore.Put(key, buf)
+	err = db.systemstore.Put(key.ToDS(), buf)
 	return col, err
 }
 
@@ -130,8 +130,8 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 		return nil, errors.New("Collection name can't be empty")
 	}
 
-	key := makeCollectionSystemKey(name)
-	buf, err := db.systemstore.Get(key)
+	key := core.MakeCollectionSystemKey(name)
+	buf, err := db.systemstore.Get(key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -539,12 +539,6 @@ func writeObjectMarker(store ds.Write, key ds.Key) error {
 		key = key.Instance("v")
 	}
 	return store.Put(key, []byte{base.ObjectMarker})
-}
-
-// makeCollectionKey returns a formatted collection key for the system data store.
-// it assumes the name of the collection is non-empty.
-func makeCollectionSystemKey(name string) ds.Key {
-	return collectionNs.ChildString(name)
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.
