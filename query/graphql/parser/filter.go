@@ -27,12 +27,12 @@ type Filter struct {
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map
-func NewFilter(stmt *ast.ObjectValue) (Filter, error) {
+func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
-		return Filter{}, err
+		return nil, err
 	}
-	return Filter{
+	return &Filter{
 		Statement:  stmt,
 		Conditions: conditions,
 	}, nil

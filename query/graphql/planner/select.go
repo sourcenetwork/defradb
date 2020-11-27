@@ -118,11 +118,50 @@ func (n *selectNode) Close() {
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource(s *parser.Selection) error {
-	panic("not implemented")
+func (n *selectNode) initSource(parsed *parser.Select) error {
+	collectionName := parsed.Name
+	source, err := n.p.getSource(collectionName)
+	if err != nil {
+		return err
+	}
+	n.source = source.plan
+
+	// split filter
+	// apply the root filter to the source
+	// and rootSubType filters to the selectNode
+	// @todo: simulate splitting for now
+	origScan, ok := n.source.(*scanNode)
+	if ok {
+		scan.filter = n.filter
+		s.filter = nil
+	}
+
+	// iterate looking just for fields
+	// iterate again  just for Selects
+	for _, field := range parsed.Fields {
+		switch node := field.(type) {
+		case *parser.Select:
+			continue //ignore for now
+			// future:
+			// plan := n.p.Select(node)
+			// n.source := p.SubTypeIndexJoin(origScan, plan)
+		case *parser.Field:
+			// do stuff with fields I guess
+		}
+	}
+
+	return nil
 }
 
 // Select constructs a SelectPlan
-func (p *Planner) Select(s *parser.Select) error {
-	panic("not implemented")
+func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
+	s := &selectNode{p: p}
+	s.filter = pared.Filter
+	limit := parsed.Limit  // ignore for now
+	sort := parsed.OrderBy // ignore for now
+
+	err := s.initSource(parsed)
+
+	top := selectTopNode{source: s}
+	return top, nil
 }

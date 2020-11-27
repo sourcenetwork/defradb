@@ -40,13 +40,13 @@ type DB struct {
 
 	rootstore ds.Batching // main storage interface
 
-	systemstore    ds.Batching // wrapped store for system data
+	systemstore    core.DSReaderWriter // wrapped store for system data
 	ssKeyTransform ktds.KeyTransform
 
-	datastore      ds.Batching // wrapped store for data
+	datastore      core.DSReaderWriter // wrapped store for data
 	dsKeyTransform ktds.KeyTransform
 
-	headstore      ds.Batching // wrapped store for heads
+	headstore      core.DSReaderWriter // wrapped store for heads
 	hsKeyTransform ktds.KeyTransform
 
 	dagstore        core.DAGStore // wrapped store for dags
