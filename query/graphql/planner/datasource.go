@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
@@ -29,11 +28,11 @@ func (p *Planner) getSource(collection string) (planSource, error) {
 // @todo: Add field selection
 func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 	if collection == "" {
-		return nil, errors.New("collection name cannot be empty")
+		return planSource{}, errors.New("collection name cannot be empty")
 	}
 	colDesc, err := p.getCollectionDesc(collection)
 	if err != nil {
-		return nil, err
+		return planSource{}, err
 	}
 
 	scan := p.Scan()
@@ -44,20 +43,20 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 		info: sourceInfo{
 			collectionDescription: colDesc,
 		},
-	}
+	}, nil
 }
 
 func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, error) {
-	key := core.MakeCollectionSystemKey(name)
+	key := base.MakeCollectionSystemKey(name)
+	var desc base.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(key.ToDS())
 	if err != nil {
-		return nil, err
+		return desc, err
 	}
 
-	var desc base.CollectionDescription
 	err = json.Unmarshal(buf, &desc)
 	if err != nil {
-		return nil, err
+		return desc, err
 	}
 
 	return desc, nil
