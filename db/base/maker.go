@@ -28,5 +28,5 @@ func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) cor
 // MakeCollectionSystemKey returns a formatted collection key for the system data store.
 // it assumes the name of the collection is non-empty.
 func MakeCollectionSystemKey(name string) core.Key {
-	return coreKey{collectionNs.ChildString(name)}
+	return core.Key{collectionNs.ChildString(name)}
 }

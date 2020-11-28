@@ -24,6 +24,17 @@ func (col CollectionDescription) IDString() string {
 	return fmt.Sprint(col.ID)
 }
 
+func (col CollectionDescription) GetField(name string) (FieldDescription, bool) {
+	if !col.Schema.IsEmpty() {
+		for _, field := range col.Schema.Fields {
+			if field.Name == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
 // IndexDescription describes an Index on a Collection
 // and its assocatied metadata.
 type IndexDescription struct {
