@@ -42,7 +42,7 @@ type planNode interface {
 
 type ExecutionContext struct {
 	context.Context
-
+}
 
 type PlanContext struct {
 	context.Context

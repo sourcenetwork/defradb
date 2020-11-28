@@ -38,6 +38,12 @@ func (n *scanNode) Init() error {
 	return n.initScan()
 }
 
+func (n *scanNode) initCollection(desc base.CollectionDescription) error {
+	n.desc = desc
+	n.index = &desc.Indexes[0]
+	return nil
+}
+
 // Start starts the internal logic of the scanner
 // like the DocumentFetcher, and more.
 func (n *scanNode) Start() error {
@@ -101,3 +107,7 @@ func (n *scanNode) Values() map[string]interface{} {
 }
 
 func (n *scanNode) Close() {}
+
+func (p *Planner) Scan() *scanNode {
+	return &scanNode{p: p}
+}

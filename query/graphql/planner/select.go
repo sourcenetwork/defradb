@@ -120,11 +120,12 @@ func (n *selectNode) Close() {
 // planner.Select construction call.
 func (n *selectNode) initSource(parsed *parser.Select) error {
 	collectionName := parsed.Name
-	source, err := n.p.getSource(collectionName)
+	sourcePlan, err := n.p.getSource(collectionName)
 	if err != nil {
 		return err
 	}
-	n.source = source.plan
+	n.source = sourcePlan.plan
+	n.sourceInfo = sourcePlan.info
 
 	// split filter
 	// apply the root filter to the source
@@ -132,8 +133,8 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 	// @todo: simulate splitting for now
 	origScan, ok := n.source.(*scanNode)
 	if ok {
-		scan.filter = n.filter
-		s.filter = nil
+		origScan.filter = n.filter
+		n.filter = nil
 	}
 
 	// iterate looking just for fields
@@ -146,7 +147,11 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 			// plan := n.p.Select(node)
 			// n.source := p.SubTypeIndexJoin(origScan, plan)
 		case *parser.Field:
-			// do stuff with fields I guess
+			// do stuff with fields I guess :/
+			f, found := n.sourceInfo.collectionDescription.GetField(node.Name)
+			if found {
+				n.fields = append(n.fields, &f)
+			}
 		}
 	}
 
@@ -156,12 +161,16 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 // Select constructs a SelectPlan
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	s := &selectNode{p: p}
-	s.filter = pared.Filter
-	limit := parsed.Limit  // ignore for now
-	sort := parsed.OrderBy // ignore for now
+	s.fields = make([]*base.FieldDescription, 0)
+	s.filter = parsed.Filter
+	// limit := parsed.Limit  // ignore for now
+	// sort := parsed.OrderBy // ignore for now
 
 	err := s.initSource(parsed)
+	if err != nil {
+		return nil, err
+	}
 
-	top := selectTopNode{source: s}
+	top := &selectTopNode{source: s}
 	return top, nil
 }
