@@ -29,9 +29,10 @@ type Txn struct {
 	ds.Txn
 
 	// wrapped DS
-	datastore core.DSReaderWriter // wrapped txn /data namespace
-	headstore core.DSReaderWriter // wrapped txn /heads namespace
-	dagstore  core.DAGStore       // wrapped txn /blocks namespace
+	systemstore core.DSReaderWriter // wrapped txn /system namespace
+	datastore   core.DSReaderWriter // wrapped txn /data namespace
+	headstore   core.DSReaderWriter // wrapped txn /heads namespace
+	dagstore    core.DAGStore       // wrapped txn /blocks namespace
 }
 
 // Txn creates a new transaction which can be set to readonly mode
@@ -77,12 +78,18 @@ func (db *DB) newTxn(readonly bool) (*Txn, error) {
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand
 	shimStore := shimTxnStore{txn.Txn}
+	txn.systemstore = ktds.Wrap(shimStore, db.ssKeyTransform)
 	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
 	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)
 	batchstore := ktds.Wrap(shimStore, db.dagKeyTransform)
 	txn.dagstore = store.NewDAGStore(batchstore)
 
 	return txn, nil
+}
+
+// Systemstore returns the txn wrapped as a systemstore under the /system namespace
+func (txn *Txn) Systemstore() core.DSReaderWriter {
+	return txn.systemstore
 }
 
 // Datastore returns the txn wrapped as a datastore under the /data namespace

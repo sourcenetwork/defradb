@@ -72,7 +72,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 				return nil, errors.New("Collection schema field missing CRDT type")
 			}
 			desc.Schema.FieldIDs[i] = uint32(i)
-			desc.Schema.Fields[i].ID = uint32(i)
+			desc.Schema.Fields[i].ID = base.FieldID(i)
 		}
 	}
 
@@ -117,7 +117,7 @@ func (db *DB) CreateCollection(desc base.CollectionDescription) (*Collection, er
 	if err != nil {
 		return nil, err
 	}
-	key := core.MakeCollectionSystemKey(col.desc.Name)
+	key := base.MakeCollectionSystemKey(col.desc.Name)
 
 	//write the collection metadata to the system store
 	err = db.systemstore.Put(key.ToDS(), buf)
@@ -130,7 +130,7 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 		return nil, errors.New("Collection name can't be empty")
 	}
 
-	key := core.MakeCollectionSystemKey(name)
+	key := base.MakeCollectionSystemKey(name)
 	buf, err := db.systemstore.Get(key.ToDS())
 	if err != nil {
 		return nil, err
@@ -528,7 +528,7 @@ func (c *Collection) getFieldKey(doc *document.Document, fieldName string) ds.Ke
 func (c *Collection) getSchemaFieldID(fieldName string) uint32 {
 	for _, field := range c.desc.Schema.Fields {
 		if field.Name == fieldName {
-			return field.ID
+			return uint32(field.ID)
 		}
 	}
 	return uint32(0)
