@@ -23,11 +23,16 @@ type QueryDefinition struct {
 	Statement *ast.OperationDefinition
 }
 
+func (q QueryDefinition) GetStatement() ast.Node {
+	return q.Statement
+}
+
 // type SelectionSet struct {
 // 	Selections []Selection
 // }
 
 type Selection interface {
+	Statement
 	GetSelections() []Selection
 }
 
@@ -68,8 +73,12 @@ type Field struct {
 }
 
 // GetSelectionSet implements Selection
-func (s Field) GetSelections() []Selection {
+func (f Field) GetSelections() []Selection {
 	return []Selection{}
+}
+
+func (f Field) GetStatement() ast.Node {
+	return f.Statement
 }
 
 type GroupBy struct{}
@@ -120,7 +129,9 @@ func parseOperationDefinition(def *ast.OperationDefinition) (*QueryDefinition, e
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
-	qdef.Name = def.Name.Value
+	if def.Name != nil {
+		qdef.Name = def.Name.Value
+	}
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
@@ -138,8 +149,8 @@ func parseOperationDefinition(def *ast.OperationDefinition) (*QueryDefinition, e
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(field *ast.Field) (Select, error) {
-	slct := Select{Statement: field}
+func parseSelect(field *ast.Field) (*Select, error) {
+	slct := &Select{Statement: field}
 	slct.Name = field.Name.Value
 	if field.Alias != nil {
 		slct.Alias = field.Alias.Value
@@ -200,8 +211,8 @@ func parseSelect(field *ast.Field) (Select, error) {
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(field *ast.Field) Field {
-	f := Field{Name: field.Name.Value}
+func parseField(field *ast.Field) *Field {
+	f := &Field{Name: field.Name.Value}
 	if field.Alias != nil {
 		f.Alias = field.Alias.Value
 	}
