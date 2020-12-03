@@ -98,7 +98,7 @@ func (n *selectNode) Next() (bool, error) {
 // as defined by the query statement. This includes
 // aliases, and any transformations.
 func (n *selectNode) renderDoc() error {
-	panic("not implemented.")
+	return nil
 }
 
 func (n *selectNode) Spans(spans core.Spans) {
