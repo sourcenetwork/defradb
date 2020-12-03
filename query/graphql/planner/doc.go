@@ -10,8 +10,8 @@
 // query the database for. It defines what should be done at each execution step, and if it
 // should be done in parallel or sequentially.
 //
-// The plan is structured as a graph of nodes using the Volcano Method Query Evaluation
-// approach.
+// The plan is structured as a graph of nodes using the Volcano iterator Method Query 
+//Evaluation pproach.
 // Volcano - An Extensible and Parallel Query Evaluation System
 // [Paper](https://paperhub.s3.amazonaws.com/dace52a42c07f7f8348b08dc2b186061.pdf).
 //

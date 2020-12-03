@@ -2,7 +2,9 @@ package planner
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
@@ -46,7 +48,6 @@ type ExecutionContext struct {
 
 type PlanContext struct {
 	context.Context
-	RequestString string
 }
 
 type Statement struct {
@@ -58,20 +59,47 @@ type Statement struct {
 // Planner combines session state and databse state to
 // produce a query plan, which is run by the exuction context.
 type Planner struct {
-	ctx         PlanContext
-	statement   *Statement
-	isFinalized bool
-
-	txn core.Txn
-
+	txn     core.Txn
+	ctx     context.Context
 	evalCtx parser.EvalContext
+
+	// isFinalized bool
+
 }
 
-func NewPlanner() {}
+func makePlanner(txn core.Txn) *Planner {
+	ctx := context.Background()
+	return &Planner{
+		txn: txn,
+		ctx: ctx,
+	}
+}
 
-func (p *Planner) newPlan(doc *ast.Document) {}
+func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
+	switch n := stmt.(type) {
+	case *parser.Query:
+		return p.newPlan(n.Queries[0]) // @todo ensure parser.Query as at least 1 query definition
+	case *parser.QueryDefinition:
+		return p.newPlan(n.Selections[0]) // @todo: ensure parser.QueryDefinition has at least 1 selection
+	case *parser.Select:
+		return p.Select(n)
+	default:
+		return nil, errors.Errorf("unknown statement type %T", stmt)
+	}
+}
 
-func (p *Planner) makePlan(doc parser.Statement) {}
+func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
+	plan, err := p.newPlan(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.optimizePlan(plan)
+	if err != nil {
+		return nil, err
+	}
+	return plan, nil
+}
 
 // func (p *Planner) Select() {}
 
@@ -81,5 +109,82 @@ func (p *Planner) OrderBy() {}
 
 func (p *Planner) GroupBy() {}
 
+// plan optimization. Includes plan expansion and wiring
+func (p *Planner) optimizePlan(plan planNode) error {
+	return p.expandPlan(plan)
+}
+
 // full plan graph expansion and optimization
-func (p *Planner) expandPlan() {}
+func (p *Planner) expandPlan(plan planNode) error {
+	switch n := plan.(type) {
+	case *selectTopNode:
+		return p.expandSelectTopNodePlan(n)
+	default:
+		return nil
+	}
+}
+
+func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
+	// wire up source to plan
+	plan.plan = plan.source
+
+	// if group
+	// if order
+	// if limit
+	return nil
+}
+
+// func (p *Planner) QueryDocs(query parser.Query) {
+
+// }
+
+func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
+	plan, err := p.query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer plan.Close()
+	if err := plan.Start(); err != nil {
+		return nil, err
+	}
+
+	var docs []map[string]interface{}
+	for {
+		if values := plan.Values(); values != nil {
+			fmt.Println("found doc")
+			copy := copyMap(values)
+			docs = append(docs, copy)
+		}
+
+		next, err := plan.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		if !next {
+			fmt.Println("no more records in plan")
+			break
+		}
+	}
+
+	return docs, nil
+}
+
+func (p *Planner) query(query *parser.Query) (planNode, error) {
+	return p.makePlan(query)
+}
+
+func copyMap(m map[string]interface{}) map[string]interface{} {
+	cp := make(map[string]interface{})
+	for k, v := range m {
+		vm, ok := v.(map[string]interface{})
+		if ok {
+			cp[k] = copyMap(vm)
+		} else {
+			cp[k] = v
+		}
+	}
+
+	return cp
+}
