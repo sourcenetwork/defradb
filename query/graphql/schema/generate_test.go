@@ -1,4 +1,4 @@
-package graphql
+package schema
 
 import (
 	"fmt"
@@ -8,9 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -342,19 +341,20 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDefs []*gql.Object) error {
 	g := newTestGenerator()
 
-	// parse to AST
-	source := source.NewSource(&source.Source{
-		Body: []byte(schema),
-	})
-	doc, err := parser.Parse(parser.ParseParams{
-		Source: source,
-	})
-	if err != nil {
-		return errors.Wrap(err, "Failed to parse schema string")
-	}
-	// assert.NoError(t, err, "Failed to parse schema string")
+	// // parse to AST
+	// source := source.NewSource(&source.Source{
+	// 	Body: []byte(schema),
+	// })
+	// doc, err := parser.Parse(parser.ParseParams{
+	// 	Source: source,
+	// })
+	// if err != nil {
+	// 	return errors.Wrap(err, "Failed to parse schema string")
+	// }
+	// // assert.NoError(t, err, "Failed to parse schema string")
 
-	err = g.buildTypesFromAST(doc)
+	// err = g.buildTypesFromAST(doc)
+	err := g.FromSDL(schema)
 	if err != nil {
 		return errors.Wrap(err, "Failed to build types from AST")
 	}
@@ -376,6 +376,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 		}
 
 		myObjectActual := myObject.(*gql.Object)
+		spew.Dump(myObjectActual.Fields())
 		myObjectActual.Fields() // call Fields() to trigger the defineFields() function
 		// to resolve the FieldsThunker
 
