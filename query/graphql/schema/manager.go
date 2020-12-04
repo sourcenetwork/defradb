@@ -1,4 +1,4 @@
-package graphql
+package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
@@ -24,6 +24,10 @@ func NewSchemaManager() (*SchemaManager, error) {
 	}
 	sm.schema = schema
 	return sm, nil
+}
+
+func (s *SchemaManager) Schema() *gql.Schema {
+	return &s.schema
 }
 
 // ResolveTypes ensures all necessary types are defined, and
