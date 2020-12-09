@@ -38,19 +38,19 @@ func newTestCollectionDescription() base.CollectionDescription {
 			FieldIDs: []uint32{1, 2, 3},
 			Fields: []base.FieldDescription{
 				base.FieldDescription{
-					Name: "_dockey",
-					ID:   uint32(1),
+					Name: "_key",
+					ID:   base.FieldID(1),
 					Kind: base.FieldKind_DocKey,
 				},
 				base.FieldDescription{
 					Name: "Name",
-					ID:   uint32(2),
+					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name: "Age",
-					ID:   uint32(3),
+					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
 					Typ:  core.LWW_REGISTER,
 				},
