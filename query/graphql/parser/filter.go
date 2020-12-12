@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
@@ -15,6 +16,8 @@ type EvalContext struct {
 
 // Filter contains the parsed condition map to be
 // run by the Filter Evaluator.
+// @todo: Cache filter structure for faster condition
+// evaluation.
 type Filter struct {
 	// parsed filter conditions
 	Conditions map[string]interface{}
@@ -48,6 +51,9 @@ func ParseConditions(stmt *ast.ObjectValue) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		if strings.HasPrefix(name, "_") {
+			name = strings.Replace(name, "_", "$", 1)
+		}
 		conditions[name] = val
 	}
 	return conditions, nil
@@ -63,12 +69,17 @@ func parseVal(val ast.Value) (interface{}, error) {
 	case "FloatValue":
 		return strconv.ParseFloat(val.GetValue().(string), 64)
 	case "StringValue":
+		return val.GetValue().(string), nil
 	case "EnumValue":
 		return val.GetValue().(string), nil
 	case "BooleanValue":
-		return strconv.ParseBool(val.GetValue().(string))
-	case "NullValue":
-		return nil, nil
+		return val.GetValue().(bool), nil
+	// Ignoring Null input, see:
+	// - https://github.com/graphql-go/graphql/issues/178
+	// - https://github.com/99designs/gqlgen/issues/1416
+	//
+	// case "NullValue":
+	// 	return nil, nil
 	case "ListValue":
 		list := make([]interface{}, 0)
 		for _, item := range val.GetValue().([]ast.Value) {
@@ -80,7 +91,7 @@ func parseVal(val ast.Value) (interface{}, error) {
 		}
 		return list, nil
 	case "ObjectValue":
-		conditions, err := ParseConditions(val.GetValue().(*ast.ObjectValue))
+		conditions, err := ParseConditions(val.(*ast.ObjectValue))
 		if err != nil {
 			return nil, err
 		}
@@ -96,5 +107,5 @@ func RunFilter(doc map[string]interface{}, filter *Filter, ctx EvalContext) (boo
 	if filter == nil {
 		return true, nil
 	}
-	return connor.Match(doc, filter.Conditions)
+	return connor.Match(filter.Conditions, doc)
 }
