@@ -33,7 +33,11 @@ func NewQueryExecutor() (*QueryExecutor, error) {
 	}, nil
 }
 
-func (e *QueryExecutor) ExecuteQueryInTransaction(txn core.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+// func (e *QueryExecutor) ExecQuery(query string, args ...interface{}) ([]map[string]interface{}, error) {
+
+// }
+
+func (e *QueryExecutor) ExecQuery(txn core.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
 	q, err := e.parseQueryString(query)
 	if err != nil {
 		return nil, err
