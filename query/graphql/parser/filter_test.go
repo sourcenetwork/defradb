@@ -111,7 +111,7 @@ func TestParseConditions_List_Int(t *testing.T) {
 			users(filter: {x: [1,2,3]})
 		}`),
 		map[string]interface{}{
-			"x": []interface{}{1, 2, 3},
+			"x": []interface{}{int64(1), int64(2), int64(3)},
 		},
 	)
 }
@@ -187,7 +187,7 @@ func TestParseConditions_Single_List_Objects(t *testing.T) {
 			users(filter: {_and: [{x: 1}, {y: 1}]})
 		}`),
 		map[string]interface{}{
-			"_and": []interface{}{
+			"$and": []interface{}{
 				map[string]interface{}{
 					"x": int64(1),
 				},
@@ -319,7 +319,7 @@ func TestRunFilter_TestCases(t *testing.T) {
 				users(filter: {x: 1})
 			}`),
 			map[string]interface{}{
-				"x": int64(1),
+				"x": uint64(1),
 			},
 			true,
 		},
