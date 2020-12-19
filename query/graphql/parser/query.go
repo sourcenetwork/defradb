@@ -33,8 +33,12 @@ func (q QueryDefinition) GetStatement() ast.Node {
 
 type Selection interface {
 	Statement
+	GetName() string
+	GetAlias() string
 	GetSelections() []Selection
 }
+
+// type
 
 // Select is a complex Field with strong typing
 // It used for sub types in a query. Includes
@@ -63,6 +67,14 @@ func (s Select) GetSelections() []Selection {
 	return s.Fields
 }
 
+func (s Select) GetName() string {
+	return s.Name
+}
+
+func (s Select) GetAlias() string {
+	return s.Alias
+}
+
 // Field implements Selection
 type Field struct {
 	Name  string
@@ -75,6 +87,14 @@ type Field struct {
 // GetSelectionSet implements Selection
 func (f Field) GetSelections() []Selection {
 	return []Selection{}
+}
+
+func (f Field) GetName() string {
+	return f.Name
+}
+
+func (f Field) GetAlias() string {
+	return f.Alias
 }
 
 func (f Field) GetStatement() ast.Node {
