@@ -81,6 +81,10 @@ const (
 	FieldKind_TIMESTAMP
 	FieldKind_STRING
 	FieldKind_BYTES
+	FieldKind_OBJECT               // Embedded object within the type
+	FieldKind_OBJECT_ARRAY         // Array of embedded objects
+	FieldKind_FOREIGN_OBJECT       // Embedded object, but accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
 )
 
 type FieldID uint32
