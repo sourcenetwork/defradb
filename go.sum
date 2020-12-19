@@ -3,6 +3,8 @@ github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9 h1:HD8gA2tkBy
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Kubuxu/go-os-helper v0.0.1/go.mod h1:N8B+I7vPCT80IcP58r50u4+gEEcsZETFUpAzWW2ep1Y=
+github.com/SierraSoftworks/connor v1.0.1 h1:Evq4Z3bAwx5UFvbrfEnBMzYiuoEYsJGQAqVYzRvhsds=
+github.com/SierraSoftworks/connor v1.0.1/go.mod h1:hCWEm8Mpp8zrJ++0I4xdo6oNn8cSG4BjcYi4+JgWViM=
 github.com/SierraSoftworks/connor v1.0.2 h1:vIPgtPP4rhMT1kaFfj85hV8QEBG67zy7cShOMnEBlVU=
 github.com/SierraSoftworks/connor v1.0.2/go.mod h1:hCWEm8Mpp8zrJ++0I4xdo6oNn8cSG4BjcYi4+JgWViM=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=

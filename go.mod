@@ -36,3 +36,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
+
+replace (
+	github.com/SierraSoftworks/connor => ../connor // local replace
+)
