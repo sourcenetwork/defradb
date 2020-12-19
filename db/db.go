@@ -8,6 +8,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
@@ -53,6 +54,8 @@ type DB struct {
 	dagKeyTransform ktds.KeyTransform
 
 	crdtFactory *crdt.Factory
+
+	queryExecutor *planner.QueryExecutor
 
 	// indicates if this references an initalized database
 	initialized bool
