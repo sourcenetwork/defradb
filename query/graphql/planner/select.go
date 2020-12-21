@@ -15,6 +15,7 @@ type selectTopNode struct {
 	group  *groupNode
 	sort   *sortNode
 	limit  *limitNode
+	render *renderNode
 
 	// top of the plan graph
 	plan planNode
@@ -27,6 +28,12 @@ func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *selectTopNode) Close()                         { n.plan.Close() }
 
+type renderInfo struct {
+	numResults int
+	fields     []*base.FieldDescription
+	aliases    []string
+}
+
 type selectNode struct {
 	p *Planner
 
@@ -37,7 +44,8 @@ type selectNode struct {
 	// collection name, meta-data, etc.
 	sourceInfo sourceInfo
 
-	fields []*base.FieldDescription
+	// data related to rendering
+	renderInfo *renderInfo
 
 	// internal doc pointer
 	// produced when Values()
@@ -56,10 +64,6 @@ type selectNode struct {
 
 	// @todo restructure renderNode -> render, which is its own
 	// object, and not a planNode.
-	// Takes a doc map, and applies the necessary rendering.
-	// It also holds all the necessary render meta-data
-	// and ast parser data.
-	render *renderNode
 }
 
 func (n *selectNode) Init() error {
@@ -87,8 +91,10 @@ func (n *selectNode) Next() (bool, error) {
 		}
 
 		if passes {
-			err := n.renderDoc()
-			return err == nil, err
+			n.renderDoc()
+			return true, err
+			// err :=
+			// return err == nil, err
 		}
 		// didn't pass, keep looping
 	}
@@ -97,7 +103,16 @@ func (n *selectNode) Next() (bool, error) {
 // applies all the necessary rendering to doc
 // as defined by the query statement. This includes
 // aliases, and any transformations.
+// Takes a doc map, and applies the necessary rendering.
+// It also holds all the necessary render meta-data
+// and ast parser data.
 func (n *selectNode) renderDoc() error {
+	renderData := map[string]interface{}{
+		"numResults": n.renderInfo.numResults,
+		"fields":     n.renderInfo.fields,
+		"aliases":    n.renderInfo.aliases,
+	}
+	n.doc["__render"] = renderData
 	return nil
 }
 
@@ -137,40 +152,53 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		n.filter = nil
 	}
 
+	n.renderInfo.numResults = 0
 	// iterate looking just for fields
 	// iterate again  just for Selects
 	for _, field := range parsed.Fields {
 		switch node := field.(type) {
 		case *parser.Select:
-			continue //ignore for now
+			// continue //ignore for now
 			// future:
 			// plan := n.p.Select(node)
 			// n.source := p.SubTypeIndexJoin(origScan, plan)
-		case *parser.Field:
-			// do stuff with fields I guess :/
-			f, found := n.sourceInfo.collectionDescription.GetField(node.Name)
+			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
 			if found {
-				n.fields = append(n.fields, &f)
+				n.renderInfo.fields = append(n.renderInfo.fields, &f)
+			}
+		case *parser.Field:
+			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
+			if found {
+				n.renderInfo.fields = append(n.renderInfo.fields, &f)
 			}
 		}
+		n.renderInfo.aliases = append(n.renderInfo.aliases, field.GetAlias())
+		n.renderInfo.numResults++
 	}
 
 	return nil
 }
 
+// func (n *selectNode) initRender(fields []*base.FieldDescription, aliases []string) error {
+// 	return n.p.render(fields, aliases)
+// }
+
 // Select constructs a SelectPlan
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	s := &selectNode{p: p}
-	s.fields = make([]*base.FieldDescription, 0)
 	s.filter = parsed.Filter
 	// limit := parsed.Limit  // ignore for now
 	// sort := parsed.OrderBy // ignore for now
 
+	s.renderInfo = &renderInfo{}
 	err := s.initSource(parsed)
 	if err != nil {
 		return nil, err
 	}
 
-	top := &selectTopNode{source: s}
+	top := &selectTopNode{
+		source: s,
+		render: p.render(),
+	}
 	return top, nil
 }
