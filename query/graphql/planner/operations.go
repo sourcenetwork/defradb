@@ -34,11 +34,6 @@ type limitNode struct {
 	p *Planner
 }
 
-// the final field select and render
-type renderNode struct { // selectNode??
-	p *Planner
-}
-
 // noop
 type noopNode struct {
 	p *Planner
