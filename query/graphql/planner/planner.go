@@ -2,7 +2,6 @@ package planner
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/core"
@@ -41,6 +40,19 @@ type planNode interface {
 	// Close terminates the planNode execution releases its resources.
 	Close()
 }
+
+// basic plan Node that implements the planNode interface
+// can be added to any struct to turn it into a planNode
+type baseNode struct {
+	plan planNode
+}
+
+func (n *baseNode) Init() error                    { return n.plan.Init() }
+func (n *baseNode) Start() error                   { return n.plan.Start() }
+func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
+func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
+func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
+func (n *baseNode) Close()                         { n.plan.Close() }
 
 type ExecutionContext struct {
 	context.Context
@@ -128,6 +140,12 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	// wire up source to plan
 	plan.plan = plan.source
 
+	// wire up the render plan
+	if plan.render != nil {
+		plan.render.plan = plan.plan
+		plan.plan = plan.render
+	}
+
 	// if group
 	// if order
 	// if limit
@@ -152,7 +170,6 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	var docs []map[string]interface{}
 	for {
 		if values := plan.Values(); values != nil {
-			fmt.Println("found doc")
 			copy := copyMap(values)
 			docs = append(docs, copy)
 		}
@@ -163,7 +180,6 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		}
 
 		if !next {
-			fmt.Println("no more records in plan")
 			break
 		}
 	}
