@@ -115,8 +115,6 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 
 // func (p *Planner) Select() {}
 
-func (p *Planner) Limit() {}
-
 func (p *Planner) OrderBy() {}
 
 func (p *Planner) GroupBy() {}
@@ -148,7 +146,12 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 
 	// if group
 	// if order
-	// if limit
+
+	if plan.limit != nil {
+		plan.limit.plan = plan.plan
+		plan.plan = plan.limit
+	}
+
 	return nil
 }
 

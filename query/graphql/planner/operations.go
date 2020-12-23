@@ -29,11 +29,6 @@ type sortNode struct {
 	p *Planner
 }
 
-// limit the results
-type limitNode struct {
-	p *Planner
-}
-
 // noop
 type noopNode struct {
 	p *Planner
