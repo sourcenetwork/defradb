@@ -194,6 +194,9 @@ func parseSelect(field *ast.Field) (*Select, error) {
 			if err != nil {
 				return slct, err
 			}
+			if slct.Limit == nil {
+				slct.Limit = &Limit{}
+			}
 			slct.Limit.Limit = i
 		} else if prop == "offset" {
 			val := argument.Value.(*ast.IntValue)
@@ -201,12 +204,20 @@ func parseSelect(field *ast.Field) (*Select, error) {
 			if err != nil {
 				return slct, err
 			}
+			if slct.Limit == nil {
+				slct.Limit = &Limit{}
+			}
 			slct.Limit.Offset = i
 		}
 
 		// @todo: parse orderby
 
 		// @todo: parse groupby
+	}
+
+	// if theres no field selections, just return
+	if field.SelectionSet == nil {
+		return slct, nil
 	}
 
 	// parse field selections
