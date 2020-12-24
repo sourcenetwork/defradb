@@ -102,8 +102,34 @@ func (f Field) GetStatement() ast.Node {
 }
 
 type GroupBy struct{}
+
+type SortDirection string
+
+const (
+	ASC  SortDirection = "ASC"
+	DESC SortDirection = "DESC"
+)
+
+var (
+	NameToSortDirection = map[string]SortDirection{
+		"ASC":  ASC,
+		"DESC": DESC,
+	}
+)
+
+type SortCondition struct {
+	// field may be a compound field statement
+	// since the sort statement allows sorting on
+	// sub objects.
+	//
+	// Given the statement: {sort: {author: {birthday: DESC}}}
+	// The field value would be "author.birthday"
+	// and the direction would be "DESC"
+	Field     string
+	Direction SortDirection
+}
 type OrderBy struct {
-	Conditions map[string]interface{}
+	Conditions []SortCondition
 	Statement  *ast.ObjectValue
 }
 
@@ -198,7 +224,7 @@ func parseSelect(field *ast.Field) (*Select, error) {
 				slct.Limit = &Limit{}
 			}
 			slct.Limit.Limit = i
-		} else if prop == "offset" {
+		} else if prop == "offset" { // parse limit/offset
 			val := argument.Value.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
@@ -208,9 +234,18 @@ func parseSelect(field *ast.Field) (*Select, error) {
 				slct.Limit = &Limit{}
 			}
 			slct.Limit.Offset = i
+		} else if prop == "sort" { // parse sort (order by)
+			obj := argument.Value.(*ast.ObjectValue)
+			cond, err := ParseConditions(obj)
+			if err != nil {
+				return nil, err
+			}
+			// replace string with SortDirection
+			err = replaceSortDirection(cond)
+			if err != nil {
+				return nil, err
+			}
 		}
-
-		// @todo: parse orderby
 
 		// @todo: parse groupby
 	}
@@ -238,6 +273,29 @@ func parseSelect(field *ast.Field) (*Select, error) {
 	}
 
 	return slct, nil
+}
+
+// iterates over the given map, and replaces the string instance
+// of the sort direction, with a SortDirection type
+func replaceSortDirection(obj map[string]interface{}) error {
+	for k, v := range obj {
+		switch n := v.(type) {
+		case string:
+			dir, ok := NameToSortDirection[n]
+			if !ok {
+				return errors.New("Invalid sort direction string")
+			}
+			obj[k] = dir
+		case map[string]interface{}:
+			err := replaceSortDirection(n)
+			if err != nil {
+				return err
+			}
+			obj[k] = n
+		}
+	}
+
+	return nil
 }
 
 // parseField simply parses the Name/Alias
