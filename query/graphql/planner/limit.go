@@ -8,6 +8,7 @@ import (
 )
 
 // limit the results
+// @todo: Handle cursor
 type limitNode struct {
 	p    *Planner
 	plan planNode
