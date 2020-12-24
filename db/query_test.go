@@ -127,20 +127,6 @@ func TestQuerySimple(t *testing.T) {
 		Age: Int
 	}
 	`)
-	db, err := newMemoryDB()
-	assert.NoError(t, err)
-
-	desc := newTestCollectionDescription()
-	col, err := db.CreateCollection(desc)
-	assert.NoError(t, err)
-
-	executor, err := planner.NewQueryExecutor()
-	assert.NoError(t, err)
-
-	db.queryExecutor = executor
-
-	err = executor.Generator.FromSDL(userCollectionGQLSchema)
-	assert.NoError(t, err)
 
 	tests := []queryTestCase{
 		{
@@ -165,6 +151,35 @@ func TestQuerySimple(t *testing.T) {
 			},
 		},
 		{
+			description: "Simple query with no filter, mutiple rows",
+			query: `query {
+						users {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 27
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "Bob",
+					"Age":  uint64(27),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
 			description: "Simple query with basic filter",
 			query: `query {
 						users(filter: {Name: {_eq: "John"}}) {
@@ -182,6 +197,44 @@ func TestQuerySimple(t *testing.T) {
 				{
 					"Name": "John",
 					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			description: "Simple query with basic filter and selection",
+			query: `query {
+						users(filter: {Name: {_eq: "John"}}) {
+							Name					
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "John",
+				},
+			},
+		},
+		{
+			description: "Simple query with basic filter and selection (diff from filter)",
+			query: `query {
+						users(filter: {Name: {_eq: "John"}}) {
+							Age					
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Age": uint64(21),
 				},
 			},
 		},
@@ -292,9 +345,155 @@ func TestQuerySimple(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "Simple query with basic limit",
+			query: `query {
+						users(limit: 1) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "Bob",
+					"Age":  uint64(32),
+				},
+				// {
+				// 	"Name": "John",
+				// 	"Age":  uint64(21),
+				// },
+			},
+		},
+		{
+			description: "Simple query with basic limit & offset",
+			query: `query {
+						users(limit: 1, offset: 1) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+			},
+			results: []map[string]interface{}{
+				// {
+				// 	"Name": "Bob",
+				// 	"Age":  uint64(32),
+				// },
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			description: "Simple query with basic limit, more rows",
+			query: `query {
+						users(limit: 2) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+				(`{
+					"Name": "Carlo",
+					"Age": 55
+				}`),
+				(`{
+					"Name": "Alice",
+					"Age": 19
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "Bob",
+					"Age":  uint64(32),
+				},
+				{
+					"Name": "Alice",
+					"Age":  uint64(19),
+				},
+			},
+		},
+		{
+			description: "Simple query with basic limit & offset, more rows",
+			query: `query {
+						users(limit: 2, offset: 2) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+				(`{
+					"Name": "Carlo",
+					"Age": 55
+				}`),
+				(`{
+					"Name": "Alice",
+					"Age": 19
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+				{
+					"Name": "Carlo",
+					"Age":  uint64(55),
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		desc := newTestCollectionDescription()
+		col, err := db.CreateCollection(desc)
+		assert.NoError(t, err)
+
+		executor, err := planner.NewQueryExecutor()
+		assert.NoError(t, err)
+
+		db.queryExecutor = executor
+
+		err = executor.Generator.FromSDL(userCollectionGQLSchema)
+		assert.NoError(t, err)
 		runQueryTestCase(t, col, test)
 	}
 
