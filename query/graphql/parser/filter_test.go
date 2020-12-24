@@ -671,5 +671,142 @@ func runRunFilterTest(t *testing.T, test testCase) {
 	passed, err := RunFilter(test.data, filter, EvalContext{})
 	assert.NoError(t, err)
 	assert.True(t, passed == test.shouldPass, "Test Case faild: %s", test.description)
+}
 
+func getQuerySortObject(query string) (*OrderBy, error) {
+	source := source.NewSource(&source.Source{
+		Body: []byte(query),
+		Name: "",
+	})
+
+	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	if err != nil {
+		return nil, err
+	}
+
+	sortObj := doc.Definitions[0].(*ast.OperationDefinition).SelectionSet.Selections[0].(*ast.Field).Arguments[0].Value.(*ast.ObjectValue)
+	conditions, err := ParseConditionsInOrder(sortObj)
+	if err != nil {
+		return nil, err
+	}
+	return &OrderBy{
+		Conditions: conditions,
+		Statement:  sortObj,
+	}, nil
+}
+
+func TestParseConditionsInOrder_Empty(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {})
+		}`),
+		[]SortCondition{},
+	)
+}
+
+func TestParseConditionsInOrder_Simple(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {name: ASC})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "name",
+				Direction: ASC,
+			},
+		},
+	)
+}
+
+func TestParseConditionsInOrder_Simple_Multiple(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {name: ASC, date: DESC})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "name",
+				Direction: ASC,
+			},
+			{
+				Field:     "date",
+				Direction: DESC,
+			},
+		},
+	)
+}
+
+func TestParseConditionsInOrder_Embedded(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {author: {name: ASC}})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "author.name",
+				Direction: ASC,
+			},
+		},
+	)
+}
+
+func TestParseConditionsInOrder_Embedded_Multiple(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {author: {name: ASC, birthday: DESC}})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "author.name",
+				Direction: ASC,
+			},
+			{
+				Field:     "author.birthday",
+				Direction: DESC,
+			},
+		},
+	)
+}
+
+func TestParseConditionsInOrder_Embedded_Nested(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {author: {address: {street_name: DESC}}})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "author.address.street_name",
+				Direction: DESC,
+			},
+		},
+	)
+}
+
+func TestParseConditionsInOrder_Complex(t *testing.T) {
+	runParseConditionInOrderTest(t, (`
+		query {
+			users(sort: {name: ASC, author: {birthday: ASC, address: {street_name: DESC}}})
+		}`),
+		[]SortCondition{
+			{
+				Field:     "name",
+				Direction: ASC,
+			},
+			{
+				Field:     "author.birthday",
+				Direction: ASC,
+			},
+			{
+				Field:     "author.address.street_name",
+				Direction: DESC,
+			},
+		},
+	)
+}
+
+func runParseConditionInOrderTest(t *testing.T, query string, target []SortCondition) {
+	sort, err := getQuerySortObject(query)
+	assert.NoError(t, err)
+
+	assert.Equal(t, target, sort.Conditions)
 }
