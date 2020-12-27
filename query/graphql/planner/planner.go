@@ -113,10 +113,6 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	return plan, nil
 }
 
-// func (p *Planner) Select() {}
-
-func (p *Planner) OrderBy() {}
-
 func (p *Planner) GroupBy() {}
 
 // plan optimization. Includes plan expansion and wiring

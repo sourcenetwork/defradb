@@ -187,8 +187,8 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	s := &selectNode{p: p}
 	s.filter = parsed.Filter
-	limit := parsed.Limit // ignore for now
-	// sort := parsed.OrderBy // ignore for now
+	limit := parsed.Limit  // ignore for now
+	sort := parsed.OrderBy // ignore for now
 
 	s.renderInfo = &renderInfo{}
 	err := s.initSource(parsed)
@@ -201,10 +201,16 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 		return nil, err
 	}
 
+	sortPlan, err := p.OrderBy(sort)
+	if err != nil {
+		return nil, err
+	}
+
 	top := &selectTopNode{
 		source: s,
 		render: p.render(),
 		limit:  limitPlan,
+		sort:   sortPlan,
 	}
 	return top, nil
 }
