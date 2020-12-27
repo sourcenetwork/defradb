@@ -1,8 +1,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -49,13 +47,14 @@ func (n *limitNode) Next() (bool, error) {
 	}
 
 	for {
+		// get next
 		if next, err := n.plan.Next(); !next {
 			return false, err
 		}
 
+		// check if we're beyond the offset
 		n.rowIndex++
 		if n.rowIndex > n.offset {
-			fmt.Println("passed offset:", n.rowIndex, n.offset)
 			break
 		}
 	}

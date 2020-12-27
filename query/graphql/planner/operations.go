@@ -24,11 +24,6 @@ type aggregateNode struct {
 // 	p *Planner
 // }
 
-// order the results
-type sortNode struct {
-	p *Planner
-}
-
 // noop
 type noopNode struct {
 	p *Planner
