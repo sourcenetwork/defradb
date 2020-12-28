@@ -45,7 +45,7 @@ func (n *valuesNode) Close() {
 }
 
 func (n *valuesNode) Next() (bool, error) {
-	if n.docIndex >= n.docs.Len() {
+	if n.docIndex >= n.docs.Len()-1 {
 		return false, nil
 	}
 	n.docIndex++
@@ -78,7 +78,7 @@ func (n *valuesNode) docValueLess(da, db map[string]interface{}) bool {
 		if order.Direction == parser.ASC {
 			ra = getMapProp(da, order.Field)
 			rb = getMapProp(db, order.Field)
-		} else {
+		} else if order.Direction == parser.DESC { // redundant, just else
 			ra = getMapProp(db, order.Field)
 			rb = getMapProp(da, order.Field)
 		}
@@ -125,8 +125,20 @@ func getMapProp(obj map[string]interface{}, prop string) interface{} {
 
 func getMapPropList(obj map[string]interface{}, props []string, numProps int) interface{} {
 	if numProps == 1 {
-		return obj[props[0]]
-	} else {
-		return getMapPropList(obj[props[0]].(map[string]interface{}), props[1:], numProps-1)
+		val, ok := obj[props[0]]
+		if !ok {
+			return nil
+		}
+		return val
 	}
+
+	val, ok := obj[props[0]]
+	if !ok {
+		return nil
+	}
+	subObj, ok := val.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	return getMapPropList(subObj, props[1:], numProps-1)
 }
