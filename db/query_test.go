@@ -477,6 +477,96 @@ func TestQuerySimple(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "Simple query with basic sort ASC",
+			query: `query {
+						users(order: {Age: ASC}) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+				(`{
+					"Name": "Carlo",
+					"Age": 55
+				}`),
+				(`{
+					"Name": "Alice",
+					"Age": 19
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "Alice",
+					"Age":  uint64(19),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+				{
+					"Name": "Bob",
+					"Age":  uint64(32),
+				},
+				{
+					"Name": "Carlo",
+					"Age":  uint64(55),
+				},
+			},
+		},
+		{
+			description: "Simple query with basic sort DESC",
+			query: `query {
+						users(order: {Age: DESC}) {
+							Name
+							Age
+						}
+					}`,
+			docs: []string{
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`),
+				(`{
+					"Name": "Bob",
+					"Age": 32
+				}`),
+				(`{
+					"Name": "Carlo",
+					"Age": 55
+				}`),
+				(`{
+					"Name": "Alice",
+					"Age": 19
+				}`),
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "Carlo",
+					"Age":  uint64(55),
+				},
+				{
+					"Name": "Bob",
+					"Age":  uint64(32),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+				{
+					"Name": "Alice",
+					"Age":  uint64(19),
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
