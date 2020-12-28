@@ -141,7 +141,12 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	}
 
 	// if group
+
 	// if order
+	if plan.sort != nil {
+		plan.sort.plan = plan.plan
+		plan.plan = plan.sort
+	}
 
 	if plan.limit != nil {
 		plan.limit.plan = plan.plan
@@ -163,6 +168,10 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 	defer plan.Close()
 	if err := plan.Start(); err != nil {
+		return nil, err
+	}
+
+	if next, err := plan.Next(); err != nil || !next {
 		return nil, err
 	}
 

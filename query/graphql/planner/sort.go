@@ -81,13 +81,14 @@ func (n *sortNode) Next() (bool, error) {
 
 		// consume data (from plan) (Next / Values())
 		next, err := n.plan.Next()
-		if err == nil {
+		if err != nil {
 			return false, err
 		}
 		if !next {
 			n.sortStrategy.Finish()
 			n.valueIter = n.sortStrategy
 			n.needSort = false
+			break
 		}
 
 		// consuming data, sort
@@ -125,7 +126,9 @@ type allSortStrategy struct {
 }
 
 func newAllSortStrategy(v *valuesNode) *allSortStrategy {
-	return &allSortStrategy{}
+	return &allSortStrategy{
+		valueNode: v,
+	}
 }
 
 // Add adds a new document to underlying valueNode
