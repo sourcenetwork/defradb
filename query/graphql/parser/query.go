@@ -234,16 +234,15 @@ func parseSelect(field *ast.Field) (*Select, error) {
 				slct.Limit = &Limit{}
 			}
 			slct.Limit.Offset = i
-		} else if prop == "sort" { // parse sort (order by)
+		} else if prop == "order" { // parse sort (order by)
 			obj := argument.Value.(*ast.ObjectValue)
-			cond, err := ParseConditions(obj)
+			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			// replace string with SortDirection
-			err = replaceSortDirection(cond)
-			if err != nil {
-				return nil, err
+			slct.OrderBy = &OrderBy{
+				Conditions: cond,
+				Statement:  obj,
 			}
 		}
 
