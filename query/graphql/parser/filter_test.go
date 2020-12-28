@@ -698,7 +698,7 @@ func getQuerySortObject(query string) (*OrderBy, error) {
 func TestParseConditionsInOrder_Empty(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {})
+			users(order: {})
 		}`),
 		[]SortCondition{},
 	)
@@ -707,7 +707,7 @@ func TestParseConditionsInOrder_Empty(t *testing.T) {
 func TestParseConditionsInOrder_Simple(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {name: ASC})
+			users(order: {name: ASC})
 		}`),
 		[]SortCondition{
 			{
@@ -721,7 +721,7 @@ func TestParseConditionsInOrder_Simple(t *testing.T) {
 func TestParseConditionsInOrder_Simple_Multiple(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {name: ASC, date: DESC})
+			users(order: {name: ASC, date: DESC})
 		}`),
 		[]SortCondition{
 			{
@@ -739,7 +739,7 @@ func TestParseConditionsInOrder_Simple_Multiple(t *testing.T) {
 func TestParseConditionsInOrder_Embedded(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {author: {name: ASC}})
+			users(order: {author: {name: ASC}})
 		}`),
 		[]SortCondition{
 			{
@@ -753,7 +753,7 @@ func TestParseConditionsInOrder_Embedded(t *testing.T) {
 func TestParseConditionsInOrder_Embedded_Multiple(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {author: {name: ASC, birthday: DESC}})
+			users(order: {author: {name: ASC, birthday: DESC}})
 		}`),
 		[]SortCondition{
 			{
@@ -771,7 +771,7 @@ func TestParseConditionsInOrder_Embedded_Multiple(t *testing.T) {
 func TestParseConditionsInOrder_Embedded_Nested(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {author: {address: {street_name: DESC}}})
+			users(order: {author: {address: {street_name: DESC}}})
 		}`),
 		[]SortCondition{
 			{
@@ -785,7 +785,7 @@ func TestParseConditionsInOrder_Embedded_Nested(t *testing.T) {
 func TestParseConditionsInOrder_Complex(t *testing.T) {
 	runParseConditionInOrderTest(t, (`
 		query {
-			users(sort: {name: ASC, author: {birthday: ASC, address: {street_name: DESC}}})
+			users(order: {name: ASC, author: {birthday: ASC, address: {street_name: DESC}}})
 		}`),
 		[]SortCondition{
 			{
