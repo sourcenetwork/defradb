@@ -25,6 +25,11 @@ func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) cor
 		ChildString(index.IDString())}
 }
 
+// MakeIndexKey generates a key for the target dockey, using the collection/index description
+func MakeIndexKey(col *CollectionDescription, index *IndexDescription, key core.Key) core.Key {
+	return core.Key{MakeIndexPrefixKey(col, index).Child(key.Key)}
+}
+
 // MakeCollectionSystemKey returns a formatted collection key for the system data store.
 // it assumes the name of the collection is non-empty.
 func MakeCollectionSystemKey(name string) core.Key {

@@ -50,8 +50,9 @@ func (index IndexDescription) IDString() string {
 }
 
 type SchemaDescription struct {
-	ID  uint32
-	Key []byte
+	ID   uint32
+	Name string
+	Key  []byte
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription
@@ -87,11 +88,34 @@ const (
 	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
 )
 
+const (
+	Meta_Relation_ONE       uint8 = 0x01 << iota // 0b0001
+	Meta_Relation_ONEMANY                        // 0b0010
+	Meta_Relation_MANY_MANY                      // 0b1000
+	_
+	_
+	_
+	_
+	Meta_Relation_Primary // 0b1000 0000 Primary reference entity on relation
+)
+
 type FieldID uint32
 
 type FieldDescription struct {
-	Name string
-	ID   FieldID
-	Kind FieldKind
-	Typ  core.CType
+	Name         string
+	ID           FieldID
+	Kind         FieldKind
+	Schema       string // If the field is an OBJECT type, then it has a target schema
+	RelationName string // The name of the relation index if the field is of type FORIEGN_OBJECT
+	Typ          core.CType
+	Meta         uint8
+	// @todo: Add relation name for specifying target relation index
+	// @body: If a type has two User sub objects, you need to specify the relation
+	// name used. By default the relation name is "rootType_subType". However,
+	// if you have two of the same sub types, then you need to specify to
+	// avoid collision.
+}
+
+func (f FieldDescription) IsObject() bool {
+	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT)
 }
