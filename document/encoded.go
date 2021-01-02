@@ -69,6 +69,7 @@ func (encdoc *EncodedDocument) Decode() (*Document, error) {
 // map of field/value pairs
 func (encdoc *EncodedDocument) DecodeToMap() (map[string]interface{}, error) {
 	doc := make(map[string]interface{})
+	doc["_key"] = string(encdoc.Key)
 	for fieldDesc, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()
 		if err != nil {

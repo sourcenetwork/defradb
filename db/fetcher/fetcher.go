@@ -202,8 +202,14 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		df.indexKey = ik.Bytes()
 		df.doc.Reset()
 		df.doc.Key = []byte(ik.BaseNamespace())
+		// fmt.Println(df.doc.Key)
+		// keyFD := df.schemaFields[0] // _key
+		// df.doc.Properties[keyFD] = &document.EncProperty{
+		// 	Raw: df.doc.Key[:],
+		// }
 	}
 
+	// @todo: remove all schema-less branches
 	var fieldDesc base.FieldDescription
 	if df.hasSchema {
 		// extract the FieldID and update the encoded doc properties map
