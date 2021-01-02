@@ -64,6 +64,9 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]SortCondition, error) {
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 	conditions := make([]SortCondition, 0)
+	if stmt == nil {
+		return conditions, nil
+	}
 	for _, field := range stmt.Fields {
 		name := field.Name.Value
 		val, err := parseVal(field.Value, parseConditionsInOrder)
@@ -129,13 +132,16 @@ func ParseConditions(stmt *ast.ObjectValue) (map[string]interface{}, error) {
 
 func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 	conditions := make(map[string]interface{})
+	if stmt == nil {
+		return conditions, nil
+	}
 	for _, field := range stmt.Fields {
 		name := field.Name.Value
 		val, err := parseVal(field.Value, parseConditions)
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(name, "_") {
+		if strings.HasPrefix(name, "_") && name != "_key" {
 			name = strings.Replace(name, "_", "$", 1)
 		}
 		conditions[name] = val
