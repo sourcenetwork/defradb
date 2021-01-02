@@ -68,7 +68,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 			if field.Kind == base.FieldKind_None {
 				return nil, errors.New("Collection schema field missing FieldKind")
 			}
-			if field.Kind != base.FieldKind_DocKey && field.Typ == core.NONE_CRDT {
+			if (field.Kind != base.FieldKind_DocKey && !field.IsObject()) && field.Typ == core.NONE_CRDT {
 				return nil, errors.New("Collection schema field missing CRDT type")
 			}
 			desc.Schema.FieldIDs[i] = uint32(i)
