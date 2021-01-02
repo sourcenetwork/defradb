@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
@@ -26,13 +27,16 @@ type Type struct {
 type Generator struct {
 	typeDefs []*gql.Object
 	manager  *SchemaManager
+
+	expandedTypes map[string]bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
 func NewGenerator(manager *SchemaManager) *Generator {
 	return &Generator{
-		manager: manager,
+		manager:       manager,
+		expandedTypes: make(map[string]bool),
 	}
 }
 
@@ -57,26 +61,165 @@ func (g *Generator) FromSDL(schema string) error {
 // parsed GraphQL Schema Definition Language AST document
 func (g *Generator) FromAST(document *ast.Document) error {
 	// build base types
-	err := g.buildTypesFromAST(document)
-	if err != nil {
+	if err := g.buildTypesFromAST(document); err != nil {
 		return err
 	}
 	// resolve types
-	err = g.manager.ResolveTypes()
-	if err != nil {
+	if err := g.manager.ResolveTypes(); err != nil {
 		return err
 	}
 
 	// for each built type
 	// 		generate query inputs
+	queryType := g.manager.schema.QueryType()
 	for _, t := range g.typeDefs {
-		err = g.GenerateQueryInputForGQLType(t)
+		f, err := g.GenerateQueryInputForGQLType(t, true)
 		if err != nil {
 			return err
 		}
+		queryType.AddFieldConfig(f.Name, f)
 	}
 	// resolve types
-	return g.manager.ResolveTypes()
+	if err := g.manager.ResolveTypes(); err != nil {
+		return err
+	}
+
+	spew.Dump(g.manager.schema.TypeMap())
+
+	// secondary pass to expand query collection type
+	// argument inputs
+	query := g.manager.schema.QueryType()
+	collections := query.Fields()
+	for _, def := range collections {
+		t := def.Type
+		if obj, ok := t.(*gql.List); ok {
+			fmt.Println("expanding input type field")
+			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
+				return err
+			}
+		}
+	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return err
+	}
+
+	fmt.Println("=======222222222======")
+	// spew.Dump(g.manager.schema.TypeMap()["usersFilterArg"].(*gql.InputObject).Fields())
+	spew.Dump(g.manager.schema.TypeMap()["book"].(*gql.Object).Fields())
+
+	return nil
+}
+
+func (g *Generator) expandInputArgument(obj *gql.Object) error {
+	fields := obj.Fields()
+	for f, def := range fields {
+
+		switch t := def.Type.(type) {
+		case *gql.Object:
+			if _, complete := g.expandedTypes[obj.Name()]; complete {
+				fmt.Println("skipping object expansion:", obj.Name())
+				continue
+			} else {
+				g.expandedTypes[obj.Name()] = true
+				fmt.Println("expanding object:", obj.Name())
+			}
+			// make sure all the sub fields are expanded first
+			if err := g.expandInputArgument(t); err != nil {
+				return err
+			}
+
+			// new field object with arugments (single)
+			expandedField, err := g.createExpandedFieldSingle(def, t)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Adding queryable field %s of type %s to %s\n", f, expandedField.Type.Name(), obj.Name())
+			// obj.AddFieldConfig(f, expandedField)
+			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
+			obj.AddFieldConfig(f, expandedField)
+			// obj.AddFieldConfig(f+"_test", expandedField)
+			// delete(g.manager.schema.TypeMap(), obj.Name())
+			// if err := g.manager.schema.AppendType(obj); err != nil {
+			// 	panic(err)
+			// }
+
+			// spew.Dump(expandedField)
+			// fmt.Println("~~~~~~~~~~~~~~~~~~~~~")
+			// spew.Dump(obj.Fields())
+
+			// if obj.Error() != nil {
+			// 	panic(obj.Error())
+			// }
+
+			// // temp bug fix, make sure we've resolved all FieldThunks
+			// obj.Fields()
+
+			// g.manager.schema.TypeMap()[obj.Name()] = obj
+			break
+		case *gql.List: // new field object with aguments (list)
+			listType := t.OfType
+			if _, complete := g.expandedTypes[listType.Name()]; complete {
+				fmt.Println("skipping object list expansion:", listType.Name())
+				continue
+			} else {
+				g.expandedTypes[listType.Name()] = true
+				fmt.Println("expanding list object:", listType.Name())
+			}
+
+			if listObjType, ok := listType.(*gql.Object); ok {
+				if err := g.expandInputArgument(listObjType); err != nil {
+					return err
+				}
+
+				expandedField, err := g.createExpandedFieldList(def, listObjType)
+				if err != nil {
+					return err
+				}
+				obj.AddFieldConfig(f, expandedField)
+			}
+			// todo: check if NonNull is possible here
+			//case *gql.NonNull:
+			// get subtype
+		}
+	}
+
+	return nil
+}
+
+func (g *Generator) createExpandedFieldSingle(f *gql.FieldDefinition, t *gql.Object) (*gql.Field, error) {
+	typeName := t.Name()
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: f.Name,
+		Type: t,
+		Args: gql.FieldConfigArgument{
+			"filter": newArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+		},
+	}
+	return field, nil
+}
+
+// @todo: add field reference so we can copy extra fields (like description, depreciation, etc)
+func (g *Generator) createExpandedFieldList(f *gql.FieldDefinition, t *gql.Object) (*gql.Field, error) {
+	typeName := t.Name()
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: f.Name,
+		Type: gql.NewList(t),
+		Args: gql.FieldConfigArgument{
+			"filter":  newArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"]))),
+			"having":  newArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
+			"order":   newArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			"limit":   newArgConfig(gql.Int),
+			"offset":  newArgConfig(gql.Int),
+		},
+	}
+
+	return field, nil
 }
 
 // @todo: Add Schema Directives (IE: relation, etc..)
@@ -107,6 +250,11 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 			// at a future point in time.
 			fieldsThunk := (gql.FieldsThunk)(func() gql.Fields {
 				fields := gql.Fields{}
+
+				// @todo: Check if this is a collection (relation) type
+				// or just a embedded only type (which doesnt need a key)
+				// automatically add the _key: ID field to the type
+				fields["_key"] = &gql.Field{Type: gql.ID}
 				for _, field := range defType.Fields {
 					fType := new(gql.Field)
 					if field.Name != nil {
@@ -122,6 +270,15 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 						// @todo: Handle errors during type genation within a Thunk
 						// panic(err)
 					}
+
+					// check if ttype is a Object value
+					// if so, add appropriate relationship data
+					// @todo check various directives for nature
+					// of object relationship
+					if _, ok := ttype.(*gql.Object); ok {
+						fields[fType.Name+"_id"] = &gql.Field{Type: gql.ID}
+					}
+
 					fType.Type = ttype
 					fields[fType.Name] = fType
 				}
@@ -186,21 +343,27 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 // GenerateQueryInputForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
-func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) error {
+func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object, isList bool) (*gql.Field, error) {
 	if obj.Error() != nil {
-		return obj.Error()
+		return nil, obj.Error()
 	}
 	types := queryInputTypeConfig{}
 	types.filter = g.genTypeFilterArgInput(obj)
-	types.groupBy = g.genTypeFieldsEnum(obj)
-	types.having = g.genTypeHavingArgInput(obj)
-	types.order = g.genTypeOrderArgInput(obj)
 
-	queryField := g.genTypeQueryCollectionField(obj, types)
-	queryType := g.manager.schema.QueryType()
-	queryType.AddFieldConfig(queryField.Name, queryField)
+	var queryField *gql.Field
+	if isList {
+		types.groupBy = g.genTypeFieldsEnum(obj)
+		types.having = g.genTypeHavingArgInput(obj)
+		types.order = g.genTypeOrderArgInput(obj)
+		queryField = g.genTypeQueryableFieldList(obj, types)
+	} else {
+		queryField = g.genTypeQueryableField(obj, types)
+	}
 
-	return nil
+	// queryType := g.manager.schema.QueryType()
+	// queryType.AddFieldConfig(queryField.Name, queryField)
+
+	return queryField, nil
 }
 
 // enum {Type.Name}Fields { ... }
@@ -258,6 +421,8 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		}
 
+		// fmt.Println("#####################")
+		// spew.Dump(fields)
 		return fields
 	})
 
@@ -358,11 +523,36 @@ type queryInputTypeConfig struct {
 }
 
 // generate the type Query { ... }  field for the given type
-func (g *Generator) genTypeQueryCollectionField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
-	collectionName := strings.ToLower(obj.Name())
+func (g *Generator) genTypeQueryableField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
+	name := strings.ToLower(obj.Name())
+
+	// add the generated types to the type map
+	// g.manager.schema.AppendType(config.filter)
+
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
-		Name: collectionName,
+		Name: name,
+		Type: obj,
+		Args: gql.FieldConfigArgument{
+			"filter": newArgConfig(config.filter),
+		},
+	}
+
+	return field
+}
+
+func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
+	name := strings.ToLower(obj.Name())
+
+	// add the generated types to the type map
+	g.manager.schema.AppendType(config.filter)
+	g.manager.schema.AppendType(config.groupBy)
+	g.manager.schema.AppendType(config.having)
+	g.manager.schema.AppendType(config.order)
+
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"filter":  newArgConfig(config.filter),
