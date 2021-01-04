@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -26,7 +28,11 @@ func (n *selectTopNode) Start() error                   { return n.plan.Start() 
 func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
 func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *selectTopNode) Close()                         { n.plan.Close() }
+func (n *selectTopNode) Close() {
+	if n.plan != nil {
+		n.plan.Close()
+	}
+}
 
 type renderInfo struct {
 	numResults int
@@ -85,16 +91,21 @@ func (n *selectNode) Next() (bool, error) {
 		}
 
 		n.doc = n.source.Values()
+
+		fmt.Println("Running filter on select node:", n.filter, n.doc)
 		passes, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
 
 		if passes {
+			fmt.Println("filter passed")
 			n.renderDoc()
 			return true, err
 			// err :=
 			// return err == nil, err
+		} else {
+			fmt.Println("filter failed")
 		}
 		// didn't pass, keep looping
 	}
@@ -153,6 +164,8 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 	}
 
 	n.renderInfo.numResults = 0
+	subTypes := make([]*parser.Select, 0)
+
 	// iterate looking just for fields
 	// iterate again  just for Selects
 	for _, field := range parsed.Fields {
@@ -166,6 +179,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 			if found {
 				n.renderInfo.fields = append(n.renderInfo.fields, &f)
 			}
+			subTypes = append(subTypes, node)
 		case *parser.Field:
 			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
 			if found {
@@ -176,12 +190,36 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		n.renderInfo.numResults++
 	}
 
+	// loop over the sub type
+	// at the moment, we're only testing a single sub selection
+	for _, subtype := range subTypes {
+		typeIndexJoin, err := n.p.makeTypeIndexJoin(n, origScan, subtype)
+		if err != nil {
+			return err
+		}
+
+		n.source = typeIndexJoin
+	}
+
 	return nil
 }
 
 // func (n *selectNode) initRender(fields []*base.FieldDescription, aliases []string) error {
 // 	return n.p.render(fields, aliases)
 // }
+
+func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
+	plan, err := p.Select(parsed)
+	if err != nil {
+		return nil, err
+	}
+
+	// if this is a sub select plan, we need to remove the render node
+	// as the final top level selectTopNode will handle all sub renders
+	top := plan.(*selectTopNode)
+	top.render = nil
+	return top, nil
+}
 
 // Select constructs a SelectPlan
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
