@@ -1,8 +1,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -91,21 +89,16 @@ func (n *selectNode) Next() (bool, error) {
 		}
 
 		n.doc = n.source.Values()
-
-		fmt.Println("Running filter on select node:", n.filter, n.doc)
 		passes, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
 
 		if passes {
-			fmt.Println("filter passed")
 			n.renderDoc()
 			return true, err
 			// err :=
 			// return err == nil, err
-		} else {
-			fmt.Println("filter failed")
 		}
 		// didn't pass, keep looping
 	}

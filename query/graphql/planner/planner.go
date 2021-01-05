@@ -117,7 +117,8 @@ func (p *Planner) GroupBy() {}
 
 // plan optimization. Includes plan expansion and wiring
 func (p *Planner) optimizePlan(plan planNode) error {
-	return p.expandPlan(plan)
+	err := p.expandPlan(plan)
+	return err
 }
 
 // full plan graph expansion and optimization
@@ -125,12 +126,20 @@ func (p *Planner) expandPlan(plan planNode) error {
 	switch n := plan.(type) {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n)
+	case *selectNode:
+		return p.expandPlan(n.source)
+	case *typeIndexJoin:
+		return p.expandTypeIndexJoinPlan(n)
 	default:
 		return nil
 	}
 }
 
 func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
+	if err := p.expandPlan(plan.source); err != nil {
+		return err
+	}
+
 	// wire up source to plan
 	plan.plan = plan.source
 
@@ -154,6 +163,19 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	}
 
 	return nil
+}
+
+// func (p *Planner) expandSelectNodePlan(plan *selectNode) error {
+// 	fmt.Println("Expanding select plan")
+// 	return p.expandPlan(plan.source)
+// }
+
+func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
+	switch node := plan.joinPlan.(type) {
+	case *typeJoinOne:
+		return p.expandPlan(node.subType)
+	}
+	return errors.New("Unknown type index join plan")
 }
 
 // func (p *Planner) QueryDocs(query parser.Query) {
