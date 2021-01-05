@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
@@ -84,8 +83,6 @@ func (g *Generator) FromAST(document *ast.Document) error {
 		return err
 	}
 
-	spew.Dump(g.manager.schema.TypeMap())
-
 	// secondary pass to expand query collection type
 	// argument inputs
 	query := g.manager.schema.QueryType()
@@ -93,7 +90,6 @@ func (g *Generator) FromAST(document *ast.Document) error {
 	for _, def := range collections {
 		t := def.Type
 		if obj, ok := t.(*gql.List); ok {
-			fmt.Println("expanding input type field")
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return err
 			}
@@ -105,10 +101,6 @@ func (g *Generator) FromAST(document *ast.Document) error {
 		return err
 	}
 
-	fmt.Println("=======222222222======")
-	// spew.Dump(g.manager.schema.TypeMap()["usersFilterArg"].(*gql.InputObject).Fields())
-	spew.Dump(g.manager.schema.TypeMap()["book"].(*gql.Object).Fields())
-
 	return nil
 }
 
@@ -119,11 +111,9 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 		switch t := def.Type.(type) {
 		case *gql.Object:
 			if _, complete := g.expandedTypes[obj.Name()]; complete {
-				fmt.Println("skipping object expansion:", obj.Name())
 				continue
 			} else {
 				g.expandedTypes[obj.Name()] = true
-				fmt.Println("expanding object:", obj.Name())
 			}
 			// make sure all the sub fields are expanded first
 			if err := g.expandInputArgument(t); err != nil {
@@ -136,37 +126,16 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				return err
 			}
 
-			fmt.Printf("Adding queryable field %s of type %s to %s\n", f, expandedField.Type.Name(), obj.Name())
 			// obj.AddFieldConfig(f, expandedField)
 			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
-			// obj.AddFieldConfig(f+"_test", expandedField)
-			// delete(g.manager.schema.TypeMap(), obj.Name())
-			// if err := g.manager.schema.AppendType(obj); err != nil {
-			// 	panic(err)
-			// }
-
-			// spew.Dump(expandedField)
-			// fmt.Println("~~~~~~~~~~~~~~~~~~~~~")
-			// spew.Dump(obj.Fields())
-
-			// if obj.Error() != nil {
-			// 	panic(obj.Error())
-			// }
-
-			// // temp bug fix, make sure we've resolved all FieldThunks
-			// obj.Fields()
-
-			// g.manager.schema.TypeMap()[obj.Name()] = obj
 			break
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
 			if _, complete := g.expandedTypes[listType.Name()]; complete {
-				fmt.Println("skipping object list expansion:", listType.Name())
 				continue
 			} else {
 				g.expandedTypes[listType.Name()] = true
-				fmt.Println("expanding list object:", listType.Name())
 			}
 
 			if listObjType, ok := listType.(*gql.Object); ok {
