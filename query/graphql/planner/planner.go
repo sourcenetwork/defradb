@@ -174,6 +174,8 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
 		return p.expandPlan(node.subType)
+	case *typeJoinMany:
+		return p.expandPlan(node.subType)
 	}
 	return errors.New("Unknown type index join plan")
 }

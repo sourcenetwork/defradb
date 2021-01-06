@@ -68,6 +68,12 @@ func (r *renderNode) render(src map[string]interface{}) map[string]interface{} {
 				switch v := val.(type) {
 				case map[string]interface{}:
 					result[dst] = r.render(v)
+				case []map[string]interface{}:
+					subdocs := make([]map[string]interface{}, 0)
+					for _, subv := range v {
+						subdocs = append(subdocs, r.render(subv))
+					}
+					result[dst] = subdocs
 				default:
 					result[dst] = v
 				}

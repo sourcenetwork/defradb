@@ -270,6 +270,59 @@ func newTestQueryCollectionDescription3() base.CollectionDescription {
 	}
 }
 
+func newTestQueryCollectionDescription4() base.CollectionDescription {
+	return base.CollectionDescription{
+		Name: "author",
+		ID:   uint32(3),
+		Schema: base.SchemaDescription{
+			ID:       uint32(3),
+			Name:     "author",
+			FieldIDs: []uint32{1, 2, 3, 4, 5},
+			Fields: []base.FieldDescription{
+				base.FieldDescription{
+					Name: "_key",
+					ID:   base.FieldID(1),
+					Kind: base.FieldKind_DocKey,
+				},
+				base.FieldDescription{
+					Name: "name",
+					ID:   base.FieldID(2),
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+				base.FieldDescription{
+					Name: "age",
+					ID:   base.FieldID(3),
+					Kind: base.FieldKind_INT,
+					Typ:  core.LWW_REGISTER,
+				},
+				base.FieldDescription{
+					Name: "verified",
+					ID:   base.FieldID(4),
+					Kind: base.FieldKind_BOOL,
+					Typ:  core.LWW_REGISTER,
+				},
+				base.FieldDescription{
+					Name:   "published",
+					ID:     base.FieldID(5),
+					Kind:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
+					Schema: "book",
+					Typ:    core.NONE_CRDT,
+					Meta:   base.Meta_Relation_ONEMANY,
+				},
+			},
+		},
+		Indexes: []base.IndexDescription{
+			base.IndexDescription{
+				Name:    "primary",
+				ID:      uint32(0),
+				Primary: true,
+				Unique:  true,
+			},
+		},
+	}
+}
+
 type queryTestCase struct {
 	description string
 	query       string
@@ -1313,6 +1366,161 @@ func TestQueryRelationOne(t *testing.T) {
 		runQueryTestCase(t, []*Collection{bookCol, authorCol}, test)
 	}
 
+}
+
+func TestQueryRelationMany(t *testing.T) {
+	var bookAuthorGQLSchema = (`
+	type book {
+		name: String
+		rating: Float
+		author: author
+	}
+
+	type author {
+		name: String
+		age: Int
+		verified: Boolean
+		published: [book]
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "One-to-many relation query from one side",
+			query: `query {
+						book {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`)},
+				//authors
+				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"name":   "Painted House",
+					"rating": 4.9,
+					"author": map[string]interface{}{
+						"name": "John Grisham",
+						"age":  uint64(65),
+					},
+				},
+			},
+		},
+		{
+			description: "One-to-many relation query from many side",
+			query: `query {
+				author {
+					name
+					age
+					published {
+						name
+						rating
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+						"name": "Painted House",
+						"rating": 4.9,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`),
+					(`{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+						}`),
+					(`{
+						"name": "Theif Lord",
+						"rating": 4.8,
+						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`),
+				},
+				//authors
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+					}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					(`{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+					}`),
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "John Grisham",
+					"age":  uint64(65),
+					"published": []map[string]interface{}{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
+					},
+				},
+				{
+					"name": "Cornelia Funke",
+					"age":  uint64(62),
+					"published": []map[string]interface{}{
+						{
+							"name":   "Theif Lord",
+							"rating": 4.8,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		bookDesc := newTestQueryCollectionDescription2()
+		bookCol, err := db.CreateCollection(bookDesc)
+		assert.NoError(t, err)
+
+		authorDesc := newTestQueryCollectionDescription4()
+		authorCol, err := db.CreateCollection(authorDesc)
+		assert.NoError(t, err)
+
+		executor, err := planner.NewQueryExecutor()
+		assert.NoError(t, err)
+
+		db.queryExecutor = executor
+
+		err = executor.Generator.FromSDL(bookAuthorGQLSchema)
+		assert.NoError(t, err)
+		runQueryTestCase(t, []*Collection{bookCol, authorCol}, test)
+	}
 }
 
 func runQueryTestCase(t *testing.T, collections []*Collection, test queryTestCase) {

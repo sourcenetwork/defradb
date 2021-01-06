@@ -2,6 +2,7 @@ package planner
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -56,10 +57,27 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source *scanNode, subTyp
 	}
 
 	// handle join relation strategies
-	joinPlan, err := p.maketypeJoinOne(parent, source, subType)
+	var joinPlan planNode
+	var err error
+
+	desc := parent.sourceInfo.collectionDescription
+	typeFieldDesc, ok := desc.GetField(subType.Name)
+	if !ok {
+		return nil, errors.New("Unknown field on sub selection")
+	}
+
+	meta := typeFieldDesc.Meta
+	if meta&base.Meta_Relation_ONE > 0 { // One-to-One, or One side of One-to-Many
+		joinPlan, err = p.maketypeJoinOne(parent, source, subType)
+	} else if meta&base.Meta_Relation_ONEMANY > 0 { // Many side of One-to-Many
+		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
+	} else { // more to come, Many-to-Many, Embedded?
+		return nil, errors.New("Failed sub selection, unknow relation type")
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	typeJoin.joinPlan = joinPlan
 	return typeJoin, nil
 }
@@ -140,7 +158,7 @@ func (p *Planner) maketypeJoinOne(parent *selectNode, source *scanNode, subType 
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("Couldn't find subtype field description for typeJoin node.")
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
 	subType.Name = subTypeFieldDesc.Schema
 
@@ -289,13 +307,21 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source *scanNode, subType
 		root: source,
 	}
 
+	desc := parent.sourceInfo.collectionDescription
+	// get the correct sub field schema type (collection)
+	subTypeFieldDesc, ok := desc.GetField(subType.Name)
+	if !ok {
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+	}
+	subType.Name = subTypeFieldDesc.Schema
+
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
 		return nil, err
 	}
 	typeJoin.subType = selectPlan
-	typeJoin.subTypeName = subType.Name
-	typeJoin.rootName = parent.sourceInfo.collectionDescription.Name
+	typeJoin.subTypeName = subTypeFieldDesc.Name
+	typeJoin.rootName = desc.Name
 
 	// split filter
 	source.filter, parent.filter = splitFilterByType(source.filter, subType.Name)
@@ -342,6 +368,8 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 			return nil
 		}
 
+		// reset scan node
+		n.subType.Init()
 		for {
 			next, err := n.subType.Next()
 			if !next || err != nil {
@@ -381,10 +409,13 @@ func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{
 			}
 		}
 
-		// apply condition
+		fmt.Println("Appending filter:", filterCondition)
+		// merge conditions
 		for k, v := range filterCondition {
 			filter.Conditions[k] = v
 		}
+
+		node.filter = filter
 	}
 	return nil
 }
