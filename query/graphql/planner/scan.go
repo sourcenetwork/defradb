@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -87,6 +89,7 @@ func (n *scanNode) Next() (bool, error) {
 			return false, nil
 		}
 
+		fmt.Println("running filter:", n.filter)
 		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err

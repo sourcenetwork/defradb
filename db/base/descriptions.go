@@ -117,5 +117,6 @@ type FieldDescription struct {
 }
 
 func (f FieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT)
+	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
+		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
