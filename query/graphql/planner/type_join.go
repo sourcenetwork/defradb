@@ -2,7 +2,6 @@ package planner
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -409,8 +408,7 @@ func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{
 			}
 		}
 
-		fmt.Println("Appending filter:", filterCondition)
-		// merge conditions
+		// merge filter conditions
 		for k, v := range filterCondition {
 			filter.Conditions[k] = v
 		}
