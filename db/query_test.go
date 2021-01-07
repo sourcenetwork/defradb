@@ -1459,15 +1459,15 @@ func TestQueryRelationMany(t *testing.T) {
 				1: []string{
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{ 
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
 					}`),
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
 					(`{
-					"name": "Cornelia Funke",
-					"age": 62,
-					"verified": false
+						"name": "Cornelia Funke",
+						"age": 62,
+						"verified": false
 					}`),
 				},
 			},
@@ -1493,6 +1493,254 @@ func TestQueryRelationMany(t *testing.T) {
 						{
 							"name":   "Theif Lord",
 							"rating": 4.8,
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "One-to-many relation query from the many side, simple filter",
+			query: `query {
+				author(filter: {age: {_gt: 63}}) {
+					name
+					age
+					published {
+						name
+						rating
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+						"name": "Painted House",
+						"rating": 4.9,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`),
+					(`{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+						}`),
+					(`{
+						"name": "Theif Lord",
+						"rating": 4.8,
+						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`),
+				},
+				//authors
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					(`{
+						"name": "Cornelia Funke",
+						"age": 62,
+						"verified": false
+					}`),
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "John Grisham",
+					"age":  uint64(65),
+					"published": []map[string]interface{}{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "One-to-many relation query from the many side, simple filter on root and sub type",
+			query: `query {
+				author(filter: {age: {_gt: 63}}) {
+					name
+					age
+					published(filter: {rating: {_gt: 4.6}}) {
+						name
+						rating
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+						"name": "Painted House",
+						"rating": 4.9,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`),
+					(`{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+						}`),
+					(`{
+						"name": "Theif Lord",
+						"rating": 4.8,
+						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`),
+				},
+				//authors
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					(`{
+						"name": "Cornelia Funke",
+						"age": 62,
+						"verified": false
+					}`),
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "John Grisham",
+					"age":  uint64(65),
+					"published": []map[string]interface{}{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "One-to-many relation query from the many side, order on sub",
+			query: `query {
+				author(filter: {age: {_gt: 63}}) {
+					name
+					age
+					published(order: {rating: ASC}) {
+						name
+						rating
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+						"name": "Painted House",
+						"rating": 4.9,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`),
+					(`{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+						}`),
+					(`{
+						"name": "Theif Lord",
+						"rating": 4.8,
+						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`),
+				},
+				//authors
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					(`{
+						"name": "Cornelia Funke",
+						"age": 62,
+						"verified": false
+					}`),
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "John Grisham",
+					"age":  uint64(65),
+					"published": []map[string]interface{}{
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
+						},
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "One-to-many relation query from the many side, order & limit on sub",
+			query: `query {
+				author(filter: {age: {_gt: 63}}) {
+					name
+					age
+					published(order: {rating: ASC}, limit: 1) {
+						name
+						rating
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+					(`{
+						"name": "Painted House",
+						"rating": 4.9,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					}`),
+					(`{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+						}`),
+					(`{
+						"name": "Theif Lord",
+						"rating": 4.8,
+						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					}`),
+				},
+				//authors
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					(`{
+						"name": "Cornelia Funke",
+						"age": 62,
+						"verified": false
+					}`),
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "John Grisham",
+					"age":  uint64(65),
+					"published": []map[string]interface{}{
+						{
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
 						},
 					},
 				},

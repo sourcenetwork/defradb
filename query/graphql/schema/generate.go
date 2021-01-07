@@ -107,7 +107,6 @@ func (g *Generator) FromAST(document *ast.Document) error {
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
-
 		switch t := def.Type.(type) {
 		case *gql.Object:
 			if _, complete := g.expandedTypes[obj.Name()]; complete {
@@ -132,10 +131,10 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			break
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
-			if _, complete := g.expandedTypes[listType.Name()]; complete {
+			if _, complete := g.expandedTypes[obj.Name()]; complete {
 				continue
 			} else {
-				g.expandedTypes[listType.Name()] = true
+				g.expandedTypes[obj.Name()] = true
 			}
 
 			if listObjType, ok := listType.(*gql.Object); ok {
