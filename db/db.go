@@ -9,6 +9,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
@@ -55,6 +56,7 @@ type DB struct {
 
 	crdtFactory *crdt.Factory
 
+	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
 
 	// indicates if this references an initalized database
@@ -102,6 +104,15 @@ func NewDB(options *Options) (*DB, error) {
 	dagstore := store.NewDAGStore(blockstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 
+	sm, err := schema.NewSchemaManager()
+	if err != nil {
+		return nil, err
+	}
+	exec, err := planner.NewQueryExecutor(sm)
+	if err != nil {
+		return nil, err
+	}
+
 	db := &DB{
 		rootstore: rootstore,
 
@@ -119,6 +130,9 @@ func NewDB(options *Options) (*DB, error) {
 
 		crdtFactory: &crdtFactory,
 		log:         log,
+
+		schema:        sm,
+		queryExecutor: exec,
 	}
 
 	err = db.Initialize()
