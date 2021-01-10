@@ -43,6 +43,33 @@ type IndexDescription struct {
 	Primary  bool
 	Unique   bool
 	FieldIDs []uint32
+
+	// Junction is a special field, it indicates if this Index is
+	// being used as a junction table for a Many-to-Many relation.
+	// A Junction index needs to index the DocKey from two different
+	// collections, so the usual method of storing the indexed fields
+	// in the FieldIDs property won't work, since thats scoped to the
+	// local schema.
+	//
+	// The Junction stores the DocKey of the type its assigned to,
+	// and the DocKey of the target relation type. Morever, since
+	// we use a Composite Key Index system, the ordering of the keys
+	// affects how we can use in the index. The initial Junction
+	// Index for a type, needs to be assigned to the  "Primary"
+	// type in the Many-to-Many relation. This is usually the type
+	// that expects more reads from.
+	//
+	// Eg:
+	// A Book type can have many Categories,
+	// and Categories can belong to many Books.
+	//
+	// If we query more for Books, then Categories directly, then
+	// we can set the Book type as the Primary type.
+	Junction bool
+	// RelationType is only used in the Index is a Junction Index.
+	// It specifies what the other type is in the Many-to-Many
+	// relationship.
+	RelationType string
 }
 
 func (index IndexDescription) IDString() string {
@@ -52,7 +79,7 @@ func (index IndexDescription) IDString() string {
 type SchemaDescription struct {
 	ID   uint32
 	Name string
-	Key  []byte
+	Key  []byte // DocKey for verioned source schema
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription
@@ -60,10 +87,7 @@ type SchemaDescription struct {
 
 //IsEmpty returns true if the SchemaDescription is empty and unitialized
 func (sd SchemaDescription) IsEmpty() bool {
-	if sd.ID == 0 &&
-		len(sd.Key) == 0 &&
-		len(sd.FieldIDs) == 0 &&
-		len(sd.Fields) == 0 {
+	if len(sd.Fields) == 0 {
 		return true
 	}
 	return false
@@ -88,15 +112,17 @@ const (
 	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
 )
 
+// type RelationType uint8
+
 const (
-	Meta_Relation_ONE       uint8 = 0x01 << iota // 0b0001
-	Meta_Relation_ONEMANY                        // 0b0010
-	Meta_Relation_MANY_MANY                      // 0b1000
-	_
-	_
-	_
-	_
-	Meta_Relation_Primary // 0b1000 0000 Primary reference entity on relation
+	Meta_Relation_ONE      uint8 = 0x01 << iota // 0b0000 0001
+	Meta_Relation_MANY                          // 0b0000 0010
+	Meta_Relation_ONEONE                        // 0b0000 0100
+	Meta_Relation_ONEMANY                       // 0b0000 1000
+	Meta_Relation_MANYMANY                      // 0b0001 0000
+	_                                           // 0b0010 0000
+	_                                           // 0b0100 0000
+	Meta_Relation_Primary                       // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
@@ -119,4 +145,8 @@ type FieldDescription struct {
 func (f FieldDescription) IsObject() bool {
 	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+func IsSet(val, target uint8) bool {
+	return val&target > 0
 }

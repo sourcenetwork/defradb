@@ -52,7 +52,6 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 	}
 
 	if !desc.Schema.IsEmpty() {
-		fmt.Println()
 		if len(desc.Schema.Fields) == 0 {
 			return nil, errors.New("Collection schema has no fields")
 		}
@@ -117,6 +116,7 @@ func (db *DB) CreateCollection(desc base.CollectionDescription) (*Collection, er
 	if err != nil {
 		return nil, err
 	}
+
 	key := base.MakeCollectionSystemKey(col.desc.Name)
 
 	//write the collection metadata to the system store
@@ -143,10 +143,11 @@ func (db *DB) GetCollection(name string) (*Collection, error) {
 	}
 
 	return &Collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
+		db:        db,
+		desc:      desc,
+		colID:     desc.ID,
+		colIDKey:  core.NewKey(fmt.Sprint(desc.ID)),
+		hasSchema: !desc.Schema.IsEmpty(),
 	}, nil
 }
 
