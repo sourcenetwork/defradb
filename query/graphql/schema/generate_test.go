@@ -15,12 +15,12 @@ import (
 
 func newTestGenerator() *Generator {
 	sm, _ := NewSchemaManager()
-	return NewGenerator(sm)
+	return sm.NewGenerator()
 }
 
 func Test_Generator_NewGenerator_HasManager(t *testing.T) {
 	sm, _ := NewSchemaManager()
-	g := NewGenerator(sm)
+	g := sm.NewGenerator()
 	assert.Equal(t, sm, g.manager, "NewGenerator returned a different SchemaManager")
 }
 
@@ -354,7 +354,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 	// // assert.NoError(t, err, "Failed to parse schema string")
 
 	// err = g.buildTypesFromAST(doc)
-	err := g.FromSDL(schema)
+	_, err := g.FromSDL(schema)
 	if err != nil {
 		return errors.Wrap(err, "Failed to build types from AST")
 	}
