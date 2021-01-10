@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/db/base"
+
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
@@ -32,16 +34,17 @@ type Generator struct {
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
-func NewGenerator(manager *SchemaManager) *Generator {
-	return &Generator{
-		manager:       manager,
+func (m *SchemaManager) NewGenerator() *Generator {
+	m.Generator = &Generator{
+		manager:       m,
 		expandedTypes: make(map[string]bool),
 	}
+	return m.Generator
 }
 
 // FromSDL generates the query type definitions from a
 // encoded GraphQL Schema Definition Lanaguage string
-func (g *Generator) FromSDL(schema string) error {
+func (g *Generator) FromSDL(schema string) ([]*gql.Object, error) {
 	// parse to AST
 	source := source.NewSource(&source.Source{
 		Body: []byte(schema),
@@ -50,7 +53,7 @@ func (g *Generator) FromSDL(schema string) error {
 		Source: source,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// generate from AST
 	return g.FromAST(doc)
@@ -58,14 +61,14 @@ func (g *Generator) FromSDL(schema string) error {
 
 // FromAST generates the query type definitions from a
 // parsed GraphQL Schema Definition Language AST document
-func (g *Generator) FromAST(document *ast.Document) error {
+func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 	// build base types
 	if err := g.buildTypesFromAST(document); err != nil {
-		return err
+		return nil, err
 	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// for each built type
@@ -74,13 +77,13 @@ func (g *Generator) FromAST(document *ast.Document) error {
 	for _, t := range g.typeDefs {
 		f, err := g.GenerateQueryInputForGQLType(t, true)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		queryType.AddFieldConfig(f.Name, f)
 	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// secondary pass to expand query collection type
@@ -91,17 +94,17 @@ func (g *Generator) FromAST(document *ast.Document) error {
 		t := def.Type
 		if obj, ok := t.(*gql.List); ok {
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return g.typeDefs, nil
 }
 
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
@@ -243,8 +246,25 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 					// if so, add appropriate relationship data
 					// @todo check various directives for nature
 					// of object relationship
-					if _, ok := ttype.(*gql.Object); ok {
+					switch subobj := ttype.(type) {
+					case *gql.Object:
 						fields[fType.Name+"_id"] = &gql.Field{Type: gql.ID}
+
+						// register the relation
+						relName, err := genRelationName(objconf.Name, ttype.Name())
+						if err != nil {
+							// todo again handle errors
+						}
+						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+					case *gql.List:
+						ltype := subobj.OfType
+						// register the relation
+						relName, err := genRelationName(objconf.Name, ltype.Name())
+						if err != nil {
+							// todo again handle errors
+						}
+						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						break
 					}
 
 					fType.Type = ttype
@@ -319,6 +339,7 @@ func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object, isList bool) (
 	types.filter = g.genTypeFilterArgInput(obj)
 
 	var queryField *gql.Field
+	// @todo: Don't add sub fields to filter/order for object list types
 	if isList {
 		types.groupBy = g.genTypeFieldsEnum(obj)
 		types.having = g.genTypeHavingArgInput(obj)
@@ -533,6 +554,13 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 	}
 
 	return field
+}
+
+// Reset the stateful data within a Generator.
+// Usually called after a round of type generation
+func (g *Generator) Reset() {
+	g.typeDefs = make([]*gql.Object, 0)
+	g.expandedTypes = make(map[string]bool)
 }
 
 func newArgConfig(t gql.Input) *gql.ArgumentConfig {

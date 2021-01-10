@@ -9,6 +9,9 @@ import (
 type SchemaManager struct {
 	schema       gql.Schema
 	definedTypes []*gql.Object // base defined types
+
+	Generator *Generator
+	Relations *RelationManager
 }
 
 // NewSchemaManager returns a new instance of a SchemaManager
@@ -23,6 +26,10 @@ func NewSchemaManager() (*SchemaManager, error) {
 		return sm, err
 	}
 	sm.schema = schema
+
+	sm.NewGenerator()
+	sm.Relations = NewRelationManager()
+
 	return sm, nil
 }
 
