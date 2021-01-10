@@ -82,7 +82,7 @@ func newEmptyDoc() *Document {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array
-func NewFromJSON(obj []byte) (*Document, error) {
+func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error) {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(obj, &data)
 	if err != nil {
@@ -472,5 +472,16 @@ err := db.Save(document)
 		=> Loop through doc values
 		=> 		instanciate MerkleCRDT objects
 		=> 		Set/Publish new CRDT values
+
+
+// One-to-one relatioship example
+obj := `{
+	Hello: "world",
+	Author: {
+		Name: "Bob",
+	}
+}`
+
+docA := document.NewFromJSON(obj)
 
 */
