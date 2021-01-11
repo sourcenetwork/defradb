@@ -198,5 +198,6 @@ func RunFilter(doc map[string]interface{}, filter *Filter, ctx EvalContext) (boo
 	if filter == nil {
 		return true, nil
 	}
+
 	return connor.Match(filter.Conditions, doc)
 }
