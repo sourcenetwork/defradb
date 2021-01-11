@@ -24,7 +24,7 @@ var BooleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_eq": &gql.InputObjectFieldConfig{
 			Type: gql.Boolean,
 		},
-		"_neq": &gql.InputObjectFieldConfig{
+		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.Boolean,
 		},
 		"_like": &gql.InputObjectFieldConfig{
@@ -46,19 +46,19 @@ var DateTimeOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_eq": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
-		"_neq": &gql.InputObjectFieldConfig{
+		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
-		"_gte": &gql.InputObjectFieldConfig{
+		"_ge": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
-		"_lte": &gql.InputObjectFieldConfig{
+		"_le": &gql.InputObjectFieldConfig{
 			Type: gql.DateTime,
 		},
 		"_in": &gql.InputObjectFieldConfig{
@@ -77,19 +77,19 @@ var FloatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_eq": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
-		"_neq": &gql.InputObjectFieldConfig{
+		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
-		"_gte": &gql.InputObjectFieldConfig{
+		"_ge": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
-		"_lte": &gql.InputObjectFieldConfig{
+		"_le": &gql.InputObjectFieldConfig{
 			Type: gql.Float,
 		},
 		"_in": &gql.InputObjectFieldConfig{
@@ -108,19 +108,19 @@ var IntOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_eq": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
-		"_neq": &gql.InputObjectFieldConfig{
+		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
 		"_gt": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
-		"_gte": &gql.InputObjectFieldConfig{
+		"_ge": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
 		"_lt": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
-		"_lte": &gql.InputObjectFieldConfig{
+		"_le": &gql.InputObjectFieldConfig{
 			Type: gql.Int,
 		},
 		"_in": &gql.InputObjectFieldConfig{
@@ -139,7 +139,7 @@ var StringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_eq": &gql.InputObjectFieldConfig{
 			Type: gql.String,
 		},
-		"_neq": &gql.InputObjectFieldConfig{
+		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.String,
 		},
 		"_like": &gql.InputObjectFieldConfig{
