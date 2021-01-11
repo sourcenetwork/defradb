@@ -1,6 +1,7 @@
 package planner
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -17,19 +18,20 @@ type QueryExecutor struct {
 	// some context
 	// schema manager
 	SchemaManager *schema.SchemaManager
-	Generator     *schema.Generator
 }
 
-func NewQueryExecutor() (*QueryExecutor, error) {
-	sm, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, nil
+func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
+	// sm, err := schema.NewSchemaManager()
+	// if err != nil {
+	// 	return nil, nil
+	// }
+	if manager == nil {
+		return nil, errors.New("SchemaManager cannot be nil")
 	}
 
-	g := schema.NewGenerator(sm)
+	// g := schema.NewGenerator(sm)
 	return &QueryExecutor{
-		SchemaManager: sm,
-		Generator:     g,
+		SchemaManager: manager,
 	}, nil
 }
 

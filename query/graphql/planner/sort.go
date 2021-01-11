@@ -63,7 +63,12 @@ func (p *Planner) OrderBy(n *parser.OrderBy) (*sortNode, error) {
 	}, nil
 }
 
-func (n *sortNode) Init() error            { return n.plan.Init() }
+func (n *sortNode) Init() error {
+	// reset stateful data
+	n.needSort = true
+	n.sortStrategy = nil
+	return n.plan.Init()
+}
 func (n *sortNode) Start() error           { return n.plan.Start() }
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
