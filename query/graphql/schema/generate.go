@@ -75,7 +75,7 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 	// 		generate query inputs
 	queryType := g.manager.schema.QueryType()
 	for _, t := range g.typeDefs {
-		f, err := g.GenerateQueryInputForGQLType(t, true)
+		f, err := g.GenerateQueryInputForGQLType(t)
 		if err != nil {
 			return nil, err
 		}
@@ -99,6 +99,24 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 		}
 	}
 
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	// now lets generate the mutation types.
+	mutationType := g.manager.schema.MutationType()
+	for _, t := range g.typeDefs {
+		fs, err := g.GenerateMutationInputForGQLType(t)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range fs { // GenMutation returns multiple fields to be added
+			mutationType.AddFieldConfig(f.Name, f)
+		}
+	}
+
+	// final resolve
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -331,7 +349,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 // GenerateQueryInputForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
-func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object, isList bool) (*gql.Field, error) {
+func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) (*gql.Field, error) {
 	if obj.Error() != nil {
 		return nil, obj.Error()
 	}
@@ -340,19 +358,88 @@ func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object, isList bool) (
 
 	var queryField *gql.Field
 	// @todo: Don't add sub fields to filter/order for object list types
-	if isList {
-		types.groupBy = g.genTypeFieldsEnum(obj)
-		types.having = g.genTypeHavingArgInput(obj)
-		types.order = g.genTypeOrderArgInput(obj)
-		queryField = g.genTypeQueryableFieldList(obj, types)
-	} else {
-		queryField = g.genTypeQueryableField(obj, types)
-	}
+	types.groupBy = g.genTypeFieldsEnum(obj)
+	types.having = g.genTypeHavingArgInput(obj)
+	types.order = g.genTypeOrderArgInput(obj)
+	queryField = g.genTypeQueryableFieldList(obj, types)
 
 	// queryType := g.manager.schema.QueryType()
 	// queryType.AddFieldConfig(queryField.Name, queryField)
 
 	return queryField, nil
+}
+
+// GenerateMutationInputForGQLType creates all the mutation types and fields
+// for the given graphQL object. It assumes that all the various
+// filterArgs for the given type already exists, and will error otherwise.
+func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Field, error) {
+	if obj.Error() != nil {
+		return nil, obj.Error()
+	}
+
+	typeName := obj.Name()
+	filter, ok := g.manager.schema.TypeMap()[typeName+"FilterArg"].(*gql.InputObject)
+	if !ok {
+		return nil, errors.New("Missing filter arg for mutation type generation")
+	}
+
+	return g.genTypeMutationFields(obj, filter)
+}
+
+func (g *Generator) genTypeMutationFields(obj *gql.Object, filterInput *gql.InputObject) ([]*gql.Field, error) {
+	create, err := g.genTypeMutationCreateField(obj)
+	if err != nil {
+		return nil, err
+	}
+	update, err := g.genTypeMutationUpdateField(obj, filterInput)
+	if err != nil {
+		return nil, err
+	}
+	delete, err := g.genTypeMutationDeleteField(obj, filterInput)
+	if err != nil {
+		return nil, err
+	}
+	return []*gql.Field{create, update, delete}, nil
+}
+
+func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: "create" + strings.Title(obj.Name()),
+		Type: gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			"data": newArgConfig(gql.String),
+		},
+	}
+	return field, nil
+}
+
+func (g *Generator) genTypeMutationUpdateField(obj *gql.Object, filter *gql.InputObject) (*gql.Field, error) {
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: "update" + strings.Title(obj.Name()),
+		Type: gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			"id":     newArgConfig(gql.ID),
+			"filter": newArgConfig(filter),
+			"data":   newArgConfig(gql.String),
+		},
+	}
+	return field, nil
+}
+
+func (g *Generator) genTypeMutationDeleteField(obj *gql.Object, filter *gql.InputObject) (*gql.Field, error) {
+	field := &gql.Field{
+		// @todo: Handle collection name from @collection directive
+		Name: "delete" + strings.Title(obj.Name()),
+		Type: gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			"id":     newArgConfig(gql.ID),
+			"filter": newArgConfig(filter),
+			"data":   newArgConfig(gql.String),
+		},
+	}
+	return field, nil
 }
 
 // enum {Type.Name}Fields { ... }
