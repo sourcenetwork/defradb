@@ -19,8 +19,9 @@ type SchemaManager struct {
 func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{}
 	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types: defaultTypes(),
-		Query: defaultQueryType(),
+		Types:    defaultTypes(),
+		Query:    defaultQueryType(),
+		Mutation: defaultMutationType(),
 	})
 	if err != nil {
 		return sm, err
@@ -60,6 +61,18 @@ func (s *SchemaManager) ResolveTypes() error {
 func defaultQueryType() *gql.Object {
 	return gql.NewObject(gql.ObjectConfig{
 		Name: "Query",
+		Fields: gql.Fields{
+			"_": &gql.Field{
+				Name: "_",
+				Type: gql.Boolean,
+			},
+		},
+	})
+}
+
+func defaultMutationType() *gql.Object {
+	return gql.NewObject(gql.ObjectConfig{
+		Name: "Mutation",
 		Fields: gql.Fields{
 			"_": &gql.Field{
 				Name: "_",
