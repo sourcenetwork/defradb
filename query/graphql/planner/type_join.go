@@ -171,7 +171,7 @@ func (p *Planner) maketypeJoinOne(parent *selectNode, source *scanNode, subType 
 	typeJoin.rootName = desc.Name // @todo: Correctly handle getting sub/root names
 
 	// split filter
-	source.filter, parent.filter = splitFilterByType(source.filter, subType.Name)
+	source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
@@ -323,7 +323,7 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source *scanNode, subType
 	typeJoin.rootName = desc.Name
 
 	// split filter
-	source.filter, parent.filter = splitFilterByType(source.filter, subType.Name)
+	source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 	return typeJoin, nil
 }
 
