@@ -405,8 +405,8 @@ func (g *Generator) genTypeMutationFields(obj *gql.Object, filterInput *gql.Inpu
 func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
-		Name: "create" + strings.Title(obj.Name()),
-		Type: gql.NewList(obj),
+		Name: "create_" + obj.Name(),
+		Type: obj,
 		Args: gql.FieldConfigArgument{
 			"data": newArgConfig(gql.String),
 		},
@@ -417,7 +417,7 @@ func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, err
 func (g *Generator) genTypeMutationUpdateField(obj *gql.Object, filter *gql.InputObject) (*gql.Field, error) {
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
-		Name: "update" + strings.Title(obj.Name()),
+		Name: "update_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"id":     newArgConfig(gql.ID),
@@ -431,7 +431,7 @@ func (g *Generator) genTypeMutationUpdateField(obj *gql.Object, filter *gql.Inpu
 func (g *Generator) genTypeMutationDeleteField(obj *gql.Object, filter *gql.InputObject) (*gql.Field, error) {
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
-		Name: "delete" + strings.Title(obj.Name()),
+		Name: "delete_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"id":     newArgConfig(gql.ID),

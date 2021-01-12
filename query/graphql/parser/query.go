@@ -8,7 +8,8 @@ import (
 )
 
 type Query struct {
-	Queries   []*QueryDefinition
+	Queries   []*OperationDefinition
+	Mutations []*OperationDefinition
 	Statement *ast.Document
 }
 
@@ -16,14 +17,14 @@ func (q Query) GetStatement() ast.Node {
 	return q.Statement
 }
 
-type QueryDefinition struct {
+type OperationDefinition struct {
 	Name       string
 	Selections []Selection
 
 	Statement *ast.OperationDefinition
 }
 
-func (q QueryDefinition) GetStatement() ast.Node {
+func (q OperationDefinition) GetStatement() ast.Node {
 	return q.Statement
 }
 
@@ -152,16 +153,28 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	}
 	q := &Query{
 		Statement: doc,
-		Queries:   make([]*QueryDefinition, len(doc.Definitions)),
+		Queries:   make([]*OperationDefinition, 0),
+		Mutations: make([]*OperationDefinition, 0),
 	}
-	for i, def := range q.Statement.Definitions {
+	for _, def := range q.Statement.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
-			qdef, err := parseOperationDefinition(node)
-			if err != nil {
-				return nil, err
+			if node.Operation == "query" {
+				// parse query or mutation operation definition
+				qdef, err := parseQueryOperationDefinition(node)
+				if err != nil {
+					return nil, err
+				}
+				q.Queries = append(q.Queries, qdef)
+			} else if node.Operation == "mutation" {
+				mdef, err := parseMutationOperationDefinition(node)
+				if err != nil {
+					return nil, err
+				}
+				q.Mutations = append(q.Mutations, mdef)
+			} else {
+				return nil, errors.New("Unkown graphql operation type")
 			}
-			q.Queries[i] = qdef
 		}
 	}
 
@@ -170,8 +183,8 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 
 // parseOperationDefintition parses the individual GraphQL
 // 'query' operations, which there may be mulitple of.
-func parseOperationDefinition(def *ast.OperationDefinition) (*QueryDefinition, error) {
-	qdef := &QueryDefinition{
+func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
@@ -191,6 +204,10 @@ func parseOperationDefinition(def *ast.OperationDefinition) (*QueryDefinition, e
 	}
 	return qdef, nil
 }
+
+// @todo: Create seperate select parse functions
+// for generated object queries, and general
+// API queries
 
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include

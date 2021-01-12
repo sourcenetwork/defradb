@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse_Query(t *testing.T) {
+// func TestParse_Query(t *testing.T) {
 
-}
+// }
 
-func TestParse_Limit_Limit(t *testing.T) {
+func TestQueryParse_Limit_Limit(t *testing.T) {
 	var query = (`
 	query {
 		users(limit: 10)
@@ -34,7 +34,7 @@ func TestParse_Limit_Limit(t *testing.T) {
 	assert.Equal(t, limit.Offset, int64(0))
 }
 
-func TestParse_Limit_Offset(t *testing.T) {
+func TestQueryParse_Offset(t *testing.T) {
 	var query = (`
 	query {
 		users(offset: 100)
@@ -56,7 +56,7 @@ func TestParse_Limit_Offset(t *testing.T) {
 	assert.Equal(t, limit.Offset, int64(100))
 }
 
-func TestParse_Limit_Both(t *testing.T) {
+func TestQueryParse_Limit_Offset(t *testing.T) {
 	var query = (`
 	query {
 		users(limit: 1, offset: 100)
