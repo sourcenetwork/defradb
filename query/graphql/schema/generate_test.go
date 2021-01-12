@@ -35,6 +35,10 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.String,
@@ -386,8 +390,12 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 		// assert.NoErrorf(t, myObjectActual.Error(), "%s contains an internal error from the defineFields() call", objName)
 
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
+		fmt.Println("expected vs actual objects:")
+		fmt.Println(objDef.Fields())
+		fmt.Println(myObjectActual.Fields())
 		for _, fieldActual := range myObjectActual.Fields() {
-			fieldExpected := objDef.Fields()[fieldActual.Name]
+			fieldExpected, ok := objDef.Fields()[fieldActual.Name]
+			assert.True(t, ok, "Failed to find expected field for matching actual field")
 
 			assert.Equal(t, fieldExpected.Name, fieldActual.Name, "Mismatch object field names")
 			assert.Equal(t, fieldExpected.Type.Name(), fieldActual.Type.Name(), "Mismatch object field types")
