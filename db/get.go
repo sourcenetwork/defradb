@@ -34,7 +34,7 @@ var DefaultGetterOpts = GetterOpts{}
 // Get a document from the given DocKey, return an error if we fail to retrieve
 // the specified document.
 // If the Key doesn't exist, return ErrDocumentNotFound
-func (c *Collection) Get(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
+func (c *Collection) GetDepreciated(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
 	// create txn
 	txn, err := c.getTxn(false)
 	if err != nil {
@@ -54,7 +54,7 @@ func (c *Collection) Get(key key.DocKey, opts ...GetterOpts) (*document.Document
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
-	doc, err := c.get(txn, key, opt)
+	doc, err := c.getDepreciated(txn, key, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *Collection) getAllFields() {}
 func (c *Collection) getSomeFields() {}
 
 // scans the database for the given document and all associated fields, returns document
-func (c *Collection) get(txn *Txn, key key.DocKey, opt GetterOpts) (*document.Document, error) {
+func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	// To get the entire document, we dispatch a Query request to get all
 	// keys with the prefix for the given DocKey.
 	// This will return any and all keys under that prefix, which all fields

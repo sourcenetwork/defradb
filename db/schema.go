@@ -1,6 +1,10 @@
 package db
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
+)
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, query types, etc.
@@ -24,3 +28,7 @@ func (db *DB) LoadSchema(schema string) error {
 }
 
 func (db *DB) LoadSchemaIfNotExists(schema string) error { return nil }
+
+func (db *DB) SchemaManager() *schema.SchemaManager {
+	return db.schema
+}

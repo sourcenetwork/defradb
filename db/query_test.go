@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/stretchr/testify/assert"
 )
@@ -745,7 +746,7 @@ func TestQuerySimple(t *testing.T) {
 		col, err := db.GetCollection("users")
 		assert.NoError(t, err)
 
-		runQueryTestCase(t, []*Collection{col}, test)
+		runQueryTestCase(t, db, []client.Collection{col}, test)
 	}
 
 }
@@ -755,14 +756,14 @@ func TestQueryRelationOne(t *testing.T) {
 	type book {
 		name: String
 		rating: Float
-		author: author @primary
+		author: author 
 	}
 
 	type author {
 		name: String
 		age: Int
 		verified: Boolean
-		published: book
+		published: book @primary
 	}
 	`)
 
@@ -784,15 +785,15 @@ func TestQueryRelationOne(t *testing.T) {
 				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"rating": 4.9
 				}`)},
 				//authors
 				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`)},
 			},
 			results: []map[string]interface{}{
@@ -823,15 +824,15 @@ func TestQueryRelationOne(t *testing.T) {
 				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"rating": 4.9
 				}`)},
 				//authors
 				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`)},
 			},
 			results: []map[string]interface{}{
@@ -862,15 +863,15 @@ func TestQueryRelationOne(t *testing.T) {
 				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"rating": 4.9
 				}`)},
 				//authors
 				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`)},
 			},
 			results: []map[string]interface{}{
@@ -901,15 +902,15 @@ func TestQueryRelationOne(t *testing.T) {
 				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"rating": 4.9
 				}`)},
 				//authors
 				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 				}`)},
 			},
 			results: []map[string]interface{}{
@@ -937,16 +938,16 @@ func TestQueryRelationOne(t *testing.T) {
 			}`,
 			docs: map[int][]string{
 				//books
-				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				0: []string{
+					// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+					"rating": 4.9
 					}`),
+					// bae-d432bdfb-787d-5a1c-ac29-dc025ab80095
 					(`{
 					"name": "Theif Lord",
-					"rating": 4.8,
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+					"rating": 4.8
 					}`),
 				},
 				//authors
@@ -955,13 +956,15 @@ func TestQueryRelationOne(t *testing.T) {
 					(`{ 
 					"name": "John Grisham",
 					"age": 65,
-					"verified": true
+					"verified": true,
+					"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 					}`),
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
 					(`{
 					"name": "Cornelia Funke",
 					"age": 62,
-					"verified": false
+					"verified": false,
+					"published_id": "bae-d432bdfb-787d-5a1c-ac29-dc025ab80095"
 					}`),
 				},
 			},
@@ -998,19 +1001,35 @@ func TestQueryRelationOne(t *testing.T) {
 					}`,
 			docs: map[int][]string{
 				//books
-				0: []string{ // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
+				0: []string{
+					// bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
-					"name": "Painted House",
-					"rating": 4.9,
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`)},
+							"name": "Painted House",
+							"rating": 4.9
+							}`),
+					// bae-d432bdfb-787d-5a1c-ac29-dc025ab80095
+					// (`{
+					// "name": "Theif Lord",
+					// "rating": 4.8
+					// }`),
+				},
 				//authors
-				1: []string{ // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					(`{
-					"name": "John Grisham",
-					"age": 65,
-					"verified": true
-				}`)},
+				1: []string{
+					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+					(`{ 
+							"name": "John Grisham",
+							"age": 65,
+							"verified": true,
+							"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
+							}`),
+					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+					// (`{
+					// "name": "Cornelia Funke",
+					// "age": 62,
+					// "verified": false,
+					// "published_id": "bae-d432bdfb-787d-5a1c-ac29-dc025ab80095"
+					// }`),
+				},
 			},
 			results: []map[string]interface{}{
 				{
@@ -1040,7 +1059,7 @@ func TestQueryRelationOne(t *testing.T) {
 		authorCol, err := db.GetCollection("author")
 		assert.NoError(t, err)
 
-		runQueryTestCase(t, []*Collection{bookCol, authorCol}, test)
+		runQueryTestCase(t, db, []client.Collection{bookCol, authorCol}, test)
 	}
 
 }
@@ -1514,11 +1533,11 @@ func TestQueryRelationMany(t *testing.T) {
 		authorCol, err := db.GetCollection("author")
 		assert.NoError(t, err)
 
-		runQueryTestCase(t, []*Collection{bookCol, authorCol}, test)
+		runQueryTestCase(t, db, []client.Collection{bookCol, authorCol}, test)
 	}
 }
 
-func runQueryTestCase(t *testing.T, collections []*Collection, test queryTestCase) {
+func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, test queryTestCase) {
 	// insert docs
 	for cid, docs := range test.docs {
 		for _, docStr := range docs {
@@ -1529,10 +1548,9 @@ func runQueryTestCase(t *testing.T, collections []*Collection, test queryTestCas
 	}
 
 	// exec query
-	db := collections[0].db
 	txn, err := db.NewTxn(true)
 	assert.NoError(t, err, test.description)
-	results, err := db.queryExecutor.ExecQuery(txn, test.query)
+	results, err := db.queryExecutor.ExecQuery(db, txn, test.query)
 	assert.NoError(t, err, test.description)
 
 	fmt.Println(test.description)
@@ -1545,6 +1563,49 @@ func runQueryTestCase(t *testing.T, collections []*Collection, test queryTestCas
 	for i, result := range results {
 		assert.Equal(t, test.results[i], result, test.description)
 	}
+}
+
+func TestMutationCreateSimple(t *testing.T) {
+
+	userSchema := `
+	type user {
+		name: String
+		age: Int
+		points: Float
+		verified: Boolean
+	}
+	`
+
+	// data :=
+
+	query := `
+	mutation {
+		create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+			_key
+			name
+			age
+		}
+	}`
+
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	err = db.LoadSchema(userSchema)
+	assert.NoError(t, err)
+
+	// exec query
+	txn, err := db.NewTxn(false)
+	assert.NoError(t, err)
+	results, err := db.queryExecutor.ExecQuery(db, txn, query)
+	assert.NoError(t, err)
+
+	assert.Len(t, results, 1)
+	assert.Equal(t, map[string]interface{}{
+		"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+		"age":  int64(27),
+		"name": "John",
+	}, results[0])
+
 }
 
 // var userCollectionGQLSchema = (`

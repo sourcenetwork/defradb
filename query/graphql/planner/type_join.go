@@ -6,6 +6,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
 const (
@@ -50,7 +51,7 @@ type typeIndexJoin struct {
 	// spans core.Spans
 }
 
-func (p *Planner) makeTypeIndexJoin(parent *selectNode, source *scanNode, subType *parser.Select) (*typeIndexJoin, error) {
+func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType *parser.Select) (*typeIndexJoin, error) {
 	typeJoin := &typeIndexJoin{
 		p: p,
 	}
@@ -66,9 +67,9 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source *scanNode, subTyp
 	}
 
 	meta := typeFieldDesc.Meta
-	if meta&base.Meta_Relation_ONE > 0 { // One-to-One, or One side of One-to-Many
-		joinPlan, err = p.maketypeJoinOne(parent, source, subType)
-	} else if meta&base.Meta_Relation_ONEMANY > 0 { // Many side of One-to-Many
+	if schema.IsOne(meta) { // One-to-One, or One side of One-to-Many
+		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
+	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
 		return nil, errors.New("Failed sub selection, unknow relation type")
@@ -138,15 +139,16 @@ type typeJoinOne struct {
 	root    planNode
 	subType planNode
 
-	rootName    string
-	subTypeName string
+	rootName         string
+	subTypeName      string
+	subTypeFieldName string
 
 	primary bool
 
 	spans core.Spans
 }
 
-func (p *Planner) maketypeJoinOne(parent *selectNode, source *scanNode, subType *parser.Select) (*typeJoinOne, error) {
+func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinOne, error) {
 	//ignore recurse for now.
 	typeJoin := &typeJoinOne{
 		p:    p,
@@ -159,6 +161,18 @@ func (p *Planner) maketypeJoinOne(parent *selectNode, source *scanNode, subType 
 	if !ok {
 		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
+
+	// get relation
+	rm := p.db.SchemaManager().Relations
+	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
+	if rel == nil {
+		return nil, errors.New("Relation does not exists")
+	}
+	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
+	if !ok {
+		return nil, errors.New("Relation is missing referenced field")
+	}
+
 	subType.Name = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
@@ -168,10 +182,14 @@ func (p *Planner) maketypeJoinOne(parent *selectNode, source *scanNode, subType 
 	typeJoin.subType = selectPlan
 
 	typeJoin.subTypeName = subTypeFieldDesc.Name
+	typeJoin.subTypeFieldName = subtypefieldname
 	typeJoin.rootName = desc.Name // @todo: Correctly handle getting sub/root names
 
 	// split filter
-	source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
+	if scan, ok := source.(*scanNode); ok {
+		scan.filter, parent.filter = splitFilterByType(scan.filter, typeJoin.subTypeName)
+	}
+	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
@@ -217,7 +235,7 @@ func (n *typeJoinOne) Values() map[string]interface{} {
 func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]interface{} {
 	docKey := doc["_key"].(string)
 	filter := map[string]interface{}{
-		n.rootName + "_id": docKey,
+		n.subTypeFieldName + "_id": docKey,
 	}
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
@@ -299,7 +317,7 @@ type typeJoinMany struct {
 	spans core.Spans
 }
 
-func (p *Planner) makeTypeJoinMany(parent *selectNode, source *scanNode, subType *parser.Select) (*typeJoinMany, error) {
+func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {
 	//ignore recurse for now.
 	typeJoin := &typeJoinMany{
 		p:    p,
@@ -323,7 +341,10 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source *scanNode, subType
 	typeJoin.rootName = desc.Name
 
 	// split filter
-	source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
+	if scan, ok := source.(*scanNode); ok {
+		scan.filter, parent.filter = splitFilterByType(scan.filter, typeJoin.subTypeName)
+	}
+	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 	return typeJoin, nil
 }
 

@@ -156,11 +156,14 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		n.filter = nil
 	}
 
+	return n.initFields(parsed)
+}
+
+func (n *selectNode) initFields(parsed *parser.Select) error {
 	n.renderInfo.numResults = 0
 	subTypes := make([]*parser.Select, 0)
 
 	// iterate looking just for fields
-	// iterate again  just for Selects
 	for _, field := range parsed.Fields {
 		switch node := field.(type) {
 		case *parser.Select:
@@ -173,7 +176,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 				n.renderInfo.fields = append(n.renderInfo.fields, &f)
 			}
 			subTypes = append(subTypes, node)
-		case *parser.Field:
+		case *parser.Field, parser.Field:
 			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
 			if found {
 				n.renderInfo.fields = append(n.renderInfo.fields, &f)
@@ -186,7 +189,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, subtype := range subTypes {
-		typeIndexJoin, err := n.p.makeTypeIndexJoin(n, origScan, subtype)
+		typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.source, subtype)
 		if err != nil {
 			return err
 		}
@@ -201,6 +204,10 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 // 	return n.p.render(fields, aliases)
 // }
 
+// SubSelect is used for creating Select nodes used on sub selections,
+// not to be used on the top level selection node.
+// This allows us to disable rendering on all sub Select nodes
+// and only run it at the end on the top level select node.
 func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	plan, err := p.Select(parsed)
 	if err != nil {
@@ -214,16 +221,55 @@ func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	return top, nil
 }
 
+func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode) (planNode, error) {
+	s := &selectNode{
+		p:      p,
+		source: source,
+	}
+	s.filter = parsed.Filter
+	limit := parsed.Limit
+	sort := parsed.OrderBy
+	s.renderInfo = &renderInfo{}
+
+	desc, err := p.getCollectionDesc(parsed.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	s.sourceInfo = sourceInfo{desc}
+
+	if err := s.initFields(parsed); err != nil {
+		return nil, err
+	}
+
+	limitPlan, err := p.Limit(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	sortPlan, err := p.OrderBy(sort)
+	if err != nil {
+		return nil, err
+	}
+
+	top := &selectTopNode{
+		source: s,
+		render: p.render(),
+		limit:  limitPlan,
+		sort:   sortPlan,
+	}
+	return top, nil
+}
+
 // Select constructs a SelectPlan
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	s := &selectNode{p: p}
 	s.filter = parsed.Filter
 	limit := parsed.Limit
 	sort := parsed.OrderBy
-
 	s.renderInfo = &renderInfo{}
-	err := s.initSource(parsed)
-	if err != nil {
+
+	if err := s.initSource(parsed); err != nil {
 		return nil, err
 	}
 

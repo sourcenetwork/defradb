@@ -24,6 +24,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/multiformats/go-multibase v0.0.1
 	github.com/multiformats/go-multihash v0.0.6
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.3.0
@@ -41,6 +42,6 @@ replace (
 	github.com/SierraSoftworks/connor => ../connor // local replace
 
 	// temp bug fixing
-	// github.com/graphql-go/graphql => ../../graphql-go/graphql
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f
+	github.com/graphql-go/graphql => ../../graphql-go/graphql
+// github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f
 )

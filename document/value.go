@@ -140,6 +140,10 @@ type cborValue struct {
 	*simpleValue
 }
 
+func NewCBORValue(t core.CType, val interface{}) WriteableValue {
+	return newCBORValue(t, val)
+}
+
 func newCBORValue(t core.CType, val interface{}) WriteableValue {
 	v := newValue(t, val)
 	return cborValue{&v}
@@ -174,3 +178,18 @@ func (v cborValue) Bytes() ([]byte, error) {
 // 		crdt: dt
 // 	}
 // }
+
+// type listValue struct {
+// 	vals []Value
+// }
+
+// func (l *listValue) Value() interface{} {
+// 	return l.vals
+// }
+// func (l *listValue) IsDocument() bool { return false }
+// func (l *listValue) Type() core.CType {  }
+// func (l *listValue) IsDirty() bool
+// func (l *listValue) Clean()
+// func (l *listValue) IsDelete() bool //todo: Update IsDelete naming
+// func (l *listValue) Delete()
+// func (l *listValue) Append(v Value)

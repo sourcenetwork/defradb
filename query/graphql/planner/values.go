@@ -10,7 +10,7 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
-// valuesNode containers a collection
+// valuesNode contains a collection
 // of documents as values inside a document
 // container. It implements the planNode
 // interface, but is used slightly differently

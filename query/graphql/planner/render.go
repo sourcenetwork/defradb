@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 )
@@ -53,7 +55,7 @@ func (r *renderNode) render(src map[string]interface{}) map[string]interface{} {
 		numRenderFields := renderMap["numResults"].(int)
 		fields := renderMap["fields"].([]*base.FieldDescription)
 		aliases := renderMap["aliases"].([]string)
-
+		fmt.Println(renderMap)
 		for i := 0; i < numRenderFields; i++ {
 			field := fields[i]
 			var dst string
