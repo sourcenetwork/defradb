@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
@@ -13,6 +13,15 @@ import (
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 )
+
+// Query is an external hook into the planNode
+// system. It allows outside packages to
+// execute and manage a query plan graph directly.
+// Instead of using one of the available functions
+// like ExecQuery(...).
+// Currently, this is used by the collection.Update
+// system.
+type Query planNode
 
 type QueryExecutor struct {
 	// some context
@@ -39,13 +48,21 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 // }
 
-func (e *QueryExecutor) ExecQuery(txn core.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+func (e *QueryExecutor) MakeSelectQuery(db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
+	if selectStmt == nil {
+		return nil, errors.New("Cannot create query without a selection")
+	}
+	planner := makePlanner(db, txn)
+	return planner.makePlan(selectStmt)
+}
+
+func (e *QueryExecutor) ExecQuery(db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
 	q, err := e.parseQueryString(query)
 	if err != nil {
 		return nil, err
 	}
 
-	planner := makePlanner(txn)
+	planner := makePlanner(db, txn)
 	return planner.queryDocs(q)
 }
 

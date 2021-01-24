@@ -60,6 +60,9 @@ func NewObjectPayload(payload string) (ObjectPayload, error) {
 // Mutation is a field on the MutationType
 // of a graphql query. It includes all the possible
 // arguments and all
+//
+// @todo: Change name to ObjectMutation to indicate
+// generated object mutation actions
 type Mutation struct {
 	Name  string
 	Alias string
@@ -71,7 +74,7 @@ type Mutation struct {
 
 	ID     core.Key
 	Filter *Filter
-	Data   ObjectPayload
+	Data   string
 
 	Fields []Selection
 
@@ -92,6 +95,17 @@ func (m Mutation) GetName() string {
 
 func (m Mutation) GetAlias() string {
 	return m.Alias
+}
+
+// ToSelect returns a basic Select object, with the same Name,
+// Alias, and Fields as the Mutation object. Used to create a
+// Select planNode for the mutation return objects
+func (m Mutation) ToSelect() *Select {
+	return &Select{
+		Name:   m.Schema,
+		Alias:  m.Alias,
+		Fields: m.Fields,
+	}
 }
 
 // parseOperationDefintition parses the individual GraphQL
@@ -163,11 +177,11 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		// parse each individual arg type seperately
 		if prop == "data" { // parse data
 			raw := argument.Value.(*ast.StringValue)
-			payload, err := NewObjectPayload(raw.Value)
-			if err != nil {
-				return nil, err
-			}
-			mut.Data = payload
+			// payload, err := NewObjectPayload(raw.Value)
+			// if err != nil {
+			// 	return nil, err
+			// }
+			mut.Data = raw.Value
 		} else if prop == "filter" { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)

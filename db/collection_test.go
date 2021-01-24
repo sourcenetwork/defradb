@@ -32,7 +32,8 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 		},
 	}
 
-	return db.CreateCollection(desc)
+	col, err := db.CreateCollection(desc)
+	return col.(*Collection), err
 }
 
 func TestNewCollection(t *testing.T) {

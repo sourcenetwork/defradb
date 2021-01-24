@@ -199,9 +199,9 @@ func (r *Relation) finalize() error {
 			// neither type has primary set, auto add to
 			// lexigraphically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
-				r.types[0] = r.types[0] | base.Meta_Relation_Primary
-			} else {
 				r.types[1] = r.types[1] | base.Meta_Relation_Primary
+			} else {
+				r.types[0] = r.types[0] | base.Meta_Relation_Primary
 			}
 		}
 	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
@@ -276,6 +276,15 @@ func (r Relation) GetField(field string) (string, uint8, bool) {
 	for i, f := range r.fields {
 		if f == field {
 			return f, r.types[i], true
+		}
+	}
+	return "", uint8(0), false
+}
+
+func (r Relation) GetFieldFromSchemaType(schemaType string) (string, uint8, bool) {
+	for i, s := range r.schemaTypes {
+		if s == schemaType {
+			return r.fields[1-i], r.types[1-i], true
 		}
 	}
 	return "", uint8(0), false

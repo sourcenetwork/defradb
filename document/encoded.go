@@ -51,6 +51,9 @@ func (encdoc *EncodedDocument) Decode() (*Document, error) {
 		return nil, err
 	}
 	doc := NewWithKey(key)
+	if encdoc.Schema != nil {
+		doc.schema = *encdoc.Schema
+	}
 	for fieldDesc, prop := range encdoc.Properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {

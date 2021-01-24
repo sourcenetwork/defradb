@@ -27,9 +27,10 @@ func newMemoryDB() (*DB, error) {
 }
 
 func newTestCollection(db *DB) (*Collection, error) {
-	return db.CreateCollection(base.CollectionDescription{
+	col, err := db.CreateCollection(base.CollectionDescription{
 		Name: "test",
 	})
+	return col.(*Collection), err
 }
 
 func TestNewDB(t *testing.T) {
@@ -412,9 +413,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	}
 
 	err = col.Save(doc)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	// value check
 	name, err := doc.Get("Name")
@@ -426,4 +425,37 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	assert.Equal(t, int64(21), age)
 
 	db.printDebugDB()
+}
+
+func TestDBUpdateDocWithFilter(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	err = col.UpdateWithFilter(`{Name: {_eq: "John"}}`, `{
+		"Name": "Eric"
+	}`)
+	assert.NoError(t, err)
+
+	doc, err = col.Get(doc.Key())
+	assert.NoError(t, err)
+
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	assert.Equal(t, "Eric", name)
 }

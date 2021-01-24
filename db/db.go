@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
@@ -33,6 +34,9 @@ var (
 	headStoreKey   = rootStoreKey.ChildString("/heads")
 	blockStoreKey  = rootStoreKey.ChildString("/blocks")
 )
+
+// make sure we match our client interface
+var _ client.DB = (*DB)(nil)
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.

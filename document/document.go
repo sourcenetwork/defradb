@@ -94,6 +94,10 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 		values: make(map[Field]Value),
 	}
 
+	if len(schema) > 0 {
+		doc.schema = schema[0]
+	}
+
 	// check if document contains special _key field
 	k, hasKey := data["_key"]
 	if hasKey {
@@ -338,7 +342,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return em.Marshal(*docMap)
+	return em.Marshal(docMap)
 }
 
 // String returns the document as a strinified JSON Object.
@@ -361,13 +365,13 @@ func (doc *Document) String() string {
 
 // ToMap returns the document as a map[string]interface{}
 // object.
-func (doc *Document) ToMap() (*map[string]interface{}, error) {
-	return doc.toMap()
+func (doc *Document) ToMap() (map[string]interface{}, error) {
+	return doc.toMapWithKey()
 }
 
 // converts the document into a map[string]interface{}
 // including any sub documents
-func (doc *Document) toMap() (*map[string]interface{}, error) {
+func (doc *Document) toMap() (map[string]interface{}, error) {
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
@@ -388,7 +392,32 @@ func (doc *Document) toMap() (*map[string]interface{}, error) {
 		docMap[k] = value.Value()
 	}
 
-	return &docMap, nil
+	return docMap, nil
+}
+
+func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
+	docMap := make(map[string]interface{})
+	for k, v := range doc.fields {
+		value, exists := doc.values[v]
+		if !exists {
+			return nil, ErrFieldNotExist
+		}
+
+		if value.IsDocument() {
+			subDoc := value.Value().(*Document)
+			subDocMap, err := subDoc.toMapWithKey()
+			if err != nil {
+				return nil, err
+			}
+			docMap[k] = subDocMap
+		} else {
+
+		}
+		docMap[k] = value.Value()
+	}
+	docMap["_key"] = doc.Key().String()
+
+	return docMap, nil
 }
 
 // loops through an object of the form map[string]interface{}
@@ -483,5 +512,26 @@ obj := `{
 }`
 
 docA := document.NewFromJSON(obj)
+
+// method 1
+docA.Patch(...)
+col.Save(docA)
+
+// method 2
+docA.Get("Author").Set("Name", "Eric")
+col.Save(docA)
+
+// method 3
+docB := docA.GetObject("Author")
+docB.Set("Name", "Eric")
+authorCollection.Save(docB)
+
+// method 4
+docA.Set("Author.Name")
+
+// method 5
+doc := col.GetWithRelations("key")
+// equivalent
+doc := col.Get(key, db.WithRelationsOpt)
 
 */

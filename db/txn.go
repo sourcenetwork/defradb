@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -18,6 +19,7 @@ var (
 
 // implement interface check
 var _ core.Txn = (*Txn)(nil)
+var _ client.Txn = (*Txn)(nil)
 
 // Txn is a transaction interface for interacting with the Database.
 // It carries over the semantics of the underlying datastore regarding

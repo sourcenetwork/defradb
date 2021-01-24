@@ -9,6 +9,8 @@ import (
 
 	"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
+	gqlp "github.com/graphql-go/graphql/language/parser"
+	gqls "github.com/graphql-go/graphql/language/source"
 )
 
 type EvalContext struct {
@@ -40,6 +42,24 @@ func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 		Statement:  stmt,
 		Conditions: conditions,
 	}, nil
+}
+
+// NewFilterFromString creates a new filter from a string
+func NewFilterFromString(body string) (*Filter, error) {
+	if !strings.HasPrefix(body, "{") {
+		body = "{" + body + "}"
+	}
+	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
+	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
+	if err != nil {
+		return nil, err
+	}
+	obj, err := gqlp.ParseObject(p, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFilter(obj)
 }
 
 type parseFn func(*ast.ObjectValue) (interface{}, error)
@@ -201,3 +221,21 @@ func RunFilter(doc map[string]interface{}, filter *Filter, ctx EvalContext) (boo
 
 	return connor.Match(filter.Conditions, doc)
 }
+
+/*
+userCollection := db.getCollection("users")
+doc := userCollection.NewFromJSON("{
+	"title": "Painted House",
+	"description": "...",
+	"genres": ["bae-123", "bae-def", "bae-456"]
+	"author_id": "bae-999",
+}")
+doc.Save()
+
+doc := document.New(schema).FromJSON
+
+------------------------------------
+
+
+
+*/

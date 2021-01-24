@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
@@ -71,7 +72,9 @@ type Statement struct {
 // Planner combines session state and databse state to
 // produce a query plan, which is run by the exuction context.
 type Planner struct {
-	txn     core.Txn
+	txn client.Txn
+	db  client.DB
+
 	ctx     context.Context
 	evalCtx parser.EvalContext
 
@@ -79,10 +82,11 @@ type Planner struct {
 
 }
 
-func makePlanner(txn core.Txn) *Planner {
+func makePlanner(db client.DB, txn client.Txn) *Planner {
 	ctx := context.Background()
 	return &Planner{
 		txn: txn,
+		db:  db,
 		ctx: ctx,
 	}
 }
@@ -90,13 +94,30 @@ func makePlanner(txn core.Txn) *Planner {
 func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 	switch n := stmt.(type) {
 	case *parser.Query:
-		return p.newPlan(n.Queries[0]) // @todo ensure parser.Query as at least 1 query definition
-	case *parser.QueryDefinition:
+		if len(n.Queries) > 0 {
+			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
+		} else if len(n.Mutations) > 0 {
+			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
+		} else {
+			return nil, errors.New("Query is missing query or mutation statements")
+		}
+	case *parser.OperationDefinition:
 		return p.newPlan(n.Selections[0]) // @todo: ensure parser.QueryDefinition has at least 1 selection
 	case *parser.Select:
 		return p.Select(n)
+	case *parser.Mutation:
+		return p.newObjectMutationPlan(n)
 	default:
 		return nil, errors.Errorf("unknown statement type %T", stmt)
+	}
+}
+
+func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
+	switch stmt.Type {
+	case parser.CreateObjects:
+		return p.CreateDoc(stmt)
+	default:
+		return nil, errors.Errorf("unknown mutation action %T", stmt.Type)
 	}
 }
 

@@ -10,20 +10,26 @@ type Field interface {
 	Key() ds.Key
 	Name() string
 	Type() core.CType //TODO Abstract into a Field Type interface
+	SchemaType() string
 }
 
 type simpleField struct {
-	name     string
-	key      ds.Key
-	crdtType core.CType
+	name       string
+	key        ds.Key
+	crdtType   core.CType
+	schemaType string
 }
 
-func (doc *Document) newField(t core.CType, name string) Field {
-	return simpleField{
+func (doc *Document) newField(t core.CType, name string, schemaType ...string) Field {
+	f := simpleField{
 		name:     name,
 		key:      doc.Key().ChildString(name),
 		crdtType: t,
 	}
+	if len(schemaType) > 0 {
+		f.schemaType = schemaType[0]
+	}
+	return f
 }
 
 func (field simpleField) Name() string {
@@ -36,4 +42,8 @@ func (field simpleField) Type() core.CType {
 
 func (field simpleField) Key() ds.Key {
 	return field.key
+}
+
+func (field simpleField) SchemaType() string {
+	return field.schemaType
 }

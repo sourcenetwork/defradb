@@ -168,7 +168,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:   base.FieldKind_FOREIGN_OBJECT,
 								Typ:    core.NONE_CRDT,
 								Schema: "author",
-								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE | base.Meta_Relation_Primary,
+								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE,
 							},
 							{
 								Name: "author_id",
@@ -214,7 +214,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Kind:   base.FieldKind_FOREIGN_OBJECT,
 								Typ:    core.NONE_CRDT,
 								Schema: "book",
-								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE,
+								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE | base.Meta_Relation_Primary,
 							},
 							{
 								Name: "published_id",

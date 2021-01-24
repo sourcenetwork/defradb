@@ -24,6 +24,14 @@ func getQueryFilterObject(query string) (*Filter, error) {
 	return NewFilter(filterObj)
 }
 
+func TestNewFilterFromString(t *testing.T) {
+	_, err := NewFilterFromString(`name: {_eq: "bob"}`)
+	assert.NoError(t, err)
+
+	// fmt.Println(f.Conditions)
+	// assert.True(t, false)
+}
+
 func TestParseConditions_Empty(t *testing.T) {
 	var query = (`
 	query {
