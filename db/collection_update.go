@@ -54,7 +54,8 @@ func (c *Collection) Update2(doc *document.SimpleDocument, opts ...client.Update
 func (c *Collection) UpdateWith(target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
-		return c.UpdateWithFilter(t, updater, opts...)
+		_, err := c.UpdateWithFilter(t, updater, opts...)
+		return err
 	case key.DocKey:
 		return c.UpdateWithKey(t, updater, opts...)
 	case []key.DocKey:
@@ -71,17 +72,17 @@ func (c *Collection) UpdateWith(target interface{}, updater interface{}, opts ..
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithFilter(filter interface{}, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *Collection) UpdateWithFilter(filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer c.discardImplicitTxn(txn)
-	_, err = c.updateWithFilter(txn, filter, updater, opts...)
+	res, err := c.updateWithFilter(txn, filter, updater, opts...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return c.commitImplicitTxn(txn)
+	return res, c.commitImplicitTxn(txn)
 }
 
 // UpdateWithKey updates using a DocKey to target a single document for update.
@@ -116,7 +117,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 	return nil
 }
 
-func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
+func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -142,6 +143,10 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 		return nil, err
 	}
 
+	results := &client.UpdateResult{
+		DocKeys: make([]string, 0),
+	}
+
 	// loop while we still have results from the filter query
 	for {
 		next, err := query.Next()
@@ -163,9 +168,13 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 		if err != nil {
 			return nil, nil
 		}
+
+		// add succesful updated doc to results
+		results.DocKeys = append(results.DocKeys, doc["_key"].(string))
+		results.Count++
 	}
 
-	return nil, nil
+	return results, nil
 }
 
 // func (c *Collection) updateWithFilterPatch(txn *Txn, filter map[string]interface{}, patch []map[string]interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
@@ -261,6 +270,11 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 		fieldKey := c.getFieldKey(key, mfield)
 		if err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(fieldKey), val); err != nil {
 			return nil
+		}
+	}
+	if txn.IsBatch() {
+		if err := txn.Commit(); err != nil {
+			return err
 		}
 	}
 
@@ -416,8 +430,8 @@ func getMapProp(doc map[string]interface{}, paths []string, length int) (string,
 }
 
 type UpdateResult struct {
-	count int64
-	docs  []map[string]interface{}
+	Count   int64
+	DocKeys []string
 }
 
 type patcher interface{}

@@ -26,7 +26,7 @@ type Txn interface {
 	ds.Txn
 	core.MultiStore
 	Systemstore() core.DSReaderWriter
-
+	IsBatch() bool
 	// All DB actions are accessible in a transaction
 	//
 }
@@ -50,7 +50,7 @@ type Collection interface {
 	Exists(key.DocKey) (bool, error)
 
 	UpdateWith(interface{}, interface{}, ...UpdateOpt) error
-	UpdateWithFilter(interface{}, interface{}, ...UpdateOpt) error
+	UpdateWithFilter(interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
 	UpdateWithKey(key.DocKey, interface{}, ...UpdateOpt) error
 	UpdateWithKeys([]key.DocKey, interface{}, ...UpdateOpt) error
 
@@ -59,3 +59,8 @@ type Collection interface {
 
 type UpdateOpt struct{}
 type CreateOpt struct{}
+
+type UpdateResult struct {
+	Count   int64
+	DocKeys []string
+}

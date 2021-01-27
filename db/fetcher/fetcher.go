@@ -3,6 +3,8 @@ package fetcher
 import (
 	"bytes"
 	"errors"
+	"sort"
+	"strings"
 
 	dsq "github.com/ipfs/go-datastore/query"
 
@@ -32,8 +34,9 @@ type DocumentFetcher struct {
 	reverse   bool
 	hasSchema bool
 
-	txn   core.Txn
-	spans core.Spans
+	txn          core.Txn
+	spans        core.Spans
+	curSpanIndex int
 
 	schemaFields map[uint32]base.FieldDescription
 	fields       []*base.FieldDescription
@@ -83,9 +86,19 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 	//@todo: Handle fields Description
 	// check spans
-	if len(spans) == 0 {
+	numspans := len(spans)
+	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
 		start := base.MakeIndexPrefixKey(df.col, df.index)
 		spans = append(spans, core.NewSpan(start, start.PrefixEnd()))
+	} else if numspans > 1 {
+		// if we have multiple spans, we need to sort them by their start position
+		// so we can do a single iterative sweep
+		sort.Slice(spans, func(i, j int) bool {
+			// compare by strings if i < j.
+			// apply the '!= df.reverse' to reverse the sort
+			// if we need to
+			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0) != df.reverse
+		})
 	}
 	df.indexKey = nil
 

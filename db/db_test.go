@@ -447,7 +447,7 @@ func TestDBUpdateDocWithFilter(t *testing.T) {
 	err = col.Save(doc)
 	assert.NoError(t, err)
 
-	err = col.UpdateWithFilter(`{Name: {_eq: "John"}}`, `{
+	_, err = col.UpdateWithFilter(`{Name: {_eq: "John"}}`, `{
 		"Name": "Eric"
 	}`)
 	assert.NoError(t, err)

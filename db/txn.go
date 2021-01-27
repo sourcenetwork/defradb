@@ -109,6 +109,11 @@ func (txn *Txn) DAGstore() core.DAGStore {
 	return txn.dagstore
 }
 
+func (txn *Txn) IsBatch() bool {
+	_, ok := txn.Txn.(shimBatcherTxn)
+	return ok
+}
+
 // Shim to make ds.Txn support ds.Datastore
 type shimTxnStore struct {
 	ds.Txn

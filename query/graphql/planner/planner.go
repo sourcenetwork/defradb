@@ -116,6 +116,8 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 	switch stmt.Type {
 	case parser.CreateObjects:
 		return p.CreateDoc(stmt)
+	case parser.UpdateObjects:
+		return p.UpdateDocs(stmt)
 	default:
 		return nil, errors.Errorf("unknown mutation action %T", stmt.Type)
 	}
@@ -151,6 +153,8 @@ func (p *Planner) expandPlan(plan planNode) error {
 		return p.expandPlan(n.source)
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n)
+	case *updateNode:
+		return p.expandPlan(n.results)
 	default:
 		return nil
 	}
