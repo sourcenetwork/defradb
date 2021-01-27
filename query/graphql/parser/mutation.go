@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
-
 	"github.com/graphql-go/graphql/language/ast"
 )
 
@@ -72,7 +70,7 @@ type Mutation struct {
 	// if this mutation is on an object.
 	Schema string
 
-	ID     core.Key
+	IDs    []string
 	Filter *Filter
 	Data   string
 
@@ -192,8 +190,8 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 			mut.Filter = filter
 		} else if prop == "id" {
 			raw := argument.Value.(*ast.StringValue)
-			mut.ID = core.NewKey(raw.Value)
-		}
+			mut.IDs = []string{raw.Value}
+		} // handle ids = [...]
 	}
 
 	// if theres no field selections, just return
@@ -218,5 +216,6 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		}
 	}
 
+	// fmt.Println(mut)
 	return mut, nil
 }
