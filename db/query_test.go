@@ -1801,6 +1801,143 @@ func TestMutationUpdateFilterMultiDocsMultiResult(t *testing.T) {
 	}, results)
 }
 
+func TestMutationUpdateByKeyMultiDocsSingleResult(t *testing.T) {
+
+	userSchema := `
+	type user {
+		name: String
+		age: Int
+		points: Float
+		verified: Boolean
+	}
+	`
+
+	// data :=
+
+	query := `
+	mutation {
+		update_user(id: "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", data: "{\"points\": 59}") {
+			_key
+			name
+			points
+		}
+	}`
+
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	err = db.LoadSchema(userSchema)
+	assert.NoError(t, err)
+
+	col, err := db.GetCollection("user")
+	assert.NoError(t, err)
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"name": "John",
+		"age": 27,
+		"verified": true,
+		"points": 42.1
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	doc, err = document.NewFromJSON([]byte(`{
+		"name": "Bob",
+		"age": 39,
+		"verified": false,
+		"points": 66.6
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	// exec query
+	txn, err := db.NewTxn(false)
+	assert.NoError(t, err)
+	results, err := db.queryExecutor.ExecQuery(db, txn, query)
+	assert.NoError(t, err)
+
+	assert.Len(t, results, 1)
+	assert.Equal(t, map[string]interface{}{
+		"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+		"name":   "John",
+		"points": float64(59),
+	}, results[0])
+}
+
+func TestMutationUpdateByKeysMultiDocsMultiResult(t *testing.T) {
+
+	userSchema := `
+	type user {
+		name: String
+		age: Int
+		points: Float
+		verified: Boolean
+	}
+	`
+
+	// data :=
+
+	query := `
+	mutation {
+		update_user(ids: ["bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", "bae-958c9334-73cf-5695-bf06-cf06826babfa"], data: "{\"points\": 59}") {
+			_key
+			name
+			points
+		}
+	}`
+
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	err = db.LoadSchema(userSchema)
+	assert.NoError(t, err)
+
+	col, err := db.GetCollection("user")
+	assert.NoError(t, err)
+
+	doc, err := document.NewFromJSON([]byte(`{
+		"name": "John",
+		"age": 27,
+		"verified": true,
+		"points": 42.1
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	doc, err = document.NewFromJSON([]byte(`{
+		"name": "Bob",
+		"age": 39,
+		"verified": false,
+		"points": 66.6
+	}`))
+	assert.NoError(t, err)
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	// exec query
+	txn, err := db.NewTxn(false)
+	assert.NoError(t, err)
+	results, err := db.queryExecutor.ExecQuery(db, txn, query)
+	assert.NoError(t, err)
+
+	assert.Len(t, results, 2)
+	assert.Equal(t, []map[string]interface{}{
+		{
+			"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+			"name":   "John",
+			"points": float64(59),
+		},
+		{
+			"_key":   "bae-958c9334-73cf-5695-bf06-cf06826babfa",
+			"name":   "Bob",
+			"points": float64(59),
+		},
+	}, results)
+}
+
 // var userCollectionGQLSchema = (`
 // type users {
 // 	Name: String

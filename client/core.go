@@ -51,8 +51,8 @@ type Collection interface {
 
 	UpdateWith(interface{}, interface{}, ...UpdateOpt) error
 	UpdateWithFilter(interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKey(key.DocKey, interface{}, ...UpdateOpt) error
-	UpdateWithKeys([]key.DocKey, interface{}, ...UpdateOpt) error
+	UpdateWithKey(key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWithKeys([]key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
 	WithTxn(Txn) Collection
 }

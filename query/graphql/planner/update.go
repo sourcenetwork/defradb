@@ -4,6 +4,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -39,7 +40,29 @@ func (n *updateNode) Next() (bool, error) {
 
 		// apply the updates
 		// @todo: handle filter vs ID based
-		results, err := n.collection.UpdateWithFilter(n.filter, n.patch)
+		var results *client.UpdateResult
+		var err error
+		numids := len(n.ids)
+		if numids == 1 {
+			key, err := key.NewFromString(n.ids[0])
+			if err != nil {
+				return false, err
+			}
+			results, err = n.collection.UpdateWithKey(key, n.patch)
+		} else if numids > 1 {
+			// todo
+			keys := make([]key.DocKey, len(n.ids))
+			for i, v := range n.ids {
+				keys[i], err = key.NewFromString(v)
+				if err != nil {
+					return false, err
+				}
+			}
+			results, err = n.collection.UpdateWithKeys(keys, n.patch)
+		} else {
+			results, err = n.collection.UpdateWithFilter(n.filter, n.patch)
+		}
+
 		if err != nil {
 			return false, err
 		}
