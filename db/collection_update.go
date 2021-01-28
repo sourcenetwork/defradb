@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -57,9 +58,11 @@ func (c *Collection) UpdateWith(target interface{}, updater interface{}, opts ..
 		_, err := c.UpdateWithFilter(t, updater, opts...)
 		return err
 	case key.DocKey:
-		return c.UpdateWithKey(t, updater, opts...)
+		_, err := c.UpdateWithKey(t, updater, opts...)
+		return err
 	case []key.DocKey:
-		return c.UpdateWithKeys(t, updater, opts...)
+		_, err := c.UpdateWithKeys(t, updater, opts...)
+		return err
 	case *document.SimpleDocument:
 		return c.UpdateWithDoc(t, updater, opts...)
 	case []*document.SimpleDocument:
@@ -88,15 +91,35 @@ func (c *Collection) UpdateWithFilter(filter interface{}, updater interface{}, o
 // UpdateWithKey updates using a DocKey to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKey(key key.DocKey, updater interface{}, opts ...client.UpdateOpt) error {
-	return nil
+func (c *Collection) UpdateWithKey(key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	txn, err := c.getTxn(false)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(txn)
+	res, err := c.updateWithKey(txn, key, updater, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, c.commitImplicitTxn(txn)
 }
 
 // UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKeys(keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) error {
-	return nil
+func (c *Collection) UpdateWithKeys(keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	txn, err := c.getTxn(false)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(txn)
+	res, err := c.updateWithKeys(txn, keys, updater, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, c.commitImplicitTxn(txn)
 }
 
 // UpdateWithDoc updates targeting the supplied document.
@@ -113,8 +136,91 @@ func (c *Collection) UpdateWithDocs(docs []*document.SimpleDocument, updater int
 	return nil
 }
 
-func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) error {
-	return nil
+func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	patch, err := parseUpdater(updater)
+	if err != nil {
+		return nil, err
+	}
+
+	isPatch := false
+	switch patch.(type) {
+	case []map[string]interface{}:
+		isPatch = true
+	case map[string]interface{}:
+		isPatch = false
+	default:
+		return nil, ErrInvalidUpdater
+	}
+
+	doc, err := c.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	v, err := doc.ToMap()
+	if err != nil {
+		return nil, err
+	}
+
+	if isPatch {
+		// todo
+	} else {
+		err = c.applyMerge(txn, v, patch.(map[string]interface{}))
+	}
+	if err != nil {
+		return nil, nil
+	}
+
+	results := &client.UpdateResult{
+		Count:   1,
+		DocKeys: []string{key.String()},
+	}
+	return results, nil
+}
+
+func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	fmt.Println("updating keys:", keys)
+	patch, err := parseUpdater(updater)
+	if err != nil {
+		return nil, err
+	}
+
+	isPatch := false
+	switch patch.(type) {
+	case []map[string]interface{}:
+		isPatch = true
+	case map[string]interface{}:
+		isPatch = false
+	default:
+		return nil, ErrInvalidUpdater
+	}
+
+	results := &client.UpdateResult{
+		DocKeys: make([]string, len(keys)),
+	}
+	for i, key := range keys {
+		doc, err := c.Get(key)
+		if err != nil {
+			fmt.Println("error getting key to update:", key)
+			return nil, err
+		}
+		v, err := doc.ToMap()
+		if err != nil {
+			return nil, err
+		}
+
+		if isPatch {
+			// todo
+		} else {
+			err = c.applyMerge(txn, v, patch.(map[string]interface{}))
+		}
+		if err != nil {
+			return nil, nil
+		}
+
+		results.DocKeys[i] = key.String()
+		results.Count++
+	}
+	return results, nil
 }
 
 func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {

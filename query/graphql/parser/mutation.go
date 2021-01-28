@@ -191,7 +191,18 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		} else if prop == "id" {
 			raw := argument.Value.(*ast.StringValue)
 			mut.IDs = []string{raw.Value}
-		} // handle ids = [...]
+		} else if prop == "ids" {
+			raw := argument.Value.(*ast.ListValue)
+			mut.IDs = make([]string, len(raw.Values))
+			for i, val := range raw.Values {
+				id, ok := val.(*ast.StringValue)
+				if !ok {
+					return nil, errors.New("ids argument has a non string value")
+				}
+				mut.IDs[i] = id.Value
+			}
+
+		}
 	}
 
 	// if theres no field selections, just return
