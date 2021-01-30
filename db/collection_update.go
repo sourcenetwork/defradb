@@ -15,7 +15,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
 	"github.com/fxamacker/cbor/v2"
-	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/pkg/errors"
 )
@@ -360,7 +359,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 		return errors.New("Document is missing key")
 	}
 	key := ds.NewKey(keyStr)
-	links := make(map[string]cid.Cid)
+	links := make([]core.DAGLink, 0)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {
 			return ErrInvalidMergeValueType
@@ -382,11 +381,19 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 		if err != nil {
 			return err
 		}
-		links[mfield] = c
+		// links[mfield] = c
+		links = append(links, core.DAGLink{
+			Name: mfield,
+			Cid:  c,
+		})
 	}
 
 	// Update CompositeDAG
-	buf, err := cbor.Marshal(merge)
+	em, err := cbor.CanonicalEncOptions().EncMode()
+	if err != nil {
+		return err
+	}
+	buf, err := em.Marshal(merge)
 	if err != nil {
 		return err
 	}

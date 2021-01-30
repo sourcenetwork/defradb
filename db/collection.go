@@ -377,7 +377,7 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 	//	=> 		instanciate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
 	dockey := doc.Key().Key
-	links := make(map[string]cid.Cid)
+	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
@@ -396,11 +396,18 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 			// set value as clean
 			val.Clean()
 
-			links[k] = c
+			links = append(links, core.DAGLink{
+				Name: k,
+				Cid:  c,
+			})
 		}
 	}
 	// Update CompositeDAG
-	buf, err := cbor.Marshal(merge)
+	em, err := cbor.CanonicalEncOptions().EncMode()
+	if err != nil {
+		return err
+	}
+	buf, err := em.Marshal(merge)
 	if err != nil {
 		return nil
 	}
@@ -541,7 +548,7 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 			return cid.Cid{}, err
 		}
 		var bytes []byte
-		var links map[string]cid.Cid
+		var links []core.DAGLink
 		var ok bool
 		// parse args
 		if len(args) != 2 {
@@ -551,7 +558,7 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 		if !ok {
 			return cid.Cid{}, ErrUnknownCRDTArgument
 		}
-		links, ok = args[1].(map[string]cid.Cid)
+		links, ok = args[1].([]core.DAGLink)
 		if !ok {
 			return cid.Cid{}, ErrUnknownCRDTArgument
 		}

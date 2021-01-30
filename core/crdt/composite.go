@@ -3,6 +3,8 @@ package crdt
 import (
 	"bytes"
 	"errors"
+	"sort"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 
@@ -13,10 +15,15 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+var (
+	_ core.ReplicatedData = (*CompositeDAG)(nil)
+	_ core.CompositeDelta = (*CompositeDAGDelta)(nil)
+)
+
 type CompositeDAGDelta struct {
 	Priority uint64
 	Data     []byte
-	SubDAGs  map[string]cid.Cid
+	SubDAGs  []core.DAGLink
 }
 
 // GetPriority gets the current priority for this delta
@@ -47,15 +54,16 @@ func (delta *CompositeDAGDelta) Value() interface{} {
 	return delta.Data
 }
 
-func (delta *CompositeDAGDelta) Links() map[string]*ipld.Link {
-	links := make(map[string]*ipld.Link)
-	for path, c := range delta.SubDAGs {
-		links[path] = &ipld.Link{
-			Cid: c,
-		}
-	}
+func (delta *CompositeDAGDelta) Links() []core.DAGLink {
+	// links := make(map[string]*ipld.Link)
+	// for path, c := range delta.SubDAGs {
+	// 	links[path] = &ipld.Link{
+	// 		Cid: c,
+	// 	}
+	// }
 
-	return links
+	// return links
+	return delta.SubDAGs
 }
 
 // CompositeDAG is a CRDT structure that is used
@@ -75,7 +83,11 @@ func (c CompositeDAG) Value() ([]byte, error) {
 	return nil, nil
 }
 
-func (c CompositeDAG) Set(patch []byte, links map[string]cid.Cid) *CompositeDAGDelta {
+func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
+	// make sure the links are sorted lexigraphically by CID
+	sort.Slice(links, func(i, j int) bool {
+		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
+	})
 	return &CompositeDAGDelta{
 		Data:    patch,
 		SubDAGs: links,
@@ -121,7 +133,10 @@ func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 			continue
 		}
 
-		delta.SubDAGs[link.Name] = link.Cid
+		delta.SubDAGs = append(delta.SubDAGs, core.DAGLink{
+			Name: link.Name,
+			Cid:  link.Cid,
+		})
 	}
 	return delta, nil
 }

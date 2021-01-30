@@ -56,7 +56,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 // Set sets the values of CompositeDAG.
 // The value is always the object from the
 // mutation operations.
-func (m *MerkleCompositeDAG) Set(patch []byte, links map[string]cid.Cid) (cid.Cid, error) {
+func (m *MerkleCompositeDAG) Set(patch []byte, links []core.DAGLink) (cid.Cid, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	delta := m.reg.Set(patch, links)
