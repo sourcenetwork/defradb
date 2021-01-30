@@ -7,6 +7,7 @@ import (
 
 	// "github.com/sourcenetwork/defradb/store"
 
+	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -53,12 +54,11 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 }
 
 // Set the value of the register
-func (mlwwreg *MerkleLWWRegister) Set(value []byte) error {
+func (mlwwreg *MerkleLWWRegister) Set(value []byte) (cid.Cid, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	_, err := mlwwreg.Publish(delta)
-	return err
+	return mlwwreg.Publish(delta)
 }
 
 // Value will retrieve the current value from the db

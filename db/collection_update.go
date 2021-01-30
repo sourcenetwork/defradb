@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
+	"github.com/fxamacker/cbor/v2"
+	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/pkg/errors"
 )
@@ -357,6 +360,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 		return errors.New("Document is missing key")
 	}
 	key := ds.NewKey(keyStr)
+	links := make(map[string]cid.Cid)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {
 			return ErrInvalidMergeValueType
@@ -374,10 +378,22 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 
 		val := document.NewCBORValue(fd.Typ, cval)
 		fieldKey := c.getFieldKey(key, mfield)
-		if err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(fieldKey), val); err != nil {
+		c, err := c.saveDocValue(txn, c.getPrimaryIndexDocKey(fieldKey), val)
+		if err != nil {
 			return nil
 		}
+		links[mfield] = c
 	}
+
+	// Update CompositeDAG
+	buf, err := cbor.Marshal(merge)
+	if err != nil {
+		return nil
+	}
+	if _, err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
+		return err
+	}
+
 	// if this a a Batch masked as a Transaction
 	// commit our writes so we can see them.
 	// Batches don't maintain serializability, or
@@ -386,6 +402,8 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	// otherwise they wouldn't use a datastore
 	// that doesnt support proper transactions.
 	// So lets just commit, and keep going.
+	// @todo: Change this on the Txn.BatchShim
+	// structure
 	if txn.IsBatch() {
 		if err := txn.Commit(); err != nil {
 			return err

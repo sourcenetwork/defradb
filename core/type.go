@@ -9,6 +9,7 @@ const (
 	NONE_CRDT = CType(iota) // reserved none type
 	LWW_REGISTER
 	OBJECT
+	COMPOSITE
 )
 
 var (
@@ -16,5 +17,6 @@ var (
 		byte(0): NONE_CRDT,
 		byte(1): LWW_REGISTER,
 		byte(2): OBJECT,
+		byte(3): COMPOSITE,
 	}
 )
