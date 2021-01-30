@@ -5,9 +5,10 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
-
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
+	blocks "github.com/ipfs/go-block-format"
+	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -15,9 +16,11 @@ type DB interface {
 	// Collections
 	CreateCollection(base.CollectionDescription) (Collection, error)
 	GetCollection(string) (Collection, error)
-
-	// GetSequence(string) (Sequence, error)
+	ExecQuery(string) *QueryResult
 	SchemaManager() *schema.SchemaManager
+	LoadSchema(string) error
+	PrintDump()
+	GetBlock(c cid.Cid) (blocks.Block, error)
 }
 
 type Sequence interface{}
@@ -63,4 +66,9 @@ type CreateOpt struct{}
 type UpdateResult struct {
 	Count   int64
 	DocKeys []string
+}
+
+type QueryResult struct {
+	Errors []interface{} `json:"errors,omitempty"`
+	Data   interface{}   `json:"data"`
 }

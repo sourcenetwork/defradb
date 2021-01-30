@@ -378,6 +378,14 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 			return nil
 		}
 	}
+	// if this a a Batch masked as a Transaction
+	// commit our writes so we can see them.
+	// Batches don't maintain serializability, or
+	// linearization, or any other transaction
+	// semantics, which the user already knows
+	// otherwise they wouldn't use a datastore
+	// that doesnt support proper transactions.
+	// So lets just commit, and keep going.
 	if txn.IsBatch() {
 		if err := txn.Commit(); err != nil {
 			return err
@@ -586,3 +594,11 @@ func parseUpdaterSlice(v []interface{}) (patcher, error) {
 
 	return parseUpdater(patches)
 }
+
+/*
+
+filter := NewFilterFromString("Name: {_eq: 'bob'}")
+
+filter := db.NewQuery().And()
+
+*/

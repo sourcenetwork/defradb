@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
@@ -19,7 +17,7 @@ func (db *DB) LoadSchema(schema string) error {
 		return err
 	}
 	for _, desc := range colDesc {
-		fmt.Println(desc)
+		// fmt.Println(desc)
 		if _, err := db.CreateCollection(desc); err != nil {
 			return err
 		}

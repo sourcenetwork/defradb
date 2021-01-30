@@ -356,12 +356,12 @@ func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) (*gql.Field, e
 	types := queryInputTypeConfig{}
 	types.filter = g.genTypeFilterArgInput(obj)
 
-	var queryField *gql.Field
 	// @todo: Don't add sub fields to filter/order for object list types
 	types.groupBy = g.genTypeFieldsEnum(obj)
 	types.having = g.genTypeHavingArgInput(obj)
 	types.order = g.genTypeOrderArgInput(obj)
-	queryField = g.genTypeQueryableFieldList(obj, types)
+	// var queryField *gql.Field
+	queryField := g.genTypeQueryableFieldList(obj, types)
 
 	// queryType := g.manager.schema.QueryType()
 	// queryType.AddFieldConfig(queryField.Name, queryField)
@@ -380,7 +380,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	typeName := obj.Name()
 	filter, ok := g.manager.schema.TypeMap()[typeName+"FilterArg"].(*gql.InputObject)
 	if !ok {
-		return nil, errors.New("Missing filter arg for mutation type generation")
+		return nil, errors.New("Missing filter arg for mutation type generation " + typeName)
 	}
 
 	return g.genTypeMutationFields(obj, filter)
@@ -459,6 +459,8 @@ func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 
 // input {Type.Name}FilterArg { ... }
 func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
+	var selfRefType *gql.InputObject
+
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterArg"),
 	}
@@ -467,16 +469,15 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// @attention: do we need to explicity add our "sub types" to the TypeMap
 		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
-		g.manager.schema.TypeMap()[filterBaseArgType.Name()] = filterBaseArgType
+		g.manager.schema.AppendType(filterBaseArgType)
 
 		// conditionals
-		selfRefType := g.manager.schema.TypeMap()[genTypeName(obj, "FilterArg")]
-		fields["_and"] = &gql.InputObjectFieldConfig{
+		compoundListType := &gql.InputObjectFieldConfig{
 			Type: gql.NewList(selfRefType),
 		}
-		fields["_or"] = &gql.InputObjectFieldConfig{
-			Type: gql.NewList(selfRefType),
-		}
+
+		fields["_and"] = compoundListType
+		fields["_or"] = compoundListType
 		fields["_not"] = &gql.InputObjectFieldConfig{
 			Type: selfRefType,
 		}
@@ -505,7 +506,8 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 	// add the fields thunker
 	inputCfg.Fields = fieldThunk
-	return gql.NewInputObject(inputCfg)
+	selfRefType = gql.NewInputObject(inputCfg)
+	return selfRefType
 }
 
 // input {Type.Name}FilterBaseArg { ... }

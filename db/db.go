@@ -19,7 +19,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	badgerds "github.com/ipfs/go-ds-badger"
-	logging "github.com/ipfs/go-log"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 var (
@@ -27,12 +27,16 @@ var (
 	// call against the supplied Document Key
 	ErrDocVerification = errors.New("The document verificatioin failed")
 
+	ErrOptionsEmpty = errors.New("Empty options configuration provided")
+
 	// Individual Store Keys
 	rootStoreKey   = ds.NewKey("/db")
 	systemStoreKey = rootStoreKey.ChildString("/system")
 	dataStoreKey   = rootStoreKey.ChildString("/data")
 	headStoreKey   = rootStoreKey.ChildString("/heads")
 	blockStoreKey  = rootStoreKey.ChildString("/blocks")
+
+	log = logging.Logger("defra.db")
 )
 
 // make sure we match our client interface
@@ -67,13 +71,16 @@ type DB struct {
 	initialized bool
 
 	log logging.StandardLogger
+
+	options *Options
 }
 
 // Options for database
 type Options struct {
-	Store  string
-	Memory MemoryOptions
-	Badger BadgerOptions
+	Store   string
+	Memory  MemoryOptions
+	Badger  BadgerOptions
+	Address string
 }
 
 // BadgerOptions for the badger instance of the backing datastore
@@ -91,16 +98,21 @@ type MemoryOptions struct {
 func NewDB(options *Options) (*DB, error) {
 	var rootstore ds.Batching
 	var err error
+	if options == nil {
+		return nil, ErrOptionsEmpty
+	}
 	if options.Store == "badger" {
+		log.Info("opening badger store:", options.Badger.Path)
 		rootstore, err = badgerds.NewDatastore(options.Badger.Path, options.Badger.Options)
 		if err != nil {
 			return nil, err
 		}
 	} else if options.Store == "memory" {
+		log.Info("building new memory store")
 		rootstore = ds.NewMapDatastore()
 	}
 
-	log := logging.Logger("defradb")
+	log.Debug("loading internal datastores")
 	systemstore := namespace.Wrap(rootstore, systemStoreKey)
 	datastore := namespace.Wrap(rootstore, dataStoreKey)
 	headstore := namespace.Wrap(rootstore, headStoreKey)
@@ -108,10 +120,13 @@ func NewDB(options *Options) (*DB, error) {
 	dagstore := store.NewDAGStore(blockstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 
+	log.Debug("loading: schema manager")
 	sm, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug("loading: query executor")
 	exec, err := planner.NewQueryExecutor(sm)
 	if err != nil {
 		return nil, err
@@ -137,9 +152,13 @@ func NewDB(options *Options) (*DB, error) {
 
 		schema:        sm,
 		queryExecutor: exec,
+
+		options: options,
 	}
 
+	log.Info("Initializing db...")
 	err = db.Initialize()
+	log.Info("Succesfully complete db startup routine")
 	return db, err
 }
 
@@ -153,14 +172,17 @@ func (db *DB) Initialize() error {
 		return nil
 	}
 
+	log.Debug("Checking if db has already been initialize...")
 	exists, err := db.systemstore.Has(ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
 	if exists {
+		log.Debug("db has already been initalized, conitnuing.")
 		return nil
 	}
 
+	log.Debug("opened a new db, needs full intialization")
 	//init meta data
 	// collection sequence
 	_, err = db.getSequence("collection")
@@ -177,6 +199,10 @@ func (db *DB) Initialize() error {
 }
 
 func (db *DB) printDebugDB() {
+	printStore(db.rootstore)
+}
+
+func (db *DB) PrintDump() {
 	printStore(db.rootstore)
 }
 
