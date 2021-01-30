@@ -1,7 +1,7 @@
 package core
 
 import (
-	ipld "github.com/ipfs/go-ipld-format"
+	cid "github.com/ipfs/go-cid"
 )
 
 // Delta represents a delta-state update to delta-CRDT
@@ -15,5 +15,10 @@ type Delta interface {
 
 type CompositeDelta interface {
 	Delta
-	Links() map[string]*ipld.Link
+	Links() []DAGLink
+}
+
+type DAGLink struct {
+	Name string
+	Cid  cid.Cid
 }

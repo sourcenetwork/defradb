@@ -120,8 +120,8 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 
 	// add delta specific links
 	if comp, ok := delta.(core.CompositeDelta); ok {
-		for name, link := range comp.Links() {
-			if err = nd.AddRawLink(name, link); err != nil {
+		for _, dlink := range comp.Links() {
+			if err = nd.AddRawLink(dlink.Name, &ipld.Link{Cid: dlink.Cid}); err != nil {
 				return nil, err
 			}
 		}
