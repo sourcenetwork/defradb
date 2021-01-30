@@ -275,7 +275,7 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 			err = c.applyMerge(txn, doc, patch.(map[string]interface{}))
 		}
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
 
 		// add succesful updated doc to results
@@ -380,7 +380,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 		fieldKey := c.getFieldKey(key, mfield)
 		c, err := c.saveDocValue(txn, c.getPrimaryIndexDocKey(fieldKey), val)
 		if err != nil {
-			return nil
+			return err
 		}
 		links[mfield] = c
 	}
@@ -388,7 +388,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	// Update CompositeDAG
 	buf, err := cbor.Marshal(merge)
 	if err != nil {
-		return nil
+		return err
 	}
 	if _, err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
 		return err

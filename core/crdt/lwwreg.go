@@ -55,6 +55,10 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (delta *LWWRegDelta) Value() interface{} {
+	return delta.Data
+}
+
 // LWWRegister Last-Writer-Wins Register
 // a simple CRDT type that allows set/get of an
 // arbitrary data type that ensures convergence
