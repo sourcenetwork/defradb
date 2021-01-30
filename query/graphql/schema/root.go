@@ -153,3 +153,22 @@ var StringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		},
 	},
 })
+
+// StringOperatorBlock filter block for ID types
+var IDOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
+	Name: "IDOperatorBlock",
+	Fields: gql.InputObjectConfigFieldMap{
+		"_eq": &gql.InputObjectFieldConfig{
+			Type: gql.ID,
+		},
+		"_ne": &gql.InputObjectFieldConfig{
+			Type: gql.ID,
+		},
+		"_in": &gql.InputObjectFieldConfig{
+			Type: gql.NewList(gql.NewNonNull(gql.ID)),
+		},
+		"_nin": &gql.InputObjectFieldConfig{
+			Type: gql.NewList(gql.NewNonNull(gql.ID)),
+		},
+	},
+})

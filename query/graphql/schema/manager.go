@@ -102,6 +102,7 @@ func defaultTypes() []gql.Type {
 		BooleanOperatorBlock,
 		DateTimeOperatorBlock,
 		FloatOperatorBlock,
+		IDOperatorBlock,
 		IntOperatorBlock,
 		StringOperatorBlock,
 	}

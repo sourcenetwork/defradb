@@ -72,16 +72,16 @@ func (e *QueryExecutor) parseQueryString(query string) (*parser.Query, error) {
 		Name: "GraphQL request",
 	})
 
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	ast, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	if err != nil {
 		return nil, err
 	}
 
 	schema := e.SchemaManager.Schema()
-	validationResult := gql.ValidateDocument(schema, doc, nil)
+	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		return nil, fmt.Errorf("%v", validationResult.Errors)
 	}
 
-	return parser.ParseQuery(doc)
+	return parser.ParseQuery(ast)
 }

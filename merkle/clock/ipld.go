@@ -5,9 +5,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	cid "github.com/ipfs/go-cid"
-
 	// pb "github.com/ipfs/go-ds-crdt/pb"
+	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 )
@@ -112,10 +111,19 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	}
 
 	nd := dag.NodeWithData(data)
+	// add heads
 	for _, h := range heads {
-		err = nd.AddRawLink("", &ipld.Link{Cid: h})
-		if err != nil {
+		if err = nd.AddRawLink("head", &ipld.Link{Cid: h}); err != nil {
 			return nil, err
+		}
+	}
+
+	// add delta specific links
+	if comp, ok := delta.(core.CompositeDelta); ok {
+		for name, link := range comp.Links() {
+			if err = nd.AddRawLink(name, link); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return nd, nil

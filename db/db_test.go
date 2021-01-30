@@ -21,6 +21,9 @@ func newMemoryDB() (*DB, error) {
 		Memory: MemoryOptions{
 			Size: 1024 * 1000,
 		},
+		Badger: BadgerOptions{
+			Path: "test",
+		},
 	}
 
 	return NewDB(opts)
