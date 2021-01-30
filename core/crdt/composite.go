@@ -43,6 +43,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (delta *CompositeDAGDelta) Value() interface{} {
+	return delta.Data
+}
+
 func (delta *CompositeDAGDelta) Links() map[string]*ipld.Link {
 	links := make(map[string]*ipld.Link)
 	for path, c := range delta.SubDAGs {

@@ -54,6 +54,7 @@ var getCmd = &cobra.Command{
 			log.Error("request failed: ", err)
 			return
 		}
+		fmt.Println("Block:")
 		fmt.Println(string(buf))
 	},
 }

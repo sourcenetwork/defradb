@@ -9,7 +9,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	ds "github.com/ipfs/go-datastore"
@@ -135,21 +134,37 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	lwwdelta := delta.(*corecrdt.LWWRegDelta)
-	var val interface{}
-	err = cbor.Unmarshal(lwwdelta.Data, &val)
+
+	data, err := delta.Marshal()
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		json.NewEncoder(w).Encode(result)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	// var val interface{}
+	// err = cbor.Unmarshal(delta.Value().([]byte), &val)
+	// if err != nil {
+	// 	result.Errors = []interface{}{err.Error()}
+	// 	json.NewEncoder(w).Encode(result)
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	return
+	// }
 	result.Data = map[string]interface{}{
 		"block": string(buf),
-		"delta": string(lwwdelta.Data),
-		"val":   val,
+		"delta": string(data),
+		"val":   delta.Value(),
 	}
+
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "\t")
-	enc.Encode(result)
+	err = enc.Encode(result)
+	if err != nil {
+		result.Errors = []interface{}{err.Error()}
+		result.Data = nil
+		json.NewEncoder(w).Encode(result)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }

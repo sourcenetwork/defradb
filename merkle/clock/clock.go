@@ -116,7 +116,15 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 	// }
 
 	links := node.Links()
-	if len(links) == 0 { // reached the bottom, at a leaf
+	// check if we have any HEAD links
+	hasHeads := false
+	for _, l := range links {
+		if l.Name == "head" {
+			hasHeads = true
+			break
+		}
+	}
+	if !hasHeads { // reached the bottom, at a leaf
 		err := mc.headset.Add(root, rootPrio)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error adding head %s", root)

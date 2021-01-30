@@ -389,9 +389,9 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 			}
 			if val.IsDelete() {
 				doc.SetAs(v.Name(), nil, v.Type())
-				merge[k] = val.Value()
-			} else {
 				merge[k] = nil
+			} else {
+				merge[k] = val.Value()
 			}
 			// set value as clean
 			val.Clean()
@@ -511,13 +511,13 @@ func (c *Collection) saveDocValue(txn *Txn, key ds.Key, val document.Value) (cid
 }
 
 func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CType, args ...interface{}) (cid.Cid, error) {
-	datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
-	if err != nil {
-		return cid.Cid{}, err
-	}
-
 	switch ctype {
 	case core.LWW_REGISTER:
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		if err != nil {
+			return cid.Cid{}, err
+		}
+
 		var bytes []byte
 		var ok bool
 		// parse args
@@ -535,6 +535,11 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 		c.db.log.Debug("Sub objects not yet supported")
 		break
 	case core.COMPOSITE:
+		key = key.ChildString("C") // @todo: Generalize COMPOSITE key suffix
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		if err != nil {
+			return cid.Cid{}, err
+		}
 		var bytes []byte
 		var links map[string]cid.Cid
 		var ok bool
