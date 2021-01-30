@@ -2,16 +2,21 @@ package crdt
 
 import (
 	"bytes"
+	"errors"
+
+	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
 )
 
 type CompositeDAGDelta struct {
 	Priority uint64
 	Data     []byte
-	SubDags  map[string]cid.Cid
+	SubDAGs  map[string]cid.Cid
 }
 
 // GetPriority gets the current priority for this delta
@@ -40,11 +45,79 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 
 func (delta *CompositeDAGDelta) Links() map[string]*ipld.Link {
 	links := make(map[string]*ipld.Link)
-	for path, c := range delta.SubDags {
+	for path, c := range delta.SubDAGs {
 		links[path] = &ipld.Link{
 			Cid: c,
 		}
 	}
 
 	return links
+}
+
+// CompositeDAG is a CRDT structure that is used
+// to track a collcetion of sub MerkleCRDTs.
+type CompositeDAG struct {
+	baseCRDT
+	key   string
+	data  []byte
+	links map[string]cid.Cid
+}
+
+func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {
+	return CompositeDAG{}
+}
+
+func (c CompositeDAG) Value() ([]byte, error) {
+	return nil, nil
+}
+
+func (c CompositeDAG) Set(patch []byte, links map[string]cid.Cid) *CompositeDAGDelta {
+	return &CompositeDAGDelta{
+		Data:    patch,
+		SubDAGs: links,
+	}
+}
+
+// Merge implements ReplicatedData interface
+// Merge two LWWRegisty based on the order of the timestamp (ts),
+// if they are equal, compare IDs
+// MUTATE STATE
+// @todo
+func (c CompositeDAG) Merge(delta core.Delta, id string) error {
+	// d, ok := delta.(*CompositeDAGDelta)
+	// if !ok {
+	// 	return core.ErrMismatchedMergeType
+	// }
+
+	// return reg.setValue(d.Data, d.GetPriority())
+	return nil
+}
+
+// DeltaDecode is a typed helper to extract
+// a LWWRegDelta from a ipld.Node
+// for now lets do cbor (quick to implement)
+func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
+	delta := &CompositeDAGDelta{}
+	pbNode, ok := node.(*dag.ProtoNode)
+	if !ok {
+		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
+	}
+	data := pbNode.Data()
+	// fmt.Println(data)
+	h := &codec.CborHandle{}
+	dec := codec.NewDecoderBytes(data, h)
+	err := dec.Decode(delta)
+	if err != nil {
+		return nil, err
+	}
+
+	// get links
+	for _, link := range pbNode.Links() {
+		if link.Name == "head" { // ignore the head links
+			continue
+		}
+
+		delta.SubDAGs[link.Name] = link.Cid
+	}
+	return delta, nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -25,6 +26,8 @@ var (
 
 var (
 	ErrDocumentAlreadyExists = errors.New("A document with the given key already exists")
+	ErrUnknownCRDTArgument   = errors.New("Invalid CRDT arguments")
+	ErrUnknownCRDT           = errors.New("")
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -373,23 +376,36 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 	// Loop through doc values
 	//	=> 		instanciate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
+	dockey := doc.Key().Key
+	links := make(map[string]cid.Cid)
+	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			fieldKey := c.getFieldKey(doc.Key().Key, k)
-			err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(fieldKey), val)
+			fieldKey := c.getFieldKey(dockey, k)
+			c, err := c.saveDocValue(txn, c.getPrimaryIndexDocKey(fieldKey), val)
 			if err != nil {
 				return err
 			}
 			if val.IsDelete() {
 				doc.SetAs(v.Name(), nil, v.Type())
+				merge[k] = val.Value()
+			} else {
+				merge[k] = nil
 			}
 			// set value as clean
 			val.Clean()
+
+			links[k] = c
 		}
 	}
-
-	return nil
+	// Update CompositeDAG
+	buf, err := cbor.Marshal(merge)
+	if err != nil {
+		return nil
+	}
+	_, err = c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	return err
 }
 
 // Delete will attempt to delete a document by key
@@ -467,35 +483,77 @@ func (c *Collection) exists(txn *Txn, key key.DocKey) (bool, error) {
 	return txn.datastore.Has(c.getPrimaryIndexDocKey(key.Key.Instance("v")))
 }
 
-func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, val document.Value) error {
+func (c *Collection) saveDocValue(txn *Txn, key ds.Key, val document.Value) (cid.Cid, error) {
+	// datatype, err := c.db.crdtFactory.InstanceWithStores(txn, val.Type(), key)
+	// if err != nil {
+	// 	return cid.Cid{}, err
+	// }
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
 		if !ok {
-			return document.ErrValueTypeMismatch
+			return cid.Cid{}, document.ErrValueTypeMismatch
 		}
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, core.LWW_REGISTER, key)
-		if err != nil {
-			return err
-		}
-		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		var bytes []byte
+		var err error
 		if val.IsDelete() { // empty byte array
 			bytes = []byte{}
 		} else {
 			bytes, err = wval.Bytes()
 			if err != nil {
-				return err
+				return cid.Cid{}, err
 			}
 		}
-		return lwwreg.Set(bytes)
+		return c.saveValueToMerkleCRDT(txn, key, core.LWW_REGISTER, bytes)
+	default:
+		return cid.Cid{}, ErrUnknownCRDT
+	}
+}
 
+func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CType, args ...interface{}) (cid.Cid, error) {
+	datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+	if err != nil {
+		return cid.Cid{}, err
+	}
+
+	switch ctype {
+	case core.LWW_REGISTER:
+		var bytes []byte
+		var ok bool
+		// parse args
+		if len(args) != 1 {
+			return cid.Cid{}, ErrUnknownCRDTArgument
+		}
+		bytes, ok = args[0].([]byte)
+		if !ok {
+			return cid.Cid{}, ErrUnknownCRDTArgument
+		}
+		lwwreg := datatype.(*crdt.MerkleLWWRegister)
+		return lwwreg.Set(bytes)
 	case core.OBJECT:
 		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
 		c.db.log.Debug("Sub objects not yet supported")
 		break
+	case core.COMPOSITE:
+		var bytes []byte
+		var links map[string]cid.Cid
+		var ok bool
+		// parse args
+		if len(args) != 2 {
+			return cid.Cid{}, ErrUnknownCRDTArgument
+		}
+		bytes, ok = args[0].([]byte)
+		if !ok {
+			return cid.Cid{}, ErrUnknownCRDTArgument
+		}
+		links, ok = args[1].(map[string]cid.Cid)
+		if !ok {
+			return cid.Cid{}, ErrUnknownCRDTArgument
+		}
+		comp := datatype.(*crdt.MerkleCompositeDAG)
+		return comp.Set(bytes, links)
 	}
-	return nil
+	return cid.Cid{}, ErrUnknownCRDT
 }
 
 // getTxn gets or creates a new transaction from the underlying db.
