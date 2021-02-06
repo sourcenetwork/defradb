@@ -112,7 +112,7 @@ func NewDB(options *Options) (*DB, error) {
 		rootstore = ds.NewMapDatastore()
 	}
 
-	log.Debug("loading internal datastores")
+	log.Debug("loading: internal datastores")
 	systemstore := namespace.Wrap(rootstore, systemStoreKey)
 	datastore := namespace.Wrap(rootstore, dataStoreKey)
 	headstore := namespace.Wrap(rootstore, headStoreKey)

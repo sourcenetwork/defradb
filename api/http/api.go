@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	dag "github.com/ipfs/go-merkledag"
@@ -88,18 +88,23 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	var result client.QueryResult
 	cidStr := chi.URLParam(r, "cid")
-	fmt.Println(cidStr)
 
-	key := ds.NewKey(cidStr)
-	c, err := dshelp.DsKeyToCid(key)
-	// c, err := cid.Decode(cidStr)
+	// try to parse CID
+	c, err := cid.Decode(cidStr)
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-		result.Data = err.Error()
-		json.NewEncoder(w).Encode(result)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		// if we cant try to parse DSKeyToCID
+		// return error if we still cant
+		key := ds.NewKey(cidStr)
+		c, err = dshelp.DsKeyToCid(key)
+		if err != nil {
+			result.Errors = []interface{}{err.Error()}
+			result.Data = err.Error()
+			json.NewEncoder(w).Encode(result)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 	}
+	// c, err := cid.Decode(cidStr)
 
 	block, err := s.db.GetBlock(c)
 	if err != nil {
