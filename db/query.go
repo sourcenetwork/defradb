@@ -5,7 +5,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 
-	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 )
 
@@ -40,8 +39,8 @@ func (db *DB) ExecQuery(query string) *client.QueryResult {
 
 func (db *DB) ExecIntrospection(query string) *client.QueryResult {
 	schema := db.schema.Schema()
-	t := schema.Type("userFilterArg")
-	spew.Dump(t.(*gql.InputObject).Fields())
+	// t := schema.Type("userFilterArg")
+	// spew.Dump(t.(*gql.InputObject).Fields())
 	params := gql.Params{Schema: *schema, RequestString: query}
 	r := gql.Do(params)
 
