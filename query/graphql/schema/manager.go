@@ -1,6 +1,10 @@
 package schema
 
 import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
+
 	gql "github.com/graphql-go/graphql"
 )
 
@@ -27,6 +31,7 @@ func NewSchemaManager() (*SchemaManager, error) {
 		return sm, err
 	}
 	sm.schema = schema
+	fmt.Println(sm.schema.Type("Commit").(*gql.Object).Fields())
 
 	sm.NewGenerator()
 	sm.Relations = NewRelationManager()
@@ -59,6 +64,7 @@ func (s *SchemaManager) ResolveTypes() error {
 
 // @todo: Use a better default Query type
 func defaultQueryType() *gql.Object {
+	fmt.Println("Commit type:", types.CommitLink)
 	return gql.NewObject(gql.ObjectConfig{
 		Name: "Query",
 		Fields: gql.Fields{
@@ -66,6 +72,11 @@ func defaultQueryType() *gql.Object {
 				Name: "_",
 				Type: gql.Boolean,
 			},
+
+			// database API queries
+			// "test": queryAllCommits,
+			queryLatestCommits.Name: queryLatestCommits,
+			// queryCommit.Name:        queryCommit,
 		},
 	})
 }
@@ -105,5 +116,10 @@ func defaultTypes() []gql.Type {
 		IDOperatorBlock,
 		IntOperatorBlock,
 		StringOperatorBlock,
+
+		types.CommitLink,
+		// types.CommitLinks,
+		types.Commit,
+		types.Delta,
 	}
 }

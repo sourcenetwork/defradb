@@ -74,12 +74,14 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 	// for each built type
 	// 		generate query inputs
 	queryType := g.manager.schema.QueryType()
+	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
 		f, err := g.GenerateQueryInputForGQLType(t)
 		if err != nil {
 			return nil, err
 		}
 		queryType.AddFieldConfig(f.Name, f)
+		generatedQueryFields = append(generatedQueryFields, f)
 	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
@@ -88,9 +90,10 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 
 	// secondary pass to expand query collection type
 	// argument inputs
-	query := g.manager.schema.QueryType()
-	collections := query.Fields()
-	for _, def := range collections {
+	// query := g.manager.schema.QueryType()
+	// queries := query.Fields()
+	// only apply to generated query fields, and only once
+	for _, def := range generatedQueryFields {
 		t := def.Type
 		if obj, ok := t.(*gql.List); ok {
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
