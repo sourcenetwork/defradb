@@ -113,7 +113,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	nd := dag.NodeWithData(data)
 	// add heads
 	for _, h := range heads {
-		if err = nd.AddRawLink("head", &ipld.Link{Cid: h}); err != nil {
+		if err = nd.AddRawLink("_head", &ipld.Link{Cid: h}); err != nil {
 			return nil, err
 		}
 	}

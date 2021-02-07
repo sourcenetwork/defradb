@@ -119,7 +119,7 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 	// check if we have any HEAD links
 	hasHeads := false
 	for _, l := range links {
-		if l.Name == "head" {
+		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}

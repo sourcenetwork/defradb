@@ -77,3 +77,27 @@ func TestQueryParse_Limit_Offset(t *testing.T) {
 	assert.Equal(t, limit.Limit, int64(1))
 	assert.Equal(t, limit.Offset, int64(100))
 }
+
+func TestQueryParse_Commit_Latest(t *testing.T) {
+	var query = (`
+	query {
+		latestCommits(dockey: "Qm123") {
+			cid
+		}
+	}`)
+
+	source := source.NewSource(&source.Source{
+		Body: []byte(query),
+		Name: "",
+	})
+
+	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	assert.NoError(t, err)
+
+	q, err := ParseQuery(doc)
+	assert.NoError(t, err)
+
+	commit := q.Queries[0].Selections[0].(*CommitSelect)
+	assert.Equal(t, commit.DocKey, "Qm123")
+	assert.Len(t, commit.Fields, 1)
+}
