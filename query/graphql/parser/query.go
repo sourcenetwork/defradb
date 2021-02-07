@@ -7,6 +7,20 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
+type SelectionType int
+
+const (
+	NoneSelection = iota
+	ObjectSelection
+	CommitSelection
+)
+
+var dbAPIQueryNames = map[string]bool{
+	"latestCommits": true,
+	"allCommits":    true,
+	"commit":        true,
+}
+
 type Query struct {
 	Queries   []*OperationDefinition
 	Mutations []*OperationDefinition
@@ -37,6 +51,7 @@ type Selection interface {
 	GetName() string
 	GetAlias() string
 	GetSelections() []Selection
+	GetRoot() SelectionType
 }
 
 // type
@@ -49,6 +64,9 @@ type Select struct {
 	Name  string
 	Alias string
 
+	// Root is the top level query parsed type
+	Root SelectionType
+
 	Filter  *Filter
 	Limit   *Limit
 	OrderBy *OrderBy
@@ -58,6 +76,10 @@ type Select struct {
 
 	// raw graphql statement
 	Statement *ast.Field
+}
+
+func (s Select) GetRoot() SelectionType {
+	return s.Root
 }
 
 func (s Select) GetStatement() ast.Node {
@@ -81,8 +103,14 @@ type Field struct {
 	Name  string
 	Alias string
 
+	Root SelectionType
+
 	// raw graphql statement
 	Statement *ast.Field
+}
+
+func (c Field) GetRoot() SelectionType {
+	return c.Root
 }
 
 // GetSelectionSet implements Selection
@@ -192,14 +220,28 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 		qdef.Name = def.Name.Value
 	}
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
+		var parsed Selection
+		var err error
 		switch node := selection.(type) {
 		case *ast.Field:
-			slct, err := parseSelect(node)
+			// which query type is this
+			// database API query
+			// object query
+			// etc
+			_, exists := dbAPIQueryNames[node.Name.Value]
+			if exists {
+				// the query matches a reserved DB API query name
+				parsed, err = parseAPIQuery(node)
+			} else {
+				// the query doesn't match a reserve name
+				// so its probably a generated query
+				parsed, err = parseSelect(ObjectSelection, node)
+			}
 			if err != nil {
 				return nil, err
 			}
 
-			qdef.Selections[i] = slct
+			qdef.Selections[i] = parsed
 		}
 	}
 	return qdef, nil
@@ -212,8 +254,11 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(field *ast.Field) (*Select, error) {
-	slct := &Select{Statement: field}
+func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
+	slct := &Select{
+		Root:      rootType,
+		Statement: field,
+	}
 	slct.Name = field.Name.Value
 	if field.Alias != nil {
 		slct.Alias = field.Alias.Value
@@ -272,23 +317,31 @@ func parseSelect(field *ast.Field) (*Select, error) {
 	}
 
 	// parse field selections
-	for _, selection := range field.SelectionSet.Selections {
+	var err error
+	slct.Fields, err = parseSelectFields(slct.Root, field.SelectionSet)
+	return slct, err
+}
+
+func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
+	selections := make([]Selection, len(fields.Selections))
+	// parse field selections
+	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
 			if node.SelectionSet == nil { // regular field
-				f := parseField(node)
-				slct.Fields = append(slct.Fields, f)
+				f := parseField(root, node)
+				selections[i] = f
 			} else { // sub type with extra fields
-				s, err := parseSelect(node)
+				s, err := parseSelect(root, node)
 				if err != nil {
-					return slct, err
+					return nil, err
 				}
-				slct.Fields = append(slct.Fields, s)
+				selections[i] = s
 			}
 		}
 	}
 
-	return slct, nil
+	return selections, nil
 }
 
 // iterates over the given map, and replaces the string instance
@@ -316,10 +369,23 @@ func replaceSortDirection(obj map[string]interface{}) error {
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(field *ast.Field) *Field {
-	f := &Field{Name: field.Name.Value}
+func parseField(root SelectionType, field *ast.Field) *Field {
+	f := &Field{
+		Root:      root,
+		Name:      field.Name.Value,
+		Statement: field,
+	}
 	if field.Alias != nil {
 		f.Alias = field.Alias.Value
 	}
 	return f
+}
+
+func parseAPIQuery(field *ast.Field) (Selection, error) {
+	switch field.Name.Value {
+	case "latestCommits", "allCommits", "commit":
+		return parseCommitSelect(field)
+	default:
+		return nil, errors.New("Unknown query")
+	}
 }

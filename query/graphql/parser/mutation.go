@@ -79,6 +79,10 @@ type Mutation struct {
 	Statement *ast.Field
 }
 
+func (m Mutation) GetRoot() SelectionType {
+	return ObjectSelection
+}
+
 func (m Mutation) GetStatement() ast.Node {
 	return m.Statement
 }
@@ -210,23 +214,24 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		return mut, nil
 	}
 
-	// parse field selections
-	for _, selection := range field.SelectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.Field:
-			if node.SelectionSet == nil { // regular field
-				f := parseField(node)
-				mut.Fields = append(mut.Fields, f)
-			} else { // sub type with extra fields
-				s, err := parseSelect(node)
-				if err != nil {
-					return nil, err
-				}
-				mut.Fields = append(mut.Fields, s)
-			}
-		}
-	}
+	// // parse field selections
+	// for _, selection := range field.SelectionSet.Selections {
+	// 	switch node := selection.(type) {
+	// 	case *ast.Field:
+	// 		if node.SelectionSet == nil { // regular field
+	// 			f := parseField(node)
+	// 			mut.Fields = append(mut.Fields, f)
+	// 		} else { // sub type with extra fields
+	// 			s, err := parseSelect(node)
+	// 			if err != nil {
+	// 				return nil, err
+	// 			}
+	// 			mut.Fields = append(mut.Fields, s)
+	// 		}
+	// 	}
+	// }
 
-	// fmt.Println(mut)
-	return mut, nil
+	var err error
+	mut.Fields, err = parseSelectFields(mut.GetRoot(), field.SelectionSet)
+	return mut, err
 }
