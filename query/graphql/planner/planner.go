@@ -2,6 +2,8 @@ package planner
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
@@ -38,6 +40,11 @@ type planNode interface {
 	// processed by the executor
 	Values() map[string]interface{}
 
+	// Source returns the child planNode that
+	// generates the source values for this plan.
+	// If a plan has no source, return nil
+	Source() planNode
+
 	// Close terminates the planNode execution releases its resources.
 	Close()
 }
@@ -54,6 +61,7 @@ func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
 func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *baseNode) Close()                         { n.plan.Close() }
+func (n *baseNode) Source() planNode               { return n.plan }
 
 type ExecutionContext struct {
 	context.Context
@@ -105,11 +113,12 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		return p.newPlan(n.Selections[0]) // @todo: ensure parser.QueryDefinition has at least 1 selection
 	case *parser.Select:
 		return p.Select(n)
+	case *parser.CommitSelect:
+		return p.CommitSelect(n)
 	case *parser.Mutation:
 		return p.newObjectMutationPlan(n)
-	default:
-		return nil, errors.Errorf("unknown statement type %T", stmt)
 	}
+	return nil, errors.Errorf("unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
@@ -153,6 +162,8 @@ func (p *Planner) expandPlan(plan planNode) error {
 		return p.expandPlan(n.source)
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n)
+	case MultiNode:
+		return p.expandMultiNode(n)
 	case *updateNode:
 		return p.expandPlan(n.results)
 	default:
@@ -190,6 +201,15 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	return nil
 }
 
+func (p *Planner) expandMultiNode(plan MultiNode) error {
+	for _, child := range plan.Children() {
+		if err := p.expandPlan(child); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // func (p *Planner) expandSelectNodePlan(plan *selectNode) error {
 // 	fmt.Println("Expanding select plan")
 // 	return p.expandPlan(plan.source)
@@ -208,6 +228,54 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
 // func (p *Planner) QueryDocs(query parser.Query) {
 
 // }
+
+// walkAndReplace walks through the provided plan, and searches for an instance
+// of the target plan, and replaces it with the replace plan
+func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
+	src := plan.Source()
+	if src == nil {
+		return nil
+	}
+
+	// not our target plan
+	// walk into the next plan
+	if src != target {
+		return p.walkAndReplacePlan(src, target, replace)
+	}
+
+	// We've found our plan, figure out what type our current plan is
+	// and update accordingly
+	switch node := plan.(type) {
+	case *selectNode:
+		node.source = replace
+	case *typeJoinOne:
+		node.root = replace
+	case *typeJoinMany:
+		node.root = replace
+	// @todo: add more nodes that apply here
+	default:
+		return fmt.Errorf("Unknown plan node type to replace: %T", node)
+	}
+
+	return nil
+}
+
+// walkAndFindPlanType walks through the plan graph, and returns the first
+// instance of a plan, that matches the same type as the target plan
+func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
+	src := plan
+	if src == nil {
+		return nil
+	}
+
+	srcType := reflect.TypeOf(src)
+	targetType := reflect.TypeOf(target)
+	if srcType != targetType {
+		return p.walkAndFindPlanType(plan.Source(), target)
+	}
+
+	return src
+}
 
 func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
 	plan, err := p.query(query)
