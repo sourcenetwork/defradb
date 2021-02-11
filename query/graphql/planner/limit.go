@@ -61,3 +61,5 @@ func (n *limitNode) Next() (bool, error) {
 
 	return true, nil
 }
+
+func (n *limitNode) Source() planNode { return n.plan }

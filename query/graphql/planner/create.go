@@ -79,6 +79,8 @@ func (n *createNode) Values() map[string]interface{} {
 
 func (n *createNode) Close() { /* no-op?? */ }
 
+func (n *createNode) Source() planNode { return nil }
+
 func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
@@ -99,5 +101,5 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	// which uses the new create node as its
 	// source, instead of a scan node.
 	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create)
+	return p.SelectFromSource(slct, create, true)
 }

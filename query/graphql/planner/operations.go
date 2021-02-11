@@ -1,5 +1,18 @@
 package planner
 
+var (
+	_ planNode = (*scanNode)(nil)
+	_ planNode = (*headsetScanNode)(nil)
+	_ planNode = (*limitNode)(nil)
+	_ planNode = (*selectNode)(nil)
+	_ planNode = (*selectTopNode)(nil)
+	_ planNode = (*sortNode)(nil)
+	_ planNode = (*renderNode)(nil)
+	_ planNode = (*typeIndexJoin)(nil)
+	_ planNode = (*typeJoinOne)(nil)
+	_ planNode = (*typeJoinMany)(nil)
+)
+
 type joinNode struct {
 	p *Planner
 }
@@ -29,7 +42,7 @@ type noopNode struct {
 	p *Planner
 }
 
-// parellel planner, that is used to execute multiple plan trees in parallel.
-type parallelNode struct {
-	pNodes []planNode
-}
+// // parellel planner, that is used to execute multiple plan trees in parallel.
+// type parallelNode struct {
+// 	pNodes []planNode
+// }
