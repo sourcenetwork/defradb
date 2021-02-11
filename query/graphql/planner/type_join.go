@@ -104,6 +104,8 @@ func (n *typeIndexJoin) Close() {
 	n.joinPlan.Close()
 }
 
+func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
+
 // split the provided filter
 // into the root and subType components.
 // Eg. (filter: {age: 10, name: "bob", author: {birthday: "June 26, 1990", ...}, ...})
@@ -302,6 +304,8 @@ func (n *typeJoinOne) Close() {
 	n.subType.Close()
 }
 
+func (n *typeJoinOne) Source() planNode { return n.root }
+
 type typeJoinMany struct {
 	p *Planner
 
@@ -405,20 +409,15 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	return doc
 }
 
-func (n *typeJoinMany) Close() {}
+func (n *typeJoinMany) Close() {
+	n.root.Close()
+	n.subType.Close()
+}
+
+func (n *typeJoinMany) Source() planNode { return n.root }
 
 func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{}) error {
 	switch node := plan.(type) {
-	case *selectTopNode:
-		return appendFilterToScanNode(node.source, filterCondition)
-	case *selectNode:
-		return appendFilterToScanNode(node.source, filterCondition)
-	case *typeIndexJoin:
-		return appendFilterToScanNode(node.joinPlan, filterCondition)
-	case *typeJoinOne:
-		return appendFilterToScanNode(node.root, filterCondition)
-	case *typeJoinMany:
-		return appendFilterToScanNode(node.root, filterCondition)
 	case *scanNode:
 		var err error
 		filter := node.filter
@@ -435,6 +434,10 @@ func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{
 		}
 
 		node.filter = filter
+	case nil:
+		return nil
+	default:
+		return appendFilterToScanNode(node.Source(), filterCondition)
 	}
 	return nil
 }

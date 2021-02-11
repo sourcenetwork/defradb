@@ -122,6 +122,8 @@ func (n *sortNode) Close() {
 	}
 }
 
+func (n *sortNode) Source() planNode { return n.plan }
+
 // allSortStrategy is the simplest sort strategy available.
 // it consumes all the data into the underlying valueNode
 // document container, then sorts it. Its designed for an

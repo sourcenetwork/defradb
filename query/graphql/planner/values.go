@@ -56,6 +56,8 @@ func (n *valuesNode) Values() map[string]interface{} {
 	return n.docs.At(n.docIndex)
 }
 
+func (n *valuesNode) Source() planNode { return nil }
+
 // SortAll actually sorts all the data within the docContainer object
 func (n *valuesNode) SortAll() {
 	sort.Sort(n)
