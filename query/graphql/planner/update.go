@@ -116,6 +116,8 @@ func (n *updateNode) Close() {
 	n.results.Close()
 }
 
+func (n *updateNode) Source() planNode { return nil }
+
 func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
