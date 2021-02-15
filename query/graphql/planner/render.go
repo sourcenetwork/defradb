@@ -1,11 +1,14 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 )
+
+// @todo: Rebuild render system.
+// @body: Current render system embeds render meta-data
+// into EVERY SINGLE returned object map. This can be drastically
+// reduced. Related: Replace Values() result with a typed object
+// instead of a raw map[string]interface{}
 
 // the final field select and render
 type renderNode struct { // selectNode??
@@ -25,6 +28,7 @@ func (n *renderNode) Start() error           { return n.plan.Start() }
 func (n *renderNode) Next() (bool, error)    { return n.plan.Next() }
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *renderNode) Close()                 { n.plan.Close() }
+func (n *renderNode) Source() planNode       { return n.plan }
 
 // we only need to implement the Values() func of the planNode
 // interface since the embedded baseNode implements the rest
@@ -53,13 +57,13 @@ func (r *renderNode) render(src map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	if renderMap, ok := src["__render"].(map[string]interface{}); ok {
 		numRenderFields := renderMap["numResults"].(int)
-		fields := renderMap["fields"].([]*base.FieldDescription)
+		fields := renderMap["fields"].([]string)
 		aliases := renderMap["aliases"].([]string)
-		fmt.Println(renderMap)
+
 		for i := 0; i < numRenderFields; i++ {
 			field := fields[i]
 			var dst string
-			name := field.Name
+			name := field
 			dst = name
 			alias := aliases[i]
 			if alias != "" {

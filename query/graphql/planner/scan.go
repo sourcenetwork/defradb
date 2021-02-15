@@ -108,6 +108,58 @@ func (n *scanNode) Values() map[string]interface{} {
 
 func (n *scanNode) Close() {}
 
+func (n *scanNode) Source() planNode { return nil }
+
 func (p *Planner) Scan() *scanNode {
 	return &scanNode{p: p}
 }
+
+// multiScanNode is a buffered scanNode that has
+// multiple readers. Each reader is unaware of the
+// others, so we need a system, that will correctly
+// manage *when* to increment through the scanNode
+// plan.
+//
+// If we have two readers on our multiScanNode, then
+// we call Next() on the underlying scanNode only
+// once every 2 Next() calls on the multiScan
+type multiScanNode struct {
+	*scanNode
+	numReaders int
+	numCalls   int
+
+	lastBool bool
+	lastErr  error
+}
+
+func (n *multiScanNode) addReader() {
+	n.numReaders++
+}
+
+func (n *multiScanNode) Source() planNode {
+	return n.scanNode
+}
+
+// Next only calls Next() on the underlying
+// scanNode every numReaders.
+func (n *multiScanNode) Next() (bool, error) {
+	if n.numCalls == 0 {
+		n.lastBool, n.lastErr = n.scanNode.Next()
+	}
+	n.numCalls++
+
+	// if the number of calls equals the numbers of readers
+	// reset the counter, so our next call actually executes the Next()
+	if n.numCalls == n.numReaders {
+		n.numCalls = 0
+	}
+
+	return n.lastBool, n.lastErr
+}
+
+/*
+multiscan := p.MultiScan(scan)
+multiscan.Register(typeJoin1)
+multiscan.Register(typeJoin2)
+multiscan.Register(commitScan)
+*/
