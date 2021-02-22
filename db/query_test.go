@@ -1938,6 +1938,159 @@ func TestMutationUpdateByKeysMultiDocsMultiResult(t *testing.T) {
 	}, results)
 }
 
+func TestQueryMultiNodeSelectionOne(t *testing.T) {
+	var bookAuthorPublisherGQLSchema = (`
+	type book {
+		name: String
+		rating: Float
+		author: author 
+		publisher: publisher
+	}
+
+	type author {
+		name: String
+		age: Int
+		verified: Boolean
+		wrote: book @primary
+	}
+
+	type publisher {
+		name: String
+		address: String
+		published: book
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "multinode: One-to-one relation query with no filter",
+			query: `query {
+				book {
+					name
+					author {
+						name
+					}
+					publisher {
+						name
+					}
+				}
+			}`,
+			docs: map[int][]string{
+				//books
+				0: []string{
+					// bae-7e5ae688-3a77-5b4f-a74c-59301bd1eb25
+					(`{
+						"name": "The Coffee Table Book",
+						"rating": 4.9,
+						"publisher_id": "bae-81804a20-4d08-509e-a3e8-fd770622a356"
+					}`)},
+				//authors
+				1: []string{
+					// bae-5eae6a8a-0c52-535c-9c20-df42b7044e20
+					(`{
+						"name": "Cosmo Kramer",
+						"age": 44,
+						"verified": true,
+						"wrote_id": "bae-7e5ae688-3a77-5b4f-a74c-59301bd1eb25"
+					}`)},
+				// publishers
+				2: []string{
+					// bae-81804a20-4d08-509e-a3e8-fd770622a356
+					(`{
+						"name": "Pendant Publishing",
+						"address": "600 Madison Ave., New York, New York"
+					}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"name": "The Coffee Table Book",
+					"author": map[string]interface{}{
+						"name": "Cosmo Kramer",
+					},
+					"publisher": map[string]interface{}{
+						"name": "Pendant Publishing",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		err = db.LoadSchema(bookAuthorPublisherGQLSchema)
+		assert.NoError(t, err)
+
+		// bookDesc := newTestQueryCollectionDescription2()
+		bookCol, err := db.GetCollection("book")
+		assert.NoError(t, err)
+
+		// authorDesc := newTestQueryCollectionDescription3()
+		authorCol, err := db.GetCollection("author")
+		assert.NoError(t, err)
+
+		// authorDesc := newTestQueryCollectionDescription3()
+		pubCol, err := db.GetCollection("publisher")
+		assert.NoError(t, err)
+
+		runQueryTestCase(t, db, []client.Collection{bookCol, authorCol, pubCol}, test)
+	}
+}
+
+func TestQueryLatestCommits(t *testing.T) {
+	var userCollectionGQLSchema = (`
+	type users {
+		Name: String
+		Age: Int
+		Verified: Boolean
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "Simple latest commits query",
+			query: `query {
+						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							links {
+								name
+							}
+						}
+					}`,
+			docs: map[int][]string{
+				0: []string{
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		err = db.LoadSchema(userCollectionGQLSchema)
+		assert.NoError(t, err)
+
+		// desc := newTestQueryCollectionDescription1()
+		col, err := db.GetCollection("users")
+		assert.NoError(t, err)
+
+		runQueryTestCase(t, db, []client.Collection{col}, test)
+	}
+
+}
+
 // var userCollectionGQLSchema = (`
 // type users {
 // 	Name: String

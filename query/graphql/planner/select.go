@@ -2,7 +2,6 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -26,6 +25,7 @@ func (n *selectTopNode) Start() error                   { return n.plan.Start() 
 func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
 func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
+func (n *selectTopNode) Source() planNode               { return n.source }
 func (n *selectTopNode) Close() {
 	if n.plan != nil {
 		n.plan.Close()
@@ -34,7 +34,7 @@ func (n *selectTopNode) Close() {
 
 type renderInfo struct {
 	numResults int
-	fields     []*base.FieldDescription
+	fields     []string
 	aliases    []string
 }
 
@@ -43,6 +43,10 @@ type selectNode struct {
 
 	// main data source for the select node.
 	source planNode
+
+	// origal source that was first given when the select node
+	// was created
+	origSource planNode
 
 	// cache information about the original data source
 	// collection name, meta-data, etc.
@@ -144,6 +148,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		return err
 	}
 	n.source = sourcePlan.plan
+	n.origSource = sourcePlan.plan
 	n.sourceInfo = sourcePlan.info
 
 	// split filter
@@ -171,16 +176,18 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 			// future:
 			// plan := n.p.Select(node)
 			// n.source := p.SubTypeIndexJoin(origScan, plan)
-			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
-			if found {
-				n.renderInfo.fields = append(n.renderInfo.fields, &f)
-			}
+			// f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
+			// if found {
+			// 	n.renderInfo.fields = append(n.renderInfo.fields, f.Name)
+			// }
+			n.renderInfo.fields = append(n.renderInfo.fields, node.GetName())
 			subTypes = append(subTypes, node)
 		case *parser.Field, parser.Field:
-			f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
-			if found {
-				n.renderInfo.fields = append(n.renderInfo.fields, &f)
-			}
+			// f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
+			// if found {
+			// 	n.renderInfo.fields = append(n.renderInfo.fields, f.Name)
+			// }
+			n.renderInfo.fields = append(n.renderInfo.fields, node.GetName())
 		}
 		n.renderInfo.aliases = append(n.renderInfo.aliases, field.GetAlias())
 		n.renderInfo.numResults++
@@ -189,16 +196,28 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, subtype := range subTypes {
-		typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.source, subtype)
-		if err != nil {
-			return err
-		}
+		// @todo: check select type:
+		// - TypeJoin
+		// - commitScan
+		if subtype.Root == parser.ObjectSelection {
+			typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
+			if err != nil {
+				return err
+			}
 
-		n.source = typeIndexJoin
+			// n.source = typeIndexJoin
+			if err := n.addSubPlan(typeIndexJoin); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
 }
+
+func (n *selectNode) Source() planNode { return n.source }
+
+// func appendSource() {}
 
 // func (n *selectNode) initRender(fields []*base.FieldDescription, aliases []string) error {
 // 	return n.p.render(fields, aliases)
@@ -221,22 +240,25 @@ func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	return top, nil
 }
 
-func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode) (planNode, error) {
+func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromCollection bool) (planNode, error) {
 	s := &selectNode{
-		p:      p,
-		source: source,
+		p:          p,
+		source:     source,
+		origSource: source,
 	}
 	s.filter = parsed.Filter
 	limit := parsed.Limit
 	sort := parsed.OrderBy
 	s.renderInfo = &renderInfo{}
 
-	desc, err := p.getCollectionDesc(parsed.Name)
-	if err != nil {
-		return nil, err
-	}
+	if fromCollection {
+		desc, err := p.getCollectionDesc(parsed.Name)
+		if err != nil {
+			return nil, err
+		}
 
-	s.sourceInfo = sourceInfo{desc}
+		s.sourceInfo = sourceInfo{desc}
+	}
 
 	if err := s.initFields(parsed); err != nil {
 		return nil, err
