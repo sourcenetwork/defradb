@@ -1,6 +1,9 @@
 package planner
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -166,9 +169,9 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 
 func (n *selectNode) initFields(parsed *parser.Select) error {
 	n.renderInfo.numResults = 0
-	subTypes := make([]*parser.Select, 0)
+	// subTypes := make([]*parser.Select, 0)
 
-	// iterate looking just for fields
+	// iterate to build the render info
 	for _, field := range parsed.Fields {
 		switch node := field.(type) {
 		case *parser.Select:
@@ -181,7 +184,7 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 			// 	n.renderInfo.fields = append(n.renderInfo.fields, f.Name)
 			// }
 			n.renderInfo.fields = append(n.renderInfo.fields, node.GetName())
-			subTypes = append(subTypes, node)
+			// subTypes = append(subTypes, node)
 		case *parser.Field, parser.Field:
 			// f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
 			// if found {
@@ -193,21 +196,36 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 		n.renderInfo.numResults++
 	}
 
+	// iterate to build sub plans
+	// for _, field := range parsed.Fields {
+
+	// }
+
+	// re-organize the fields slice into reverse-alphabetical
+	// this makes sure the reserved database fields that start with
+	// a "_" end up at the end. So if/when we build our MultiNode
+	// all the AppendPlans end up at the end.
+	sort.Slice(parsed.Fields, func(i, j int) bool {
+		return !(strings.Compare(parsed.Fields[i].GetName(), parsed.Fields[j].GetName()) < 0)
+	})
+
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
-	for _, subtype := range subTypes {
-		// @todo: check select type:
-		// - TypeJoin
-		// - commitScan
-		if subtype.Root == parser.ObjectSelection {
-			typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
-			if err != nil {
-				return err
-			}
+	for _, field := range parsed.Fields {
+		if subtype, ok := field.(*parser.Select); ok {
+			// @todo: check select type:
+			// - TypeJoin
+			// - commitScan
+			if subtype.Root == parser.ObjectSelection {
+				typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
+				if err != nil {
+					return err
+				}
 
-			// n.source = typeIndexJoin
-			if err := n.addSubPlan(typeIndexJoin); err != nil {
-				return err
+				// n.source = typeIndexJoin
+				if err := n.addSubPlan(field.GetName(), typeIndexJoin); err != nil {
+					return err
+				}
 			}
 		}
 	}
