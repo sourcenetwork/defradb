@@ -1,6 +1,6 @@
-type user {
-	name: String
-	age: Int
-	verified: Boolean
+type user @version("asdadjh:jdhfkljhglkzhjlhzfjdgzhjgldfhjg") {
+	name: String 
+	age: Int 
+	verified: Boolean 
 	points: Float
 }

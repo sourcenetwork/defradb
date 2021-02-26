@@ -2054,6 +2054,7 @@ func TestQueryLatestCommits(t *testing.T) {
 						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							cid
 							links {
+								cid
 								name
 							}
 						}
@@ -2067,9 +2068,17 @@ func TestQueryLatestCommits(t *testing.T) {
 			},
 			results: []map[string]interface{}{
 				{
-					"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-					"Name": "John",
-					"Age":  uint64(21),
+					"cid": "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+					"links": []map[string]interface{}{
+						{
+							"cid":  "QmPaY2DNmd7LtRDpReswc5UTGoU5Q32Py1aEVG7Shq6Np1",
+							"name": "Age",
+						},
+						{
+							"cid":  "Qmag2zKKGGQwVSss9pQn3hjTu9opdF5mkJXUR9rt2A651h",
+							"name": "Name",
+						},
+					},
 				},
 			},
 		},

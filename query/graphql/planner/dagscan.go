@@ -95,7 +95,7 @@ type dagScanNode struct {
 	// previousScanNode planNode
 	// linksScanNode    planNode
 
-	// node       ipld.Node
+	block blocks.Block
 }
 
 func (p *Planner) DAGScan() *dagScanNode {
@@ -120,7 +120,23 @@ func (n *dagScanNode) Start() error {
 // either a CID or a DocKey.
 // If its a CID, set the node CID val
 // if its a DocKey, set the node Key val (headset)
-func (n *dagScanNode) Spans(core.Spans) { /* todo */ }
+func (n *dagScanNode) Spans(spans core.Spans) {
+	if len(spans) == 0 {
+		return
+	}
+
+	// if we have a headset, pass along
+	// otherwise, try to parse as a CID
+	if n.headset != nil {
+		n.headset.Spans(spans)
+	} else {
+		data := spans[0].Start().String()
+		c, err := cid.Decode(data)
+		if err == nil {
+			n.cid = &c
+		}
+	}
+}
 
 func (n *dagScanNode) Close() {
 	if n.headset != nil {
@@ -147,6 +163,16 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 		n.cid = &cid
 	}
+
+	// use the stored cid to scan through the blockstore
+	// clear the cid after
+	store := n.p.txn.DAGstore()
+	block, err := store.Get(*n.cid)
+	if err != nil { // handle error?
+		return false, err
+	}
+	n.block = block
+	n.cid = nil // clear cid for next round
 	return true, nil
 }
 
@@ -155,23 +181,12 @@ func (n *dagScanNode) Next() (bool, error) {
 // }
 
 func (n *dagScanNode) Values() map[string]interface{} {
-	// use the stored cid to scan through the blockstore
-	// clear the cid after
-	store := n.p.txn.DAGstore()
-	block, err := store.Get(*n.cid)
-	if err != nil { // handle error?
-		return map[string]interface{}{
-			"error": err.Error(),
-		}
-	}
-
-	doc, err := dagNodeToCommitMap(block)
-	if err != nil { // handle error?
-		return map[string]interface{}{
-			"error": err.Error(),
-		}
-	}
-	n.cid = nil // clear cid for next round
+	doc, _ := dagNodeToCommitMap(n.block)
+	// if err != nil { // handle error?
+	// 	return map[string]interface{}{
+	// 		"error": err.Error(),
+	// 	}
+	// }
 	return doc
 }
 

@@ -106,6 +106,9 @@ func (n *typeIndexJoin) Close() {
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
+// Merge implements mergeNode
+func (n *typeIndexJoin) Merge() bool { return true }
+
 // split the provided filter
 // into the root and subType components.
 // Eg. (filter: {age: 10, name: "bob", author: {birthday: "June 26, 1990", ...}, ...})
