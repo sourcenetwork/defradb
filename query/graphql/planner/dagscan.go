@@ -1,6 +1,7 @@
 package planner
 
 import (
+	"strings"
 	// "errors"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -42,6 +43,7 @@ func (h *headsetScanNode) initScan() error {
 		h.spans = append(h.spans, core.NewSpan(h.key, h.key.PrefixEnd()))
 	}
 
+	// fmt.Println("startin fetcher with spans:", h.spans[0].Start())
 	err := h.fetcher.Start(h.p.txn, h.spans)
 	if err != nil {
 		return err
@@ -86,8 +88,9 @@ func (p *Planner) HeadScan() *headsetScanNode {
 type dagScanNode struct {
 	p *Planner
 
-	key *core.Key
-	cid *cid.Cid
+	key   *core.Key
+	cid   *cid.Cid
+	field string
 
 	depthLimit int
 	headset    *headsetScanNode
@@ -128,6 +131,11 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	// if we have a headset, pass along
 	// otherwise, try to parse as a CID
 	if n.headset != nil {
+		// make sure we have the correct field suffix
+		span := spans[0].Start()
+		if !strings.HasSuffix(span.String(), n.field) {
+			spans[0] = core.NewSpan(core.Key{span.ChildString(n.field)}, core.NewKey(""))
+		}
 		n.headset.Spans(spans)
 	} else {
 		data := spans[0].Start().String()

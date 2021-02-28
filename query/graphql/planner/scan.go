@@ -110,6 +110,9 @@ func (n *scanNode) Close() {}
 
 func (n *scanNode) Source() planNode { return nil }
 
+// Merge implements mergeNode
+func (n *scanNode) Merge() bool { return true }
+
 func (p *Planner) Scan() *scanNode {
 	return &scanNode{p: p}
 }

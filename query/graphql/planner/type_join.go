@@ -2,6 +2,7 @@ package planner
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -63,7 +64,8 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("Unknown field on sub selection")
+		// return nil, errors.New("Unknown field on sub selection")
+		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
 	}
 
 	meta := typeFieldDesc.Meta

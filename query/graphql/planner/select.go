@@ -216,7 +216,22 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 			// @todo: check select type:
 			// - TypeJoin
 			// - commitScan
-			if subtype.Root == parser.ObjectSelection {
+			if subtype.Name == "_version" { // reserved sub type for object queries
+				commitSlct := &parser.CommitSelect{
+					Name:   subtype.Name,
+					Alias:  subtype.Alias,
+					Type:   parser.LatestCommits,
+					Fields: subtype.Fields,
+				}
+				commitPlan, err := n.p.CommitSelect(commitSlct)
+				if err != nil {
+					return err
+				}
+
+				if err := n.addSubPlan(field.GetName(), commitPlan); err != nil {
+					return err
+				}
+			} else if subtype.Root == parser.ObjectSelection {
 				typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
 				if err != nil {
 					return err

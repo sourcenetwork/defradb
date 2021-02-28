@@ -6,6 +6,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	gql "github.com/graphql-go/graphql"
 )
@@ -95,7 +96,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 		}
 		// and schema fields
 		for fname, field := range t.Fields() {
-			if fname == "_key" {
+			if _, ok := parser.ReservedFields[fname]; ok {
 				continue
 			}
 

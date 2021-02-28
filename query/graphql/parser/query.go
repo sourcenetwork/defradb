@@ -13,12 +13,22 @@ const (
 	NoneSelection = iota
 	ObjectSelection
 	CommitSelection
+
+	VersionFieldName = "_version"
+	GroupFieldName   = "_group"
+	DocKeyFieldName  = "_key"
 )
 
 var dbAPIQueryNames = map[string]bool{
 	"latestCommits": true,
 	"allCommits":    true,
 	"commit":        true,
+}
+
+var ReservedFields = map[string]bool{
+	VersionFieldName: true,
+	GroupFieldName:   true,
+	DocKeyFieldName:  true,
 }
 
 type Query struct {
@@ -332,7 +342,12 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 				f := parseField(root, node)
 				selections[i] = f
 			} else { // sub type with extra fields
-				s, err := parseSelect(root, node)
+				subroot := root
+				switch node.Name.Value {
+				case "_version":
+					subroot = CommitSelection
+				}
+				s, err := parseSelect(subroot, node)
 				if err != nil {
 					return nil, err
 				}
