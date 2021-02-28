@@ -125,14 +125,22 @@ func (p *parallelNode) Close() {
 // It only needs a single child plan to return true for it
 // to return true. Same with errors.
 func (p *parallelNode) Next() (bool, error) {
+	p.doc = make(map[string]interface{})
 	var orNext bool
-	for _, plan := range p.children {
-		next, err := plan.Next()
+	for i, plan := range p.children {
+		var next bool
+		var err error
+		// isMerge := false
+		switch n := plan.(type) {
+		case mergeNode:
+			// isMerge = true
+			next, err = p.nextMerge(i, n)
+		case appendNode:
+			next, err = p.nextAppend(i, n)
+		}
 		if err != nil {
 			return false, err
 		}
-
-		// logical OR all the next results together
 		orNext = orNext || next
 	}
 	// if none of the children return true for next, then this will be false.
@@ -140,15 +148,61 @@ func (p *parallelNode) Next() (bool, error) {
 	return orNext, nil
 }
 
-func (p *parallelNode) Values() map[string]interface{} {
-	var result map[string]interface{}
-	for _, plan := range p.children {
-		if doc := plan.Values(); doc != nil {
-			result = doc
-		}
+func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
+	if next, err := plan.Next(); !next {
+		return false, err
 	}
 
-	return result
+	doc := plan.Values()
+	for k, v := range doc {
+		p.doc[k] = v
+	}
+	return true, nil
+}
+
+func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
+	if key, ok := p.doc["_key"].(string); ok {
+		// pass the doc key as a reference through the spans interface
+		spans := core.Spans{core.NewSpan(core.NewKey(key), core.Key{})}
+		plan.Spans(spans)
+		plan.Init()
+	} else {
+		return false, nil
+	}
+
+	results := make([]map[string]interface{}, 0)
+	for {
+		next, err := plan.Next()
+		if err != nil {
+			return false, err
+		}
+
+		if !next {
+			break
+		}
+
+		results = append(results, plan.Values())
+	}
+	p.doc[p.childFields[index]] = results
+	return true, nil
+}
+
+func (p *parallelNode) Values() map[string]interface{} {
+	// result := make(map[string]interface{})
+	// for i, plan := range p.children {
+	// 	if doc := plan.Values(); doc != nil {
+	// 		switch plan.(type) {
+	// 		case mergeNode:
+	// 			for k, v := range doc {
+	// 				p.result[k] = v
+	// 			}
+	// 		case appendNode:
+	// 			p.result[p.childFields[i]] = doc
+	// 		}
+	// 	}
+	// }
+
+	return p.doc
 }
 
 func (p *parallelNode) Source() planNode { return p.multiscan }
@@ -332,13 +386,14 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		case mergeNode:
 			s.source = plan
 		case appendNode:
-			m := parallelNode{p: s.p}
+			m := &parallelNode{p: s.p, doc: make(map[string]interface{})}
 			if err := m.AddChild("", src); err != nil {
 				return err
 			}
 			if err := m.AddChild(field, plan); err != nil {
 				return err
 			}
+			s.source = m
 		default:
 			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
@@ -355,6 +410,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		multinode := &parallelNode{
 			p:         s.p,
 			multiscan: multiscan,
+			doc:       make(map[string]interface{}),
 		}
 		// replace our current source internal scanNode with our new multiscanner
 		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {

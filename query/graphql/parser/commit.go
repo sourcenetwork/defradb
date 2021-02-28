@@ -70,6 +70,7 @@ func (c CommitSelect) ToSelect() *Select {
 		OrderBy:   c.OrderBy,
 		Statement: c.Statement,
 		Fields:    c.Fields,
+		Root:      CommitSelection,
 	}
 }
 

@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
-	"github.com/graphql-go/graphql/language/parser"
+	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 )
 
@@ -49,7 +51,7 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(schema),
 	})
-	doc, err := parser.Parse(parser.ParseParams{
+	doc, err := gqlp.Parse(gqlp.ParseParams{
 		Source: source,
 	})
 	if err != nil {
@@ -131,6 +133,10 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
+		// ignore reserved fields
+		if _, ok := parser.ReservedFields[f]; ok {
+			continue
+		}
 		switch t := def.Type.(type) {
 		case *gql.Object:
 			if _, complete := g.expandedTypes[obj.Name()]; complete {
@@ -290,6 +296,11 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 
 					fType.Type = ttype
 					fields[fType.Name] = fType
+				}
+
+				// add _version field
+				fields["_version"] = &gql.Field{
+					Type: gql.NewList(types.Commit),
 				}
 
 				return fields

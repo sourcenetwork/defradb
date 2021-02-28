@@ -1,7 +1,11 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
+
+	gql "github.com/graphql-go/graphql"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
@@ -20,6 +24,15 @@ func (db *DB) LoadSchema(schema string) error {
 		// fmt.Println(desc)
 		if _, err := db.CreateCollection(desc); err != nil {
 			return err
+		}
+	}
+
+	user := db.schema.Schema().Type("users")
+	if user != nil {
+		if user.Error() != nil {
+			fmt.Println("User type error:", user.Error())
+		} else {
+			fmt.Println("User Type:", user, "fields:", user.(*gql.Object).Fields())
 		}
 	}
 	return nil

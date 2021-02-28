@@ -158,6 +158,8 @@ func (p *Planner) expandPlan(plan planNode) error {
 	switch n := plan.(type) {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n)
+	case *commitSelectTopNode:
+		return p.expandPlan(n.plan)
 	case *selectNode:
 		return p.expandPlan(n.source)
 	case *typeIndexJoin:
