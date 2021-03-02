@@ -15,6 +15,9 @@ https://docs.google.com/document/d/10_7DiLFOOyTXBSM2wSsQxmcT9f1h44GBS3KIPDHs8n4/
 [https://hackmd.io/ZEwh3O15QN2u4p0cVoGbxw](https://hackmd.io/ZEwh3O15QN2u4p0cVoGbxw) (Private)
 
 ## Licensing
+Current DefraDB code is released under a combination of two licenses, the [Business Source License (BSL)](licenses/BSL.txt) and the [DefraDB Community License (DCL)](licenses/DCL.txt).
+
+When contributing to a DefraDB feature, you can find the relevant license in the comments at the top of each file.
 
 ## Contributors
 - John-Alan Simmons ([@jsimnz](https://github.com/jsimnz))
