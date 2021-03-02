@@ -28,14 +28,14 @@ type MerkleCRDT interface {
 // type MerkleCRDTFactory func(store core.DSReaderWriter, namespace ds.Key) MerkleCRDTInitFn
 
 // Type indicates MerkleCRDT type
-type Type byte
+// type Type byte
 
-const (
-	//no lint
-	none = Type(iota) // reserved none type
-	LWW_REGISTER
-	OBJECT
-)
+// const (
+// 	//no lint
+// 	none = Type(iota) // reserved none type
+// 	LWW_REGISTER
+// 	OBJECT
+// )
 
 var (
 	// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
