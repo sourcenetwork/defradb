@@ -1,0 +1,13 @@
+
+type book @version("bafzbeigai3eoy2ccc7ybwjfz5r3rdxqrinwi4rwytly24tdbh6yk7zslrm") {
+    name: String
+    rating: Float
+    author: author
+}
+
+type author @version(bafqqeigai3jddheioskwjf1hda09uinwi4rwytly24tdbh8djk1loo) {
+    name: String
+    age: Int
+    verified: Boolean
+    published: [book]
+}

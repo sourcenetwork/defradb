@@ -1,0 +1,114 @@
+# This is the root schema for DefraDB GraphQL Query Language.
+# It is augmented by the auto-generated developer defined types.
+
+# Order by input options
+enum Ordering {
+    ASC
+    DESC
+}
+
+# Value Operators
+enum ValueOperatorInput {
+    _eq     # Equal to
+    _neq    # Not equal to
+    _gt     # Greater than
+    _gte    # Greater than or equal to
+    _lt     # Less than
+    _lte    # Less than or equal to
+    _in     # In the list
+    _nin    # Non in the list
+    _like   # sub string like
+}
+
+# Generic definition for all query input options
+# Will be extended from to implement developer defined types
+input GenericQueryInput {
+    filter: GenericFilterArg
+    groupBy: [GenericGroupByArg]
+    having: GenericHavingArg
+    order: GenericOrderArg
+    limit: GenericLimitArg
+    offset: GenericOffsetArg
+    cursor: GenericCursorArg
+}
+
+# Conditional operators
+interface ConditionalBlockInterface {
+    _or: [ConditionalBlock!]
+    _and: [ConditionalBlock!]
+    _not: ConditionalBlock
+}
+
+# Filter arguments
+type GenericFilterArg {
+    _or: [GenericFilterBlock!]
+    _and: [GenericFilterBlock!]
+    _not: GenericFilterBlock
+}
+
+# Custom Scalars
+scalar Binary # Binary blobs
+scalar DateTime # Formatted DateTime value RFC (TODO)
+
+# All Scalar filter operator blocks
+
+# String
+input StringOperatorBlock {
+    _eq: String
+    _neq: String
+    _like: String
+    _in: [String!]
+    _nin: [String!]
+}
+
+# Int
+input IntOperatorBlock {
+    _eq: Int
+    _neq: Int
+    _gt: Int
+    _gte: Int
+    _lt: Int
+    _lte: Int
+    _in: [Int!]
+    _nin: [Int!]
+}
+
+#Float
+input FloatOperatorBlock {
+    _eq: Float
+    _neq: Float
+    _gt: Float
+    _gte: Float
+    _lt: Float
+    _lte: Float
+    _in: [Float!]
+    _nin: [Float!]
+}
+
+# Boolean
+input BooleanOperatorBlock {
+    _eq: Boolean
+    _neq: Boolean
+    _like: Boolean
+    _in: [Boolean!]
+    _nin: [Boolean!]
+}
+
+# Binary blob
+input BinaryOperatorBlock {
+    _eq: Binary
+    _neq: Binary
+}
+
+# DateTime
+input DateTimeOperatorBlock {
+    _eq: DateTime
+    _neq: DateTime
+    _gt: DateTime
+    _gte: DateTime
+    _lt: DateTime
+    _lte: DateTime
+    _in: [DateTime!]
+    _nin: [DateTime!]
+}
+
