@@ -12,8 +12,13 @@ import (
 type queryTestCase struct {
 	description string
 	query       string
-	docs        map[int][]string
-	results     []map[string]interface{}
+	// docs is a map from Collection Index, to a list
+	// of docs in stringified JSON format
+	docs map[int][]string
+	// updates is a map from document index, to a list
+	// of changes in strinigied JSON format
+	updates map[int][]string
+	results []map[string]interface{}
 }
 
 func TestQuerySimple(t *testing.T) {
@@ -1540,10 +1545,22 @@ func TestQueryRelationMany(t *testing.T) {
 func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, test queryTestCase) {
 	// insert docs
 	for cid, docs := range test.docs {
-		for _, docStr := range docs {
+		for i, docStr := range docs {
 			doc, err := document.NewFromJSON([]byte(docStr))
 			assert.NoError(t, err, test.description)
-			collections[cid].Save(doc)
+			err = collections[cid].Save(doc)
+			assert.NoError(t, err, test.description)
+
+			// check for updates
+			updates, ok := test.updates[i]
+			if ok {
+				for _, u := range updates {
+					err = doc.SetWithJSON([]byte(u))
+					assert.NoError(t, err, test.description)
+					err = collections[cid].Save(doc)
+					assert.NoError(t, err, test.description)
+				}
+			}
 		}
 	}
 
@@ -2100,6 +2117,127 @@ func TestQueryLatestCommits(t *testing.T) {
 
 }
 
+func TestQueryAllCommitsSingleDAG(t *testing.T) {
+	var userCollectionGQLSchema = (`
+	type users {
+		Name: String
+		Age: Int
+		Verified: Boolean
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "Simple latest commits query",
+			query: `query {
+						allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							links {
+								cid
+								name
+							}
+						}
+					}`,
+			docs: map[int][]string{
+				0: []string{
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"cid": "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+					"links": []map[string]interface{}{
+						{
+							"cid":  "QmPaY2DNmd7LtRDpReswc5UTGoU5Q32Py1aEVG7Shq6Np1",
+							"name": "Age",
+						},
+						{
+							"cid":  "Qmag2zKKGGQwVSss9pQn3hjTu9opdF5mkJXUR9rt2A651h",
+							"name": "Name",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		err = db.LoadSchema(userCollectionGQLSchema)
+		assert.NoError(t, err)
+
+		// desc := newTestQueryCollectionDescription1()
+		col, err := db.GetCollection("users")
+		assert.NoError(t, err)
+
+		runQueryTestCase(t, db, []client.Collection{col}, test)
+	}
+
+}
+
+func TestQueryAllCommitsMultipleDAG(t *testing.T) {
+	var userCollectionGQLSchema = (`
+	type users {
+		Name: String
+		Age: Int
+		Verified: Boolean
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "Simple latest commits query",
+			query: `query {
+						allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							height
+						}
+					}`,
+			docs: map[int][]string{
+				0: []string{
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			updates: map[int][]string{
+				0: []string{
+					(`{"Age": 22}`), // update to change age to 22 on document 0
+				},
+			},
+			results: []map[string]interface{}{
+				{
+					"cid":    "QmQQgYgC3PLFCTwsSgMHHFvFbPEeWDKkbsnvYJwuLP3R8t",
+					"height": int64(2),
+				},
+				{
+					"cid":    "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+					"height": int64(1),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		err = db.LoadSchema(userCollectionGQLSchema)
+		assert.NoError(t, err)
+
+		// desc := newTestQueryCollectionDescription1()
+		col, err := db.GetCollection("users")
+		assert.NoError(t, err)
+
+		runQueryTestCase(t, db, []client.Collection{col}, test)
+	}
+
+}
+
 func TestQueryEmbeddedLatestCommit(t *testing.T) {
 	var userCollectionGQLSchema = (`
 	type users {
@@ -2151,6 +2289,59 @@ func TestQueryEmbeddedLatestCommit(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		db, err := newMemoryDB()
+		assert.NoError(t, err)
+
+		err = db.LoadSchema(userCollectionGQLSchema)
+		assert.NoError(t, err)
+
+		// desc := newTestQueryCollectionDescription1()
+		col, err := db.GetCollection("users")
+		assert.NoError(t, err)
+
+		runQueryTestCase(t, db, []client.Collection{col}, test)
+	}
+
+}
+
+func TestQueryOneCommit(t *testing.T) {
+	var userCollectionGQLSchema = (`
+	type users {
+		Name: String
+		Age: Int
+		Verified: Boolean
+	}
+	`)
+
+	tests := []queryTestCase{
+		{
+			description: "query for a single block by CID",
+			query: `query {
+						commit(cid: "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV") {
+							cid
+							height
+							delta
+						}
+					}`,
+			docs: map[int][]string{
+				0: []string{
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"cid":    "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+					"height": int64(1),
+					// cbor encoded delta
+					"delta": []uint8{0xa2, 0x63, 0x41, 0x67, 0x65, 0x15, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x64, 0x4a, 0x6f, 0x68, 0x6e},
 				},
 			},
 		},

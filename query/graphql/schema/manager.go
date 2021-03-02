@@ -70,9 +70,9 @@ func defaultQueryType() *gql.Object {
 			},
 
 			// database API queries
-			// "test": queryAllCommits,
+			queryAllCommits.Name:    queryAllCommits,
 			queryLatestCommits.Name: queryLatestCommits,
-			// queryCommit.Name:        queryCommit,
+			queryCommit.Name:        queryCommit,
 		},
 	})
 }

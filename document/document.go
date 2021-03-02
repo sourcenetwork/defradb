@@ -193,6 +193,31 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 	return v, nil
 }
 
+// SetWithJSON sets all the fields of a document using the provided
+// JSON Merge Patch object. Note: fields indicated as nil in the Merge
+// Patch are to be deleted
+// @todo: Handle sub documents for SetWithJSON
+func (doc *Document) SetWithJSON(patch []byte) error {
+	var patchObj map[string]interface{}
+	err := json.Unmarshal(patch, &patchObj)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range patchObj {
+		fmt.Println(k, v)
+		if v == nil { // needs deletion
+			err = doc.Delete(k)
+		} else {
+			err = doc.Set(k, v)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Set the value of a field
 func (doc *Document) Set(field string, value interface{}) error {
 	return doc.setAndParseType(field, value)

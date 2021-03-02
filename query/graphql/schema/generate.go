@@ -498,8 +498,10 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// generate basic filter operator blocks
 		// @todo: Extract object field loop into its own utility func
-		for _, field := range obj.Fields() {
-
+		for f, field := range obj.Fields() {
+			if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				continue
+			}
 			// scalars (leafs)
 			if gql.IsLeafType(field.Type) { // only Scalars, and enums
 				fields[field.Name] = &gql.InputObjectFieldConfig{
@@ -589,7 +591,10 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
 		fields := gql.InputObjectConfigFieldMap{}
 
-		for _, field := range obj.Fields() {
+		for f, field := range obj.Fields() {
+			if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				continue
+			}
 			if gql.IsLeafType(field.Type) { // only Scalars, and enums
 				fields[field.Name] = &gql.InputObjectFieldConfig{
 					Type: g.manager.schema.TypeMap()["Ordering"],
