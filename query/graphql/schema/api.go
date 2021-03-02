@@ -27,6 +27,6 @@ var queryCommit = &gql.Field{
 	Name: "commit",
 	Type: types.Commit,
 	Args: gql.FieldConfigArgument{
-		"cid": newArgConfig(gql.ID),
+		"cid": newArgConfig(gql.NewNonNull(gql.ID)),
 	},
 }

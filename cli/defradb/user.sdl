@@ -1,4 +1,4 @@
-type user @version("asdadjh:jdhfkljhglkzhjlhzfjdgzhjgldfhjg") {
+type user {
 	name: String 
 	age: Int 
 	verified: Boolean 

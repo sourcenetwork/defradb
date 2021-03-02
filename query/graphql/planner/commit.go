@@ -1,6 +1,11 @@
 package planner
 
 import (
+	"errors"
+	"fmt"
+	"math"
+
+	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -61,6 +66,12 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	switch parsed.Type {
 	case parser.LatestCommits:
 		commit, err = p.commitSelectLatest(parsed)
+	case parser.OneCommit:
+		commit, err = p.commitSelectBlock(parsed)
+	case parser.AllCommits:
+		commit, err = p.commitSelectAll(parsed)
+	default:
+		return nil, errors.New("Invalid CommitSelect type")
 	}
 	if err != nil {
 		return nil, err
@@ -94,6 +105,49 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 		headset.key = key
 	}
 	dag.headset = headset
+	// dag.depthLimit = 1
+	// dag.key = &key
+	commit := &commitSelectNode{
+		p:             p,
+		source:        dag,
+		subRenderInfo: make(map[string]renderInfo),
+	}
+
+	return commit, nil
+}
+
+func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectNode, error) {
+	dag := p.DAGScan()
+	if parsed.Cid != "" {
+		c, err := cid.Decode(parsed.Cid)
+		if err != nil {
+			return nil, err
+		}
+		dag.cid = &c
+		fmt.Println("got cid:", c)
+	}
+
+	return &commitSelectNode{
+		p:             p,
+		source:        dag,
+		subRenderInfo: make(map[string]renderInfo),
+	}, nil
+}
+
+func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNode, error) {
+	dag := p.DAGScan()
+	headset := p.HeadScan()
+	// @todo: Get Collection field ID
+	if parsed.FieldName == "" {
+		parsed.FieldName = "C" // C for composite DAG
+	}
+	dag.field = parsed.FieldName
+	if parsed.DocKey != "" {
+		key := core.NewKey(parsed.DocKey + "/" + parsed.FieldName)
+		headset.key = key
+	}
+	dag.headset = headset
+	dag.depthLimit = math.MaxUint32 // inifinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:             p,

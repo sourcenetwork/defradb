@@ -1,7 +1,9 @@
 package planner
 
 import (
+	"container/list"
 	"strings"
+
 	// "errors"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -10,6 +12,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/pkg/errors"
 )
@@ -92,17 +95,32 @@ type dagScanNode struct {
 	cid   *cid.Cid
 	field string
 
-	depthLimit int
-	headset    *headsetScanNode
+	// used for tracking traversal
+	// note: depthLimit of 0 or 1 are equivalent
+	// since the depth check is done after the
+	// block scan.
+	// If we need an infinite depth, use math.MaxUint32
+	depthLimit   uint32
+	depthVisited uint32
+	visitedNodes map[string]bool
+
+	queuedCids *list.List
+
+	headset *headsetScanNode
 
 	// previousScanNode planNode
 	// linksScanNode    planNode
 
-	block blocks.Block
+	// block blocks.Block
+	doc map[string]interface{}
 }
 
 func (p *Planner) DAGScan() *dagScanNode {
-	return &dagScanNode{p: p}
+	return &dagScanNode{
+		p:            p,
+		visitedNodes: make(map[string]bool),
+		queuedCids:   list.New(),
+	}
 }
 
 func (n *dagScanNode) Init() error {
@@ -156,10 +174,17 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 
 func (n *dagScanNode) Next() (bool, error) {
 	// find target cid either through headset or direct cid.
-	if n.cid == nil {
-		if n.headset == nil {
-			return false, errors.New("DAG Scan node has no target, missing key, cid, or headset scan node")
+	// if n.cid == nil {
+
+	if n.queuedCids.Len() > 0 {
+		c := n.queuedCids.Front()
+		cid, ok := c.Value.(cid.Cid)
+		if !ok {
+			return false, errors.New("Queued value in DAGScan isn't a CID")
 		}
+		n.queuedCids.Remove(c)
+		n.cid = &cid
+	} else if n.headset != nil {
 		if next, err := n.headset.Next(); !next {
 			return false, err
 		}
@@ -170,6 +195,22 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, errors.New("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
+
+	} else if n.cid == nil {
+		// add this final elseif case in case another function
+		// manually sets the CID. Should prob migrate any remote CID
+		// updates to use the queuedCids.
+		return false, nil // no queued cids and no headset available
+	}
+
+	// skip already visited CIDs
+	// we only need to call Next() again
+	// as it will reset and scan through the headset/queue
+	// and eventually return a value, or false if we've
+	// visited everything
+	if _, ok := n.visitedNodes[n.cid.String()]; ok {
+		n.cid = nil
+		return n.Next()
 	}
 
 	// use the stored cid to scan through the blockstore
@@ -179,7 +220,30 @@ func (n *dagScanNode) Next() (bool, error) {
 	if err != nil { // handle error?
 		return false, err
 	}
-	n.block = block
+	var heads []*ipld.Link
+	n.doc, heads, err = dagBlockToNodeMap(block)
+	if err != nil {
+		return false, err
+	}
+
+	// the dagscan node can traverse into the merkle dag
+	// based on the specified depth limit.
+	// The default query 'latestCommit' only cares about
+	// the current latest heads, so it has a depth limit
+	// of 1. The query 'allCommits' doesn't have a depth
+	// limit, so it will continue to traverse the graph
+	// until there are no more links, and no more explored
+	// HEAD paths.
+	n.depthVisited++
+	n.visitedNodes[n.cid.String()] = true // mark the current node as "visited"
+	if n.depthVisited < n.depthLimit {
+		// look for HEAD links
+		for _, h := range heads {
+			// queue our found heads
+			n.queuedCids.PushFront(h.Cid)
+		}
+
+	}
 	n.cid = nil // clear cid for next round
 	return true, nil
 }
@@ -189,13 +253,7 @@ func (n *dagScanNode) Next() (bool, error) {
 // }
 
 func (n *dagScanNode) Values() map[string]interface{} {
-	doc, _ := dagNodeToCommitMap(n.block)
-	// if err != nil { // handle error?
-	// 	return map[string]interface{}{
-	// 		"error": err.Error(),
-	// 	}
-	// }
-	return doc
+	return n.doc
 }
 
 /*
@@ -213,7 +271,7 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func dagNodeToCommitMap(block blocks.Block) (map[string]interface{}, error) {
+func dagBlockToNodeMap(block blocks.Block) (map[string]interface{}, []*ipld.Link, error) {
 	commit := map[string]interface{}{
 		"cid": block.Cid().String(),
 	}
@@ -221,21 +279,24 @@ func dagNodeToCommitMap(block blocks.Block) (map[string]interface{}, error) {
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	// @todo: Wrap delta unmarshaling into a proper typed interface.
 	var delta map[string]interface{}
 	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return nil, errors.New("Commit Delta missing priority key")
+		return nil, nil, errors.New("Commit Delta missing priority key")
 	}
 
 	commit["height"] = int64(prio)
 	commit["delta"] = delta["Data"] // check
+
+	heads := make([]*ipld.Link, 0)
 
 	// links
 	links := make([]map[string]interface{}, len(nd.Links()))
@@ -245,7 +306,11 @@ func dagNodeToCommitMap(block blocks.Block) (map[string]interface{}, error) {
 			"cid":  l.Cid.String(),
 		}
 		links[i] = link
+
+		if l.Name == "_head" {
+			heads = append(heads, l)
+		}
 	}
 	commit["links"] = links
-	return commit, nil
+	return commit, heads, nil
 }
