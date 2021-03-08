@@ -323,7 +323,7 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	sm, err := NewSchemaManager()
 	assert.NoError(t, err, testcase.description)
 
-	types, err := sm.Generator.FromSDL(testcase.sdl)
+	types, _, err := sm.Generator.FromSDL(testcase.sdl)
 	assert.NoError(t, err, testcase.description)
 
 	assert.Len(t, types, len(testcase.targetDescs), testcase.description)

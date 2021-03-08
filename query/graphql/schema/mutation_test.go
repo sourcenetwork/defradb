@@ -19,7 +19,7 @@ func TestSimleTypeMutation(t *testing.T) {
 
 	sm, err := NewSchemaManager()
 	assert.NoError(t, err)
-	_, err = sm.Generator.FromSDL(sdl)
+	_, _, err = sm.Generator.FromSDL(sdl)
 	assert.NoError(t, err)
 
 	mutationType := sm.schema.MutationType()

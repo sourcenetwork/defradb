@@ -46,7 +46,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 
 // FromSDL generates the query type definitions from a
 // encoded GraphQL Schema Definition Lanaguage string
-func (g *Generator) FromSDL(schema string) ([]*gql.Object, error) {
+func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error) {
 	// parse to AST
 	source := source.NewSource(&source.Source{
 		Body: []byte(schema),
@@ -55,17 +55,19 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, error) {
 		Source: source,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// generate from AST
-	return g.FromAST(doc)
+	types, err := g.FromAST(doc)
+	return types, doc, err
 }
 
 // FromAST generates the query type definitions from a
 // parsed GraphQL Schema Definition Language AST document
 func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 	// build base types
-	if err := g.buildTypesFromAST(document); err != nil {
+	defs, err := g.buildTypesFromAST(document)
+	if err != nil {
 		return nil, err
 	}
 	// resolve types
@@ -127,7 +129,7 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
-	return g.typeDefs, nil
+	return defs, nil
 }
 
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
@@ -228,12 +230,19 @@ func (g *Generator) createExpandedFieldList(f *gql.FieldDefinition, t *gql.Objec
 
 // Given a parsed AST of  developer defined types
 // extract and return the correct gql.Object type(s)
-func (g *Generator) buildTypesFromAST(document *ast.Document) error {
+func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
+	objs := make([]*gql.Object, 0)
+
 	for _, def := range document.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
+			// check if type exists
+			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
+				return nil, fmt.Errorf("Schema type already exists: %s", defType.Name.Value)
+			}
+
 			objconf := gql.ObjectConfig{}
 			// otype.astDef = defType // keep a reference
 			if defType.Name != nil {
@@ -309,13 +318,17 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) error {
 			objconf.Fields = fieldsThunk
 
 			obj := gql.NewObject(objconf)
-			g.manager.schema.TypeMap()[obj.Name()] = obj
-			g.typeDefs = append(g.typeDefs, obj)
-			// s.types = append(s.types, obj)
+			objs = append(objs, obj)
 		}
 	}
 
-	return nil
+	// add all the new types now that they're converted to gql.Objects
+	for _, obj := range objs {
+		g.manager.schema.TypeMap()[obj.Name()] = obj
+		g.typeDefs = append(g.typeDefs, obj)
+	}
+
+	return objs, nil
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
