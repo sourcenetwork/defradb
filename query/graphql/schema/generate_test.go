@@ -358,7 +358,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 	// // assert.NoError(t, err, "Failed to parse schema string")
 
 	// err = g.buildTypesFromAST(doc)
-	_, err := g.FromSDL(schema)
+	_, _, err := g.FromSDL(schema)
 	if err != nil {
 		return errors.Wrap(err, "Failed to build types from AST")
 	}

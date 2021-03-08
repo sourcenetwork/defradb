@@ -24,9 +24,10 @@ var schemaCmd = &cobra.Command{
 	Use:   "schema",
 	Short: "Interact with the schema system of a running DefraDB instance",
 	Long: `Make changes, updates, migrations, or look for existing schema types
-to a DefraDB instance
+to a DefraDB 
+
 Example Usage:
-	> defradb client schema add -f user.sdl`,
+> defradb client schema add -f user.sdl`,
 }
 
 func init() {
