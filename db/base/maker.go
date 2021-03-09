@@ -16,6 +16,7 @@ var (
 var (
 	collectionSeqKey = "collection"
 	collectionNs     = ds.NewKey("/collection")
+	schemaNs         = ds.NewKey("/schema")
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
@@ -34,4 +35,10 @@ func MakeIndexKey(col *CollectionDescription, index *IndexDescription, key core.
 // it assumes the name of the collection is non-empty.
 func MakeCollectionSystemKey(name string) core.Key {
 	return core.Key{collectionNs.ChildString(name)}
+}
+
+// MakeSchemaSystemKey returns a formatted schema key for the system data store.
+// it assumes the name of the schema is non-empty.
+func MakeSchemaSystemKey(name string) core.Key {
+	return core.Key{schemaNs.ChildString(name)}
 }

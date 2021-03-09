@@ -18,7 +18,7 @@ type DB interface {
 	GetCollection(string) (Collection, error)
 	ExecQuery(string) *QueryResult
 	SchemaManager() *schema.SchemaManager
-	LoadSchema(string) error
+	AddSchema(string) error
 	PrintDump()
 	GetBlock(c cid.Cid) (blocks.Block, error)
 }
