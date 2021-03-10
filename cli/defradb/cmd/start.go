@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"os/signal"
 
 	"github.com/sourcenetwork/defradb/db"
 
@@ -12,20 +13,38 @@ import (
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a DefraDB server ",
-	Long: `Start a new instance of the DefraDB:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Start a new instance of DefraDB server:`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Starting DefraDB process...")
+
+		// setup signal handlers
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, os.Interrupt)
+
 		db, err := db.NewDB(&config.Database)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)
 		}
+		if err := db.Start(); err != nil {
+			log.Error("Failed to start the database: ", err)
+			db.Close()
+			os.Exit(1)
+		}
 
-		db.Listen()
+		// run the server listener in a seperate goroutine
+		go func() {
+			db.Listen()
+		}()
+
+		// capture the interrupt signal, and gracefully exit
+		// @todo: Handle hard interuppt
+		select {
+		case <-signalCh:
+			log.Info("Recieved interrupt; closing db")
+			db.Close()
+			os.Exit(0)
+		}
 	},
 }
 
@@ -40,5 +59,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// startCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	startCmd.Flags().String("store", "badger", "Specify the data store to use (supported: badger, memory)")
+
 }
