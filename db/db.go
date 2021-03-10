@@ -102,7 +102,7 @@ func NewDB(options *Options) (*DB, error) {
 		return nil, ErrOptionsEmpty
 	}
 	if options.Store == "badger" {
-		log.Info("opening badger store:", options.Badger.Path)
+		log.Info("opening badger store: ", options.Badger.Path)
 		rootstore, err = badgerds.NewDatastore(options.Badger.Path, options.Badger.Options)
 		if err != nil {
 			return nil, err
@@ -156,10 +156,12 @@ func NewDB(options *Options) (*DB, error) {
 		options: options,
 	}
 
-	log.Info("Initializing db...")
-	err = db.Initialize()
-	log.Info("Succesfully complete db startup routine")
 	return db, err
+}
+
+// Start runs all the inital sub-routines and initialization steps.
+func (db *DB) Start() error {
+	return db.Initialize()
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -168,22 +170,25 @@ func (db *DB) Initialize() error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	if db.initialized { // skip
+	// if its already initialized, just load the schema and we're done
+	if db.initialized {
 		return nil
 	}
 
-	log.Debug("Checking if db has already been initialize...")
+	log.Debug("Checking if db has already been initialized...")
 	exists, err := db.systemstore.Has(ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
+	// if we're loading an existing database, just load the schema
+	// and finish intialization
 	if exists {
 		log.Debug("db has already been initalized, conitnuing.")
-		return nil
+		return db.loadSchema()
 	}
 
 	log.Debug("opened a new db, needs full intialization")
-	//init meta data
+	// init meta data
 	// collection sequence
 	_, err = db.getSequence("collection")
 	if err != nil {
@@ -195,6 +200,7 @@ func (db *DB) Initialize() error {
 		return err
 	}
 
+	db.initialized = true
 	return nil
 }
 
@@ -204,6 +210,19 @@ func (db *DB) printDebugDB() {
 
 func (db *DB) PrintDump() {
 	printStore(db.rootstore)
+}
+
+// Close is called when we are shutting down the database.
+// This is the place for any last minute cleanup or releaseing
+// of resources (IE: Badger instance)
+func (db *DB) Close() {
+	log.Info("Closing DefraDB process...")
+	if db.options.Store == "badger" {
+		if db.rootstore != nil {
+			db.rootstore.Close()
+		}
+	}
+	log.Info("Succesfully closed running process")
 }
 
 func printStore(store core.DSReaderWriter) {
