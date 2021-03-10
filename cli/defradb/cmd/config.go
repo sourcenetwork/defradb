@@ -18,7 +18,7 @@ var (
 	defaultConfig = Config{
 		Database: db.Options{
 			Address: "localhost:9181",
-			Store:   "memory",
+			Store:   "badger",
 			Badger: db.BadgerOptions{
 				Path: "$HOME/.defradb/data",
 			},

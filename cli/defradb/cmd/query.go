@@ -18,13 +18,15 @@ var (
 // queryCmd represents the query command
 var queryCmd = &cobra.Command{
 	Use:   "query",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Send a GraphQL query",
+	Long: `Use this command if you wish to send a formatted GraphQL
+query to the database. It's advised to use a proper GraphQL client
+to interact with the database, the reccomended approach is with a
+local GraphiQL application (https://github.com/graphql/graphiql).
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+To learn more about the DefraDB GraphQL Query Language, you may use
+the additional documenation found at: https://hackmd.io/@source/BksQY6Qfw.
+		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbaddr := viper.GetString("database.address")
 		if dbaddr == "" {

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"strings"
 
@@ -92,21 +91,24 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("test")
 		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-		fmt.Fprintln(os.Stdout, "Loading config file:", viper.ConfigFileUsed())
+		log.Debug("Loading config file:", viper.ConfigFileUsed())
 	} else {
 		os.Mkdir(home+"/.defradb", os.ModePerm)
+		// if err != nil {
+		// 	cobra.CheckErr(err)
+		// }
 		// fmt.Fprintln(os.Stdout, "Generating default config file")
 		defaultConfig.Database.Badger.Path = strings.Replace(defaultConfig.Database.Badger.Path, "$HOME", home, -1)
 		bs, err := yaml.Marshal(defaultConfig)
 		cobra.CheckErr(err)
 
 		viper.ReadConfig(bytes.NewBuffer(bs))
-		viper.WriteConfig()
+		err = viper.WriteConfigAs(home + "/.defradb/" + "config.yaml")
+		cobra.CheckErr(err)
 	}
 
 	viper.BindPFlag("database.address", rootCmd.Flags().Lookup("url"))
-
+	viper.BindPFlag("database.store", startCmd.Flags().Lookup("store"))
 	viper.Unmarshal(&config)
 }
