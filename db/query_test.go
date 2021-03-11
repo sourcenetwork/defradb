@@ -744,7 +744,7 @@ func TestQuerySimple(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
@@ -1053,7 +1053,7 @@ func TestQueryRelationOne(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(bookAuthorGQLSchema)
+		err = db.AddSchema(bookAuthorGQLSchema)
 		assert.NoError(t, err)
 
 		// bookDesc := newTestQueryCollectionDescription2()
@@ -1527,7 +1527,7 @@ func TestQueryRelationMany(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(bookAuthorGQLSchema)
+		err = db.AddSchema(bookAuthorGQLSchema)
 		assert.NoError(t, err)
 
 		// bookDesc := newTestQueryCollectionDescription2()
@@ -1607,7 +1607,7 @@ func TestMutationCreateSimple(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	// exec query
@@ -1650,7 +1650,7 @@ func TestMutationUpdateFilterSimple(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollection("user")
@@ -1706,7 +1706,7 @@ func TestMutationUpdateFilterMultiDocsSingleResult(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollection("user")
@@ -1771,7 +1771,7 @@ func TestMutationUpdateFilterMultiDocsMultiResult(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollection("user")
@@ -1843,7 +1843,7 @@ func TestMutationUpdateByKeyMultiDocsSingleResult(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollection("user")
@@ -1908,7 +1908,7 @@ func TestMutationUpdateByKeysMultiDocsMultiResult(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.LoadSchema(userSchema)
+	err = db.AddSchema(userSchema)
 	assert.NoError(t, err)
 
 	col, err := db.GetCollection("user")
@@ -2036,7 +2036,7 @@ func TestQueryMultiNodeSelectionOne(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(bookAuthorPublisherGQLSchema)
+		err = db.AddSchema(bookAuthorPublisherGQLSchema)
 		assert.NoError(t, err)
 
 		// bookDesc := newTestQueryCollectionDescription2()
@@ -2105,7 +2105,7 @@ func TestQueryLatestCommits(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
@@ -2167,7 +2167,7 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
@@ -2226,7 +2226,7 @@ func TestQueryAllCommitsMultipleDAG(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
@@ -2298,7 +2298,7 @@ func TestQueryEmbeddedLatestCommit(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
@@ -2351,7 +2351,7 @@ func TestQueryOneCommit(t *testing.T) {
 		db, err := newMemoryDB()
 		assert.NoError(t, err)
 
-		err = db.LoadSchema(userCollectionGQLSchema)
+		err = db.AddSchema(userCollectionGQLSchema)
 		assert.NoError(t, err)
 
 		// desc := newTestQueryCollectionDescription1()
