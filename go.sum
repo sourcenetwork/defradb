@@ -379,12 +379,16 @@ github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1
 github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa/go.mod h1:2RVY1rIf+2J2o/IM9+vPq9RzmHDSseB7FoXiSNIUsoU=
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
+github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12 h1:MELz22GoPeecJnBS5RT4i52bNY/wlpvbGW3L4lLuBTU=
+github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12/go.mod h1:IimP/qkAJro1hXbVA8xOMDdkUeWkVw8rF40XrZq5YX0=
 github.com/sourcenetwork/graphql v0.7.10-0.20210207011242-1a9db8859ef5 h1:NZzp71e/SwCx8HQuXlRyuQY6/Q3oJA26tjZ6v6M3gE8=
 github.com/sourcenetwork/graphql v0.7.10-0.20210207011242-1a9db8859ef5/go.mod h1:k6yrAYQaSP59DC5UVxbgxESlmVyojThKdORUqGDGmrI=
 github.com/sourcenetwork/graphql v0.7.10-0.20210209231920-02120df7c0e6 h1:E9+An/g54a02XeejoLQKDBg9wiuUNgLda3LIKnA1nOY=
 github.com/sourcenetwork/graphql v0.7.10-0.20210209231920-02120df7c0e6/go.mod h1:k6yrAYQaSP59DC5UVxbgxESlmVyojThKdORUqGDGmrI=
 github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f h1:X3V90GyuEAPbOU1JaTQvh7zXqDqjq/FFvO9gjiXMcww=
 github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
+github.com/sourcenetwork/graphql v0.7.10-0.20210312090624-3aa34ef0f75a h1:hwyuU5V0j5hkg0R0w74SJP86xSQbO9vvvguHg6bxHJE=
+github.com/sourcenetwork/graphql v0.7.10-0.20210312090624-3aa34ef0f75a/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
 github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a/go.mod h1:7AyxJNCJ7SBZ1MfVQCWD6Uqo2oubI2Eq2y2eqf+A5r0=
 github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572/go.mod h1:w0SWMsp6j9O/dk4/ZpIhL+3CkG8ofA2vuv7k+ltqUMc=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=

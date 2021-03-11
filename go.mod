@@ -44,9 +44,9 @@ require (
 )
 
 replace (
-	github.com/SierraSoftworks/connor => ../connor // local replace
+	github.com/SierraSoftworks/connor => github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12
 
 	// temp bug fixing
-	github.com/graphql-go/graphql => ../../graphql-go/graphql
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20210312090624-3aa34ef0f75a
 // github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f
 )
