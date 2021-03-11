@@ -71,7 +71,7 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.db.LoadSchema(string(sdl))
+	err = s.db.AddSchema(string(sdl))
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		json.NewEncoder(w).Encode(result)
