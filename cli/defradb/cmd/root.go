@@ -48,6 +48,9 @@ For example:
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
+// expose root as public
+var RootCmd = rootCmd
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
