@@ -70,7 +70,7 @@ This will register the type, build a dedicated collection, and generate the type
 
 You can find more examples of schema type definitions in the [cli/defradb/examples](cli/defradb/examples) folder.
 
-### Create a Document Istance
+### Create a Document Instance
 To create a new instance of a user type, submit the following query.
 ```
 mutation {
