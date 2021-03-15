@@ -9,7 +9,7 @@ The DefraDB is a Peer-to-Peer Edge Database, with the interface of a NoSQL Docum
 DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for production deployments. Please reach out to the team at [Source](https://source.network/) by emailing [hello@source.network](mailto:hello@source.network) for support with your use-case and deployment.
 
 ## Installation
-To install a DefraDB node, you can download the pre-compiled binaries available on the releases] page, or you can compile it youself if you have a local [Go Toolchain](https://golang.org/) installed.
+To install a DefraDB node, you can download the pre-compiled binaries available on the releases page, or you can compile it youself if you have a local [Go Toolchain](https://golang.org/) installed.
 
 ### Compile
 ```
@@ -25,6 +25,21 @@ go install
 To get started with DefraDB, make sure you have the `defradb` cli installed locally, or access to a remote node.
 
 Additionally, you most likely want to use a native GraphQL client, like GraphiQL, which can be downloaded as an Electron App [here](https://www.electronjs.org/apps/graphiql).
+
+Setup a local DefraDB node with:
+```
+defradb start
+```
+
+This will start a node with the default settings (running at http://localhost:9181), and create a configuration file at $HOME/.defra/config.yaml. Where $HOME is your operating system user home directory.
+
+Currently, DefraDB supports two storage engines; [BadgerDB](https://github.com/dgraph-io/badger), and an In-Memory store. By default, it uses BadgerDB, as it provides disk-backed persistent storage, unlike the In-Memory store. You can specify which engine to use with the `--store` option for the `start` command, or by editing the local config file.
+
+If you are using BadgerDB, and you encounter the following error:
+```
+Failed to initiate database:Map log file. Path=.defradb/data/000000.vlog. Error=exec format error
+```
+It means terminal client doesn't support Mmap'ed files. This is common with older version of Ubuntu on Windows va WSL. Unfortuently, BadgerDB uses Mmap to interact with the filesystem, so you will need to use a terminal client which supports it.
 
 Once your local environment is setup, you can test your connection with:
 ```
@@ -55,9 +70,9 @@ You can find more examples of schema type definitions in the [cli/defradb/exampl
 To create a new instance of a user type, submit the following query.
 ```
 mutation {
-	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-    _key
-  }
+    create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+        _key
+    }
 }
 ```
 
@@ -173,6 +188,18 @@ You can access the official DefraDB Query Language documentation online here: [h
 
 ## CLI Documentation
 You can find generated documentation for the shipped CLI interface [here](docs/cmd/defradb.md)
+
+## Next Steps
+The current early access release has much of the digial signatute, and identity work removed, until the cryptographic elements can be finalized.
+
+The following will ship with the next release:
+- schema type mutation/migration
+- data syncronization between nodes
+- grouping and aggregation on the query language
+- additional CRDT type(s)
+- and more. 
+
+We will release a project board outlining the planned, and completed features of our roadmap.
 
 ## Licensing
 Current DefraDB code is released under a combination of two licenses, the [Business Source License (BSL)](licenses/BSL.txt) and the [DefraDB Community License (DCL)](licenses/DCL.txt).
