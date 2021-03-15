@@ -49,6 +49,8 @@ defradb client ping
 ```
 which should respond with `Success!`
 
+Once you've confirmed your node is running correctly, if you're using the GraphiQL client to interact with the database, then make sure you set the `GraphQL Endpoint` to `http://localhost:9181/graphql` and the `Method` to `GET`.
+
 ### Add a Schema type
 To add a new schema type to the database, you can write the schema to a local file using the GraphQL SDL format, and submit that to the database like so:
 ```
