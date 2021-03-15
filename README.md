@@ -53,8 +53,8 @@ Once you've confirmed your node is running correctly, if you're using the Graphi
 
 ### Add a Schema type
 To add a new schema type to the database, you can write the schema to a local file using the GraphQL SDL format, and submit that to the database like so:
-```
-# Add this to users.gql
+```gql
+# Add this to users.gql file
 type user {
 	name: String 
 	age: Int 
@@ -72,7 +72,7 @@ You can find more examples of schema type definitions in the [cli/defradb/exampl
 
 ### Create a Document Instance
 To create a new instance of a user type, submit the following query.
-```
+```gql
 mutation {
     create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
         _key
@@ -81,7 +81,7 @@ mutation {
 ```
 
 This will respond with:
-```
+```json
 {
   "data": [
     {
@@ -90,11 +90,11 @@ This will respond with:
   ]
 }
 ```
-Here, the "_key" field is a unique identifier added to each and every document in a DefraDB instance. It uses a combination of [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier) and [CIDs](https://docs.ipfs.io/concepts/content-addressing/)
+Here, the "_key" field is a unique identifier added to each and every document in a DefraDB node. It uses a combination of [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier) and [CIDs](https://docs.ipfs.io/concepts/content-addressing/)
 
 ### Query our documents
 Once we have populated our local node with data, we can query that data. 
-```
+```gql
 query {
   user {
     _key
@@ -107,7 +107,7 @@ query {
 This will query *all* the users, and return the fields `_key, age, name, points`. GraphQL queries only ever return the exact fields you request, there's no `*` selector like with SQL.
 
 We can further filter our results by adding a `filter` argument to the query.
-```
+```gql
 query {
   user(filter: {points: {_ge: 50}}) {
     _key
@@ -125,7 +125,7 @@ To see all the available query options, types, and functions please see the [Que
 Internally, DefraDB uses MerkleCRDTs to store data. MerkleCRDTs convert all mutations and updates a document has into a graph of changes; similar to Git. Moreover, the graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all nodes are content identifiable with CIDs, and each node, references its parents CIDs.
 
 To get the most recent commit in the MerkleDAG for a with a docKey of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`, we can submit the following query:
-```
+```gql
 query {
   latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
     cid
@@ -139,7 +139,7 @@ query {
 }
 ```
 This will return a structure similar to the following, which contains the update payload that caused this new commit (delta), and any sub graph commits this references.
-```
+```json
 {
   "data": [
     {
@@ -170,7 +170,7 @@ This will return a structure similar to the following, which contains the update
 ```
 
 Additionally, we can get *all* commits in a document MerkleDAG with `allCommits`, and lastly, we can get a specific commit, identified by a `cid` with the `commit` query, like so:
-```
+```gql
 query {
   commit(cid: "QmPqCtcCPNHoWkHLFvG4aKqDkLLzhVDAVEDSzEs38GHxoo") {
     cid
