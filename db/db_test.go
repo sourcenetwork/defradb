@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/db/base"
+
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -19,9 +21,19 @@ func newMemoryDB() (*DB, error) {
 		Memory: MemoryOptions{
 			Size: 1024 * 1000,
 		},
+		Badger: BadgerOptions{
+			Path: "test",
+		},
 	}
 
 	return NewDB(opts)
+}
+
+func newTestCollection(db *DB) (*Collection, error) {
+	col, err := db.CreateCollection(base.CollectionDescription{
+		Name: "test",
+	})
+	return col.(*Collection), err
 }
 
 func TestNewDB(t *testing.T) {
@@ -38,8 +50,33 @@ func TestNewDB(t *testing.T) {
 	}
 }
 
+func TestNewDBWithCollection(t *testing.T) {
+	opts := &Options{
+		Store: "memory",
+		Memory: MemoryOptions{
+			Size: 1024 * 1000,
+		},
+	}
+
+	db, err := NewDB(opts)
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = db.CreateCollection(base.CollectionDescription{
+		Name: "test",
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestDBSaveSimpleDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -53,7 +90,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 		return
 	}
 
-	err = db.Save(doc)
+	err = col.Save(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -77,7 +114,10 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 }
 
 func TestDBUpdateDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -91,7 +131,7 @@ func TestDBUpdateDocument(t *testing.T) {
 		return
 	}
 
-	err = db.Save(doc)
+	err = col.Save(doc)
 	if err != nil {
 		t.Error(err)
 	}
@@ -104,7 +144,7 @@ func TestDBUpdateDocument(t *testing.T) {
 	weightVal, _ := doc.GetValueWithField(weightField)
 	assert.True(t, weightVal.IsDelete())
 
-	err = db.Update(doc)
+	err = col.Update(doc)
 
 	// value check
 	name, err := doc.Get("Name")
@@ -123,7 +163,10 @@ func TestDBUpdateDocument(t *testing.T) {
 }
 
 func TestDBUpdateNonExistingDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -137,12 +180,15 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 		return
 	}
 
-	err = db.Update(doc)
+	err = col.Update(doc)
 	assert.Error(t, err)
 }
 
 func TestDBUpdateExistingDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -153,7 +199,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 	doc, err := document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Save(doc)
+	err = col.Save(doc)
 	assert.NoError(t, err)
 
 	testJSONObj = []byte(`{
@@ -165,7 +211,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 	doc, err = document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Update(doc)
+	err = col.Update(doc)
 	assert.NoError(t, err)
 
 	// value check
@@ -181,7 +227,10 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 }
 
 func TestDBGetDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -192,16 +241,24 @@ func TestDBGetDocument(t *testing.T) {
 	doc, err := document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Save(doc)
+	err = col.Save(doc)
+	fmt.Println(doc.Get("Name"))
 	assert.NoError(t, err)
+
+	fmt.Printf("-------\n")
+	db.printDebugDB()
+	fmt.Printf("-------\n")
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	doc, err = db.Get(key)
+	doc, err = col.Get(key)
+	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	// value check
 	name, err := doc.Get("Name")
+	fmt.Println("-----------------------------------------------")
+	fmt.Println(name)
 	assert.NoError(t, err)
 	age, err := doc.Get("Age")
 	assert.NoError(t, err)
@@ -214,16 +271,22 @@ func TestDBGetDocument(t *testing.T) {
 }
 
 func TestDBGetNotFoundDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	_, err = db.Get(key)
+	_, err = col.Get(key)
 	assert.EqualError(t, err, ErrDocumentNotFound.Error())
 }
 
 func TestDBDeleteDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -234,28 +297,34 @@ func TestDBDeleteDocument(t *testing.T) {
 	doc, err := document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Save(doc)
+	err = col.Save(doc)
 	assert.NoError(t, err)
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	deleted, err := db.Delete(key)
+	deleted, err := col.Delete(key)
 	assert.NoError(t, err)
 	assert.True(t, deleted)
 }
 
 func TestDBDeleteNotFoundDocument(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
-	deleted, err := db.Delete(key)
+	deleted, err := col.Delete(key)
 	assert.EqualError(t, err, ErrDocumentNotFound.Error())
 	assert.False(t, deleted)
 }
 
 func TestDocumentMerkleDAG(t *testing.T) {
-	db, _ := newMemoryDB()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollection(db)
+	assert.NoError(t, err)
 
 	testJSONObj := []byte(`{
 		"Name": "John",
@@ -266,7 +335,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	doc, err := document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Save(doc)
+	err = col.Save(doc)
 	assert.NoError(t, err)
 
 	clk := clock.NewMerkleClock(db.headstore, nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
@@ -302,7 +371,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	doc, err = document.NewFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
-	err = db.Update(doc)
+	err = col.Update(doc)
 	assert.NoError(t, err)
 
 	heads = clk.(*clock.MerkleClock).Heads()
@@ -326,5 +395,70 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		lwwdelta := delta.(*corecrdt.LWWRegDelta)
 		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
+}
 
+// collection with schema
+func TestDBSchemaSaveSimpleDocument(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	// value check
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	age, err := doc.Get("Age")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "John", name)
+	assert.Equal(t, int64(21), age)
+
+	db.printDebugDB()
+}
+
+func TestDBUpdateDocWithFilter(t *testing.T) {
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+	col, err := newTestCollectionWithSchema(db)
+	assert.NoError(t, err)
+
+	testJSONObj := []byte(`{
+		"Name": "John",
+		"Age": 21
+	}`)
+
+	doc, err := document.NewFromJSON(testJSONObj)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = col.Save(doc)
+	assert.NoError(t, err)
+
+	_, err = col.UpdateWithFilter(`{Name: {_eq: "John"}}`, `{
+		"Name": "Eric"
+	}`)
+	assert.NoError(t, err)
+
+	doc, err = col.Get(doc.Key())
+	assert.NoError(t, err)
+
+	name, err := doc.Get("Name")
+	assert.NoError(t, err)
+	assert.Equal(t, "Eric", name)
 }

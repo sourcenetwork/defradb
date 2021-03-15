@@ -1,11 +1,13 @@
 package db
 
 import (
+	"strings"
 	"sync"
 
+	"github.com/sourcenetwork/defradb/core"
+	_ "github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 
 	"github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
@@ -32,8 +34,15 @@ var DefaultGetterOpts = GetterOpts{}
 // Get a document from the given DocKey, return an error if we fail to retrieve
 // the specified document.
 // If the Key doesn't exist, return ErrDocumentNotFound
-func (db *DB) Get(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
-	found, err := db.Exists(key)
+func (c *Collection) GetDepreciated(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
+	// create txn
+	txn, err := c.getTxn(false)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(txn)
+
+	found, err := c.exists(txn, key)
 	if err != nil {
 		return nil, err
 	}
@@ -45,26 +54,31 @@ func (db *DB) Get(key key.DocKey, opts ...GetterOpts) (*document.Document, error
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
-	return db.get(key, opt)
+	doc, err := c.getDepreciated(txn, key, opt)
+	if err != nil {
+		return nil, err
+	}
+	return doc, c.commitImplicitTxn(txn)
 }
 
-func (db *DB) getAllFields() {}
+func (c *Collection) getAllFields() {}
 
-func (db *DB) getSomeFields() {}
+func (c *Collection) getSomeFields() {}
 
 // scans the database for the given document and all associated fields, returns document
-func (db *DB) get(key key.DocKey, opt GetterOpts) (*document.Document, error) {
+func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	// To get the entire document, we dispatch a Query request to get all
 	// keys with the prefix for the given DocKey.
 	// This will return any and all keys under that prefix, which all fields
 	// of the document exist, as well as any sub documents, etc
 	q := query.Query{
-		Prefix:   key.Key.String(),
+		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
+		Filters:  []query.Filter{filterPriorityEntry{}},
 		KeysOnly: false,
 	}
 
 	doc := document.NewWithKey(key)
-	res, err := db.datastore.Query(q)
+	res, err := txn.datastore.Query(q)
 	defer res.Close()
 	if err != nil {
 		return nil, err
@@ -80,9 +94,7 @@ func (db *DB) get(key key.DocKey, opt GetterOpts) (*document.Document, error) {
 	collector := newFieldCollector()
 	for r := range res.Next() {
 		// do we need to check r.Error here?
-		if k := ds.NewKey(r.Key); k.Name() != "p" { // ignore priority key
-			collector.dispatch(k.Type(), r.Entry)
-		}
+		collector.dispatch(ds.NewKey(r.Key).Type(), r.Entry)
 	}
 
 	done := make(chan struct{})
@@ -118,7 +130,7 @@ type fieldResult struct {
 	// // and the remaining are all the values/metadata need for the field pair
 	name  string
 	value interface{}
-	ctype crdt.Type
+	ctype core.CType
 	err   error
 }
 
@@ -175,20 +187,23 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 
 		switch k.Name() {
 		case "v": // main cbor encoded value
-			err := cbor.Unmarshal(entry.Value, &res.value)
+			crdtByte := entry.Value[0]
+			res.ctype = core.CType(crdtByte)
+			buf := entry.Value[1:]
+			err := cbor.Unmarshal(buf, &res.value)
 			if err != nil {
 				res.err = err
 				c.fieldResultsCh <- res
 				close(q)
 			}
 		case "ct": // cached crdt type, which is only a single byte, hence [0]
-			res.ctype = crdt.Type(entry.Value[0])
+			res.ctype = core.CType(entry.Value[0])
 		}
 
 		// if weve completed all our tasks, close this queue/process down
 		collected++
 		// fmt.Printf("Collected status: %d/3\n", collected)
-		if collected == 3 { // maybe parameterize this constant
+		if collected == 2 { // maybe parameterize this constant
 			// fmt.Printf("Closing queue and process for %s...\n", res.name)
 			c.fieldResultsCh <- res
 			close(q)
@@ -199,4 +214,10 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 
 func (c *fieldCollector) results() <-chan fieldResult {
 	return c.fieldResultsCh
+}
+
+type filterPriorityEntry struct{}
+
+func (f filterPriorityEntry) Filter(e query.Entry) bool {
+	return !strings.HasSuffix(e.Key, ":p")
 }

@@ -89,47 +89,47 @@ func TestFactoryWithStores(t *testing.T) {
 func TestFullFactoryRegister(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
-	err := f.Register(LWW_REGISTER, &lwwFactoryFn)
+	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
-	assert.Equal(t, &lwwFactoryFn, f.crdts[LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
 }
 
 func TestBlankFactoryRegister(t *testing.T) {
 	f := NewFactory(nil, nil, nil)
-	err := f.Register(LWW_REGISTER, &lwwFactoryFn)
+	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
-	assert.Equal(t, &lwwFactoryFn, f.crdts[LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
 }
 
 func TestWithStoresFactoryRegister(t *testing.T) {
 	f := NewFactory(nil, nil, nil)
-	f.Register(LWW_REGISTER, &lwwFactoryFn)
+	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	d, h, s := newStores()
 	f2 := f.WithStores(d, h, s)
 
-	assert.Equal(t, &lwwFactoryFn, f2.crdts[LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f2.crdts[core.LWW_REGISTER])
 }
 
 func TestDefaultFactory(t *testing.T) {
 	assert.NotNil(t, DefaultFactory)
-	assert.Equal(t, &lwwFactoryFn, DefaultFactory.crdts[LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, DefaultFactory.crdts[core.LWW_REGISTER])
 }
 
 func TestFactoryInstanceMissing(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 
-	_, err := f.Instance(LWW_REGISTER, ds.NewKey("MyKey"))
+	_, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
 func TestBlankFactoryInstance(t *testing.T) {
 	d, h, s := newStores()
 	f1 := NewFactory(nil, nil, nil)
-	f1.Register(LWW_REGISTER, &lwwFactoryFn)
+	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	f := f1.WithStores(d, h, s)
 
-	crdt, err := f.Instance(LWW_REGISTER, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -139,9 +139,9 @@ func TestBlankFactoryInstance(t *testing.T) {
 func TestFullFactoryInstance(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
-	f.Register(LWW_REGISTER, &lwwFactoryFn)
+	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 
-	crdt, err := f.Instance(LWW_REGISTER, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)

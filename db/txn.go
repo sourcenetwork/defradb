@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -16,6 +17,10 @@ var (
 	ErrNoTxnSupport = errors.New("The given store has no transaction or batching support")
 )
 
+// implement interface check
+var _ core.Txn = (*Txn)(nil)
+var _ client.Txn = (*Txn)(nil)
+
 // Txn is a transaction interface for interacting with the Database.
 // It carries over the semantics of the underlying datastore regarding
 // transactions.
@@ -26,13 +31,22 @@ type Txn struct {
 	ds.Txn
 
 	// wrapped DS
-	datastore core.DSReaderWriter // wrapped txn /data namespace
-	headstore core.DSReaderWriter // wrapped txn /heads namespace
-	dagstore  core.DAGStore       // wrapped txn /blocks namespace
+	systemstore core.DSReaderWriter // wrapped txn /system namespace
+	datastore   core.DSReaderWriter // wrapped txn /data namespace
+	headstore   core.DSReaderWriter // wrapped txn /heads namespace
+	dagstore    core.DAGStore       // wrapped txn /blocks namespace
+}
+
+// Txn creates a new transaction which can be set to readonly mode
+func (db *DB) NewTxn(readonly bool) (*Txn, error) {
+	return db.newTxn(readonly)
 }
 
 // readonly is only for datastores that support ds.TxnDatastore
 func (db *DB) newTxn(readonly bool) (*Txn, error) {
+	db.glock.RLock()
+	defer db.glock.RUnlock()
+
 	txn := new(Txn)
 
 	// check if our datastore natively supports transactions or Batching
@@ -66,12 +80,18 @@ func (db *DB) newTxn(readonly bool) (*Txn, error) {
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand
 	shimStore := shimTxnStore{txn.Txn}
+	txn.systemstore = ktds.Wrap(shimStore, db.ssKeyTransform)
 	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
 	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)
 	batchstore := ktds.Wrap(shimStore, db.dagKeyTransform)
 	txn.dagstore = store.NewDAGStore(batchstore)
 
 	return txn, nil
+}
+
+// Systemstore returns the txn wrapped as a systemstore under the /system namespace
+func (txn *Txn) Systemstore() core.DSReaderWriter {
+	return txn.systemstore
 }
 
 // Datastore returns the txn wrapped as a datastore under the /data namespace
@@ -87,6 +107,11 @@ func (txn *Txn) Headstore() core.DSReaderWriter {
 // DAGstore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
 func (txn *Txn) DAGstore() core.DAGStore {
 	return txn.dagstore
+}
+
+func (txn *Txn) IsBatch() bool {
+	_, ok := txn.Txn.(shimBatcherTxn)
+	return ok
 }
 
 // Shim to make ds.Txn support ds.Datastore
@@ -112,3 +137,7 @@ type shimBatcherTxn struct {
 func (shimBatcherTxn) Discard() {
 	// noop
 }
+
+// txn := db.NewTxn()
+// users := db.GetCollection("users")
+// usersTxn := users.WithTxn(txn)
