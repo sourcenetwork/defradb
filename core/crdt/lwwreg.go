@@ -55,6 +55,10 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (delta *LWWRegDelta) Value() interface{} {
+	return delta.Data
+}
+
 // LWWRegister Last-Writer-Wins Register
 // a simple CRDT type that allows set/get of an
 // arbitrary data type that ensures convergence
@@ -80,7 +84,13 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 // RETURN STATE
 func (reg LWWRegister) Value() ([]byte, error) {
 	valueK := reg.valueKey(reg.key)
-	return reg.store.Get(valueK)
+	buf, err := reg.store.Get(valueK)
+	if err != nil {
+		return nil, err
+	}
+	// ignore the first byte (CRDT Type marker) from the returned value
+	buf = buf[1:]
+	return buf, nil
 }
 
 // Set generates a new delta with the supplied value
@@ -132,15 +142,11 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 		}
 	}
 
-	err = reg.store.Put(valueK, val)
+	// prepend the value byte array with a single byte indicator for the CRDT Type.
+	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
+	err = reg.store.Put(valueK, buf)
 	if err != nil {
 		return errors.Wrap(err, "Failed to store new value")
-	}
-
-	typeK := reg.typeKey(reg.key)
-	err = reg.store.Put(typeK, []byte{byte(LWW_REGISTER)})
-	if err != nil {
-		return errors.Wrap(err, "Failed to write crdt type value")
 	}
 
 	return reg.setPriority(reg.key, priority)

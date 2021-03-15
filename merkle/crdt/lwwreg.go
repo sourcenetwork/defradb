@@ -7,6 +7,7 @@ import (
 
 	// "github.com/sourcenetwork/defradb/store"
 
+	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -19,7 +20,7 @@ var (
 )
 
 func init() {
-	DefaultFactory.Register(LWW_REGISTER, &lwwFactoryFn)
+	DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
 }
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
@@ -38,7 +39,9 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
-	clk := clock.NewMerkleClock(headstore, dagstore, dockey.String(), reg)
+	// strip collection/index identifier from docKey
+	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
+	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}
 	// instatiate MerkleLWWRegister
@@ -51,12 +54,11 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 }
 
 // Set the value of the register
-func (mlwwreg *MerkleLWWRegister) Set(value []byte) error {
+func (mlwwreg *MerkleLWWRegister) Set(value []byte) (cid.Cid, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	_, err := mlwwreg.Publish(delta)
-	return err
+	return mlwwreg.Publish(delta)
 }
 
 // Value will retrieve the current value from the db
