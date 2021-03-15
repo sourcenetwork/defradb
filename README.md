@@ -15,9 +15,11 @@ To install a DefraDB node, you can download the pre-compiled binaries available 
 ```
 go install github.com/sourcenetwork/defradb/cli/defradb
 ```
-or, if you have the source local to your machine
+or
 ```
-cd <local repo path>/cli/defradb
+git clone git@github.com:sourcenetwork/defradb-early-access.git
+mv defradb-early-access defradb # Rename the folder
+cd defradb/cli/defradb
 go install
 ```
 
