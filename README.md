@@ -180,6 +180,7 @@ When contributing to a DefraDB feature, you can find the relevant license in the
 - John-Alan Simmons ([@jsimnz](https://github.com/jsimnz))
 
 <br>
+
 > The following documents are internal to the Source Team, if you wish to gain access, please reach out to us at [hello@source.network](mailto:hello@source.network)
 
 
