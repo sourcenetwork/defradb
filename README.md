@@ -46,7 +46,7 @@ defradb client schema add -f users.gql
 
 This will register the type, build a dedicated collection, and generate the typed GraphQL endpoints for querying and mutation.
 
-You can find more examples of schema type definitions in the [cli/defradb/examples](/cli/defradb/examples) folder.
+You can find more examples of schema type definitions in the [cli/defradb/examples](cli/defradb/examples) folder.
 
 ### Create a Document Istance
 To create a new instance of a user type, submit the following query.
@@ -180,9 +180,6 @@ When contributing to a DefraDB feature, you can find the relevant license in the
 - John-Alan Simmons ([@jsimnz](https://github.com/jsimnz))
 
 <br>
----
-<br>
-
 > The following documents are internal to the Source Team, if you wish to gain access, please reach out to us at [hello@source.network](mailto:hello@source.network)
 
 
