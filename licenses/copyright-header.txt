@@ -1,4 +1,4 @@
-// Copyright 2019 The DefraDB Authors.
+// Copyright 2020 Source Inc.
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
