@@ -7,8 +7,8 @@ Parameters
 Licensor:                   Source Inc.
 
 
-Licensed Work:              DefraDB 
-                            The Licensed Work is (c) 2020 Source Inc.
+Licensed Work:              DefraDB v0.1
+                            The Licensed Work is (c) 2021 Source Inc.
 
 
 Additional Use Grant:       You may use the Licensed Work when your 
@@ -30,7 +30,7 @@ Additional Use Grant:       You may use the Licensed Work when your
                             applications controlled by such third parties. 
 
 
-Change Date:                2024-10-01
+Change Date:                2025-03-01
 
 
 Change License:             Apache License, Version 2.0
