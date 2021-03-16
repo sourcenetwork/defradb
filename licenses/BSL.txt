@@ -8,7 +8,7 @@ Licensor:                   Source Inc.
 
 
 Licensed Work:              DefraDB 
-                            The Licensed Work is (c) 2020 Source Inc.
+                            The Licensed Work is (c) 2021 Source Inc.
 
 
 Additional Use Grant:       You may use the Licensed Work when your 
