@@ -86,6 +86,9 @@ type Select struct {
 	// Root is the top level query parsed type
 	Root SelectionType
 
+	DocKey string
+	CID    string
+
 	Filter  *Filter
 	Limit   *Limit
 	OrderBy *OrderBy
@@ -295,6 +298,12 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			}
 
 			slct.Filter = filter
+		} else if prop == "dockey" { // parse single dockey query field
+			val := argument.Value.(*ast.StringValue)
+			slct.DocKey = val.Value
+		} else if prop == "cid" { // parse single CID query field
+			val := argument.Value.(*ast.StringValue)
+			slct.CID = val.Value
 		} else if prop == "limit" { // parse limit/offset
 			val := argument.Value.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)

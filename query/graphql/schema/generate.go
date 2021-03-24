@@ -271,6 +271,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 				// or just a embedded only type (which doesnt need a key)
 				// automatically add the _key: ID field to the type
 				fields["_key"] = &gql.Field{Type: gql.ID}
+
 				for _, field := range defType.Fields {
 					fType := new(gql.Field)
 					if field.Name != nil {
@@ -636,6 +637,8 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 type queryInputTypeConfig struct {
+	key     *gql.Scalar
+	cid     *gql.Scalar
 	filter  *gql.InputObject
 	groupBy *gql.Enum
 	having  *gql.InputObject
@@ -675,6 +678,8 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
+			"dockey":  newArgConfig(gql.String),
+			"cid":     newArgConfig(gql.String),
 			"filter":  newArgConfig(config.filter),
 			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
 			"having":  newArgConfig(config.having),
