@@ -43,6 +43,27 @@ func TestQueryParse_Limit_Limit(t *testing.T) {
 	assert.Equal(t, limit.Offset, int64(0))
 }
 
+func TestQueryParse_FindByDockey(t *testing.T) {
+	var query = (`
+	query {
+		users(dockey: "test")
+	}`)
+
+	source := source.NewSource(&source.Source{
+		Body: []byte(query),
+		Name: "",
+	})
+
+	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
+	assert.NoError(t, err)
+
+	q, err := ParseQuery(doc)
+	assert.NoError(t, err)
+
+	dockey := q.Queries[0].Selections[0].(*Select).DocKey
+	assert.Equal(t, dockey, "test")
+}
+
 func TestQueryParse_Offset(t *testing.T) {
 	var query = (`
 	query {

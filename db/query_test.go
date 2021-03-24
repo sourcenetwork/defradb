@@ -117,7 +117,29 @@ func TestQuerySimple(t *testing.T) {
 			},
 		},
 		{
-			description: "Simple query with basic filter (key)",
+			description: "Simple query with basic filter (key by DocKey arg)",
+			query: `query {
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							Name
+							Age
+						}
+					}`,
+			docs: map[int][]string{
+				0: []string{
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			description: "Simple query with basic filter (key by filter block)",
 			query: `query {
 						users(filter: {_key: {_eq: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"}}) {
 							Name

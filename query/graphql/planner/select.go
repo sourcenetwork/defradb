@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -81,6 +82,12 @@ type selectNode struct {
 	// The filters that are defined on the subtype query
 	// are defined in the subtype scan node.
 	filter *parser.Filter
+
+	// If the select query is using a FindByDocKey filter
+	docKey string
+
+	// If te select query is using a FindByCID filter
+	cid string
 
 	// @todo restructure renderNode -> render, which is its own
 	// object, and not a planNode.
@@ -171,6 +178,18 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 	if ok {
 		origScan.filter = n.filter
 		n.filter = nil
+
+		// if we have a FindByDockey filter, create a span for it
+		// and propogate it to the scanNode
+		// @todo: When running the optimizer, check if the filter object
+		// contains a _key equality condition, and upgrade it to a point lookup
+		// instead of a prefix scan + filter via the Primary Index (0), like here:
+		if parsed.DocKey != "" {
+			dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
+				&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(parsed.DocKey))
+			spans := core.Spans{core.NewSpan(dockeyIndexKey, core.Key{})}
+			origScan.Spans(spans)
+		}
 	}
 
 	return n.initFields(parsed)
