@@ -184,8 +184,13 @@ func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey
 	return results, nil
 }
 
+<<<<<<< HEAD
 func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	fmt.Println("updating keys:", keys)
+=======
+func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	// fmt.Println("updating keys:", keys)
+>>>>>>> Started versioned fetcher design
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
