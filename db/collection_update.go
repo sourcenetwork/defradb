@@ -189,7 +189,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 }
 
 func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	fmt.Println("updating keys:", keys)
+	// fmt.Println("updating keys:", keys)
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err

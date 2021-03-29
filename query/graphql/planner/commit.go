@@ -11,7 +11,6 @@ package planner
 
 import (
 	"errors"
-	"fmt"
 	"math"
 
 	cid "github.com/ipfs/go-cid"
@@ -125,6 +124,9 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	return commit, nil
 }
 
+// commitSelectBlock is a CommitSelect node intialized witout a headsetScanNode, and is
+// expected to be given a target CID in the parser.CommitSelect object. It returns
+// a single commit if found
 func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan()
 	if parsed.Cid != "" {
@@ -133,7 +135,7 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 			return nil, err
 		}
 		dag.cid = &c
-		fmt.Println("got cid:", c)
+		// fmt.Println("got cid:", c)
 	}
 
 	return &commitSelectNode{
@@ -143,6 +145,8 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 	}, nil
 }
 
+// commitSelectAll is a CommitSelect initialized with a headsetScanNode, and will
+// recursively return all graph commits in order.
 func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan()
 	headset := p.HeadScan()
