@@ -79,7 +79,7 @@ func TestNewCollectionWithSchema(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
-		assert.Equal(t, uint32(i), schema.Fields[i].ID)
+		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
 }
 
