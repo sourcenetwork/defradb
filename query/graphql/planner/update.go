@@ -10,6 +10,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -53,12 +55,14 @@ func (n *updateNode) Next() (bool, error) {
 		var err error
 		numids := len(n.ids)
 		if numids == 1 {
-			key, err := key.NewFromString(n.ids[0])
-			if err != nil {
-				return false, err
+			fmt.Println("single key")
+			key, err2 := key.NewFromString(n.ids[0])
+			if err2 != nil {
+				return false, err2
 			}
 			results, err = n.collection.UpdateWithKey(key, n.patch)
 		} else if numids > 1 {
+			fmt.Println("multi key")
 			// todo
 			keys := make([]key.DocKey, len(n.ids))
 			for i, v := range n.ids {
@@ -69,14 +73,17 @@ func (n *updateNode) Next() (bool, error) {
 			}
 			results, err = n.collection.UpdateWithKeys(keys, n.patch)
 		} else {
+			fmt.Println("filter")
 			results, err = n.collection.UpdateWithFilter(n.filter, n.patch)
 		}
 
+		fmt.Println("update node error:", err)
 		if err != nil {
 			return false, err
 		}
 
 		// consume the updates into our valuesNode
+		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
 			n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 		}
