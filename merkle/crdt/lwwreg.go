@@ -10,8 +10,11 @@
 package crdt
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	// "github.com/sourcenetwork/defradb/store"
@@ -47,9 +50,31 @@ type MerkleLWWRegister struct {
 func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
+
 	// New Clock
-	// strip collection/index identifier from docKey
-	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
+	// two possible cases here
+	// 1) Primary index
+	// 2) Versioned Index
+
+	var headsetKey ds.Key
+	list := dockey.List()[1:] // remove collection identifier
+	if list[0] == fmt.Sprint(base.PrimaryIndex) {
+		// strip collection/index identifier from docKey, and any trailing
+		// data AFTER the docKey.
+		headsetKey = ds.KeyWithNamespaces(list[1:])
+	} else if list[0] == fmt.Sprint(base.VersionIndex) {
+		// splice out the Version CID component of the
+		// VersionIndex compound index key.
+		// Currently, the key is in the following format
+		// /VersionIndexID/DocKey/VersionCID/.../FieldIdentifer
+		//
+		// We want to remove the VersionIndexID and the VersionCID, but keep the rest.
+		headsetKey = ds.KeyWithNamespaces(append(list[1:2], list[3:]...))
+	} else {
+		// error, lets panic for now. TODO: FIX THIS
+		panic("invalid index identifier for Merkle CRDT")
+	}
+
 	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clk, reg}

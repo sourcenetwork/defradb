@@ -58,6 +58,9 @@ import (
 // - Incremental checkpoint/snapshotting
 // - Reverse traversal (starting from the current state, and working backwards)
 // - Create a effecient memory store for in-order traversal (BTree, etc)
+//
+// Note: Should we transition this state traversal into the CRDT objects themselves, and not
+// within a new fetcher?
 type VersionedFetcher struct {
 	txn   core.Txn
 	spans core.Spans
@@ -155,5 +158,9 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid) error {
 	// nextCID = get the "_head" link target CID
 	// err := vf.seekNext(nextCID)
 
+	return nil
+}
+
+func (vf *VersionedFetcher) merge(delta core.Delta) error {
 	return nil
 }

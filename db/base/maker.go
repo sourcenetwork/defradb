@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	ROOT   = "/db"
 	SYSTEM = "/db/system"
 	DATA   = "/db/data"
 	BLOCK  = "/db/block"
@@ -50,4 +51,12 @@ func MakeCollectionSystemKey(name string) core.Key {
 // it assumes the name of the schema is non-empty.
 func MakeSchemaSystemKey(name string) core.Key {
 	return core.Key{schemaNs.ChildString(name)}
+}
+
+// MakeIndexPrefixKeyRaw is the same as MakeIndexPrefixKey but it takes as inputs
+// the raw datastore keys, instead of the collection and index objects respectively.
+func MakeIndexPrefixKeyRaw(collectionID ds.Key, indexID ds.Key) core.Key {
+	return core.Key{core.NewKey(DATA).
+		Child(collectionID).
+		Child(indexID)}
 }
