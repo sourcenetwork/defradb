@@ -10,8 +10,10 @@
 package base
 
 import (
+	"errors"
 	"fmt"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -25,7 +27,9 @@ const (
 // Adding new IDs incrementally is not breaking.
 const (
 	PrimaryIndex int32 = 0
-	// VersionIndex is a
+
+	// VersionIndex is a Reserved secondary index that represents a
+	// versioned instance of the PrimaryIndex
 	VersionIndex int32 = -1 * iota
 )
 
@@ -35,7 +39,7 @@ type CollectionDescription struct {
 	Name    string
 	ID      uint32
 	Schema  SchemaDescription
-	Indexes []IndexDescription
+	Indexes []IndexDescription // @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
 }
 
 // IDString returns the collection ID as a string
@@ -52,6 +56,32 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 		}
 	}
 	return FieldDescription{}, false
+}
+
+func (c CollectionDescription) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
+	return ds.NewKey(c.IDString()).ChildString(fmt.Sprint(indexID)).Child(key)
+}
+
+func (c CollectionDescription) GetPrimaryIndexDocKey(key ds.Key) ds.Key {
+	return c.GetIndexDocKey(key, c.Indexes[0].ID)
+}
+
+func (c CollectionDescription) GetFieldKey(key ds.Key, fieldName string) ds.Key {
+	if !c.Schema.IsEmpty() {
+		return key.ChildString(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
+	}
+	return key.ChildString(fieldName)
+}
+
+func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key ds.Key, fieldName string) (ds.Key, error) {
+	switch ctype {
+	case core.COMPOSITE:
+		return c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_ID), nil
+	case core.LWW_REGISTER:
+		fieldKey := c.GetFieldKey(key, fieldName)
+		return c.GetPrimaryIndexDocKey(fieldKey), nil
+	}
+	return ds.Key{}, errors.New("Invalid CRDT type")
 }
 
 // IndexDescription describes an Index on a Collection
@@ -110,6 +140,15 @@ func (sd SchemaDescription) IsEmpty() bool {
 		return true
 	}
 	return false
+}
+
+func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
+	for _, field := range sd.Fields {
+		if field.Name == fieldName {
+			return uint32(field.ID)
+		}
+	}
+	return uint32(0)
 }
 
 type FieldKind uint8
