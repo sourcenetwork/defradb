@@ -31,10 +31,12 @@ func init() {
 	ipld.Register(cid.DagProtobuf, dag.DecodeProtobufBlock)
 }
 
+type deltaExtractorFn func(ipld.Node) (core.Delta, error)
+
 // crdtNodeGetter wraps an ipld.NodeGetter with some additional utility methods
 type crdtNodeGetter struct {
 	ipld.NodeGetter
-	deltaExtractor func(ipld.Node) (core.Delta, error)
+	deltaExtractor deltaExtractorFn
 }
 
 func (ng *crdtNodeGetter) GetDelta(ctx context.Context, c cid.Cid) (ipld.Node, core.Delta, error) {
