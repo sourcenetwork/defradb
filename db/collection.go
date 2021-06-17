@@ -614,8 +614,16 @@ func (c *Collection) commitImplicitTxn(txn *Txn) error {
 	return nil
 }
 
+func (c *Collection) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
+	return c.GetIndexDocKey(key, indexID)
+}
+
 func (c *Collection) getIndexDocKey(key ds.Key, indexID uint32) ds.Key {
 	return c.colIDKey.ChildString(fmt.Sprint(indexID)).Child(key)
+}
+
+func (c *Collection) GetPrimaryIndexDocKey(key ds.Key) ds.Key {
+	return c.getPrimaryIndexDocKey(key)
 }
 
 func (c *Collection) getPrimaryIndexDocKey(key ds.Key) ds.Key {

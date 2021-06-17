@@ -94,7 +94,7 @@ func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	}
 
 	// apply the new node and merge the delta with state
-	// @todo Remove NodeGetter as a paramter, and move it to a MerkleClock field
+	// @todo Remove NodeGed Wtter as a paramter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
 		&crdtNodeGetter{deltaExtractor: mc.crdt.DeltaDecode},
 		nd.Cid(),
@@ -181,3 +181,5 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }
+
+// func (mc *MerkleClock) DeltaDecoder()
