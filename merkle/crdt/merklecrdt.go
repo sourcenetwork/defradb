@@ -11,6 +11,7 @@ package crdt
 
 import (
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -26,6 +27,8 @@ var (
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
+
+	Clock() core.MerkleClock
 	// core.MerkleClock
 	// WithStore(core.DSReaderWriter)
 	// WithNS(ds.Key)
@@ -58,6 +61,18 @@ var (
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
+
+	// reference to schema
+	// @todo: Abstract schema definitions to CORE
+	// @body: Currently schema definitions are stored in db/base/descriptions
+	// which is suppose to be reserved for implementation specific data.
+	// However we need to have some reference of schema here in the MerkleCRDT
+	// system, which is a protocol design, and shouldn't rely on implementation
+	// specific utilities.
+	// So we need to abstract schema work into core or something else to seperate
+	// schema from implementation, so that we can reference it here in the protocol
+	// sections freely without violating our design isolation.
+	schema base.SchemaDescription
 }
 
 func (base *baseMerkleCRDT) Merge(other core.Delta, id string) error {
@@ -70,6 +85,10 @@ func (base *baseMerkleCRDT) DeltaDecode(node ipld.Node) (core.Delta, error) {
 
 func (base *baseMerkleCRDT) Value() ([]byte, error) {
 	return base.crdt.Value()
+}
+
+func (base *baseMerkleCRDT) Clock() core.MerkleClock {
+	return base.clock
 }
 
 // func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {

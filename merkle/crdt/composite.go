@@ -52,7 +52,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
 	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
-	base := &baseMerkleCRDT{clk, reg}
+	base := &baseMerkleCRDT{clock: clk, crdt: reg}
 	// instatiate MerkleCompositeDAG
 	// return
 	return &MerkleCompositeDAG{

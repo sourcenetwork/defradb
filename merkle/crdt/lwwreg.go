@@ -77,7 +77,7 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 
 	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
-	base := &baseMerkleCRDT{clk, reg}
+	base := &baseMerkleCRDT{clock: clk, crdt: reg}
 	// instatiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{

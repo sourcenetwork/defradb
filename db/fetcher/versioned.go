@@ -11,11 +11,17 @@ package fetcher
 
 import (
 	"container/list"
+	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/merkle/crdt"
 
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
+	format "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
 )
 
 // HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
@@ -65,14 +71,23 @@ type VersionedFetcher struct {
 	txn   core.Txn
 	spans core.Spans
 
+	// Transient version store
+	store core.MultiStore
+
 	key     core.Key
 	version cid.Cid
+
+	versionedKey core.Key
 
 	queuedCids *list.List
 
 	kv     *core.KeyValue
 	kvIter dsq.Results
 	kvEnd  bool
+
+	col    *base.CollectionDescription
+	index  *base.IndexDescription
+	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
 // Init
@@ -101,7 +116,10 @@ err := VersionFetcher.Start(txn, spans) {
 // the state graph via the `_head` link.
 func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	// recursive step through the graph
-	// err := vf.seekNext(c)
+	err := vf.seekNext(c, true)
+	if err != nil {
+		return err
+	}
 
 	// after seekNext is completed, we have a populated
 	// queuedCIDs list, and all the necessary
@@ -120,6 +138,16 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	/// // as a cache, we need to swap out states to the parent of the current
 	/// // CID.
 	// }
+	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
+		cc, ok := ccv.Value.(cid.Cid)
+		if !ok {
+			return errors.New("queueudCids contains an invalid CID value")
+		}
+		err := vf.merge(cc)
+		if err != nil {
+			return err
+		}
+	}
 
 	// we now have all the the required state stored
 	// in our transient local Version_Index, we now need to
@@ -136,7 +164,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 // seekNext is the recursive iteration step of seekTo, its goal is
 // to build the queuedCids list, and to transfer the required
 // blocks from the global to the local store.
-func (vf *VersionedFetcher) seekNext(c cid.Cid) error {
+func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// check if cid block exists in the global store, handle err
 
 	// @todo: Find an effecient way to determine if a CID is a member of a
@@ -144,23 +172,154 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid) error {
 	// @body: We could possibly append the DocKey to the CID either as a
 	// child key, or an instance on the CID key.
 
-	/// blk, err := vf.txn.DAGstore().Get(c)
+	hasLocalBlock, err := vf.store.DAGstore().Has(c)
+	if err != nil {
+		return err
+	}
+	// skip if we already have it locally
+	if hasLocalBlock {
+		return nil
+	}
 
-	// check if the block exists in the local (transient) store:
+	blk, err := vf.txn.DAGstore().Get(c)
+	if err != nil {
+		return err
+	}
 
-	// IF YES we've already processed this block, return with
-	// no errors
-
-	// IF NO:
+	// store the block in the local (transient store)
+	vf.store.DAGstore().Put(blk)
 
 	// add the CID to the queuedCIDs list
+	if topParent {
+		vf.queuedCids.PushFront(c)
+	}
+
 	// decode the block
-	// nextCID = get the "_head" link target CID
-	// err := vf.seekNext(nextCID)
+	nd, err := dag.DecodeProtobuf(blk.RawData())
+	if err != nil {
+		return err
+	}
+
+	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
+	l, err := nd.GetNodeLink(core.HEAD)
+	// ErrLinkNotFound is fine, it just means we have no more head links
+	if err != nil && err != dag.ErrLinkNotFound {
+		return err
+	}
+
+	// only seekNext on parent if we have a HEAD link
+	if err != dag.ErrLinkNotFound {
+		err := vf.seekNext(l.Cid, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	// loop over links and ignore head links
+	for _, l := range nd.Links() {
+		if l.Name == core.HEAD {
+			continue
+		}
+
+		err := vf.seekNext(l.Cid, false)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func (vf *VersionedFetcher) merge(delta core.Delta) error {
+// merge in the state of the IPLD Block identified by CID c into the
+// VersionedFetcher state.
+// Requires the CID to already exists in the DAGStore.
+// This function only works for merging Composite MerkleCRDT objects.
+//
+// First it checks for the existence of the block,
+// then extracts the delta object and priority from the block
+// gets the existing MerkleClock instance, or creates one.
+//
+// Currently we assume the CID is a CompositeDAG CRDT node
+func (vf *VersionedFetcher) merge(c cid.Cid) error {
+	// get node
+	nd, err := vf.getDAGNode(c)
+	if err != nil {
+		return err
+	}
+
+	// first arg 0 is the index for the composite DAG in the mCRDTs cache
+	if err := vf.processNode(0, nd, core.COMPOSITE, ""); err != nil {
+		return err
+	}
+
+	// handle subgraphs
+	// loop over links and ignore head links
+	for _, l := range nd.Links() {
+		if l.Name == core.HEAD {
+			continue
+		}
+
+		// get node
+		subNd, err := vf.getDAGNode(l.Cid)
+		if err != nil {
+			return err
+		}
+
+		fieldID := vf.col.Schema.GetFieldKey(l.Name)
+		if fieldID == uint32(0) {
+			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
+		}
+		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and get CType from descriptions
+		if err := vf.processNode(0, subNd, core.LWW_REGISTER, l.Name); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
+
+func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype core.CType, fieldName string) (err error) {
+	// handle CompositeDAG
+	mcrdt, exists := vf.mCRDTs[crdtIndex]
+	if !exists {
+		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key.Key, fieldName)
+		if err != nil {
+			return err
+		}
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, ctype, key)
+		if err != nil {
+			return err
+		}
+		vf.mCRDTs[crdtIndex] = mcrdt
+		// compositeClock = compMCRDT
+	}
+
+	delta, err := mcrdt.DeltaDecode(nd)
+	if err != nil {
+		return err
+	}
+
+	height := delta.GetPriority()
+	_, err = mcrdt.Clock().ProcessNode(nil, nd.Cid(), height, delta, nd)
+	return err
+}
+
+func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
+	// get Block
+	blk, err := vf.store.DAGstore().Get(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// get node
+	// decode the block
+	return dag.DecodeProtobuf(blk.RawData())
+}
+
+// func createMerkleCRDT(ctype core.CType, key ds.Key, store core.MultiStore) (crdt.MerkleCRDT, error) {
+// 	key := vf.col.GetPrimaryIndexDocKey(vf.key.Key).ChildString(core.COMPOSITE_ID)
+// 	compCRDT, err = crdt.DefaultFactory.InstanceWithStores(vf.store, core.COMPOSITE, key)
+// 	if err != nil {
+// 		return err
+// 	}
+// }
