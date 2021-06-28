@@ -38,3 +38,5 @@ type DSReaderWriter interface {
 type DAGStore interface {
 	blockstore.Blockstore
 }
+
+// func MultiStoreFrom(rootstore )
