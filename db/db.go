@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
@@ -37,13 +38,6 @@ var (
 	ErrDocVerification = errors.New("The document verificatioin failed")
 
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
-
-	// Individual Store Keys
-	rootStoreKey   = ds.NewKey("/db")
-	systemStoreKey = rootStoreKey.ChildString("/system")
-	dataStoreKey   = rootStoreKey.ChildString("/data")
-	headStoreKey   = rootStoreKey.ChildString("/heads")
-	blockStoreKey  = rootStoreKey.ChildString("/blocks")
 
 	log = logging.Logger("defra.db")
 )
@@ -122,10 +116,10 @@ func NewDB(options *Options) (*DB, error) {
 	}
 
 	log.Debug("loading: internal datastores")
-	systemstore := namespace.Wrap(rootstore, systemStoreKey)
-	datastore := namespace.Wrap(rootstore, dataStoreKey)
-	headstore := namespace.Wrap(rootstore, headStoreKey)
-	blockstore := namespace.Wrap(rootstore, blockStoreKey)
+	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
+	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
+	headstore := namespace.Wrap(rootstore, base.HeadStoreKey)
+	blockstore := namespace.Wrap(rootstore, base.BlockStoreKey)
 	dagstore := store.NewDAGStore(blockstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 

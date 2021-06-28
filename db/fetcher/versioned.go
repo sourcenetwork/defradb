@@ -17,8 +17,10 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	format "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
@@ -81,6 +83,8 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
+	df *DocumentFetcher
+
 	kv     *core.KeyValue
 	kvIter dsq.Results
 	kvEnd  bool
@@ -93,6 +97,42 @@ type VersionedFetcher struct {
 // Init
 
 // Start
+
+func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+	vf.col = col
+	// df.index = index
+	// df.fields = fields
+	// df.reverse = reverse
+	// df.initialized = true
+	// df.doc = new(document.EncodedDocument)
+	// if !col.Schema.IsEmpty() {
+	// 	df.hasSchema = true
+	// 	df.doc.Schema = &col.Schema
+
+	// 	df.schemaFields = make(map[uint32]base.FieldDescription)
+	// 	for _, field := range col.Schema.Fields {
+	// 		df.schemaFields[uint32(field.ID)] = field
+	// 	}
+	// }
+	return nil
+}
+
+// Start implements DocumentFetcher
+func (vf *VersionedFetcher) Start(txn core.Txn, key core.Key, c cid.Cid) error {
+	if vf.col == nil {
+		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
+	}
+
+	vf.txn = txn
+	vf.key = key
+	vf.version = c
+
+	// create store
+	memstore := ds.NewMapDatastore()
+	vf.store = store.MultiStoreFrom(memstore)
+
+	return nil
+}
 
 // Start a fetcher with the needed info (cid embedded in a span)
 
