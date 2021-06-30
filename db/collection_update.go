@@ -178,7 +178,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 		err = c.applyMerge(txn, v, patch.(map[string]interface{}))
 	}
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	results := &client.UpdateResult{
@@ -449,8 +449,11 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		sval, ok = val.(string)
 		cval, err = time.Parse(time.RFC3339, sval)
 	case base.FieldKind_INT:
-		fval, ok := val.(float64)
+		fmt.Printf("encountered val type: %v\n", val)
+		var fval float64
+		fval, ok = val.(float64)
 		if !ok {
+			fmt.Println("error1")
 			return nil, ErrInvalidMergeValueType
 		}
 		cval = int64(fval)
@@ -460,6 +463,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	}
 
 	if !ok {
+		fmt.Println("error2")
 		return nil, ErrInvalidMergeValueType
 	}
 	if err != nil {
