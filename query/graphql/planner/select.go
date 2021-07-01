@@ -15,7 +15,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	"github.com/ipfs/go-cid"
+	"github.com/pkg/errors"
 )
 
 // wraps a selectNode and all the logic of a plan
@@ -162,7 +166,7 @@ func (n *selectNode) Close() {
 // planner.Select construction call.
 func (n *selectNode) initSource(parsed *parser.Select) error {
 	collectionName := parsed.Name
-	sourcePlan, err := n.p.getSource(collectionName, false)
+	sourcePlan, err := n.p.getSource(collectionName, parsed.QueryType == parser.VersionedScanQuery)
 	if err != nil {
 		return err
 	}
@@ -179,12 +183,22 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		origScan.filter = n.filter
 		n.filter = nil
 
-		// if we have a FindByDockey filter, create a span for it
-		// and propogate it to the scanNode
-		// @todo: When running the optimizer, check if the filter object
-		// contains a _key equality condition, and upgrade it to a point lookup
-		// instead of a prefix scan + filter via the Primary Index (0), like here:
-		if parsed.DocKey != "" {
+		// If we have both a DocKey and a CID, then we need to run
+		// a TimeTravel (History-Traversing Versioned) query, which means
+		// we need to propogate the values to the underlying VersionedFetcher
+		if parsed.QueryType == parser.VersionedScanQuery {
+			c, err := cid.Decode(parsed.CID)
+			if err != nil {
+				return errors.Wrap(err, "Failed to propagate VersionFetcher span, invalid CID")
+			}
+			spans := fetcher.NewVersionedSpan(core.NewKey(parsed.DocKey), c)
+			origScan.Spans(spans)
+		} else if len(parsed.DocKey) != 0 { // If we *just* have a DocKey, run a FindByDocKey optimization
+			// if we have a FindByDockey filter, create a span for it
+			// and propogate it to the scanNode
+			// @todo: When running the optimizer, check if the filter object
+			// contains a _key equality condition, and upgrade it to a point lookup
+			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
 				&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(parsed.DocKey))
 			spans := core.Spans{core.NewSpan(dockeyIndexKey, core.Key{})}
@@ -246,10 +260,25 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 			// - commitScan
 			if subtype.Name == "_version" { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
-					Name:   subtype.Name,
-					Alias:  subtype.Alias,
-					Type:   parser.LatestCommits,
+					Name:  subtype.Name,
+					Alias: subtype.Alias,
+					// Type:   parser.LatestCommits,
 					Fields: subtype.Fields,
+				}
+				// handle _version sub selection query differently
+				// if we are executing a regular Scan query
+				// or a TimeTravel query.
+				if parsed.QueryType == parser.VersionedScanQuery {
+					// for a TimeTravel query, we don't need the Latest
+					// commit. Instead, _version references the CID
+					// of that Target version we are querying.
+					// So instead of a LatestCommit subquery, we need
+					// a OneCommit subquery, with the supplied parameters.
+					commitSlct.DocKey = parsed.DocKey
+					commitSlct.Cid = parsed.CID
+					commitSlct.Type = parser.OneCommit
+				} else {
+					commitSlct.Type = parser.LatestCommits
 				}
 				commitPlan, err := n.p.CommitSelect(commitSlct)
 				if err != nil {

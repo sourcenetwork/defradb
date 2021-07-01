@@ -28,6 +28,14 @@ const (
 	DocKeyFieldName  = "_key"
 )
 
+// Enum for different types of read Select queries
+type SelectQueryType int
+
+const (
+	ScanQuery = iota
+	VersionedScanQuery
+)
+
 var dbAPIQueryNames = map[string]bool{
 	"latestCommits": true,
 	"allCommits":    true,
@@ -83,11 +91,15 @@ type Select struct {
 	Name  string
 	Alias string
 
+	// QueryType indicates what kind of query this is
+	// Currently supports: ScanQuery, VersionedScanQuery
+	QueryType SelectQueryType
+
 	// Root is the top level query parsed type
 	Root SelectionType
 
 	DocKey string
-	CID    string
+	CID    string // used for TimeTravel queries
 
 	Filter  *Filter
 	Limit   *Limit
@@ -334,6 +346,12 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 				Conditions: cond,
 				Statement:  obj,
 			}
+		}
+
+		if len(slct.DocKey) != 0 && len(slct.CID) != 0 {
+			slct.QueryType = VersionedScanQuery
+		} else {
+			slct.QueryType = ScanQuery
 		}
 
 		// @todo: parse groupby
