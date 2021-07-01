@@ -74,6 +74,7 @@ type VersionedFetcher struct {
 	spans core.Spans
 
 	// Transient version store
+	root  ds.Datastore
 	store core.MultiStore
 
 	key     core.Key
@@ -98,8 +99,10 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(col *base.CollectionDescription, fields []*base.FieldDescription, reverse bool) error {
 	vf.col = col
+	vf.queuedCids = list.New()
+	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
 	// df.index = index
 	// df.fields = fields
 	// df.reverse = reverse
@@ -128,10 +131,14 @@ func (vf *VersionedFetcher) Start(txn core.Txn, key core.Key, c cid.Cid) error {
 	vf.version = c
 
 	// create store
-	memstore := ds.NewMapDatastore()
-	vf.store = store.MultiStoreFrom(memstore)
+	vf.root = ds.NewMapDatastore()
+	vf.store = store.MultiStoreFrom(vf.root)
 
 	return nil
+}
+
+func (vf *VersionedFetcher) Rootstore() ds.Datastore {
+	return vf.root
 }
 
 // Start a fetcher with the needed info (cid embedded in a span)
@@ -147,6 +154,11 @@ err := VersionFetcher.Start(txn, spans) {
 	vf.traverse(cid)
 }
 */
+
+// SeekTo exposes the private seekTo
+func (vf *VersionedFetcher) SeekTo(c cid.Cid) error {
+	return vf.seekTo(c)
+}
 
 // seekTo seeks to the given CID version by steping through the CRDT
 // state graph from the beginning to the target state, creating the
@@ -310,7 +322,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and get CType from descriptions
-		if err := vf.processNode(0, subNd, core.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(fieldID, subNd, core.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}

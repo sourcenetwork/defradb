@@ -67,7 +67,6 @@ func (n *scanNode) initScan() error {
 		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
 	}
 
-	// fmt.Println("Initializing scan with the following spans:", n.spans)
 	err := n.fetcher.Start(n.p.ctx, n.p.txn, n.spans)
 	if err != nil {
 		return err
