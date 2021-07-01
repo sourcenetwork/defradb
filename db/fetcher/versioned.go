@@ -70,7 +70,10 @@ import (
 // Note: Should we transition this state traversal into the CRDT objects themselves, and not
 // within a new fetcher?
 type VersionedFetcher struct {
-	txn   core.Txn
+	// embed the regular doc fetcher
+	*DocumentFetcher
+
+	txn   core.MultiStore
 	spans core.Spans
 
 	// Transient version store
@@ -99,10 +102,14 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *base.CollectionDescription, fields []*base.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
+
+	// run the DF init, VersionedFetchers only supports the Primary (0) index
+	vf.DocumentFetcher = new(DocumentFetcher)
+	return vf.DocumentFetcher.Init(col, &col.Indexes[0], fields, reverse)
 	// df.index = index
 	// df.fields = fields
 	// df.reverse = reverse
@@ -117,24 +124,48 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, fields []*base
 	// 		df.schemaFields[uint32(field.ID)] = field
 	// 	}
 	// }
-	return nil
+	// return nil
 }
 
-// Start implements DocumentFetcher
-func (vf *VersionedFetcher) Start(txn core.Txn, key core.Key, c cid.Cid) error {
+// Start serializes the correct state accoriding to the Key and CID
+func (vf *VersionedFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
 
+	if len(spans) != 1 {
+		return errors.New("spans must contain only a single entry")
+	}
+
+	// For the VersionedFetcher, the spans needs to be in the format
+	// Span{Start: DocKey, End: CID}
+	dk := spans[0].Start()
+	cidRaw := spans[0].End()
+	if len(dk.String()) == 0 {
+		return errors.New("spans missing start DocKey")
+	} else if len(cidRaw.String()) == 0 {
+		return errors.New("span missing end CID")
+	}
+
+	// decode cidRaw from core.Key to cid.Cid
+	c, err := cid.Decode(cidRaw.String())
+	if err != nil {
+		return err
+	}
+
 	vf.txn = txn
-	vf.key = key
+	vf.key = dk
 	vf.version = c
 
 	// create store
 	vf.root = ds.NewMapDatastore()
 	vf.store = store.MultiStoreFrom(vf.root)
 
-	return nil
+	if err := vf.seekTo(vf.version); err != nil {
+		return err
+	}
+
+	return vf.DocumentFetcher.Start(vf.store, nil)
 }
 
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
@@ -366,6 +397,10 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get node
 	// decode the block
 	return dag.DecodeProtobuf(blk.RawData())
+}
+
+func NewVersionedSpan(dockey core.Key, version cid.Cid) core.Spans {
+	return core.Spans{core.NewSpan(dockey, core.NewKey(version.String()))}
 }
 
 // func createMerkleCRDT(ctype core.CType, key ds.Key, store core.MultiStore) (crdt.MerkleCRDT, error) {

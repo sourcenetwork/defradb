@@ -147,6 +147,11 @@ func (factory Factory) WithDagstore(dagstore core.DAGStore) Factory {
 	return factory
 }
 
+// Rootstore impements MultiStore
+func (factory Factory) Rootstore() core.DSReaderWriter {
+	return nil
+}
+
 // SetLogger sets the current logger
 // func (factory *Factory) SetLogger(l logging.StandardLogger) error {
 // 	factory.log = l

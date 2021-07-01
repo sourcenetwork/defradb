@@ -162,7 +162,7 @@ func (n *selectNode) Close() {
 // planner.Select construction call.
 func (n *selectNode) initSource(parsed *parser.Select) error {
 	collectionName := parsed.Name
-	sourcePlan, err := n.p.getSource(collectionName)
+	sourcePlan, err := n.p.getSource(collectionName, false)
 	if err != nil {
 		return err
 	}

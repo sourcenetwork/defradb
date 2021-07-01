@@ -17,5 +17,12 @@ import (
 type Txn interface {
 	ds.Txn
 	MultiStore
+
+	// implement MultiStore
+	// Root
+	// Datastore() DSReaderWriter
+	// Headstore() DSReaderWriter
+	// DAGStore() DAGStore
+
 	Systemstore() DSReaderWriter
 }

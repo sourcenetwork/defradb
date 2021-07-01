@@ -22,6 +22,18 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 )
 
+// Fetcher is the interface for collecting documents
+// from the underlying data store. It handles all
+// the key/value scanning, aggregation, and document
+// encoding.
+type Fetcher interface {
+	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
+	Start(txn core.MultiStore, spans core.Spans) error
+	FetchNext() (*document.EncodedDocument, error)
+	FetchNextDecoded() (*document.Document, error)
+	FetchNextMap() ([]byte, map[string]interface{}, error)
+}
+
 /*
 var DocumentFetcher DocumentFetcher = &Fetcher{}
 DocumentFetcher.Init()
@@ -43,7 +55,7 @@ type DocumentFetcher struct {
 	reverse   bool
 	hasSchema bool
 
-	txn          core.Txn
+	txn          core.DSReaderWriter
 	spans        core.Spans
 	curSpanIndex int
 
@@ -83,7 +95,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 }
 
 // Start implements DocumentFetcher
-func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
+func (df *DocumentFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
@@ -121,7 +133,7 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 
 	var err error
-	df.kvIter, err = txn.Query(q)
+	df.kvIter, err = txn.Rootstore().Query(q)
 	if err != nil {
 		return err
 	}

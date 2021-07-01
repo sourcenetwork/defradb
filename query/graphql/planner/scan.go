@@ -40,7 +40,7 @@ type scanNode struct {
 
 	scanInitialized bool
 
-	fetcher fetcher.DocumentFetcher
+	fetcher fetcher.Fetcher
 }
 
 func (n *scanNode) Init() error {
@@ -122,8 +122,14 @@ func (n *scanNode) Source() planNode { return nil }
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan() *scanNode {
-	return &scanNode{p: p}
+func (p *Planner) Scan(versioned bool) *scanNode {
+	var f fetcher.Fetcher
+	if versioned {
+		f = new(fetcher.VersionedFetcher)
+	} else {
+		f = new(fetcher.DocumentFetcher)
+	}
+	return &scanNode{p: p, fetcher: f}
 }
 
 // multiScanNode is a buffered scanNode that has

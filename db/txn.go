@@ -118,6 +118,12 @@ func (txn *Txn) DAGstore() core.DAGStore {
 	return txn.dagstore
 }
 
+// Rootstore returns the underlying txn as a DSReaderWriter to implement
+// the MultiStore interface
+func (txn *Txn) Rootstore() core.DSReaderWriter {
+	return txn.Txn
+}
+
 func (txn *Txn) IsBatch() bool {
 	_, ok := txn.Txn.(shimBatcherTxn)
 	return ok

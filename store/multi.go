@@ -38,19 +38,24 @@ func MultiStoreFrom(rootstore ds.Datastore) core.MultiStore {
 	return ms
 }
 
-// Datastore implements core.Multistore
+// Datastore implements core.MultiStore
 func (ms multistore) Datastore() core.DSReaderWriter {
 	return ms.data
 }
 
-// Headstore implements core.Multistore
+// Headstore implements core.MultiStore
 func (ms multistore) Headstore() core.DSReaderWriter {
 	return ms.head
 }
 
-// DAGstore implements core.Multistore
+// DAGstore implements core.MultiStore
 func (ms multistore) DAGstore() core.DAGStore {
 	return ms.dag
+}
+
+// Rootstore implements core.MultiStore
+func (ms multistore) Rootstore() core.DSReaderWriter {
+	return ms.root
 }
 
 func PrintStore(store core.DSReaderWriter) {
