@@ -45,25 +45,14 @@ func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (plan
 		return planSource{}, err
 	}
 
-	var plan planNode
-	if versioned {
-		vscan := p.VersionedScan()
-		err = vscan.initCollection(colDesc)
-		if err != nil {
-			return planSource{}, err
-		}
-		plan = vscan
-	} else {
-		scan := p.Scan(false)
-		err = scan.initCollection(colDesc)
-		if err != nil {
-			return planSource{}, err
-		}
-		plan = scan
+	scan := p.Scan(versioned)
+	err = scan.initCollection(colDesc)
+	if err != nil {
+		return planSource{}, err
 	}
 
 	return planSource{
-		plan: plan,
+		plan: scan,
 		info: sourceInfo{
 			collectionDescription: colDesc,
 		},

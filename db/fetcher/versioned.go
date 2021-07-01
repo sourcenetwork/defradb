@@ -11,7 +11,6 @@ package fetcher
 
 import (
 	"container/list"
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -24,6 +23,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	format "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+	"github.com/pkg/errors"
 )
 
 // HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
@@ -148,9 +148,11 @@ func (vf *VersionedFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 	}
 
 	// decode cidRaw from core.Key to cid.Cid
-	c, err := cid.Decode(cidRaw.String())
+	// need to remove '/' prefix from the core.Key
+
+	c, err := cid.Decode(cidRaw.String()[1:])
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.String()))
 	}
 
 	vf.txn = txn
