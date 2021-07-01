@@ -430,6 +430,8 @@ func (c *Collection) save(txn *Txn, doc *document.Document) error {
 	if err != nil {
 		return nil
 	}
+	fmt.Println("Merge:", merge, buf)
+
 	_, err = c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
 	return err
 }

@@ -291,10 +291,14 @@ func (doc *Document) setObject(t core.CType, field string, val *Document) error 
 	return doc.set(t, field, &value)
 }
 
+// @todo: Update with document schemas
 func (doc *Document) setAndParseType(field string, value interface{}) error {
 	switch value.(type) {
 
 	// int (any number)
+	case int:
+		val := value.(int)
+		doc.setCBOR(core.LWW_REGISTER, field, int64(val))
 	case float64:
 		// case int64:
 

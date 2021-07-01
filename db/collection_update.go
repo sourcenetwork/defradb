@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
-	"github.com/fxamacker/cbor/v2"
+	cbor "github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/pkg/errors"
 )
@@ -384,6 +384,18 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 			return err
 		}
 
+		// handle Int/Float case
+		// JSON is annoying in that it represents all numbers
+		// as Float64s. So our merge object contains float64s
+		// even for fields defined as Ints, which causes issues
+		// when we serialize that in CBOR. To generate the delta
+		// payload.
+		// So lets just make sure ints are ints
+		// ref: https://play.golang.org/p/djThEqGXtvR
+		if fd.Kind == base.FieldKind_INT {
+			merge[mfield] = int64(mval.(float64))
+		}
+
 		val := document.NewCBORValue(fd.Typ, cval)
 		fieldKey := c.getFieldKey(key, mfield)
 		c, err := c.saveDocValue(txn, c.getPrimaryIndexDocKey(fieldKey), val)
@@ -406,6 +418,8 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	if err != nil {
 		return err
 	}
+	fmt.Println("Merge:", merge, buf)
+
 	if _, err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
 		return err
 	}
