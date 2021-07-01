@@ -17,8 +17,19 @@ import (
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
 // MerkleCRDTs
 type MultiStore interface {
+	Rootstore() DSReaderWriter
+
+	// Datastore is a wrapped root DSReaderWriter
+	// under the /data namespace
 	Datastore() DSReaderWriter
+
+	// Headstore is a wrapped root DSReaderWriter
+	// under the /head namespace
 	Headstore() DSReaderWriter
+
+	// DAGstore is a wrapped root DSReaderWriter
+	// as a Blockstore, embedded into a DAGStore
+	// under the /blocks namespace
 	DAGstore() DAGStore
 }
 

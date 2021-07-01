@@ -148,3 +148,5 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	}
 	return nd, nil
 }
+
+// type LocalNodeGetter

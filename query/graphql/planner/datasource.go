@@ -30,13 +30,13 @@ type planSource struct {
 
 // datasource is a set of utilities for constructing scan/index/join nodes
 // from a given query statement
-func (p *Planner) getSource(collection string) (planSource, error) {
+func (p *Planner) getSource(collection string, versioned bool) (planSource, error) {
 	// for now, we only handle simple collection scannodes
-	return p.getCollectionScanPlan(collection)
+	return p.getCollectionScanPlan(collection, versioned)
 }
 
 // @todo: Add field selection
-func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
+func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (planSource, error) {
 	if collection == "" {
 		return planSource{}, errors.New("collection name cannot be empty")
 	}
@@ -45,14 +45,25 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 		return planSource{}, err
 	}
 
-	scan := p.Scan()
-	err = scan.initCollection(colDesc)
-	if err != nil {
-		return planSource{}, err
+	var plan planNode
+	if versioned {
+		vscan := p.VersionedScan()
+		err = vscan.initCollection(colDesc)
+		if err != nil {
+			return planSource{}, err
+		}
+		plan = vscan
+	} else {
+		scan := p.Scan(false)
+		err = scan.initCollection(colDesc)
+		if err != nil {
+			return planSource{}, err
+		}
+		plan = scan
 	}
 
 	return planSource{
-		plan: scan,
+		plan: plan,
 		info: sourceInfo{
 			collectionDescription: colDesc,
 		},

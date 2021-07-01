@@ -22,6 +22,18 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 )
 
+// Fetcher is the interface for collecting documents
+// from the underlying data store. It handles all
+// the key/value scanning, aggregation, and document
+// encoding.
+type Fetcher interface {
+	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
+	Start(txn core.MultiStore, spans core.Spans) error
+	FetchNext() (*document.EncodedDocument, error)
+	FetchNextDecoded() (*document.Document, error)
+	FetchNextMap() ([]byte, map[string]interface{}, error)
+}
+
 /*
 var DocumentFetcher DocumentFetcher = &Fetcher{}
 DocumentFetcher.Init()
@@ -42,7 +54,7 @@ type DocumentFetcher struct {
 	index   *base.IndexDescription
 	reverse bool
 
-	txn          core.Txn
+	txn          core.DSReaderWriter
 	spans        core.Spans
 	order        []dsq.Order
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
