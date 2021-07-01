@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
-	"github.com/fxamacker/cbor/v2"
+	cbor "github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -184,13 +184,7 @@ func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey
 	return results, nil
 }
 
-<<<<<<< HEAD
 func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	fmt.Println("updating keys:", keys)
-=======
-func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	// fmt.Println("updating keys:", keys)
->>>>>>> Started versioned fetcher design
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -387,6 +381,18 @@ func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]in
 		cval, err := validateFieldSchema(mval, fd)
 		if err != nil {
 			return err
+		}
+
+		// handle Int/Float case
+		// JSON is annoying in that it represents all numbers
+		// as Float64s. So our merge object contains float64s
+		// even for fields defined as Ints, which causes issues
+		// when we serialize that in CBOR. To generate the delta
+		// payload.
+		// So lets just make sure ints are ints
+		// ref: https://play.golang.org/p/djThEqGXtvR
+		if fd.Kind == base.FieldKind_INT {
+			merge[mfield] = int64(mval.(float64))
 		}
 
 		val := document.NewCBORValue(fd.Typ, cval)
