@@ -418,7 +418,6 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	if err != nil {
 		return err
 	}
-	fmt.Println("Merge:", merge, buf)
 
 	if _, err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
 		return err

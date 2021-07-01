@@ -1,7 +1,6 @@
 package fetcher_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -9,10 +8,9 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/document"
+	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,26 +50,28 @@ func TestVersionedFetcherStart(t *testing.T) {
 
 	db.PrintDump()
 
-	k := ds.NewKey("CIQC6HCXT2MS25VZIBFGYJKFAXMEZVVOJGLXM5DO4XF6WWJK43BB3PA")
-	c, err := dshelp.DsKeyToCid(k)
-	fmt.Println(c)
-
-	assert.True(t, false) // force printing dump
+	// assert.True(t, false) // force printing dump
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S")
+	version, err := cid.Decode("QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH")
 	assert.NoError(t, err)
 
 	err = vf.Start(txn, key, version)
 	assert.NoError(t, err)
+
+	err = vf.SeekTo(version)
+	assert.NoError(t, err)
+
+	store.PrintStore(vf.Rootstore())
+	assert.True(t, false)
 }
 
 func createDocUpdates(col *db.Collection) error {
@@ -113,7 +113,7 @@ func createDocUpdates(col *db.Collection) error {
 	}
 
 	// update #2
-	// cid: Qmf38odVhMXXE21La5a5dsS1bdrzqSTohY1j17oEmJQyJf
+	// cid: QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh
 	// sub:
 	// 	- verified: QmNTLb5ChDx3HjeAMuWVm7wmgjbXPzDRdPNnzwRqG71T2Q
 	//  - age: QmfJTRSXy1x4VxaVDqSa35b3sXQkCAppPSwfhwKGkV2zez
@@ -124,13 +124,12 @@ func createDocUpdates(col *db.Collection) error {
 	}
 
 	// update #3
-	// cid: QmZDYKSdBfkhZ8kjnXBmkgh8ad8ncy8tmHDZ6vUsvsMPEL
+	// cid: QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH
 	// sub:
 	// 	- points: QmQGkkF1xpLkMFWtG5fNTGs6VwbNXESrtG2Mj35epLU8do
 	doc.Set("points", 129.99)
 	err = col.Update(doc)
 
-	fmt.Println(doc.ToMap())
 	return err
 }
 

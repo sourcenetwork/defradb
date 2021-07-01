@@ -26,7 +26,6 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/namespace"
-	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log/v2"
@@ -229,7 +228,7 @@ func (db *DB) Close() {
 }
 
 func printStore(store core.DSReaderWriter) {
-	q := query.Query{
+	q := dsq.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsq.Order{dsq.OrderByKey{}},

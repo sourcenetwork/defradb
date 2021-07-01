@@ -10,11 +10,14 @@
 package store
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
+	dsq "github.com/ipfs/go-datastore/query"
 )
 
 type multistore struct {
@@ -48,4 +51,22 @@ func (ms multistore) Headstore() core.DSReaderWriter {
 // DAGstore implements core.Multistore
 func (ms multistore) DAGstore() core.DAGStore {
 	return ms.dag
+}
+
+func PrintStore(store core.DSReaderWriter) {
+	q := dsq.Query{
+		Prefix:   "",
+		KeysOnly: false,
+		Orders:   []dsq.Order{dsq.OrderByKey{}},
+	}
+
+	results, err := store.Query(q)
+	defer results.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	for r := range results.Next() {
+		fmt.Println(r.Key, ": ", r.Value)
+	}
 }
