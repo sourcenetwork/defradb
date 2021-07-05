@@ -96,6 +96,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 
 // Start implements DocumentFetcher
 func (df *DocumentFetcher) Start(txn core.MultiStore, spans core.Spans) error {
+	df.txn = txn.Rootstore()
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
@@ -121,10 +122,35 @@ func (df *DocumentFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0) != df.reverse
 		})
 	}
+	df.spans = spans
 	df.indexKey = nil
 
+	// q := dsq.Query{
+	// 	Prefix: df.spans[0].Start().String(), // @todo: Support multiple spans
+	// }
+	// if df.reverse {
+	// 	q.Orders = []dsq.Order{dsq.OrderByKeyDescending{}}
+	// } else {
+	// 	q.Orders = []dsq.Order{dsq.OrderByKey{}}
+	// }
+
+	// var err error
+	// df.kvIter, err = df.txn.Query(q)
+	// if err != nil {
+	// 	return err
+	// }
+	err := df.initQuery()
+	if err != nil {
+		return err
+	}
+
+	_, err = df.nextKey()
+	return err
+}
+
+func (df *DocumentFetcher) initQuery() error {
 	q := dsq.Query{
-		Prefix: spans[0].Start().String(), // @todo: Support multiple spans
+		Prefix: df.spans[0].Start().String(), // @todo: Support multiple spans
 	}
 	if df.reverse {
 		q.Orders = []dsq.Order{dsq.OrderByKeyDescending{}}
@@ -133,12 +159,7 @@ func (df *DocumentFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 	}
 
 	var err error
-	df.kvIter, err = txn.Rootstore().Query(q)
-	if err != nil {
-		return err
-	}
-
-	_, err = df.nextKey()
+	df.kvIter, err = df.txn.Query(q)
 	return err
 }
 

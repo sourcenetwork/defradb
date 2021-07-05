@@ -87,7 +87,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	df *DocumentFetcher
+	// df *DocumentFetcher
 
 	kv     *core.KeyValue
 	kvIter dsq.Results
@@ -190,7 +190,12 @@ err := VersionFetcher.Start(txn, spans) {
 
 // SeekTo exposes the private seekTo
 func (vf *VersionedFetcher) SeekTo(c cid.Cid) error {
-	return vf.seekTo(c)
+	err := vf.seekTo(c)
+	if err != nil {
+		return err
+	}
+
+	return vf.DocumentFetcher.initQuery()
 }
 
 // seekTo seeks to the given CID version by steping through the CRDT
@@ -200,6 +205,9 @@ func (vf *VersionedFetcher) SeekTo(c cid.Cid) error {
 // which on the first run is 0. It seeks by iteratively jumping through
 // the state graph via the `_head` link.
 func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
+	// reinit the queued cids list
+	vf.queuedCids = list.New()
+
 	// recursive step through the graph
 	err := vf.seekNext(c, true)
 	if err != nil {
