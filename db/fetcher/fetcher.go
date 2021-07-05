@@ -54,7 +54,7 @@ type DocumentFetcher struct {
 	index   *base.IndexDescription
 	reverse bool
 
-	txn          core.DSReaderWriter
+	txn          core.Txn
 	spans        core.Spans
 	order        []dsq.Order
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
@@ -124,7 +124,6 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 			}
 		}
 	}
-
 	df.indexKey = nil
 	df.spans = uniqueSpans
 	df.curSpanIndex = -1
