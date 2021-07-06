@@ -34,6 +34,10 @@ type Fetcher interface {
 	FetchNextMap() ([]byte, map[string]interface{}, error)
 }
 
+var (
+	_ Fetcher = (*DocumentFetcher)(nil)
+)
+
 /*
 var DocumentFetcher DocumentFetcher = &Fetcher{}
 DocumentFetcher.Init()
