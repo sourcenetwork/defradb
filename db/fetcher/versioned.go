@@ -26,6 +26,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	// interface check
+	_ Fetcher = (*VersionedFetcher)(nil)
+)
+
 // HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
 // to a specific version in the documents history graph, and return the fetched
 // state at that point exactly.
