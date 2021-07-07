@@ -22,6 +22,13 @@ type Delta interface {
 	Value() interface{}
 }
 
+// AuthenticatedDelta adds authentication via DigitalSignatures
+// to the Delta type
+type AuthenticatedDelta interface {
+	Delta
+	Signature() []byte
+}
+
 type CompositeDelta interface {
 	Delta
 	Links() []DAGLink

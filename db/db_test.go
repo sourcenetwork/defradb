@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -459,7 +460,8 @@ func TestDBUpdateDocWithFilter(t *testing.T) {
 	err = col.Save(doc)
 	assert.NoError(t, err)
 
-	_, err = col.UpdateWithFilter(`{Name: {_eq: "John"}}`, `{
+	ctx := context.Background()
+	_, err = col.UpdateWithFilter(ctx, `{Name: {_eq: "John"}}`, `{
 		"Name": "Eric"
 	}`)
 	assert.NoError(t, err)

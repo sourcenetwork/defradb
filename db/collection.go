@@ -583,7 +583,7 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 			return cid.Cid{}, ErrUnknownCRDTArgument
 		}
 		comp := datatype.(*crdt.MerkleCompositeDAG)
-		return comp.Set(bytes, links)
+		return comp.Set(bytes, nil, links) // @todo: add signature to compositeDAG SET op
 	}
 	return cid.Cid{}, ErrUnknownCRDT
 }

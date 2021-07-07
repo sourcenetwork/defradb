@@ -439,6 +439,7 @@ func (g *Generator) genTypeMutationFields(obj *gql.Object, filterInput *gql.Inpu
 	return []*gql.Field{create, update, delete}, nil
 }
 
+// create the Mutation field for the CREATE operation
 func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, error) {
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
@@ -446,6 +447,7 @@ func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, err
 		Type: obj,
 		Args: gql.FieldConfigArgument{
 			"data": newArgConfig(gql.String),
+			"sig":  newArgConfig(gql.String),
 		},
 	}
 	return field, nil
@@ -461,6 +463,7 @@ func (g *Generator) genTypeMutationUpdateField(obj *gql.Object, filter *gql.Inpu
 			"ids":    newArgConfig(gql.NewList(gql.ID)),
 			"filter": newArgConfig(filter),
 			"data":   newArgConfig(gql.String),
+			"sig":    newArgConfig(gql.String),
 		},
 	}
 	return field, nil

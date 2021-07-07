@@ -36,6 +36,10 @@ type createNode struct {
 	// newDoc is the JSON string of the new document, unpares
 	newDocStr string
 	doc       *document.Document
+
+	// signature
+	sig string
+
 	// result is the target document as a map after creation
 	result map[string]interface{}
 
@@ -95,6 +99,7 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	create := &createNode{
 		p:         p,
 		newDocStr: parsed.Data,
+		sig:       parsed.Signature,
 	}
 
 	// get collection

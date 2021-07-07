@@ -79,9 +79,10 @@ type Mutation struct {
 	// if this mutation is on an object.
 	Schema string
 
-	IDs    []string
-	Filter *Filter
-	Data   string
+	IDs       []string
+	Filter    *Filter
+	Data      string
+	Signature string
 
 	Fields []Selection
 
@@ -183,6 +184,8 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 	}
 
 	// parse arguments
+	// we dont need to do much type validation as the GraphQL
+	// interface should already enforce types
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		// parse each individual arg type seperately
@@ -214,7 +217,9 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 				}
 				mut.IDs[i] = id.Value
 			}
-
+		} else if prop == "sig" {
+			raw := argument.Value.(*ast.StringValue)
+			mut.Signature = raw.Value
 		}
 	}
 

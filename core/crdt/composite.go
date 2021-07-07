@@ -30,9 +30,10 @@ var (
 )
 
 type CompositeDAGDelta struct {
-	Priority uint64
-	Data     []byte
-	SubDAGs  []core.DAGLink
+	Priority  uint64
+	Data      []byte
+	Signature []byte
+	SubDAGs   []core.DAGLink
 }
 
 // GetPriority gets the current priority for this delta
@@ -50,9 +51,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		Priority uint64
-		Data     []byte
-	}{delta.Priority, delta.Data})
+		Priority  uint64
+		Data      []byte
+		Signature []byte
+	}{delta.Priority, delta.Data, delta.Signature})
 	if err != nil {
 		return nil, err
 	}
@@ -92,14 +94,15 @@ func (c CompositeDAG) Value() ([]byte, error) {
 	return nil, nil
 }
 
-func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
+func (c CompositeDAG) Set(patch []byte, signature []byte, links []core.DAGLink) *CompositeDAGDelta {
 	// make sure the links are sorted lexigraphically by CID
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:    patch,
-		SubDAGs: links,
+		Data:      patch,
+		Signature: signature,
+		SubDAGs:   links,
 	}
 }
 

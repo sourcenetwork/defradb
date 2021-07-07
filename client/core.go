@@ -10,6 +10,8 @@
 package client
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
@@ -61,10 +63,10 @@ type Collection interface {
 	Delete(key.DocKey) (bool, error)
 	Exists(key.DocKey) (bool, error)
 
-	UpdateWith(interface{}, interface{}, ...UpdateOpt) error
-	UpdateWithFilter(interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKey(key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKeys([]key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWith(context.Context, interface{}, interface{}, ...UpdateOpt) error
+	UpdateWithFilter(context.Context, interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
 	WithTxn(Txn) Collection
 }
