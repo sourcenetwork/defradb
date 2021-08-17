@@ -1,6 +1,9 @@
 /*
 Package net provides p2p network functions for the core DefraDB instance.
 
+Notable design descision. All DocKeys (Documents) have their own respective PubSub topics.
+@todo: Needs review/scrutiny.
+
 Its structured as follows.
 
 We define a Peer object, which encapsulates an instanciated DB objects, libp2p host object, libp2p DAGService.
@@ -18,7 +21,8 @@ type Peer struct {
 	context???
 }
 
-Server object
+Server object is responsible for all underlying gRPC related functions and as it relates to the pubsub network.
 
+Credit: Some of the base structure of this net package and its types is inspired/inherited from Textile Threads (github.com/textileio/go-threads)
 */
 package net
