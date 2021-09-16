@@ -6,9 +6,9 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto"
 // Service is the peer-to-peer network API for thread orchestration.
 service Service {
     // GetLogs from a peer.
-    rpc GetLogs(GetLogsRequest) returns (GetLogsReply) {}
+    rpc GetDocGraph(GetDocGraphRequest) returns (GetDocGraphReply) {}
     // PushLog to a peer.
-    rpc PushLog(PushLogRequest) returns (PushLogReply) {}
+    rpc PushDocGraph(PushDocGraphRequest) returns (PushDocGraphReply) {}
     // // GetRecords from a peer.
     // rpc GetRecords(GetRecordsRequest) returns (GetRecordsReply) {}
     // // PushRecord to a peer.
