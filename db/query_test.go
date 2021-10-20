@@ -39,46 +39,7 @@ func TestQuerySimple(t *testing.T) {
 	}
 	`)
 
-	tests := []queryTestCase{
-		{
-			description: "Simple query with sort & filter",
-			query: `query {
-						users(filter: {Age: {_gt: 30}}, order: {Age: DESC}) {
-							Name
-							Age
-						}
-					}`,
-			docs: map[int][]string{
-				0: []string{
-					(`{
-					"Name": "John",
-					"Age": 21
-				}`),
-					(`{
-					"Name": "Bob",
-					"Age": 32
-				}`),
-					(`{
-					"Name": "Carlo",
-					"Age": 55
-				}`),
-					(`{
-					"Name": "Alice",
-					"Age": 19
-				}`)},
-			},
-			results: []map[string]interface{}{
-				{
-					"Name": "Carlo",
-					"Age":  uint64(55),
-				},
-				{
-					"Name": "Bob",
-					"Age":  uint64(32),
-				},
-			},
-		},
-	}
+	tests := []queryTestCase{}
 
 	for _, test := range tests {
 		db, err := newMemoryDB()
