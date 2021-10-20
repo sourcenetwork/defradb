@@ -30,43 +30,6 @@ type queryTestCase struct {
 	results []map[string]interface{}
 }
 
-func TestQueryRelationMany(t *testing.T) {
-	var bookAuthorGQLSchema = (`
-	type book {
-		name: String
-		rating: Float
-		author: author
-	}
-
-	type author {
-		name: String
-		age: Int
-		verified: Boolean
-		published: [book]
-	}
-	`)
-
-	tests := []queryTestCase{}
-
-	for _, test := range tests {
-		db, err := newMemoryDB()
-		assert.NoError(t, err)
-
-		err = db.AddSchema(bookAuthorGQLSchema)
-		assert.NoError(t, err)
-
-		// bookDesc := newTestQueryCollectionDescription2()
-		bookCol, err := db.GetCollection("book")
-		assert.NoError(t, err)
-
-		// authorDesc := newTestQueryCollectionDescription3()
-		authorCol, err := db.GetCollection("author")
-		assert.NoError(t, err)
-
-		runQueryTestCase(t, db, []client.Collection{bookCol, authorCol}, test)
-	}
-}
-
 func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, test queryTestCase) {
 	// insert docs
 	for cid, docs := range test.docs {
