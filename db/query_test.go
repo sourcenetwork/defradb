@@ -9,67 +9,6 @@
 // licenses/APL.txt.
 package db
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/stretchr/testify/assert"
-)
-
-type queryTestCase struct {
-	description string
-	query       string
-	// docs is a map from Collection Index, to a list
-	// of docs in stringified JSON format
-	docs map[int][]string
-	// updates is a map from document index, to a list
-	// of changes in strinigied JSON format
-	updates map[int][]string
-	results []map[string]interface{}
-}
-
-func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, test queryTestCase) {
-	// insert docs
-	for cid, docs := range test.docs {
-		for i, docStr := range docs {
-			doc, err := document.NewFromJSON([]byte(docStr))
-			assert.NoError(t, err, test.description)
-			err = collections[cid].Save(doc)
-			assert.NoError(t, err, test.description)
-
-			// check for updates
-			updates, ok := test.updates[i]
-			if ok {
-				for _, u := range updates {
-					err = doc.SetWithJSON([]byte(u))
-					assert.NoError(t, err, test.description)
-					err = collections[cid].Save(doc)
-					assert.NoError(t, err, test.description)
-				}
-			}
-		}
-	}
-
-	// exec query
-	txn, err := db.NewTxn(true)
-	assert.NoError(t, err, test.description)
-	results, err := db.queryExecutor.ExecQuery(db, txn, test.query)
-	assert.NoError(t, err, test.description)
-
-	fmt.Println(test.description)
-	fmt.Println(results)
-	fmt.Println("--------------")
-	fmt.Println("")
-
-	// compare results
-	assert.Equal(t, len(test.results), len(results), test.description)
-	for i, result := range results {
-		assert.Equal(t, test.results[i], result, test.description)
-	}
-}
-
 // var userCollectionGQLSchema = (`
 // type users {
 // 	Name: String
