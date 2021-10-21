@@ -70,59 +70,6 @@ func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, tes
 	}
 }
 
-func TestQueryOneCommit(t *testing.T) {
-	var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		Age: Int
-		Verified: Boolean
-	}
-	`)
-
-	tests := []queryTestCase{
-		{
-			description: "query for a single block by CID",
-			query: `query {
-						commit(cid: "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV") {
-							cid
-							height
-							delta
-						}
-					}`,
-			docs: map[int][]string{
-				0: []string{
-					(`{
-					"Name": "John",
-					"Age": 21
-				}`)},
-			},
-			results: []map[string]interface{}{
-				{
-					"cid":    "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
-					"height": int64(1),
-					// cbor encoded delta
-					"delta": []uint8{0xa2, 0x63, 0x41, 0x67, 0x65, 0x15, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x64, 0x4a, 0x6f, 0x68, 0x6e},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		db, err := newMemoryDB()
-		assert.NoError(t, err)
-
-		err = db.AddSchema(userCollectionGQLSchema)
-		assert.NoError(t, err)
-
-		// desc := newTestQueryCollectionDescription1()
-		col, err := db.GetCollection("users")
-		assert.NoError(t, err)
-
-		runQueryTestCase(t, db, []client.Collection{col}, test)
-	}
-
-}
-
 // var userCollectionGQLSchema = (`
 // type users {
 // 	Name: String
