@@ -70,68 +70,6 @@ func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, tes
 	}
 }
 
-func TestQueryLatestCommits(t *testing.T) {
-	var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		Age: Int
-		Verified: Boolean
-	}
-	`)
-
-	tests := []queryTestCase{
-		{
-			description: "Simple latest commits query",
-			query: `query {
-						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-							cid
-							links {
-								cid
-								name
-							}
-						}
-					}`,
-			docs: map[int][]string{
-				0: []string{
-					(`{
-					"Name": "John",
-					"Age": 21
-				}`)},
-			},
-			results: []map[string]interface{}{
-				{
-					"cid": "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
-					"links": []map[string]interface{}{
-						{
-							"cid":  "QmPaY2DNmd7LtRDpReswc5UTGoU5Q32Py1aEVG7Shq6Np1",
-							"name": "Age",
-						},
-						{
-							"cid":  "Qmag2zKKGGQwVSss9pQn3hjTu9opdF5mkJXUR9rt2A651h",
-							"name": "Name",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		db, err := newMemoryDB()
-		assert.NoError(t, err)
-
-		err = db.AddSchema(userCollectionGQLSchema)
-		assert.NoError(t, err)
-
-		// desc := newTestQueryCollectionDescription1()
-		col, err := db.GetCollection("users")
-		assert.NoError(t, err)
-
-		runQueryTestCase(t, db, []client.Collection{col}, test)
-	}
-
-}
-
 func TestQueryAllCommitsSingleDAG(t *testing.T) {
 	var userCollectionGQLSchema = (`
 	type users {
