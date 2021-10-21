@@ -70,49 +70,6 @@ func runQueryTestCase(t *testing.T, db *DB, collections []client.Collection, tes
 	}
 }
 
-func TestMutationCreateSimple(t *testing.T) {
-
-	userSchema := `
-	type user {
-		name: String
-		age: Int
-		points: Float
-		verified: Boolean
-	}
-	`
-
-	// data :=
-
-	query := `
-	mutation {
-		create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-			_key
-			name
-			age
-		}
-	}`
-
-	db, err := newMemoryDB()
-	assert.NoError(t, err)
-
-	err = db.AddSchema(userSchema)
-	assert.NoError(t, err)
-
-	// exec query
-	txn, err := db.NewTxn(false)
-	assert.NoError(t, err)
-	results, err := db.queryExecutor.ExecQuery(db, txn, query)
-	assert.NoError(t, err)
-
-	assert.Len(t, results, 1)
-	assert.Equal(t, map[string]interface{}{
-		"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-		"age":  int64(27),
-		"name": "John",
-	}, results[0])
-
-}
-
 func TestMutationUpdateFilterSimple(t *testing.T) {
 
 	userSchema := `
