@@ -54,8 +54,7 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,
-		// clock:          clk,
-		reg: register,
+		reg:            register,
 	}
 }
 
