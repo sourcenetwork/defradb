@@ -67,7 +67,6 @@ func TestNewCollectionWithSchema(t *testing.T) {
 
 	desc := col.Description()
 	schema := col.Schema()
-	// indexes := col.Indexes()
 
 	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
