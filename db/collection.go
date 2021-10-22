@@ -561,7 +561,7 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 		c.db.log.Debug("Sub objects not yet supported")
 		break
 	case core.COMPOSITE:
-		key = key.ChildString("C") // @todo: Generalize COMPOSITE key suffix
+		key = key.ChildString(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err

@@ -21,6 +21,10 @@ const (
 	COMPOSITE
 )
 
+const (
+	COMPOSITE_NAMESPACE = "C"
+)
+
 var (
 	ByteToType = map[byte]CType{
 		byte(0): NONE_CRDT,
