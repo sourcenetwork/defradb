@@ -106,7 +106,7 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	headset := p.HeadScan()
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
-		parsed.FieldName = "C" // C for composite DAG
+		parsed.FieldName = core.COMPOSITE_NAMESPACE
 	}
 	dag.field = parsed.FieldName
 	if parsed.DocKey != "" {
@@ -148,7 +148,7 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 	headset := p.HeadScan()
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
-		parsed.FieldName = "C" // C for composite DAG
+		parsed.FieldName = core.COMPOSITE_NAMESPACE
 	}
 	dag.field = parsed.FieldName
 	if parsed.DocKey != "" {
