@@ -161,7 +161,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 		// make sure we have the correct field suffix
 		span := spans[0].Start()
 		if !strings.HasSuffix(span.String(), n.field) {
-			spans[0] = core.NewSpan(core.Key{span.ChildString(n.field)}, core.NewKey(""))
+			spans[0] = core.NewSpan(core.Key{Key: span.ChildString(n.field)}, core.NewKey(""))
 		}
 		n.headset.Spans(spans)
 	} else {
