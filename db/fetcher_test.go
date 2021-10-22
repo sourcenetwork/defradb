@@ -28,18 +28,18 @@ func newTestCollectionDescription() base.CollectionDescription {
 			ID:       uint32(1),
 			FieldIDs: []uint32{1, 2, 3},
 			Fields: []base.FieldDescription{
-				base.FieldDescription{
+				{
 					Name: "_key",
 					ID:   base.FieldID(1),
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				{
 					Name: "Name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				{
 					Name: "Age",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
@@ -48,7 +48,7 @@ func newTestCollectionDescription() base.CollectionDescription {
 			},
 		},
 		Indexes: []base.IndexDescription{
-			base.IndexDescription{
+			{
 				Name:    "primary",
 				ID:      uint32(0),
 				Primary: true,
