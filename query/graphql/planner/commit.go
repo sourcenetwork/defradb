@@ -114,8 +114,6 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 		headset.key = key
 	}
 	dag.headset = headset
-	// dag.depthLimit = 1
-	// dag.key = &key
 	commit := &commitSelectNode{
 		p:             p,
 		source:        dag,
