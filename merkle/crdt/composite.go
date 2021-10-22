@@ -46,19 +46,19 @@ type MerkleCompositeDAG struct {
 // backed by a CompositeDAG CRDT
 func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleCompositeDAG {
 	// New Register
-	reg := corecrdt.NewCompositeDAG(datastore, ns, dockey.String() /* stuff like namespace and ID */)
+	compositeDag := corecrdt.NewCompositeDAG(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
 	// strip collection/index identifier from docKey
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
-	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
+	clock := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), compositeDag)
 	// newBaseMerkleCRDT(clock, register)
-	base := &baseMerkleCRDT{clk, reg}
+	base := &baseMerkleCRDT{clock, compositeDag}
 	// instatiate MerkleCompositeDAG
 	// return
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
 		// clock:          clk,
-		reg: reg,
+		reg: compositeDag,
 	}
 }
 
