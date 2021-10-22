@@ -47,7 +47,6 @@ func (c *Collection) get(txn *Txn, key key.DocKey) (*document.Document, error) {
 	index := &c.desc.Indexes[0]
 	// initialize it with the priamry index
 	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
-	// defer df.Close()
 	if err != nil {
 		return nil, err
 	}
