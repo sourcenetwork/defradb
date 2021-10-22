@@ -82,8 +82,6 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	}
 }
 
-// func TestCollectionIndexes
-
 func TestGetCollection(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
