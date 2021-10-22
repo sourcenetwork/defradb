@@ -359,7 +359,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := core.Key{base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
+	docKey := core.Key{Key: base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}
