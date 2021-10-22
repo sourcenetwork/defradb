@@ -46,19 +46,19 @@ type MerkleLWWRegister struct {
 // backed by a LWWRegister CRDT
 func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
-	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
+	register := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 	// New Clock
 	// strip collection/index identifier from docKey
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
-	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
+	clock := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), register)
 	// newBaseMerkleCRDT(clock, register)
-	base := &baseMerkleCRDT{clk, reg}
+	base := &baseMerkleCRDT{clock, register}
 	// instatiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,
 		// clock:          clk,
-		reg: reg,
+		reg: register,
 	}
 }
 
