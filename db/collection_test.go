@@ -23,16 +23,16 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 		Name: "users",
 		Schema: base.SchemaDescription{
 			Fields: []base.FieldDescription{
-				base.FieldDescription{
+				{
 					Name: "_key",
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				{
 					Name: "Name",
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				{
 					Name: "Age",
 					Kind: base.FieldKind_INT,
 					Typ:  core.LWW_REGISTER,
