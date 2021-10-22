@@ -20,24 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func newMemoryDB() (*db.DB, error) {
-// 	opts := &db.Options{
-// 		Store: "memory",
-// 		Memory: db.MemoryOptions{
-// 			Size: 1024 * 1000,
-// 		},
-// 	}
-
-// 	return db.NewDB(opts)
-// }
-
-// Create a new Fetcher for a Collection named "users"
-// with the following schema:
-// Users {
-//		Name string
-//		Age int
-// }
-
 func newTestCollectionDescription() base.CollectionDescription {
 	return base.CollectionDescription{
 		Name: "users",
