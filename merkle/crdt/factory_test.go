@@ -165,6 +165,6 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
 
-	err := lwwreg.Set([]byte("hi"))
+	_, err := lwwreg.Set([]byte("hi"))
 	assert.NoError(t, err)
 }
