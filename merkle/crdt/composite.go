@@ -54,8 +54,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
-		// clock:          clk,
-		reg: compositeDag,
+		reg:            compositeDag,
 	}
 }
 
