@@ -11,8 +11,6 @@ package base
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-
-	ds "github.com/ipfs/go-datastore"
 )
 
 var (
@@ -24,8 +22,8 @@ var (
 
 var (
 	collectionSeqKey = "collection"
-	collectionNs     = ds.NewKey("/collection")
-	schemaNs         = ds.NewKey("/schema")
+	collectionNs     = core.NewKey("/collection")
+	schemaNs         = core.NewKey("/schema")
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions

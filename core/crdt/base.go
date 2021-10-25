@@ -31,14 +31,14 @@ var (
 // tasks that all the CRDTs need to implement anyway
 type baseCRDT struct {
 	store          core.DSReaderWriter
-	namespace      ds.Key
+	namespace      core.Key
 	keysNs         string
 	valueSuffix    string
 	prioritySuffix string
 }
 
 // @TODO paramaterize ns/suffix
-func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
+func newBaseCRDT(store core.DSReaderWriter, namespace core.Key) baseCRDT {
 	return baseCRDT{
 		store:          store,
 		namespace:      namespace,
@@ -48,23 +48,23 @@ func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
 	}
 }
 
-func (base baseCRDT) keyPrefix(key string) ds.Key {
-	return base.namespace.ChildString(key)
+func (base baseCRDT) keyPrefix(key string) core.Key {
+	return core.Key{Key: base.namespace.ChildString(key)}
 }
 
-func (base baseCRDT) valueKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(base.valueSuffix)
+func (base baseCRDT) valueKey(key string) core.Key {
+	return core.Key{Key: base.namespace.ChildString(key).Instance(base.valueSuffix)}
 }
 
-func (base baseCRDT) priorityKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
+func (base baseCRDT) priorityKey(key string) core.Key {
+	return core.Key{Key: base.namespace.ChildString(key).Instance(base.prioritySuffix)}
 }
 
-func (base baseCRDT) typeKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
+func (base baseCRDT) typeKey(key string) core.Key {
+	return core.Key{Key: base.namespace.ChildString(key).Instance(crdtTypeSuffix)}
 }
 
-// func (base baseCRDT) dataTypeKey(key string) ds.Key {
+// func (base baseCRDT) dataTypeKey(key string) core.Key {
 // 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)
 // }
 
@@ -76,13 +76,13 @@ func (base baseCRDT) setPriority(key string, priority uint64) error {
 		return errors.New("error encoding priority")
 	}
 
-	return base.store.Put(prioK, buf[0:n])
+	return base.store.Put(prioK.ToDS(), buf[0:n])
 }
 
 // get the current priority for given key
 func (base baseCRDT) getPriority(key string) (uint64, error) {
 	pKey := base.priorityKey(key)
-	pbuf, err := base.store.Get(pKey)
+	pbuf, err := base.store.Get(pKey.ToDS())
 	if err != nil {
 		if err == ds.ErrNotFound {
 			return 0, nil

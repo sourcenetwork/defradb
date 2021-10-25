@@ -20,6 +20,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 func newRandomCID() cid.Cid {
@@ -46,7 +47,7 @@ func newRandomCID() cid.Cid {
 func newHeadSet() *heads {
 	store := newDS()
 
-	return newHeadset(store, ds.NewKey("/test/db/heads/mydockey"))
+	return newHeadset(store, core.NewKey("/test/db/heads/mydockey"))
 }
 
 func TestHeadsWrite(t *testing.T) {

@@ -30,7 +30,7 @@ import (
 
 var (
 	collectionSeqKey = "collection"
-	collectionNs     = ds.NewKey("/collection")
+	collectionNs     = core.NewKey("/collection")
 )
 
 var (
@@ -301,7 +301,7 @@ func (c *Collection) create(txn *Txn, doc *document.Document) error {
 	}
 	// fmt.Println(c)
 	dockey := key.NewDocKeyV0(doccid)
-	if !dockey.Key.Equal(doc.Key().Key) {
+	if !dockey.Key.Equal(doc.Key().Key.Key) {
 		return errors.Wrap(ErrDocVerification, fmt.Sprintf("Expected %s, got %s", doc.Key().UUID(), dockey.UUID()))
 	}
 
@@ -315,7 +315,7 @@ func (c *Collection) create(txn *Txn, doc *document.Document) error {
 	}
 
 	// write object marker
-	err = writeObjectMarker(txn.datastore, c.getPrimaryIndexDocKey(doc.Key().Instance("v")))
+	err = writeObjectMarker(txn.datastore, c.getPrimaryIndexDocKey(core.Key{Key: doc.Key().Instance("v")}))
 	if err != nil {
 		return err
 	}
@@ -479,7 +479,7 @@ func (c *Collection) delete(txn *Txn, key key.DocKey) (bool, error) {
 			return false, err
 		}
 
-		err = txn.datastore.Delete(c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		err = txn.datastore.Delete(c.getPrimaryIndexDocKey(core.NewKey(e.Key)).ToDS())
 		if err != nil {
 			return false, err
 		}
@@ -506,10 +506,10 @@ func (c *Collection) Exists(key key.DocKey) (bool, error) {
 
 // check if a document exists with the given key
 func (c *Collection) exists(txn *Txn, key key.DocKey) (bool, error) {
-	return txn.datastore.Has(c.getPrimaryIndexDocKey(key.Key.Instance("v")))
+	return txn.datastore.Has(c.getPrimaryIndexDocKey(core.Key{Key: key.Key.Instance("v")}).ToDS())
 }
 
-func (c *Collection) saveDocValue(txn *Txn, key ds.Key, val document.Value) (cid.Cid, error) {
+func (c *Collection) saveDocValue(txn *Txn, key core.Key, val document.Value) (cid.Cid, error) {
 	// datatype, err := c.db.crdtFactory.InstanceWithStores(txn, val.Type(), key)
 	// if err != nil {
 	// 	return cid.Cid{}, err
@@ -536,7 +536,7 @@ func (c *Collection) saveDocValue(txn *Txn, key ds.Key, val document.Value) (cid
 	}
 }
 
-func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CType, args ...interface{}) (cid.Cid, error) {
+func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key core.Key, ctype core.CType, args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
@@ -561,7 +561,7 @@ func (c *Collection) saveValueToMerkleCRDT(txn *Txn, key ds.Key, ctype core.CTyp
 		c.db.log.Debug("Sub objects not yet supported")
 		break
 	case core.COMPOSITE:
-		key = key.ChildString(core.COMPOSITE_NAMESPACE)
+		key = core.Key{Key: key.ChildString(core.COMPOSITE_NAMESPACE)}
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
@@ -614,19 +614,19 @@ func (c *Collection) commitImplicitTxn(txn *Txn) error {
 	return nil
 }
 
-func (c *Collection) getIndexDocKey(key ds.Key, indexID uint32) ds.Key {
-	return c.colIDKey.ChildString(fmt.Sprint(indexID)).Child(key)
+func (c *Collection) getIndexDocKey(key core.Key, indexID uint32) core.Key {
+	return core.Key{Key: c.colIDKey.ChildString(fmt.Sprint(indexID)).Child(key.ToDS())}
 }
 
-func (c *Collection) getPrimaryIndexDocKey(key ds.Key) ds.Key {
+func (c *Collection) getPrimaryIndexDocKey(key core.Key) core.Key {
 	return c.getIndexDocKey(key, c.PrimaryIndex().ID)
 }
 
-func (c *Collection) getFieldKey(key ds.Key, fieldName string) ds.Key {
+func (c *Collection) getFieldKey(key core.Key, fieldName string) core.Key {
 	if c.hasSchema {
-		return key.ChildString(fmt.Sprint(c.getSchemaFieldID(fieldName)))
+		return core.Key{Key: key.ChildString(fmt.Sprint(c.getSchemaFieldID(fieldName)))}
 	}
-	return key.ChildString(fieldName)
+	return core.Key{Key: key.ChildString(fieldName)}
 }
 
 // getSchemaFieldID returns the FieldID of the given fieldName.
@@ -641,15 +641,15 @@ func (c *Collection) getSchemaFieldID(fieldName string) uint32 {
 	return uint32(0)
 }
 
-func writeObjectMarker(store ds.Write, key ds.Key) error {
+func writeObjectMarker(store ds.Write, key core.Key) error {
 	if key.Name() != "v" {
-		key = key.Instance("v")
+		key = core.Key{Key: key.Instance("v")}
 	}
-	return store.Put(key, []byte{base.ObjectMarker})
+	return store.Put(key.ToDS(), []byte{base.ObjectMarker})
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.
 // it assumes the name of the collection is non-empty.
-// func makeCollectionDataKey(collectionID uint32) ds.Key {
+// func makeCollectionDataKey(collectionID uint32) core.Key {
 // 	return collectionNs.ChildString(name)
 // }

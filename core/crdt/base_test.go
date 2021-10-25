@@ -25,11 +25,11 @@ func newSeededDS() core.DSReaderWriter {
 }
 
 func exampleBaseCRDT() baseCRDT {
-	return newBaseCRDT(newSeededDS(), ds.NewKey("test"))
+	return newBaseCRDT(newSeededDS(), core.NewKey("test"))
 }
 
 func TestBaseCRDTNew(t *testing.T) {
-	base := newBaseCRDT(newDS(), ds.NewKey("test"))
+	base := newBaseCRDT(newDS(), core.NewKey("test"))
 	if base.store == nil {
 		t.Error("newBaseCRDT needs to init store")
 	} else if base.namespace.String() == "" {

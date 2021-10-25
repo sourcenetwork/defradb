@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
@@ -78,7 +77,7 @@ type LWWRegister struct {
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, namespace),
 		key:      key,
@@ -93,7 +92,7 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 // RETURN STATE
 func (reg LWWRegister) Value() ([]byte, error) {
 	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(valueK)
+	buf, err := reg.store.Get(valueK.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(valueK)
+		curValue, _ := reg.store.Get(valueK.ToDS())
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -153,7 +152,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(valueK, buf)
+	err = reg.store.Put(valueK.ToDS(), buf)
 	if err != nil {
 		return errors.Wrap(err, "Failed to store new value")
 	}

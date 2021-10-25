@@ -27,23 +27,23 @@ import (
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     core.DSReaderWriter
-	namespace ds.Key
+	namespace core.Key
 }
 
-func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
+func newHeadset(store core.DSReaderWriter, namespace core.Key) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) ds.Key {
+func (hh *heads) key(c cid.Cid) core.Key {
 	// /<namespace>/<cid>
-	return hh.namespace.Child(dshelp.CidToDsKey(c))
+	return core.Key{Key: hh.namespace.Child(dshelp.CidToDsKey(c))}
 }
 
 func (hh *heads) load(c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(hh.key(c))
+	v, err := hh.store.Get(hh.key(c).ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -60,11 +60,11 @@ func (hh *heads) write(store ds.Write, c cid.Cid, height uint64) error {
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(hh.key(c), buf[0:n])
+	return store.Put(hh.key(c).ToDS(), buf[0:n])
 }
 
 func (hh *heads) delete(store ds.Write, c cid.Cid) error {
-	err := store.Delete(hh.key(c))
+	err := store.Delete(hh.key(c).ToDS())
 	if err == ds.ErrNotFound {
 		return nil
 	}
@@ -143,9 +143,8 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, errors.Wrap(r.Error, "Failed to get next query result")
 		}
-		// fmt.Println(r.Key, hh.namespace.String())
-		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		headCid, err := dshelp.DsKeyToCid(headKey)
+		headKey := core.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
+		headCid, err := dshelp.DsKeyToCid(headKey.ToDS())
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "Failed to get CID from key")
 		}

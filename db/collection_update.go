@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
 	"github.com/fxamacker/cbor/v2"
-	ds "github.com/ipfs/go-datastore"
 	"github.com/pkg/errors"
 )
 
@@ -367,7 +366,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	if !ok {
 		return errors.New("Document is missing key")
 	}
-	key := ds.NewKey(keyStr)
+	key := core.NewKey(keyStr)
 	links := make([]core.DAGLink, 0)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {

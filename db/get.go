@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 
 	"github.com/fxamacker/cbor/v2"
-	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	"github.com/jbenet/goprocess"
 )
@@ -103,7 +102,7 @@ func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*
 	collector := newFieldCollector()
 	for r := range res.Next() {
 		// do we need to check r.Error here?
-		collector.dispatch(ds.NewKey(r.Key).Type(), r.Entry)
+		collector.dispatch(core.NewKey(r.Key).Type(), r.Entry)
 	}
 
 	done := make(chan struct{})
@@ -187,7 +186,7 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 	res := fieldResult{}
 	for entry := range q {
 		// fmt.Println("Got a new entry on queue")
-		k := ds.NewKey(entry.Key)
+		k := core.NewKey(entry.Key)
 		// new entry, parse and insert
 		if len(res.name) == 0 {
 			res.name = k.Type()

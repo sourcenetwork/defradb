@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -84,7 +83,7 @@ type CompositeDAG struct {
 	links map[string]cid.Cid
 }
 
-func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {
+func NewCompositeDAG(store core.DSReaderWriter, namespace core.Key, key string) CompositeDAG {
 	return CompositeDAG{}
 }
 

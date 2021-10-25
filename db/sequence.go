@@ -14,11 +14,12 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/pkg/errors"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 type sequence struct {
 	db  *DB
-	key ds.Key
+	key core.Key
 	val uint64
 }
 
@@ -26,7 +27,7 @@ func (db *DB) getSequence(key string) (*sequence, error) {
 	if key == "" {
 		return nil, errors.New("key cannot be empty")
 	}
-	seqKey := ds.NewKey("/seq").ChildString(key)
+	seqKey := core.Key{Key: core.NewKey("/seq").ChildString(key)}
 	seq := &sequence{
 		db:  db,
 		key: seqKey,
@@ -44,7 +45,7 @@ func (db *DB) getSequence(key string) (*sequence, error) {
 }
 
 func (seq *sequence) get() (uint64, error) {
-	val, err := seq.db.systemstore.Get(seq.key)
+	val, err := seq.db.systemstore.Get(seq.key.ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -56,7 +57,7 @@ func (seq *sequence) get() (uint64, error) {
 func (seq *sequence) update() error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := seq.db.systemstore.Put(seq.key, buf[:]); err != nil {
+	if err := seq.db.systemstore.Put(seq.key.ToDS(), buf[:]); err != nil {
 		return err
 	}
 
