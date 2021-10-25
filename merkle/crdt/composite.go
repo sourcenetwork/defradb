@@ -14,8 +14,6 @@ import (
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
-	// "github.com/sourcenetwork/defradb/store"
-
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 )
