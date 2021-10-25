@@ -14,7 +14,7 @@ import (
 	"context"
 
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -66,7 +66,7 @@ func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
 			body := defType.Loc.Source.Body[defType.Loc.Start:defType.Loc.End]
-			key := base.MakeSchemaSystemKey(defType.Name.Value)
+			key := core.NewSchemaKey(defType.Name.Value)
 			if err := db.Systemstore().Put(ctx, key.ToDS(), body); err != nil {
 				return err
 			}

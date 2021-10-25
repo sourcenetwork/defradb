@@ -189,7 +189,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			if err != nil {
 				return nil, fmt.Errorf("Failed to propagate VersionFetcher span, invalid CID: %w", err)
 			}
-			spans := fetcher.NewVersionedSpan(core.NewKey(parsed.DocKeys[0]), c) // @todo check len
+			spans := fetcher.NewVersionedSpan(core.DataStoreKey{DocKey: parsed.DocKeys[0]}, c) // @todo check len
 			origScan.Spans(spans)
 		} else if parsed.DocKeys != nil { // If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
@@ -200,7 +200,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			spans := make(core.Spans, len(parsed.DocKeys))
 			for i, docKey := range parsed.DocKeys {
 				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
-					&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(docKey))
+					&sourcePlan.info.collectionDescription.Indexes[0], core.DataStoreKey{DocKey: docKey})
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
 			origScan.Spans(spans)

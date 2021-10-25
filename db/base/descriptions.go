@@ -58,30 +58,33 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
-func (c CollectionDescription) GetIndexDocKey(key core.Key, indexID uint32) core.Key {
-	return core.NewKey(core.NewKey(c.IDString()).ChildString(fmt.Sprint(indexID)).Child(key.Key).String())
+func (c CollectionDescription) getIndexDocKey(key core.DataStoreKey, indexID uint32) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: c.IDString(),
+		IndexId:      key.IndexId,
+	}.WithInstanceInfo(key)
 }
 
-func (c CollectionDescription) GetPrimaryIndexDocKey(key core.Key) core.Key {
-	return c.GetIndexDocKey(key, c.Indexes[0].ID)
+func (c CollectionDescription) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
+	return c.getIndexDocKey(key, c.Indexes[0].ID)
 }
 
-func (c CollectionDescription) GetFieldKey(key core.Key, fieldName string) core.Key {
+func (c CollectionDescription) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
 	if !c.Schema.IsEmpty() {
-		return core.NewKey(key.ChildString(fmt.Sprint(c.Schema.GetFieldKey(fieldName))).String())
+		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
 	}
-	return core.NewKey(key.ChildString(fieldName).String())
+	return key.WithFieldId(fieldName)
 }
 
-func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key core.Key, fieldName string) (core.Key, error) {
+func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
 	switch ctype {
 	case core.COMPOSITE:
-		return core.NewKey(c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_NAMESPACE).String()), nil
+		return c.getPrimaryIndexDocKey(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case core.LWW_REGISTER:
-		fieldKey := c.GetFieldKey(key, fieldName)
-		return c.GetPrimaryIndexDocKey(fieldKey), nil
+		fieldKey := c.getFieldKey(key, fieldName)
+		return c.getPrimaryIndexDocKey(fieldKey), nil
 	}
-	return core.Key{}, errors.New("Invalid CRDT type")
+	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
 }
 
 // IndexDescription describes an Index on a Collection

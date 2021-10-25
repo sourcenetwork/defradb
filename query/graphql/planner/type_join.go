@@ -441,7 +441,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// create the index key for the sub doc
 	slct := n.subType.(*selectTopNode).source.(*selectNode)
 	desc := slct.sourceInfo.collectionDescription
-	subKeyIndexKey := base.MakeIndexKey(&desc, &desc.Indexes[0], core.NewKey(subDocKeyStr))
+	subKeyIndexKey := base.MakeIndexKey(&desc, &desc.Indexes[0], core.DataStoreKey{}.WithDocKey(subDocKeyStr))
 
 	n.spans = core.Spans{} // reset span
 	n.spans = append(n.spans, core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd()))

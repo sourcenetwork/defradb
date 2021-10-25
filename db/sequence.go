@@ -21,7 +21,7 @@ import (
 
 type sequence struct {
 	db  *DB
-	key core.Key
+	key core.SequenceKey
 	val uint64
 }
 
@@ -29,7 +29,7 @@ func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 	if key == "" {
 		return nil, errors.New("key cannot be empty")
 	}
-	seqKey := core.Key{Key: core.NewKey("/seq").ChildString(key)}
+	seqKey := core.NewSequenceKey(key)
 	seq := &sequence{
 		db:  db,
 		key: seqKey,

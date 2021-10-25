@@ -28,58 +28,42 @@ func newSeededDS() core.DSReaderWriter {
 }
 
 func exampleBaseCRDT() baseCRDT {
-	return newBaseCRDT(newSeededDS(), core.NewKey("test"))
+	return newBaseCRDT(newSeededDS(), core.DataStoreKey{})
 }
 
 func TestBaseCRDTNew(t *testing.T) {
-	base := newBaseCRDT(newDS(), core.NewKey("test"))
+	base := newBaseCRDT(newDS(), core.DataStoreKey{})
 	if base.store == nil {
 		t.Error("newBaseCRDT needs to init store")
-	} else if base.namespace.String() == "" {
-		t.Error("newBaseCRDT needs to init namespace")
-	} else if base.keysNs == "" {
-		t.Error("newBaseCRDT needs to init KeyNS")
-	} else if base.valueSuffix == "" {
-		t.Error("newBaseCRDT needs to init valueSuffix")
-	} else if base.prioritySuffix == "" {
-		t.Error("newBaseCRDT needs to init prioritySuffix")
-	}
-}
-
-func TestBaseCRDTKeyPrefix(t *testing.T) {
-	base := exampleBaseCRDT()
-	kp := base.keyPrefix("key1")
-	if kp.String() != "/test/key1" {
-		t.Errorf("Incorrect keyPrefix. Have %v, want %v", kp.String(), "/test/key1")
 	}
 }
 
 func TestBaseCRDTvalueKey(t *testing.T) {
 	base := exampleBaseCRDT()
-	vk := base.valueKey("mykey")
-	if vk.String() != "/test/mykey:v" {
-		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.String(), "/test/k/mykey/v")
+	vk := base.key.WithDocKey("mykey").WithValueFlag()
+	if vk.ToString() != "/mykey:v" {
+		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/mykey:v")
 	}
 }
 
 func TestBaseCRDTprioryKey(t *testing.T) {
 	base := exampleBaseCRDT()
-	pk := base.priorityKey("mykey")
-	if pk.String() != "/test/mykey:p" {
-		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.String(), "/test/k/mykey/p")
+	pk := base.key.WithDocKey("mykey").WithPriorityFlag()
+	if pk.ToString() != "/mykey:p" {
+		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/mykey:p")
 	}
 }
 
 func TestBaseCRDTSetGetPriority(t *testing.T) {
 	base := exampleBaseCRDT()
 	ctx := context.Background()
-	err := base.setPriority(ctx, "mykey", 10)
+	err := base.setPriority(ctx, base.key.WithDocKey("mykey"), 10)
 	if err != nil {
 		t.Errorf("baseCRDT failed to set Priority. err: %v", err)
 		return
 	}
 
-	priority, err := base.getPriority(ctx, "mykey")
+	priority, err := base.getPriority(ctx, base.key.WithDocKey("mykey"))
 	if err != nil {
 		t.Errorf("baseCRDT failed to get priority. err: %v", err)
 		return

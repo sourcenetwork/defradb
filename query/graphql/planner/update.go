@@ -101,7 +101,7 @@ func (n *updateNode) Values() map[string]interface{} {
 	// create a new span with the updateDoc._key
 	docKeyStr := updatedDoc["_key"].(string)
 	desc := n.collection.Description()
-	updatedDocKeyIndex := base.MakeIndexKey(&desc, &desc.Indexes[0], core.NewKey(docKeyStr))
+	updatedDocKeyIndex := base.MakeIndexKey(&desc, &desc.Indexes[0], core.DataStoreKey{}.WithDocKey(docKeyStr))
 	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
 
 	n.results.Spans(spans)

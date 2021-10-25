@@ -32,6 +32,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.6.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.4.1
+	github.com/multiformats/go-base32 v0.0.3
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/multiformats/go-varint v0.0.6

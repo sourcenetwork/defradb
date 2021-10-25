@@ -54,7 +54,7 @@ type dagJob struct {
 	node       ipld.Node       // the current ipld Node
 
 	collection client.Collection // collection our document belongs to
-	dockey     core.Key          // dockey of our document
+	dockey     core.DataStoreKey // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
 	// OLD FIELDS

@@ -56,7 +56,11 @@ func (w *wrappedStore) Delete(ctx context.Context, key ds.Key) error {
 }
 
 func (w *wrappedStore) GetIterator(q query.Query) (iterable.Iterator, error) {
-	return w.store.GetIterator(withPrefix(q, w.transform.ConvertKey(ds.NewKey(q.Prefix)).String()))
+	iterator, err := w.store.GetIterator(withPrefix(q, w.transform.ConvertKey(ds.NewKey(q.Prefix)).String()))
+	if err != nil {
+		return nil, err
+	}
+	return &wrappedIterator{transform: w.transform, iterator: iterator}, nil
 }
 
 func withPrefix(q query.Query, prefix string) query.Query {
@@ -197,4 +201,19 @@ orders:
 		break
 	}
 	return
+}
+
+type wrappedIterator struct {
+	transform ktds.KeyTransform
+	iterator  iterable.Iterator
+}
+
+var _ iterable.Iterator = (*wrappedIterator)(nil)
+
+func (w *wrappedIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
+	return w.iterator.IteratePrefix(ctx, w.transform.ConvertKey(startPrefix), w.transform.ConvertKey(endPrefix))
+}
+
+func (w *wrappedIterator) Close() error {
+	return w.iterator.Close()
 }

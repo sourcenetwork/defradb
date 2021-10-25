@@ -305,8 +305,8 @@ func (c *Collection) applyFullDelete(
 	// Covert dockey to compositeKey as follows:
 	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
 	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
-	compositeKey := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
-	headset := clock.NewHeadSet(txn.Headstore(), core.NewKey(compositeKey.String()))
+	compositeKey := dockey.Key.ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE)
+	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
 
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
@@ -324,7 +324,7 @@ func (c *Collection) applyFullDelete(
 
 	// 2. =========================== Delete datastore state ============================
 	dataQuery := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
+		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).ToString(),
 		KeysOnly: true,
 	}
 	dataResult, err := txn.Datastore().Query(ctx, dataQuery)
@@ -340,7 +340,7 @@ func (c *Collection) applyFullDelete(
 		}
 	}
 	// Delete the parent marker key for this document.
-	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key.WithValueFlag()).ToDS())
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (c *Collection) applyFullDelete(
 
 	// 3. =========================== Delete headstore state ===========================
 	headQuery := query.Query{
-		Prefix:   dockey.Key.String(),
+		Prefix:   dockey.Key.ToString(),
 		KeysOnly: true,
 	}
 	headResult, err := txn.Headstore().Query(ctx, headQuery)

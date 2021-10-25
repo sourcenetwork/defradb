@@ -157,7 +157,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	defer db.glock.Unlock()
 
 	log.Debug(ctx, "Checking if db has already been initialized...")
-	exists, err := db.Systemstore().Has(ctx, core.NewKey("init").ToDS())
+	exists, err := db.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -171,12 +171,12 @@ func (db *DB) initialize(ctx context.Context) error {
 	log.Debug(ctx, "Opened a new DB, needs full initialization")
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, "collection")
+	_, err = db.getSequence(ctx, core.COLLECTION)
 	if err != nil {
 		return err
 	}
 
-	err = db.Systemstore().Put(ctx, core.NewKey("init").ToDS(), []byte{1})
+	err = db.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}

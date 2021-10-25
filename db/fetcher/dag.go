@@ -19,9 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
@@ -42,7 +40,7 @@ type HeadFetcher struct {
 	spans core.Spans
 	cid   *cid.Cid
 
-	kv     *core.KeyValue
+	kv     *core.HeadKeyValue
 	kvIter dsq.Results
 	kvEnd  bool
 }
@@ -58,13 +56,13 @@ func (hf *HeadFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0)
+			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 
 	q := dsq.Query{
-		Prefix: hf.spans[0].Start().String(),
+		Prefix: hf.spans[0].Start().ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 
@@ -99,7 +97,7 @@ func (hf *HeadFetcher) nextKey() (bool, error) {
 	return false, nil
 }
 
-func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
+func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.HeadKeyValue, err error) {
 	res, available := hf.kvIter.NextSync()
 	if !available {
 		return true, nil, nil
@@ -108,24 +106,19 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 		return true, nil, err
 	}
 
-	kv = &core.KeyValue{
-		Key:   core.NewKey(res.Key),
+	headStoreKey, err := core.NewHeadStoreKey(res.Key)
+	if err != nil {
+		return true, nil, err
+	}
+	kv = &core.HeadKeyValue{
+		Key:   headStoreKey,
 		Value: res.Value,
 	}
 	return false, kv, nil
 }
 
-func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
-	// convert Value from KV value to cid.Cid
-	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.String(), hf.spans[0].Start().String()))
-
-	hash, err := dshelp.DsKeyToMultihash(headKey)
-	if err != nil {
-		return err
-	}
-	headCid := cid.NewCidV1(cid.Raw, hash)
-	hf.cid = &headCid
-	return nil
+func (hf *HeadFetcher) processKV(kv *core.HeadKeyValue) {
+	hf.cid = &kv.Key.Cid
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
@@ -137,9 +130,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, errors.New("Failed to get head, fetcher hasn't been initialized or started")
 	}
 
-	if err := hf.processKV(hf.kv); err != nil {
-		return nil, err
-	}
+	hf.processKV(hf.kv)
 
 	_, err := hf.nextKey()
 	if err != nil {

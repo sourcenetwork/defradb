@@ -77,14 +77,12 @@ func (delta *LWWRegDelta) Value() interface{} {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	baseCRDT
-	key string
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, namespace),
-		key:      key,
+		baseCRDT: newBaseCRDT(store, key),
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -95,7 +93,7 @@ func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) L
 // Value gets the current register value
 // RETURN STATE
 func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
 		return nil, err
@@ -111,12 +109,12 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
 		Data:   value,
-		DocKey: []byte(reg.key),
+		DocKey: reg.key.Bytes(),
 	}
 }
 
 func (reg LWWRegister) ID() string {
-	return reg.key
+	return reg.key.ToString()
 }
 
 // RETURN DELTA
@@ -141,7 +139,7 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) e
 }
 
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(ctx, reg.key)
+	curPrio, err := reg.getPriority(ctx, reg.key.WithPriorityFlag())
 	if err != nil {
 		return fmt.Errorf("Failed to get priority for Set : %w", err)
 	}
@@ -149,7 +147,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {

@@ -57,7 +57,7 @@ var (
 				"points": 99.9,
 			},
 			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeihlfvqiwtdpzzxjlsvkxv5ignjgdqer5gwe2pgo5wr5qj4k4dqfjq",
+			cid: "bafybeienkr6hj73uwd5vhxehavbu26mkk4tv4yd4xefjsa2xy5wlafpls4",
 		},
 		{
 			payload: []byte(`{
@@ -71,7 +71,7 @@ var (
 				"age":      22,
 			},
 			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeigwekvyc3lmrtqyxrxh5dgd3n5wl5ljhbwvl2eqmlznzuxhiryo7q",
+			cid: "bafybeif24w2yjzkb45kywubghcj2pacrfwjjolqq3k3qyiciclvoxcycxe",
 		},
 		{
 			payload: []byte(`{
@@ -84,7 +84,7 @@ var (
 				"points": 129.99,
 			},
 			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeibaollpiaq7x2etrsrhbxxwpqyddeaf6njqblo7rrg5on4zv3w45q",
+			cid: "bafybeiasb5jvqygubz54bp2c7wryj643osthoqgzismc6p53wriq3bpubq",
 		},
 	}
 )
@@ -127,7 +127,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[3].cid)
 	assert.NoError(t, err)
 
@@ -155,7 +155,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[0].cid)
 	assert.NoError(t, err)
 
@@ -194,7 +194,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[1].cid)
 	assert.NoError(t, err)
 
@@ -233,7 +233,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[2].cid)
 	assert.NoError(t, err)
 
@@ -270,7 +270,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[3].cid)
 	assert.NoError(t, err)
 
@@ -307,7 +307,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
-	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
+	key := core.DataStoreKey{DocKey: "bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d"}
 	version, err := cid.Decode(testStates[0].cid)
 	assert.NoError(t, err)
 

@@ -33,9 +33,8 @@ func newMockStore() core.DSReaderWriter {
 
 func setupLWWRegister() LWWRegister {
 	store := newMockStore()
-	ns := core.NewKey("defra/test")
-	id := "AAAA-BBBB"
-	return NewLWWRegister(store, ns, id)
+	key := core.DataStoreKey{DocKey: "AAAA-BBBB"}
+	return NewLWWRegister(store, key)
 }
 
 func setupLoadedLWWRegster(ctx context.Context) LWWRegister {

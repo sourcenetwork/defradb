@@ -58,12 +58,11 @@ type DocumentFetcher struct {
 	decodedDoc  *document.Document
 	initialized bool
 
-	kv            *core.KeyValue
-	kvIter        iterable.Iterator
-	kvResultsIter dsq.Results
-	kvEnd         bool
-
-	indexKey []byte
+	kv                *core.KeyValue
+	kvIter            iterable.Iterator
+	kvResultsIter     dsq.Results
+	kvEnd             bool
+	isReadingDocument bool
 }
 
 // Init implements DocumentFetcher
@@ -77,6 +76,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
+	df.isReadingDocument = false
 	df.doc = new(document.EncodedDocument)
 	df.doc.Schema = &col.Schema
 
@@ -126,7 +126,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 			}
 		}
 	}
-	df.indexKey = nil
+
 	df.spans = uniqueSpans
 	df.curSpanIndex = -1
 	df.txn = txn
@@ -218,7 +218,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		}
 
 		// skip if we are iterating through a non value kv pair
-		if df.kv.Key.Name() != "v" {
+		if df.kv.Key.InstanceType != "v" {
 			continue
 		}
 
@@ -228,8 +228,8 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		}
 
 		// check if we've crossed document boundries
-		if df.indexKey != nil && !bytes.HasPrefix(df.kv.Key.Bytes(), df.indexKey) {
-			df.indexKey = nil
+		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+			df.isReadingDocument = false
 			return true, nil
 		}
 		return false, nil
@@ -251,7 +251,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 	}
 
 	kv = &core.KeyValue{
-		Key:   core.NewKey(res.Key),
+		Key:   core.NewDataStoreKey(res.Key),
 		Value: res.Value,
 	}
 	return false, kv, nil
@@ -270,12 +270,10 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		return errors.New("Failed to process KV, uninitialized document object")
 	}
 
-	if df.indexKey == nil {
-		// thihs is the first key for the document
-		ik := df.ReadIndexKey(kv.Key)
-		df.indexKey = ik.Bytes()
+	if !df.isReadingDocument {
+		df.isReadingDocument = true
 		df.doc.Reset()
-		df.doc.Key = []byte(ik.BaseNamespace())
+		df.doc.Key = []byte(kv.Key.DocKey)
 	}
 
 	// extract the FieldID and update the encoded doc properties map
@@ -378,17 +376,6 @@ func (df *DocumentFetcher) FetchNextMap(ctx context.Context) ([]byte, map[string
 	return encdoc.Key, doc, err
 }
 
-// ReadIndexKey extracts and returns the index key from the given KV key.
-// @todo: Generalize ReadIndexKey to handle secondary indexes
-func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
-	// currently were only support primary index keys
-	// which have the following structure:
-	// /db/data/<collection_id>/<index_id = 0>/<dockey>/<field_id>
-	// We only care about the data up to /<dockey>
-	// so were just going to do a quick hack
-	return core.Key{Key: key.Parent()}
-}
-
 func (df *DocumentFetcher) Close() error {
 	if df.kvIter == nil {
 		return nil
@@ -397,6 +384,10 @@ func (df *DocumentFetcher) Close() error {
 	err := df.kvIter.Close()
 	if err != nil {
 		return err
+	}
+
+	if df.kvResultsIter == nil {
+		return nil
 	}
 
 	return df.kvResultsIter.Close()

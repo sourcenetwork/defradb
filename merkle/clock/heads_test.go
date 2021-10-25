@@ -50,7 +50,7 @@ func newRandomCID() cid.Cid {
 func newHeadSet() *heads {
 	s := newDS()
 
-	return newHeadset(store.AsDSReaderWriter(s), core.NewKey("/test/db/heads/mydockey"))
+	return newHeadset(store.AsDSReaderWriter(s), core.HeadStoreKey{}.WithDocKey("mydockey").WithFieldId("1"))
 }
 
 func TestHeadsWrite(t *testing.T) {

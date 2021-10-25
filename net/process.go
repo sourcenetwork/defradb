@@ -34,7 +34,7 @@ import (
 func (p *Peer) processLog(
 	ctx context.Context,
 	col client.Collection,
-	dockey core.Key,
+	dockey core.DataStoreKey,
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
@@ -87,12 +87,12 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey core.Key, field string) (crdt.MerkleCRDT, error) {
-	var key core.Key
+func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
+	var key core.DataStoreKey
 	var ctype core.CType
 	if field == "" { // empty field name implies composite type
 		ctype = core.COMPOSITE
-		key = core.NewKey(col.GetPrimaryIndexDocKey(docKey).ChildString(core.COMPOSITE_NAMESPACE).String())
+		key = col.GetPrimaryIndexDocKey(docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
 	} else {
 		fd, ok := col.Description().GetField(field)
 		if !ok {
@@ -100,7 +100,7 @@ func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collec
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = core.NewKey(col.GetPrimaryIndexDocKey(docKey).ChildString(fieldID).String())
+		key = col.GetPrimaryIndexDocKey(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
@@ -124,7 +124,7 @@ func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) 
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
 	col client.Collection,
-	dockey core.Key,
+	dockey core.DataStoreKey,
 	field string,
 	nd ipld.Node,
 	children []cid.Cid,
