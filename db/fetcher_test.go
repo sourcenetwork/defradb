@@ -20,24 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func newMemoryDB() (*db.DB, error) {
-// 	opts := &db.Options{
-// 		Store: "memory",
-// 		Memory: db.MemoryOptions{
-// 			Size: 1024 * 1000,
-// 		},
-// 	}
-
-// 	return db.NewDB(opts)
-// }
-
-// Create a new Fetcher for a Collection named "users"
-// with the following schema:
-// Users {
-//		Name string
-//		Age int
-// }
-
 func newTestCollectionDescription() base.CollectionDescription {
 	return base.CollectionDescription{
 		Name: "users",
@@ -46,18 +28,18 @@ func newTestCollectionDescription() base.CollectionDescription {
 			ID:       uint32(1),
 			FieldIDs: []uint32{1, 2, 3},
 			Fields: []base.FieldDescription{
-				base.FieldDescription{
+				{
 					Name: "_key",
 					ID:   base.FieldID(1),
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				{
 					Name: "Name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				{
 					Name: "Age",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
@@ -66,7 +48,7 @@ func newTestCollectionDescription() base.CollectionDescription {
 			},
 		},
 		Indexes: []base.IndexDescription{
-			base.IndexDescription{
+			{
 				Name:    "primary",
 				ID:      uint32(0),
 				Primary: true,
@@ -377,7 +359,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := core.Key{base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
+	docKey := core.Key{Key: base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}

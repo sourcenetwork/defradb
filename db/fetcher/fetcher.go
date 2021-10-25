@@ -348,5 +348,5 @@ func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 	// /db/data/<collection_id>/<index_id = 0>/<dockey>/<field_id>
 	// We only care about the data up to /<dockey>
 	// so were just going to do a quick hack
-	return core.Key{key.Parent()}
+	return core.Key{Key: key.Parent()}
 }
