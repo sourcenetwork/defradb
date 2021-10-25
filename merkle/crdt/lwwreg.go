@@ -28,8 +28,8 @@ import (
 
 var (
 	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, _ corenet.Broadcaster) MerkleCRDTInitFn {
-		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
+		return func(key core.Key) MerkleCRDT {
+			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), core.NewKey(""), key)
 		}
 	})
 )
@@ -52,15 +52,13 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
-	// New Register
-	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
+func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey core.Key) *MerkleLWWRegister {
+	register := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 
 	// New Clock
 	// two possible cases here
 	// 1) Primary index
 	// 2) Versioned Index
-
 	var headsetKey ds.Key
 	list := dockey.List()[1:] // remove collection identifier
 	if list[0] == fmt.Sprint(base.PrimaryIndex) {
@@ -80,14 +78,14 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 		panic("invalid index identifier for Merkle CRDT")
 	}
 
-	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
+	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), register)
 	// newBaseMerkleCRDT(clock, register)
-	base := &baseMerkleCRDT{clock: clk, crdt: reg}
+	base := &baseMerkleCRDT{clock: clk, crdt: register}
 	// instantiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,
-		reg:            reg,
+		reg:            register,
 	}
 }
 

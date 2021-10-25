@@ -26,9 +26,9 @@ var (
 var (
 	// Commented because it's deadcode (unused according to linter).
 	// collectionSeqKey = "collection"
-	collectionNs       = ds.NewKey("/collection/names")
-	schemaNs           = ds.NewKey("/schema")
-	collectionSchemaNs = ds.NewKey("/collection/schema")
+	collectionNs       = core.NewKey("/collection/names")
+	schemaNs           = core.NewKey("/schema")
+	collectionSchemaNs = core.NewKey("/collection/schema")
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions

@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -81,7 +80,7 @@ type CompositeDAG struct {
 	schemaID string
 }
 
-func NewCompositeDAG(store core.DSReaderWriter, schemaID string, namespace ds.Key, key string) CompositeDAG {
+func NewCompositeDAG(store core.DSReaderWriter, schemaID string, namespace core.Key, key string) CompositeDAG {
 	return CompositeDAG{
 		key:      key,
 		schemaID: schemaID,

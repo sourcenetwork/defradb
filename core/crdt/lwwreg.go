@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
@@ -82,7 +81,7 @@ type LWWRegister struct {
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, namespace),
 		key:      key,
@@ -97,7 +96,7 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 // RETURN STATE
 func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(ctx, valueK)
+	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +153,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, valueK)
+		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -162,7 +161,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, valueK, buf)
+	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
 		return fmt.Errorf("Failed to store new value : %w", err)
 	}

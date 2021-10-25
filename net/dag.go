@@ -21,7 +21,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -54,7 +54,7 @@ type dagJob struct {
 	node       ipld.Node       // the current ipld Node
 
 	collection client.Collection // collection our document belongs to
-	dockey     key.DocKey        // dockey of our document
+	dockey     core.Key          // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
 	// OLD FIELDS

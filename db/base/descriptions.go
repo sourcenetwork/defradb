@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -59,30 +58,30 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
-func (c CollectionDescription) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
-	return ds.NewKey(c.IDString()).ChildString(fmt.Sprint(indexID)).Child(key)
+func (c CollectionDescription) GetIndexDocKey(key core.Key, indexID uint32) core.Key {
+	return core.NewKey(core.NewKey(c.IDString()).ChildString(fmt.Sprint(indexID)).Child(key.Key).String())
 }
 
-func (c CollectionDescription) GetPrimaryIndexDocKey(key ds.Key) ds.Key {
+func (c CollectionDescription) GetPrimaryIndexDocKey(key core.Key) core.Key {
 	return c.GetIndexDocKey(key, c.Indexes[0].ID)
 }
 
-func (c CollectionDescription) GetFieldKey(key ds.Key, fieldName string) ds.Key {
+func (c CollectionDescription) GetFieldKey(key core.Key, fieldName string) core.Key {
 	if !c.Schema.IsEmpty() {
-		return key.ChildString(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
+		return core.NewKey(key.ChildString(fmt.Sprint(c.Schema.GetFieldKey(fieldName))).String())
 	}
-	return key.ChildString(fieldName)
+	return core.NewKey(key.ChildString(fieldName).String())
 }
 
-func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key ds.Key, fieldName string) (ds.Key, error) {
+func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key core.Key, fieldName string) (core.Key, error) {
 	switch ctype {
 	case core.COMPOSITE:
-		return c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_NAMESPACE), nil
+		return core.NewKey(c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_NAMESPACE).String()), nil
 	case core.LWW_REGISTER:
 		fieldKey := c.GetFieldKey(key, fieldName)
 		return c.GetPrimaryIndexDocKey(fieldKey), nil
 	}
-	return ds.Key{}, errors.New("Invalid CRDT type")
+	return core.Key{}, errors.New("Invalid CRDT type")
 }
 
 // IndexDescription describes an Index on a Collection

@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/sourcenetwork/defradb/logging"
@@ -41,7 +40,7 @@ func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id st
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
-		headset:   newHeadset(headstore, ds.NewKey(id)),
+		headset:   newHeadset(headstore, core.NewKey(id)),
 		crdt:      crdt,
 	}
 }

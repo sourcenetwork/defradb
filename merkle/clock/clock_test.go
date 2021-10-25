@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -27,7 +28,7 @@ func newDS() ds.Datastore {
 }
 
 func newTestMerkleClock() *MerkleClock {
-	ns := ds.NewKey("/test/db")
+	ns := core.NewKey("/test/db")
 	s := newDS()
 	rw := store.AsDSReaderWriter(s)
 	multistore := store.MultiStoreFrom(rw)
@@ -37,7 +38,7 @@ func newTestMerkleClock() *MerkleClock {
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	ns := ds.NewKey("/test/db")
+	ns := core.NewKey("/test/db")
 	s := newDS()
 	rw := store.AsDSReaderWriter(s)
 	multistore := store.MultiStoreFrom(rw)

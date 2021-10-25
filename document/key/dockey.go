@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 // Key Versions
@@ -52,7 +52,7 @@ type DocKey struct {
 	uuid    uuid.UUID
 	cid     cid.Cid
 	peerID  string
-	ds.Key
+	core.Key
 }
 
 // Undef can be defined to be a nil like DocKey
@@ -67,7 +67,7 @@ func NewDocKeyV0(dataCID cid.Cid) DocKey {
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
-	dc.Key = ds.NewKey(dc.String())
+	dc.Key = core.NewKey(dc.String())
 	return dc
 }
 
@@ -99,7 +99,7 @@ func NewFromString(key string) (DocKey, error) {
 		version: uint16(version),
 		uuid:    uuid,
 	}
-	dc.Key = ds.NewKey(key)
+	dc.Key = core.NewKey(key)
 	return dc, nil
 }
 

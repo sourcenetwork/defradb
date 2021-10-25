@@ -306,7 +306,7 @@ func (c *Collection) applyFullDelete(
 	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
 	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
 	compositeKey := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
-	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
+	headset := clock.NewHeadSet(txn.Headstore(), core.NewKey(compositeKey.String()))
 
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)

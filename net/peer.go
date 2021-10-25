@@ -305,7 +305,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 				continue
 			}
 			dockey := key.Key
-			headset := clock.NewHeadSet(txn.Headstore(), dockey.ChildString(core.COMPOSITE_NAMESPACE))
+			headset := clock.NewHeadSet(txn.Headstore(), core.NewKey(dockey.ChildString(core.COMPOSITE_NAMESPACE).String()))
 			cids, priority, err := headset.List(ctx)
 			if err != nil {
 				log.ErrorE(

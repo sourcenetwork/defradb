@@ -32,28 +32,27 @@ import (
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     core.DSReaderWriter
-	namespace ds.Key
+	namespace core.Key
 }
 
-// NewHeadSet
-func NewHeadSet(store core.DSReaderWriter, namespace ds.Key) *heads {
+func NewHeadSet(store core.DSReaderWriter, namespace core.Key) *heads {
 	return newHeadset(store, namespace)
 }
 
-func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
+func newHeadset(store core.DSReaderWriter, namespace core.Key) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) ds.Key {
+func (hh *heads) key(c cid.Cid) core.Key {
 	// /<namespace>/<cid>
-	return hh.namespace.Child(dshelp.MultihashToDsKey(c.Hash()))
+	return core.Key{Key: hh.namespace.Child(dshelp.MultihashToDsKey(c.Hash()))}
 }
 
 func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(ctx, hh.key(c))
+	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -70,11 +69,11 @@ func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height ui
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(ctx, hh.key(c), buf[0:n])
+	return store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
 
 func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
-	err := store.Delete(ctx, hh.key(c))
+	err := store.Delete(ctx, hh.key(c).ToDS())
 	if err == ds.ErrNotFound {
 		return nil
 	}
@@ -166,8 +165,9 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
 		}
-		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		hash, err := dshelp.DsKeyToMultihash(headKey)
+
+		headKey := core.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
+		hash, err := dshelp.DsKeyToMultihash(headKey.Key)
 		if err != nil {
 			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
 		}

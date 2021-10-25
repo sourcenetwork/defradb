@@ -379,7 +379,7 @@ func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype 
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key.Key, fieldName)
+		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}

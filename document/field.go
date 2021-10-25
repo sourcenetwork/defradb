@@ -11,13 +11,12 @@
 package document
 
 import (
-	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 )
 
 // Field is an interface to interact with Fields inside a document
 type Field interface {
-	Key() ds.Key
+	Key() core.Key
 	Name() string
 	Type() core.CType //TODO Abstract into a Field Type interface
 	SchemaType() string
@@ -25,7 +24,7 @@ type Field interface {
 
 type simpleField struct {
 	name       string
-	key        ds.Key
+	key        core.Key
 	crdtType   core.CType
 	schemaType string
 }
@@ -33,7 +32,7 @@ type simpleField struct {
 func (doc *Document) newField(t core.CType, name string, schemaType ...string) Field {
 	f := simpleField{
 		name:     name,
-		key:      doc.Key().ChildString(name),
+		key:      core.Key{Key: doc.Key().ChildString(name)},
 		crdtType: t,
 	}
 	if len(schemaType) > 0 {
@@ -50,7 +49,7 @@ func (field simpleField) Type() core.CType {
 	return field.crdtType
 }
 
-func (field simpleField) Key() ds.Key {
+func (field simpleField) Key() core.Key {
 	return field.key
 }
 
