@@ -51,7 +51,7 @@ type DocKey struct {
 	uuid    uuid.UUID
 	cid     cid.Cid
 	peerID  string
-	core.Key
+	Key     core.DataStoreKey
 }
 
 // Undef can be defined to be a nil like DocKey
@@ -66,7 +66,7 @@ func NewDocKeyV0(dataCID cid.Cid) DocKey {
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
-	dc.Key = core.NewKey(dc.String())
+	dc.Key = core.DataStoreKey{DocKey: dc.String()}
 	return dc
 }
 
@@ -98,7 +98,7 @@ func NewFromString(key string) (DocKey, error) {
 		version: uint16(version),
 		uuid:    uuid,
 	}
-	dc.Key = core.NewKey(key)
+	dc.Key = core.DataStoreKey{DocKey: key}
 	return dc, nil
 }
 

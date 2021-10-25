@@ -110,7 +110,7 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	}
 	dag.field = parsed.FieldName
 	if parsed.DocKey != "" {
-		key := core.NewKey(parsed.DocKey + "/" + parsed.FieldName)
+		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(parsed.FieldName)
 		headset.key = key
 	}
 	dag.headset = headset
@@ -150,7 +150,7 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 	}
 	dag.field = parsed.FieldName
 	if parsed.DocKey != "" {
-		key := core.NewKey(parsed.DocKey + "/" + parsed.FieldName)
+		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(parsed.FieldName)
 		headset.key = key
 	}
 	dag.headset = headset

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -347,7 +348,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.headstore, nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
+	clk := clock.NewMerkleClock(db.headstore, nil, core.HeadStoreKey{}.WithDocKey("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d").WithFieldId("Name"), nil)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List()
 	assert.NoError(t, err)

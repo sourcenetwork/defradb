@@ -39,7 +39,7 @@ var (
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
 
 	// Individual Store Keys
-	rootStoreKey   = core.NewKey("/db")
+	rootStoreKey   = ds.NewKey("/db")
 	systemStoreKey = rootStoreKey.ChildString("/system")
 	dataStoreKey   = rootStoreKey.ChildString("/data")
 	headStoreKey   = rootStoreKey.ChildString("/heads")
@@ -185,7 +185,7 @@ func (db *DB) Initialize() error {
 	}
 
 	log.Debug("Checking if db has already been initialized...")
-	exists, err := db.systemstore.Has(core.NewKey("init").ToDS())
+	exists, err := db.systemstore.Has(ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -199,12 +199,12 @@ func (db *DB) Initialize() error {
 	log.Debug("opened a new db, needs full intialization")
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence("collection")
+	_, err = db.getSequence(core.COLLECTION)
 	if err != nil {
 		return err
 	}
 
-	err = db.systemstore.Put(core.NewKey("init").ToDS(), []byte{1})
+	err = db.systemstore.Put(ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}

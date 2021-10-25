@@ -12,8 +12,8 @@ package clock
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/core"
@@ -21,25 +21,40 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
+	"github.com/multiformats/go-base32"
 )
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     core.DSReaderWriter
-	namespace core.Key
+	namespace core.HeadStoreKey
 }
 
-func newHeadset(store core.DSReaderWriter, namespace core.Key) *heads {
+func newHeadset(store core.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) core.Key {
+func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
 	// /<namespace>/<cid>
-	return core.Key{Key: hh.namespace.Child(dshelp.CidToDsKey(c))}
+	return hh.namespace.WithCid(CidToString(c))
+}
+
+func CidToString(k cid.Cid) string {
+	rawKey := k.Bytes()
+	buf := make([]byte, base32.RawStdEncoding.EncodedLen(len(rawKey)))
+	base32.RawStdEncoding.Encode(buf, rawKey)
+	return string(buf)
+}
+
+func StringToCid(s string) (cid.Cid, error) {
+	bytes, err := base32.RawStdEncoding.DecodeString(s)
+	if err != nil {
+		return cid.Cid{}, err
+	}
+	return cid.Cast(bytes)
 }
 
 func (hh *heads) load(c cid.Cid) (uint64, error) {
@@ -127,7 +142,7 @@ func (hh *heads) Add(c cid.Cid, height uint64) error {
 // @todo Document Heads.List function
 func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	q := query.Query{
-		Prefix:   hh.namespace.String(),
+		Prefix:   hh.namespace.ToString(),
 		KeysOnly: false,
 	}
 
@@ -143,11 +158,15 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, errors.Wrap(r.Error, "Failed to get next query result")
 		}
-		headKey := core.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		headCid, err := dshelp.DsKeyToCid(headKey.ToDS())
+
+		headKey := core.NewHeadStoreKey(r.Key)
+		headCid, err := StringToCid(headKey.Cid)
 		if err != nil {
+			fmt.Println(headKey.Cid)
+			fmt.Println(r.Key)
 			return nil, 0, errors.Wrap(err, "Failed to get CID from key")
 		}
+
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
 			return nil, 0, errors.New("error decocding height")

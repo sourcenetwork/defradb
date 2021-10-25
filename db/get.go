@@ -80,7 +80,7 @@ func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*
 	// This will return any and all keys under that prefix, which all fields
 	// of the document exist, as well as any sub documents, etc
 	q := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
+		Prefix:   c.getPrimaryIndexDocKey(key.Key).ToString(),
 		Filters:  []query.Filter{filterPriorityEntry{}},
 		KeysOnly: false,
 	}
@@ -102,7 +102,7 @@ func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*
 	collector := newFieldCollector()
 	for r := range res.Next() {
 		// do we need to check r.Error here?
-		collector.dispatch(core.NewKey(r.Key).Type(), r.Entry)
+		collector.dispatch(core.NewDataStoreKey(r.Key).FieldId, r.Entry)
 	}
 
 	done := make(chan struct{})
@@ -186,14 +186,14 @@ func (c *fieldCollector) runQueue(q chan query.Entry) {
 	res := fieldResult{}
 	for entry := range q {
 		// fmt.Println("Got a new entry on queue")
-		k := core.NewKey(entry.Key)
+		k := core.NewDataStoreKey(entry.Key)
 		// new entry, parse and insert
 		if len(res.name) == 0 {
-			res.name = k.Type()
+			res.name = k.FieldId
 			collected++
 		}
 
-		switch k.Name() {
+		switch k.InstanceType {
 		case "v": // main cbor encoded value
 			crdtByte := entry.Value[0]
 			res.ctype = core.CType(crdtByte)

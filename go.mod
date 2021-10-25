@@ -25,6 +25,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-multibase v0.0.1
 	github.com/multiformats/go-multihash v0.0.6
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect

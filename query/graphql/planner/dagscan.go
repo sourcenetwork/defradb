@@ -28,7 +28,7 @@ import (
 
 type headsetScanNode struct {
 	p   *Planner
-	key core.Key
+	key core.DataStoreKey
 
 	spans           core.Spans
 	scanInitialized bool
@@ -160,12 +160,12 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	if n.headset != nil {
 		// make sure we have the correct field suffix
 		span := spans[0].Start()
-		if !strings.HasSuffix(span.String(), n.field) {
-			spans[0] = core.NewSpan(core.Key{Key: span.ChildString(n.field)}, core.NewKey(""))
+		if !strings.HasSuffix(span.ToString(), n.field) {
+			spans[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
 		}
 		n.headset.Spans(spans)
 	} else {
-		data := spans[0].Start().String()
+		data := spans[0].Start().ToString()
 		c, err := cid.Decode(data)
 		if err == nil {
 			n.cid = &c

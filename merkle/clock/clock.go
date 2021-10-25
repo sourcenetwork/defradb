@@ -35,11 +35,11 @@ type MerkleClock struct {
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData) core.MerkleClock {
+func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, namespace core.HeadStoreKey, crdt core.ReplicatedData) core.MerkleClock {
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
-		headset:   newHeadset(headstore, core.NewKey(id)), //TODO: Config logger param package wide
+		headset:   newHeadset(headstore, namespace), //TODO: Config logger param package wide
 		crdt:      crdt,
 	}
 }

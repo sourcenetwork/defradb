@@ -29,27 +29,25 @@ func newDS() ds.Datastore {
 }
 
 func newTestMerkleClock() *MerkleClock {
-	ns := core.NewKey("/test/db")
+	ns := ds.NewKey("/test/db")
 	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
 	headstore := namespace.Wrap(s, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(s, core.NewKey("blockstore").ToDS())
+	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
 	dagstore := store.NewDAGStore(batchStore)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(s, ns, id)
-	return NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(s, core.DataStoreKey{})
+	return NewMerkleClock(headstore, dagstore, core.HeadStoreKey{DocKey: "dockey", FieldId: "1"}, reg).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	ns := core.NewKey("/test/db")
+	ns := ds.NewKey("/test/db")
 	s := newDS()
 	// datastore := namespace.Wrap(store, ns.ChildString("data"))
 	headstore := namespace.Wrap(s, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(s, core.NewKey("blockstore").ToDS())
+	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
 	dagstore := store.NewDAGStore(batchStore)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(s, ns, id)
-	clk := NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(s, core.DataStoreKey{})
+	clk := NewMerkleClock(headstore, dagstore, core.HeadStoreKey{}, reg).(*MerkleClock)
 
 	if clk.headstore != headstore {
 		t.Error("MerkleClock store not correctly set")

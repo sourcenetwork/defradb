@@ -172,7 +172,7 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	if key, ok := p.doc["_key"].(string); ok {
 		// pass the doc key as a reference through the spans interface
-		spans := core.Spans{core.NewSpan(core.NewKey(key), core.Key{})}
+		spans := core.Spans{core.NewSpan(core.DataStoreKey{DocKey: key}, core.DataStoreKey{})}
 		plan.Spans(spans)
 		plan.Init()
 	} else {

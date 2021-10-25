@@ -106,13 +106,13 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0) != df.reverse
+			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0) != df.reverse
 		})
 	}
 	df.indexKey = nil
 
 	q := dsq.Query{
-		Prefix: spans[0].Start().String(), // @todo: Support multiple spans
+		Prefix: spans[0].Start().ToString(), // @todo: Support multiple spans
 	}
 	if df.reverse {
 		q.Orders = []dsq.Order{dsq.OrderByKeyDescending{}}
@@ -121,7 +121,7 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 
 	var err error
-	df.kvIter, err = txn.Query(q)
+	df.kvIter, err = txn.Datastore().Query(q)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 		}
 
 		// skip if we are iterating through a non value kv pair
-		if df.kv.Key.Name() != "v" {
+		if df.kv.Key.InstanceType != "v" {
 			continue
 		}
 
@@ -199,7 +199,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 	}
 
 	kv = &core.KeyValue{
-		Key:   core.NewKey(res.Key),
+		Key:   core.NewDataStoreKey(res.Key),
 		Value: res.Value,
 	}
 	return false, kv, nil
@@ -223,8 +223,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		ik := df.ReadIndexKey(kv.Key)
 		df.indexKey = ik.Bytes()
 		df.doc.Reset()
-		df.doc.Key = []byte(ik.BaseNamespace())
-		// fmt.Println(df.doc.Key)
+		df.doc.Key = []byte(kv.Key.DocKey) // core.DataStoreKey{DocKey: kv.Key.DocKey}.Bytes() //todo, this is very lazy
 		// keyFD := df.schemaFields[0] // _key
 		// df.doc.Properties[keyFD] = &document.EncProperty{
 		// 	Raw: df.doc.Key[:],
@@ -245,7 +244,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 			return errors.New("Found field with no matching FieldDescription")
 		}
 	} else {
-		fieldName := kv.Key.Type()
+		fieldName := kv.Key.FieldId
 		fieldDesc = base.FieldDescription{
 			Name: fieldName,
 		}
@@ -342,11 +341,15 @@ func (df *DocumentFetcher) FetchNextMap() ([]byte, map[string]interface{}, error
 
 // ReadIndexKey extracts and returns the index key from the given KV key.
 // @todo: Generalize ReadIndexKey to handle secondary indexes
-func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
+func (df *DocumentFetcher) ReadIndexKey(key core.DataStoreKey) core.DataStoreKey {
 	// currently were only support primary index keys
 	// which have the following structure:
 	// /db/data/<collection_id>/<index_id = 0>/<dockey>/<field_id>
 	// We only care about the data up to /<dockey>
 	// so were just going to do a quick hack
-	return core.Key{Key: key.Parent()}
+	return core.DataStoreKey{
+		CollectionId:   key.CollectionId,
+		PrimaryIndexId: key.PrimaryIndexId,
+		DocKey:         key.DocKey,
+	}
 }

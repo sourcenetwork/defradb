@@ -72,15 +72,13 @@ func (delta *LWWRegDelta) Value() interface{} {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	baseCRDT
-	key  string
 	data []byte
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, namespace),
-		key:      key,
+		baseCRDT: newBaseCRDT(store, key),
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -91,7 +89,7 @@ func NewLWWRegister(store core.DSReaderWriter, namespace core.Key, key string) L
 // Value gets the current register value
 // RETURN STATE
 func (reg LWWRegister) Value() ([]byte, error) {
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	buf, err := reg.store.Get(valueK.ToDS())
 	if err != nil {
 		return nil, err
@@ -132,7 +130,7 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 }
 
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(reg.key)
+	curPrio, err := reg.getPriority(reg.key.WithPriorityFlag())
 	if err != nil {
 		return errors.Wrap(err, "Failed to get priority for Set")
 	}
@@ -140,7 +138,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	// if the current priority is higher ignore put
 	// else if the current value is lexographically
 	// greater than the new then ignore
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {

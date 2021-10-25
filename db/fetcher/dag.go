@@ -54,13 +54,13 @@ func (hf *HeadFetcher) Start(txn core.Txn, spans core.Spans) error {
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0)
+			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 
 	q := dsq.Query{
-		Prefix: hf.spans[0].Start().String(),
+		Prefix: hf.spans[0].Start().ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 
@@ -100,7 +100,7 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 	}
 
 	kv = &core.KeyValue{
-		Key:   core.NewKey(res.Key),
+		Key:   core.NewDataStoreKey(res.Key),
 		Value: res.Value,
 	}
 	return false, kv, nil
@@ -108,7 +108,7 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 
 func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
 	// convert Value from KV value to cid.Cid
-	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.String(), hf.spans[0].Start().String()))
+	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.ToString(), hf.spans[0].Start().ToString()))
 	headCid, err := dshelp.DsKeyToCid(headKey)
 	if err != nil {
 		return err

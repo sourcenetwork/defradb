@@ -188,7 +188,6 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 }
 
 func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	fmt.Println("updating keys:", keys)
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -210,7 +209,6 @@ func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interfa
 	for i, key := range keys {
 		doc, err := c.Get(key)
 		if err != nil {
-			fmt.Println("error getting key to update:", key)
 			return nil, err
 		}
 		v, err := doc.ToMap()
@@ -224,10 +222,10 @@ func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interfa
 			err = c.applyMerge(txn, v, patch.(map[string]interface{}))
 		}
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
 
-		results.DocKeys[i] = key.String()
+		results.DocKeys[i] = key.Key.DocKey
 		results.Count++
 	}
 	return results, nil
@@ -366,7 +364,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	if !ok {
 		return errors.New("Document is missing key")
 	}
-	key := core.NewKey(keyStr)
+	key := core.DataStoreKey{DocKey: keyStr}
 	links := make([]core.DAGLink, 0)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {

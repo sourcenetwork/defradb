@@ -12,9 +12,9 @@ package core
 // Span is a range of keys from [Start, End)
 type Span interface {
 	// Start returns the starting key of the Span
-	Start() Key
+	Start() DataStoreKey
 	// End returns the ending key of the Span
-	End() Key
+	End() DataStoreKey
 	// Contains returns true of the Span contains the provided Span's range
 	Contains(Span) bool
 	// Equal returns true if the provided Span is equal to the current
@@ -25,11 +25,11 @@ type Span interface {
 
 type span struct {
 	Span
-	start Key
-	end   Key
+	start DataStoreKey
+	end   DataStoreKey
 }
 
-func NewSpan(start, end Key) Span {
+func NewSpan(start, end DataStoreKey) Span {
 	return span{
 		start: start,
 		end:   end,
@@ -37,12 +37,12 @@ func NewSpan(start, end Key) Span {
 }
 
 // Start returns the starting key of the Span
-func (s span) Start() Key {
+func (s span) Start() DataStoreKey {
 	return s.start
 }
 
 // End returns the ending key of the Span
-func (s span) End() Key {
+func (s span) End() DataStoreKey {
 	return s.end
 }
 
@@ -66,6 +66,6 @@ type Spans []Span
 
 // KeyValue is a KV store response containing the resulting core.Key and byte array value
 type KeyValue struct {
-	Key   Key
+	Key   DataStoreKey
 	Value []byte
 }

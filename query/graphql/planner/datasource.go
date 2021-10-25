@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
@@ -56,7 +57,7 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 }
 
 func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, error) {
-	key := base.MakeCollectionSystemKey(name)
+	key := core.NewCollectionKey(name)
 	var desc base.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(key.ToDS())
 	if err != nil {
