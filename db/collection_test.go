@@ -23,16 +23,16 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 		Name: "users",
 		Schema: base.SchemaDescription{
 			Fields: []base.FieldDescription{
-				base.FieldDescription{
+				{
 					Name: "_key",
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				{
 					Name: "Name",
 					Kind: base.FieldKind_STRING,
 					Typ:  core.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				{
 					Name: "Age",
 					Kind: base.FieldKind_INT,
 					Typ:  core.LWW_REGISTER,
@@ -67,7 +67,6 @@ func TestNewCollectionWithSchema(t *testing.T) {
 
 	desc := col.Description()
 	schema := col.Schema()
-	// indexes := col.Indexes()
 
 	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
@@ -82,8 +81,6 @@ func TestNewCollectionWithSchema(t *testing.T) {
 		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
 }
-
-// func TestCollectionIndexes
 
 func TestGetCollection(t *testing.T) {
 	db, err := newMemoryDB()

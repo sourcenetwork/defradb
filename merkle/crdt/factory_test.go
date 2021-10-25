@@ -132,7 +132,7 @@ func TestFactoryInstanceMissing(t *testing.T) {
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
-func TestBlankFactoryInstance(t *testing.T) {
+func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	d, h, s := newStores()
 	f1 := NewFactory(nil, nil, nil)
 	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
@@ -145,7 +145,20 @@ func TestBlankFactoryInstance(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestFullFactoryInstance(t *testing.T) {
+func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
+	d, h, s := newStores()
+	f1 := NewFactory(nil, nil, nil)
+	f1.Register(core.COMPOSITE, &compFactoryFn)
+	f := f1.WithStores(d, h, s)
+
+	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("MyKey"))
+	assert.NoError(t, err)
+
+	_, ok := crdt.(*MerkleCompositeDAG)
+	assert.True(t, ok)
+}
+
+func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
@@ -157,6 +170,18 @@ func TestFullFactoryInstance(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
+	d, h, s := newStores()
+	f := NewFactory(d, h, s)
+	f.Register(core.COMPOSITE, &compFactoryFn)
+
+	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("MyKey"))
+	assert.NoError(t, err)
+
+	_, ok := crdt.(*MerkleCompositeDAG)
+	assert.True(t, ok)
+}
+
 func TestLWWRegisterFactoryFn(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
@@ -165,6 +190,18 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
 
-	err := lwwreg.Set([]byte("hi"))
+	_, err := lwwreg.Set([]byte("hi"))
+	assert.NoError(t, err)
+}
+
+func TestCompositeRegisterFactoryFn(t *testing.T) {
+	d, h, s := newStores()
+	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
+	crdt := compFactoryFn(f)(ds.NewKey("MyKey"))
+
+	merkleReg, ok := crdt.(*MerkleCompositeDAG)
+	assert.True(t, ok)
+
+	_, err := merkleReg.Set([]byte("hi"), []core.DAGLink{})
 	assert.NoError(t, err)
 }

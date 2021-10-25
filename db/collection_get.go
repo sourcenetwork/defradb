@@ -47,13 +47,12 @@ func (c *Collection) get(txn *Txn, key key.DocKey) (*document.Document, error) {
 	index := &c.desc.Indexes[0]
 	// initialize it with the priamry index
 	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
-	// defer df.Close()
 	if err != nil {
 		return nil, err
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(desc, index, core.Key{key.Key})
+	targetKey := base.MakeIndexKey(desc, index, core.Key{Key: key.Key})
 	// run the doc fetcher
 	err = df.Start(txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {
