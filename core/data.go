@@ -64,7 +64,7 @@ func (s span) Compare(s2 Span) int {
 // Spans is a collection of individual spans
 type Spans []Span
 
-// KeyValue is a KV store response containing the resulting ds.Key and byte array value
+// KeyValue is a KV store response containing the resulting core.Key and byte array value
 type KeyValue struct {
 	Key   Key
 	Value []byte
