@@ -22,8 +22,6 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-// var ()
-
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
