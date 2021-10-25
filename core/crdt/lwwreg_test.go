@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
-	// "github.com/sourcenetwork/defradb/store"
 	"github.com/ugorji/go/codec"
 
 	ipld "github.com/ipfs/go-ipld-format"
