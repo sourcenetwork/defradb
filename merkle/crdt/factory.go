@@ -16,8 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 
-	// "github.com/sourcenetwork/defradb/store"
-
 	ds "github.com/ipfs/go-datastore"
 )
 
