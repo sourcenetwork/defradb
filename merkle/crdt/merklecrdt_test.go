@@ -27,7 +27,6 @@ import (
 
 var (
 	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-	// store core.DSReaderWriter
 )
 
 func newDS() ds.Datastore {
