@@ -306,7 +306,7 @@ func (c *Collection) create(txn *Txn, doc *document.Document) error {
 	}
 
 	// write object marker
-	err = writeObjectMarker(txn.datastore, c.getPrimaryIndexDocKey(doc.Key().Key.WithValueFlag()))
+	err = writeObjectMarker(txn.datastore, c.getPrimaryIndexDocKey(doc.Key().Key))
 	if err != nil {
 		return err
 	}
