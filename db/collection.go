@@ -48,8 +48,7 @@ type Collection struct {
 	db  *DB
 	txn core.Txn
 
-	colID    uint32
-	colIDKey core.DataStoreKey
+	colID uint32
 
 	schemaID string
 
@@ -104,10 +103,9 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 	}
 
 	return &Collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		colIDKey: core.DataStoreKey{CollectionId: fmt.Sprint(desc.ID)},
+		db:    db,
+		desc:  desc,
+		colID: desc.ID,
 	}, nil
 }
 
@@ -211,7 +209,6 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
-		colIDKey: core.DataStoreKey{CollectionId: fmt.Sprint(desc.ID)},
 		schemaID: sid,
 	}, nil
 }
@@ -407,7 +404,6 @@ func (c *Collection) WithTxn(txn core.Txn) client.Collection {
 		txn:      txn,
 		desc:     c.desc,
 		colID:    c.colID,
-		colIDKey: c.colIDKey,
 		schemaID: c.schemaID,
 	}
 }
@@ -789,14 +785,6 @@ func (c *Collection) commitImplicitTxn(ctx context.Context, txn core.Txn) error 
 		return txn.Commit(ctx)
 	}
 	return nil
-}
-
-func (c *Collection) GetIndexDocKey(key core.DataStoreKey, indexID uint32) core.DataStoreKey {
-	return c.getIndexDocKey(key, indexID)
-}
-
-func (c *Collection) getIndexDocKey(key core.DataStoreKey, indexID uint32) core.DataStoreKey {
-	return c.colIDKey.WithPrimaryIndexId(fmt.Sprint(indexID)).WithInstanceInfo(key)
 }
 
 func (c *Collection) GetPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
