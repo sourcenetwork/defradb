@@ -22,6 +22,28 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
+
+SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
+
+{
+	query {
+		user {
+			age
+
+			friend {
+				name
+			}
+
+			address {
+				street
+			}
+		}
+	}
+}
+
+*/
+
 // wraps a selectNode and all the logic of a plan
 // graph into a single struct for proper plan
 // expansion
@@ -36,6 +58,10 @@ type selectTopNode struct {
 
 	// top of the plan graph
 	plan planNode
+
+	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRADEGY) -> render -> source
+
+	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
 func (n *selectTopNode) Init() error                    { return n.plan.Init() }
