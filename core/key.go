@@ -197,12 +197,6 @@ func (k DataStoreKey) WithFieldId(fieldId string) DataStoreKey {
 	return newKey
 }
 
-func (k DataStoreKey) WithPrimaryIndexId(indexId string) DataStoreKey {
-	newKey := k
-	newKey.PrimaryIndexId = indexId
-	return newKey
-}
-
 func (k DataStoreKey) ToHeadStoreKey() HeadStoreKey {
 	return HeadStoreKey{
 		DocKey:  k.DocKey,
