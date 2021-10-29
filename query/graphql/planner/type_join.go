@@ -19,6 +19,60 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
+const (
+	indexJoinBatchSize = 100
+)
+
+/*
+
+type User {
+	name: String
+	age: Int
+	friends: [Friend]
+}
+
+type Friend {
+	name: String
+	friendsDate: DateTime
+	user_id: DocKey
+}
+
+- >
+
+/graphql
+/explain
+
+
+{
+	query {
+		user { selectTopNode -> (source) selectNode -> (source) scanNode(user) -> filter: NIL
+			[_key]
+			name
+
+			// key = bae-KHDFLGHJFLDG
+			friends selectNode -> (source) scanNode(friend) -> filter: {user_id: {_eq: "bae-KHDFLGHJFLDG"}} {
+				name
+				date: friendsDate
+			}
+		}
+	}
+}
+
+selectTopNode - > selectNode -> MultiNode.children: []planNode  -> multiScanNode(scanNode(user)**)											-> } -> scanNode(user).Next() -> FETCHER_STUFF + FILTER_STUFF + OTHER_STUFF
+										  						-> TypeJoinNode -> TypeJoinOneMany -> (one) multiScanNode(scanNode(user)**)	-> } -> scanNode(user).Value() -> doc
+																			 					   -> (many) selectNode - > scanNode(friend)
+
+1. NEXT/VALUES MultiNode.doc = {_key: bae-KHDFLGHJFLDG, name: "BOB"}
+2. NEXT/VALUES TypeJoinOneMany.one {_key: bae-KHDFLGHJFLDG, name: "BOB"}
+3. NEXT/VALUES (many).selectNode.doc = {name: "Eric", date: Oct29}
+LOOP
+4. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{{name: "Eric", date: Oct29}}]}
+5. NEXT/VALUES (many).selectNode.doc = {name: "Jimmy", date: Oct21}
+6. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
+GOTO LOOP
+
+*/
+
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
 // It constructs a new plan node, which queries the
