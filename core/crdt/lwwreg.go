@@ -130,7 +130,7 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 }
 
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(reg.key.WithPriorityFlag())
+	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get priority for Set")
 	}
