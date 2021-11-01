@@ -223,7 +223,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		ik := df.ReadIndexKey(kv.Key)
 		df.indexKey = ik.Bytes()
 		df.doc.Reset()
-		df.doc.Key = []byte(kv.Key.DocKey) // core.DataStoreKey{DocKey: kv.Key.DocKey}.Bytes() //todo, this is very lazy
+		df.doc.Key = []byte(kv.Key.DocKey)
 		// keyFD := df.schemaFields[0] // _key
 		// df.doc.Properties[keyFD] = &document.EncProperty{
 		// 	Raw: df.doc.Key[:],
