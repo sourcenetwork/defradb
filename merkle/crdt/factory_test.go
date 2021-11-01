@@ -128,7 +128,7 @@ func TestFactoryInstanceMissing(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 
-	_, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
+	_, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
@@ -138,7 +138,7 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	f := f1.WithStores(d, h, s)
 
-	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -151,7 +151,7 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 	f1.Register(core.COMPOSITE, &compFactoryFn)
 	f := f1.WithStores(d, h, s)
 
-	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -163,7 +163,7 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	f := NewFactory(d, h, s)
 	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 
-	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -175,7 +175,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 	f := NewFactory(d, h, s)
 	f.Register(core.COMPOSITE, &compFactoryFn)
 
-	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("MyKey"))
+	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -185,7 +185,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 func TestLWWRegisterFactoryFn(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
-	crdt := lwwFactoryFn(f)(ds.NewKey("MyKey"))
+	crdt := lwwFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
@@ -197,7 +197,7 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 func TestCompositeRegisterFactoryFn(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
-	crdt := compFactoryFn(f)(ds.NewKey("MyKey"))
+	crdt := compFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)
