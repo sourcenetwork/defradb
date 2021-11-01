@@ -58,8 +58,7 @@ type DocumentFetcher struct {
 	kvIter dsq.Results
 	kvEnd  bool
 	// kvIndex int
-
-	indexKey []byte
+	isReadingDocument bool
 }
 
 // Init implements DocumentFetcher
@@ -109,7 +108,6 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0) != df.reverse
 		})
 	}
-	df.indexKey = nil
 
 	q := dsq.Query{
 		Prefix: spans[0].Start().ToString(), // @todo: Support multiple spans
@@ -176,8 +174,8 @@ func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 		}
 
 		// check if we've crossed document boundries
-		if df.indexKey != nil && !bytes.HasPrefix(df.kv.Key.Bytes(), df.indexKey) {
-			df.indexKey = nil
+		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+			df.isReadingDocument = false
 			return true, nil
 		}
 		return false, nil
@@ -218,10 +216,8 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		return errors.New("Failed to process KV, uninitialized document object")
 	}
 
-	if df.indexKey == nil {
-		// thihs is the first key for the document
-		ik := df.ReadIndexKey(kv.Key)
-		df.indexKey = ik.Bytes()
+	if df.isReadingDocument == false {
+		df.isReadingDocument = true
 		df.doc.Reset()
 		df.doc.Key = []byte(kv.Key.DocKey)
 		// keyFD := df.schemaFields[0] // _key
@@ -337,19 +333,4 @@ func (df *DocumentFetcher) FetchNextMap() ([]byte, map[string]interface{}, error
 		return nil, nil, err
 	}
 	return encdoc.Key, doc, err
-}
-
-// ReadIndexKey extracts and returns the index key from the given KV key.
-// @todo: Generalize ReadIndexKey to handle secondary indexes
-func (df *DocumentFetcher) ReadIndexKey(key core.DataStoreKey) core.DataStoreKey {
-	// currently were only support primary index keys
-	// which have the following structure:
-	// /db/data/<collection_id>/<index_id = 0>/<dockey>/<field_id>
-	// We only care about the data up to /<dockey>
-	// so were just going to do a quick hack
-	return core.DataStoreKey{
-		CollectionId:   key.CollectionId,
-		PrimaryIndexId: key.PrimaryIndexId,
-		DocKey:         key.DocKey,
-	}
 }
