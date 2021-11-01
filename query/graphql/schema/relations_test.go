@@ -49,8 +49,8 @@ func TestSimpleOneToOneFromSingle(t *testing.T) {
 	rel, err := rm.GetRelation(relName1)
 	assert.NoError(t, err)
 	assert.Equal(t, rel.relType, base.Meta_Relation_ONEONE)
-	assert.True(t, rel.SchemaTypeIsPrimary("Author"))
-	assert.False(t, rel.SchemaTypeIsPrimary("Book"))
+	assert.False(t, rel.SchemaTypeIsPrimary("Author"))
+	assert.True(t, rel.SchemaTypeIsPrimary("Book")) // @todo: Check primary auto-set ordering
 }
 
 func TestSimpleOneToOnePrimaryFromSingle(t *testing.T) {
