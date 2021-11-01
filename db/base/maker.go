@@ -23,10 +23,10 @@ func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) cor
 }
 
 // MakeIndexKey generates a key for the target dockey, using the collection/index description
-func MakeIndexKey(col *CollectionDescription, index *IndexDescription, key core.DataStoreKey) core.DataStoreKey {
+func MakeIndexKey(col *CollectionDescription, index *IndexDescription, docKey string) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: col.IDString(),
 		IndexId:      index.IDString(),
-		DocKey:       key.DocKey,
+		DocKey:       docKey,
 	}
 }
