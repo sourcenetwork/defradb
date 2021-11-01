@@ -90,14 +90,8 @@ func newEmptyDoc() *Document {
 	}
 }
 
-// NewFromJSON creates a new instance of a Document from a raw JSON object byte array
-func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error) {
-	data := make(map[string]interface{})
-	err := json.Unmarshal(obj, &data)
-	if err != nil {
-		return nil, err
-	}
-
+func NewFromMap(data map[string]interface{}, schema ...base.SchemaDescription) (*Document, error) {
+	var err error
 	doc := &Document{
 		fields: make(map[string]Field),
 		values: make(map[Field]Value),
@@ -149,6 +143,17 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 	}
 
 	return doc, nil
+}
+
+// NewFromJSON creates a new instance of a Document from a raw JSON object byte array
+func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error) {
+	data := make(map[string]interface{})
+	err := json.Unmarshal(obj, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFromMap(data, schema...)
 }
 
 // Key returns the generated DocKey for this document
