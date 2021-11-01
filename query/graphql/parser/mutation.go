@@ -34,6 +34,10 @@ var (
 	}
 )
 
+var (
+	ErrEmptyDataPayload = errors.New("given data payload is empty")
+)
+
 type ObjectPayload struct {
 	Object map[string]interface{}
 	Array  []interface{}
@@ -188,10 +192,9 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		// parse each individual arg type seperately
 		if prop == "data" { // parse data
 			raw := argument.Value.(*ast.StringValue)
-			// payload, err := NewObjectPayload(raw.Value)
-			// if err != nil {
-			// 	return nil, err
-			// }
+			if raw.Value == "" {
+				return nil, ErrEmptyDataPayload
+			}
 			mut.Data = raw.Value
 		} else if prop == "filter" { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
