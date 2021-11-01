@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,11 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 					Kind: base.FieldKind_INT,
 					Typ:  core.LWW_REGISTER,
 				},
+				{
+					Name: "Weight",
+					Kind: base.FieldKind_FLOAT,
+					Typ:  core.LWW_REGISTER,
+				},
 			},
 		},
 	}
@@ -45,17 +51,18 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 	return col.(*Collection), err
 }
 
-func TestNewCollection(t *testing.T) {
+func createNewTestCollection(db *DB) (client.Collection, error) {
+	return db.CreateCollection(base.CollectionDescription{
+		Name: "test",
+	})
+}
+
+func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollection(db)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "test", col.Name())
-	assert.Equal(t, uint32(1), col.ID())
-	assert.True(t, reflect.DeepEqual(col.Schema(), base.SchemaDescription{}))
-	assert.Equal(t, 1, len(col.Indexes()))
+	_, err = createNewTestCollection(db)
+	assert.Error(t, err)
 }
 
 func TestNewCollectionWithSchema(t *testing.T) {
@@ -65,18 +72,18 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
-	desc := col.Description()
 	schema := col.Schema()
+	desc := col.Description()
 
 	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
 	assert.False(t, reflect.DeepEqual(schema, base.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
-	assert.Equal(t, 3, len(schema.Fields))
-	assert.Equal(t, 3, len(schema.FieldIDs))
+	assert.Equal(t, 4, len(schema.Fields))
+	assert.Equal(t, 4, len(schema.FieldIDs))
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
 		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
@@ -86,14 +93,25 @@ func TestGetCollection(t *testing.T) {
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	_, err = newTestCollection(db)
+	_, err = newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
-	col, err := db.GetCollection("test")
+	col, err := db.GetCollection("users")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "test", col.Name())
+	schema := col.Schema()
+	desc := col.Description()
+
+	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
+	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
-	assert.True(t, reflect.DeepEqual(col.Schema(), base.SchemaDescription{}))
+	assert.False(t, reflect.DeepEqual(schema, base.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
+	assert.Equal(t, 4, len(schema.Fields))
+	assert.Equal(t, 4, len(schema.FieldIDs))
+
+	for i := 0; i < 4; i++ {
+		assert.Equal(t, uint32(i), schema.FieldIDs[i])
+		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
+	}
 }
