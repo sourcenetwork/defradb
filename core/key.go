@@ -82,7 +82,7 @@ type SequenceKey struct {
 // [CollectionId]/[PrimaryIndexId]/
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
-func NewDataStoreKey(key string) DataStoreKey { //@todo: unit test this like crazy
+func NewDataStoreKey(key string) DataStoreKey {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
 		return dataStoreKey
