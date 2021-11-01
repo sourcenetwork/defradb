@@ -45,7 +45,7 @@ func TestSimleTypeMutation(t *testing.T) {
 		} else if strings.Contains(mname, "update") {
 			assert.Equal(t, "Book", f.Type.Name())
 			assert.IsType(t, &gql.List{}, f.Type)
-			assert.Len(t, f.Args, 3)
+			assert.Len(t, f.Args, 4)
 		} else if strings.Contains(mname, "delete") {
 			assert.Equal(t, "Book", f.Type.Name())
 			assert.IsType(t, &gql.List{}, f.Type)
