@@ -52,7 +52,7 @@ func (c *Collection) get(txn *Txn, key key.DocKey) (*document.Document, error) {
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(desc, index, key.Key)
+	targetKey := base.MakeIndexKey(desc, index, key.Key.DocKey)
 	// run the doc fetcher
 	err = df.Start(txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {

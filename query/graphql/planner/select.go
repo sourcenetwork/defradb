@@ -186,7 +186,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		// instead of a prefix scan + filter via the Primary Index (0), like here:
 		if parsed.DocKey != "" {
 			dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
-				&sourcePlan.info.collectionDescription.Indexes[0], core.DataStoreKey{DocKey: parsed.DocKey})
+				&sourcePlan.info.collectionDescription.Indexes[0], parsed.DocKey)
 			spans := core.Spans{core.NewSpan(dockeyIndexKey, core.DataStoreKey{})}
 			origScan.Spans(spans)
 		}
