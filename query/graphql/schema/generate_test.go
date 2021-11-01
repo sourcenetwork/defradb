@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
 	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
@@ -48,6 +49,10 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 						Name: "_key",
 						Type: gql.ID,
 					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.String,
@@ -68,6 +73,14 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.NewNonNull(gql.String),
@@ -88,6 +101,14 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.NewList(gql.String),
@@ -108,6 +129,14 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.NewList(gql.NewNonNull(gql.String)),
@@ -128,6 +157,14 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.NewNonNull(gql.NewList(gql.String)),
@@ -148,6 +185,14 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
@@ -173,6 +218,14 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.String,
@@ -217,6 +270,14 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.String,
@@ -226,6 +287,14 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"otherField": &gql.Field{
 						Name: "otherField",
 						Type: gql.Boolean,
@@ -252,6 +321,14 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"myField": &gql.Field{
 						Name: "myField",
 						Type: gql.String,
@@ -265,6 +342,14 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"otherField": &gql.Field{
 						Name: "otherField",
 						Type: gql.Boolean,
@@ -282,6 +367,14 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 	myObj := gql.NewObject(gql.ObjectConfig{
 		Name: "MyObject",
 		Fields: gql.Fields{
+			"_key": &gql.Field{
+				Name: "_key",
+				Type: gql.ID,
+			},
+			"_version": &gql.Field{
+				Name: "_version",
+				Type: gql.NewList(types.Commit),
+			},
 			"myField": &gql.Field{
 				Name: "myField",
 				Type: gql.String,
@@ -303,9 +396,21 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"otherField": &gql.Field{
 						Name: "otherField",
 						Type: myObj,
+					},
+					"otherField_id": &gql.Field{
+						Name: "otherField_id",
+						Type: gql.ID,
 					},
 				},
 			}),
@@ -337,9 +442,21 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
 				Fields: gql.Fields{
+					"_key": &gql.Field{
+						Name: "_key",
+						Type: gql.ID,
+					},
+					"_version": &gql.Field{
+						Name: "_version",
+						Type: gql.NewList(types.Commit),
+					},
 					"otherField": &gql.Field{
 						Name: "otherField",
 						Type: myObj,
+					},
+					"otherField_id": &gql.Field{
+						Name: "otherField_id",
+						Type: gql.ID,
 					},
 				},
 			}),
