@@ -119,7 +119,10 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 			return nil, errors.New("Query is missing query or mutation statements")
 		}
 	case *parser.OperationDefinition:
-		return p.newPlan(n.Selections[0]) // @todo: ensure parser.QueryDefinition has at least 1 selection
+		if len(n.Selections) == 0 {
+			return nil, errors.New("OperationDefinition is missing selections")
+		}
+		return p.newPlan(n.Selections[0])
 	case *parser.Select:
 		return p.Select(n)
 	case *parser.CommitSelect:
