@@ -71,6 +71,118 @@ LOOP
 6. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
 GOTO LOOP
 
+
+// SPLIT FILTER
+query {
+	user {
+		age
+		name
+		points
+
+		friends {
+			name
+			points
+		}
+	}
+}
+
+{
+	data: [
+		{
+			_key: bae-ALICE
+			age: 22,
+			name: "Alice",
+			points: 45,
+
+			friends: [
+				{
+					name: "Bob",
+					points:  11
+					user_id: "bae-ALICE"
+				},
+			]
+		},
+
+		{
+			_key: bae-CHARLIE
+			age: 22,
+			name: "Charlie",
+			points: 45,
+
+			friends: [
+				// {
+				// 	name: "Mickey",
+				// 	points:  6
+				// }
+			]
+		},
+	]
+}
+
+ALL EMPTY
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode.filter = NIL
+
+ROOT EMPTY / SUB FULL
+{friends: {points: {_gt: 10}}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode.filter = NIL
+
+ROOT FULL / SUB EMPTY
+{age: {_gte: 21}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+
+ROOT FULL / SUB FULL
+{age: {_gte: 21}, friends: {points: {_gt: 10}}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																																-> scanNode(friends).filter = NIL
+
+ROOT FULL / SUB EMPTY / SUB SUB FULL
+{age: {_gte: 21}}
+friends: {points: {_gt: 10}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																									 -> scanNode(friends).filter = {points: {_gt: 10}}
+
+ROOT FULL / SUB FULL / SUB SUB FULL
+{age: {_gte: 21}}
+friends: {points: {_gt: 10}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																									 							-> scanNode(friends).filter = {points: {_gt: 10}}
+
+
+ONE-TO-ONE EXAMPLE WITH FILTER TRACKING
+type user {
+	age: Int
+	points: Float
+	name: String
+
+	address: Address @primary
+	address_id: bae-address-VALUE
+}
+
+type Address: {
+	street_name: String
+	house_number: Int
+	city: String
+	country: String
+	...
+
+	user: user
+	# user_id: DocKey
+}
+
+query {
+	user {
+		age
+		points
+		name
+
+		address {
+			street_name
+			city
+			country
+		}
+	}
+}
+
 */
 
 // typeIndexJoin provides the needed join functionality
@@ -469,7 +581,7 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	} else {
 		docKey := doc["_key"].(string)
 		filter := map[string]interface{}{
-			n.rootName + "_id": docKey,
+			n.rootName + "_id": docKey, // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
