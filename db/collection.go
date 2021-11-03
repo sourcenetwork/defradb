@@ -50,8 +50,7 @@ type Collection struct {
 	colID    uint32
 	colIDKey core.Key
 
-	desc      base.CollectionDescription
-	hasSchema bool
+	desc base.CollectionDescription
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -70,28 +69,32 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 		return nil, errors.New("Collection ID must be greater than 0")
 	}
 
-	if !desc.Schema.IsEmpty() {
-		if len(desc.Schema.Fields) == 0 {
-			return nil, errors.New("Collection schema has no fields")
+	if desc.Schema.IsEmpty() {
+		return nil, errors.New("Collection must have a schema")
+	}
+
+	if len(desc.Schema.Fields) == 0 {
+		return nil, errors.New("Collection schema has no fields")
+	}
+
+	docKeyField := desc.Schema.Fields[0]
+	if docKeyField.Kind != base.FieldKind_DocKey || docKeyField.Name != "_key" {
+		return nil, errors.New("Collection schema first field must be a DocKey")
+	}
+
+	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
+	for i, field := range desc.Schema.Fields {
+		if field.Name == "" {
+			return nil, errors.New("Collection schema field missing Name")
 		}
-		docKeyField := desc.Schema.Fields[0]
-		if docKeyField.Kind != base.FieldKind_DocKey || docKeyField.Name != "_key" {
-			return nil, errors.New("Collection schema first field must be a DocKey")
+		if field.Kind == base.FieldKind_None {
+			return nil, errors.New("Collection schema field missing FieldKind")
 		}
-		desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
-		for i, field := range desc.Schema.Fields {
-			if field.Name == "" {
-				return nil, errors.New("Collection schema field missing Name")
-			}
-			if field.Kind == base.FieldKind_None {
-				return nil, errors.New("Collection schema field missing FieldKind")
-			}
-			if (field.Kind != base.FieldKind_DocKey && !field.IsObject()) && field.Typ == core.NONE_CRDT {
-				return nil, errors.New("Collection schema field missing CRDT type")
-			}
-			desc.Schema.FieldIDs[i] = uint32(i)
-			desc.Schema.Fields[i].ID = base.FieldID(i)
+		if (field.Kind != base.FieldKind_DocKey && !field.IsObject()) && field.Typ == core.NONE_CRDT {
+			return nil, errors.New("Collection schema field missing CRDT type")
 		}
+		desc.Schema.FieldIDs[i] = uint32(i)
+		desc.Schema.Fields[i].ID = base.FieldID(i)
 	}
 
 	// for now, ignore any defined indexes, and overwrite the entire IndexDescription
@@ -106,11 +109,10 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 	}
 
 	return &Collection{
-		db:        db,
-		desc:      desc,
-		colID:     desc.ID,
-		colIDKey:  core.NewKey(fmt.Sprint(desc.ID)),
-		hasSchema: !desc.Schema.IsEmpty(),
+		db:       db,
+		desc:     desc,
+		colID:    desc.ID,
+		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
 	}, nil
 }
 
@@ -171,12 +173,15 @@ func (db *DB) GetCollection(name string) (client.Collection, error) {
 		return nil, err
 	}
 
+	if desc.Schema.IsEmpty() {
+		return nil, errors.New("Collection must have a schema")
+	}
+
 	return &Collection{
-		db:        db,
-		desc:      desc,
-		colID:     desc.ID,
-		colIDKey:  core.NewKey(fmt.Sprint(desc.ID)),
-		hasSchema: !desc.Schema.IsEmpty(),
+		db:       db,
+		desc:     desc,
+		colID:    desc.ID,
+		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
 	}, nil
 }
 
@@ -238,12 +243,11 @@ func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
 // handle instead of a raw DB handle
 func (c *Collection) WithTxn(txn client.Txn) client.Collection {
 	return &Collection{
-		db:        c.db,
-		txn:       txn.(*Txn),
-		desc:      c.desc,
-		colID:     c.colID,
-		colIDKey:  c.colIDKey,
-		hasSchema: c.hasSchema,
+		db:       c.db,
+		txn:      txn.(*Txn),
+		desc:     c.desc,
+		colID:    c.colID,
+		colIDKey: c.colIDKey,
 	}
 }
 
@@ -623,10 +627,7 @@ func (c *Collection) getPrimaryIndexDocKey(key ds.Key) ds.Key {
 }
 
 func (c *Collection) getFieldKey(key ds.Key, fieldName string) ds.Key {
-	if c.hasSchema {
-		return key.ChildString(fmt.Sprint(c.getSchemaFieldID(fieldName)))
-	}
-	return key.ChildString(fieldName)
+	return key.ChildString(fmt.Sprint(c.getSchemaFieldID(fieldName)))
 }
 
 // getSchemaFieldID returns the FieldID of the given fieldName.
