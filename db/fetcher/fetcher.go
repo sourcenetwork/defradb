@@ -38,10 +38,9 @@ DocumentFetcher.Init()
 // )
 
 type DocumentFetcher struct {
-	col       *base.CollectionDescription
-	index     *base.IndexDescription
-	reverse   bool
-	hasSchema bool
+	col     *base.CollectionDescription
+	index   *base.IndexDescription
+	reverse bool
 
 	txn          core.Txn
 	spans        core.Spans
@@ -64,20 +63,21 @@ type DocumentFetcher struct {
 
 // Init implements DocumentFetcher
 func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+	if col.Schema.IsEmpty() {
+		return errors.New("DocumentFetcher must be given a schema")
+	}
+
 	df.col = col
 	df.index = index
 	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
 	df.doc = new(document.EncodedDocument)
-	if !col.Schema.IsEmpty() {
-		df.hasSchema = true
-		df.doc.Schema = &col.Schema
+	df.doc.Schema = &col.Schema
 
-		df.schemaFields = make(map[uint32]base.FieldDescription)
-		for _, field := range col.Schema.Fields {
-			df.schemaFields[uint32(field.ID)] = field
-		}
+	df.schemaFields = make(map[uint32]base.FieldDescription)
+	for _, field := range col.Schema.Fields {
+		df.schemaFields[uint32(field.ID)] = field
 	}
 	return nil
 }
@@ -231,24 +231,14 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		// }
 	}
 
-	// @todo: remove all schema-less branches
-	var fieldDesc base.FieldDescription
-	if df.hasSchema {
-		// extract the FieldID and update the encoded doc properties map
-		fieldID, err := kv.Key.FieldID()
-		if err != nil {
-			return err
-		}
-		var exists bool
-		fieldDesc, exists = df.schemaFields[fieldID]
-		if !exists {
-			return errors.New("Found field with no matching FieldDescription")
-		}
-	} else {
-		fieldName := kv.Key.Type()
-		fieldDesc = base.FieldDescription{
-			Name: fieldName,
-		}
+	// extract the FieldID and update the encoded doc properties map
+	fieldID, err := kv.Key.FieldID()
+	if err != nil {
+		return err
+	}
+	fieldDesc, exists := df.schemaFields[fieldID]
+	if !exists {
+		return errors.New("Found field with no matching FieldDescription")
 	}
 
 	// @todo: Secondary Index might not have encoded FieldIDs
