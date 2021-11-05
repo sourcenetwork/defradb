@@ -273,6 +273,25 @@ func (n *dagScanNode) Next() (bool, error) {
 	return true, nil
 }
 
+//			   -> D1 -> E1 -> F1
+// A -> B -> C |
+//			   -> D2 -> E2 -> F2
+
+/*
+
+/db/blocks/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmHLSHDFLHJSDFLHJFSLDKSH => IPLD_BLOCK_BYTE_ARRAY  => []byte("hello")
+/db/blocks/QmSFHLSDHLHJSDLFHJLSD => IPLD_BLOCK_BYTE_ARRAY	=> []byte("goodbye")
+/db/data/1/0/bae-ALICE/1:v => "hello"
+/db/data/1/0/bae-ALICE/C:v => []byte...
+/db/heads/bae-ALICE/C/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => [priority=1]
+/db/heads/bae-ALICE/C/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => [priority=1]
+/db/heads/bae-ALICE/1/QmHLSHDFLHJSDFLHJFSLDKSH => [priority=1]
+/db/heads/bae-ALICE/1/QmSFHLSDHLHJSDLFHJLSD => [priority=1]
+
+*/
+
 // func (n *dagScanNode) nextHead() (cid.Cid, error) {
 
 // }
