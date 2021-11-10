@@ -59,7 +59,7 @@ type Friend {
 }
 
 selectTopNode - > selectNode -> MultiNode.children: []planNode  -> multiScanNode(scanNode(user)**)											-> } -> scanNode(user).Next() -> FETCHER_STUFF + FILTER_STUFF + OTHER_STUFF
-										  						-> TypeJoinNode -> TypeJoinOneMany -> (one) multiScanNode(scanNode(user)**)	-> } -> scanNode(user).Value() -> doc
+										  						-> TypeJoinNode(merge**) -> TypeJoinOneMany -> (one) multiScanNode(scanNode(user)**)	-> } -> scanNode(user).Value() -> doc
 																			 					   -> (many) selectNode - > scanNode(friend)
 
 1. NEXT/VALUES MultiNode.doc = {_key: bae-KHDFLGHJFLDG, name: "BOB"}
@@ -71,17 +71,16 @@ LOOP
 6. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
 GOTO LOOP
 
-
 // SPLIT FILTER
 query {
-	user {
-		age
-		name
-		points
-
-		friends {
+		user {
+			age
 			name
 			points
+
+			friends {
+				name
+				points
 		}
 	}
 }

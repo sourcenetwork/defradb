@@ -467,3 +467,5 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	}
 	return top, nil
 }
+
+// func (p *Planner) select(parsed *parser.Select, source planNode, render bool, fromCollection string) (....)
