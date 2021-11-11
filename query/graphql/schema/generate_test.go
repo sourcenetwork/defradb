@@ -471,24 +471,10 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDefs []*gql.Object) error {
 	g := newTestGenerator()
 
-	// // parse to AST
-	// source := source.NewSource(&source.Source{
-	// 	Body: []byte(schema),
-	// })
-	// doc, err := parser.Parse(parser.ParseParams{
-	// 	Source: source,
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to parse schema string : %w", err)
-	// }
-	// // assert.NoError(t, err, "Failed to parse schema string")
-
-	// err = g.buildTypesFromAST(doc)
 	_, _, err := g.FromSDL(schema)
 	if err != nil {
 		return fmt.Errorf("Failed to build types from AST : %w", err)
 	}
-	// assert.NoError(t, err, "Failed to build types from AST")
 
 	for i, objDef := range typeDefs {
 		objName := objDef.Name()
@@ -513,7 +499,6 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 		if myObject.Error() != nil {
 			return fmt.Errorf("%s contains an internal error from the Fields() > definFields() call : %w", objName, myObject.Error())
 		}
-		// assert.NoErrorf(t, myObjectActual.Error(), "%s contains an internal error from the defineFields() call", objName)
 
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
 		fmt.Println("expected vs actual objects:")
