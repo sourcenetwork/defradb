@@ -148,7 +148,7 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Failed to get CID from key", err)
+			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
