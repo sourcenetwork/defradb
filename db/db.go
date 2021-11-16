@@ -10,10 +10,9 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"

@@ -76,7 +76,7 @@ func (base *baseMerkleCRDT) Value() ([]byte, error) {
 // 	current := node.Cid()
 // 	err := base.Merge(delta, dshelp.CidToDsKey(current).String())
 // 	if err != nil {
-// 		return nil, errors.Wrapf(eff, "error merging delta from %s", current)
+// 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
 // 	}
 
 // 	return base.clock.ProcessNode(ng, root, rootPrio, delta, node)

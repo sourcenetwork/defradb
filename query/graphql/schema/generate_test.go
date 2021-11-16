@@ -10,12 +10,12 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
 	"github.com/davecgh/go-spew/spew"
@@ -479,14 +479,14 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 	// 	Source: source,
 	// })
 	// if err != nil {
-	// 	return errors.Wrap(err, "Failed to parse schema string")
+	// 	return fmt.Errorf("Failed to parse schema string : %w", err)
 	// }
 	// // assert.NoError(t, err, "Failed to parse schema string")
 
 	// err = g.buildTypesFromAST(doc)
 	_, _, err := g.FromSDL(schema)
 	if err != nil {
-		return errors.Wrap(err, "Failed to build types from AST")
+		return fmt.Errorf("Failed to build types from AST : %w", err)
 	}
 	// assert.NoError(t, err, "Failed to build types from AST")
 
@@ -497,7 +497,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 			return errors.New(fmt.Sprintf("%s type doesn't exist in the schema manager TypeMap", objName))
 		}
 		if myObject.Error() != nil {
-			return errors.Wrapf(myObject.Error(), "%s contains an internal error", objName)
+			return fmt.Errorf("%s contains an internal error : %w", objName, myObject.Error())
 		}
 		if !reflect.DeepEqual(myObject, g.typeDefs[i]) {
 			// add the assert here for its object diff output
@@ -511,7 +511,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, schema string, typeDef
 		// to resolve the FieldsThunker
 
 		if myObject.Error() != nil {
-			return errors.Wrap(myObject.Error(), fmt.Sprintf("%s contains an internal error from the Fields() > definFields() call", objName))
+			return fmt.Errorf("%s contains an internal error from the Fields() > definFields() call : %w", objName, myObject.Error())
 		}
 		// assert.NoErrorf(t, myObjectActual.Error(), "%s contains an internal error from the defineFields() call", objName)
 

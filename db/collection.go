@@ -21,11 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 
+	"errors"
+
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	mh "github.com/multiformats/go-multihash"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -306,7 +307,7 @@ func (c *Collection) create(txn *Txn, doc *document.Document) error {
 	// fmt.Println(c)
 	dockey := key.NewDocKeyV0(doccid)
 	if !dockey.Key.Equal(doc.Key().Key) {
-		return errors.Wrap(ErrDocVerification, fmt.Sprintf("Expected %s, got %s", doc.Key().UUID(), dockey.UUID()))
+		return fmt.Errorf("Expected %s, got %s : %w", doc.Key().UUID(), dockey.UUID(), ErrDocVerification)
 	}
 
 	// check if doc already exists

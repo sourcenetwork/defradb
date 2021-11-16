@@ -10,10 +10,10 @@
 package core
 
 import (
+	"fmt"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -62,7 +62,7 @@ func (k Key) FieldID() (uint32, error) {
 	fieldIDStr := k.Type()
 	fieldID, err := strconv.Atoi(fieldIDStr)
 	if err != nil {
-		return 0, errors.Wrap(err, "Failed to get FieldID of Key")
+		return 0, fmt.Errorf("Failed to get FieldID of Key: %w", err)
 	}
 	return uint32(fieldID), nil
 }
