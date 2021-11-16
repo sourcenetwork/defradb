@@ -11,6 +11,7 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/pkg/errors"
 )
 
 type UpdateOpt struct{}

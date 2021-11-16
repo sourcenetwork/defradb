@@ -12,8 +12,9 @@ package db
 import (
 	"encoding/binary"
 
+	"errors"
+
 	ds "github.com/ipfs/go-datastore"
-	"github.com/pkg/errors"
 )
 
 type sequence struct {

@@ -13,8 +13,9 @@ import (
 	// "time"
 
 	"bytes"
+	"fmt"
 
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
@@ -135,7 +136,7 @@ func (reg LWWRegister) Merge(delta core.Delta, id string) error {
 func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(reg.key)
 	if err != nil {
-		return errors.Wrap(err, "Failed to get priority for Set")
+		return fmt.Errorf("Failed to get priority for Set : %w", err)
 	}
 
 	// if the current priority is higher ignore put
@@ -155,7 +156,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
 	err = reg.store.Put(valueK, buf)
 	if err != nil {
-		return errors.Wrap(err, "Failed to store new value")
+		return fmt.Errorf("Failed to store new value : %w", err)
 	}
 
 	return reg.setPriority(reg.key, priority)
