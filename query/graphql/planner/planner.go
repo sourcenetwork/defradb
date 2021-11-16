@@ -14,7 +14,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"

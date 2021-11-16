@@ -16,7 +16,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"

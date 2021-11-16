@@ -15,7 +15,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 

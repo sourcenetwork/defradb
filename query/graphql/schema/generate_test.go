@@ -10,12 +10,12 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
 	"github.com/davecgh/go-spew/spew"
