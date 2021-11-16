@@ -12,6 +12,7 @@ package clock
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -141,13 +142,13 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, errors.Wrap(r.Error, "Failed to get next query result")
+			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
 		}
 		// fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, errors.Wrap(err, "Failed to get CID from key")
+			return nil, 0, fmt.Errorf("Failed to get CID from key", err)
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
