@@ -131,7 +131,7 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 	case *parser.Mutation:
 		return p.newObjectMutationPlan(n)
 	}
-	return nil, errors.Errorf("unknown statement type %T", stmt)
+	return nil, fmt.Errorf("unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
@@ -141,7 +141,7 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
 	default:
-		return nil, errors.Errorf("unknown mutation action %T", stmt.Type)
+		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
 }
 
