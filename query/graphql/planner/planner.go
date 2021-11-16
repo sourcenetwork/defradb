@@ -250,7 +250,6 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	var childSource planNode
-	// @todo: this is incorrect for joins within `_group` collections, and should be corrected when possible
 	// Find the first scan node in the plan, we assume that it will be for the correct collection
 	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
 	// Check for any existing pipe nodes in the plan, we should use it if there is one
@@ -269,7 +268,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 			plan.group.childSelect.GroupBy.Fields = append(plan.group.childSelect.GroupBy.Fields, plan.group.groupByFields...)
 		}
 
-		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false)
+		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
 		if err != nil {
 			return err
 		}

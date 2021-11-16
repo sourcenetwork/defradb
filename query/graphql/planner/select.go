@@ -307,7 +307,7 @@ func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	return top, nil
 }
 
-func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromCollection bool) (planNode, error) {
+func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromCollection bool, providedSourceInfo *sourceInfo) (planNode, error) {
 	s := &selectNode{
 		p:          p,
 		source:     source,
@@ -318,6 +318,10 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 	sort := parsed.OrderBy
 	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
+
+	if providedSourceInfo != nil {
+		s.sourceInfo = *providedSourceInfo
+	}
 
 	if fromCollection {
 		desc, err := p.getCollectionDesc(parsed.Name)
