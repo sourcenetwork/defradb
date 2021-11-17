@@ -10,6 +10,8 @@
 package crdt
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
@@ -59,20 +61,20 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 }
 
 // Set the value of the register
-func (mlwwreg *MerkleLWWRegister) Set(value []byte) (cid.Cid, error) {
+func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Cid, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	return mlwwreg.Publish(delta)
+	return mlwwreg.Publish(ctx, delta)
 }
 
 // Value will retrieve the current value from the db
-func (mlwwreg *MerkleLWWRegister) Value() ([]byte, error) {
-	return mlwwreg.reg.Value()
+func (mlwwreg *MerkleLWWRegister) Value(ctx context.Context) ([]byte, error) {
+	return mlwwreg.reg.Value(ctx)
 }
 
 // Merge writes the provided delta to state using a supplied
 // merge semantic
-func (mlwwreg *MerkleLWWRegister) Merge(other core.Delta, id string) error {
-	return mlwwreg.reg.Merge(other, id)
+func (mlwwreg *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta, id string) error {
+	return mlwwreg.reg.Merge(ctx, other, id)
 }

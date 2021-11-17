@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -47,12 +48,12 @@ type Txn struct {
 }
 
 // Txn creates a new transaction which can be set to readonly mode
-func (db *DB) NewTxn(readonly bool) (*Txn, error) {
-	return db.newTxn(readonly)
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (*Txn, error) {
+	return db.newTxn(ctx, readonly)
 }
 
 // readonly is only for datastores that support ds.TxnDatastore
-func (db *DB) newTxn(readonly bool) (*Txn, error) {
+func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 	db.glock.RLock()
 	defer db.glock.RUnlock()
 
@@ -61,7 +62,7 @@ func (db *DB) newTxn(readonly bool) (*Txn, error) {
 	// check if our datastore natively supports transactions or Batching
 	txnStore, ok := db.rootstore.(ds.TxnDatastore)
 	if ok { // we support transactions
-		dstxn, err := txnStore.NewTransaction(readonly)
+		dstxn, err := txnStore.NewTransaction(ctx, readonly)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +70,7 @@ func (db *DB) newTxn(readonly bool) (*Txn, error) {
 		txn.Txn = dstxn
 
 	} else if batchStore, ok := db.rootstore.(ds.Batching); ok { // we support Batching
-		batcher, err := batchStore.Batch()
+		batcher, err := batchStore.Batch(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -128,12 +129,12 @@ type shimTxnStore struct {
 	ds.Txn
 }
 
-func (ts shimTxnStore) Sync(prefix ds.Key) error {
-	return ts.Txn.Commit()
+func (ts shimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
+	return ts.Txn.Commit(ctx)
 }
 
 func (ts shimTxnStore) Close() error {
-	ts.Discard()
+	ts.Discard(context.TODO())
 	return nil
 }
 
@@ -143,7 +144,7 @@ type shimBatcherTxn struct {
 	ds.Batch
 }
 
-func (shimBatcherTxn) Discard() {
+func (shimBatcherTxn) Discard(_ context.Context) {
 	// noop
 }
 

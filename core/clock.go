@@ -10,6 +10,8 @@
 package core
 
 import (
+	"context"
+
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 )
@@ -18,6 +20,6 @@ import (
 // writing to and from the MerkleDAG structure, ensuring a casual
 // ordering of
 type MerkleClock interface {
-	AddDAGNode(delta Delta) (cid.Cid, error) // possibly change to AddDeltaNode?
-	ProcessNode(NodeGetter, cid.Cid, uint64, Delta, ipld.Node) ([]cid.Cid, error)
+	AddDAGNode(ctx context.Context, delta Delta) (cid.Cid, error) // possibly change to AddDeltaNode?
+	ProcessNode(context.Context, NodeGetter, cid.Cid, uint64, Delta, ipld.Node) ([]cid.Cid, error)
 }

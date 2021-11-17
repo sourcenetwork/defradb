@@ -10,6 +10,7 @@
 package crdt
 
 import (
+	"context"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -69,13 +70,14 @@ func TestBaseCRDTprioryKey(t *testing.T) {
 
 func TestBaseCRDTSetGetPriority(t *testing.T) {
 	base := exampleBaseCRDT()
-	err := base.setPriority("mykey", 10)
+	ctx := context.Background()
+	err := base.setPriority(ctx, "mykey", 10)
 	if err != nil {
 		t.Errorf("baseCRDT failed to set Priority. err: %v", err)
 		return
 	}
 
-	priority, err := base.getPriority("mykey")
+	priority, err := base.getPriority(ctx, "mykey")
 	if err != nil {
 		t.Errorf("baseCRDT failed to get priority. err: %v", err)
 		return

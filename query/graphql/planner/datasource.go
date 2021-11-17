@@ -58,7 +58,7 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, error) {
 	key := base.MakeCollectionSystemKey(name)
 	var desc base.CollectionDescription
-	buf, err := p.txn.Systemstore().Get(key.ToDS())
+	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
 		return desc, err
 	}

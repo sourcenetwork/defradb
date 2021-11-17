@@ -10,6 +10,8 @@
 package crdt
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/merkle/clock"
@@ -61,21 +63,21 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 // Set sets the values of CompositeDAG.
 // The value is always the object from the
 // mutation operations.
-func (m *MerkleCompositeDAG) Set(patch []byte, links []core.DAGLink) (cid.Cid, error) {
+func (m *MerkleCompositeDAG) Set(ctx context.Context, patch []byte, links []core.DAGLink) (cid.Cid, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	delta := m.reg.Set(patch, links)
-	return m.Publish(delta)
+	return m.Publish(ctx, delta)
 }
 
 // Value is a no-op for a CompositeDAG
-func (m *MerkleCompositeDAG) Value() ([]byte, error) {
-	return m.reg.Value()
+func (m *MerkleCompositeDAG) Value(ctx context.Context) ([]byte, error) {
+	return m.reg.Value(ctx)
 }
 
 // Merge writes the provided delta to state using a supplied
 // merge semantic
 // @todo
-func (m *MerkleCompositeDAG) Merge(other core.Delta, id string) error {
-	return m.reg.Merge(other, id)
+func (m *MerkleCompositeDAG) Merge(ctx context.Context, other core.Delta, id string) error {
+	return m.reg.Merge(ctx, other, id)
 }

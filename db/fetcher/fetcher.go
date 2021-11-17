@@ -11,6 +11,7 @@ package fetcher
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"sort"
 	"strings"
@@ -83,7 +84,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 }
 
 // Start implements DocumentFetcher
-func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
@@ -121,7 +122,7 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 
 	var err error
-	df.kvIter, err = txn.Query(q)
+	df.kvIter, err = txn.Query(ctx, q)
 	if err != nil {
 		return err
 	}

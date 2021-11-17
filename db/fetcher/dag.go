@@ -10,6 +10,7 @@
 package fetcher
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"strings"
@@ -43,7 +44,7 @@ type HeadFetcher struct {
 	kvEnd  bool
 }
 
-func (hf *HeadFetcher) Start(txn core.Txn, spans core.Spans) error {
+func (hf *HeadFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	numspans := len(spans)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")
@@ -65,7 +66,7 @@ func (hf *HeadFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 
 	var err error
-	hf.kvIter, err = txn.Headstore().Query(q)
+	hf.kvIter, err = txn.Headstore().Query(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -109,10 +110,12 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
 	// convert Value from KV value to cid.Cid
 	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.String(), hf.spans[0].Start().String()))
-	headCid, err := dshelp.DsKeyToCid(headKey)
+
+	hash, err := dshelp.DsKeyToMultihash(headKey)
 	if err != nil {
 		return err
 	}
+	headCid := cid.NewCidV0(hash)
 	hf.cid = &headCid
 	return nil
 }

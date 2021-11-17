@@ -10,6 +10,7 @@
 package clock
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -45,7 +46,7 @@ func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id st
 	}
 }
 
-func (mc *MerkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
+func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
 	if delta != nil {
 		delta.SetPriority(height)
 	}
@@ -65,7 +66,7 @@ func (mc *MerkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 	// if err != nil {
 	// 	return nil, fmt.Errorf("error writing new block %s : %w", node.Cid(), err)
 	// }
-	err = mc.dagstore.Put(node)
+	err = mc.dagstore.Put(ctx, node)
 	if err != nil {
 		return nil, fmt.Errorf("error writing new block %s : %w", node.Cid(), err)
 	}
@@ -78,8 +79,8 @@ func (mc *MerkleClock) putBlock(heads []cid.Cid, height uint64, delta core.Delta
 // AddDAGNode adds a new delta to the existing DAG for this MerkleClock
 // It checks the current heads, sets the delta priority in the merkle dag
 // adds it to the blockstore the runs ProcessNode
-func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
-	heads, height, err := mc.headset.List()
+func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Cid, error) {
+	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
 		return cid.Undef, fmt.Errorf("error getting heads : %w", err)
 	}
@@ -88,7 +89,7 @@ func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	delta.SetPriority(height)
 
 	// write the delta and heads to a new block
-	nd, err := mc.putBlock(heads, height, delta)
+	nd, err := mc.putBlock(ctx, heads, height, delta)
 	if err != nil {
 		return cid.Undef, fmt.Errorf("Error adding block : %w", err)
 	}
@@ -96,6 +97,7 @@ func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 	// apply the new node and merge the delta with state
 	// @todo Remove NodeGetter as a paramter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
+		ctx,
 		&crdtNodeGetter{deltaExtractor: mc.crdt.DeltaDecode},
 		nd.Cid(),
 		height,
@@ -111,9 +113,9 @@ func (mc *MerkleClock) AddDAGNode(delta core.Delta) (cid.Cid, error) {
 
 // ProcessNode processes an already merged delta into a crdt
 // by
-func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
+func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
 	current := node.Cid()
-	err := mc.crdt.Merge(delta, dshelp.CidToDsKey(current).String())
+	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
 	}
@@ -134,7 +136,7 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
-		err := mc.headset.Add(root, rootPrio)
+		err := mc.headset.Add(ctx, root, rootPrio)
 		if err != nil {
 			return nil, fmt.Errorf("error adding head %s : %w", root, err)
 		}
@@ -145,7 +147,7 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 
 	for _, l := range links {
 		child := l.Cid
-		isHead, _, err := mc.headset.IsHead(child)
+		isHead, _, err := mc.headset.IsHead(ctx, child)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if %s is head : %w", child, err)
 		}
@@ -153,7 +155,7 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err := mc.headset.Replace(child, root, rootPrio)
+			err := mc.headset.Replace(ctx, child, root, rootPrio)
 			if err != nil {
 				return nil, fmt.Errorf("error replacing head: %s->%s : %w", child, root, err)
 			}
@@ -161,14 +163,14 @@ func (mc *MerkleClock) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio ui
 			continue
 		}
 
-		known, err := mc.dagstore.Has(child)
+		known, err := mc.dagstore.Has(ctx, child)
 		if err != nil {
 			return nil, fmt.Errorf("error checking for know block %s : %w", child, err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			mc.headset.Add(root, rootPrio)
+			mc.headset.Add(ctx, root, rootPrio)
 			continue
 		}
 

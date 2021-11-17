@@ -10,6 +10,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -58,17 +59,20 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) dump(w http.ResponseWriter, r *http.Request) {
-	s.db.PrintDump()
+	ctx := context.Background()
+	s.db.PrintDump(ctx)
 	w.Write([]byte("ok"))
 }
 
 func (s *Server) execGQL(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	query := r.URL.Query().Get("query")
-	result := s.db.ExecQuery(query)
+	result := s.db.ExecQuery(ctx, query)
 	json.NewEncoder(w).Encode(result)
 }
 
 func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	var result client.QueryResult
 	sdl, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -80,7 +84,7 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.db.AddSchema(string(sdl))
+	err = s.db.AddSchema(ctx, string(sdl))
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		json.NewEncoder(w).Encode(result)
@@ -95,6 +99,7 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	var result client.QueryResult
 	cidStr := chi.URLParam(r, "cid")
 
@@ -104,7 +109,7 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		// if we cant try to parse DSKeyToCID
 		// return error if we still cant
 		key := ds.NewKey(cidStr)
-		c, err = dshelp.DsKeyToCid(key)
+		hash, err := dshelp.DsKeyToMultihash(key)
 		if err != nil {
 			result.Errors = []interface{}{err.Error()}
 			result.Data = err.Error()
@@ -112,10 +117,11 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		c = cid.NewCidV0(hash)
 	}
 	// c, err := cid.Decode(cidStr)
 
-	block, err := s.db.GetBlock(c)
+	block, err := s.db.GetBlock(ctx, c)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		json.NewEncoder(w).Encode(result)
