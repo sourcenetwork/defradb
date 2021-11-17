@@ -144,8 +144,8 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
-		// ignore reserved fields
-		if _, ok := parser.ReservedFields[f]; ok {
+		// ignore reserved fields, execpt the Group field (as that requires typing)
+		if _, ok := parser.ReservedFields[f]; ok && f != parser.GroupFieldName {
 			continue
 		}
 		// Both the object name and the field name should be used as the key
@@ -323,6 +323,15 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 				// add _version field
 				fields["_version"] = &gql.Field{
 					Type: gql.NewList(types.Commit),
+				}
+
+				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
+				if !ok {
+					//todo@ handle error
+				}
+
+				fields[parser.GroupFieldName] = &gql.Field{
+					Type: gql.NewList(gqlType),
 				}
 
 				return fields

@@ -152,7 +152,9 @@ func (f Field) GetStatement() ast.Node {
 	return f.Statement
 }
 
-type GroupBy struct{}
+type GroupBy struct {
+	Fields []string
+}
 
 type SortDirection string
 
@@ -334,9 +336,17 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 				Conditions: cond,
 				Statement:  obj,
 			}
-		}
+		} else if prop == "groupBy" {
+			obj := argument.Value.(*ast.ListValue)
+			fields := make([]string, 0)
+			for _, v := range obj.Values {
+				fields = append(fields, v.GetValue().(string))
+			}
 
-		// @todo: parse groupby
+			slct.GroupBy = &GroupBy{
+				Fields: fields,
+			}
+		}
 	}
 
 	// if theres no field selections, just return

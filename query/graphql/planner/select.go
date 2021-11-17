@@ -89,6 +89,8 @@ type selectNode struct {
 	// If te select query is using a FindByCID filter
 	cid string
 
+	groupSelect *parser.Select
+
 	// @todo restructure renderNode -> render, which is its own
 	// object, and not a planNode.
 }
@@ -260,14 +262,18 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 					return err
 				}
 			} else if subtype.Root == parser.ObjectSelection {
-				typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
-				if err != nil {
-					return err
-				}
+				if subtype.Name == parser.GroupFieldName {
+					n.groupSelect = subtype
+				} else {
+					typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
+					if err != nil {
+						return err
+					}
 
-				// n.source = typeIndexJoin
-				if err := n.addSubPlan(field.GetName(), typeIndexJoin); err != nil {
-					return err
+					// n.source = typeIndexJoin
+					if err := n.addSubPlan(field.GetName(), typeIndexJoin); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -310,6 +316,7 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 	s.filter = parsed.Filter
 	limit := parsed.Limit
 	sort := parsed.OrderBy
+	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
 
 	if fromCollection {
@@ -325,6 +332,11 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		return nil, err
 	}
 
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	if err != nil {
+		return nil, err
+	}
+
 	limitPlan, err := p.Limit(limit)
 	if err != nil {
 		return nil, err
@@ -340,6 +352,7 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		render: p.render(),
 		limit:  limitPlan,
 		sort:   sortPlan,
+		group:  groupPlan,
 	}
 	return top, nil
 }
@@ -350,9 +363,15 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	s.filter = parsed.Filter
 	limit := parsed.Limit
 	sort := parsed.OrderBy
+	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
 
 	if err := s.initSource(parsed); err != nil {
+		return nil, err
+	}
+
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	if err != nil {
 		return nil, err
 	}
 
@@ -371,6 +390,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 		render: p.render(),
 		limit:  limitPlan,
 		sort:   sortPlan,
+		group:  groupPlan,
 	}
 	return top, nil
 }
