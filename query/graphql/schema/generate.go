@@ -490,8 +490,8 @@ func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 		Values: gql.EnumValueConfigMap{},
 	}
 
-	for i, field := range obj.Fields() {
-		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: i}
+	for f, field := range obj.Fields() {
+		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
 	}
 
 	return gql.NewEnum(enumFieldsCfg)
