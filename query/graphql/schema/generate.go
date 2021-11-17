@@ -40,15 +40,15 @@ type Generator struct {
 	typeDefs []*gql.Object
 	manager  *SchemaManager
 
-	expandedTypes map[string]bool
+	expandedFields map[string]bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
 func (m *SchemaManager) NewGenerator() *Generator {
 	m.Generator = &Generator{
-		manager:       m,
-		expandedTypes: make(map[string]bool),
+		manager:        m,
+		expandedFields: make(map[string]bool),
 	}
 	return m.Generator
 }
@@ -148,12 +148,15 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 		if _, ok := parser.ReservedFields[f]; ok {
 			continue
 		}
+		// Both the object name and the field name should be used as the key
+		// in case the child object type is referenced multiple times from the same parent type
+		fieldKey := obj.Name() + f
 		switch t := def.Type.(type) {
 		case *gql.Object:
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 			// make sure all the sub fields are expanded first
 			if err := g.expandInputArgument(t); err != nil {
@@ -172,10 +175,10 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			break
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 
 			if listObjType, ok := listType.(*gql.Object); ok {
@@ -696,7 +699,7 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 // Usually called after a round of type generation
 func (g *Generator) Reset() {
 	g.typeDefs = make([]*gql.Object, 0)
-	g.expandedTypes = make(map[string]bool)
+	g.expandedFields = make(map[string]bool)
 }
 
 func newArgConfig(t gql.Input) *gql.ArgumentConfig {
