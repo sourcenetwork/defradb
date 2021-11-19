@@ -262,12 +262,6 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	}
 
 	if plan.group.childSelect != nil {
-		if plan.group.childSelect.GroupBy != nil {
-			// group by fields have to be propogated downwards to ensure correct sub-grouping, otherwise child
-			// groups will only group on the fields they explicitly reference
-			plan.group.childSelect.GroupBy.Fields = append(plan.group.childSelect.GroupBy.Fields, plan.group.groupByFields...)
-		}
-
 		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
 		if err != nil {
 			return err
