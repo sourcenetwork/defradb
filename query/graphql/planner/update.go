@@ -60,7 +60,7 @@ func (n *updateNode) Next() (bool, error) {
 			if err2 != nil {
 				return false, err2
 			}
-			results, err = n.collection.UpdateWithKey(key, n.patch)
+			results, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
 		} else if numids > 1 {
 			fmt.Println("multi key")
 			// todo
@@ -71,10 +71,10 @@ func (n *updateNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			results, err = n.collection.UpdateWithKeys(keys, n.patch)
+			results, err = n.collection.UpdateWithKeys(n.p.ctx, keys, n.patch)
 		} else {
 			fmt.Println("filter")
-			results, err = n.collection.UpdateWithFilter(n.filter, n.patch)
+			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
 		}
 
 		fmt.Println("update node error:", err)
@@ -144,7 +144,7 @@ func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(parsed.Schema)
+	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
 	if err != nil {
 		return nil, err
 	}

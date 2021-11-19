@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"encoding/binary"
 
 	"errors"
@@ -23,7 +24,7 @@ type sequence struct {
 	val uint64
 }
 
-func (db *DB) getSequence(key string) (*sequence, error) {
+func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 	if key == "" {
 		return nil, errors.New("key cannot be empty")
 	}
@@ -34,9 +35,9 @@ func (db *DB) getSequence(key string) (*sequence, error) {
 		val: uint64(0),
 	}
 
-	_, err := seq.get()
+	_, err := seq.get(ctx)
 	if err == ds.ErrNotFound {
-		seq.update()
+		seq.update(ctx)
 	} else if err != nil {
 		return nil, err
 	}
@@ -44,8 +45,8 @@ func (db *DB) getSequence(key string) (*sequence, error) {
 	return seq, nil
 }
 
-func (seq *sequence) get() (uint64, error) {
-	val, err := seq.db.systemstore.Get(seq.key)
+func (seq *sequence) get(ctx context.Context) (uint64, error) {
+	val, err := seq.db.systemstore.Get(ctx, seq.key)
 	if err != nil {
 		return 0, err
 	}
@@ -54,22 +55,22 @@ func (seq *sequence) get() (uint64, error) {
 	return seq.val, nil
 }
 
-func (seq *sequence) update() error {
+func (seq *sequence) update(ctx context.Context) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := seq.db.systemstore.Put(seq.key, buf[:]); err != nil {
+	if err := seq.db.systemstore.Put(ctx, seq.key, buf[:]); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (seq *sequence) next() (uint64, error) {
-	_, err := seq.get()
+func (seq *sequence) next(ctx context.Context) (uint64, error) {
+	_, err := seq.get(ctx)
 	if err != nil {
 		return 0, err
 	}
 
 	seq.val++
-	return seq.val, seq.update()
+	return seq.val, seq.update(ctx)
 }

@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -75,12 +76,13 @@ func TestFetcherInit(t *testing.T) {
 }
 
 func TestFetcherStart(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -88,23 +90,24 @@ func TestFetcherStart(t *testing.T) {
 	df, err := newTestFetcher()
 	assert.NoError(t, err)
 
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 }
 
 func TestFetcherStartWithoutInit(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	df := new(fetcher.DocumentFetcher)
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.Error(t, err)
 }
 
@@ -115,10 +118,11 @@ func TestMakeIndexPrefixKey(t *testing.T) {
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := document.NewFromJSON([]byte(`{
@@ -126,10 +130,10 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 		"Age": 21
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -142,7 +146,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
 
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
 	// assert.False(t, df.KVEnd())
@@ -164,10 +168,11 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
 	doc, err := document.NewFromJSON([]byte(`{
@@ -175,7 +180,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 		"Age": 21
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	doc, err = document.NewFromJSON([]byte(`{
@@ -183,10 +188,10 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 		"Age": 27
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -199,7 +204,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
 
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
 	// assert.False(t, df.KVEnd())
@@ -225,13 +230,14 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -242,7 +248,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 		"Age": 21
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	df := new(fetcher.DocumentFetcher)
@@ -250,7 +256,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
 
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded()
@@ -269,13 +275,14 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -286,7 +293,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 		"Age": 21
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	doc, err = document.NewFromJSON([]byte(`{
@@ -294,7 +301,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 		"Age": 27
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	df := new(fetcher.DocumentFetcher)
@@ -302,7 +309,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
 
-	err = df.Start(txn, core.Spans{})
+	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded()
@@ -333,13 +340,14 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 }
 
 func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(true)
+	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		t.Error(err)
 		return
@@ -350,7 +358,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 		"Age": 21
 	}`))
 	assert.NoError(t, err)
-	err = col.Save(doc)
+	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	df := new(fetcher.DocumentFetcher)
@@ -363,7 +371,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}
-	err = df.Start(txn, spans)
+	err = df.Start(ctx, txn, spans)
 	assert.NoError(t, err)
 
 	ddoc, err := df.FetchNextDecoded()

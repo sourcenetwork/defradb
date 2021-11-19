@@ -10,6 +10,8 @@
 package db
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -17,15 +19,15 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-func (c *Collection) Get(key key.DocKey) (*document.Document, error) {
+func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Document, error) {
 	//create txn
-	txn, err := c.getTxn(true)
+	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(txn)
+	defer c.discardImplicitTxn(ctx, txn)
 
-	found, err := c.exists(txn, key)
+	found, err := c.exists(ctx, txn, key)
 	if err != nil {
 		return nil, err
 	}
@@ -33,14 +35,14 @@ func (c *Collection) Get(key key.DocKey) (*document.Document, error) {
 		return nil, ErrDocumentNotFound
 	}
 
-	doc, err := c.get(txn, key)
+	doc, err := c.get(ctx, txn, key)
 	if err != nil {
 		return nil, err
 	}
-	return doc, c.commitImplicitTxn(txn)
+	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(txn *Txn, key key.DocKey) (*document.Document, error) {
+func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*document.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
@@ -54,7 +56,7 @@ func (c *Collection) get(txn *Txn, key key.DocKey) (*document.Document, error) {
 	// construct target key for DocKey
 	targetKey := base.MakeIndexKey(desc, index, core.Key{Key: key.Key})
 	// run the doc fetcher
-	err = df.Start(txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
+	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {
 		return nil, err
 	}

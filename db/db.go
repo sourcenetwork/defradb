@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -168,13 +169,13 @@ func NewDB(options *Options) (*DB, error) {
 }
 
 // Start runs all the inital sub-routines and initialization steps.
-func (db *DB) Start() error {
-	return db.Initialize()
+func (db *DB) Start(ctx context.Context) error {
+	return db.Initialize(ctx)
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters
-func (db *DB) Initialize() error {
+func (db *DB) Initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
@@ -184,7 +185,7 @@ func (db *DB) Initialize() error {
 	}
 
 	log.Debug("Checking if db has already been initialized...")
-	exists, err := db.systemstore.Has(ds.NewKey("init"))
+	exists, err := db.systemstore.Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -192,18 +193,18 @@ func (db *DB) Initialize() error {
 	// and finish intialization
 	if exists {
 		log.Debug("db has already been initalized, conitnuing.")
-		return db.loadSchema()
+		return db.loadSchema(ctx)
 	}
 
 	log.Debug("opened a new db, needs full intialization")
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence("collection")
+	_, err = db.getSequence(ctx, "collection")
 	if err != nil {
 		return err
 	}
 
-	err = db.systemstore.Put(ds.NewKey("init"), []byte{1})
+	err = db.systemstore.Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -212,12 +213,12 @@ func (db *DB) Initialize() error {
 	return nil
 }
 
-func (db *DB) printDebugDB() {
-	printStore(db.rootstore)
+func (db *DB) printDebugDB(ctx context.Context) {
+	printStore(ctx, db.rootstore)
 }
 
-func (db *DB) PrintDump() {
-	printStore(db.rootstore)
+func (db *DB) PrintDump(ctx context.Context) {
+	printStore(ctx, db.rootstore)
 }
 
 // Close is called when we are shutting down the database.
@@ -233,14 +234,14 @@ func (db *DB) Close() {
 	log.Info("Succesfully closed running process")
 }
 
-func printStore(store core.DSReaderWriter) {
+func printStore(ctx context.Context, store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsq.Order{dsq.OrderByKey{}},
 	}
 
-	results, err := store.Query(q)
+	results, err := store.Query(ctx, q)
 	defer results.Close()
 	if err != nil {
 		panic(err)

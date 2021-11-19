@@ -10,6 +10,7 @@
 package crdt
 
 import (
+	"context"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -183,6 +184,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 }
 
 func TestLWWRegisterFactoryFn(t *testing.T) {
+	ctx := context.Background()
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
 	crdt := lwwFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
@@ -190,11 +192,12 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
 
-	_, err := lwwreg.Set([]byte("hi"))
+	_, err := lwwreg.Set(ctx, []byte("hi"))
 	assert.NoError(t, err)
 }
 
 func TestCompositeRegisterFactoryFn(t *testing.T) {
+	ctx := context.Background()
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
 	crdt := compFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
@@ -202,6 +205,6 @@ func TestCompositeRegisterFactoryFn(t *testing.T) {
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)
 
-	_, err := merkleReg.Set([]byte("hi"), []core.DAGLink{})
+	_, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{})
 	assert.NoError(t, err)
 }

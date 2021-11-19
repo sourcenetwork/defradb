@@ -10,6 +10,7 @@
 package crdt
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -35,10 +36,10 @@ func setupLWWRegister() LWWRegister {
 	return NewLWWRegister(store, ns, id)
 }
 
-func setupLoadedLWWRegster() LWWRegister {
+func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 	return lww
 }
 
@@ -52,15 +53,16 @@ func TestLWWRegisterAddDelta(t *testing.T) {
 }
 
 func TestLWWRegisterInitialMerge(t *testing.T) {
+	ctx := context.Background()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
-	err := lww.Merge(addDelta, "test")
+	err := lww.Merge(ctx, addDelta, "test")
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
 		return
 	}
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 		return
@@ -73,12 +75,13 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 }
 
 func TestLWWReisterFollowupMerge(t *testing.T) {
-	lww := setupLoadedLWWRegster()
+	ctx := context.Background()
+	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test2"))
 	addDelta.SetPriority(2)
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,12 +92,13 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 }
 
 func TestLWWRegisterOldMerge(t *testing.T) {
-	lww := setupLoadedLWWRegster()
+	ctx := context.Background()
+	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test-1"))
 	addDelta.SetPriority(0)
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Error(err)
 	}

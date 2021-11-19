@@ -71,7 +71,7 @@ func (n *createNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	if err := n.collection.WithTxn(n.p.txn).Create(n.doc); err != nil {
+	if err := n.collection.WithTxn(n.p.txn).Create(n.p.ctx, n.doc); err != nil {
 		return false, err
 	}
 
@@ -98,7 +98,7 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(parsed.Schema)
+	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
 	if err != nil {
 		return nil, err
 	}

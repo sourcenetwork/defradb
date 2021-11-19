@@ -10,6 +10,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"os/signal"
 
@@ -25,6 +26,7 @@ var startCmd = &cobra.Command{
 	Long:  `Start a new instance of DefraDB server:`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Starting DefraDB process...")
+		ctx := context.Background()
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
@@ -35,7 +37,7 @@ var startCmd = &cobra.Command{
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)
 		}
-		if err := db.Start(); err != nil {
+		if err := db.Start(ctx); err != nil {
 			log.Error("Failed to start the database: ", err)
 			db.Close()
 			os.Exit(1)

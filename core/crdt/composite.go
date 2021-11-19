@@ -11,6 +11,7 @@ package crdt
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"sort"
 	"strings"
@@ -88,7 +89,7 @@ func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) Co
 	return CompositeDAG{}
 }
 
-func (c CompositeDAG) Value() ([]byte, error) {
+func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
 
@@ -108,7 +109,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // if they are equal, compare IDs
 // MUTATE STATE
 // @todo
-func (c CompositeDAG) Merge(delta core.Delta, id string) error {
+func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
 	// d, ok := delta.(*CompositeDAGDelta)
 	// if !ok {
 	// 	return core.ErrMismatchedMergeType

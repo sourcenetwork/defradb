@@ -54,7 +54,7 @@ func (h *headsetScanNode) initScan() error {
 	}
 
 	// fmt.Println("startin fetcher with spans:", h.spans[0].Start())
-	err := h.fetcher.Start(h.p.txn, h.spans)
+	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
 	store := n.p.txn.DAGstore()
-	block, err := store.Get(*n.cid)
+	block, err := store.Get(n.p.ctx, *n.cid)
 	if err != nil { // handle error?
 		return false, err
 	}

@@ -10,6 +10,7 @@
 package tests_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -46,15 +47,16 @@ func NewMemoryDB() (*db.DB, error) {
 }
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
+	ctx := context.Background()
 	db, err := NewMemoryDB()
 	assert.NoError(t, err)
 
-	err = db.AddSchema(schema)
+	err = db.AddSchema(ctx, schema)
 	assert.NoError(t, err)
 
 	collections := []client.Collection{}
 	for _, collectionName := range collectionNames {
-		col, err := db.GetCollection(collectionName)
+		col, err := db.GetCollection(ctx, collectionName)
 		assert.NoError(t, err)
 		collections = append(collections, col)
 	}
@@ -64,7 +66,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		for i, docStr := range docs {
 			doc, err := document.NewFromJSON([]byte(docStr))
 			assert.NoError(t, err, test.Description)
-			err = collections[cid].Save(doc)
+			err = collections[cid].Save(ctx, doc)
 			assert.NoError(t, err, test.Description)
 
 			// check for updates
@@ -73,7 +75,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 				for _, u := range updates {
 					err = doc.SetWithJSON([]byte(u))
 					assert.NoError(t, err, test.Description)
-					err = collections[cid].Save(doc)
+					err = collections[cid].Save(ctx, doc)
 					assert.NoError(t, err, test.Description)
 				}
 			}
@@ -81,7 +83,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 	}
 
 	// exec query
-	result := db.ExecQuery(test.Query)
+	result := db.ExecQuery(ctx, test.Query)
 	assert.Empty(t, result.Errors, test.Description)
 
 	resultantData := result.Data.([]map[string]interface{})

@@ -11,6 +11,7 @@ package clock
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"sort"
@@ -41,11 +42,11 @@ func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
 
 func (hh *heads) key(c cid.Cid) ds.Key {
 	// /<namespace>/<cid>
-	return hh.namespace.Child(dshelp.CidToDsKey(c))
+	return hh.namespace.Child(dshelp.MultihashToDsKey(c.Hash()))
 }
 
-func (hh *heads) load(c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(hh.key(c))
+func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
+	v, err := hh.store.Get(ctx, hh.key(c))
 	if err != nil {
 		return 0, err
 	}
@@ -56,17 +57,17 @@ func (hh *heads) load(c cid.Cid) (uint64, error) {
 	return height, nil
 }
 
-func (hh *heads) write(store ds.Write, c cid.Cid, height uint64) error {
+func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(hh.key(c), buf[0:n])
+	return store.Put(ctx, hh.key(c), buf[0:n])
 }
 
-func (hh *heads) delete(store ds.Write, c cid.Cid) error {
-	err := store.Delete(hh.key(c))
+func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
+	err := store.Delete(ctx, hh.key(c))
 	if err == ds.ErrNotFound {
 		return nil
 	}
@@ -74,21 +75,21 @@ func (hh *heads) delete(store ds.Write, c cid.Cid) error {
 }
 
 // IsHead returns if a given cid is among the current heads.
-func (hh *heads) IsHead(c cid.Cid) (bool, uint64, error) {
-	height, err := hh.load(c)
+func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
+	height, err := hh.load(ctx, c)
 	if err == ds.ErrNotFound {
 		return false, 0, nil
 	}
 	return err == nil, height, err
 }
 
-func (hh *heads) Len() (int, error) {
-	list, _, err := hh.List()
+func (hh *heads) Len(ctx context.Context) (int, error) {
+	list, _, err := hh.List(ctx)
 	return len(list), err
 }
 
 // Replace replaces a head with a new cid.
-func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
+func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
 	log.Infof("replacing DAG head: %s -> %s (new height: %d)", h, c, height)
 	var store ds.Write = hh.store
 	var err error
@@ -101,12 +102,12 @@ func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
 	// 	}
 	// }
 
-	err = hh.delete(store, h)
+	err = hh.delete(ctx, store, h)
 	if err != nil {
 		return err
 	}
 
-	err = hh.write(store, c, height)
+	err = hh.write(ctx, store, c, height)
 	if err != nil {
 		return err
 	}
@@ -120,20 +121,20 @@ func (hh *heads) Replace(h, c cid.Cid, height uint64) error {
 	return nil
 }
 
-func (hh *heads) Add(c cid.Cid, height uint64) error {
+func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
 	log.Infof("adding new DAG head: %s (height: %d)", c, height)
-	return hh.write(hh.store, c, height)
+	return hh.write(ctx, hh.store, c, height)
 }
 
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
-func (hh *heads) List() ([]cid.Cid, uint64, error) {
+func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	q := query.Query{
 		Prefix:   hh.namespace.String(),
 		KeysOnly: false,
 	}
 
-	results, err := hh.store.Query(q)
+	results, err := hh.store.Query(ctx, q)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -147,10 +148,11 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		}
 		// fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		headCid, err := dshelp.DsKeyToCid(headKey)
+		hash, err := dshelp.DsKeyToMultihash(headKey)
 		if err != nil {
 			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
 		}
+		headCid := cid.NewCidV0(hash)
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
 			return nil, 0, errors.New("error decocding height")
