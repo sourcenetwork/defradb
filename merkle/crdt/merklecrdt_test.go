@@ -10,6 +10,7 @@
 package crdt
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -49,12 +50,13 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
+	ctx := context.Background()
 	bCRDT, store := newTestBaseMerkleCRDT()
 	delta := &corecrdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
 
-	c, err := bCRDT.Publish(delta)
+	c, err := bCRDT.Publish(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
@@ -65,16 +67,16 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		return
 	}
 
-	printStore(store)
+	printStore(ctx, store)
 }
 
-func printStore(store core.DSReaderWriter) {
+func printStore(ctx context.Context, store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
 	}
 
-	results, err := store.Query(q)
+	results, err := store.Query(ctx, q)
 	defer results.Close()
 	if err != nil {
 		panic(err)

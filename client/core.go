@@ -10,6 +10,8 @@
 package client
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
@@ -23,13 +25,13 @@ import (
 
 type DB interface {
 	// Collections
-	CreateCollection(base.CollectionDescription) (Collection, error)
-	GetCollection(string) (Collection, error)
-	ExecQuery(string) *QueryResult
+	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
+	GetCollection(context.Context, string) (Collection, error)
+	ExecQuery(context.Context, string) *QueryResult
 	SchemaManager() *schema.SchemaManager
-	AddSchema(string) error
-	PrintDump()
-	GetBlock(c cid.Cid) (blocks.Block, error)
+	AddSchema(context.Context, string) error
+	PrintDump(ctx context.Context)
+	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 }
 
 type Sequence interface{}
@@ -54,17 +56,17 @@ type Collection interface {
 	Index(uint32) (base.IndexDescription, error)
 	CreateIndex(base.IndexDescription) error
 
-	Create(*document.Document) error
-	CreateMany([]*document.Document) error
-	Update(*document.Document) error
-	Save(*document.Document) error
-	Delete(key.DocKey) (bool, error)
-	Exists(key.DocKey) (bool, error)
+	Create(context.Context, *document.Document) error
+	CreateMany(context.Context, []*document.Document) error
+	Update(context.Context, *document.Document) error
+	Save(context.Context, *document.Document) error
+	Delete(context.Context, key.DocKey) (bool, error)
+	Exists(context.Context, key.DocKey) (bool, error)
 
-	UpdateWith(interface{}, interface{}, ...UpdateOpt) error
-	UpdateWithFilter(interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKey(key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKeys([]key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWith(context.Context, interface{}, interface{}, ...UpdateOpt) error
+	UpdateWithFilter(context.Context, interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
 	WithTxn(Txn) Collection
 }

@@ -15,8 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	_ "github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 
 	"github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
@@ -40,97 +38,9 @@ type GetterOpts struct {
 // It will be used, if no others are specified.
 var DefaultGetterOpts = GetterOpts{}
 
-// Get a document from the given DocKey, return an error if we fail to retrieve
-// the specified document.
-// If the Key doesn't exist, return ErrDocumentNotFound
-func (c *Collection) GetDepreciated(key key.DocKey, opts ...GetterOpts) (*document.Document, error) {
-	// create txn
-	txn, err := c.getTxn(false)
-	if err != nil {
-		return nil, err
-	}
-	defer c.discardImplicitTxn(txn)
-
-	found, err := c.exists(txn, key)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, ErrDocumentNotFound
-	}
-
-	var opt GetterOpts
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-	doc, err := c.getDepreciated(txn, key, opt)
-	if err != nil {
-		return nil, err
-	}
-	return doc, c.commitImplicitTxn(txn)
-}
-
 func (c *Collection) getAllFields() {}
 
 func (c *Collection) getSomeFields() {}
-
-// scans the database for the given document and all associated fields, returns document
-func (c *Collection) getDepreciated(txn *Txn, key key.DocKey, opt GetterOpts) (*document.Document, error) {
-	// To get the entire document, we dispatch a Query request to get all
-	// keys with the prefix for the given DocKey.
-	// This will return any and all keys under that prefix, which all fields
-	// of the document exist, as well as any sub documents, etc
-	q := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
-		Filters:  []query.Filter{filterPriorityEntry{}},
-		KeysOnly: false,
-	}
-
-	doc := document.NewWithKey(key)
-	res, err := txn.datastore.Query(q)
-	defer res.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	// dispatch collectors for each returned key/value pair.
-	// Because our k/v layout utilizes multiple pairs to represent a given
-	// field/value element of the document, and because the query isn't
-	// guranteed to maintain any specific order, we need to asynchronisly
-	// collect all the responses from the given channel, and dispatch them,
-	// to the correct collector for the field they are apart of.
-	// @todo: Investigate different field collector approach
-	collector := newFieldCollector()
-	for r := range res.Next() {
-		// do we need to check r.Error here?
-		collector.dispatch(ds.NewKey(r.Key).Type(), r.Entry)
-	}
-
-	done := make(chan struct{})
-	go func() {
-		// fmt.Println("-- Waiting for all queue processes to close --")
-		collector.wg.Wait()
-		close(done)
-		// fmt.Println("-- All process have completed and closed --")
-	}()
-
-	// waits for the collector to collate the necessary
-	// k/v pairs, and returns a formatted field/value entry
-	for {
-		select {
-		case fr := <-collector.results():
-			// fmt.Println("New field result:", fr)
-			err = doc.SetAs(fr.name, fr.value, fr.ctype)
-			if err != nil {
-				return nil, err // wrap
-			}
-
-		case <-done:
-			// fmt.Println("Collector process closed")
-			return doc, nil
-		}
-	}
-}
 
 type fieldResult struct {
 	// data [3][]byte // an array of size 3 of byte arrays to hold all the data we need per field pair

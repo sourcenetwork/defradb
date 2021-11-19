@@ -10,10 +10,12 @@
 package db
 
 import (
+	"context"
+
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 )
 
-func (db *DB) GetBlock(c cid.Cid) (blocks.Block, error) {
-	return db.dagstore.Get(c)
+func (db *DB) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
+	return db.dagstore.Get(ctx, c)
 }

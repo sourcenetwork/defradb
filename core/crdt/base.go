@@ -10,6 +10,7 @@
 package crdt
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 
@@ -68,7 +69,7 @@ func (base baseCRDT) typeKey(key string) ds.Key {
 // 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)
 // }
 
-func (base baseCRDT) setPriority(key string, priority uint64) error {
+func (base baseCRDT) setPriority(ctx context.Context, key string, priority uint64) error {
 	prioK := base.priorityKey(key)
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, priority+1)
@@ -76,13 +77,13 @@ func (base baseCRDT) setPriority(key string, priority uint64) error {
 		return errors.New("error encoding priority")
 	}
 
-	return base.store.Put(prioK, buf[0:n])
+	return base.store.Put(ctx, prioK, buf[0:n])
 }
 
 // get the current priority for given key
-func (base baseCRDT) getPriority(key string) (uint64, error) {
+func (base baseCRDT) getPriority(ctx context.Context, key string) (uint64, error) {
 	pKey := base.priorityKey(key)
-	pbuf, err := base.store.Get(pKey)
+	pbuf, err := base.store.Get(ctx, pKey)
 	if err != nil {
 		if err == ds.ErrNotFound {
 			return 0, nil

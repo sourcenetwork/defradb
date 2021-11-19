@@ -13,6 +13,7 @@ import (
 	// "time"
 
 	"bytes"
+	"context"
 	"fmt"
 
 	"errors"
@@ -92,9 +93,9 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 
 // Value gets the current register value
 // RETURN STATE
-func (reg LWWRegister) Value() ([]byte, error) {
+func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(valueK)
+	buf, err := reg.store.Get(ctx, valueK)
 	if err != nil {
 		return nil, err
 	}
@@ -124,17 +125,17 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg LWWRegister) Merge(delta core.Delta, id string) error {
+func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
 		return core.ErrMismatchedMergeType
 	}
 
-	return reg.setValue(d.Data, d.GetPriority())
+	return reg.setValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg LWWRegister) setValue(val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(reg.key)
+func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
+	curPrio, err := reg.getPriority(ctx, reg.key)
 	if err != nil {
 		return fmt.Errorf("Failed to get priority for Set : %w", err)
 	}
@@ -146,7 +147,7 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(valueK)
+		curValue, _ := reg.store.Get(ctx, valueK)
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -154,12 +155,12 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(valueK, buf)
+	err = reg.store.Put(ctx, valueK, buf)
 	if err != nil {
 		return fmt.Errorf("Failed to store new value : %w", err)
 	}
 
-	return reg.setPriority(reg.key, priority)
+	return reg.setPriority(ctx, reg.key, priority)
 }
 
 // DeltaDecode is a typed helper to extract

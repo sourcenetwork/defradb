@@ -10,6 +10,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 
 	cid "github.com/ipfs/go-cid"
@@ -25,9 +26,9 @@ var (
 // to deterministicly merge other replicated data so as to
 // converge on the same state
 type ReplicatedData interface {
-	Merge(other Delta, id string) error
+	Merge(ctx context.Context, other Delta, id string) error
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
-	Value() ([]byte, error)
+	Value(ctx context.Context) ([]byte, error)
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore

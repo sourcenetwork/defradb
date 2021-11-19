@@ -57,16 +57,16 @@ type bstore struct {
 	rehash bool
 }
 
-func (bs *bstore) HashOnRead(enabled bool) {
+func (bs *bstore) HashOnRead(_ context.Context, enabled bool) {
 	bs.rehash = enabled
 }
 
-func (bs *bstore) Get(k cid.Cid) (blocks.Block, error) {
+func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		log.Error("undefined cid in blockstore")
 		return nil, ErrNotFound
 	}
-	bdata, err := bs.store.Get(dshelp.CidToDsKey(k))
+	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
 		return nil, ErrNotFound
 	}
@@ -88,26 +88,26 @@ func (bs *bstore) Get(k cid.Cid) (blocks.Block, error) {
 	return blocks.NewBlockWithCid(bdata, k)
 }
 
-func (bs *bstore) Put(block blocks.Block) error {
-	k := dshelp.CidToDsKey(block.Cid())
+func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
+	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
 	// Has is cheaper than Put, so see if we already have it
-	exists, err := bs.store.Has(k)
+	exists, err := bs.store.Has(ctx, k)
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	return bs.store.Put(k, block.RawData())
+	return bs.store.Put(ctx, k, block.RawData())
 }
 
-func (bs *bstore) PutMany(blocks []blocks.Block) error {
+func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
-		k := dshelp.CidToDsKey(b.Cid())
-		exists, err := bs.store.Has(k)
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k)
 		if err == nil && exists {
 			continue
 		}
 
-		err = bs.store.Put(k, b.RawData())
+		err = bs.store.Put(ctx, k, b.RawData())
 		if err != nil {
 			return err
 		}
@@ -115,20 +115,20 @@ func (bs *bstore) PutMany(blocks []blocks.Block) error {
 	return nil
 }
 
-func (bs *bstore) Has(k cid.Cid) (bool, error) {
-	return bs.store.Has(dshelp.CidToDsKey(k))
+func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
+	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
-func (bs *bstore) GetSize(k cid.Cid) (int, error) {
-	size, err := bs.store.GetSize(dshelp.CidToDsKey(k))
+func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
+	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
 		return -1, ErrNotFound
 	}
 	return size, err
 }
 
-func (bs *bstore) DeleteBlock(k cid.Cid) error {
-	return bs.store.Delete(dshelp.CidToDsKey(k))
+func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
+	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
 // AllKeysChan runs a query for keys from the blockstore.
@@ -139,7 +139,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 
 	// KeysOnly, because that would be _a lot_ of data.
 	q := dsq.Query{KeysOnly: true}
-	res, err := bs.store.Query(q)
+	res, err := bs.store.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}

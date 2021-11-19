@@ -10,6 +10,8 @@
 package crdt
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/core"
 
 	"github.com/ipfs/go-cid"
@@ -60,16 +62,16 @@ type baseMerkleCRDT struct {
 	crdt  core.ReplicatedData
 }
 
-func (base *baseMerkleCRDT) Merge(other core.Delta, id string) error {
-	return base.crdt.Merge(other, id)
+func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta, id string) error {
+	return base.crdt.Merge(ctx, other, id)
 }
 
 func (base *baseMerkleCRDT) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	return base.crdt.DeltaDecode(node)
 }
 
-func (base *baseMerkleCRDT) Value() ([]byte, error) {
-	return base.crdt.Value()
+func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
+	return base.crdt.Value(ctx)
 }
 
 // func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
@@ -83,7 +85,7 @@ func (base *baseMerkleCRDT) Value() ([]byte, error) {
 // }
 
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(delta core.Delta) (cid.Cid, error) {
-	return base.clock.AddDAGNode(delta)
+func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, error) {
+	return base.clock.AddDAGNode(ctx, delta)
 	// and broadcast
 }

@@ -10,6 +10,7 @@
 package db
 
 import (
+	"context"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -17,27 +18,27 @@ import (
 	gql "github.com/graphql-go/graphql"
 )
 
-func (db *DB) ExecQuery(query string) *client.QueryResult {
+func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	res := &client.QueryResult{}
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {
 		return db.ExecIntrospection(query)
 	}
 
-	txn, err := db.NewTxn(false)
-	defer txn.Discard()
+	txn, err := db.NewTxn(ctx, false)
+	defer txn.Discard(ctx)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
 
-	results, err := db.queryExecutor.ExecQuery(db, txn, query)
+	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
 
-	if err := txn.Commit(); err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}

@@ -10,6 +10,7 @@
 package planner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -57,21 +58,21 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 // }
 
-func (e *QueryExecutor) MakeSelectQuery(db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
+func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
 	if selectStmt == nil {
 		return nil, errors.New("Cannot create query without a selection")
 	}
-	planner := makePlanner(db, txn)
+	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
 	q, err := e.parseQueryString(query)
 	if err != nil {
 		return nil, err
 	}
 
-	planner := makePlanner(db, txn)
+	planner := makePlanner(ctx, db, txn)
 	return planner.queryDocs(q)
 }
 

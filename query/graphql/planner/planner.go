@@ -100,8 +100,7 @@ type Planner struct {
 
 }
 
-func makePlanner(db client.DB, txn client.Txn) *Planner {
-	ctx := context.Background()
+func makePlanner(ctx context.Context, db client.DB, txn client.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
