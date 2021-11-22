@@ -21,22 +21,14 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
+	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/stretchr/testify/assert"
 )
 
 func newMemoryDB() (*DB, error) {
-	opts := &Options{
-		Store: "memory",
-		Memory: MemoryOptions{
-			Size: 1024 * 1000,
-		},
-		Badger: BadgerOptions{
-			Path: "test",
-		},
-	}
-
-	return NewDB(opts)
+	rootstore := ds.NewMapDatastore()
+	return NewDB(rootstore, struct{}{})
 }
 
 func newTestCollection(ctx context.Context, db *DB) (*Collection, error) {
@@ -47,14 +39,9 @@ func newTestCollection(ctx context.Context, db *DB) (*Collection, error) {
 }
 
 func TestNewDB(t *testing.T) {
-	opts := &Options{
-		Store: "memory",
-		Memory: MemoryOptions{
-			Size: 1024 * 1000,
-		},
-	}
+	rootstore := ds.NewMapDatastore()
 
-	_, err := NewDB(opts)
+	_, err := NewDB(rootstore, struct{}{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,14 +49,9 @@ func TestNewDB(t *testing.T) {
 
 func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
-	opts := &Options{
-		Store: "memory",
-		Memory: MemoryOptions{
-			Size: 1024 * 1000,
-		},
-	}
+	rootstore := ds.NewMapDatastore()
 
-	db, err := NewDB(opts)
+	db, err := NewDB(rootstore, struct{}{})
 	if err != nil {
 		t.Error(err)
 	}
