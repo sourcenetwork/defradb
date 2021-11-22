@@ -10,25 +10,37 @@
 package cmd
 
 import (
-	"github.com/sourcenetwork/defradb/db"
+	badgerds "github.com/ipfs/go-ds-badger"
 )
 
 type Config struct {
-	Database db.Options
+	Database Options
 }
 
-type DatabaseConfig struct {
-	URL     string
-	storage string
-	// badger
+type Options struct {
+	Address string
+	Store   string
+	Memory  MemoryOptions
+	Badger  BadgerOptions
+}
+
+// BadgerOptions for the badger instance of the backing datastore
+type BadgerOptions struct {
+	Path string
+	*badgerds.Options
+}
+
+// MemoryOptions for the memory instance of the backing datastore
+type MemoryOptions struct {
+	Size uint64
 }
 
 var (
 	defaultConfig = Config{
-		Database: db.Options{
+		Database: Options{
 			Address: "localhost:9181",
 			Store:   "badger",
-			Badger: db.BadgerOptions{
+			Badger: BadgerOptions{
 				Path: "$HOME/.defradb/data",
 			},
 		},

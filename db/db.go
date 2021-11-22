@@ -27,7 +27,6 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -81,46 +80,12 @@ type DB struct {
 
 	log logging.StandardLogger
 
-	options *Options
-}
-
-// Options for database
-type Options struct {
-	Store   string
-	Memory  MemoryOptions
-	Badger  BadgerOptions
-	Address string
-}
-
-// BadgerOptions for the badger instance of the backing datastore
-type BadgerOptions struct {
-	Path string
-	*badgerds.Options
-}
-
-// MemoryOptions for the memory instance of the backing datastore
-type MemoryOptions struct {
-	Size uint64
+	// The options used to init the database
+	options interface{}
 }
 
 // NewDB creates a new instance of the DB using the given options
-func NewDB(options *Options) (*DB, error) {
-	var rootstore ds.Batching
-	var err error
-	if options == nil {
-		return nil, ErrOptionsEmpty
-	}
-	if options.Store == "badger" {
-		log.Info("opening badger store: ", options.Badger.Path)
-		rootstore, err = badgerds.NewDatastore(options.Badger.Path, options.Badger.Options)
-		if err != nil {
-			return nil, err
-		}
-	} else if options.Store == "memory" {
-		log.Info("building new memory store")
-		rootstore = ds.NewMapDatastore()
-	}
-
+func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
 	log.Debug("loading: internal datastores")
 	systemstore := namespace.Wrap(rootstore, systemStoreKey)
 	datastore := namespace.Wrap(rootstore, dataStoreKey)
@@ -161,8 +126,7 @@ func NewDB(options *Options) (*DB, error) {
 
 		schema:        sm,
 		queryExecutor: exec,
-
-		options: options,
+		options:       options,
 	}
 
 	return db, err
@@ -226,11 +190,7 @@ func (db *DB) PrintDump(ctx context.Context) {
 // of resources (IE: Badger instance)
 func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
-	if db.options.Store == "badger" {
-		if db.rootstore != nil {
-			db.rootstore.Close()
-		}
-	}
+	db.rootstore.Close()
 	log.Info("Succesfully closed running process")
 }
 
