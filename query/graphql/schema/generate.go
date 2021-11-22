@@ -40,15 +40,15 @@ type Generator struct {
 	typeDefs []*gql.Object
 	manager  *SchemaManager
 
-	expandedTypes map[string]bool
+	expandedFields map[string]bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
 func (m *SchemaManager) NewGenerator() *Generator {
 	m.Generator = &Generator{
-		manager:       m,
-		expandedTypes: make(map[string]bool),
+		manager:        m,
+		expandedFields: make(map[string]bool),
 	}
 	return m.Generator
 }
@@ -144,16 +144,19 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
-		// ignore reserved fields
-		if _, ok := parser.ReservedFields[f]; ok {
+		// ignore reserved fields, execpt the Group field (as that requires typing)
+		if _, ok := parser.ReservedFields[f]; ok && f != parser.GroupFieldName {
 			continue
 		}
+		// Both the object name and the field name should be used as the key
+		// in case the child object type is referenced multiple times from the same parent type
+		fieldKey := obj.Name() + f
 		switch t := def.Type.(type) {
 		case *gql.Object:
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 			// make sure all the sub fields are expanded first
 			if err := g.expandInputArgument(t); err != nil {
@@ -172,10 +175,10 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			break
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 
 			if listObjType, ok := listType.(*gql.Object); ok {
@@ -320,6 +323,15 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 				// add _version field
 				fields["_version"] = &gql.Field{
 					Type: gql.NewList(types.Commit),
+				}
+
+				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
+				if !ok {
+					//todo@ handle error
+				}
+
+				fields[parser.GroupFieldName] = &gql.Field{
+					Type: gql.NewList(gqlType),
 				}
 
 				return fields
@@ -487,8 +499,8 @@ func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 		Values: gql.EnumValueConfigMap{},
 	}
 
-	for i, field := range obj.Fields() {
-		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: i}
+	for f, field := range obj.Fields() {
+		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
 	}
 
 	return gql.NewEnum(enumFieldsCfg)
@@ -696,7 +708,7 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 // Usually called after a round of type generation
 func (g *Generator) Reset() {
 	g.typeDefs = make([]*gql.Object, 0)
-	g.expandedTypes = make(map[string]bool)
+	g.expandedFields = make(map[string]bool)
 }
 
 func newArgConfig(t gql.Input) *gql.ArgumentConfig {

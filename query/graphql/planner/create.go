@@ -110,5 +110,5 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	// which uses the new create node as its
 	// source, instead of a scan node.
 	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create, true)
+	return p.SelectFromSource(slct, create, true, nil)
 }

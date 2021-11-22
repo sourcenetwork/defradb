@@ -90,7 +90,7 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 		return nil, err
 	}
 	slct := parsed.ToSelect()
-	plan, err := p.SelectFromSource(slct, commit, false)
+	plan, err := p.SelectFromSource(slct, commit, false, nil)
 	if err != nil {
 		return nil, err
 	}

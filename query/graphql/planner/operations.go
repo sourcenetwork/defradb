@@ -13,6 +13,8 @@ var (
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*headsetScanNode)(nil)
 	_ planNode = (*limitNode)(nil)
+	_ planNode = (*groupNode)(nil)
+	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*selectNode)(nil)
 	_ planNode = (*selectTopNode)(nil)
 	_ planNode = (*sortNode)(nil)
@@ -25,11 +27,6 @@ var (
 type joinNode struct {
 	p *Planner
 }
-
-// applys a 'Group By' operation
-type groupNode struct {
-	p *Planner
-} // gatherNode?
 
 // scatter group by or aggregate operations
 type scatterNode struct {

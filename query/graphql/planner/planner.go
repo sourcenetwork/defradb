@@ -157,8 +157,6 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	return plan, nil
 }
 
-func (p *Planner) GroupBy() {}
-
 // plan optimization. Includes plan expansion and wiring
 func (p *Planner) optimizePlan(plan planNode) error {
 	err := p.expandPlan(plan)
@@ -176,6 +174,10 @@ func (p *Planner) expandPlan(plan planNode) error {
 		return p.expandPlan(n.source)
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n)
+	case *groupNode:
+		// We only care about expanding the child source here, it is assumed that the parent source
+		// is expanded elsewhere/already
+		return p.expandPlan(n.dataSource.childSource)
 	case MultiNode:
 		return p.expandMultiNode(n)
 	case *updateNode:
@@ -193,13 +195,20 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	// wire up source to plan
 	plan.plan = plan.source
 
+	// if group
+	if plan.group != nil {
+		err := p.expandGroupNodePlan(plan)
+		if err != nil {
+			return err
+		}
+		plan.plan = plan.group
+	}
+
 	// wire up the render plan
 	if plan.render != nil {
 		plan.render.plan = plan.plan
 		plan.plan = plan.render
 	}
-
-	// if group
 
 	// if order
 	if plan.sort != nil {
@@ -239,6 +248,41 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
 	return errors.New("Unknown type index join plan")
 }
 
+func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
+	var childSource planNode
+	// Find the first scan node in the plan, we assume that it will be for the correct collection
+	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
+	// Check for any existing pipe nodes in the plan, we should use it if there is one
+	pipe, hasPipe := p.walkAndFindPlanType(plan.plan, &pipeNode{}).(*pipeNode)
+
+	if !hasPipe {
+		newPipeNode := newPipeNode()
+		pipe = &newPipeNode
+		pipe.source = scanNode
+	}
+
+	if plan.group.childSelect != nil {
+		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
+		if err != nil {
+			return err
+		}
+		// We need to remove the render so that any child records are preserved on arrival at the parent
+		childSelectNode.(*selectTopNode).render = nil
+
+		childSource = childSelectNode
+	}
+
+	plan.group.dataSource.childSource = childSource
+	plan.group.dataSource.parentSource = plan.plan
+	plan.group.dataSource.pipeNode = pipe
+
+	if err := p.walkAndReplacePlan(plan.group, scanNode, pipe); err != nil {
+		return err
+	}
+
+	return p.expandPlan(childSource)
+}
+
 // func (p *Planner) QueryDocs(query parser.Query) {
 
 // }
@@ -266,6 +310,8 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		node.root = replace
 	case *typeJoinMany:
 		node.root = replace
+	case *pipeNode:
+		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
 		return fmt.Errorf("Unknown plan node type to replace: %T", node)
