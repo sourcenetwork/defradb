@@ -20,7 +20,6 @@ type Config struct {
 type DatabaseConfig struct {
 	URL     string
 	storage string
-	// badger
 }
 
 var (
