@@ -225,11 +225,7 @@ func (db *DB) PrintDump(ctx context.Context) {
 // of resources (IE: Badger instance)
 func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
-	if db.options.Store == "badger" {
-		if db.rootstore != nil {
-			db.rootstore.Close()
-		}
-	}
+	db.rootstore.Close()
 	log.Info("Succesfully closed running process")
 }
 
