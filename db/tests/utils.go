@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
@@ -33,17 +34,8 @@ type QueryTestCase struct {
 }
 
 func NewMemoryDB() (*db.DB, error) {
-	opts := &db.Options{
-		Store: "memory",
-		Memory: db.MemoryOptions{
-			Size: 1024 * 1000,
-		},
-		Badger: db.BadgerOptions{
-			Path: "test",
-		},
-	}
-
-	return db.NewDB(opts)
+	rootstore := ds.NewMapDatastore()
+	return db.NewDB(rootstore, struct{}{})
 }
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {

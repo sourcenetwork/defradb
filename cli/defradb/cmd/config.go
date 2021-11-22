@@ -11,7 +11,6 @@ package cmd
 
 import (
 	badgerds "github.com/ipfs/go-ds-badger"
-	"github.com/sourcenetwork/defradb/db"
 )
 
 type Config struct {
@@ -34,19 +33,6 @@ type BadgerOptions struct {
 // MemoryOptions for the memory instance of the backing datastore
 type MemoryOptions struct {
 	Size uint64
-}
-
-func (cmdOptions *Options) ToDatabaseOptions() db.Options {
-	return db.Options{
-		Store: cmdOptions.Store,
-		Memory: db.MemoryOptions{
-			Size: cmdOptions.Memory.Size,
-		},
-		Badger: db.BadgerOptions{
-			Path:    cmdOptions.Badger.Path,
-			Options: cmdOptions.Badger.Options,
-		},
-	}
 }
 
 var (

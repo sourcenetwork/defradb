@@ -16,6 +16,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/db"
 
+	ds "github.com/ipfs/go-datastore"
+	badgerds "github.com/ipfs/go-ds-badger"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +34,24 @@ var startCmd = &cobra.Command{
 		signalCh := make(chan os.Signal, 1)
 		signal.Notify(signalCh, os.Interrupt)
 
-		options := config.Database.ToDatabaseOptions()
-		db, err := db.NewDB(&options)
+		var rootstore ds.Batching
+		var options interface{}
+		var err error
+		if config.Database.Store == "badger" {
+			log.Info("opening badger store: ", config.Database.Badger.Path)
+			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
+			options = config.Database.Badger
+			if err != nil {
+				log.Error("Failed to initiate database:", err)
+				os.Exit(1)
+			}
+		} else if config.Database.Store == "memory" {
+			log.Info("building new memory store")
+			rootstore = ds.NewMapDatastore()
+			options = config.Database.Memory
+		}
+
+		db, err := db.NewDB(rootstore, options)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)
