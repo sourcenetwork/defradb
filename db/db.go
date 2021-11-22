@@ -86,10 +86,9 @@ type DB struct {
 
 // Options for database
 type Options struct {
-	Store   string
-	Memory  MemoryOptions
-	Badger  BadgerOptions
-	Address string
+	Store  string
+	Memory MemoryOptions
+	Badger BadgerOptions
 }
 
 // BadgerOptions for the badger instance of the backing datastore

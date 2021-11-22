@@ -32,7 +32,8 @@ var startCmd = &cobra.Command{
 		signalCh := make(chan os.Signal, 1)
 		signal.Notify(signalCh, os.Interrupt)
 
-		db, err := db.NewDB(&config.Database)
+		options := config.Database.ToDatabaseOptions()
+		db, err := db.NewDB(&options)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)
@@ -45,7 +46,7 @@ var startCmd = &cobra.Command{
 
 		// run the server listener in a seperate goroutine
 		go func() {
-			db.Listen()
+			db.Listen(config.Database.Address)
 		}()
 
 		// capture the interrupt signal, and gracefully exit
