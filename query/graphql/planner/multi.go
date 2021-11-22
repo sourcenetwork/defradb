@@ -390,7 +390,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 	src := s.source
 	switch node := src.(type) {
 	// if its a scan node, we either replace or create a multinode
-	case *scanNode:
+	case *scanNode, *pipeNode:
 		switch plan.(type) {
 		case mergeNode:
 			s.source = plan
