@@ -237,12 +237,6 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	doc, err := document.NewFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
@@ -255,6 +249,12 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	desc := col.Description()
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
@@ -282,12 +282,6 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	doc, err := document.NewFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
@@ -308,6 +302,12 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	desc := col.Description()
 	err = df.Init(&desc, &desc.Indexes[0], nil, false)
 	assert.NoError(t, err)
+
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
@@ -347,12 +347,6 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	doc, err := document.NewFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
@@ -371,6 +365,13 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}
+
+	txn, err := db.NewTxn(ctx, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	err = df.Start(ctx, txn, spans)
 	assert.NoError(t, err)
 
