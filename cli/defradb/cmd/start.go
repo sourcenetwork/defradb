@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/db"
 
+	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/spf13/cobra"
@@ -41,14 +42,16 @@ var startCmd = &cobra.Command{
 			log.Info("opening badger store: ", config.Database.Badger.Path)
 			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
 			options = config.Database.Badger
-			if err != nil {
-				log.Error("Failed to initiate database:", err)
-				os.Exit(1)
-			}
 		} else if config.Database.Store == "memory" {
 			log.Info("building new memory store")
-			rootstore = ds.NewMapDatastore()
+			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+			rootstore, err = badgerds.NewDatastore("", &opts)
 			options = config.Database.Memory
+		}
+
+		if err != nil {
+			log.Error("Failed to initiate datastore:", err)
+			os.Exit(1)
 		}
 
 		db, err := db.NewDB(rootstore, options)
