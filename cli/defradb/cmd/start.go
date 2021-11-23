@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 
 	ds "github.com/ipfs/go-datastore"
-	badgerds "github.com/ipfs/go-ds-badger"
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/spf13/cobra"
 )
 
