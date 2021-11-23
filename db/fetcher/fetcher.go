@@ -122,6 +122,13 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 	}
 
 	var err error
+	if df.kvIter != nil {
+		// If an existing iterator is to be replaced, we must still may sure it is properly closed
+		err = df.kvIter.Close()
+		if err != nil {
+			return err
+		}
+	}
 	df.kvIter, err = txn.Query(ctx, q)
 	if err != nil {
 		return err
