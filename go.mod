@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/SierraSoftworks/connor v1.0.2
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dgraph-io/badger/v3 v3.2103.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/go-chi/chi v1.5.2
 	github.com/graphql-go/graphql v0.7.9
@@ -28,6 +29,7 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
 	github.com/ugorji/go/codec v1.1.7
+	go.uber.org/zap v1.16.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
 
