@@ -10,3 +10,7 @@ var dbopts = &db.Options{
 	Address: "localhost:19181",
 	Store:   "memory",
 }
+
+func cleanupDB(db *db.DB) {
+	db.Close()
+}
