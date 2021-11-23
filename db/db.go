@@ -48,7 +48,10 @@ var (
 )
 
 // make sure we match our client interface
-var _ client.DB = (*DB)(nil)
+var (
+	_ client.DB         = (*DB)(nil)
+	_ client.Collection = (*Collection)(nil)
+)
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.
