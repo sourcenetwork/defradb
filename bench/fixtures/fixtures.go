@@ -3,6 +3,7 @@ package fixtures
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -31,21 +32,49 @@ func WithSchema(ctx context.Context, schemaName string) Context {
 	}
 }
 
+// Types returns the defined types for this fixture set
+func (ctx Context) Types() []interface{} {
+	return ctx.types
+}
+
+// Type returns type at the given index in the fixture set
+func (ctx Context) Type(index int) interface{} {
+	return ctx.types[index]
+}
+
+// TypeName returns the name of the type at the given index
+// in the fixture set
+func (ctx Context) TypeName(index int) string {
+	return reflect.TypeOf(ctx.types[index]).Name()
+}
+
+// GenerateFixtureDocs uses the faker fixture system to
+// randomly generate a new set of documents matching the defined
+// struct types within the context.
 func (ctx Context) GenerateFixtureDocs() ([]string, error) {
 	results := make([]string, len(ctx.types))
 	for i, t := range ctx.types {
-		val := reflect.New(reflect.TypeOf(t))
-		err := faker.FakeData(val)
-		if err != nil {
+		val := reflect.New(reflect.TypeOf(t)).Interface()
+
+		// generate our new random struct and
+		// write it to our reflected variable
+		if err := faker.FakeData(val); err != nil {
 			return nil, err
 		}
 
+		buf, err := json.Marshal(val)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = string(buf)
 	}
+
+	return results, nil
 }
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct
-func extractGQLFromType(t interface{}) (string, error) {
+func ExtractGQLFromType(t interface{}) (string, error) {
 	var buf *bytes.Buffer
 	if reflect.TypeOf(t).Kind() != reflect.Struct {
 		return "", errors.New("given type is not a struct")
