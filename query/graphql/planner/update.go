@@ -128,8 +128,8 @@ func (n *updateNode) Start() error {
 	return n.results.Start()
 }
 
-func (n *updateNode) Close() {
-	n.results.Close()
+func (n *updateNode) Close() error {
+	return n.results.Close()
 }
 
 func (n *updateNode) Source() planNode { return nil }

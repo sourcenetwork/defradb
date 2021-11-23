@@ -56,7 +56,7 @@ type planNode interface {
 	Source() planNode
 
 	// Close terminates the planNode execution releases its resources.
-	Close()
+	Close() error
 }
 
 // basic plan Node that implements the planNode interface
@@ -70,7 +70,7 @@ func (n *baseNode) Start() error                   { return n.plan.Start() }
 func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
 func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *baseNode) Close()                         { n.plan.Close() }
+func (n *baseNode) Close() error                   { return n.plan.Close() }
 func (n *baseNode) Source() planNode               { return n.plan }
 
 type ExecutionContext struct {
@@ -343,12 +343,13 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		return nil, err
 	}
 
-	defer plan.Close()
 	if err := plan.Start(); err != nil {
+		plan.Close()
 		return nil, err
 	}
 
 	if next, err := plan.Next(); err != nil || !next {
+		plan.Close()
 		return nil, err
 	}
 
@@ -361,6 +362,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 		next, err := plan.Next()
 		if err != nil {
+			plan.Close()
 			return nil, err
 		}
 
@@ -369,7 +371,8 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		}
 	}
 
-	return docs, nil
+	err = plan.Close()
+	return docs, err
 }
 
 func (p *Planner) query(query *parser.Query) (planNode, error) {

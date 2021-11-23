@@ -45,7 +45,7 @@ func (n *pipeNode) Init() error {
 
 func (n *pipeNode) Start() error           { return n.source.Start() }
 func (n *pipeNode) Spans(spans core.Spans) { n.source.Spans(spans) }
-func (n *pipeNode) Close()                 { n.source.Close() }
+func (n *pipeNode) Close() error           { return n.source.Close() }
 func (n *pipeNode) Source() planNode       { return n.source }
 
 func (n *pipeNode) Values() map[string]interface{} {

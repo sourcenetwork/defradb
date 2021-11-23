@@ -341,3 +341,7 @@ func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 	// so were just going to do a quick hack
 	return core.Key{Key: key.Parent()}
 }
+
+func (df *DocumentFetcher) Close() error {
+	return df.kvIter.Close()
+}
