@@ -10,7 +10,7 @@ Table of Contents
 
 * [Early Access](#early-access)
 * [Installation](#installation)
-	* [Compile](#compile)
+	* [Build](#build)
 * [Getting Started](#getting-started)
 	* [Add a Schema type](#add-a-schema-type)
 	* [Create a Document Instance](#create-a-document-instance)
@@ -31,13 +31,35 @@ DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for
 ## Installation
 To install a DefraDB node, you can download the pre-compiled binaries available on the releases page, or you can compile it youself if you have a local [Go Toolchain](https://golang.org/) installed.
 
-### Compile
+### Build
+Run using Make:
+```
+make
+```
+
+Install using Make:
+```
+make install
+```
+
+Build the binary inside the `build/` folder:
+```
+make build
+```
+
+Build and Start DefraDB:
+```
+make start
+```
+
+Install Manually:
 ```
 go install github.com/sourcenetwork/defradb/cli/defradb
 ```
-or
+
+Build and Install Manually:
 ```
-git clone git@github.com:sourcenetwork/defradb-early-access.git
+git clone git@github.com:sourcenetwork/defradb.git
 mv defradb-early-access defradb # Rename the folder
 cd defradb/cli/defradb
 go install
