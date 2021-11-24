@@ -75,7 +75,8 @@ func (ctx Context) GenerateFixtureDocs() ([]string, error) {
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct
 func ExtractGQLFromType(t interface{}) (string, error) {
-	var buf *bytes.Buffer
+	var buf bytes.Buffer
+
 	if reflect.TypeOf(t).Kind() != reflect.Struct {
 		return "", errors.New("given type is not a struct")
 	}
@@ -85,14 +86,16 @@ func ExtractGQLFromType(t interface{}) (string, error) {
 	name := tt.Name()
 
 	// write the GQL SDL object to the buffer, field by field
-	fmt.Fprintf(buf, "type %s {", name)
+	fmt.Fprintf(&buf, "type %s {\n", name)
 	for i := 0; i < tt.NumField(); i++ {
+		// @todo: Handle non-scalar types
 		f := tt.Field(i)
 		fname := f.Name
 		ftype := f.Type.Name()
-		fmt.Fprintf(buf, "\t%s: %s\n", fname, ftype)
+		gqlType := gTypeToGQLType[ftype]
+		fmt.Fprintf(&buf, "\t%s: %s\n", fname, gqlType)
 	}
-	fmt.Fprint(buf, "}")
+	fmt.Fprint(&buf, "}")
 
 	return buf.String(), nil
 }
