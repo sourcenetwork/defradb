@@ -75,13 +75,20 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error)
 // parsed GraphQL Schema Definition Language AST document
 func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypesFromAST(document)
-	if err != nil {
-		return nil, err
+	defs, typeDefinitionErrorPointer := g.buildTypesFromAST(document)
+	if typeDefinitionErrorPointer != nil && *typeDefinitionErrorPointer != nil {
+		return nil, *typeDefinitionErrorPointer
 	}
+
 	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
-		return nil, err
+	if resolutionError := g.manager.ResolveTypes(); resolutionError != nil {
+		// The fields thunks may have been partially resolved now, and we need to check if the typeDefinitionErrorPointer
+		// has been update with any errors that may have occured during thunk resolution.  An error in a thunk should always
+		// result in a resolutionError (by returning nil)
+		if typeDefinitionErrorPointer != nil && *typeDefinitionErrorPointer != nil {
+			return nil, fmt.Errorf("%v Thunk error: %w", resolutionError, *typeDefinitionErrorPointer)
+		}
+		return nil, resolutionError
 	}
 
 	// for each built type
@@ -96,6 +103,7 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 		queryType.AddFieldConfig(f.Name, f)
 		generatedQueryFields = append(generatedQueryFields, f)
 	}
+
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -242,17 +250,19 @@ func (g *Generator) createExpandedFieldList(f *gql.FieldDefinition, t *gql.Objec
 
 // Given a parsed AST of  developer defined types
 // extract and return the correct gql.Object type(s)
-func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, *error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
+	var definitionError error = nil
 
 	for _, def := range document.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
 			// check if type exists
 			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
-				return nil, fmt.Errorf("Schema type already exists: %s", defType.Name.Value)
+				definitionError = fmt.Errorf("Schema type already exists: %s", defType.Name.Value)
+				return nil, &definitionError
 			}
 
 			objconf := gql.ObjectConfig{}
@@ -287,8 +297,8 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					t := field.Type
 					ttype, err := astNodeToGqlType(g.manager.schema.TypeMap(), t)
 					if err != nil {
-						// @todo: Handle errors during type genation within a Thunk
-						// panic(err)
+						definitionError = err
+						return nil
 					}
 
 					// check if ttype is a Object value
@@ -302,7 +312,8 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						// register the relation
 						relName, err := genRelationName(objconf.Name, ttype.Name())
 						if err != nil {
-							// todo again handle errors
+							definitionError = err
+							return nil
 						}
 						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
 					case *gql.List:
@@ -310,7 +321,8 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						// register the relation
 						relName, err := genRelationName(objconf.Name, ltype.Name())
 						if err != nil {
-							// todo again handle errors
+							definitionError = err
+							return nil
 						}
 						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
 						break
@@ -327,7 +339,8 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
-					//todo@ handle error
+					definitionError = fmt.Errorf("object not found whilst executing fields thunk: %s", defType.Name.Value)
+					return nil
 				}
 
 				fields[parser.GroupFieldName] = &gql.Field{
@@ -350,7 +363,8 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 		g.typeDefs = append(g.typeDefs, obj)
 	}
 
-	return objs, nil
+	// We need to return the definitionError pointer so that thunk errors may be handled by the consumer
+	return objs, &definitionError
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there

@@ -570,7 +570,7 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 		})
 
 	// make sure we get back the *correct* error.
-	if err != nil && !strings.Contains(err.Error(), "field type must be Output Type but got: <nil>") {
+	if err != nil && !strings.Contains(err.Error(), "No type found for given name: UndefinedObject") {
 		t.Error("buildTypesFromAST didn't fail on UndefinedObject:", err)
 	}
 }
