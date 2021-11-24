@@ -152,7 +152,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if err != nil {
 			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
 		}
-		headCid := cid.NewCidV0(hash)
+		headCid := cid.NewCidV1(cid.Raw, hash)
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
 			return nil, 0, errors.New("error decocding height")

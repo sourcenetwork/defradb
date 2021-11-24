@@ -166,7 +166,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 				log.Warningf("error parsing key from binary: %s", err)
 				continue
 			}
-			k := cid.NewCidV0(hash)
+			k := cid.NewCidV1(cid.Raw, hash)
 			select {
 			case <-ctx.Done():
 				return
