@@ -28,11 +28,6 @@ var (
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
-	// core.MerkleClock
-	// WithStore(core.DSReaderWriter)
-	// WithNS(ds.Key)
-	// ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error)
-	// NewObject() error
 }
 
 // type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
@@ -73,16 +68,6 @@ func (base *baseMerkleCRDT) DeltaDecode(node ipld.Node) (core.Delta, error) {
 func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 	return base.crdt.Value(ctx)
 }
-
-// func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
-// 	current := node.Cid()
-// 	err := base.Merge(delta, dshelp.CidToDsKey(current).String())
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
-// 	}
-
-// 	return base.clock.ProcessNode(ng, root, rootPrio, delta, node)
-// }
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, error) {

@@ -181,16 +181,3 @@ var IDOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		},
 	},
 })
-
-/*
-type Commit {
-	Height: Int
-	CID: String
-	Delta: Delta
-	Previous: [Commit]
-}
-
-type Delta {
-	Payload: String
-}
-*/

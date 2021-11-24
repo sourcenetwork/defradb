@@ -25,7 +25,7 @@ import (
 
 func newRandomCID() cid.Cid {
 	pref := cid.Prefix{
-		Version:  0,
+		Version:  1,
 		Codec:    cid.Raw,
 		MhType:   mh.SHA2_256,
 		MhLength: -1, // default length
