@@ -111,7 +111,7 @@ func TestQueryParse_Limit_Offset(t *testing.T) {
 func TestQueryParse_Commit_Latest(t *testing.T) {
 	var query = (`
 	query {
-		latestCommits(dockey: "Qm123") {
+		latestCommits(dockey: "baf123") {
 			cid
 		}
 	}`)
@@ -128,6 +128,6 @@ func TestQueryParse_Commit_Latest(t *testing.T) {
 	assert.NoError(t, err)
 
 	commit := q.Queries[0].Selections[0].(*CommitSelect)
-	assert.Equal(t, commit.DocKey, "Qm123")
+	assert.Equal(t, commit.DocKey, "baf123")
 	assert.Len(t, commit.Fields, 1)
 }

@@ -86,9 +86,6 @@ type selectNode struct {
 	// If the select query is using a FindByDocKey filter
 	docKey string
 
-	// If te select query is using a FindByCID filter
-	cid string
-
 	groupSelect *parser.Select
 
 	// @todo restructure renderNode -> render, which is its own
