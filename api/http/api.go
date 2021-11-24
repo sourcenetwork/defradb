@@ -119,7 +119,6 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		}
 		c = cid.NewCidV0(hash)
 	}
-	// c, err := cid.Decode(cidStr)
 
 	block, err := s.db.GetBlock(ctx, c)
 	if err != nil {

@@ -516,10 +516,6 @@ func (c *Collection) exists(ctx context.Context, txn *Txn, key key.DocKey) (bool
 }
 
 func (c *Collection) saveDocValue(ctx context.Context, txn *Txn, key ds.Key, val document.Value) (cid.Cid, error) {
-	// datatype, err := c.db.crdtFactory.InstanceWithStores(txn, val.Type(), key)
-	// if err != nil {
-	// 	return cid.Cid{}, err
-	// }
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)

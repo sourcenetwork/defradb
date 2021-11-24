@@ -80,16 +80,3 @@ var (
 func init() {
 
 }
-
-/*
-type Commit {
-	Height: Int
-	CID: String
-	Delta: Delta
-	Previous: [Commit]
-}
-
-type Delta {
-	Payload: String
-}
-*/
