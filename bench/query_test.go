@@ -104,6 +104,8 @@ func setupCollections(b *testing.B, db *defradb.DB, ctx fixtures.Context) ([]cli
 }
 
 func runCollectionBenchGet(b *testing.B, ctx fixtures.Context, docCount, opCount int) error {
+	b.StopTimer()
+
 	db, err := defradb.NewDB(dbopts)
 	if err != nil {
 		return err
@@ -144,7 +146,8 @@ func runCollectionBenchGet(b *testing.B, ctx fixtures.Context, docCount, opCount
 	}
 
 	// run benchmark
-	b.ResetTimer()
+	b.StartTimer()
+
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
 			for k := 0; k < numTypes; k++ {
