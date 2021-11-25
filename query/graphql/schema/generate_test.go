@@ -598,8 +598,6 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 
 		myObjectActual := myObject.(*gql.Object)
 		spew.Dump(myObjectActual.Fields())
-		myObjectActual.Fields() // call Fields() to trigger the defineFields() function
-		// to resolve the FieldsThunker
 
 		if myObject.Error() != nil {
 			return fmt.Errorf("%s contains an internal error from the Fields() > definFields() call : %w", objName, myObject.Error())
