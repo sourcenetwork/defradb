@@ -28,16 +28,7 @@ import (
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
 	core.ReplicatedData
-<<<<<<< HEAD
-=======
-
 	Clock() core.MerkleClock
-	// core.MerkleClock
-	// WithStore(core.DSReaderWriter)
-	// WithNS(ds.Key)
-	// ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error)
-	// NewObject() error
->>>>>>> Major implementation for versioned fetcher
 }
 
 // type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
