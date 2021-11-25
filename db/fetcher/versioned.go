@@ -21,7 +21,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
 	format "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/pkg/errors"
@@ -79,9 +78,8 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher
 
-	txn   core.MultiStore
-	ctx   context.Context
-	spans core.Spans
+	txn core.MultiStore
+	ctx context.Context
 
 	// Transient version store
 	root  ds.Datastore
@@ -90,15 +88,7 @@ type VersionedFetcher struct {
 	key     core.Key
 	version cid.Cid
 
-	versionedKey core.Key
-
 	queuedCids *list.List
-
-	// df *DocumentFetcher
-
-	kv     *core.KeyValue
-	kvIter dsq.Results
-	kvEnd  bool
 
 	col    *base.CollectionDescription
 	index  *base.IndexDescription

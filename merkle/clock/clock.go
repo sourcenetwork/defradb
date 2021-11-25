@@ -188,5 +188,3 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }
-
-// func (mc *MerkleClock) DeltaDecoder()

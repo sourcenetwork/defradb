@@ -38,21 +38,6 @@ var (
 	_ Fetcher = (*DocumentFetcher)(nil)
 )
 
-/*
-var DocumentFetcher DocumentFetcher = &Fetcher{}
-DocumentFetcher.Init()
-*/
-// type DocumentFetcher interface {
-// 	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
-// 	Start(txn core.Txn, spans core.Spans) error
-// 	FetchNext() (*document.EncodedDocument, error)
-// 	FetchNextDecoded() (*document.Document, error)
-// }
-
-// var (
-// 	_ DocumentFetcher = &DocFetcher{}
-// )
-
 type DocumentFetcher struct {
 	col     *base.CollectionDescription
 	index   *base.IndexDescription
