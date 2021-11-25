@@ -275,7 +275,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
 	if err != nil {
-		return err
+		return fmt.Errorf("(version fetcher) failed to find block in blockstore: %w", err)
 	}
 	// skip if we already have it locally
 	if hasLocalBlock {
@@ -284,11 +284,13 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return err
+		return fmt.Errorf("(version fetcher) failed to get block in blockstore: %w", err)
 	}
 
 	// store the block in the local (transient store)
-	vf.store.DAGstore().Put(vf.ctx, blk)
+	if err := vf.store.DAGstore().Put(vf.ctx, blk); err != nil {
+		return fmt.Errorf("(version fetcher) failed to write block to blockstore : %w", err)
+	}
 
 	// add the CID to the queuedCIDs list
 	if topParent {
@@ -298,14 +300,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// decode the block
 	nd, err := dag.DecodeProtobuf(blk.RawData())
 	if err != nil {
-		return err
+		return fmt.Errorf("(version fetcher) failed to decode protobuf: %w", err)
 	}
 
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
 	if err != nil && err != dag.ErrLinkNotFound {
-		return err
+		return fmt.Errorf("(version fetcher) failed to get node link from DAG: %w", err)
 	}
 
 	// only seekNext on parent if we have a HEAD link

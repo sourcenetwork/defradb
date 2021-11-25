@@ -13,6 +13,7 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,8 @@ var (
 				"points": 100,
 				"verified": true
 			}`),
-			cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
+			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
+			cid: "bafybeihs23iizmjh6wpjat2ximlr3tocz6l6wie6qazjxiertjdlcsuhn4",
 		},
 		{
 			payload: []byte(`{
@@ -44,7 +46,8 @@ var (
 				"name":   "Pete",
 				"points": 99.9,
 			},
-			cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
+			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
+			cid: "bafybeiephwqi4sz4y4oq5t4ny5ihdtfyvr6g36igcb5cjyuza7trueq5be",
 		},
 		{
 			payload: []byte(`{
@@ -57,7 +60,8 @@ var (
 				"verified": false,
 				"age":      22,
 			},
-			cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
+			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
+			cid: "bafybeibdjsxta6grha3dn7jftm6uyl5lb4k3qc5bhitjw5isstnjnoe2ki",
 		},
 		{
 			payload: []byte(`{
@@ -69,20 +73,15 @@ var (
 			diffOps: map[string]interface{}{
 				"points": 129.99,
 			},
-			cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
+			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
+			cid: "bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju",
 		},
 	}
 )
 
 func newMemoryDB() (*db.DB, error) {
-	opts := &db.Options{
-		Store: "memory",
-		Memory: db.MemoryOptions{
-			Size: 1024 * 1000,
-		},
-	}
-
-	return db.NewDB(opts)
+	rootstore := ds.NewMapDatastore()
+	return db.NewDB(rootstore, struct{}{})
 }
 
 func TestVersionedFetcherInit(t *testing.T) {
@@ -121,7 +120,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH")
+	version, err := cid.Decode("bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju")
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -200,7 +199,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR")
+	version, err := cid.Decode("bafybeiephwqi4sz4y4oq5t4ny5ihdtfyvr6g36igcb5cjyuza7trueq5be")
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -243,7 +242,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh")
+	version, err := cid.Decode("bafybeibdjsxta6grha3dn7jftm6uyl5lb4k3qc5bhitjw5isstnjnoe2ki")
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -286,7 +285,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH")
+	version, err := cid.Decode("bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju")
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)

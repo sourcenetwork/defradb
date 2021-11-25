@@ -426,10 +426,12 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				doc.Clean()
 			})
 
-			links = append(links, core.DAGLink{
+			link := core.DAGLink{
 				Name: k,
 				Cid:  c,
-			})
+			}
+			links = append(links, link)
+			// fmt.Println("links:", link)
 		}
 	}
 	// Update CompositeDAG
@@ -441,7 +443,9 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	if err != nil {
 		return nil
 	}
+
 	_, err = c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	// fmt.Printf("final: %s\n\n", docCid)
 	return err
 }
 
