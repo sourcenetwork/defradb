@@ -387,7 +387,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	name := t.(*ast.Named).Name.Value
 	ttype, ok := typeMap[name]
 	if !ok {
-		return nil, errors.New("No type found for given name")
+		return nil, fmt.Errorf("No type found for given name: %s", name)
 	}
 
 	return ttype, nil
