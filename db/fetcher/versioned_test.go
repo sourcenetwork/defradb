@@ -1,6 +1,7 @@
 package fetcher_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -98,6 +99,7 @@ func TestVersionedFetcherInit(t *testing.T) {
 }
 
 func TestVersionedFetcherStart(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -115,7 +117,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -123,7 +125,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	// err = vf.SeekTo(version)
@@ -134,6 +136,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 }
 
 func TestVersionedFetcherNextMap(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -150,7 +153,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -158,7 +161,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	_, doc, err := vf.FetchNextMap()
@@ -176,6 +179,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 }
 
 func TestVersionedFetcherNextMapV1(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -192,7 +196,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -200,7 +204,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	_, doc, err := vf.FetchNextMap()
@@ -218,6 +222,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 }
 
 func TestVersionedFetcherNextMapV2(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -234,7 +239,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -242,7 +247,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	_, doc, err := vf.FetchNextMap()
@@ -260,6 +265,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 }
 
 func TestVersionedFetcherNextMapV3(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -276,7 +282,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -284,7 +290,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	_, doc, err := vf.FetchNextMap()
@@ -301,6 +307,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 }
 
 func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
@@ -317,7 +324,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	err = vf.Init(&desc, nil, nil, false)
 	assert.NoError(t, err)
 
-	txn, err := db.NewTxn(false)
+	txn, err := db.NewTxn(ctx, false)
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
@@ -325,7 +332,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
-	err = vf.Start(txn, span)
+	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
 	// loop over updates so we can seek to them
@@ -431,13 +438,14 @@ func createDocUpdates(col *db.Collection) error {
 
 	var doc *document.Document
 	var err error
+	ctx := context.Background()
 	for i, update := range testStates {
 		if i == 0 { // create
 			doc, err = document.NewFromJSON(update.payload)
 			if err != nil {
 				return err
 			}
-			if err := col.Save(doc); err != nil {
+			if err := col.Save(ctx, doc); err != nil {
 				return err
 			}
 		} else {
@@ -448,7 +456,7 @@ func createDocUpdates(col *db.Collection) error {
 			for k, v := range update.diffOps {
 				doc.Set(k, v)
 			}
-			err = col.Update(doc)
+			err = col.Update(ctx, doc)
 			if err != nil {
 				return err
 			}
@@ -491,6 +499,7 @@ func newTestCollectionWithSchema(d *db.DB) (*db.Collection, error) {
 		},
 	}
 
-	col, err := d.CreateCollection(desc)
+	ctx := context.Background()
+	col, err := d.CreateCollection(ctx, desc)
 	return col.(*db.Collection), err
 }

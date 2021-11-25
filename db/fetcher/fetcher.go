@@ -28,10 +28,10 @@ import (
 // encoding.
 type Fetcher interface {
 	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
-	Start(txn core.MultiStore, spans core.Spans) error
-	FetchNext() (*document.EncodedDocument, error)
-	FetchNextDecoded() (*document.Document, error)
-	FetchNextMap() ([]byte, map[string]interface{}, error)
+	Start(ctx context.Context, txn core.Txn, spans core.Spans) error
+	FetchNext(ctx context.Context) (*document.EncodedDocument, error)
+	FetchNextDecoded(ctx context.Context) (*document.Document, error)
+	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 }
 
 var (

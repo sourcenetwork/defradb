@@ -11,6 +11,7 @@ package fetcher
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -79,6 +80,7 @@ type VersionedFetcher struct {
 	*DocumentFetcher
 
 	txn   core.MultiStore
+	ctx   context.Context
 	spans core.Spans
 
 	// Transient version store
@@ -133,7 +135,7 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 }
 
 // Start serializes the correct state accoriding to the Key and CID
-func (vf *VersionedFetcher) Start(txn core.MultiStore, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, txn core.MultiStore, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
@@ -161,6 +163,7 @@ func (vf *VersionedFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 	}
 
 	vf.txn = txn
+	vf.ctx = ctx
 	vf.key = dk
 	vf.version = c
 
@@ -172,7 +175,7 @@ func (vf *VersionedFetcher) Start(txn core.MultiStore, spans core.Spans) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(vf.store, nil)
+	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
 }
 
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
@@ -270,7 +273,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// @body: We could possibly append the DocKey to the CID either as a
 	// child key, or an instance on the CID key.
 
-	hasLocalBlock, err := vf.store.DAGstore().Has(c)
+	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
 	if err != nil {
 		return err
 	}
@@ -279,13 +282,13 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 		return nil
 	}
 
-	blk, err := vf.txn.DAGstore().Get(c)
+	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
 	if err != nil {
 		return err
 	}
 
 	// store the block in the local (transient store)
-	vf.store.DAGstore().Put(blk)
+	vf.store.DAGstore().Put(vf.ctx, blk)
 
 	// add the CID to the queuedCIDs list
 	if topParent {
@@ -398,13 +401,13 @@ func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype 
 	}
 
 	height := delta.GetPriority()
-	_, err = mcrdt.Clock().ProcessNode(nil, nd.Cid(), height, delta, nd)
+	_, err = mcrdt.Clock().ProcessNode(vf.ctx, nil, nd.Cid(), height, delta, nd)
 	return err
 }
 
 func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
-	blk, err := vf.store.DAGstore().Get(c)
+	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
 		return nil, err
 	}

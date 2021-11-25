@@ -83,7 +83,7 @@ func (n *versionedScanNode) initScan() error {
 	// create a span of the form {DocKey, VersionCID}
 	// spans := core.Spans{core.NewSpan(n.key, core.NewKey(n.version.String()))}
 	spans := fetcher.NewVersionedSpan(n.key, n.version)
-	err := n.fetcher.Start(n.p.txn, spans)
+	err := n.fetcher.Start(n.p.ctx, n.p.txn, spans)
 	if err != nil {
 		return err
 	}

@@ -10,14 +10,11 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	dsq "github.com/ipfs/go-datastore/query"
 )
 
 type multistore struct {
@@ -58,20 +55,20 @@ func (ms multistore) Rootstore() core.DSReaderWriter {
 	return ms.root
 }
 
-func PrintStore(store core.DSReaderWriter) {
-	q := dsq.Query{
-		Prefix:   "",
-		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
-	}
+// func PrintStore(ctx context.Context, store core.DSReaderWriter) {
+// 	q := dsq.Query{
+// 		Prefix:   "",
+// 		KeysOnly: false,
+// 		Orders:   []dsq.Order{dsq.OrderByKey{}},
+// 	}
 
-	results, err := store.Query(q)
-	defer results.Close()
-	if err != nil {
-		panic(err)
-	}
+// 	results, err := store.Query(q)
+// 	defer results.Close()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	for r := range results.Next() {
-		fmt.Println(r.Key, ": ", r.Value)
-	}
-}
+// 	for r := range results.Next() {
+// 		fmt.Println(r.Key, ": ", r.Value)
+// 	}
+// }
