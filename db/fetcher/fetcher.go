@@ -15,6 +15,7 @@ import (
 	"errors"
 
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -54,10 +55,10 @@ type DocumentFetcher struct {
 	decodedDoc  *document.Document
 	initialized bool
 
-	kv     *core.KeyValue
-	kvIter dsq.Results
-	kvEnd  bool
-	// kvIndex int
+	kv            *core.KeyValue
+	kvIter        iterable.Iterator
+	kvResultsIter dsq.Results
+	kvEnd         bool
 
 	indexKey []byte
 }
@@ -75,6 +76,8 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.initialized = true
 	df.doc = new(document.EncodedDocument)
 	df.doc.Schema = &col.Schema
+	df.kvResultsIter = nil
+	df.kvIter = nil
 
 	df.schemaFields = make(map[uint32]base.FieldDescription)
 	for _, field := range col.Schema.Fields {
@@ -131,20 +134,24 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	q := dsq.Query{
-		Prefix: df.spans[nextSpanIndex].Start().String(),
-		Orders: df.order,
+	var err error
+	if df.kvIter == nil {
+		df.kvIter, err = df.txn.GetIterator(dsq.Query{
+			Orders: df.order,
+		})
+	}
+	if err != nil {
+		return false, err
 	}
 
-	var err error
-	if df.kvIter != nil {
-		// If an existing iterator is to be replaced, we must still may sure it is properly closed
-		err = df.kvIter.Close()
+	if df.kvResultsIter != nil {
+		err = df.kvResultsIter.Close()
 		if err != nil {
 			return false, err
 		}
 	}
-	df.kvIter, err = df.txn.Query(ctx, q)
+
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, df.spans[nextSpanIndex].Start().ToDS())
 	if err != nil {
 		return false, err
 	}
@@ -220,7 +227,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
 func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
-	res, available := df.kvIter.NextSync()
+	res, available := df.kvResultsIter.NextSync()
 	if !available {
 		return true, nil, nil
 	}
@@ -377,5 +384,6 @@ func (df *DocumentFetcher) Close() error {
 	if df.kvIter == nil {
 		return nil
 	}
-	return df.kvIter.Close()
+	df.kvIter.Close()
+	return df.kvResultsIter.Close()
 }

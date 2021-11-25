@@ -10,12 +10,12 @@
 package core
 
 import (
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 )
 
 // Txn is a common interface to the db.Txn struct
 type Txn interface {
-	ds.Txn
+	iterable.IterableTxn
 	MultiStore
 	Systemstore() DSReaderWriter
 }
