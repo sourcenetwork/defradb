@@ -45,6 +45,10 @@ type scanNode struct {
 }
 
 func (n *scanNode) Init() error {
+	// init the fetcher
+	if err := n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse); err != nil {
+		return err
+	}
 	return n.initScan()
 }
 
@@ -57,8 +61,7 @@ func (n *scanNode) initCollection(desc base.CollectionDescription) error {
 // Start starts the internal logic of the scanner
 // like the DocumentFetcher, and more.
 func (n *scanNode) Start() error {
-	// init the fetcher
-	return n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse)
+	return nil // noop
 }
 
 func (n *scanNode) initScan() error {
@@ -80,12 +83,6 @@ func (n *scanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
-	if !n.scanInitialized {
-		if err := n.initScan(); err != nil {
-			return false, err
-		}
-	}
-
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error

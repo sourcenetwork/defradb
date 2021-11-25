@@ -48,6 +48,10 @@ type versionedScanNode struct {
 }
 
 func (n *versionedScanNode) Init() error {
+	// init the fetcher
+	if err := n.fetcher.Init(&n.desc, nil, n.fields, n.reverse); err != nil {
+		return err
+	}
 	return n.initScan()
 }
 
@@ -66,16 +70,10 @@ func (n *versionedScanNode) initVersion(key core.Key, c cid.Cid) error {
 // Start starts the internal logic of the scanner
 // like the DocumentFetcher, and more.
 func (n *versionedScanNode) Start() error {
-	// init the fetcher
-	return n.fetcher.Init(&n.desc, nil, n.fields, n.reverse)
+	return nil // noop
 }
 
 func (n *versionedScanNode) initScan() error {
-	// if len(n.spans) == 0 {
-	// 	// DocKey and VersionCID are embedded within spans
-	// 	// if we have no spans,
-	// }
-
 	if len(n.key.String()) == 0 || n.version.Equals(emptyCID) {
 		return errors.New("VersionedScan is missing either a DocKey or VersionCID")
 	}
@@ -96,11 +94,11 @@ func (n *versionedScanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *versionedScanNode) Next() (bool, error) {
-	if !n.scanInitialized {
-		if err := n.initScan(); err != nil {
-			return false, err
-		}
-	}
+	// if !n.scanInitialized {
+	// 	if err := n.initScan(); err != nil {
+	// 		return false, err
+	// 	}
+	// }
 
 	// keep scanning until we find a doc that passes the filter
 	for {
