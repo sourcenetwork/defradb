@@ -161,13 +161,12 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 				return
 			}
 
-			// need to convert to key.Key using key.KeyFromDsKey.
-			bk, err := dshelp.BinaryFromDsKey(ds.RawKey(e.Key))
+			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(e.Key))
 			if err != nil {
 				log.Warningf("error parsing key from binary: %s", err)
 				continue
 			}
-			k := cid.NewCidV1(cid.Raw, bk)
+			k := cid.NewCidV1(cid.Raw, hash)
 			select {
 			case <-ctx.Done():
 				return

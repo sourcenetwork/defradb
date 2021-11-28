@@ -23,6 +23,7 @@ import (
 
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+	mh "github.com/multiformats/go-multihash"
 )
 
 func newMockStore() core.DSReaderWriter {
@@ -187,6 +188,14 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	// data = []byte("test")
 	// fmt.Println("PRE", data)
 	nd := dag.NodeWithData(data)
+	// The cid builder defaults to v0, we want to be using v1 Cids
+	nd.SetCidBuilder(
+		cid.V1Builder{
+			Codec:    cid.Raw,
+			MhType:   mh.SHA2_256,
+			MhLength: -1,
+		})
+
 	for _, h := range heads {
 		err = nd.AddRawLink("", &ipld.Link{Cid: h})
 		if err != nil {

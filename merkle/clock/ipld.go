@@ -14,6 +14,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
+	mh "github.com/multiformats/go-multihash"
 	// pb "github.com/ipfs/go-ds-crdt/pb"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -120,6 +121,14 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	}
 
 	nd := dag.NodeWithData(data)
+	// The cid builder defaults to v0, we want to be using v1 Cids
+	nd.SetCidBuilder(
+		cid.V1Builder{
+			Codec:    cid.Raw,
+			MhType:   mh.SHA2_256,
+			MhLength: -1,
+		})
+
 	// add heads
 	for _, h := range heads {
 		if err = nd.AddRawLink("_head", &ipld.Link{Cid: h}); err != nil {

@@ -115,7 +115,7 @@ func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
 	if err != nil {
 		return err
 	}
-	headCid := cid.NewCidV0(hash)
+	headCid := cid.NewCidV1(cid.Raw, hash)
 	hf.cid = &headCid
 	return nil
 }

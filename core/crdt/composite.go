@@ -65,14 +65,6 @@ func (delta *CompositeDAGDelta) Value() interface{} {
 }
 
 func (delta *CompositeDAGDelta) Links() []core.DAGLink {
-	// links := make(map[string]*ipld.Link)
-	// for path, c := range delta.SubDAGs {
-	// 	links[path] = &ipld.Link{
-	// 		Cid: c,
-	// 	}
-	// }
-
-	// return links
 	return delta.SubDAGs
 }
 

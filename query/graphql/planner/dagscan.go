@@ -181,8 +181,6 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 
 func (n *dagScanNode) Next() (bool, error) {
 	// find target cid either through headset or direct cid.
-	// if n.cid == nil {
-
 	if n.queuedCids.Len() > 0 {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)

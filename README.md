@@ -185,24 +185,24 @@ This will return a structure similar to the following, which contains the update
 {
   "data": [
     {
-      "cid": "QmPqCtcCPNHoWkHLFvG4aKqDkLLzhVDAVEDSzEs38GHxoo",
+      "cid": "bafkreibbbtps3cki27zs5w24djizgjfuydqsdgtrz773sfpqechiih5ose",
       "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
       "height": 1,
       "links": [
         {
-          "cid": "QmSom35RYVzYTE7nGsudvomv1pi9ffjEfSFsPZgQRM92v1",
+          "cid": "bafybeiccmckwnoe3ib3ebybcb6fdyawrji4z4wg2trwswjbfmkeyhdkd4y",
           "name": "age"
         },
         {
-          "cid": "QmYJrCcfMmfFp4JcbChLfMLCv8TSHjGwRVHUBgPazWxPga",
+          "cid": "bafybeieud2zx7evz47vtujk4pyhexcaankozyfhkd4tyjoyp73eeq2xak4",
           "name": "name"
         },
         {
-          "cid": "QmXLuVB5CCGqWcdQitingkfRxoVRLKh2jNcnX4UbYnW6Mk",
+          "cid": "bafybeiefzhsaukwg6dazgyztulstewns2f6a6c6hku4egso2cyowxrxcd4",
           "name": "points"
         },
         {
-          "cid": "QmNRQwWjTBTDfAFUHkG8yuKmtbprYQtGs4jYxGJ5fCfXtn",
+          "cid": "bafybeiabhbk6omcebl52bwxjxbcabpe2ajc22yxrav7mq5f26v7ds76j2m",
           "name": "verified"
         }
       ]
