@@ -287,6 +287,10 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 		results.Count++
 	}
 
+	err = query.Close()
+	if err != nil {
+		return nil, err
+	}
 	return results, nil
 }
 
