@@ -39,10 +39,11 @@ func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
 func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *selectTopNode) Source() planNode               { return n.source }
-func (n *selectTopNode) Close() {
-	if n.plan != nil {
-		n.plan.Close()
+func (n *selectTopNode) Close() error {
+	if n.plan == nil {
+		return nil
 	}
+	return n.plan.Close()
 }
 
 type renderInfo struct {
@@ -150,8 +151,8 @@ func (n *selectNode) Values() map[string]interface{} {
 	return n.doc
 }
 
-func (n *selectNode) Close() {
-	n.source.Close()
+func (n *selectNode) Close() error {
+	return n.source.Close()
 }
 
 // initSource is the main workhorse for recursively constructing

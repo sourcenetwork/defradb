@@ -46,7 +46,7 @@ func (n *limitNode) Init() error {
 
 func (n *limitNode) Start() error                   { return n.plan.Start() }
 func (n *limitNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *limitNode) Close()                         { n.plan.Close() }
+func (n *limitNode) Close() error                   { return n.plan.Close() }
 func (n *limitNode) Values() map[string]interface{} { return n.plan.Values() }
 
 func (n *limitNode) Next() (bool, error) {

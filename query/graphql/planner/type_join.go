@@ -111,8 +111,8 @@ func (n *typeIndexJoin) Values() map[string]interface{} {
 	return n.joinPlan.Values()
 }
 
-func (n *typeIndexJoin) Close() {
-	n.joinPlan.Close()
+func (n *typeIndexJoin) Close() error {
+	return n.joinPlan.Close()
 }
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
@@ -313,9 +313,12 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	return doc
 }
 
-func (n *typeJoinOne) Close() {
-	n.root.Close()
-	n.subType.Close()
+func (n *typeJoinOne) Close() error {
+	err := n.root.Close()
+	if err != nil {
+		return err
+	}
+	return n.subType.Close()
 }
 
 func (n *typeJoinOne) Source() planNode { return n.root }
@@ -423,9 +426,12 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	return doc
 }
 
-func (n *typeJoinMany) Close() {
-	n.root.Close()
-	n.subType.Close()
+func (n *typeJoinMany) Close() error {
+	err := n.root.Close()
+	if err != nil {
+		return err
+	}
+	return n.subType.Close()
 }
 
 func (n *typeJoinMany) Source() planNode { return n.root }
