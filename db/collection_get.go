@@ -62,5 +62,15 @@ func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*docume
 	}
 
 	// return first matched decoded doc
-	return df.FetchNextDecoded(ctx)
+	doc, err := df.FetchNextDecoded(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = df.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, nil
 }
