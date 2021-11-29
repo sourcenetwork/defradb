@@ -87,14 +87,22 @@ func (n *dataSource) Spans(spans core.Spans) {
 	}
 }
 
-func (n *dataSource) Close() {
+func (n *dataSource) Close() error {
+	var err error
 	if n.parentSource != nil {
-		n.parentSource.Close()
+		err = n.parentSource.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	if n.childSource != nil {
-		n.childSource.Close()
+		err = n.childSource.Close()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (n *dataSource) Source() planNode {

@@ -123,10 +123,9 @@ func (p *parallelNode) Spans(spans core.Spans) {
 	})
 }
 
-func (p *parallelNode) Close() {
-	p.applyToPlans(func(n planNode) error {
-		n.Close()
-		return nil
+func (p *parallelNode) Close() error {
+	return p.applyToPlans(func(n planNode) error {
+		return n.Close()
 	})
 }
 

@@ -55,8 +55,8 @@ func (n *commitSelectNode) Spans(spans core.Spans) {
 	n.source.Spans(spans)
 }
 
-func (n *commitSelectNode) Close() {
-	n.source.Close()
+func (n *commitSelectNode) Close() error {
+	return n.source.Close()
 }
 
 func (n *commitSelectNode) Source() planNode {
@@ -211,10 +211,11 @@ func (n *commitSelectTopNode) Next() (bool, error)            { return n.plan.Ne
 func (n *commitSelectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *commitSelectTopNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *commitSelectTopNode) Source() planNode               { return n.plan }
-func (n *commitSelectTopNode) Close() {
-	if n.plan != nil {
-		n.plan.Close()
+func (n *commitSelectTopNode) Close() error {
+	if n.plan == nil {
+		return nil
 	}
+	return n.plan.Close()
 }
 
 func (n *commitSelectTopNode) Append() bool { return true }

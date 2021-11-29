@@ -10,7 +10,7 @@
 package cmd
 
 import (
-	badgerds "github.com/ipfs/go-ds-badger"
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 )
 
 type Config struct {
