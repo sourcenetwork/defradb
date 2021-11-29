@@ -22,7 +22,9 @@ import (
 type updateNode struct {
 	p *Planner
 
+	/* Commenting out because unused code (structcheck) according to linter.
 	sourceInfo sourceInfo
+	*/
 	collection client.Collection
 
 	filter *parser.Filter

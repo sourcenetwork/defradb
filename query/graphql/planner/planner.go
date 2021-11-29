@@ -19,8 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	"github.com/graphql-go/graphql/language/ast"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement
@@ -59,6 +57,7 @@ type planNode interface {
 	Close()
 }
 
+/* Commented to make linter happy as these are unused.
 // basic plan Node that implements the planNode interface
 // can be added to any struct to turn it into a planNode
 type baseNode struct {
@@ -72,6 +71,7 @@ func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *baseNode) Close()                         { n.plan.Close() }
 func (n *baseNode) Source() planNode               { return n.plan }
+*/
 
 type ExecutionContext struct {
 	context.Context
@@ -82,9 +82,11 @@ type PlanContext struct {
 }
 
 type Statement struct {
+	/* Commenting out because unused code (structcheck) according to linter.
 	requestString   string
 	requestDocument *ast.Document // parser.Statement -> parser.Query - >
 	requestQuery    parser.Query
+	*/
 }
 
 // Planner combines session state and databse state to

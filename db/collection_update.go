@@ -45,10 +45,12 @@ func (c *Collection) Create2(doc *document.SimpleDocument, opts ...CreateOpt) er
 	return nil
 }
 
+/* Commented because this function was unused for now (to adhere to compiler).
 func (c *Collection) save2(txn *Txn, doc *document.SimpleDocument) error {
-
 	return nil
 }
+}
+*/
 
 // Update2 updates the given doc. It will scan through the field/value pairs
 // and find those marked for update, and apply the appropriate update.
@@ -349,7 +351,7 @@ func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []ma
 		if err != nil {
 			return err
 		}
-		field, val, ok := getValFromDocForPatchPath(doc, path)
+		field, val, _ := getValFromDocForPatchPath(doc, path)
 		if err := targetCollection.applyPatchOp(txn, key, field, val, op); err != nil {
 			return err
 		}
@@ -474,15 +476,26 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	return cval, err
 }
 
-func (c *Collection) applyMergePatchOp(txn *Txn, docKey string, field string, currentVal interface{}, targetVal interface{}) error {
+/* Commented because this function was unused for now (to adhere to compiler).
+func (c *Collection) applyMergePatchOp(
+	txn *Txn,
+	docKey string,
+	field string,
+	currentVal interface{},
+	targetVal interface{}) error {
 	return nil
 }
+*/
 
 // makeQuery constructs a simple query of the collection using the given filter.
 // currently it doesn't support any other query operation other than filters.
 // (IE: No limit, order, etc)
 // Additionally it only queries for the root scalar fields of the object
-func (c *Collection) makeSelectionQuery(ctx context.Context, txn *Txn, filter interface{}, opts ...client.UpdateOpt) (planner.Query, error) {
+func (c *Collection) makeSelectionQuery(
+	ctx context.Context,
+	txn *Txn,
+	filter interface{},
+	opts ...client.UpdateOpt) (planner.Query, error) {
 	var f *parser.Filter
 	var err error
 	switch fval := filter.(type) {
@@ -552,9 +565,7 @@ func (c *Collection) getTargetKeyForPatchPath(txn *Txn, doc map[string]interface
 }
 
 func splitPatchPath(path string) ([]string, int) {
-	if strings.HasPrefix(path, "/") {
-		path = path[1:]
-	}
+	path = strings.TrimPrefix(path, "/")
 	pathParts := strings.Split(path, "/")
 	return pathParts, len(pathParts)
 }

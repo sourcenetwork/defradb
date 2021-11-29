@@ -18,8 +18,11 @@ import (
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
-	schema       gql.Schema
+	schema gql.Schema
+
+	/* Commented because unused (for linter: structcheck).
 	definedTypes []*gql.Object // base defined types
+	*/
 
 	Generator *Generator
 	Relations *RelationManager

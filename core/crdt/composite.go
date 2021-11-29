@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
@@ -71,10 +70,12 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 // CompositeDAG is a CRDT structure that is used
 // to track a collcetion of sub MerkleCRDTs.
 type CompositeDAG struct {
+	/* Commented because unused (linter structcheck).
 	baseCRDT
 	key   string
 	data  []byte
 	links map[string]cid.Cid
+	*/
 }
 
 func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {

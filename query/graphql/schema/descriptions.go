@@ -24,6 +24,7 @@ var (
 	// this is only here as a reference, and not to be used
 	// directly. As it will yield incorrect and unexpected
 	// results
+	/* Commented out because this is deadcode according to linter:
 	gqlTypeToFieldKindReference = map[gql.Type]base.FieldKind{
 		gql.ID:        base.FieldKind_DocKey,
 		gql.Boolean:   base.FieldKind_BOOL,
@@ -38,6 +39,7 @@ var (
 		// - ByteArray
 		// - Counters
 	}
+	*/
 
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[base.FieldKind]core.CType{

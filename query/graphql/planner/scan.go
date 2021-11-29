@@ -28,12 +28,14 @@ type scanNode struct {
 	doc    map[string]interface{}
 	docKey []byte
 
+	/* Commenting out because unused code (structcheck) according to linter.
 	// map between fieldID and index in fields
 	fieldIdxMap map[base.FieldID]int
-
-	spans            core.Spans
 	isSecondaryIndex bool
-	reverse          bool
+	*/
+
+	spans   core.Spans
+	reverse bool
 
 	// rowIndex int64
 

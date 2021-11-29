@@ -31,12 +31,14 @@ func newMemoryDB() (*DB, error) {
 	return NewDB(rootstore, struct{}{})
 }
 
+/* Unused function according to the linter:
 func newTestCollection(ctx context.Context, db *DB) (*Collection, error) {
 	col, err := db.CreateCollection(ctx, base.CollectionDescription{
 		Name: "test",
 	})
 	return col.(*Collection), err
 }
+*/
 
 func TestNewDB(t *testing.T) {
 	rootstore := ds.NewMapDatastore()
@@ -138,6 +140,9 @@ func TestDBUpdateDocument(t *testing.T) {
 	assert.True(t, weightVal.IsDelete())
 
 	err = col.Update(ctx, doc)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// value check
 	name, err := doc.Get("Name")
@@ -349,15 +354,19 @@ func TestDocumentMerkleDAG(t *testing.T) {
 
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, err := db.dagstore.Get(ctx, c)
-		assert.NoError(t, err)
+		b, errGet := db.dagstore.Get(ctx, c)
+		assert.NoError(t, errGet)
 
-		nd, err := dag.DecodeProtobuf(b.RawData())
-		assert.NoError(t, err)
-		buf, err := nd.MarshalJSON()
-		assert.NoError(t, err)
+		nd, errDecode := dag.DecodeProtobuf(b.RawData())
+		assert.NoError(t, errDecode)
+
+		buf, errMarshal := nd.MarshalJSON()
+		assert.NoError(t, errMarshal)
+
 		fmt.Println(string(buf))
-		delta, err := reg.DeltaDecode(nd)
+		delta, errDeltaDecode := reg.DeltaDecode(nd)
+		assert.NoError(t, errDeltaDecode)
+
 		lwwdelta := delta.(*corecrdt.LWWRegDelta)
 		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
@@ -388,10 +397,14 @@ func TestDocumentMerkleDAG(t *testing.T) {
 
 		nd, err := dag.DecodeProtobuf(b.RawData())
 		assert.NoError(t, err)
+
 		buf, err := nd.MarshalJSON()
 		assert.NoError(t, err)
+
 		fmt.Println(string(buf))
 		delta, err := reg.DeltaDecode(nd)
+		assert.NoError(t, err)
+
 		lwwdelta := delta.(*corecrdt.LWWRegDelta)
 		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}

@@ -33,7 +33,9 @@ type BlockFetcher struct {
 type HeadFetcher struct {
 	// key core.Key
 
+	/* Commented because this code is not used yet according to the linter.
 	txn   core.Txn
+	*/
 	spans core.Spans
 	// curSpanIndex int
 

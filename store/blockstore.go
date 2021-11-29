@@ -163,7 +163,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 
 			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(e.Key))
 			if err != nil {
-				log.Warningf("error parsing key from binary: %s", err)
+				log.Warnf("error parsing key from binary: %s", err)
 				continue
 			}
 			k := cid.NewCidV1(cid.Raw, hash)

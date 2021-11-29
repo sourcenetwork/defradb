@@ -172,7 +172,10 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			// obj.AddFieldConfig(f, expandedField)
 			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
+
+			/* Redundant break statement??
 			break
+			*/
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
 			if _, complete := g.expandedFields[fieldKey]; complete {
@@ -313,7 +316,9 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 							// todo again handle errors
 						}
 						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						/* Redundant break statement??
 						break
+						*/
 					}
 
 					fType.Type = ttype
@@ -325,9 +330,10 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					Type: gql.NewList(types.Commit),
 				}
 
-				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
+				// @todo Pairup on removing the staticcheck linter error below.
+				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value] // nolint:staticcheck
 				if !ok {
-					//todo@ handle error
+					// @todo handle error
 				}
 
 				fields[parser.GroupFieldName] = &gql.Field{
@@ -649,14 +655,17 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 type queryInputTypeConfig struct {
+	/* Commenting out unused variables to supress linter error (structcheck).
 	key     *gql.Scalar
 	cid     *gql.Scalar
+	*/
 	filter  *gql.InputObject
 	groupBy *gql.Enum
 	having  *gql.InputObject
 	order   *gql.InputObject
 }
 
+/* Commenting out unused function to supress linter error.
 // generate the type Query { ... }  field for the given type
 func (g *Generator) genTypeQueryableField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
 	name := strings.ToLower(obj.Name())
@@ -675,6 +684,7 @@ func (g *Generator) genTypeQueryableField(obj *gql.Object, config queryInputType
 
 	return field
 }
+*/
 
 func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
 	name := strings.ToLower(obj.Name())

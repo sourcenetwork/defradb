@@ -281,6 +281,8 @@ func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error 
 	return doc.set(t, field, value)
 }
 
+/* Comment the following functions as they aren't used anywhere to satisfy the linter:
+
 func (doc *Document) setString(t core.CType, field string, val string) error {
 	value := NewStringValue(t, val)
 	return doc.set(t, field, value)
@@ -291,31 +293,36 @@ func (doc *Document) setInt64(t core.CType, field string, val int64) error {
 	return doc.set(t, field, value)
 }
 
+*/
+
 func (doc *Document) setObject(t core.CType, field string, val *Document) error {
 	value := newValue(t, val)
 	return doc.set(t, field, &value)
 }
 
 func (doc *Document) setAndParseType(field string, value interface{}) error {
-	switch value.(type) {
+	switch val := value.(type) { // nolint:gosimple @todo fix this linter error,
 
 	// int (any number)
 	case float64:
 		// case int64:
 
 		// Check if its actually a float or just an int
-		val := value.(float64)
 		if float64(int64(val)) == val { //int
 			doc.setCBOR(core.LWW_REGISTER, field, int64(val))
 		} else { //float
-			doc.setCBOR(core.LWW_REGISTER, field, value)
+			doc.setCBOR(core.LWW_REGISTER, field, val)
 		}
+		/* Redundant break statement (S1023), linter screams.
 		break
+		*/
 
 	// string, bool, and more
 	case string, bool:
-		doc.setCBOR(core.LWW_REGISTER, field, value)
+		doc.setCBOR(core.LWW_REGISTER, field, val)
+		/* Redundant break statement (S1023), linter screams.
 		break
+		*/
 
 	// array
 	case []interface{}:
@@ -332,16 +339,18 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 	//			- Which is parsed as an uint64
 	case map[string]interface{}:
 		subDoc := newEmptyDoc()
-		err := subDoc.setAndParseObjectType(value.(map[string]interface{}))
+		err := subDoc.setAndParseObjectType(val)
 		if err != nil {
 			return err
 		}
 
 		doc.setObject(core.OBJECT, field, subDoc)
+		/* Redundant break statement (S1023), linter screams.
 		break
+		*/
 
 	default:
-		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, value)
+		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
 
 	}
 	return nil

@@ -10,16 +10,7 @@
 package db
 
 import (
-	"strings"
-	"sync"
-
-	"github.com/sourcenetwork/defradb/core"
 	_ "github.com/sourcenetwork/defradb/db/fetcher"
-
-	"github.com/fxamacker/cbor/v2"
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
-	"github.com/jbenet/goprocess"
 )
 
 // GetterOpts is an options struct used to pass
@@ -37,6 +28,8 @@ type GetterOpts struct {
 // DefaultGetterOpts are defualt configuraion settings for a Get
 // It will be used, if no others are specified.
 var DefaultGetterOpts = GetterOpts{}
+
+/* Commenting this code because it is unused for now and the linter complains:
 
 func (c *Collection) getAllFields() {}
 
@@ -140,3 +133,4 @@ type filterPriorityEntry struct{}
 func (f filterPriorityEntry) Filter(e query.Entry) bool {
 	return !strings.HasSuffix(e.Key, ":p")
 }
+*/

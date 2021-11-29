@@ -16,12 +16,13 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-	logging "github.com/ipfs/go-log"
 )
 
+/* Commenting because this is a redundant break, and the linter complains:
 var (
 	log = logging.Logger("defradb.merkle.crdt")
 )
+*/
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface

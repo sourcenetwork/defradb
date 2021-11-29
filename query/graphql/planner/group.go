@@ -45,13 +45,13 @@ func (p *Planner) GroupBy(n *parser.GroupBy, childSelect *parser.Select) (*group
 		childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
 	}
 
-	groupNode := groupNode{
+	groupNodeObj := groupNode{
 		p:             p,
 		childSelect:   childSelect,
 		groupByFields: n.Fields,
 		dataSource:    newDataSource(parser.GroupFieldName),
 	}
-	return &groupNode, nil
+	return &groupNodeObj, nil
 }
 
 func (n *groupNode) Init() error {

@@ -75,8 +75,10 @@ func (delta *LWWRegDelta) Value() interface{} {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	baseCRDT
-	key  string
+	key string
+	/* Commented because used code (for linter).
 	data []byte
+	*/
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID

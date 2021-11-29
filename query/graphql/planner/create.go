@@ -28,16 +28,20 @@ import (
 type createNode struct {
 	p *Planner
 
+	/* Commenting out to adhere uo the linter as this is unused code (structcheck):
+	// result is the target document as a map after creation
+	result map[string]interface{}
+
+	sourceInfo sourceInfo
+	*/
+
 	// cache information about the original data source
 	// collection name, meta-data, etc.
-	sourceInfo sourceInfo
 	collection client.Collection
 
 	// newDoc is the JSON string of the new document, unpares
 	newDocStr string
 	doc       *document.Document
-	// result is the target document as a map after creation
-	result map[string]interface{}
 
 	err error
 

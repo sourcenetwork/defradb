@@ -83,8 +83,10 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *parser.Filter
 
+	/* Commenting out because unused code (structcheck) according to linter.
 	// If the select query is using a FindByDocKey filter
 	docKey string
+	*/
 
 	groupSelect *parser.Select
 

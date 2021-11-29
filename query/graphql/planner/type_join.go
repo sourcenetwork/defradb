@@ -19,9 +19,11 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
+/* Commenting out because unused code (deadcode) according to linter.
 const (
 	indexJoinBatchSize = 100
 )
+*/
 
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
@@ -282,7 +284,8 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	subDoc := make(map[string]interface{})
+	// Commented the below line becase it is an ineffectual assignment (not used).
+	// subDoc := make(map[string]interface{})
 	subDocField := n.subTypeName
 	doc[subDocField] = map[string]interface{}{}
 
@@ -302,13 +305,22 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		// or if we encounter an error just return the base doc,
 		// with an empty map for the subdoc
 		next, err := n.subType.Next()
-		if !next || err != nil {
+
+		// @todo pair up on the error handling / logging properly.
+		if err != nil {
+			fmt.Println("Internal primary value error : %w", err)
 			return doc
 		}
 
-		subDoc = n.subType.Values()
+		if !next {
+			return doc
+		}
+
+		subDoc := n.subType.Values()
 		doc[subDocField] = subDoc
-		break
+
+		// @todo Figure out why this break is here, is the loop even required?
+		break // nolint:staticcheck
 	}
 	return doc
 }
@@ -332,7 +344,9 @@ type typeJoinMany struct {
 	subType     planNode
 	subTypeName string
 
+	/* Commenting out because unused code (structcheck) according to linter.
 	spans core.Spans
+	*/
 }
 
 func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {

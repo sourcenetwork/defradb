@@ -50,7 +50,7 @@ func Compare(a, b interface{}) int {
 func compareBool(a, b bool) int {
 	if a == b {
 		return 0
-	} else if a == true && b == false { // a > b (true > false)
+	} else if a && !b { // a > b (true > false)
 		return 1
 	}
 	return -1

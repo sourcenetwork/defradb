@@ -23,13 +23,14 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
-	logging "github.com/ipfs/go-log"
 )
 
+/* Commenting because this is unused code, and linter complains (deadcode).
 var (
 	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
 	// store core.DSReaderWriter
 )
+*/
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
@@ -77,7 +78,15 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-	defer results.Close()
+
+	// SA5001: should check returned error before deferring results.Close().
+	// Good resouces to read:
+	// https://blog.learngoprogramming.com/5-gotchas-of-defer-in-go-golang-part-iii-36a1ab3d6ef1
+	// https://www.joeshaw.org/dont-defer-close-on-writable-files/
+	if results != nil {
+		defer results.Close()
+	}
+
 	if err != nil {
 		panic(err)
 	}

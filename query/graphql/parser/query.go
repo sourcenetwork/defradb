@@ -387,6 +387,8 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	return selections, nil
 }
 
+/* Commenting out to adhere to the linter as this function is unused code:
+
 // iterates over the given map, and replaces the string instance
 // of the sort direction, with a SortDirection type
 func replaceSortDirection(obj map[string]interface{}) error {
@@ -409,6 +411,8 @@ func replaceSortDirection(obj map[string]interface{}) error {
 
 	return nil
 }
+
+*/
 
 // parseField simply parses the Name/Alias
 // into a Field type

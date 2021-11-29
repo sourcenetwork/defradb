@@ -20,6 +20,10 @@ multi-build:
 start: build
 	./build/defradb start
 
+.PHONY: deps
+deps:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+
 .PHONY: clean
 clean:
 	go clean cli/defradb/main.go
@@ -35,8 +39,12 @@ test:
 
 .PHONY: lint
 lint:
-	golangci-lint run
+	golangci-lint run --config .golangci.sourceinc.yaml
 
-.PHONY: deps
-deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+.PHONY: lint\:todo
+lint\:todo:
+	rg "nolint" -g '!{Makefile}'
+
+.PHONY: lint\:list
+lint\:list:
+	golangci-lint linters --config .golangci.sourceinc.yaml

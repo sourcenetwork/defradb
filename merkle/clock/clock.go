@@ -23,8 +23,10 @@ import (
 )
 
 var (
-	log     = logging.Logger("defradb.merkle.clock")
+	log = logging.Logger("defradb.merkle.clock")
+	/* Commenting because this is unused code, and the linter complains (deadcode):
 	headsNS = "h"
+	*/
 )
 
 type MerkleClock struct {
@@ -155,9 +157,9 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err := mc.headset.Replace(ctx, child, root, rootPrio)
-			if err != nil {
-				return nil, fmt.Errorf("error replacing head: %s->%s : %w", child, root, err)
+			replaceErr := mc.headset.Replace(ctx, child, root, rootPrio)
+			if replaceErr != nil {
+				return nil, fmt.Errorf("error replacing head: %s->%s : %w", child, root, replaceErr)
 			}
 
 			continue
