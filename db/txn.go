@@ -68,31 +68,25 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 		}
 
 		txn.Txn = dstxn
+
+		// Note: db.rootstore now has type `ds.Batching`.
+	} else if batchStore := db.rootstore; ok { // we support Batching
+		batcher, err := batchStore.Batch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// hide a ds.Batching store as a ds.Txn
+		rb := shimBatcherTxn{
+			Read:  batchStore,
+			Batch: batcher,
+		}
+		txn.Txn = rb
+	} else {
+		// our datastore supports neither TxnDatastore or Batching
+		// for now return error
+		return nil, ErrNoTxnSupport
 	}
-
-	// } else if batchStore, ok := db.rootstore.(ds.Batching); ok {
-	// ^Commenting because, If not a transactionStore then is a batchStore (for now).
-
-	// We support Batching
-	batchStore := db.rootstore
-	batcher, err := batchStore.Batch(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// hide a ds.Batching store as a ds.Txn
-	rb := shimBatcherTxn{
-		Read:  batchStore,
-		Batch: batcher,
-	}
-	txn.Txn = rb
-
-	// Commenting because only have two cases for now (in accordance with the linter):
-	// else {
-	// 	// our datastore supports neither TxnDatastore or Batching
-	// 	// for now return error
-	// 	return nil, ErrNoTxnSupport
-	// }
 
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand
