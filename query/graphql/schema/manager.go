@@ -20,9 +20,8 @@ import (
 type SchemaManager struct {
 	schema gql.Schema
 
-	/* Commented because unused (for linter: structcheck).
-	definedTypes []*gql.Object // base defined types
-	*/
+	// Commented because unused (for linter: structcheck).
+	// definedTypes []*gql.Object base defined types
 
 	Generator *Generator
 	Relations *RelationManager

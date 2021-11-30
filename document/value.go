@@ -51,9 +51,8 @@ type simpleValue struct {
 	value   interface{}
 	isDirty bool
 	delete  bool
-	/* Commenting because this is unused code, and the linter complains (structcheck):
-	crdt    crdt.MerkleCRDT
-	*/
+	// Commenting because this is unused code, and the linter complains (structcheck):
+	// crdt    crdt.MerkleCRDT
 }
 
 func newValue(t core.CType, val interface{}) simpleValue {

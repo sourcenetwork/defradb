@@ -87,13 +87,12 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 	}
 	txn.Txn = rb
 
-	/* Commenting because only have two cases for now (in accordance with the linter):
-	else {
-		// our datastore supports neither TxnDatastore or Batching
-		// for now return error
-		return nil, ErrNoTxnSupport
-	}
-	*/
+	// Commenting because only have two cases for now (in accordance with the linter):
+	// else {
+	// 	// our datastore supports neither TxnDatastore or Batching
+	// 	// for now return error
+	// 	return nil, ErrNoTxnSupport
+	// }
 
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand

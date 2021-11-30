@@ -945,10 +945,9 @@ func unwrapType(t gql.Type) gql.Type {
 	}
 }
 
-/* Commenting because dead code:
-func isEqualTypes(t1, t2 gql.Type) bool {
-	// equal names
-	// prob more things too :/
-	return t1.Name() == t2.Name()
-}
-*/
+// Commenting because dead code:
+// func isEqualTypes(t1, t2 gql.Type) bool {
+//  // equal names
+//  // prob more things too :/
+//     return t1.Name() == t2.Name()
+// }

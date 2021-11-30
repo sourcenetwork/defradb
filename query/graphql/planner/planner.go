@@ -57,21 +57,22 @@ type planNode interface {
 	Close()
 }
 
-/* Commented to make linter happy as these are unused.
-// basic plan Node that implements the planNode interface
-// can be added to any struct to turn it into a planNode
-type baseNode struct {
-	plan planNode
-}
-
-func (n *baseNode) Init() error                    { return n.plan.Init() }
-func (n *baseNode) Start() error                   { return n.plan.Start() }
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *baseNode) Close()                         { n.plan.Close() }
-func (n *baseNode) Source() planNode               { return n.plan }
-*/
+// Commented to make linter happy as these are unused.
+//
+// // basic plan Node that implements the planNode interface
+// // can be added to any struct to turn it into a planNode
+//
+// type baseNode struct {
+//     plan planNode
+// }
+//
+// func (n *baseNode) Init() error                    { return n.plan.Init() }
+// func (n *baseNode) Start() error                   { return n.plan.Start() }
+// func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
+// func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
+// func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
+// func (n *baseNode) Close()                         { n.plan.Close() }
+// func (n *baseNode) Source() planNode               { return n.plan }
 
 type ExecutionContext struct {
 	context.Context
@@ -82,11 +83,10 @@ type PlanContext struct {
 }
 
 type Statement struct {
-	/* Commenting out because unused code (structcheck) according to linter.
-	requestString   string
-	requestDocument *ast.Document // parser.Statement -> parser.Query - >
-	requestQuery    parser.Query
-	*/
+	// Commenting out because unused code (structcheck) according to linter.
+	// requestString   string
+	// requestDocument *ast.Document parser.Statement -> parser.Query - >
+	// requestQuery    parser.Query
 }
 
 // Planner combines session state and databse state to

@@ -22,9 +22,8 @@ var (
 )
 
 var (
-	/* Commented because it's deadcode (unused according to linter).
-	   collectionSeqKey = "collection"
-	*/
+	// Commented because it's deadcode (unused according to linter).
+	// collectionSeqKey = "collection"
 	collectionNs = ds.NewKey("/collection")
 	schemaNs     = ds.NewKey("/schema")
 )

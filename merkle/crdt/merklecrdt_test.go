@@ -25,12 +25,11 @@ import (
 	"github.com/ipfs/go-datastore/query"
 )
 
-/* Commenting because this is unused code, and linter complains (deadcode).
-var (
-	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-	// store core.DSReaderWriter
-)
-*/
+// Commenting because this is unused code, and linter complains (deadcode).
+// var (
+//     merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
+//     store core.DSReaderWriter
+// )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()

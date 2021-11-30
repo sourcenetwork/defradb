@@ -567,9 +567,8 @@ func (c *Collection) saveValueToMerkleCRDT(
 	case core.OBJECT:
 		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
 		c.db.log.Debug("Sub objects not yet supported")
-		/* Redundant break statement (S103 gosimple linter).
-		break
-		*/
+		// Redundant break statement (S103 gosimple linter).
+		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)

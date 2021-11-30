@@ -21,11 +21,10 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 )
 
-/* Commenting because this is unused code, and the linter complains:
-var (
-	factoryTestLog = logging.Logger("defradb.tests.factory")
-)
-*/
+// Commenting because this is unused code, and the linter complains:
+// var (
+//     factoryTestLog = logging.Logger("defradb.tests.factory")
+// )
 
 func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 	root := ds.NewMapDatastore()

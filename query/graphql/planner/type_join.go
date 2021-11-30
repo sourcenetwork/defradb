@@ -19,11 +19,10 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-/* Commenting out because unused code (deadcode) according to linter.
-const (
-	indexJoinBatchSize = 100
-)
-*/
+// Commenting out because unused code (deadcode) according to linter.
+// const (
+//     indexJoinBatchSize = 100
+// )
 
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
@@ -286,6 +285,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// Commented the below line becase it is an ineffectual assignment (not used).
 	// subDoc := make(map[string]interface{})
+
 	subDocField := n.subTypeName
 	doc[subDocField] = map[string]interface{}{}
 
@@ -344,9 +344,8 @@ type typeJoinMany struct {
 	subType     planNode
 	subTypeName string
 
-	/* Commenting out because unused code (structcheck) according to linter.
-	spans core.Spans
-	*/
+	// Commenting out because unused code (structcheck) according to linter.
+	// spans core.Spans
 }
 
 func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {

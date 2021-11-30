@@ -76,9 +76,8 @@ func (delta *LWWRegDelta) Value() interface{} {
 type LWWRegister struct {
 	baseCRDT
 	key string
-	/* Commented because used code (for linter).
-	data []byte
-	*/
+	// Commented because used code (for linter).
+	// data []byte
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID

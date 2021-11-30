@@ -22,10 +22,9 @@ var (
 	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
 	valueSuffix    = "v" // value key
 	prioritySuffix = "p" // priority key
-	/* Commented because unused / deadcode is not liked by the linter :P
-	crdtTypeSuffix = "ct" // crdt-type key
-	dataTypeSuffix = "dt"
-	*/
+	// Commented because unused / deadcode is not liked by the linter :P
+	// crdtTypeSuffix = "ct" // crdt-type key
+	// dataTypeSuffix = "dt"
 )
 
 // baseCRDT is embedded as a base layer into all
@@ -63,11 +62,10 @@ func (base baseCRDT) priorityKey(key string) ds.Key {
 	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
 }
 
-/* Commented becuase this function is unused (for linter).
-func (base baseCRDT) typeKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
-}
-*/
+// Commented becuase this function is unused (for linter).
+// func (base baseCRDT) typeKey(key string) ds.Key {
+// 	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
+// }
 
 // func (base baseCRDT) dataTypeKey(key string) ds.Key {
 // 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)

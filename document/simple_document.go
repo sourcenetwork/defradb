@@ -21,23 +21,20 @@ type ValueType interface {
 
 // Scalar Value Type
 type Scalar struct {
-	/* Commenting because this is unused code, and the linter complains (structcheck):
-	value interface{}
-	*/
+	// Commenting because this is unused code, and the linter complains (structcheck):
+	// value interface{}
 }
 
 // List Value Type
 type List struct {
-	/* Commenting because this is unused code, and the linter complains (structcheck):
-	vals []ValueType
-	*/
+	// Commenting because this is unused code, and the linter complains (structcheck):
+	// vals []ValueType
 }
 
 type SimpleDocument struct {
-	/* Commenting because this is unused code, and the linter complains (structcheck):
-	schema *base.SchemaDescription
-	data map[string]ValueType
-	*/
+	// Commenting because this is unused code, and the linter complains (structcheck):
+	// schema *base.SchemaDescription
+	// data map[string]ValueType
 }
 
 func NewSimpleFromJSON(schema *base.SchemaDescription, data []byte) (*SimpleDocument, error) {

@@ -24,22 +24,22 @@ var (
 	// this is only here as a reference, and not to be used
 	// directly. As it will yield incorrect and unexpected
 	// results
-	/* Commented out because this is deadcode according to linter:
-	gqlTypeToFieldKindReference = map[gql.Type]base.FieldKind{
-		gql.ID:        base.FieldKind_DocKey,
-		gql.Boolean:   base.FieldKind_BOOL,
-		gql.Int:       base.FieldKind_INT,
-		gql.Float:     base.FieldKind_FLOAT,
-		gql.DateTime:  base.FieldKind_DATE,
-		gql.String:    base.FieldKind_STRING,
-		&gql.Object{}: base.FieldKind_FOREIGN_OBJECT,
-		&gql.List{}:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
-		// More custom ones to come
-		// - JSON
-		// - ByteArray
-		// - Counters
-	}
-	*/
+
+	// Commented out because this is deadcode according to linter:
+	// gqlTypeToFieldKindReference = map[gql.Type]base.FieldKind{
+	//     gql.ID:        base.FieldKind_DocKey,
+	//     gql.Boolean:   base.FieldKind_BOOL,
+	//     gql.Int:       base.FieldKind_INT,
+	//     gql.Float:     base.FieldKind_FLOAT,
+	//     gql.DateTime:  base.FieldKind_DATE,
+	//     gql.String:    base.FieldKind_STRING,
+	//     &gql.Object{}: base.FieldKind_FOREIGN_OBJECT,
+	//     &gql.List{}:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
+	//     // More custom ones to come
+	//     // - JSON
+	//     // - ByteArray
+	//     // - Counters
+	// }
 
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[base.FieldKind]core.CType{

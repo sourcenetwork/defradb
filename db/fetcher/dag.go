@@ -31,15 +31,15 @@ type BlockFetcher struct {
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
-	// key core.Key
 
-	/* Commented because this code is not used yet according to the linter.
-	txn   core.Txn
-	*/
-	spans core.Spans
+	// Commented because this code is not used yet according to the linter.
+	// txn   core.Txn
+
+	// key core.Key
 	// curSpanIndex int
 
-	cid *cid.Cid
+	spans core.Spans
+	cid   *cid.Cid
 
 	kv     *core.KeyValue
 	kvIter dsq.Results

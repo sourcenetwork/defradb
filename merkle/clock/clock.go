@@ -24,9 +24,8 @@ import (
 
 var (
 	log = logging.Logger("defradb.merkle.clock")
-	/* Commenting because this is unused code, and the linter complains (deadcode):
-	headsNS = "h"
-	*/
+	// Commenting because this is unused code, and the linter complains (deadcode):
+	// headsNS = "h"
 )
 
 type MerkleClock struct {

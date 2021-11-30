@@ -24,34 +24,34 @@ var (
 	_ planNode = (*typeJoinMany)(nil)
 )
 
-/* Commenting out because all of this is deadcode and linter complains.
-
-type joinNode struct {
-	p *Planner
-}
-
-// scatter group by or aggregate operations
-type scatterNode struct {
-	p *Planner
-}
-
-// apply an aggregate function to a result
-type aggregateNode struct {
-	p *Planner
-}
-
-// apply a "Having" operation
-type filterHavingNode struct {
-	p *Planner
-}
-
-// noop
-type noopNode struct {
-	p *Planner
-}
-
-// parellel planner, that is used to execute multiple plan trees in parallel.
-type parallelNode struct {
-	pNodes []planNode
-}
-*/
+// Commenting out because all of this is deadcode and linter complains.
+//
+// type joinNode struct {
+// 	p *Planner
+// }
+//
+// // scatter group by or aggregate operations
+// type scatterNode struct {
+// 	p *Planner
+// }
+//
+// // apply an aggregate function to a result
+// type aggregateNode struct {
+// 	p *Planner
+// }
+//
+// // apply a "Having" operation
+// type filterHavingNode struct {
+// 	p *Planner
+// }
+//
+// // noop
+// type noopNode struct {
+// 	p *Planner
+// }
+//
+// // parellel planner, that is used to execute multiple plan trees in parallel.
+// type parallelNode struct {
+// 	pNodes []planNode
+// }
+//

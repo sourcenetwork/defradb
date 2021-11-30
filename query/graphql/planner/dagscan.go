@@ -98,9 +98,8 @@ func (p *Planner) HeadScan() *headsetScanNode {
 type dagScanNode struct {
 	p *Planner
 
-	/* Commenting out to adhere to the linter as this is unused code:
-	key   *core.Key
-	*/
+	// Commenting out to adhere to the linter as this is unused code:
+	// key   *core.Key
 	cid   *cid.Cid
 	field string
 
