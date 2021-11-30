@@ -121,14 +121,19 @@ func (n *sortNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *sortNode) Close() {
-	n.plan.Close()
+func (n *sortNode) Close() error {
+	err := n.plan.Close()
+	if err != nil {
+		return err
+	}
+
 	if n.valueIter != nil {
 		n.valueIter.Close()
 	}
 	if n.sortStrategy != nil {
 		n.sortStrategy.Close()
 	}
+	return nil
 }
 
 func (n *sortNode) Source() planNode { return n.plan }

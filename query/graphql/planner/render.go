@@ -36,7 +36,7 @@ func (n *renderNode) Init() error            { return n.plan.Init() }
 func (n *renderNode) Start() error           { return n.plan.Start() }
 func (n *renderNode) Next() (bool, error)    { return n.plan.Next() }
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *renderNode) Close()                 { n.plan.Close() }
+func (n *renderNode) Close() error           { return n.plan.Close() }
 func (n *renderNode) Source() planNode       { return n.plan }
 
 // we only need to implement the Values() func of the planNode

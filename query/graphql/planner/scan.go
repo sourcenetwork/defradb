@@ -119,7 +119,9 @@ func (n *scanNode) Values() map[string]interface{} {
 	return n.doc
 }
 
-func (n *scanNode) Close() {}
+func (n *scanNode) Close() error {
+	return n.fetcher.Close()
+}
 
 func (n *scanNode) Source() planNode { return nil }
 

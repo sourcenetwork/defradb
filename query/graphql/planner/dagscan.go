@@ -87,7 +87,7 @@ func (h *headsetScanNode) Values() map[string]interface{} {
 	}
 }
 
-func (h *headsetScanNode) Close() {}
+func (h *headsetScanNode) Close() error { return nil }
 
 func (h *headsetScanNode) Source() planNode { return nil }
 
@@ -172,10 +172,11 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	}
 }
 
-func (n *dagScanNode) Close() {
-	if n.headset != nil {
-		n.headset.Close()
+func (n *dagScanNode) Close() error {
+	if n.headset == nil {
+		return nil
 	}
+	return n.headset.Close()
 }
 
 func (n *dagScanNode) Source() planNode { return n.headset }

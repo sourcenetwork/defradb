@@ -88,7 +88,7 @@ func (n *createNode) Values() map[string]interface{} {
 	return val
 }
 
-func (n *createNode) Close() { /* no-op?? */ }
+func (n *createNode) Close() error { return nil }
 
 func (n *createNode) Source() planNode { return nil }
 

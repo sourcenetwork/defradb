@@ -123,6 +123,13 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 	}
 
 	var err error
+	if df.kvIter != nil {
+		// If an existing iterator is to be replaced, we must still may sure it is properly closed
+		err = df.kvIter.Close()
+		if err != nil {
+			return err
+		}
+	}
 	df.kvIter, err = txn.Query(ctx, q)
 	if err != nil {
 		return err
@@ -341,4 +348,8 @@ func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 	// We only care about the data up to /<dockey>
 	// so were just going to do a quick hack
 	return core.Key{Key: key.Parent()}
+}
+
+func (df *DocumentFetcher) Close() error {
+	return df.kvIter.Close()
 }

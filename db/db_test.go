@@ -21,13 +21,19 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
+	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/stretchr/testify/assert"
 )
 
 func newMemoryDB() (*DB, error) {
-	rootstore := ds.NewMapDatastore()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		return nil, err
+	}
 	return NewDB(rootstore, struct{}{})
 }
 
@@ -40,9 +46,14 @@ func newMemoryDB() (*DB, error) {
 // }
 
 func TestNewDB(t *testing.T) {
-	rootstore := ds.NewMapDatastore()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
-	_, err := NewDB(rootstore, struct{}{})
+	_, err = NewDB(rootstore, struct{}{})
 	if err != nil {
 		t.Error(err)
 	}

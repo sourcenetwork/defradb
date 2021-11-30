@@ -14,8 +14,9 @@ import (
 	"fmt"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
+	badger "github.com/dgraph-io/badger/v3"
 	"github.com/sourcenetwork/defradb/client"
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,12 @@ type QueryTestCase struct {
 }
 
 func NewMemoryDB() (*db.DB, error) {
-	rootstore := ds.NewMapDatastore()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		return nil, err
+	}
+
 	return db.NewDB(rootstore, struct{}{})
 }
 
