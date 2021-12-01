@@ -161,8 +161,10 @@ func (n *selectNode) Close() error {
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
 func (n *selectNode) initSource(parsed *parser.Select) error {
-	collectionName := parsed.Name
-	sourcePlan, err := n.p.getSource(collectionName)
+	if parsed.CollectionName == "" {
+		parsed.CollectionName = parsed.Name
+	}
+	sourcePlan, err := n.p.getSource(parsed.CollectionName)
 	if err != nil {
 		return err
 	}
