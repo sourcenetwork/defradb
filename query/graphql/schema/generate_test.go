@@ -46,7 +46,7 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -64,7 +64,7 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 							Name: "myField",
 							Type: gql.String,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -82,7 +82,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -100,7 +100,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 							Name: "myField",
 							Type: gql.NewNonNull(gql.String),
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -118,7 +118,7 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -136,7 +136,7 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 							Name: "myField",
 							Type: gql.NewList(gql.String),
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -154,7 +154,7 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -172,7 +172,7 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 							Name: "myField",
 							Type: gql.NewList(gql.NewNonNull(gql.String)),
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -190,7 +190,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -208,7 +208,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 							Name: "myField",
 							Type: gql.NewNonNull(gql.NewList(gql.String)),
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -226,7 +226,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -244,7 +244,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 							Name: "myField",
 							Type: gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -267,7 +267,7 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -305,7 +305,7 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 							Name: "idField",
 							Type: gql.ID,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -327,7 +327,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -345,12 +345,12 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Name: "myField",
 							Type: gql.String,
 						},
-					}
+					}, nil
 				})},
 			),
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -368,7 +368,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Name: "otherField",
 							Type: gql.Boolean,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -392,7 +392,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 		[]*gql.Object{
 			gql.NewObject(gql.ObjectConfig{
 				Name: "MyObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -414,12 +414,12 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Name: "secondary",
 							Type: gql.Int,
 						},
-					}
+					}, nil
 				})},
 			),
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -441,7 +441,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Name: "tertiary",
 							Type: gql.Float,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -452,7 +452,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 
 	myObj := gql.NewObject(gql.ObjectConfig{
 		Name: "MyObject",
-		Fields: (gql.FieldsThunk)(func() gql.Fields {
+		Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 			return gql.Fields{
 				"_key": &gql.Field{
 					Name: "_key",
@@ -470,7 +470,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 					Name: "myField",
 					Type: gql.String,
 				},
-			}
+			}, nil
 		})},
 	)
 
@@ -488,7 +488,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 			myObj,
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -510,7 +510,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 							Name: "otherField_id",
 							Type: gql.ID,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
@@ -542,7 +542,7 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 			myObj,
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
-				Fields: (gql.FieldsThunk)(func() gql.Fields {
+				Fields: (gql.FieldsThunk)(func() (gql.Fields, error) {
 					return gql.Fields{
 						"_key": &gql.Field{
 							Name: "_key",
@@ -564,13 +564,13 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 							Name: "otherField_id",
 							Type: gql.ID,
 						},
-					}
+					}, nil
 				})},
 			),
 		})
 
 	// make sure we get back the *correct* error.
-	if err != nil && !strings.Contains(err.Error(), "field type must be Output Type but got: <nil>") {
+	if err != nil && !strings.Contains(err.Error(), "No type found for given name: UndefinedObject") {
 		t.Error("buildTypesFromAST didn't fail on UndefinedObject:", err)
 	}
 }
@@ -598,8 +598,6 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 
 		myObjectActual := myObject.(*gql.Object)
 		spew.Dump(myObjectActual.Fields())
-		myObjectActual.Fields() // call Fields() to trigger the defineFields() function
-		// to resolve the FieldsThunker
 
 		if myObject.Error() != nil {
 			return fmt.Errorf("%s contains an internal error from the Fields() > definFields() call : %w", objName, myObject.Error())
