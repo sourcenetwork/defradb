@@ -92,7 +92,7 @@ func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.doc, err = n.fetcher.FetchNextMap()
+		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
 		if err != nil {
 			return false, err
 		}

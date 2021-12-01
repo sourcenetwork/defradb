@@ -13,8 +13,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"sort"
-	"strings"
 
 	dsq "github.com/ipfs/go-datastore/query"
 
@@ -43,9 +41,11 @@ type DocumentFetcher struct {
 	index   *base.IndexDescription
 	reverse bool
 
-	txn          core.Txn   //nolint:structcheck,unused
-	spans        core.Spans //nolint:structcheck,unused
-	curSpanIndex int        //nolint:structcheck,unused
+	txn          core.Txn
+	spans        core.Spans
+	order        []dsq.Order
+	uniqueSpans  map[core.Span]struct{}
+	curSpanIndex int
 
 	schemaFields map[uint32]base.FieldDescription
 	fields       []*base.FieldDescription
@@ -97,28 +97,45 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 	//@todo: Handle fields Description
 	// check spans
 	numspans := len(spans)
+	var uniqueSpans core.Spans
 	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
 		start := base.MakeIndexPrefixKey(df.col, df.index)
-		spans = append(spans, core.NewSpan(start, start.PrefixEnd()))
+		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
 	} else if numspans > 1 {
-		// if we have multiple spans, we need to sort them by their start position
-		// so we can do a single iterative sweep
-		sort.Slice(spans, func(i, j int) bool {
-			// compare by strings if i < j.
-			// apply the '!= df.reverse' to reverse the sort
-			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0) != df.reverse
-		})
+		uniqueSpans = spans.MergeAscending()
+		if df.reverse {
+			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
+				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
+			}
+		}
+	} else {
+		uniqueSpans = spans
 	}
+
 	df.indexKey = nil
+	df.spans = uniqueSpans
+	df.curSpanIndex = -1
+	df.txn = txn
+
+	if df.reverse {
+		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
+	} else {
+		df.order = []dsq.Order{dsq.OrderByKey{}}
+	}
+
+	_, err := df.startNextSpan(ctx)
+	return err
+}
+
+func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
+	nextSpanIndex := df.curSpanIndex + 1
+	if nextSpanIndex >= len(df.spans) {
+		return false, nil
+	}
 
 	q := dsq.Query{
-		Prefix: spans[0].Start().String(), // @todo: Support multiple spans
-	}
-	if df.reverse {
-		q.Orders = []dsq.Order{dsq.OrderByKeyDescending{}}
-	} else {
-		q.Orders = []dsq.Order{dsq.OrderByKey{}}
+		Prefix: df.spans[nextSpanIndex].Start().String(),
+		Orders: df.order,
 	}
 
 	var err error
@@ -126,16 +143,17 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 		// If an existing iterator is to be replaced, we must still may sure it is properly closed
 		err = df.kvIter.Close()
 		if err != nil {
-			return err
+			return false, err
 		}
 	}
-	df.kvIter, err = txn.Query(ctx, q)
+	df.kvIter, err = df.txn.Query(ctx, q)
 	if err != nil {
-		return err
+		return false, err
 	}
+	df.curSpanIndex = nextSpanIndex
 
-	_, err = df.nextKey()
-	return err
+	_, err = df.nextKey(ctx)
+	return err == nil, err
 }
 
 func (df *DocumentFetcher) KVEnd() bool {
@@ -146,8 +164,8 @@ func (df *DocumentFetcher) KV() *core.KeyValue {
 	return df.kv
 }
 
-func (df *DocumentFetcher) NextKey() (docDone bool, err error) {
-	return df.nextKey()
+func (df *DocumentFetcher) NextKey(ctx context.Context) (docDone bool, err error) {
+	return df.nextKey(ctx)
 }
 
 func (df *DocumentFetcher) NextKV() (iterDone bool, kv *core.KeyValue, err error) {
@@ -160,7 +178,7 @@ func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
-func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
+func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error) {
 	// get the next kv from nextKV()
 	for {
 		docDone, df.kv, err = df.nextKV()
@@ -170,6 +188,13 @@ func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 		}
 		df.kvEnd = docDone
 		if df.kvEnd {
+			hasNextSpan, err := df.startNextSpan(ctx)
+			if err != nil {
+				return false, err
+			}
+			if hasNextSpan {
+				return true, nil
+			}
 			return true, nil
 		}
 
@@ -263,7 +288,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (*document.EncodedDocument, error) {
 	if df.kvEnd {
 		return nil, nil
 	}
@@ -284,7 +309,7 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 			return nil, err
 		}
 
-		end, err := df.nextKey()
+		end, err := df.nextKey(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -303,8 +328,8 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 }
 
 // FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
-	encdoc, err := df.FetchNext()
+func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*document.Document, error) {
+	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +347,8 @@ func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
 
 // FetchNextMap returns the next document as a map[string]interface{}
 // The first return value is the parsed document key
-func (df *DocumentFetcher) FetchNextMap() ([]byte, map[string]interface{}, error) {
-	encdoc, err := df.FetchNext()
+func (df *DocumentFetcher) FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error) {
+	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

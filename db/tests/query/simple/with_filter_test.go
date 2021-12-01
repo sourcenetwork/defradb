@@ -89,6 +89,114 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 	}
 }
 
+func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "Simple query with basic filter (single key by DocKeys arg)",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			Description: "Simple query with basic filter (single key by DocKeys arg), no results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{},
+		},
+		{
+			Description: "Simple query with basic filter (duplicate key by DocKeys arg), partial results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+					}`),
+					(`{
+						"Name": "Bob",
+						"Age": 32
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			Description: "Simple query with basic filter (multiple key by DocKeys arg), partial results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+					}`),
+					(`{
+						"Name": "Bob",
+						"Age": 32
+					}`),
+					(`{
+						"Name": "Jim",
+						"Age": 27
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "Jim",
+					"Age":  uint64(27),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
+}
+
 func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with basic filter (key by filter block)",
