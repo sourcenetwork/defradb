@@ -24,7 +24,6 @@ type Span interface {
 }
 
 type span struct {
-	Span
 	start Key
 	end   Key
 }
