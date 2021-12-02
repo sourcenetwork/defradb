@@ -80,8 +80,9 @@ type Selection interface {
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name  string
-	Alias string
+	Name           string
+	Alias          string
+	CollectionName string
 
 	// Root is the top level query parsed type
 	Root SelectionType
