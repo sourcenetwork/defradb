@@ -10,11 +10,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 )
 
-var dbopts = &db.Options{
-	Address: "localhost:19181",
-	Store:   "badger",
-	Badger:  db.BadgerOptions{},
-}
+var dbpath string
 
 // handle temp dir in a cross-platform way
 func init() {
@@ -22,7 +18,16 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	dbopts.Badger.Path = dir
+	dbpath = dir
+}
+
+func newDB() (*db.DB, error) {
+	rootstore, err := badgerds.NewDatastore(dbpath, badger.DefaultOptions(dbpath))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create badger in-memory store: %w", err)
+	}
+
+	return defradb.NewDB(rootstore, struct{}{})
 }
 
 func cleanupDB(db *db.DB) {
