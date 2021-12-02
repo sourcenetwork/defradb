@@ -148,9 +148,9 @@ func runCollectionBenchGet(b *testing.B, ctx fixtures.Context, docCount, opCount
 	// run benchmark
 	b.StartTimer()
 
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < opCount; j++ {
-			for k := 0; k < numTypes; k++ {
+	for i := 0; i < b.N; i++ { // outer benchmark loop
+		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
+			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				collections[k].Get(dockeys[j][k])
 			}
 		}
