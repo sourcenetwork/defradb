@@ -3,15 +3,15 @@
 package bench
 
 import (
-	"github.com/sourcenetwork/defradb/db"
+	"fmt"
+
+	badger "github.com/dgraph-io/badger/v3"
+
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	defradb "github.com/sourcenetwork/defradb/db"
 )
 
-var dbopts = &db.Options{
-	Address: "localhost:19181",
-	Store:   "memory",
-}
-
-func newDB() (*db.DB, error) {
+func newDB() (*defradb.DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -21,6 +21,6 @@ func newDB() (*db.DB, error) {
 	return defradb.NewDB(rootstore, nil)
 }
 
-func cleanupDB(db *db.DB) {
+func cleanupDB(db *defradb.DB) {
 	db.Close()
 }

@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/sourcenetwork/defradb/db"
+	badger "github.com/dgraph-io/badger/v3"
+
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	defradb "github.com/sourcenetwork/defradb/db"
 )
 
 var dbpath string
@@ -21,7 +24,7 @@ func init() {
 	dbpath = dir
 }
 
-func newDB() (*db.DB, error) {
+func newDB() (*defradb.DB, error) {
 	rootstore, err := badgerds.NewDatastore(dbpath, badger.DefaultOptions(dbpath))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create badger in-memory store: %w", err)
@@ -30,7 +33,7 @@ func newDB() (*db.DB, error) {
 	return defradb.NewDB(rootstore, struct{}{})
 }
 
-func cleanupDB(db *db.DB) {
+func cleanupDB(db *defradb.DB) {
 	db.Close()
 	removeDir(dbopts.Badger.Path)
 }
