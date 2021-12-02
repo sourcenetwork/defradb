@@ -68,7 +68,7 @@ func Benchmark_Collection_UserSimpleOne_Read_1000_100(b *testing.B) {
 	}
 }
 
-func setupCollections(b *testing.B, db *defradb.DB, fixture fixtures.Context) ([]client.Collection, error) {
+func setupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Context) ([]client.Collection, error) {
 	// create collection
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
@@ -87,13 +87,13 @@ func setupCollections(b *testing.B, db *defradb.DB, fixture fixtures.Context) ([
 
 	// b.Logf("Loading schema: \n%s", schema)
 
-	if err := db.AddSchema(schema); err != nil {
+	if err := db.AddSchema(ctx, schema); err != nil {
 		return nil, fmt.Errorf("Couldn't load schema: %w", err)
 	}
 
 	// loop to get collections
 	for i := 0; i < numTypes; i++ {
-		col, err := db.GetCollection(fixture.TypeName(i))
+		col, err := db.GetCollection(ctx, fixture.TypeName(i))
 		if err != nil {
 			return nil, fmt.Errorf("Couldn't get the collection %v: %w", fixture.TypeName(i), err)
 		}
@@ -116,7 +116,7 @@ func runCollectionBenchGet(b *testing.B, fixture fixtures.Context, docCount, opC
 
 	// create collections
 	numTypes := len(fixture.Types())
-	collections, err := setupCollections(b, db, fixture)
+	collections, err := setupCollections(b, ctx, db, fixture)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func runCollectionBenchGet(b *testing.B, fixture fixtures.Context, docCount, opC
 				return fmt.Errorf("Failed to create document from fixture: %w", err)
 			}
 
-			if err := collections[j].Create(doc); err != nil {
+			if err := collections[j].Create(ctx, doc); err != nil {
 				return fmt.Errorf("Failed to create document on collection: %w", err)
 			}
 			keys[j] = doc.Key()
@@ -153,7 +153,7 @@ func runCollectionBenchGet(b *testing.B, fixture fixtures.Context, docCount, opC
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get(dockeys[j][k])
+				collections[k].Get(ctx, dockeys[j][k])
 			}
 		}
 	}
