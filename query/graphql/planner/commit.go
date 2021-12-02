@@ -43,7 +43,6 @@ func (n *commitSelectNode) Next() (bool, error) {
 	}
 
 	n.doc = n.source.Values()
-	n.renderDoc()
 	return true, nil
 }
 
@@ -82,10 +81,6 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	default:
 		return nil, errors.New("Invalid CommitSelect type")
 	}
-	if err != nil {
-		return nil, err
-	}
-	err = commit.initFields(parsed)
 	if err != nil {
 		return nil, err
 	}
@@ -163,39 +158,6 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 	}
 
 	return commit, nil
-}
-
-// renderDoc applies the render meta-data to the
-// links/previous sub selections for a commit type
-// query.
-func (n *commitSelectNode) renderDoc() {
-	for subfield, info := range n.subRenderInfo {
-		renderData := map[string]interface{}{
-			"numResults": info.numResults,
-			"fields":     info.fields,
-			"aliases":    info.aliases,
-		}
-		for _, subcommit := range n.doc[subfield].([]map[string]interface{}) {
-			subcommit["__render"] = renderData
-		}
-
-	}
-}
-
-func (n *commitSelectNode) initFields(parsed parser.Selection) error {
-	for _, selection := range parsed.GetSelections() {
-		switch node := selection.(type) {
-		case *parser.Select:
-			info := renderInfo{}
-			for _, f := range node.Fields {
-				info.fields = append(info.fields, f.GetName())
-				info.aliases = append(info.aliases, f.GetAlias())
-				info.numResults++
-			}
-			n.subRenderInfo[node.Name] = info
-		}
-	}
-	return nil
 }
 
 // commitSelectTopNode is a wrapper for the selectTopNode

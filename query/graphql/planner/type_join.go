@@ -189,7 +189,7 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 		return nil, errors.New("Relation is missing referenced field")
 	}
 
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -351,7 +351,7 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	if !ok {
 		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
