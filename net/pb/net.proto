@@ -1,7 +1,15 @@
-syntax = "proto3"
-package net.pb
+syntax = "proto3";
+package net.pb;
 
-import "github.com/gogo/protobuf/gogoproto/gogo.proto"
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+message GetDocGraphRequest {}
+
+message GetDocGraphReply {}
+
+message PushDocGraphRequest {}
+
+message PushDocGraphReply {}
 
 // Service is the peer-to-peer network API for thread orchestration.
 service Service {
