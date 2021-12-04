@@ -24,8 +24,6 @@ var (
 	_ planNode = (*typeJoinMany)(nil)
 )
 
-// Commenting out because all of this is deadcode and linter complains.
-//
 // type joinNode struct {
 // 	p *Planner
 // }
@@ -54,4 +52,3 @@ var (
 // type parallelNode struct {
 // 	pNodes []planNode
 // }
-//

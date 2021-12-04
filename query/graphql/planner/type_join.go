@@ -19,11 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-// Commenting out because unused code (deadcode) according to linter.
-// const (
-//     indexJoinBatchSize = 100
-// )
-
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
 // It constructs a new plan node, which queries the
@@ -190,7 +185,7 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 		return nil, errors.New("Relation is missing referenced field")
 	}
 
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -283,9 +278,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	// Commented the below line becase it is an ineffectual assignment (not used).
-	// subDoc := make(map[string]interface{})
-
 	subDocField := n.subTypeName
 	doc[subDocField] = map[string]interface{}{}
 
@@ -300,28 +292,24 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)
 	n.subType.Init() // re-initalize the sub type plan
-	for {
-		// if we don't find any docs from our point span lookup
-		// or if we encounter an error just return the base doc,
-		// with an empty map for the subdoc
-		next, err := n.subType.Next()
+	// if we don't find any docs from our point span lookup
+	// or if we encounter an error just return the base doc,
+	// with an empty map for the subdoc
+	next, err := n.subType.Next()
 
-		// @todo pair up on the error handling / logging properly.
-		if err != nil {
-			fmt.Println("Internal primary value error : %w", err)
-			return doc
-		}
-
-		if !next {
-			return doc
-		}
-
-		subDoc := n.subType.Values()
-		doc[subDocField] = subDoc
-
-		// @todo Figure out why this break is here, is the loop even required?
-		break // nolint:staticcheck
+	// @todo pair up on the error handling / logging properly.
+	if err != nil {
+		fmt.Println("Internal primary value error : %w", err)
+		return doc
 	}
+
+	if !next {
+		return doc
+	}
+
+	subDoc := n.subType.Values()
+	doc[subDocField] = subDoc
+
 	return doc
 }
 
@@ -346,9 +334,6 @@ type typeJoinMany struct {
 	// the subtype plan to get the subtype docs
 	subType     planNode
 	subTypeName string
-
-	// Commenting out because unused code (structcheck) according to linter.
-	// spans core.Spans
 }
 
 func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {
@@ -364,7 +349,7 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	if !ok {
 		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {

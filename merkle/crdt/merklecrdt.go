@@ -18,7 +18,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-// Commenting because this is a redundant break, and the linter complains:
 // var (
 //     log = logging.Logger("defradb.merkle.crdt")
 // )

@@ -80,8 +80,9 @@ type Selection interface {
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name  string
-	Alias string
+	Name           string
+	Alias          string
+	CollectionName string
 
 	// Root is the top level query parsed type
 	Root SelectionType
@@ -386,31 +387,6 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 
 	return selections, nil
 }
-
-// Commenting out to adhere to the linter as this function is unused code:
-//
-// // iterates over the given map, and replaces the string instance
-// // of the sort direction, with a SortDirection type
-// func replaceSortDirection(obj map[string]interface{}) error {
-// 	for k, v := range obj {
-// 		switch n := v.(type) {
-// 		case string:
-// 			dir, ok := NameToSortDirection[n]
-// 			if !ok {
-// 				return errors.New("Invalid sort direction string")
-// 			}
-// 			obj[k] = dir
-// 		case map[string]interface{}:
-// 			err := replaceSortDirection(n)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			obj[k] = n
-// 		}
-// 	}
-//
-// 	return nil
-// }
 
 // parseField simply parses the Name/Alias
 // into a Field type

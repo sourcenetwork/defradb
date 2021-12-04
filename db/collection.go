@@ -32,8 +32,6 @@ import (
 
 var (
 	collectionSeqKey = "collection"
-	// Commented because unused.
-	// collectionNs     = ds.NewKey("/collection")
 )
 
 var (

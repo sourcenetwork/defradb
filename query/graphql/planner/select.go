@@ -46,12 +46,6 @@ func (n *selectTopNode) Close() error {
 	return n.plan.Close()
 }
 
-type renderInfo struct {
-	numResults int
-	fields     []string
-	aliases    []string
-}
-
 type selectNode struct {
 	p *Planner
 
@@ -84,14 +78,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *parser.Filter
 
-	// Commenting out because unused code (structcheck) according to linter.
-	// // If the select query is using a FindByDocKey filter
-	// docKey string
-
 	groupSelect *parser.Select
-
-	// @todo restructure renderNode -> render, which is its own
-	// object, and not a planNode.
 }
 
 func (n *selectNode) Init() error {
@@ -119,29 +106,10 @@ func (n *selectNode) Next() (bool, error) {
 		}
 
 		if passes {
-			n.renderDoc()
 			return true, err
-			// err :=
-			// return err == nil, err
 		}
 		// didn't pass, keep looping
 	}
-}
-
-// applies all the necessary rendering to doc
-// as defined by the query statement. This includes
-// aliases, and any transformations.
-// Takes a doc map, and applies the necessary rendering.
-// It also holds all the necessary render meta-data
-// and ast parser data.
-func (n *selectNode) renderDoc() error {
-	renderData := map[string]interface{}{
-		"numResults": n.renderInfo.numResults,
-		"fields":     n.renderInfo.fields,
-		"aliases":    n.renderInfo.aliases,
-	}
-	n.doc["__render"] = renderData
-	return nil
 }
 
 func (n *selectNode) Spans(spans core.Spans) {
@@ -162,8 +130,10 @@ func (n *selectNode) Close() error {
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
 func (n *selectNode) initSource(parsed *parser.Select) error {
-	collectionName := parsed.Name
-	sourcePlan, err := n.p.getSource(collectionName)
+	if parsed.CollectionName == "" {
+		parsed.CollectionName = parsed.Name
+	}
+	sourcePlan, err := n.p.getSource(parsed.CollectionName)
 	if err != nil {
 		return err
 	}
@@ -197,39 +167,6 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 }
 
 func (n *selectNode) initFields(parsed *parser.Select) error {
-	n.renderInfo.numResults = 0
-	// subTypes := make([]*parser.Select, 0)
-
-	// iterate to build the render info
-	for _, field := range parsed.Fields {
-		switch node := field.(type) {
-		case *parser.Select:
-			// continue //ignore for now
-			// future:
-			// plan := n.p.Select(node)
-			// n.source := p.SubTypeIndexJoin(origScan, plan)
-			// f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
-			// if found {
-			// 	n.renderInfo.fields = append(n.renderInfo.fields, f.Name)
-			// }
-			n.renderInfo.fields = append(n.renderInfo.fields, node.GetName())
-			// subTypes = append(subTypes, node)
-		case *parser.Field, parser.Field:
-			// f, found := n.sourceInfo.collectionDescription.GetField(node.GetName())
-			// if found {
-			// 	n.renderInfo.fields = append(n.renderInfo.fields, f.Name)
-			// }
-			n.renderInfo.fields = append(n.renderInfo.fields, node.GetName())
-		}
-		n.renderInfo.aliases = append(n.renderInfo.aliases, field.GetAlias())
-		n.renderInfo.numResults++
-	}
-
-	// iterate to build sub plans
-	// for _, field := range parsed.Fields {
-
-	// }
-
 	// re-organize the fields slice into reverse-alphabetical
 	// this makes sure the reserved database fields that start with
 	// a "_" end up at the end. So if/when we build our MultiNode
@@ -352,7 +289,7 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 
 	top := &selectTopNode{
 		source: s,
-		render: p.render(),
+		render: p.render(parsed),
 		limit:  limitPlan,
 		sort:   sortPlan,
 		group:  groupPlan,
@@ -390,7 +327,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 
 	top := &selectTopNode{
 		source: s,
-		render: p.render(),
+		render: p.render(parsed),
 		limit:  limitPlan,
 		sort:   sortPlan,
 		group:  groupPlan,

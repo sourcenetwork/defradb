@@ -70,19 +70,6 @@ var startCmd = &cobra.Command{
 			db.Listen(config.Database.Address)
 		}()
 
-		//  Commenting out this block of code because the linter crys with this:
-		//  S1000: should use a simple channel send/receive instead of `select` with a single case
-		//  Note: Removed the the `signalCh` out of `select { case }` in the following lines.
-
-		//  		// capture the interrupt signal, and gracefully exit
-		//  		// @todo: Handle hard interuppt
-		//  		select {
-		//  		case <-signalCh:
-		//  			log.Info("Recieved interrupt; closing db")
-		//  			db.Close()
-		//  			os.Exit(0)
-		//  		}
-
 		<-signalCh
 		log.Info("Recieved interrupt; closing db")
 		db.Close()

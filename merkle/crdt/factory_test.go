@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 )
 
-// Commenting because this is unused code, and the linter complains:
 // var (
 //     factoryTestLog = logging.Logger("defradb.tests.factory")
 // )

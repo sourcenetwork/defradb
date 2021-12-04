@@ -18,11 +18,7 @@ import (
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
-	schema gql.Schema
-
-	// Commented because unused (for linter: structcheck).
-	// definedTypes []*gql.Object base defined types
-
+	schema    gql.Schema
 	Generator *Generator
 	Relations *RelationManager
 }
@@ -66,6 +62,20 @@ func (s *SchemaManager) ResolveTypes() error {
 	// ATM, there is no function to easily call the internal
 	// typeMapReducer function, so as a hack, we are just
 	// going to re-add the Query type.
+
+	for _, gqlType := range s.schema.TypeMap() {
+		object, isObject := gqlType.(*gql.Object)
+		if !isObject {
+			continue
+		}
+		// We need to make sure the object's fields are resolved
+		object.Fields()
+
+		if object.Error() != nil {
+			return object.Error()
+		}
+	}
+
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
 }

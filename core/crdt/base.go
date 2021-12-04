@@ -22,9 +22,6 @@ var (
 	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
 	valueSuffix    = "v" // value key
 	prioritySuffix = "p" // priority key
-	// Commented because unused / deadcode is not liked by the linter :P
-	// crdtTypeSuffix = "ct" // crdt-type key
-	// dataTypeSuffix = "dt"
 )
 
 // baseCRDT is embedded as a base layer into all
@@ -39,7 +36,7 @@ type baseCRDT struct {
 	prioritySuffix string
 }
 
-// @TODO paramaterize ns/suffix
+// @todo paramaterize ns/suffix
 func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
 	return baseCRDT{
 		store:          store,

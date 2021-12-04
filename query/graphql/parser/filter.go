@@ -113,8 +113,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 				Field:     name,
 				Direction: dir,
 			})
-			// Commenting because this is a redundant break, and the linter complains:
-			// break
+
 		case []SortCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condtion from the slice
@@ -125,8 +124,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 				cond.Field = fmt.Sprintf("%s.%s", name, cond.Field)
 				conditions = append(conditions, cond)
 			}
-			// Commenting because this is a redundant break, and the linter complains:
-			// break
+
 		default:
 			return nil, errors.New("Unexpected parsed type for parseConditionInOrder")
 		}

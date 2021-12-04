@@ -45,11 +45,6 @@ func (c *Collection) Create2(doc *document.SimpleDocument, opts ...CreateOpt) er
 	return nil
 }
 
-// Commented because this function was unused for now (to adhere to compiler).
-// func (c *Collection) save2(txn *Txn, doc *document.SimpleDocument) error {
-// 	return nil
-// }
-
 // Update2 updates the given doc. It will scan through the field/value pairs
 // and find those marked for update, and apply the appropriate update.
 // Update only works on root level field/value pairs. So not foreign or related
@@ -474,15 +469,14 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	return cval, err
 }
 
-// Commented because this function was unused for now (to adhere to compiler).
-// func (c *Collection) applyMergePatchOp(
-//     txn *Txn,
-//     docKey string,
-//     field string,
-//     currentVal interface{},
-//     targetVal interface{}) error {
-//     return nil
-// }
+func (c *Collection) applyMergePatchOp( //nolint:unused
+	txn *Txn,
+	docKey string,
+	field string,
+	currentVal interface{},
+	targetVal interface{}) error {
+	return nil
+}
 
 // makeQuery constructs a simple query of the collection using the given filter.
 // currently it doesn't support any other query operation other than filters.

@@ -29,13 +29,17 @@ clean:
 	go clean cli/defradb/main.go
 	rm -f build/defradb
 
-.PHONY: update
-update:
+.PHONY: tidy
+tidy:
 	go mod tidy
 
 .PHONY: test
 test:
 	go test ./...
+
+.PHONY: test\:bench
+test\:bench:
+	go test -bench
 
 .PHONY: lint
 lint:

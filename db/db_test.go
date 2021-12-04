@@ -37,14 +37,6 @@ func newMemoryDB() (*DB, error) {
 	return NewDB(rootstore, struct{}{})
 }
 
-// Unused function according to the linter:
-// func newTestCollection(ctx context.Context, db *DB) (*Collection, error) {
-//     col, err := db.CreateCollection(ctx, base.CollectionDescription{
-//         Name: "test",
-//     })
-//     return col.(*Collection), err
-// }
-
 func TestNewDB(t *testing.T) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)

@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/multiformats/go-multihash"
 	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 
@@ -109,10 +110,11 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		// if we cant try to parse DSKeyToCID
 		// return error if we still cant
 		key := ds.NewKey(cidStr)
-		hash, multiHashErr := dshelp.DsKeyToMultihash(key)
-		if multiHashErr != nil {
-			result.Errors = []interface{}{multiHashErr.Error()}
-			result.Data = multiHashErr.Error()
+		var hash multihash.Multihash
+		hash, err = dshelp.DsKeyToMultihash(key)
+		if err != nil {
+			result.Errors = []interface{}{err.Error()}
+			result.Data = err.Error()
 			json.NewEncoder(w).Encode(result)
 			w.WriteHeader(http.StatusBadRequest)
 			return

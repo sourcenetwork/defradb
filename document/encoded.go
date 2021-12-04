@@ -24,7 +24,6 @@ type EncProperty struct {
 	Desc base.FieldDescription
 	Raw  []byte
 
-	// Commenting because this is unused code, and the linter complains (structcheck):
 	// // encoding meta data
 	// encoding base.DataEncoding
 }

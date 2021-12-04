@@ -913,8 +913,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12 h1:MELz22GoPeecJnBS5RT4i52bNY/wlpvbGW3L4lLuBTU=
 github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12/go.mod h1:IimP/qkAJro1hXbVA8xOMDdkUeWkVw8rF40XrZq5YX0=
-github.com/sourcenetwork/graphql v0.7.10-0.20210312090624-3aa34ef0f75a h1:hwyuU5V0j5hkg0R0w74SJP86xSQbO9vvvguHg6bxHJE=
-github.com/sourcenetwork/graphql v0.7.10-0.20210312090624-3aa34ef0f75a/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
+github.com/sourcenetwork/graphql v0.7.10-0.20211201133854-7e4c02b364c3 h1:tlzloRd2CwVQmUUKp+xnZ8ydOgI/D0h/BooFNrDFNGg=
+github.com/sourcenetwork/graphql v0.7.10-0.20211201133854-7e4c02b364c3/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
 github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a/go.mod h1:7AyxJNCJ7SBZ1MfVQCWD6Uqo2oubI2Eq2y2eqf+A5r0=
 github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 h1:RC6RW7j+1+HkWaX/Yh71Ee5ZHaHYt7ZP4sQgUrm6cDU=
 github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572/go.mod h1:w0SWMsp6j9O/dk4/ZpIhL+3CkG8ofA2vuv7k+ltqUMc=

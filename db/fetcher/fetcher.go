@@ -43,10 +43,9 @@ type DocumentFetcher struct {
 	index   *base.IndexDescription
 	reverse bool
 
-	// Commented because these are unused (on a mission to obey linter's commands).
-	// txn          core.Txn
-	// spans        core.Spans
-	// curSpanIndex int
+	txn          core.Txn   //nolint:structcheck,unused
+	spans        core.Spans //nolint:structcheck,unused
+	curSpanIndex int        //nolint:structcheck,unused
 
 	schemaFields map[uint32]base.FieldDescription
 	fields       []*base.FieldDescription

@@ -28,11 +28,6 @@ import (
 type createNode struct {
 	p *Planner
 
-	// Commenting out to adhere uo the linter as this is unused code (structcheck):
-	// // result is the target document as a map after creation
-	// result map[string]interface{}
-	// sourceInfo sourceInfo
-
 	// cache information about the original data source
 	// collection name, meta-data, etc.
 	collection client.Collection

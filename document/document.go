@@ -281,8 +281,6 @@ func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error 
 	return doc.set(t, field, value)
 }
 
-// Comment the following functions as they aren't used anywhere to satisfy the linter:
-//
 // func (doc *Document) setString(t core.CType, field string, val string) error {
 // 	value := NewStringValue(t, val)
 // 	return doc.set(t, field, value)
