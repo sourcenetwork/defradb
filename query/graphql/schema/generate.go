@@ -324,7 +324,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 				}
 
 				// @todo Pairup on removing the staticcheck linter error below.
-				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value] // nolint:staticcheck
+				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
 					return nil, fmt.Errorf("object not found whilst executing fields thunk: %s", defType.Name.Value)
 				}

@@ -297,7 +297,7 @@ func (doc *Document) setObject(t core.CType, field string, val *Document) error 
 }
 
 func (doc *Document) setAndParseType(field string, value interface{}) error {
-	switch val := value.(type) { // nolint:gosimple @todo fix this linter error,
+	switch val := value.(type) {
 
 	// int (any number)
 	case float64:
@@ -309,14 +309,10 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		} else { //float
 			doc.setCBOR(core.LWW_REGISTER, field, val)
 		}
-		// Redundant break statement (S1023), linter screams.
-		// break
 
 	// string, bool, and more
 	case string, bool:
 		doc.setCBOR(core.LWW_REGISTER, field, val)
-		// Redundant break statement (S1023), linter screams.
-		// break
 
 	// array
 	case []interface{}:
@@ -339,8 +335,6 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 
 		doc.setObject(core.OBJECT, field, subDoc)
-		// Redundant break statement (S1023), linter screams.
-		// break
 
 	default:
 		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
