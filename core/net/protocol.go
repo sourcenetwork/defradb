@@ -7,7 +7,7 @@ import (
 
 const (
 	// Name is the protocol slug.
-	Name = "de.fra"
+	Name = "defra"
 	// Code is the protocol code.
 	Code = 961 // @TODO: Register code with Multicodec https://github.com/multiformats/multicodec. 961 is arbitrary at the moment
 	// Version is the current protocol version.
@@ -21,4 +21,10 @@ var addrProtocol = ma.Protocol{
 	Code:  Code,
 	VCode: ma.CodeToVarint(Code),
 	Size:  ma.LengthPrefixedVarSize,
+}
+
+func init() {
+	if err := ma.AddProtocol(addrProtocol); err != nil {
+		panic(err)
+	}
 }
