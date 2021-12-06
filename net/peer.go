@@ -3,11 +3,10 @@ package net
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/client"
-	"google.golang.org/grpc"
-
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p-core/host"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"google.golang.org/grpc"
 )
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
@@ -17,8 +16,7 @@ type peer struct {
 
 	format.DAGService
 	host host.Host
-
-	db client.DB
+	ps   *pubsub.PubSub
 
 	rpc    *grpc.Server
 	server *server
