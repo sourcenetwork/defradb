@@ -15,16 +15,15 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	logging "github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 )
 
-var (
-	factoryTestLog = logging.Logger("defradb.tests.factory")
-)
+// var (
+//     factoryTestLog = logging.Logger("defradb.tests.factory")
+// )
 
 func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 	root := ds.NewMapDatastore()
@@ -37,7 +36,7 @@ func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 func TestNewBlankFactory(t *testing.T) {
 	f := NewFactory(nil, nil, nil)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 }
 
@@ -45,7 +44,7 @@ func TestNewFactoryWithStores(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 
 	assert.Equal(t, d, f.datastore)
@@ -57,7 +56,7 @@ func TestFactoryMultiStoreInterface(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 
 	// check interface implement

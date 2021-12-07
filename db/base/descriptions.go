@@ -96,10 +96,7 @@ type SchemaDescription struct {
 
 //IsEmpty returns true if the SchemaDescription is empty and unitialized
 func (sd SchemaDescription) IsEmpty() bool {
-	if len(sd.Fields) == 0 {
-		return true
-	}
-	return false
+	return len(sd.Fields) == 0
 }
 
 type FieldKind uint8

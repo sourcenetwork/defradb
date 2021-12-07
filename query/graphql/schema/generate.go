@@ -172,7 +172,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			// obj.AddFieldConfig(f, expandedField)
 			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
-			break
+
 		case *gql.List: // new field object with aguments (list)
 			listType := t.OfType
 			if _, complete := g.expandedFields[fieldKey]; complete {
@@ -192,7 +192,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-			// todo: check if NonNull is possible here
+			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
 			// get subtype
 		}
@@ -312,7 +312,6 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 							return nil, err
 						}
 						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
-						break
 					}
 
 					fType.Type = ttype
@@ -324,6 +323,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					Type: gql.NewList(types.Commit),
 				}
 
+				// @todo Pairup on removing the staticcheck linter error below.
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
 					return nil, fmt.Errorf("object not found whilst executing fields thunk: %s", defType.Name.Value)
@@ -648,31 +648,10 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 type queryInputTypeConfig struct {
-	key     *gql.Scalar
-	cid     *gql.Scalar
 	filter  *gql.InputObject
 	groupBy *gql.Enum
 	having  *gql.InputObject
 	order   *gql.InputObject
-}
-
-// generate the type Query { ... }  field for the given type
-func (g *Generator) genTypeQueryableField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
-	name := strings.ToLower(obj.Name())
-
-	// add the generated types to the type map
-	// g.manager.schema.AppendType(config.filter)
-
-	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: name,
-		Type: obj,
-		Args: gql.FieldConfigArgument{
-			"filter": newArgConfig(config.filter),
-		},
-	}
-
-	return field
 }
 
 func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {

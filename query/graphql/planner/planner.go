@@ -19,8 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	"github.com/graphql-go/graphql/language/ast"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement
@@ -61,17 +59,17 @@ type planNode interface {
 
 // basic plan Node that implements the planNode interface
 // can be added to any struct to turn it into a planNode
-type baseNode struct {
+type baseNode struct { //nolint:unused
 	plan planNode
 }
 
-func (n *baseNode) Init() error                    { return n.plan.Init() }
-func (n *baseNode) Start() error                   { return n.plan.Start() }
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *baseNode) Close() error                   { return n.plan.Close() }
-func (n *baseNode) Source() planNode               { return n.plan }
+func (n *baseNode) Init() error                    { return n.plan.Init() }   //nolint:unused
+func (n *baseNode) Start() error                   { return n.plan.Start() }  //nolint:unused
+func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }   //nolint:unused
+func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }    //nolint:unused
+func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() } //nolint:unused
+func (n *baseNode) Close() error                   { return n.plan.Close() }  //nolint:unused
+func (n *baseNode) Source() planNode               { return n.plan }          //nolint:unused
 
 type ExecutionContext struct {
 	context.Context
@@ -82,9 +80,10 @@ type PlanContext struct {
 }
 
 type Statement struct {
-	requestString   string
-	requestDocument *ast.Document // parser.Statement -> parser.Query - >
-	requestQuery    parser.Query
+	// Commenting out because unused code (structcheck) according to linter.
+	// requestString   string
+	// requestDocument *ast.Document parser.Statement -> parser.Query - >
+	// requestQuery    parser.Query
 }
 
 // Planner combines session state and databse state to
@@ -283,10 +282,6 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	return p.expandPlan(childSource)
 }
 
-// func (p *Planner) QueryDocs(query parser.Query) {
-
-// }
-
 // walkAndReplace walks through the provided plan, and searches for an instance
 // of the target plan, and replaces it with the replace plan
 func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
@@ -343,12 +338,13 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		return nil, err
 	}
 
-	if err := plan.Start(); err != nil {
+	if err = plan.Start(); err != nil {
 		plan.Close()
 		return nil, err
 	}
 
-	if next, err := plan.Next(); err != nil || !next {
+	var next bool
+	if next, err = plan.Next(); err != nil || !next {
 		plan.Close()
 		return nil, err
 	}
@@ -360,7 +356,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 			docs = append(docs, copy)
 		}
 
-		next, err := plan.Next()
+		next, err = plan.Next()
 		if err != nil {
 			plan.Close()
 			return nil, err

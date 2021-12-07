@@ -24,7 +24,6 @@ type pipeNode struct {
 
 	// The index of the current value - will be -1 if nothinghas been read yet
 	docIndex int
-	hasNext  bool
 }
 
 func newPipeNode() pipeNode {

@@ -23,13 +23,12 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
-	logging "github.com/ipfs/go-log"
 )
 
-var (
-	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-	// store core.DSReaderWriter
-)
+// var (
+//     merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
+//     store core.DSReaderWriter
+// )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
@@ -77,10 +76,12 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-	defer results.Close()
+
 	if err != nil {
 		panic(err)
 	}
+
+	defer results.Close()
 
 	for r := range results.Next() {
 		fmt.Println(r.Key, ": ", r.Value)

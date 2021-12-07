@@ -22,7 +22,6 @@ import (
 type updateNode struct {
 	p *Planner
 
-	sourceInfo sourceInfo
 	collection client.Collection
 
 	filter *parser.Filter

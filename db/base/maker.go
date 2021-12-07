@@ -10,9 +10,8 @@
 package base
 
 import (
-	"github.com/sourcenetwork/defradb/core"
-
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 var (
@@ -23,31 +22,30 @@ var (
 )
 
 var (
-	collectionSeqKey = "collection"
-	collectionNs     = ds.NewKey("/collection")
-	schemaNs         = ds.NewKey("/schema")
+	// Commented because it's deadcode (unused according to linter).
+	// collectionSeqKey = "collection"
+	collectionNs = ds.NewKey("/collection")
+	schemaNs     = ds.NewKey("/schema")
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
 func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) core.Key {
-	return core.Key{core.NewKey(DATA).
-		ChildString(col.IDString()).
-		ChildString(index.IDString())}
+	return core.Key{Key: core.NewKey(DATA).ChildString(col.IDString()).ChildString(index.IDString())}
 }
 
 // MakeIndexKey generates a key for the target dockey, using the collection/index description
 func MakeIndexKey(col *CollectionDescription, index *IndexDescription, key core.Key) core.Key {
-	return core.Key{MakeIndexPrefixKey(col, index).Child(key.Key)}
+	return core.Key{Key: MakeIndexPrefixKey(col, index).Child(key.Key)}
 }
 
 // MakeCollectionSystemKey returns a formatted collection key for the system data store.
 // it assumes the name of the collection is non-empty.
 func MakeCollectionSystemKey(name string) core.Key {
-	return core.Key{collectionNs.ChildString(name)}
+	return core.Key{Key: collectionNs.ChildString(name)}
 }
 
 // MakeSchemaSystemKey returns a formatted schema key for the system data store.
 // it assumes the name of the schema is non-empty.
 func MakeSchemaSystemKey(name string) core.Key {
-	return core.Key{schemaNs.ChildString(name)}
+	return core.Key{Key: schemaNs.ChildString(name)}
 }

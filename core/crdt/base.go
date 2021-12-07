@@ -19,11 +19,9 @@ import (
 )
 
 var (
-	keysNs         = "k"  // /keys namespace /set/k/<key>/{v,p}
-	valueSuffix    = "v"  // value key
-	prioritySuffix = "p"  // priority key
-	crdtTypeSuffix = "ct" // crdt-type key
-	dataTypeSuffix = "dt"
+	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
+	valueSuffix    = "v" // value key
+	prioritySuffix = "p" // priority key
 )
 
 // baseCRDT is embedded as a base layer into all
@@ -38,7 +36,7 @@ type baseCRDT struct {
 	prioritySuffix string
 }
 
-// @TODO paramaterize ns/suffix
+// @todo paramaterize ns/suffix
 func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
 	return baseCRDT{
 		store:          store,
@@ -61,9 +59,10 @@ func (base baseCRDT) priorityKey(key string) ds.Key {
 	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
 }
 
-func (base baseCRDT) typeKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
-}
+// Commented becuase this function is unused (for linter).
+// func (base baseCRDT) typeKey(key string) ds.Key {
+// 	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
+// }
 
 // func (base baseCRDT) dataTypeKey(key string) ds.Key {
 // 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)

@@ -32,7 +32,6 @@ import (
 
 var (
 	collectionSeqKey = "collection"
-	collectionNs     = ds.NewKey("/collection")
 )
 
 var (
@@ -538,7 +537,12 @@ func (c *Collection) saveDocValue(ctx context.Context, txn *Txn, key ds.Key, val
 	}
 }
 
-func (c *Collection) saveValueToMerkleCRDT(ctx context.Context, txn *Txn, key ds.Key, ctype core.CType, args ...interface{}) (cid.Cid, error) {
+func (c *Collection) saveValueToMerkleCRDT(
+	ctx context.Context,
+	txn *Txn,
+	key ds.Key,
+	ctype core.CType,
+	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
@@ -561,7 +565,8 @@ func (c *Collection) saveValueToMerkleCRDT(ctx context.Context, txn *Txn, key ds
 	case core.OBJECT:
 		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
 		c.db.log.Debug("Sub objects not yet supported")
-		break
+		// Redundant break statement (S103 gosimple linter).
+		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)

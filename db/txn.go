@@ -69,7 +69,8 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 
 		txn.Txn = dstxn
 
-	} else if batchStore, ok := db.rootstore.(ds.Batching); ok { // we support Batching
+		// Note: db.rootstore now has type `ds.Batching`.
+	} else if batchStore := db.rootstore; ok { // we support Batching
 		batcher, err := batchStore.Batch(ctx)
 		if err != nil {
 			return nil, err

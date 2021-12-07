@@ -96,9 +96,7 @@ func (p *Planner) HeadScan() *headsetScanNode {
 }
 
 type dagScanNode struct {
-	p *Planner
-
-	key   *core.Key
+	p     *Planner
 	cid   *cid.Cid
 	field string
 

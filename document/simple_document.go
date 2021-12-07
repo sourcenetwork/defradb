@@ -21,19 +21,15 @@ type ValueType interface {
 
 // Scalar Value Type
 type Scalar struct {
-	value interface{}
+	// value interface{}
 }
 
 // List Value Type
 type List struct {
-	vals []ValueType
+	// vals []ValueType
 }
 
-type SimpleDocument struct {
-	schema *base.SchemaDescription
-
-	data map[string]ValueType
-}
+type SimpleDocument struct{}
 
 func NewSimpleFromJSON(schema *base.SchemaDescription, data []byte) (*SimpleDocument, error) {
 	return nil, nil

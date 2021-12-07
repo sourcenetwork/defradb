@@ -202,10 +202,12 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-	defer results.Close()
+
 	if err != nil {
 		panic(err)
 	}
+
+	defer results.Close()
 
 	for r := range results.Next() {
 		fmt.Println(r.Key, ": ", r.Value)
