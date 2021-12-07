@@ -106,7 +106,9 @@ func initConfig() {
 		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 		log.Debug("Loading config file:", viper.ConfigFileUsed())
 	} else {
-		os.Mkdir(home+"/.defradb", os.ModePerm)
+		if err := os.Mkdir(home+"/.defradb", os.ModePerm); err != nil {
+			cobra.CheckErr(err)
+		}
 		// if err != nil {
 		// 	cobra.CheckErr(err)
 		// }

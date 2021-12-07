@@ -24,8 +24,8 @@ type EncProperty struct {
 	Desc base.FieldDescription
 	Raw  []byte
 
-	// encoding meta data
-	encoding base.DataEncoding
+	// // encoding meta data
+	// encoding base.DataEncoding
 }
 
 // Decode returns the decoded value and CRDT type for the given property.

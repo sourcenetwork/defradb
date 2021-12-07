@@ -40,8 +40,7 @@ type MerkleLWWRegister struct {
 	*baseMerkleCRDT
 	// core.ReplicatedData
 
-	reg   corecrdt.LWWRegister
-	clock core.MerkleClock
+	reg corecrdt.LWWRegister
 }
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT

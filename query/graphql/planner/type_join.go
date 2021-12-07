@@ -19,10 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-const (
-	indexJoinBatchSize = 100
-)
-
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
 // It constructs a new plan node, which queries the
@@ -282,7 +278,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	subDoc := make(map[string]interface{})
 	subDocField := n.subTypeName
 	doc[subDocField] = map[string]interface{}{}
 
@@ -297,19 +292,24 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)
 	n.subType.Init() // re-initalize the sub type plan
-	for {
-		// if we don't find any docs from our point span lookup
-		// or if we encounter an error just return the base doc,
-		// with an empty map for the subdoc
-		next, err := n.subType.Next()
-		if !next || err != nil {
-			return doc
-		}
+	// if we don't find any docs from our point span lookup
+	// or if we encounter an error just return the base doc,
+	// with an empty map for the subdoc
+	next, err := n.subType.Next()
 
-		subDoc = n.subType.Values()
-		doc[subDocField] = subDoc
-		break
+	// @todo pair up on the error handling / logging properly.
+	if err != nil {
+		fmt.Println("Internal primary value error : %w", err)
+		return doc
 	}
+
+	if !next {
+		return doc
+	}
+
+	subDoc := n.subType.Values()
+	doc[subDocField] = subDoc
+
 	return doc
 }
 
@@ -334,8 +334,6 @@ type typeJoinMany struct {
 	// the subtype plan to get the subtype docs
 	subType     planNode
 	subTypeName string
-
-	spans core.Spans
 }
 
 func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {

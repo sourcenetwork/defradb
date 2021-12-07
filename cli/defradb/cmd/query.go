@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	queryStr string
+// Commented because it is deadcode, for linter.
+// queryStr string
 )
 
 // queryCmd represents the query command

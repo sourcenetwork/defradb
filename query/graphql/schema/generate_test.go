@@ -585,7 +585,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 		objName := objDef.Name()
 		myObject, exists := g.manager.schema.TypeMap()[objDef.Name()]
 		if !exists {
-			return errors.New(fmt.Sprintf("%s type doesn't exist in the schema manager TypeMap", objName))
+			return fmt.Errorf("%s type doesn't exist in the schema manager TypeMap", objName)
 		}
 		if myObject.Error() != nil {
 			return fmt.Errorf("%s contains an internal error : %w", objName, myObject.Error())
@@ -941,13 +941,4 @@ func unwrapType(t gql.Type) gql.Type {
 	default:
 		return t
 	}
-}
-
-func isEqualTypes(t1, t2 gql.Type) bool {
-	// equal names
-	if t1.Name() != t2.Name() {
-		return false
-	}
-	// prob more things too :/
-	return true
 }

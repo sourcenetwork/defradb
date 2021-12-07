@@ -39,9 +39,7 @@ func init() {
 type MerkleCompositeDAG struct {
 	*baseMerkleCRDT
 	// core.ReplicatedData
-
-	reg   corecrdt.CompositeDAG
-	clock core.MerkleClock
+	reg corecrdt.CompositeDAG
 }
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT

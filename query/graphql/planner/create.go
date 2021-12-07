@@ -30,14 +30,11 @@ type createNode struct {
 
 	// cache information about the original data source
 	// collection name, meta-data, etc.
-	sourceInfo sourceInfo
 	collection client.Collection
 
 	// newDoc is the JSON string of the new document, unpares
 	newDocStr string
 	doc       *document.Document
-	// result is the target document as a map after creation
-	result map[string]interface{}
 
 	err error
 

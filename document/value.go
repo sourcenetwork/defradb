@@ -15,7 +15,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 // Value is an interface that points to a concrete Value implementation
@@ -50,7 +49,6 @@ type ReadableValue interface {
 type simpleValue struct {
 	t       core.CType
 	value   interface{}
-	crdt    crdt.MerkleCRDT
 	isDirty bool
 	delete  bool
 }

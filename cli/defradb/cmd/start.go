@@ -70,14 +70,10 @@ var startCmd = &cobra.Command{
 			db.Listen(config.Database.Address)
 		}()
 
-		// capture the interrupt signal, and gracefully exit
-		// @todo: Handle hard interuppt
-		select {
-		case <-signalCh:
-			log.Info("Recieved interrupt; closing db")
-			db.Close()
-			os.Exit(0)
-		}
+		<-signalCh
+		log.Info("Recieved interrupt; closing db")
+		db.Close()
+		os.Exit(0)
 	},
 }
 

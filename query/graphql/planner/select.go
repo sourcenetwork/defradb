@@ -78,13 +78,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *parser.Filter
 
-	// If the select query is using a FindByDocKey filter
-	docKey string
-
 	groupSelect *parser.Select
-
-	// @todo restructure renderNode -> render, which is its own
-	// object, and not a planNode.
 }
 
 func (n *selectNode) Init() error {
