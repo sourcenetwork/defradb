@@ -669,6 +669,7 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"dockey":  newArgConfig(gql.String),
+			"dockeys": newArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
 			"cid":     newArgConfig(gql.String),
 			"filter":  newArgConfig(config.filter),
 			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),

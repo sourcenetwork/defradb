@@ -159,7 +159,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	// assert.True(t, false)
 
 	// var _ []*document.EncodedDocument
-	encdoc, err := df.FetchNext()
+	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
 
@@ -217,11 +217,11 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	// assert.True(t, false)
 
 	// var _ []*document.EncodedDocument
-	encdoc, err := df.FetchNext()
+	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
 	// fmt.Println(encdoc)
-	encdoc, err = df.FetchNext()
+	encdoc, err = df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
 
@@ -259,7 +259,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	ddoc, err := df.FetchNextDecoded()
+	ddoc, err := df.FetchNextDecoded(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, ddoc)
 
@@ -312,7 +312,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	ddoc, err := df.FetchNextDecoded()
+	ddoc, err := df.FetchNextDecoded(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, ddoc)
 
@@ -325,7 +325,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	assert.Equal(t, "John", name)
 	assert.Equal(t, uint64(21), age)
 
-	ddoc, err = df.FetchNextDecoded()
+	ddoc, err = df.FetchNextDecoded(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, ddoc)
 
@@ -375,7 +375,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	err = df.Start(ctx, txn, spans)
 	assert.NoError(t, err)
 
-	ddoc, err := df.FetchNextDecoded()
+	ddoc, err := df.FetchNextDecoded(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, ddoc)
 

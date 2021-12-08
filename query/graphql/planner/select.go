@@ -155,10 +155,13 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		// @todo: When running the optimizer, check if the filter object
 		// contains a _key equality condition, and upgrade it to a point lookup
 		// instead of a prefix scan + filter via the Primary Index (0), like here:
-		if parsed.DocKey != "" {
-			dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
-				&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(parsed.DocKey))
-			spans := core.Spans{core.NewSpan(dockeyIndexKey, core.Key{})}
+		if parsed.DocKeys != nil {
+			spans := make(core.Spans, len(parsed.DocKeys))
+			for i, docKey := range parsed.DocKeys {
+				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
+					&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(docKey))
+				spans[i] = core.NewSpan(dockeyIndexKey, core.Key{})
+			}
 			origScan.Spans(spans)
 		}
 	}

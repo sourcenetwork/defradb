@@ -62,5 +62,5 @@ func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*docume
 	}
 
 	// return first matched decoded doc
-	return df.FetchNextDecoded()
+	return df.FetchNextDecoded(ctx)
 }
