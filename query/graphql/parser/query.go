@@ -87,8 +87,8 @@ type Select struct {
 	// Root is the top level query parsed type
 	Root SelectionType
 
-	DocKey string
-	CID    string
+	DocKeys []string
+	CID     string
 
 	Filter  *Filter
 	Limit   *Limit
@@ -303,7 +303,14 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			slct.Filter = filter
 		} else if prop == "dockey" { // parse single dockey query field
 			val := argument.Value.(*ast.StringValue)
-			slct.DocKey = val.Value
+			slct.DocKeys = []string{val.Value}
+		} else if prop == "dockeys" {
+			docKeyValues := argument.Value.(*ast.ListValue).Values
+			docKeys := make([]string, len(docKeyValues))
+			for i, value := range docKeyValues {
+				docKeys[i] = value.(*ast.StringValue).Value
+			}
+			slct.DocKeys = docKeys
 		} else if prop == "cid" { // parse single CID query field
 			val := argument.Value.(*ast.StringValue)
 			slct.CID = val.Value

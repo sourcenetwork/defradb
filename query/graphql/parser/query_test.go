@@ -60,7 +60,7 @@ func TestQueryParse_FindByDockey(t *testing.T) {
 	q, err := ParseQuery(doc)
 	assert.NoError(t, err)
 
-	dockey := q.Queries[0].Selections[0].(*Select).DocKey
+	dockey := q.Queries[0].Selections[0].(*Select).DocKeys[0]
 	assert.Equal(t, dockey, "test")
 }
 
