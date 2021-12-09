@@ -101,15 +101,13 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
 		start := base.MakeIndexPrefixKey(df.col, df.index)
 		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
-	} else if numspans > 1 {
+	} else {
 		uniqueSpans = spans.MergeAscending()
 		if df.reverse {
 			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
 				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
 			}
 		}
-	} else {
-		uniqueSpans = spans
 	}
 
 	df.indexKey = nil
