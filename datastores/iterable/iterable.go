@@ -36,6 +36,6 @@ type Iterable interface {
 
 type Iterator interface {
 	// Iterates across the given prefix
-	IteratePrefix(ctx context.Context, prefix ds.Key) (dsq.Results, error)
+	IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error)
 	Close() error
 }
