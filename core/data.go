@@ -194,31 +194,26 @@ func (spans Spans) MergeAscending() Spans {
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
-				break
 			case StartBeforeEndEqualToStart, StartBeforeEndWithin, StartBeforeEndEqual:
 				uniqueSpans[i] = NewSpan(span.Start(), uniqueSpan.End())
 				uniqueSpanFound = true
 				i++
-				break
 			case StartBeforeEndAfter:
 				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
 				uniqueSpans[i] = NewSpan(span.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
-				break
 			case StartEqualEndWithin, Equal, StartWithinEndWithin, StartWithinEndEqual:
 				uniqueSpanFound = true
 				// Do nothing, span is contained within an existing unique-span
 				i = len(uniqueSpans)
-				break
 			case StartEqualEndAfter, StartWithinEndAfter, StartEqualToEndEndAfter:
 				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
 				uniqueSpans[i] = NewSpan(uniqueSpan.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
 				i = len(uniqueSpans)
-				break
 			case After:
 				i++
 			}
