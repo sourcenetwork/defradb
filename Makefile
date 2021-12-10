@@ -22,6 +22,7 @@ start: build
 
 .PHONY: deps
 deps:
+	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
 
 .PHONY: clean
