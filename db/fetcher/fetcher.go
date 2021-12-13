@@ -44,7 +44,7 @@ type DocumentFetcher struct {
 	txn          core.Txn
 	spans        core.Spans
 	order        []dsq.Order
-	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
+	uniqueSpans  map[core.Span]struct{} // nolint:structcheck
 	curSpanIndex int
 
 	schemaFields map[uint32]base.FieldDescription

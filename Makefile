@@ -27,7 +27,6 @@ deps\:circle-ci:
 
 .PHONY: deps
 deps: deps\:circle-ci
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
 
 .PHONY: clean
 clean:
