@@ -12,7 +12,8 @@ package planner
 var (
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*headsetScanNode)(nil)
-	_ planNode = (*limitNode)(nil)
+	_ planNode = (*hardLimitNode)(nil)
+	_ planNode = (*renderLimitNode)(nil)
 	_ planNode = (*groupNode)(nil)
 	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*selectNode)(nil)
@@ -22,6 +23,7 @@ var (
 	_ planNode = (*typeIndexJoin)(nil)
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*typeJoinMany)(nil)
+	_ planNode = (*countNode)(nil)
 )
 
 // type joinNode struct {

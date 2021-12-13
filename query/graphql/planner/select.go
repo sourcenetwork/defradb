@@ -23,11 +23,12 @@ import (
 // expansion
 // Executes the top level plan node.
 type selectTopNode struct {
-	source planNode
-	group  *groupNode
-	sort   *sortNode
-	limit  *limitNode
-	render *renderNode
+	source     planNode
+	group      *groupNode
+	sort       *sortNode
+	limit      planNode
+	countPlans []*countNode
+	render     *renderNode
 
 	// top of the plan graph
 	plan planNode
@@ -218,6 +219,46 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 		}
 	}
 
+	// Handle aggregates of child collection that are not rendered
+	for _, count := range parsed.Counts {
+		if count.Field == "" {
+			continue
+		}
+
+		hasChildProperty := false
+		for _, field := range parsed.Fields {
+			if count.Field == field.GetName() {
+				hasChildProperty = true
+				break
+			}
+		}
+
+		// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
+		if !hasChildProperty {
+			if count.Field == parser.GroupFieldName {
+				// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
+				n.groupSelect = &parser.Select{
+					Name: parser.GroupFieldName,
+				}
+			} else { // todo: it seems likely that this will break for arrays defined directly on the object (add test!)
+				subtype := &parser.Select{
+					Name: count.Field,
+				}
+				// todo: refactor with where you copied this from - the two should not be allowed to differ (and consider also doing the same for the
+				// `n.groupSelect = ...` one liners)
+				typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
+				if err != nil {
+					return err
+				}
+
+				// n.source = typeIndexJoin
+				if err := n.addSubPlan(count.Field, typeIndexJoin); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -280,7 +321,7 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		return nil, err
 	}
 
-	limitPlan, err := p.Limit(limit)
+	limitPlan, err := p.HardLimit(limit)
 	if err != nil {
 		return nil, err
 	}
@@ -290,12 +331,22 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		return nil, err
 	}
 
+	countPlans := []*countNode{}
+	for _, countItem := range parsed.Counts {
+		countNode, err := p.Count(&countItem, countItem.Name)
+		if err != nil {
+			return nil, err
+		}
+		countPlans = append(countPlans, countNode)
+	}
+
 	top := &selectTopNode{
-		source: s,
-		render: p.render(parsed),
-		limit:  limitPlan,
-		sort:   sortPlan,
-		group:  groupPlan,
+		source:     s,
+		render:     p.render(parsed),
+		limit:      limitPlan,
+		sort:       sortPlan,
+		group:      groupPlan,
+		countPlans: countPlans,
 	}
 	return top, nil
 }
@@ -318,7 +369,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 		return nil, err
 	}
 
-	limitPlan, err := p.Limit(limit)
+	limitPlan, err := p.HardLimit(limit)
 	if err != nil {
 		return nil, err
 	}
@@ -328,12 +379,22 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 		return nil, err
 	}
 
+	countPlans := []*countNode{}
+	for _, countItem := range parsed.Counts {
+		countNode, err := p.Count(&countItem, countItem.Name)
+		if err != nil {
+			return nil, err
+		}
+		countPlans = append(countPlans, countNode)
+	}
+
 	top := &selectTopNode{
-		source: s,
-		render: p.render(parsed),
-		limit:  limitPlan,
-		sort:   sortPlan,
-		group:  groupPlan,
+		source:     s,
+		render:     p.render(parsed),
+		limit:      limitPlan,
+		sort:       sortPlan,
+		group:      groupPlan,
+		countPlans: countPlans,
 	}
 	return top, nil
 }
