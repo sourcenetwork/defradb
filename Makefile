@@ -20,10 +20,14 @@ multi-build:
 start: build
 	./build/defradb start
 
-.PHONY: deps
-deps:
+.PHONY: deps\:circle-ci
+deps\:circle-ci:
 	go mod download
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
+
+.PHONY: deps
+deps: deps\:circle-ci
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
 
 .PHONY: clean
 clean:
