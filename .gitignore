@@ -1,3 +1,4 @@
 cli/defradb/defradb
 cli/defradb/defradb.exe
 build/defradb*
+cover.out
