@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
-package tests_test
+package tests
 
 import (
 	"context"
@@ -17,20 +17,37 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
+	"github.com/stretchr/testify/assert"
+
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
-	"github.com/stretchr/testify/assert"
+)
+
+const (
+	storageEnvName      = "DEFRA_BENCH_STORAGE"
+	memoryBadgerEnvName = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName   = "DEFRA_BADGER_FILE"
+	memoryMapEnvName    = "DEFRA_MAP"
+)
+
+var (
+	storage        string = "memory"
+	badgerInMemory bool
+	badgerFile     bool
+	mapStore       bool
 )
 
 type QueryTestCase struct {
 	Description string
 	Query       string
+
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
 	Docs map[int][]string
+
 	// updates is a map from document index, to a list
 	// of changes in strinigied JSON format
 	Updates map[int][]string
@@ -44,15 +61,11 @@ type databaseInfo struct {
 	db   *db.DB
 }
 
-var badgerInMemory bool
-var badgerFile bool
-var mapStore bool
-
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
-	_, badgerInMemory = os.LookupEnv("DEFRA_BADGER_MEMORY")
-	_, badgerFile = os.LookupEnv("DEFRA_BADGER_FILE")
-	_, mapStore = os.LookupEnv("DEFRA_MAP")
+	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
+	_, badgerFile = os.LookupEnv(fileBadgerEnvName)
+	_, mapStore = os.LookupEnv(memoryMapEnvName)
 
 	// default is to run against all
 	if !badgerInMemory && !badgerFile && !mapStore {
@@ -61,6 +74,32 @@ func init() {
 		badgerFile = false
 		mapStore = true
 	}
+
+	// assign if not empty
+	if s := os.Getenv(storageEnvName); s != "" {
+		storage = s
+	}
+}
+
+func NewTestDB(t *testing.T) (*db.DB, error) {
+	var dbInfo databaseInfo
+	var err error
+
+	switch storage {
+	case "memory":
+		dbInfo, err = newBadgerMemoryDB()
+	case "badger":
+		dbInfo, err = newBadgerFileDB(t)
+	case "memorymap":
+		dbInfo, err = newMapDB()
+	default:
+		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create storage backend: %w", err)
+	}
+	return dbInfo.db, err
 }
 
 func newBadgerMemoryDB() (databaseInfo, error) {
@@ -142,6 +181,10 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	return databases, nil
+}
+
+func newMemoryMapDB() (*db.DB, error) {
+	return nil, nil
 }
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {

@@ -8,6 +8,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
 	defradb "github.com/sourcenetwork/defradb/db"
+	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 )
@@ -106,11 +107,11 @@ func setupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 func runCollectionBenchGet(b *testing.B, fixture fixtures.Context, docCount, opCount int) error {
 	b.StopTimer()
 
-	db, err := newDB()
+	db, err := testutils.NewTestDB()
 	if err != nil {
 		return err
 	}
-	defer cleanupDB(db)
+	defer db.Close()
 
 	ctx := context.Background()
 

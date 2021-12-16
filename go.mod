@@ -1,11 +1,12 @@
 module github.com/sourcenetwork/defradb
 
-go 1.12
+go 1.17
 
 require (
 	github.com/SierraSoftworks/connor v1.0.2
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/chuongtrh/godepviz v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fxamacker/cbor/v2 v2.2.0
