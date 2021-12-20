@@ -11,14 +11,28 @@ message PushDocGraphRequest {}
 
 message PushDocGraphReply {}
 
-// Service is the peer-to-peer network API for thread orchestration.
+message GetLogRequest {}
+
+message GetLogReply {}
+
+message PushLogRequest {}
+
+message GetHeadLogRequest {}
+
+message PushLogReply {}
+
+message GetHeadLogReply {}
+
+// Service is the peer-to-peer network API for document sync
 service Service {
-    // GetLogs from a peer.
+    // GetDocGraph from this peer.
     rpc GetDocGraph(GetDocGraphRequest) returns (GetDocGraphReply) {}
-    // PushLog to a peer.
+    // PushDocGraph to this peer.
     rpc PushDocGraph(PushDocGraphRequest) returns (PushDocGraphReply) {}
-    // // GetRecords from a peer.
-    // rpc GetRecords(GetRecordsRequest) returns (GetRecordsReply) {}
-    // // PushRecord to a peer.
-    // rpc PushRecord(PushRecordRequest) returns (PushRecordReply) {}
+    // GetLog from this peer.
+    rpc GetLog(GetLogRequest) returns (GetLogReply) {}
+    // PushLog to this peer.
+    rpc PushLog(PushLogRequest) returns (PushLogReply) {}
+    // GetHeadLog from this peer
+    rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
 }
