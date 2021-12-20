@@ -6,7 +6,7 @@ import (
 	gonet "net"
 	"time"
 
-	"github.com/libp2p/go-libp2p-core/peer"
+	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,7 +23,7 @@ var (
 )
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
-func (s *server) dial(peerID peer.ID) (pb.ServiceClient, error) {
+func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 	s.Lock()
 	defer s.Unlock()
 	conn, ok := s.conns[peerID]
@@ -49,7 +49,7 @@ func (s *server) dial(peerID peer.ID) (pb.ServiceClient, error) {
 // getLibp2pDialer returns a WithContextDialer option for libp2p dialing.
 func (s *server) getLibp2pDialer() grpc.DialOption {
 	return grpc.WithContextDialer(func(ctx context.Context, peerIDStr string) (gonet.Conn, error) {
-		id, err := peer.Decode(peerIDStr)
+		id, err := libpeer.Decode(peerIDStr)
 		if err != nil {
 			return nil, fmt.Errorf("grpc tried to dial non peerID: %w", err)
 		}
