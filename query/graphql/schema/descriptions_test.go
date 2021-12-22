@@ -19,7 +19,7 @@ import (
 )
 
 var testDefaultIndex = []base.IndexDescription{
-	base.IndexDescription{
+	{
 		Name:    "primary",
 		ID:      uint32(0),
 		Primary: true,
@@ -39,7 +39,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "user",
 					Schema: base.SchemaDescription{
 						Name: "user",
@@ -86,7 +86,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "user",
 					Schema: base.SchemaDescription{
 						Name: "user",
@@ -115,7 +115,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
@@ -162,7 +162,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "book",
 					Schema: base.SchemaDescription{
 						Name: "book",
@@ -198,7 +198,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
@@ -252,7 +252,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "book",
 					Schema: base.SchemaDescription{
 						Name: "book",
@@ -288,7 +288,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
