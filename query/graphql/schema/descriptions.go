@@ -132,6 +132,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 						field.Type.Name(),
 						t.Name())
 				}
+				fd.RelationName = rel.name
 
 				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {

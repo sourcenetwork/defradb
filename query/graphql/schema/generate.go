@@ -299,7 +299,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						fields[fType.Name+"_id"] = &gql.Field{Type: gql.ID}
 
 						// register the relation
-						relName, err := genRelationName(objconf.Name, ttype.Name())
+						relName, err := getRelationshipName(field, objconf, ttype)
 						if err != nil {
 							return nil, err
 						}
@@ -307,7 +307,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					case *gql.List:
 						ltype := subobj.OfType
 						// register the relation
-						relName, err := genRelationName(objconf.Name, ltype.Name())
+						relName, err := getRelationshipName(field, objconf, ltype)
 						if err != nil {
 							return nil, err
 						}
@@ -350,6 +350,28 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 	}
 
 	return objs, nil
+}
+
+// Gets the name of the relationship. Will return the provided name if one is specified,
+// otherwise will generate one
+func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, targetName gql.Type) (string, error) {
+	// search for a user-defined name, and return it if found
+	for _, directive := range field.Directives {
+		if directive.Name.Value == "relation" {
+			for _, arguement := range directive.Arguments {
+				if arguement.Name.Value == "name" {
+					name, isString := arguement.Value.GetValue().(string)
+					if !isString {
+						return "", fmt.Errorf("Relationship name must be of type string, but was: %v", arguement.Value.GetKind())
+					}
+					return name, nil
+				}
+			}
+		}
+	}
+
+	// if no name is provided, generate one
+	return genRelationName(hostName.Name, targetName.Name())
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
