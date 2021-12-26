@@ -51,7 +51,7 @@ func (ctx Context) TypeName(index int) string {
 // GenerateFixtureDocs uses the faker fixture system to
 // randomly generate a new set of documents matching the defined
 // struct types within the context.
-func (ctx Context) GenerateFixtureDocs() ([]string, error) {
+func (ctx Context) GenerateDocs() ([]string, error) {
 	results := make([]string, len(ctx.types))
 	for i, t := range ctx.types {
 		val := reflect.New(reflect.TypeOf(t)).Interface()

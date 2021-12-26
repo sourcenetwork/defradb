@@ -12,7 +12,7 @@ var (
 
 type User struct {
 	Name     string `faker:"name"`
-	Age      int    `faker:""`
-	Points   float32
+	Age      int
+	Points   float32 `faker:"amount"`
 	Verified bool
 }
