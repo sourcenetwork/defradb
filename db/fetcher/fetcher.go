@@ -375,5 +375,8 @@ func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 }
 
 func (df *DocumentFetcher) Close() error {
+	if df.kvIter == nil {
+		return nil
+	}
 	return df.kvIter.Close()
 }
