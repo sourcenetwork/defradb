@@ -3,8 +3,11 @@ package collection
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"testing"
+
+	badger "github.com/dgraph-io/badger/v3"
 
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
@@ -12,6 +15,10 @@ import (
 	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+)
+
+const (
+	writeBatchGroup = 100
 )
 
 func setupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Context) ([]client.Collection, error) {
@@ -63,6 +70,7 @@ func runCollectionBenchGet(b *testing.B, fixture fixtures.Context, docCount, opC
 		return err
 	}
 
+	// fmt.Println("Finished backfill...")
 	numTypes := len(fixture.Types())
 
 	// run benchmark
@@ -135,11 +143,58 @@ func runCollectionBenchCreate(b *testing.B, fixture fixtures.Context, docCount, 
 
 	numTypes := len(fixture.Types())
 
+	// docs := make([][]string, opCount/numTypes)
+	// for j := 0; j < opCount/numTypes; j++ {
+	// 	docs[j], _ = fixture.GenerateDocs()
+	// }
+
 	// run benchmark
 	b.StartTimer()
 	if doSync {
 		return runCollectionBenchCreateSync(b, ctx, collections, fixture, docCount, opCount, numTypes)
 	}
+	return runCollectionBenchCreateAsync2(b, ctx, collections, fixture, docCount, opCount, numTypes)
+}
+
+func runCollectionBenchCreateMany(b *testing.B, fixture fixtures.Context, docCount, opCount int, doSync bool) error {
+	b.StopTimer()
+	ctx := context.Background()
+	db, collections, err := setupDBAndCollections(b, ctx, fixture)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = backfillBenchmarkDB(b, ctx, collections, fixture, docCount, opCount, doSync)
+	if err != nil {
+		return err
+	}
+
+	// numTypes := len(fixture.Types())
+	// @todo for CreateMany make sure numTypes == 1
+
+	// docs := make([][]string, opCount/numTypes)
+	// for j := 0; j < opCount/numTypes; j++ {
+	// 	docs[j], _ = fixture.GenerateDocs()
+	// }
+
+	// run benchmark
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		docs := make([]*document.Document, opCount)
+		for j := 0; j < opCount; j++ {
+			d, _ := fixture.GenerateDocs()
+			docs[j], _ = document.NewFromJSON([]byte(d[0]))
+			// for k := 0; k < numTypes; k++ {
+			// 	doc, _ := document.NewFromJSON([]byte(docs[k]))
+			// 	collections[k].Create(ctx, doc)
+			// }
+		}
+
+		collections[0].CreateMany(ctx, docs)
+	}
+
 	return nil
 }
 
@@ -170,38 +225,51 @@ func backfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 	dockeys := make([][]key.DocKey, docCount)
 
 	go func() {
-		for i := 0; i < docCount; i++ {
-			go func(index int) {
-				docs, err := fixture.GenerateDocs()
-				if err != nil {
-					errCh <- fmt.Errorf("Failed to generate document payload from fixtures: %w", err)
-					return
-				}
+		for bid := 0; float64(bid) < math.Ceil(float64(docCount)/writeBatchGroup); bid++ {
+			currentBatchSize := int(math.Min(float64((docCount - (bid * writeBatchGroup))), writeBatchGroup))
+			var batchWg sync.WaitGroup
+			batchWg.Add(currentBatchSize)
 
-				fmt.Println(docs)
-
-				// create the documents
-				keys := make([]key.DocKey, numTypes)
-				for j := 0; j < numTypes; j++ {
-
-					doc, err := document.NewFromJSON([]byte(docs[j]))
+			for i := 0; i < currentBatchSize; i++ {
+				go func(index int) {
+					docs, err := fixture.GenerateDocs()
 					if err != nil {
-						errCh <- fmt.Errorf("Failed to create document from fixture: %w", err)
+						errCh <- fmt.Errorf("Failed to generate document payload from fixtures: %w", err)
 						return
 					}
 
-					if err := cols[j].Create(ctx, doc); err != nil {
-						fmt.Println("Failed on", doc)
-						errCh <- fmt.Errorf("Failed to create document on collection: %w", err)
-						return
-					}
-					fmt.Println("created:", doc)
-					keys[j] = doc.Key()
-				}
-				dockeys[index] = keys
+					// fmt.Println(docs)
 
-				wg.Done()
-			}(i)
+					// create the documents
+					keys := make([]key.DocKey, numTypes)
+					for j := 0; j < numTypes; j++ {
+
+						doc, err := document.NewFromJSON([]byte(docs[j]))
+						if err != nil {
+							errCh <- fmt.Errorf("Failed to create document from fixture: %w", err)
+							return
+						}
+
+						for { // loop untill commited
+							if err := cols[j].Create(ctx, doc); err != nil && err.Error() == badger.ErrConflict.Error() {
+								fmt.Printf("failed to commit TX for doc %s, retrying...\n", doc.Key())
+								continue
+							} else if err != nil {
+								errCh <- fmt.Errorf("Failed to create document: %w", err)
+							}
+							keys[j] = doc.Key()
+							break
+						}
+					}
+					dockeys[index] = keys
+
+					wg.Done()
+					batchWg.Done()
+				}((bid * writeBatchGroup) + i)
+			}
+
+			batchWg.Wait()
+			// fmt.Printf(".")
 		}
 
 		// wait for our group and signal by closing waitCh
@@ -226,18 +294,104 @@ func runCollectionBenchCreateSync(b *testing.B,
 	docCount, opCount, numTypes int,
 ) error {
 
+	runs := opCount / numTypes
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < opCount/numTypes; j++ {
+		for j := 0; j < runs; j++ {
+			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
-				docs, _ := fixture.GenerateDocs()
-
-				// create the documents
-				for h := 0; h < numTypes; h++ {
-					doc, _ := document.NewFromJSON([]byte(docs[h]))
-					collections[k].Create(ctx, doc)
-				}
+				doc, _ := document.NewFromJSON([]byte(docs[k]))
+				collections[k].Create(ctx, doc)
 			}
 		}
+	}
+
+	return nil
+}
+
+// workers
+func runCollectionBenchCreateAsync1(b *testing.B,
+	ctx context.Context,
+	collections []client.Collection,
+	fixture fixtures.Context,
+	docCount, opCount, numTypes int,
+) error {
+	// fmt.Println("----------------------------------------------------------")
+	// init the workers
+	b.StopTimer()
+	closeCh := make(chan struct{})
+	workerCh := make(chan struct{}, writeBatchGroup)
+	var wg sync.WaitGroup
+	for i := 0; i < writeBatchGroup; i++ {
+		go func() {
+			for {
+				select {
+				case <-workerCh:
+					docs, _ := fixture.GenerateDocs()
+					for k := 0; k < numTypes; k++ {
+						doc, _ := document.NewFromJSON([]byte(docs[k]))
+						collections[k].Create(ctx, doc)
+					}
+					wg.Done()
+				case <-closeCh:
+					return
+				}
+			}
+		}()
+	}
+
+	runs := opCount / numTypes
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		wg.Add(runs)
+		for j := 0; j < runs; j++ {
+			workerCh <- struct{}{} // send job notification
+		}
+		wg.Wait()
+	}
+
+	close(closeCh)
+	return nil
+}
+
+// batching
+func runCollectionBenchCreateAsync2(b *testing.B,
+	ctx context.Context,
+	collections []client.Collection,
+	fixture fixtures.Context,
+	docCount, opCount, numTypes int,
+) error {
+
+	// load fixtures
+	for bi := 0; bi < b.N; bi++ {
+		var wg sync.WaitGroup
+		wg.Add(opCount)
+
+		for bid := 0; float64(bid) < math.Ceil(float64(opCount)/writeBatchGroup); bid++ {
+			currentBatchSize := int(math.Min(float64((opCount - (bid * writeBatchGroup))), writeBatchGroup))
+			var batchWg sync.WaitGroup
+			batchWg.Add(currentBatchSize)
+
+			for i := 0; i < currentBatchSize; i++ {
+				go func(index int) {
+					docs, _ := fixture.GenerateDocs()
+					// create the documents
+					for j := 0; j < numTypes; j++ {
+						doc, _ := document.NewFromJSON([]byte(docs[j]))
+						collections[j].Create(ctx, doc)
+					}
+
+					wg.Done()
+					batchWg.Done()
+				}((bid * writeBatchGroup) + i)
+			}
+
+			batchWg.Wait()
+			// fmt.Printf(".")
+		}
+
+		// finish or err
+		wg.Wait()
 	}
 
 	return nil
