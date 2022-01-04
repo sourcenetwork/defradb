@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.17.5]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
 
     name: lint
     runs-on: ${{ matrix.os }}
@@ -38,7 +38,7 @@ jobs:
           version: v1.43
 
           # Optional: working directory, useful for monorepos
-          # working-directory:
+          working-directory: ./
 
           # Optional: golangci-lint command line arguments.
           args: --issues-exit-code=0 --config .golangci.sourceinc.yaml
