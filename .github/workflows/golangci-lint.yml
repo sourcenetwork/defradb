@@ -1,0 +1,47 @@
+name: golangci-lint
+
+on:
+  pull_request:
+
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+      - develop
+      - lone/ci/github-workflow-linter-annotation
+
+permissions:
+  # Optional: allow read access to pull request. Use with `only-new-issues` option.
+  pull-requests: read
+  contents: read
+
+jobs:
+  golangci:
+    strategy:
+      matrix:
+        go-version: [1.17.5]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    name: lint
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+
+        with:
+          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+          version: v1.43
+
+          # Optional: working directory, useful for monorepos
+          working-directory: ./
+
+          # Optional: golangci-lint command line arguments.
+          args: --issues-exit-code=0 --config .golangci.sourceinc.yaml
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          only-new-issues: true
