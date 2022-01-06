@@ -417,6 +417,18 @@ func (doc *Document) ToMap() (map[string]interface{}, error) {
 	return doc.toMapWithKey()
 }
 
+func (doc *Document) Clean() {
+	for _, v := range doc.Fields() {
+		val, _ := doc.GetValueWithField(v)
+		if val.IsDirty() {
+			if val.IsDelete() {
+				doc.SetAs(v.Name(), nil, v.Type())
+			}
+			val.Clean()
+		}
+	}
+}
+
 // converts the document into a map[string]interface{}
 // including any sub documents
 func (doc *Document) toMap() (map[string]interface{}, error) {
