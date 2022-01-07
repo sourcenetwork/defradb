@@ -205,15 +205,7 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 				if subtype.Name == parser.GroupFieldName {
 					n.groupSelect = subtype
 				} else {
-					typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
-					if err != nil {
-						return err
-					}
-
-					// n.source = typeIndexJoin
-					if err := n.addSubPlan(field.GetName(), typeIndexJoin); err != nil {
-						return err
-					}
+					n.addTypeIndexJoin(subtype)
 				}
 			}
 		}
@@ -240,23 +232,26 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 				n.groupSelect = &parser.Select{
 					Name: parser.GroupFieldName,
 				}
-			} else { // todo: it seems likely that this will break for arrays defined directly on the object (add test!)
+			} else if parsed.Root != parser.CommitSelection {
 				subtype := &parser.Select{
 					Name: count.Field,
 				}
-				// todo: refactor with where you copied this from - the two should not be allowed to differ (and consider also doing the same for the
-				// `n.groupSelect = ...` one liners)
-				typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subtype)
-				if err != nil {
-					return err
-				}
-
-				// n.source = typeIndexJoin
-				if err := n.addSubPlan(count.Field, typeIndexJoin); err != nil {
-					return err
-				}
+				n.addTypeIndexJoin(subtype)
 			}
 		}
+	}
+
+	return nil
+}
+
+func (n *selectNode) addTypeIndexJoin(subSelect *parser.Select) error {
+	typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subSelect)
+	if err != nil {
+		return err
+	}
+
+	if err := n.addSubPlan(subSelect.Name, typeIndexJoin); err != nil {
+		return err
 	}
 
 	return nil
