@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
+	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
@@ -57,8 +57,13 @@ type QueryTestCase struct {
 }
 
 type databaseInfo struct {
-	name string
-	db   *db.DB
+	name      string
+	db        *db.DB
+	rootstore ds.Batching
+}
+
+type TempDirMaker interface {
+	TempDir() string
 }
 
 func init() {
@@ -81,7 +86,17 @@ func init() {
 	}
 }
 
-func NewTestDB(t *testing.T) (*db.DB, error) {
+func NewTestDB(t TempDirMaker) (*db.DB, error) {
+	dbInfo, err := newBenchStoreInfo(t)
+	return dbInfo.db, err
+}
+
+func NewTestStorage(t TempDirMaker) (ds.Batching, error) {
+	dbInfo, err := newBenchStoreInfo(t)
+	return dbInfo.rootstore, err
+}
+
+func newBenchStoreInfo(t TempDirMaker) (databaseInfo, error) {
 	var dbInfo databaseInfo
 	var err error
 
@@ -93,13 +108,13 @@ func NewTestDB(t *testing.T) (*db.DB, error) {
 	case "memorymap":
 		dbInfo, err = newMapDB()
 	default:
-		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
+		return databaseInfo{}, fmt.Errorf("invalid storage engine backend: %s", storage)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create storage backend: %w", err)
+		return databaseInfo{}, fmt.Errorf("Failed to create storage backend: %w", err)
 	}
-	return dbInfo.db, err
+	return dbInfo, err
 }
 
 func newBadgerMemoryDB() (databaseInfo, error) {
@@ -115,8 +130,9 @@ func newBadgerMemoryDB() (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "badger-in-memory",
-		db:   db,
+		name:      "badger-in-memory",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
@@ -128,12 +144,13 @@ func newMapDB() (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "ipfs-map-datastore",
-		db:   db,
+		name:      "ipfs-map-datastore",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
-func newBadgerFileDB(t *testing.T) (databaseInfo, error) {
+func newBadgerFileDB(t TempDirMaker) (databaseInfo, error) {
 	path := t.TempDir()
 
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
@@ -148,8 +165,9 @@ func newBadgerFileDB(t *testing.T) (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "badger-file-system",
-		db:   db,
+		name:      "badger-file-system",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
@@ -181,10 +199,6 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	return databases, nil
-}
-
-func newMemoryMapDB() (*db.DB, error) {
-	return nil, nil
 }
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
