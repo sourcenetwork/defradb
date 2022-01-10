@@ -118,11 +118,12 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 			fd.Typ = defaultCRDTForFieldKind[fd.Kind]
 
 			if fd.IsObject() {
-				fd.Schema = field.Type.Name()
+				schemaName := field.Type.Name()
+				fd.Schema = schemaName
 
 				// check if its a one-to-one, one-to-many, many-to-many
 				rel := g.manager.Relations.GetRelationByDescription(
-					fname, field.Type.Name(), t.Name())
+					fname, schemaName, t.Name())
 				if rel == nil {
 					return nil, errors.New("Field missing associated relation")
 				}
