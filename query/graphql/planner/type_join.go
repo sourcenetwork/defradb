@@ -151,7 +151,6 @@ type typeJoinOne struct {
 	root    planNode
 	subType planNode
 
-	rootName         string
 	subTypeName      string
 	subTypeFieldName string
 
@@ -195,7 +194,6 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 
 	typeJoin.subTypeName = subTypeFieldDesc.Name
 	typeJoin.subTypeFieldName = subtypefieldname
-	typeJoin.rootName = desc.Name // @todo: Correctly handle getting sub/root names
 
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
