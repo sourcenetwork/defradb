@@ -128,7 +128,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 					return nil, errors.New("Field missing associated relation")
 				}
 
-				_, fieldRelationType, ok := rel.GetField(fname)
+				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {
 					return nil, errors.New("Relation is missing field")
 				}
