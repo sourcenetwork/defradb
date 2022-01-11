@@ -227,6 +227,10 @@ func (r *Relation) finalize() error {
 	return nil
 }
 
+func (r Relation) GetFields() []string {
+	return r.fields
+}
+
 // Type returns what kind of relation it is
 func (r Relation) Kind() uint8 {
 	return r.relType
