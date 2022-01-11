@@ -11,6 +11,7 @@ package schema
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -125,8 +126,13 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 				rel := g.manager.Relations.GetRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
-					return nil, errors.New("Field missing associated relation")
+					return nil, fmt.Errorf(
+						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
+						fname,
+						field.Type.Name(),
+						t.Name())
 				}
+				fd.RelationName = rel.name
 
 				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {

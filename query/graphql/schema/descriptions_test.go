@@ -19,7 +19,7 @@ import (
 )
 
 var testDefaultIndex = []base.IndexDescription{
-	base.IndexDescription{
+	{
 		Name:    "primary",
 		ID:      uint32(0),
 		Primary: true,
@@ -39,7 +39,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "user",
 					Schema: base.SchemaDescription{
 						Name: "user",
@@ -86,7 +86,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "user",
 					Schema: base.SchemaDescription{
 						Name: "user",
@@ -115,7 +115,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
@@ -162,7 +162,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "book",
 					Schema: base.SchemaDescription{
 						Name: "book",
@@ -173,11 +173,12 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  core.NONE_CRDT,
 							},
 							{
-								Name:   "author",
-								Kind:   base.FieldKind_FOREIGN_OBJECT,
-								Typ:    core.NONE_CRDT,
-								Schema: "author",
-								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE,
+								Name:         "author",
+								RelationName: "author_book",
+								Kind:         base.FieldKind_FOREIGN_OBJECT,
+								Typ:          core.NONE_CRDT,
+								Schema:       "author",
+								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEONE,
 							},
 							{
 								Name: "author_id",
@@ -198,7 +199,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
@@ -219,11 +220,12 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  core.LWW_REGISTER,
 							},
 							{
-								Name:   "published",
-								Kind:   base.FieldKind_FOREIGN_OBJECT,
-								Typ:    core.NONE_CRDT,
-								Schema: "book",
-								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEONE | base.Meta_Relation_Primary,
+								Name:         "published",
+								RelationName: "author_book",
+								Kind:         base.FieldKind_FOREIGN_OBJECT,
+								Typ:          core.NONE_CRDT,
+								Schema:       "book",
+								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEONE | base.Meta_Relation_Primary,
 							},
 							{
 								Name: "published_id",
@@ -252,7 +254,7 @@ func TestSingleSimpleType(t *testing.T) {
 			}
 			`,
 			targetDescs: []base.CollectionDescription{
-				base.CollectionDescription{
+				{
 					Name: "book",
 					Schema: base.SchemaDescription{
 						Name: "book",
@@ -263,11 +265,12 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  core.NONE_CRDT,
 							},
 							{
-								Name:   "author",
-								Kind:   base.FieldKind_FOREIGN_OBJECT,
-								Typ:    core.NONE_CRDT,
-								Schema: "author",
-								Meta:   base.Meta_Relation_ONE | base.Meta_Relation_ONEMANY | base.Meta_Relation_Primary,
+								Name:         "author",
+								RelationName: "author_book",
+								Kind:         base.FieldKind_FOREIGN_OBJECT,
+								Typ:          core.NONE_CRDT,
+								Schema:       "author",
+								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEMANY | base.Meta_Relation_Primary,
 							},
 							{
 								Name: "author_id",
@@ -288,7 +291,7 @@ func TestSingleSimpleType(t *testing.T) {
 					},
 					Indexes: testDefaultIndex,
 				},
-				base.CollectionDescription{
+				{
 					Name: "author",
 					Schema: base.SchemaDescription{
 						Name: "author",
@@ -309,11 +312,12 @@ func TestSingleSimpleType(t *testing.T) {
 								Typ:  core.LWW_REGISTER,
 							},
 							{
-								Name:   "published",
-								Kind:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
-								Typ:    core.NONE_CRDT,
-								Schema: "book",
-								Meta:   base.Meta_Relation_MANY | base.Meta_Relation_ONEMANY,
+								Name:         "published",
+								RelationName: "author_book",
+								Kind:         base.FieldKind_FOREIGN_OBJECT_ARRAY,
+								Typ:          core.NONE_CRDT,
+								Schema:       "book",
+								Meta:         base.Meta_Relation_MANY | base.Meta_Relation_ONEMANY,
 							},
 						},
 					},
