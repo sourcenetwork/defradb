@@ -44,4 +44,4 @@ jobs:
           args: --config .golangci.sourceinc.yaml
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
-          only-new-issues: true
+          only-new-issues: false
