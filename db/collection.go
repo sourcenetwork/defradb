@@ -652,8 +652,19 @@ func writeObjectMarker(ctx context.Context, store ds.Write, key ds.Key) error {
 	return store.Put(ctx, key, []byte{base.ObjectMarker})
 }
 
-// makeCollectionKey returns a formatted collection key for the system data store.
-// it assumes the name of the collection is non-empty.
-// func makeCollectionDataKey(collectionID uint32) ds.Key {
-// 	return collectionNs.ChildString(name)
-// }
+type patcher interface{}
+
+func getMapProp(doc map[string]interface{}, paths []string, length int) (string, interface{}, bool) {
+	val, ok := doc[paths[0]]
+	if !ok {
+		return "", nil, false
+	}
+	if length > 1 {
+		doc, ok := val.(map[string]interface{})
+		if !ok {
+			return "", nil, false
+		}
+		return getMapProp(doc, paths[1:], length-1)
+	}
+	return paths[0], val, true
+}

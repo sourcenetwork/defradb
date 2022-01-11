@@ -20,19 +20,31 @@ import (
 
 func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	res := &client.QueryResult{}
+
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {
 		return db.ExecIntrospection(query)
 	}
 
 	txn, err := db.NewTxn(ctx, false)
-	defer txn.Discard(ctx)
+
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
 
+	defer txn.Discard(ctx)
+
 	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
+
+	//println("\n DB - EXECQUERY-------------------------------------------------------")
+	//test := results
+	//ssTest, _ := json.MarshalIndent(test, "", "\t")
+	//fmt.Println(string(ssTest))
+	//println("=======================================================")
+	//fmt.Printf("%#v", test)
+	//println("\n-------------------------------------------------------")
+
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res

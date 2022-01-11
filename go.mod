@@ -7,6 +7,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fxamacker/cbor/v2 v2.2.0
+	github.com/gdexlab/go-render v1.0.1 // indirect
 	github.com/go-chi/chi v1.5.2
 	github.com/graphql-go/graphql v0.7.9
 	github.com/ipfs/go-block-format v0.0.3

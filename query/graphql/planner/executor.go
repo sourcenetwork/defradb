@@ -29,7 +29,7 @@ import (
 // execute and manage a query plan graph directly.
 // Instead of using one of the available functions
 // like ExecQuery(...).
-// Currently, this is used by the collection.Update
+// Currently, this is used by the collection.Update and collection.Delete.
 // system.
 type Query planNode
 
@@ -58,7 +58,11 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 // }
 
-func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
+func (e *QueryExecutor) MakeSelectQuery(
+	ctx context.Context,
+	db client.DB,
+	txn client.Txn,
+	selectStmt *parser.Select) (Query, error) {
 	if selectStmt == nil {
 		return nil, errors.New("Cannot create query without a selection")
 	}
@@ -66,14 +70,31 @@ func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn c
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+func (e *QueryExecutor) ExecQuery(
+	ctx context.Context,
+	db client.DB,
+	txn client.Txn,
+	query string,
+	args ...interface{}) ([]map[string]interface{}, error) {
 	q, err := e.parseQueryString(query)
+
 	if err != nil {
 		return nil, err
 	}
 
 	planner := makePlanner(ctx, db, txn)
-	return planner.queryDocs(q)
+
+	docs, err := planner.queryDocs(q)
+
+	// println("\n QueryExecutor:ExecQuery -> queryDocs-------------------------------------------------------")
+	// test := docs
+	// ssTest, _ := json.MarshalIndent(test, "", "\t")
+	// fmt.Println(string(ssTest))
+	// println("=======================================================")
+	// fmt.Printf("%#v", test)
+	// println("\n-------------------------------------------------------")
+
+	return docs, err
 }
 
 func (e *QueryExecutor) parseQueryString(query string) (*parser.Query, error) {

@@ -66,8 +66,18 @@ func (s *Server) dump(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) execGQL(w http.ResponseWriter, r *http.Request) {
+
 	ctx := context.Background()
 	query := r.URL.Query().Get("query")
+
+	// println("\n-------------------------------------------------------")
+	// test := query
+	// ssTest, _ := json.MarshalIndent(test, "", "\t")
+	// fmt.Println(string(ssTest))
+	// println("=======================================================")
+	// fmt.Printf("%+w", test)
+	// println("\n-------------------------------------------------------")
+
 	result := s.db.ExecQuery(ctx, query)
 	json.NewEncoder(w).Encode(result)
 }

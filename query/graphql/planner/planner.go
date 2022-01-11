@@ -138,6 +138,8 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 		return p.CreateDoc(stmt)
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
+	case parser.DeleteObjects:
+		return p.DeleteDocs(stmt)
 	default:
 		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
@@ -333,12 +335,23 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 }
 
 func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
+
 	plan, err := p.query(query)
+
+	//println("\n QueryDocs -> plan -------------------------------------------------------")
+	//test := plan
+	//ssTest, _ := json.MarshalIndent(test, "", "\t")
+	//fmt.Println(string(ssTest))
+	//println("=======================================================")
+	//fmt.Printf("%#v", test)
+	//println("\n-------------------------------------------------------")
+
 	if err != nil {
 		return nil, err
 	}
 
 	if err = plan.Start(); err != nil {
+
 		plan.Close()
 		return nil, err
 	}

@@ -10,6 +10,7 @@
 package planner
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -151,8 +152,19 @@ func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
 
 	// create the results Select node
 	slct := parsed.ToSelect()
+
 	slctNode, err := p.Select(slct)
+
+	println("\n UPDATE: -------------------------------------------------------")
+	test := slctNode
+	ssTest, _ := json.MarshalIndent(test, "", "\t")
+	fmt.Println(string(ssTest))
+	println("=======================================================")
+	fmt.Printf("%#v", test)
+	println("\n-------------------------------------------------------")
+
 	if err != nil {
+		println("\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 		return nil, err
 	}
 	update.results = slctNode

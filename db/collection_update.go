@@ -248,7 +248,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter, opts...)
+	query, err := c.makeSelectionUpdateQuery(ctx, txn, filter, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func (c *Collection) applyMergePatchOp( //nolint:unused
 // currently it doesn't support any other query operation other than filters.
 // (IE: No limit, order, etc)
 // Additionally it only queries for the root scalar fields of the object
-func (c *Collection) makeSelectionQuery(
+func (c *Collection) makeSelectionUpdateQuery(
 	ctx context.Context,
 	txn *Txn,
 	filter interface{},
@@ -506,7 +506,7 @@ func (c *Collection) makeSelectionQuery(
 	if filter == "" {
 		return nil, errors.New("Invalid filter")
 	}
-	slct, err := c.makeSelectLocal(f)
+	slct, err := c.makeSelectUpdateLocal(f)
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +514,22 @@ func (c *Collection) makeSelectionQuery(
 	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
 }
 
-func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
+// func getMapProp(doc map[string]interface{}, paths []string, length int) (string, interface{}, bool) {
+// 	val, ok := doc[paths[0]]
+// 	if !ok {
+// 		return "", nil, false
+// 	}
+// 	if length > 1 {
+// 		doc, ok := val.(map[string]interface{})
+// 		if !ok {
+// 			return "", nil, false
+// 		}
+// 		return getMapProp(doc, paths[1:], length-1)
+// 	}
+// 	return paths[0], val, true
+// }
+
+func (c *Collection) makeSelectUpdateLocal(filter *parser.Filter) (*parser.Select, error) {
 	slct := &parser.Select{
 		Name:   c.Name(),
 		Filter: filter,
@@ -569,27 +584,27 @@ func getValFromDocForPatchPath(doc map[string]interface{}, path string) (string,
 	return getMapProp(doc, pathParts, length)
 }
 
-func getMapProp(doc map[string]interface{}, paths []string, length int) (string, interface{}, bool) {
-	val, ok := doc[paths[0]]
-	if !ok {
-		return "", nil, false
-	}
-	if length > 1 {
-		doc, ok := val.(map[string]interface{})
-		if !ok {
-			return "", nil, false
-		}
-		return getMapProp(doc, paths[1:], length-1)
-	}
-	return paths[0], val, true
-}
+// func getMapProp(doc map[string]interface{}, paths []string, length int) (string, interface{}, bool) {
+// 	val, ok := doc[paths[0]]
+// 	if !ok {
+// 		return "", nil, false
+// 	}
+// 	if length > 1 {
+// 		doc, ok := val.(map[string]interface{})
+// 		if !ok {
+// 			return "", nil, false
+// 		}
+// 		return getMapProp(doc, paths[1:], length-1)
+// 	}
+// 	return paths[0], val, true
+// }
+//
+// type UpdateResult struct {
+// 	Count   int64
+// 	DocKeys []string
+// }
 
-type UpdateResult struct {
-	Count   int64
-	DocKeys []string
-}
-
-type patcher interface{}
+// type patcher interface{}
 
 func parseUpdater(updater interface{}) (patcher, error) {
 	switch v := updater.(type) {
