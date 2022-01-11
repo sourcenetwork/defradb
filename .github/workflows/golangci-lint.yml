@@ -1,0 +1,59 @@
+name: golangci-lint
+
+on:
+  pull_request:
+
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+      - develop
+
+permissions:
+  # Optional: allow read access to pull request. Need this if we use the `only-new-issues` option.
+  pull-requests: read
+  contents: read
+
+jobs:
+  golangci:
+    strategy:
+      matrix:
+        go-version: [1.17.5]
+        os: [ubuntu-latest]
+
+    name: lint
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+
+        with:
+          # Required: the version of golangci-lint is required.
+          # Note: The version should not pick the patch version as the latest patch
+          #  version is what will always be used.
+          version: v1.43
+
+          # Optional: working directory, useful for monorepos or if we wanted to run this
+          #  on a non-root directory.
+          # working-directory: ./
+
+          # Optional: golangci-lint command line arguments.
+          # Note: we can set `--issues-exit-code=0` if we want a successcode always,
+          #  indicating that the linter ran successfully (weather or not linter errors
+          #  exist or not doesn't matter). But the good think is that the annotations
+          #  will still show up. I think this can be useful if we don't want the pipeline
+          #  to stop just because we had some linter errors. 
+          args: --issues-exit-code=1 --config .golangci.sourceinc.yaml
+
+          # Optional: we can set the below to `true` if we only want to see newly introduced
+          #  linter errors, however I found that in practive that option is a bit gimmicky,
+          #  as it passes the linter check despite having new linter errors in some cases.
+          #  So we opt in for all annotations of linter errors to show up, this is actually
+          #  nicer because we suppress our linter errors manually anyways so there shouldn't
+          #  be any linter errors anyways. The enforces us to always have a clean lint state.
+          only-new-issues: false
