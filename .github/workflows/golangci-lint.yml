@@ -11,7 +11,7 @@ on:
       - develop
 
 permissions:
-  # Optional: allow read access to pull request. Use with `only-new-issues` option.
+  # Optional: allow read access to pull request. Need this if we use the `only-new-issues` option.
   pull-requests: read
   contents: read
 
@@ -41,8 +41,12 @@ jobs:
 
           # Optional: golangci-lint command line arguments.
           # args: --issues-exit-code=0 --config .golangci.sourceinc.yaml
-          args: --config .golangci.sourceinc.yaml
+          args: --issues-exit-code=0 --config .golangci.sourceinc.yaml
 
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # Optional: we can set the below to `true` if we only want to see newly introduced
+          #  linter errors, however I found that in practive that option is a bit gimmicky,
+          #  as it passes the linter check despite having new linter errors in some cases.
+          #  So we opt in for all annotations of linter errors to show up, this is actually
+          #  nicer because we suppress our linter errors manually anyways so there shouldn't
+          #  be any linter errors anyways. The enforces us to always have a clean lint state.
           only-new-issues: false
-
