@@ -118,27 +118,22 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 			fd.Typ = defaultCRDTForFieldKind[fd.Kind]
 
 			if fd.IsObject() {
-				fd.Schema = field.Type.Name()
+				schemaName := field.Type.Name()
+				fd.Schema = schemaName
 
 				// check if its a one-to-one, one-to-many, many-to-many
 				rel := g.manager.Relations.GetRelationByDescription(
-					fname, field.Type.Name(), t.Name())
+					fname, schemaName, t.Name())
 				if rel == nil {
 					return nil, errors.New("Field missing associated relation")
 				}
 
-				_, fieldRelationType, ok := rel.GetField(fname)
+				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {
 					return nil, errors.New("Relation is missing field")
 				}
 
 				fd.Meta = rel.Kind() | fieldRelationType
-				// if  {
-				// 	fd.Meta = fieldRelationType // Primary is embedded within fieldRelationType
-				// } else if base.IsSet(rel.Kind(), base.Meta_Relation_ONEMANY) {
-				// 	// are we the one side or the many side
-
-				// }
 			}
 
 			desc.Schema.Fields = append(desc.Schema.Fields, fd)
@@ -157,7 +152,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 
 		// add default index
 		desc.Indexes = []base.IndexDescription{
-			base.IndexDescription{
+			{
 				Name:    "primary",
 				ID:      uint32(0),
 				Primary: true,

@@ -281,9 +281,9 @@ func (r Relation) schemaTypeExists(t string) (int, bool) {
 	return -1, false
 }
 
-func (r Relation) GetField(field string) (string, uint8, bool) {
+func (r Relation) GetField(schemaType string, field string) (string, uint8, bool) {
 	for i, f := range r.fields {
-		if f == field {
+		if f == field && r.schemaTypes[i] == schemaType {
 			return f, r.types[i], true
 		}
 	}
