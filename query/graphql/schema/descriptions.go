@@ -25,6 +25,7 @@ var (
 	// directly. As it will yield incorrect and unexpected
 	// results
 
+	// nolint:deadcode,unused,varcheck
 	gqlTypeToFieldKindReference = map[gql.Type]base.FieldKind{
 		gql.ID:        base.FieldKind_DocKey,
 		gql.Boolean:   base.FieldKind_BOOL,
