@@ -315,12 +315,8 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 
 	// string, bool, and more
-	case string, bool:
+	case string, bool, []interface{}:
 		doc.setCBOR(core.LWW_REGISTER, field, val)
-
-	// array
-	case []interface{}:
-		break
 
 	// sub object, recurse down.
 	// @TODO: Object Definitions
