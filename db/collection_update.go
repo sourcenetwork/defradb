@@ -445,11 +445,9 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		sval, ok = val.(string)
 		cval, err = time.Parse(time.RFC3339, sval)
 	case base.FieldKind_INT:
-		fmt.Printf("encountered val type: %v\n", val)
 		var fval float64
 		fval, ok = val.(float64)
 		if !ok {
-			fmt.Println("error1")
 			return nil, ErrInvalidMergeValueType
 		}
 		cval = int64(fval)
@@ -459,7 +457,6 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	}
 
 	if !ok {
-		fmt.Println("error2")
 		return nil, ErrInvalidMergeValueType
 	}
 	if err != nil {
