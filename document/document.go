@@ -297,6 +297,10 @@ func (doc *Document) setObject(t core.CType, field string, val *Document) error 
 }
 
 func (doc *Document) setAndParseType(field string, value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
 	switch val := value.(type) {
 
 	// int (any number)
