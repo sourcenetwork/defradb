@@ -1,12 +1,12 @@
 name: aws-ec2-job
 
-on: pull_request
+on: [ push, pull_request ]
 
 jobs:
 
   start-runner:
     name: Start self-hosted EC2 runner
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
