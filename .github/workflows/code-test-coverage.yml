@@ -5,14 +5,29 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
         with:
           fetch-depth: 2
-      - uses: actions/setup-go@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
         with:
-          go-version: '1.14'
-      - name: Run coverage
-        run: go test -race -coverprofile=coverage.out -covermode=atomic
+          go-version: '1.17'
+
+      - name: Generate coverage report
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
       - name: Upload coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash)
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+          # path_to_write_report: ./coverage/codecov_report.txt
+          # directory: ./coverage/reports/
