@@ -60,6 +60,10 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
 						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -95,6 +99,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"myField": &gql.Field{
 							Name: "myField",
@@ -132,6 +140,10 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
 						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.NewList(gql.String),
@@ -167,6 +179,10 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"myField": &gql.Field{
 							Name: "myField",
@@ -204,6 +220,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
 						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.NewNonNull(gql.NewList(gql.String)),
@@ -239,6 +259,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"myField": &gql.Field{
 							Name: "myField",
@@ -280,6 +304,10 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"myField": &gql.Field{
 							Name: "myField",
@@ -341,6 +369,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
 						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -363,6 +395,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["OtherObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"otherField": &gql.Field{
 							Name: "otherField",
@@ -406,6 +442,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
 						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -432,6 +472,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["OtherObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"otherField": &gql.Field{
 							Name: "otherField",
@@ -465,6 +509,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 				"_group": &gql.Field{
 					Name: "_group",
 					Type: gql.NewList(g.manager.schema.TypeMap()["MyObject"]),
+				},
+				"_count": &gql.Field{
+					Name: "_count",
+					Type: gql.Int,
 				},
 				"myField": &gql.Field{
 					Name: "myField",
@@ -501,6 +549,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["OtherObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"otherField": &gql.Field{
 							Name: "otherField",
@@ -555,6 +607,10 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 						"_group": &gql.Field{
 							Name: "_group",
 							Type: gql.NewList(g.manager.schema.TypeMap()["OtherObject"]),
+						},
+						"_count": &gql.Field{
+							Name: "_count",
+							Type: gql.Int,
 						},
 						"otherField": &gql.Field{
 							Name: "otherField",
