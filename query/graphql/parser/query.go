@@ -11,6 +11,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -26,6 +27,8 @@ const (
 	VersionFieldName = "_version"
 	GroupFieldName   = "_group"
 	DocKeyFieldName  = "_key"
+	CountFieldName   = "_count"
+	HiddenFieldName  = "_hidden"
 )
 
 var dbAPIQueryNames = map[string]bool{
@@ -37,6 +40,8 @@ var dbAPIQueryNames = map[string]bool{
 var ReservedFields = map[string]bool{
 	VersionFieldName: true,
 	GroupFieldName:   true,
+	CountFieldName:   true,
+	HiddenFieldName:  true,
 	DocKeyFieldName:  true,
 }
 
@@ -73,7 +78,10 @@ type Selection interface {
 	GetRoot() SelectionType
 }
 
-// type
+type baseSelect interface {
+	Selection
+	AddCount(count Count)
+}
 
 // Select is a complex Field with strong typing
 // It used for sub types in a query. Includes
@@ -94,6 +102,7 @@ type Select struct {
 	Limit   *Limit
 	OrderBy *OrderBy
 	GroupBy *GroupBy
+	Counts  []Count
 
 	Fields []Selection
 
@@ -119,6 +128,10 @@ func (s Select) GetName() string {
 
 func (s Select) GetAlias() string {
 	return s.Alias
+}
+
+func (s *Select) AddCount(count Count) {
+	s.Counts = append(s.Counts, count)
 }
 
 // Field implements Selection
@@ -155,6 +168,11 @@ func (f Field) GetStatement() ast.Node {
 
 type GroupBy struct {
 	Fields []string
+}
+
+type Count struct {
+	Name  string
+	Field string
 }
 
 type SortDirection string
@@ -365,6 +383,15 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 	// parse field selections
 	var err error
 	slct.Fields, err = parseSelectFields(slct.Root, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parseCounts(slct)
+	if err != nil {
+		return nil, err
+	}
+
 	return slct, err
 }
 
@@ -416,4 +443,33 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	default:
 		return nil, errors.New("Unknown query")
 	}
+}
+
+// Parses requested _count(s), creating a virtual name (alias) if an alias is not provided to allow for multiple _count
+// fields.  Strongly consider refactoring this as more aggregates get added.
+func parseCounts(slct baseSelect) error {
+	for i, field := range slct.GetSelections() {
+		if field.GetName() == CountFieldName {
+			virtualName := fmt.Sprintf("count%v", i)
+			f := field.(*Field)
+			if f.Alias == "" {
+				f.Alias = f.Name
+			}
+			f.Name = virtualName
+			var fieldName string
+			fieldStatement, statementIsField := field.GetStatement().(*ast.Field)
+			if !statementIsField {
+				return fmt.Errorf("Unexpected error: could not cast field statement to field.")
+			}
+
+			if len(fieldStatement.Arguments) == 0 {
+				fieldName = ""
+			} else {
+				fieldName = fieldStatement.Arguments[0].Value.GetValue().(string)
+			}
+			slct.AddCount(Count{Name: virtualName, Field: fieldName})
+		}
+	}
+
+	return nil
 }

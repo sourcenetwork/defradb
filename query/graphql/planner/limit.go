@@ -14,9 +14,9 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
-// limit the results
+// Limit the results, yielding only what the limit/offset permits
 // @todo: Handle cursor
-type limitNode struct {
+type hardLimitNode struct {
 	p    *Planner
 	plan planNode
 
@@ -25,13 +25,13 @@ type limitNode struct {
 	rowIndex int64
 }
 
-// Limit creates a new limitNode initalized from
+// HardLimit creates a new hardLimitNode initalized from
 // the parser.Limit object.
-func (p *Planner) Limit(n *parser.Limit) (*limitNode, error) {
+func (p *Planner) HardLimit(n *parser.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
-	return &limitNode{
+	return &hardLimitNode{
 		p:        p,
 		limit:    n.Limit,
 		offset:   n.Offset,
@@ -39,17 +39,17 @@ func (p *Planner) Limit(n *parser.Limit) (*limitNode, error) {
 	}, nil
 }
 
-func (n *limitNode) Init() error {
+func (n *hardLimitNode) Init() error {
 	n.rowIndex = 0
 	return n.plan.Init()
 }
 
-func (n *limitNode) Start() error                   { return n.plan.Start() }
-func (n *limitNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *limitNode) Close() error                   { return n.plan.Close() }
-func (n *limitNode) Values() map[string]interface{} { return n.plan.Values() }
+func (n *hardLimitNode) Start() error                   { return n.plan.Start() }
+func (n *hardLimitNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
+func (n *hardLimitNode) Close() error                   { return n.plan.Close() }
+func (n *hardLimitNode) Values() map[string]interface{} { return n.plan.Values() }
 
-func (n *limitNode) Next() (bool, error) {
+func (n *hardLimitNode) Next() (bool, error) {
 	// check if we're passed the limit
 	if n.rowIndex-n.offset >= n.limit {
 		return false, nil
@@ -71,4 +71,59 @@ func (n *limitNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *limitNode) Source() planNode { return n.plan }
+func (n *hardLimitNode) Source() planNode { return n.plan }
+
+// limit the results, flagging any records outside the bounds of limit/offset with
+// with a 'hidden' flag blocking rendering.  Used if consumers of the results require
+// the full dataset.
+type renderLimitNode struct {
+	p    *Planner
+	plan planNode
+
+	limit    int64
+	offset   int64
+	rowIndex int64
+}
+
+// RenderLimit creates a new renderLimitNode initalized from
+// the parser.Limit object.
+func (p *Planner) RenderLimit(n *parser.Limit) (*renderLimitNode, error) {
+	if n == nil {
+		return nil, nil // nothing to do
+	}
+	return &renderLimitNode{
+		p:        p,
+		limit:    n.Limit,
+		offset:   n.Offset,
+		rowIndex: 0,
+	}, nil
+}
+
+func (n *renderLimitNode) Init() error {
+	n.rowIndex = 0
+	return n.plan.Init()
+}
+
+func (n *renderLimitNode) Start() error           { return n.plan.Start() }
+func (n *renderLimitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *renderLimitNode) Close() error           { return n.plan.Close() }
+func (n *renderLimitNode) Values() map[string]interface{} {
+	value := n.plan.Values()
+
+	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
+		value[parser.HiddenFieldName] = struct{}{}
+	}
+
+	return value
+}
+
+func (n *renderLimitNode) Next() (bool, error) {
+	if next, err := n.plan.Next(); !next {
+		return false, err
+	}
+
+	n.rowIndex++
+	return true, nil
+}
+
+func (n *renderLimitNode) Source() planNode { return n.plan }

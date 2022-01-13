@@ -158,36 +158,36 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 
 // plan optimization. Includes plan expansion and wiring
 func (p *Planner) optimizePlan(plan planNode) error {
-	err := p.expandPlan(plan)
+	err := p.expandPlan(plan, nil)
 	return err
 }
 
 // full plan graph expansion and optimization
-func (p *Planner) expandPlan(plan planNode) error {
+func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	switch n := plan.(type) {
 	case *selectTopNode:
-		return p.expandSelectTopNodePlan(n)
+		return p.expandSelectTopNodePlan(n, parentPlan)
 	case *commitSelectTopNode:
-		return p.expandPlan(n.plan)
+		return p.expandPlan(n.plan, parentPlan)
 	case *selectNode:
-		return p.expandPlan(n.source)
+		return p.expandPlan(n.source, parentPlan)
 	case *typeIndexJoin:
-		return p.expandTypeIndexJoinPlan(n)
+		return p.expandTypeIndexJoinPlan(n, parentPlan)
 	case *groupNode:
 		// We only care about expanding the child source here, it is assumed that the parent source
 		// is expanded elsewhere/already
-		return p.expandPlan(n.dataSource.childSource)
+		return p.expandPlan(n.dataSource.childSource, parentPlan)
 	case MultiNode:
-		return p.expandMultiNode(n)
+		return p.expandMultiNode(n, parentPlan)
 	case *updateNode:
-		return p.expandPlan(n.results)
+		return p.expandPlan(n.results, parentPlan)
 	default:
 		return nil
 	}
 }
 
-func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
-	if err := p.expandPlan(plan.source); err != nil {
+func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selectTopNode) error {
+	if err := p.expandPlan(plan.source, plan); err != nil {
 		return err
 	}
 
@@ -203,10 +203,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 		plan.plan = plan.group
 	}
 
-	// wire up the render plan
-	if plan.render != nil {
-		plan.render.plan = plan.plan
-		plan.plan = plan.render
+	// consider extracting this out to an `expandAggregatePlan` when adding more aggregates
+	for _, countPlan := range plan.countPlans {
+		countPlan.plan = plan.plan
+		plan.plan = countPlan
 	}
 
 	// if order
@@ -216,16 +216,21 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	}
 
 	if plan.limit != nil {
-		plan.limit.plan = plan.plan
-		plan.plan = plan.limit
+		p.expandLimitPlan(plan, parentPlan)
+	}
+
+	// wire up the render plan
+	if plan.render != nil {
+		plan.render.plan = plan.plan
+		plan.plan = plan.render
 	}
 
 	return nil
 }
 
-func (p *Planner) expandMultiNode(plan MultiNode) error {
+func (p *Planner) expandMultiNode(plan MultiNode, parentPlan *selectTopNode) error {
 	for _, child := range plan.Children() {
-		if err := p.expandPlan(child); err != nil {
+		if err := p.expandPlan(child, parentPlan); err != nil {
 			return err
 		}
 	}
@@ -237,12 +242,12 @@ func (p *Planner) expandMultiNode(plan MultiNode) error {
 // 	return p.expandPlan(plan.source)
 // }
 
-func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
+func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandPlan(node.subType)
+		return p.expandPlan(node.subType, parentPlan)
 	case *typeJoinMany:
-		return p.expandPlan(node.subType)
+		return p.expandPlan(node.subType, parentPlan)
 	}
 	return errors.New("Unknown type index join plan")
 }
@@ -279,7 +284,44 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		return err
 	}
 
-	return p.expandPlan(childSource)
+	return p.expandPlan(childSource, plan)
+}
+
+func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {
+	switch l := plan.limit.(type) {
+	case *hardLimitNode:
+		if l == nil {
+			return nil
+		}
+
+		// if this is a child node, and the parent select has an aggregate then we need to
+		// replace the hard limit with a render limit to allow the full set of child records
+		// to be aggregated
+		if parentPlan != nil && len(parentPlan.countPlans) > 0 {
+			renderLimit, err := p.RenderLimit(&parser.Limit{
+				Offset: l.offset,
+				Limit:  l.limit,
+			})
+			if err != nil {
+				return err
+			}
+			plan.limit = renderLimit
+
+			renderLimit.plan = plan.plan
+			plan.plan = plan.limit
+		} else {
+			l.plan = plan.plan
+			plan.plan = plan.limit
+		}
+	case *renderLimitNode:
+		if l == nil {
+			return nil
+		}
+
+		l.plan = plan.plan
+		plan.plan = plan.limit
+	}
+	return nil
 }
 
 // walkAndReplace walks through the provided plan, and searches for an instance
