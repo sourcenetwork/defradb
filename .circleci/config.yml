@@ -30,14 +30,14 @@ jobs:
           command: |
             mkdir -p /tmp/test-reports
             gotestsum --junitfile /tmp/test-reports/unit-tests.xml
-      - store_test_results:
-          path: /tmp/test-reports
       - run:
           name: Generate tests coverage report
           command: go test -race -coverprofile=coverage.out -covermode=atomic
       - run:
           name: Upload coverage report to Codecov
           command: bash <(curl -s https://codecov.io/bash)
+      - store_test_results:
+          path: /tmp/test-reports
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
