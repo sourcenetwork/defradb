@@ -1,9 +1,9 @@
 name: Code Test Coverage
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
-  build:
+  code-test-coverage:
     runs-on: ubuntu-latest
 
     steps:
