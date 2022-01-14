@@ -78,9 +78,24 @@ func buildRenderInfo(parsed parser.Selection) renderInfo {
 	return info
 }
 
-func (n *renderNode) Init() error            { return n.plan.Init() }
-func (n *renderNode) Start() error           { return n.plan.Start() }
-func (n *renderNode) Next() (bool, error)    { return n.plan.Next() }
+func (n *renderNode) Init() error  { return n.plan.Init() }
+func (n *renderNode) Start() error { return n.plan.Start() }
+func (n *renderNode) Next() (bool, error) {
+	hasNext, err := n.plan.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
+
+	doc := n.plan.Values()
+	if doc == nil {
+		return n.Next()
+	}
+
+	if _, isHidden := doc[parser.HiddenFieldName]; isHidden {
+		return n.Next()
+	}
+	return hasNext, err
+}
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *renderNode) Close() error           { return n.plan.Close() }
 func (n *renderNode) Source() planNode       { return n.plan }
@@ -109,6 +124,11 @@ func (r *renderInfo) render(src map[string]interface{}, destination map[string]i
 		// If the current property is itself a map, we should render any properties of the child
 		case map[string]interface{}:
 			inner := map[string]interface{}{}
+
+			if _, isHidden := v[parser.HiddenFieldName]; isHidden {
+				return
+			}
+
 			for _, child := range r.children {
 				child.render(v, inner)
 			}
@@ -117,6 +137,10 @@ func (r *renderInfo) render(src map[string]interface{}, destination map[string]i
 		case []map[string]interface{}:
 			subdocs := make([]map[string]interface{}, 0)
 			for _, subv := range v {
+				if _, isHidden := subv[parser.HiddenFieldName]; isHidden {
+					continue
+				}
+
 				inner := map[string]interface{}{}
 				for _, child := range r.children {
 					child.render(subv, inner)
