@@ -1,4 +1,6 @@
-<p align="center"> 
+[![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
+
+<p align="center">
 <img height="120px" src="docs/DefraDB_Full-v2-cropped.png">
 </p>
 
