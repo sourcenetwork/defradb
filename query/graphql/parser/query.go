@@ -28,6 +28,7 @@ const (
 	GroupFieldName   = "_group"
 	DocKeyFieldName  = "_key"
 	CountFieldName   = "_count"
+	SumFieldName     = "_sum"
 	HiddenFieldName  = "_hidden"
 )
 
@@ -41,8 +42,14 @@ var ReservedFields = map[string]bool{
 	VersionFieldName: true,
 	GroupFieldName:   true,
 	CountFieldName:   true,
+	SumFieldName:     true,
 	HiddenFieldName:  true,
 	DocKeyFieldName:  true,
+}
+
+var aggregates = map[string]struct{}{
+	CountFieldName: {},
+	SumFieldName:   {},
 }
 
 type Query struct {
@@ -78,11 +85,6 @@ type Selection interface {
 	GetRoot() SelectionType
 }
 
-type baseSelect interface {
-	Selection
-	AddCount(transformationDefinition PropertyTransformation)
-}
-
 // Select is a complex Field with strong typing
 // It used for sub types in a query. Includes
 // fields, and query arguments like filters,
@@ -102,7 +104,6 @@ type Select struct {
 	Limit   *Limit
 	OrderBy *OrderBy
 	GroupBy *GroupBy
-	Counts  []PropertyTransformation
 
 	Fields []Selection
 
@@ -128,10 +129,6 @@ func (s Select) GetName() string {
 
 func (s Select) GetAlias() string {
 	return s.Alias
-}
-
-func (s *Select) AddCount(transformationDefinition PropertyTransformation) {
-	s.Counts = append(s.Counts, transformationDefinition)
 }
 
 // Field implements Selection
@@ -168,14 +165,6 @@ func (f Field) GetStatement() ast.Node {
 
 type GroupBy struct {
 	Fields []string
-}
-
-// Contains mapping information between a source and destination properties
-type PropertyTransformation struct {
-	// Where the result of transformation should be written to
-	Destination string
-	// Where the data to be transformed should be read from
-	Source []string
 }
 
 type SortDirection string
@@ -390,11 +379,6 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 		return nil, err
 	}
 
-	err = parseAggregates(slct)
-	if err != nil {
-		return nil, err
-	}
-
 	return slct, err
 }
 
@@ -405,7 +389,10 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 		switch node := selection.(type) {
 		case *ast.Field:
 			if node.SelectionSet == nil { // regular field
-				f := parseField(root, node)
+				f, err := parseField(i, root, node)
+				if err != nil {
+					return nil, err
+				}
 				selections[i] = f
 			} else { // sub type with extra fields
 				subroot := root
@@ -427,16 +414,31 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(root SelectionType, field *ast.Field) *Field {
+func parseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
+	var name string
+	var alias string
+
+	if _, isAggregate := aggregates[field.Name.Value]; isAggregate {
+		name = fmt.Sprintf("_agg%v", i)
+		if field.Alias == nil {
+			alias = field.Name.Value
+		} else {
+			alias = field.Alias.Value
+		}
+	} else {
+		name = field.Name.Value
+		if field.Alias != nil {
+			alias = field.Alias.Value
+		}
+	}
+
 	f := &Field{
 		Root:      root,
-		Name:      field.Name.Value,
+		Name:      name,
 		Statement: field,
+		Alias:     alias,
 	}
-	if field.Alias != nil {
-		f.Alias = field.Alias.Value
-	}
-	return f
+	return f, nil
 }
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {
@@ -448,48 +450,29 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	}
 }
 
-// Parses requested aggregates, creating a virtual name (alias) if an alias is not provided to allow for multiple aggregate
-// fields.  Mutates any aggregate field properties on the select, and adds the result onto the given select object.
-func parseAggregates(slct baseSelect) error {
-	for i, field := range slct.GetSelections() {
-		switch field.GetName() {
-		case CountFieldName:
-			err, transformation := parseAggregate(i, field)
-			if err != nil {
-				return err
-			}
-			slct.AddCount(transformation)
-		}
-	}
-
-	return nil
-}
-
-// Parses the given aggregate field selector, mutating the given field and returning the resultant PropertyTransformation
-func parseAggregate(i int, field Selection) (error, PropertyTransformation) {
-	virtualName := fmt.Sprintf("_agg%v", i)
-	f := field.(*Field)
-	if f.Alias == "" {
-		f.Alias = f.Name
-	}
-	f.Name = virtualName
-
+// Returns the source of the aggregate as requested by the consumer
+func (field Field) GetAggregateSource() ([]string, error) {
 	var path []string
-	if len(f.Statement.Arguments) == 0 {
+
+	if len(field.Statement.Arguments) == 0 {
 		path = []string{}
 	} else {
-		switch arguementValue := f.Statement.Arguments[0].Value.GetValue().(type) {
+		switch arguementValue := field.Statement.Arguments[0].Value.GetValue().(type) {
 		case string:
 			path = []string{arguementValue}
 		case []*ast.ObjectField:
 			if len(arguementValue) == 0 {
-				//Note: Scalar arrays will hit this clause and should be handled appropriately (not adding now as not testable in a time-efficient manner)
-				return fmt.Errorf("Unexpected error: aggregate field contained no child field selector"), PropertyTransformation{}
+				return []string{}, fmt.Errorf("Unexpected error: aggregate field contained no child field selector")
 			}
-
-			path = []string{arguementValue[0].Name.Value, arguementValue[0].Value.GetValue().(string)}
+			innerPath := arguementValue[0].Value.GetValue()
+			if innerPathStringValue, isString := innerPath.(string); isString {
+				path = []string{arguementValue[0].Name.Value, innerPathStringValue}
+			} else {
+				// If the inner path is not a string, this must mean the field is an inline array in which case we only want the base path
+				path = []string{arguementValue[0].Name.Value}
+			}
 		}
 	}
 
-	return nil, PropertyTransformation{Destination: virtualName, Source: path}
+	return path, nil
 }

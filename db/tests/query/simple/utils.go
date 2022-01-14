@@ -19,6 +19,7 @@ var userCollectionGQLSchema = (`
 	type users {
 		Name: String
 		Age: Int
+		HeightM: Float
 		Verified: Boolean
 	}
 `)

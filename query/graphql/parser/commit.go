@@ -45,7 +45,6 @@ type CommitSelect struct {
 
 	Limit   *Limit
 	OrderBy *OrderBy
-	Counts  []PropertyTransformation
 
 	Fields []Selection
 
@@ -72,17 +71,12 @@ func (c CommitSelect) GetSelections() []Selection {
 	return c.Fields
 }
 
-func (s *CommitSelect) AddCount(transformationDefinition PropertyTransformation) {
-	s.Counts = append(s.Counts, transformationDefinition)
-}
-
 func (c CommitSelect) ToSelect() *Select {
 	return &Select{
 		Name:      c.Name,
 		Alias:     c.Alias,
 		Limit:     c.Limit,
 		OrderBy:   c.OrderBy,
-		Counts:    c.Counts,
 		Statement: c.Statement,
 		Fields:    c.Fields,
 		Root:      CommitSelection,
@@ -125,8 +119,6 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 
 	var err error
 	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
-
-	parseAggregates(commit)
 
 	return commit, err
 }

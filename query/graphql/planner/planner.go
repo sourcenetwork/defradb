@@ -224,10 +224,15 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	return nil
 }
 
+type aggregateNode interface {
+	planNode
+	SetPlan(plan planNode)
+}
+
 func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
-	for _, countPlan := range plan.countPlans {
-		countPlan.plan = plan.plan
-		plan.plan = countPlan
+	for _, aggregate := range plan.aggregates {
+		aggregate.SetPlan(plan.plan)
+		plan.plan = aggregate
 	}
 }
 
@@ -300,7 +305,7 @@ func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode
 		// if this is a child node, and the parent select has an aggregate then we need to
 		// replace the hard limit with a render limit to allow the full set of child records
 		// to be aggregated
-		if parentPlan != nil && len(parentPlan.countPlans) > 0 {
+		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
 			renderLimit, err := p.RenderLimit(&parser.Limit{
 				Offset: l.offset,
 				Limit:  l.limit,
