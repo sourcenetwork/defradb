@@ -382,12 +382,12 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 
 func (g *Generator) genAggregateFields() {
 	for _, t := range g.typeDefs {
-		countField := genCountFieldConfig(t)
+		countField := g.genCountFieldConfig(t)
 		t.AddFieldConfig(countField.Name, &countField)
 	}
 }
 
-func genCountFieldConfig(obj *gql.Object) gql.Field {
+func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 	inputCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "CountArg"),
 		Values: gql.EnumValueConfigMap{},
@@ -401,6 +401,7 @@ func genCountFieldConfig(obj *gql.Object) gql.Field {
 		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 	}
 	countType := gql.NewEnum(inputCfg)
+	g.manager.schema.AppendType(countType)
 
 	field := gql.Field{
 		Name: parser.CountFieldName,
