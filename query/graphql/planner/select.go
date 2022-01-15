@@ -10,6 +10,7 @@
 package planner
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	"github.com/ipfs/go-cid"
-	"github.com/pkg/errors"
 )
 
 /*
@@ -187,7 +187,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 		if parsed.QueryType == parser.VersionedScanQuery {
 			c, err := cid.Decode(parsed.CID)
 			if err != nil {
-				return nil, errors.Wrap(err, "Failed to propagate VersionFetcher span, invalid CID")
+				return nil, fmt.Errorf("Failed to propagate VersionFetcher span, invalid CID: %w", err)
 			}
 			spans := fetcher.NewVersionedSpan(core.NewKey(parsed.DocKeys[0]), c) // @todo check len
 			origScan.Spans(spans)

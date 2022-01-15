@@ -9,9 +9,10 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/go-chi/chi v1.5.2
+	github.com/gogo/protobuf v1.3.2
 	github.com/graphql-go/graphql v0.7.9
 	github.com/ipfs/go-block-format v0.0.3
-	github.com/ipfs/go-cid v0.0.7
+	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-datastore v0.5.0
 	github.com/ipfs/go-ipfs-blockstore v1.1.0
 	github.com/ipfs/go-ipfs-ds-help v1.1.0
@@ -20,16 +21,23 @@ require (
 	github.com/ipfs/go-log/v2 v2.3.0
 	github.com/ipfs/go-merkledag v0.5.0
 	github.com/jbenet/goprocess v0.1.4
+	github.com/kr/text v0.2.0 // indirect
+	github.com/libp2p/go-libp2p-core v0.11.0
+	github.com/libp2p/go-libp2p-gostream v0.3.1
+	github.com/libp2p/go-libp2p-pubsub v0.6.1
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multibase v0.0.3
-	github.com/multiformats/go-multihash v0.0.15
-	github.com/pkg/errors v0.9.1
+	github.com/multiformats/go-multihash v0.0.16
+	github.com/multiformats/go-varint v0.0.6
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
+	github.com/textileio/go-libp2p-pubsub-rpc v0.0.6
 	github.com/ugorji/go/codec v1.1.7
-	go.uber.org/zap v1.16.0
+	go.uber.org/zap v1.19.0
+	google.golang.org/grpc v1.40.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

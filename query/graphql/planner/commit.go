@@ -10,7 +10,7 @@
 package planner
 
 import (
-	"errors"
+	"fmt"
 	"math"
 
 	cid "github.com/ipfs/go-cid"
@@ -78,7 +78,7 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	case parser.AllCommits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
-		return nil, errors.New("Invalid CommitSelect type")
+		return nil, fmt.Errorf("Invalid CommitSelect type")
 	}
 	if err != nil {
 		return nil, err

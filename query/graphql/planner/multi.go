@@ -10,7 +10,7 @@
 package planner
 
 import (
-	"errors"
+	"fmt"
 
 	"log"
 
@@ -433,7 +433,7 @@ Select {
 // 		// get original scanNode
 // 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
 // 		if origScan == nil {
-// 			return errors.New("Failed to find original scan node in plan graph")
+// 			return fmt.Errorf("Failed to find original scan node in plan graph")
 // 		}
 // 		// create our new multiscanner
 // 		multiscan = &multiScanNode{scanNode: origScan}
@@ -484,14 +484,14 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			}
 			s.source = m
 		default:
-			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
+			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 
 	// source is a mergeNode, like a TypeJoin
 	case mergeNode:
 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
 		if origScan == nil {
-			return errors.New("Failed to find original scan node in plan graph")
+			return fmt.Errorf("Failed to find original scan node in plan graph")
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
@@ -564,7 +564,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 				children[0] = plan
 			}
 		default:
-			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
+			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 	}
 	return nil

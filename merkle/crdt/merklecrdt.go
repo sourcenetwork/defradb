@@ -57,6 +57,10 @@ type baseMerkleCRDT struct {
 	crdt  core.ReplicatedData
 }
 
+func (base *baseMerkleCRDT) Clock() core.MerkleClock {
+	return base.clock
+}
+
 func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta, id string) error {
 	return base.crdt.Merge(ctx, other, id)
 }

@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/status"
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	grpcpeer "google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -64,19 +64,29 @@ func newServer(p *peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 }
 
 // GetDocGraph recieves a get graph request
-func (s *server) GetDocGraph(ctx context.Context, req *pb.GetDocGraphRequest) (*pb.GetDocGraphReply, error)
+func (s *server) GetDocGraph(ctx context.Context, req *pb.GetDocGraphRequest) (*pb.GetDocGraphReply, error) {
+	return nil, nil
+}
 
 // PushDocGraph recieves a push graph request
-func (s *server) PushDocGraph(ctx context.Context, req *pb.PushDocGraphRequest) (*pb.PushDocGraphReply, error)
+func (s *server) PushDocGraph(ctx context.Context, req *pb.PushDocGraphRequest) (*pb.PushDocGraphReply, error) {
+	return nil, nil
+}
 
 // GetLog recieves a get log request
-func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogReply, error)
+func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogReply, error) {
+	return nil, nil
+}
 
 // PushLog recieves a push log request
-func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error)
+func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
+	return nil, nil
+}
 
 // GetHeadLog recieves a get head log request
-func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb.GetHeadLogReply, error)
+func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb.GetHeadLogReply, error) {
+	return nil, nil
+}
 
 // addPubSubTopic subscribes to a DocKey topic
 func (s *server) addPubSubTopic(dockey key.DocKey) error {
@@ -126,7 +136,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
-	if _, err := s.PushLog(ctx, req); status.Codes(err) == codes.NotFound {
+	if _, err := s.PushLog(ctx, req); status.Code(err) == codes.NotFound {
 		// log err
 	} else if err != nil {
 		return nil, fmt.Errorf("failed pushing log to doc %s: %w", topic, err)

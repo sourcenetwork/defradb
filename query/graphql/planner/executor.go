@@ -11,7 +11,6 @@ package planner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -45,7 +44,7 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 	// 	return nil, nil
 	// }
 	if manager == nil {
-		return nil, errors.New("SchemaManager cannot be nil")
+		return nil, fmt.Errorf("SchemaManager cannot be nil")
 	}
 
 	// g := schema.NewGenerator(sm)
@@ -60,7 +59,7 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
 	if selectStmt == nil {
-		return nil, errors.New("Cannot create query without a selection")
+		return nil, fmt.Errorf("Cannot create query without a selection")
 	}
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)
