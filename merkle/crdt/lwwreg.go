@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
@@ -26,9 +27,9 @@ import (
 )
 
 var (
-	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore) MerkleCRDTInitFn {
+	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, bs corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
+			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
 		}
 	})
 )

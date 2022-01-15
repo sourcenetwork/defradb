@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -55,6 +56,8 @@ var (
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
+
+	broadcaster corenet.Broadcaster
 }
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
@@ -73,22 +76,19 @@ func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 	return base.crdt.Value(ctx)
 }
 
-func (base *baseMerkleCRDT) Clock() core.MerkleClock {
-	return base.clock
+func (base *baseMerkleCRDT) ID() string {
+	return base.crdt.ID()
 }
-
-// func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
-// 	current := node.Cid()
-// 	err := base.Merge(delta, dshelp.CidToDsKey(current).String())
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
-// 	}
-
-// 	return base.clock.ProcessNode(ng, root, rootPrio, delta, node)
-// }
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, error) {
-	return base.clock.AddDAGNode(ctx, delta)
+	c, err := base.clock.AddDAGNode(ctx, delta)
+	if err != nil {
+		return cid.Undef, err
+	}
 	// and broadcast
+	if base.broadcaster != nil {
+		go base.broadcaster.Broadcast([]byte(base.crdt.ID()), c.Bytes())
+	}
+	return c, nil
 }

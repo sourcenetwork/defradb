@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
@@ -28,6 +29,7 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
+	format "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -68,6 +70,9 @@ type DB struct {
 	dagKeyTransform ktds.KeyTransform
 
 	crdtFactory *crdt.Factory
+
+	ds          format.DAGService
+	broadcaster corenet.Broadcaster
 
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor

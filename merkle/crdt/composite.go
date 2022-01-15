@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	// "github.com/sourcenetwork/defradb/store"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore) MerkleCRDTInitFn {
+	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
 			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
 		}

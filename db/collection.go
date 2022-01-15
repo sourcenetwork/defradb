@@ -562,7 +562,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}
@@ -586,7 +586,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}

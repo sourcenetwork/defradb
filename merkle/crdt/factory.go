@@ -13,6 +13,8 @@ import (
 	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
+
 	// "github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
@@ -27,7 +29,7 @@ type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
 
 // MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
 // returns a MerkleCRDTInitFn with all the necessary stores set
-type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
+type MerkleCRDTFactory func(mstore core.MultiStore, bs corenet.Broadcaster) MerkleCRDTInitFn
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
@@ -66,25 +68,25 @@ func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a core.MultiStore object)
-func (factory Factory) Instance(t core.CType, key ds.Key) (MerkleCRDT, error) {
+func (factory Factory) Instance(bs corenet.Broadcaster, t core.CType, key ds.Key) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
 	}
-	return (*fn)(factory)(key), nil
+	return (*fn)(factory, bs)(key), nil
 }
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied core.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStores(store core.MultiStore, t core.CType, key ds.Key) (MerkleCRDT, error) {
+func (factory Factory) InstanceWithStores(store core.MultiStore, bs corenet.Broadcaster, t core.CType, key ds.Key) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
 	}
 
-	return (*fn)(store)(key), nil
+	return (*fn)(store, bs)(key), nil
 }
 
 func (factory Factory) getRegisteredFactory(t core.CType) (*MerkleCRDTFactory, error) {
