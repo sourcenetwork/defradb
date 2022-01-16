@@ -8,6 +8,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-varint"
+
+	"github.com/sourcenetwork/defradb/document/key"
 )
 
 // customGogoType aggregates the interfaces that custom Gogo types need to implement.
@@ -138,5 +140,43 @@ func (c *ProtoCid) UnmarshalJSON(data []byte) error {
 }
 
 func (c ProtoCid) Size() int {
+	return len(c.Bytes())
+}
+
+// ProtoCid is a custom type used by gogo to serde raw CIDs into the cid.CID type, and back.
+type ProtoDocKey struct {
+	key.DocKey
+}
+
+var _ customGogoType = (*ProtoDocKey)(nil)
+
+func (c ProtoDocKey) Marshal() ([]byte, error) {
+	return c.Bytes(), nil
+}
+
+func (c ProtoDocKey) MarshalTo(data []byte) (n int, err error) {
+	return copy(data, c.Bytes()), nil
+}
+
+func (c ProtoDocKey) MarshalJSON() ([]byte, error) {
+	m, _ := c.Marshal()
+	return json.Marshal(m)
+}
+
+func (c *ProtoDocKey) Unmarshal(data []byte) (err error) {
+	c.DocKey, err = key.NewFromString(string(data))
+	return err
+}
+
+func (c *ProtoDocKey) UnmarshalJSON(data []byte) error {
+	v := new([]byte)
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		return err
+	}
+	return c.Unmarshal(*v)
+}
+
+func (c ProtoDocKey) Size() int {
 	return len(c.Bytes())
 }

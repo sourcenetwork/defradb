@@ -78,10 +78,10 @@ func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uin
 // AddDAGNode adds a new delta to the existing DAG for this MerkleClock
 // It checks the current heads, sets the delta priority in the merkle dag
 // adds it to the blockstore the runs ProcessNode
-func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Cid, error) {
+func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
-		return cid.Undef, fmt.Errorf("error getting heads : %w", err)
+		return cid.Undef, nil, fmt.Errorf("error getting heads : %w", err)
 	}
 	height = height + 1
 
@@ -90,7 +90,7 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 	// write the delta and heads to a new block
 	nd, err := mc.putBlock(ctx, heads, height, delta)
 	if err != nil {
-		return cid.Undef, fmt.Errorf("Error adding block : %w", err)
+		return cid.Undef, nil, fmt.Errorf("Error adding block : %w", err)
 	}
 
 	// apply the new node and merge the delta with state
@@ -105,9 +105,9 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 	)
 
 	if err != nil {
-		return cid.Undef, fmt.Errorf("error processing new block : %w", err)
+		return cid.Undef, nil, fmt.Errorf("error processing new block : %w", err)
 	}
-	return nd.Cid(), nil
+	return nd.Cid(), nd, nil //@todo: Include raw block data in return
 }
 
 // ProcessNode processes an already merged delta into a crdt

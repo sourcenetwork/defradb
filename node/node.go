@@ -59,7 +59,7 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 
 	// create our peerstore from the underlying defra rootstore
 	// prefixed with "p2p"
-	rootstore := namespace.Wrap(db.Rootstore(), ds.NewKey("p2p"))
+	rootstore := db.Rootstore()
 	pstore := namespace.Wrap(rootstore, ds.NewKey("peers"))
 	peerstore, err := pstoreds.NewPeerstore(ctx, pstore, pstoreds.DefaultOpts())
 	if err != nil {
@@ -90,7 +90,8 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 		return nil, fin.Cleanup(err)
 	}
 
-	lite, err := ipfslite.New(ctx, rootstore, h, d, nil)
+	bstore := db.DAGStore()
+	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
@@ -129,11 +130,10 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 		ds:     lite,
 		ctx:    ctx,
 		cancel: cancel,
-	}
-
-	return nil, nil
+	}, nil
 }
 
+// replace with proper keystore
 func getHostKey(keypath string) (crypto.PrivKey, error) {
 	// If a local datastore is used, the key is written to a file
 	pth := filepath.Join(keypath, "key")

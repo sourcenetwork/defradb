@@ -34,6 +34,9 @@ type DB interface {
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	SetBroadcaster(bs corenet.Broadcaster)
+	Rootstore() ds.Batching
+	Headstore() core.DSReaderWriter
+	DAGStore() core.DAGStore
 }
 
 type Sequence interface{}

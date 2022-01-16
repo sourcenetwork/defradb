@@ -59,7 +59,7 @@ type bstore struct {
 	rehash bool
 }
 
-func (bs *bstore) HashOnRead(_ context.Context, enabled bool) {
+func (bs *bstore) HashOnRead(enabled bool) {
 	bs.rehash = enabled
 }
 

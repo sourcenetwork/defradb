@@ -3,6 +3,20 @@ package net.pb;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
+// Log represents a thread log.
+message Document {
+    // ID of the document.
+    bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+    // head of the log.
+    bytes head = 4 [(gogoproto.customtype) = "ProtoCid"];
+
+    // Record is a thread record containing link data.
+    message Log {
+        // block is the top-level node's raw data as an ipld.Block.
+        bytes block = 1;
+    }
+}
+
 message GetDocGraphRequest {}
 
 message GetDocGraphReply {}
@@ -15,7 +29,18 @@ message GetLogRequest {}
 
 message GetLogReply {}
 
-message PushLogRequest {}
+message PushLogRequest {
+    Body body = 1;
+
+    message Body {
+        // threadID is the target thread's ID.
+        bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+        // logID is the target log's ID.
+        bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
+        // record is the actual record payload.
+        Document.Log log = 3;
+    }
+}
 
 message GetHeadLogRequest {}
 

@@ -28,7 +28,7 @@ type server struct {
 	opts []grpc.DialOption
 	db   client.DB
 
-	topics map[key.DocKey]*rpc.Topic
+	topics map[string]*rpc.Topic
 
 	conns map[libpeer.ID]*grpc.ClientConn
 
@@ -41,7 +41,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	s := &server{
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
-		topics: make(map[key.DocKey]*rpc.Topic),
+		topics: make(map[string]*rpc.Topic),
 	}
 
 	defaultOpts := []grpc.DialOption{
@@ -53,7 +53,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	if s.peer.ps != nil {
 		var keys []key.DocKey // @todo: Get all DocKeys across all collections in the DB
 		for _, key := range keys {
-			if err := s.addPubSubTopic(key); err != nil {
+			if err := s.addPubSubTopic(key.String()); err != nil {
 				return nil, err
 			}
 		}
@@ -89,7 +89,7 @@ func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb
 }
 
 // addPubSubTopic subscribes to a DocKey topic
-func (s *server) addPubSubTopic(dockey key.DocKey) error {
+func (s *server) addPubSubTopic(dockey string) error {
 	if s.peer.ps == nil {
 		return nil
 	}
@@ -100,7 +100,7 @@ func (s *server) addPubSubTopic(dockey key.DocKey) error {
 		return nil
 	}
 
-	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), dockey.String(), true)
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), dockey, true)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (s *server) addPubSubTopic(dockey key.DocKey) error {
 }
 
 // removePubSubTopic unsubscribes to a DocKey topic
-func (s *server) removePubSubTopic(dockey key.DocKey) error {
+func (s *server) removePubSubTopic(dockey string) error {
 	if s.peer.ps == nil {
 		return nil
 	}
@@ -128,7 +128,7 @@ func (s *server) removePubSubTopic(dockey key.DocKey) error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // cooresponding topic
-func (s *server) publishLog(ctx context.Context, dockey key.DocKey, req *pb.PushLogRequest) error {
+func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
@@ -169,7 +169,9 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 }
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
-func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {}
+func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
+	//@todo: Log Event
+}
 
 // addr implements net.Addr and holds a libp2p peer ID.
 type addr struct{ id libpeer.ID }

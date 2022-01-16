@@ -4,15 +4,18 @@ import (
 	"time"
 
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
-	"github.com/libp2p/go-libp2p-core/connmgr"
+	cconnmgr "github.com/libp2p/go-libp2p-core/connmgr"
 	ma "github.com/multiformats/go-multiaddr"
+	"google.golang.org/grpc"
 )
 
 type Options struct {
-	ListenAddrs  []ma.Multiaddr
-	RepoPath     string
-	ConnManager  connmgr.ConnManager
-	EnablePubSub bool
+	ListenAddrs       []ma.Multiaddr
+	RepoPath          string
+	ConnManager       cconnmgr.ConnManager
+	EnablePubSub      bool
+	GRPCServerOptions []grpc.ServerOption
+	GRPCDialOptions   []grpc.DialOption
 }
 
 type NodeOpt func(*Options) error

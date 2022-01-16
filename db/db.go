@@ -139,6 +139,21 @@ func (db *DB) Start(ctx context.Context) error {
 	return db.Initialize(ctx)
 }
 
+// Rootstore gets the internal rootstore handle
+func (db *DB) Rootstore() ds.Batching {
+	return db.rootstore
+}
+
+// Headstore returns the interal index store for DAG Heads
+func (db *DB) Headstore() core.DSReaderWriter {
+	return db.headstore
+}
+
+// DAGStore returns the internal DAG store which contains IPLD blocks
+func (db *DB) DAGStore() core.DAGStore {
+	return db.dagstore
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters
 func (db *DB) Initialize(ctx context.Context) error {

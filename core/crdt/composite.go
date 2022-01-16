@@ -69,13 +69,13 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 
 // CompositeDAG is a CRDT structure that is used
 // to track a collcetion of sub MerkleCRDTs.
-type CompositeDAG struct{
+type CompositeDAG struct {
 	key string
 }
 
 func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {
 	return CompositeDAG{
-		key: key
+		key: key,
 	}
 }
 
