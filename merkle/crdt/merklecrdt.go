@@ -81,14 +81,21 @@ func (base *baseMerkleCRDT) ID() string {
 }
 
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, error) {
+func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, error) {
 	c, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return cid.Undef, err
 	}
 	// and broadcast
-	if base.broadcaster != nil {
-		go base.broadcaster.Broadcast([]byte(base.crdt.ID()), c.Bytes())
+	if base.broadcaster != nil && broadcast {
+		go func() {
+			log := core.Log{
+				DocKey: base.crdt.ID(),
+				CID:    c,
+				Delta:  delta,
+			}
+			base.broadcaster.Broadcast(log) //@todo
+		}()
 	}
 	return c, nil
 }

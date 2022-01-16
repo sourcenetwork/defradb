@@ -70,7 +70,7 @@ func (m *MerkleCompositeDAG) Set(ctx context.Context, patch []byte, links []core
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	delta := m.reg.Set(patch, links)
-	return m.Publish(ctx, delta)
+	return m.Publish(ctx, delta, true)
 }
 
 // Value is a no-op for a CompositeDAG
