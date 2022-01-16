@@ -179,6 +179,11 @@ func (db *DB) Initialize(ctx context.Context) error {
 	return nil
 }
 
+// SetBroadcaster sets the internal broadcaster
+func (db *DB) SetBroadcaster(bs corenet.Broadcaster) {
+	db.broadcaster = bs
+}
+
 func (db *DB) printDebugDB(ctx context.Context) {
 	printStore(ctx, db.rootstore)
 }

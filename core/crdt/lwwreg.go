@@ -115,6 +115,10 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	}
 }
 
+func (reg LWWRegister) ID() string {
+	return reg.key
+}
+
 // RETURN DELTA
 // func (reg LWWRegister) setWithClock(value []byte, clock Clock) LWWRegDelta {
 // 	// return NewLWWRegister(reg.id, value, clock.Apply(), clock)

@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -17,7 +18,7 @@ import (
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
-type peer struct {
+type Peer struct {
 	//config??
 
 	host host.Host
@@ -31,9 +32,9 @@ type peer struct {
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
-func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, ds format.DAGService, serverOptions []grpc.ServerOption, dialOptions []grpc.DialOption) (*peer, error) {
+func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, ds format.DAGService, serverOptions []grpc.ServerOption, dialOptions []grpc.DialOption) (*Peer, error) {
 	ctx, cancel := context.WithCancel(ctx)
-	p := &peer{
+	p := &Peer{
 		host:   h,
 		ps:     ps,
 		rpc:    grpc.NewServer(serverOptions...),
@@ -55,6 +56,7 @@ func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, 
 		pb.RegisterServiceServer(p.rpc, p.server)
 		if err := p.rpc.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			// @todo: Log fatal
+			fmt.Println("Fatal serve error:", err)
 		}
 	}()
 	return p, nil

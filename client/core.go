@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastores/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
@@ -32,6 +33,7 @@ type DB interface {
 	AddSchema(context.Context, string) error
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
+	SetBroadcaster(bs corenet.Broadcaster)
 }
 
 type Sequence interface{}

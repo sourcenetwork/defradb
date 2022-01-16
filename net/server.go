@@ -24,7 +24,7 @@ import (
 // Specifically, server handles the push/get request/response aspects of the RPC service
 // but not the API calls.
 type server struct {
-	peer *peer
+	peer *Peer
 	opts []grpc.DialOption
 	db   client.DB
 
@@ -37,7 +37,7 @@ type server struct {
 
 // newServer creates a new network server that handle/directs RPC requests to the
 // underlying DB instance.
-func newServer(p *peer, db client.DB, opts ...grpc.DialOption) (*server, error) {
+func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
@@ -126,6 +126,30 @@ func (s *server) removePubSubTopic(dockey key.DocKey) error {
 	return nil
 }
 
+// publishLog publishes the given PushLogRequest object on the PubSub network via the
+// cooresponding topic
+func (s *server) publishLog(ctx context.Context, dockey key.DocKey, req *pb.PushLogRequest) error {
+	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
+		return nil
+	}
+	s.Lock()
+	t, ok := s.topics[dockey]
+	s.Unlock()
+	if !ok {
+		return fmt.Errorf("No pubsub topic found for doc %s", dockey)
+	}
+
+	data, err := req.Marshal()
+	if err != nil {
+		return fmt.Errorf("failed marshling pubsub message: %w", err)
+	}
+
+	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
+		return fmt.Errorf("failed publishing to thread %s: %w", dockey, err)
+	}
+	return nil
+}
+
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
 	req := new(pb.PushLogRequest)
@@ -139,7 +163,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	if _, err := s.PushLog(ctx, req); status.Code(err) == codes.NotFound {
 		// log err
 	} else if err != nil {
-		return nil, fmt.Errorf("failed pushing log to doc %s: %w", topic, err)
+		return nil, fmt.Errorf("failed pushing log for doc %s: %w", topic, err)
 	}
 	return nil, nil
 }
