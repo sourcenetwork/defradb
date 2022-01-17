@@ -28,11 +28,18 @@ type countNode struct {
 	virtualFieldId string
 }
 
-func (p *Planner) Count(c *parser.Count) (*countNode, error) {
+func (p *Planner) Count(c *parser.PropertyTransformation) (*countNode, error) {
+	var sourceProperty string
+	if len(c.Source) == 1 {
+		sourceProperty = c.Source[0]
+	} else {
+		sourceProperty = ""
+	}
+
 	return &countNode{
 		p:              p,
-		sourceProperty: c.Field,
-		virtualFieldId: c.Name,
+		sourceProperty: sourceProperty,
+		virtualFieldId: c.Destination,
 	}, nil
 }
 

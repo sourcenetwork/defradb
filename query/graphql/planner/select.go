@@ -213,13 +213,14 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 
 	// Handle aggregates of child collection that are not rendered
 	for _, count := range parsed.Counts {
-		if count.Field == "" {
+		if len(count.Source) == 0 {
 			continue
 		}
 
+		fieldName := count.Source[0]
 		hasChildProperty := false
 		for _, field := range parsed.Fields {
-			if count.Field == field.GetName() {
+			if fieldName == field.GetName() {
 				hasChildProperty = true
 				break
 			}
@@ -227,14 +228,14 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 
 		// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
 		if !hasChildProperty {
-			if count.Field == parser.GroupFieldName {
+			if fieldName == parser.GroupFieldName {
 				// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
 				n.groupSelect = &parser.Select{
 					Name: parser.GroupFieldName,
 				}
 			} else if parsed.Root != parser.CommitSelection {
 				subtype := &parser.Select{
-					Name: count.Field,
+					Name: fieldName,
 				}
 				n.addTypeIndexJoin(subtype)
 			}

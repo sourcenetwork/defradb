@@ -80,7 +80,7 @@ type Selection interface {
 
 type baseSelect interface {
 	Selection
-	AddCount(count Count)
+	AddCount(count PropertyTransformation)
 }
 
 // Select is a complex Field with strong typing
@@ -102,7 +102,7 @@ type Select struct {
 	Limit   *Limit
 	OrderBy *OrderBy
 	GroupBy *GroupBy
-	Counts  []Count
+	Counts  []PropertyTransformation
 
 	Fields []Selection
 
@@ -130,7 +130,7 @@ func (s Select) GetAlias() string {
 	return s.Alias
 }
 
-func (s *Select) AddCount(count Count) {
+func (s *Select) AddCount(count PropertyTransformation) {
 	s.Counts = append(s.Counts, count)
 }
 
@@ -170,9 +170,12 @@ type GroupBy struct {
 	Fields []string
 }
 
-type Count struct {
-	Name  string
-	Field string
+// Contains mapping information between a source and destination properties
+type PropertyTransformation struct {
+	// Where the result of transformation should be written to
+	Destination string
+	// Where the data to be transformed should be read from
+	Source []string
 }
 
 type SortDirection string
@@ -456,18 +459,18 @@ func parseCounts(slct baseSelect) error {
 				f.Alias = f.Name
 			}
 			f.Name = virtualName
-			var fieldName string
 			fieldStatement, statementIsField := field.GetStatement().(*ast.Field)
 			if !statementIsField {
 				return fmt.Errorf("Unexpected error: could not cast field statement to field.")
 			}
 
+			var path []string
 			if len(fieldStatement.Arguments) == 0 {
-				fieldName = ""
+				path = []string{}
 			} else {
-				fieldName = fieldStatement.Arguments[0].Value.GetValue().(string)
+				path = []string{fieldStatement.Arguments[0].Value.GetValue().(string)}
 			}
-			slct.AddCount(Count{Name: virtualName, Field: fieldName})
+			slct.AddCount(PropertyTransformation{Destination: virtualName, Source: path})
 		}
 	}
 

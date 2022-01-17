@@ -45,7 +45,7 @@ type CommitSelect struct {
 
 	Limit   *Limit
 	OrderBy *OrderBy
-	Counts  []Count
+	Counts  []PropertyTransformation
 
 	Fields []Selection
 
@@ -72,7 +72,7 @@ func (c CommitSelect) GetSelections() []Selection {
 	return c.Fields
 }
 
-func (s *CommitSelect) AddCount(count Count) {
+func (s *CommitSelect) AddCount(count PropertyTransformation) {
 	s.Counts = append(s.Counts, count)
 }
 
