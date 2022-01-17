@@ -72,8 +72,8 @@ func (c CommitSelect) GetSelections() []Selection {
 	return c.Fields
 }
 
-func (s *CommitSelect) AddCount(count PropertyTransformation) {
-	s.Counts = append(s.Counts, count)
+func (s *CommitSelect) AddCount(transformationDefinition PropertyTransformation) {
+	s.Counts = append(s.Counts, transformationDefinition)
 }
 
 func (c CommitSelect) ToSelect() *Select {
@@ -126,7 +126,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	var err error
 	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
 
-	parseCounts(commit)
+	parseAggregates(commit)
 
 	return commit, err
 }

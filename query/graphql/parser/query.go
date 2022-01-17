@@ -80,7 +80,7 @@ type Selection interface {
 
 type baseSelect interface {
 	Selection
-	AddCount(count PropertyTransformation)
+	AddCount(transformationDefinition PropertyTransformation)
 }
 
 // Select is a complex Field with strong typing
@@ -130,8 +130,8 @@ func (s Select) GetAlias() string {
 	return s.Alias
 }
 
-func (s *Select) AddCount(count PropertyTransformation) {
-	s.Counts = append(s.Counts, count)
+func (s *Select) AddCount(transformationDefinition PropertyTransformation) {
+	s.Counts = append(s.Counts, transformationDefinition)
 }
 
 // Field implements Selection
@@ -390,7 +390,7 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 		return nil, err
 	}
 
-	err = parseCounts(slct)
+	err = parseAggregates(slct)
 	if err != nil {
 		return nil, err
 	}
@@ -448,31 +448,48 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	}
 }
 
-// Parses requested _count(s), creating a virtual name (alias) if an alias is not provided to allow for multiple _count
-// fields.  Strongly consider refactoring this as more aggregates get added.
-func parseCounts(slct baseSelect) error {
+// Parses requested aggregates, creating a virtual name (alias) if an alias is not provided to allow for multiple aggregate
+// fields.  Mutates any aggregate field properties on the select, and adds the result onto the given select object.
+func parseAggregates(slct baseSelect) error {
 	for i, field := range slct.GetSelections() {
-		if field.GetName() == CountFieldName {
-			virtualName := fmt.Sprintf("count%v", i)
-			f := field.(*Field)
-			if f.Alias == "" {
-				f.Alias = f.Name
+		switch field.GetName() {
+		case CountFieldName:
+			err, transformation := parseAggregate(i, field)
+			if err != nil {
+				return err
 			}
-			f.Name = virtualName
-			fieldStatement, statementIsField := field.GetStatement().(*ast.Field)
-			if !statementIsField {
-				return fmt.Errorf("Unexpected error: could not cast field statement to field.")
-			}
-
-			var path []string
-			if len(fieldStatement.Arguments) == 0 {
-				path = []string{}
-			} else {
-				path = []string{fieldStatement.Arguments[0].Value.GetValue().(string)}
-			}
-			slct.AddCount(PropertyTransformation{Destination: virtualName, Source: path})
+			slct.AddCount(transformation)
 		}
 	}
 
 	return nil
+}
+
+// Parses the given aggregate field selector, mutating the given field and returning the resultant PropertyTransformation
+func parseAggregate(i int, field Selection) (error, PropertyTransformation) {
+	virtualName := fmt.Sprintf("_agg%v", i)
+	f := field.(*Field)
+	if f.Alias == "" {
+		f.Alias = f.Name
+	}
+	f.Name = virtualName
+
+	var path []string
+	if len(f.Statement.Arguments) == 0 {
+		path = []string{}
+	} else {
+		switch arguementValue := f.Statement.Arguments[0].Value.GetValue().(type) {
+		case string:
+			path = []string{arguementValue}
+		case []*ast.ObjectField:
+			if len(arguementValue) == 0 {
+				//Note: Scalar arrays will hit this clause and should be handled appropriately (not adding now as not testable in a time-efficient manner)
+				return fmt.Errorf("Unexpected error: aggregate field contained no child field selector"), PropertyTransformation{}
+			}
+
+			path = []string{arguementValue[0].Name.Value, arguementValue[0].Value.GetValue().(string)}
+		}
+	}
+
+	return nil, PropertyTransformation{Destination: virtualName, Source: path}
 }
