@@ -203,11 +203,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		plan.plan = plan.group
 	}
 
-	// consider extracting this out to an `expandAggregatePlan` when adding more aggregates
-	for _, countPlan := range plan.countPlans {
-		countPlan.plan = plan.plan
-		plan.plan = countPlan
-	}
+	p.expandAggregatePlans(plan)
 
 	// if order
 	if plan.sort != nil {
@@ -226,6 +222,13 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	return nil
+}
+
+func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
+	for _, countPlan := range plan.countPlans {
+		countPlan.plan = plan.plan
+		plan.plan = countPlan
+	}
 }
 
 func (p *Planner) expandMultiNode(plan MultiNode, parentPlan *selectTopNode) error {
