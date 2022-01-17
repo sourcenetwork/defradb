@@ -213,36 +213,41 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 
 	// Handle aggregates of child collection that are not rendered
 	for _, count := range parsed.Counts {
-		if len(count.Source) == 0 {
-			continue
-		}
-
-		fieldName := count.Source[0]
-		hasChildProperty := false
-		for _, field := range parsed.Fields {
-			if fieldName == field.GetName() {
-				hasChildProperty = true
-				break
-			}
-		}
-
-		// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
-		if !hasChildProperty {
-			if fieldName == parser.GroupFieldName {
-				// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
-				n.groupSelect = &parser.Select{
-					Name: parser.GroupFieldName,
-				}
-			} else if parsed.Root != parser.CommitSelection {
-				subtype := &parser.Select{
-					Name: fieldName,
-				}
-				n.addTypeIndexJoin(subtype)
-			}
-		}
+		n.joinAggregatedChild(parsed, count)
 	}
 
 	return nil
+}
+
+// Join any child collections required by the given transformation if the child collections have not been requested for render by the consumer
+func (n *selectNode) joinAggregatedChild(parsed *parser.Select, transformation parser.PropertyTransformation) {
+	if len(transformation.Source) == 0 {
+		return
+	}
+
+	fieldName := transformation.Source[0]
+	hasChildProperty := false
+	for _, field := range parsed.Fields {
+		if fieldName == field.GetName() {
+			hasChildProperty = true
+			break
+		}
+	}
+
+	// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
+	if !hasChildProperty {
+		if fieldName == parser.GroupFieldName {
+			// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
+			n.groupSelect = &parser.Select{
+				Name: parser.GroupFieldName,
+			}
+		} else if parsed.Root != parser.CommitSelection {
+			subtype := &parser.Select{
+				Name: fieldName,
+			}
+			n.addTypeIndexJoin(subtype)
+		}
+	}
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *parser.Select) error {
