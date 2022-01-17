@@ -328,7 +328,7 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 
 	countPlans := []*countNode{}
 	for _, countItem := range parsed.Counts {
-		countNode, err := p.Count(&countItem, countItem.Name)
+		countNode, err := p.Count(&countItem)
 		if err != nil {
 			return nil, err
 		}
@@ -376,7 +376,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 
 	countPlans := []*countNode{}
 	for _, countItem := range parsed.Counts {
-		countNode, err := p.Count(&countItem, countItem.Name)
+		countNode, err := p.Count(&countItem)
 		if err != nil {
 			return nil, err
 		}
