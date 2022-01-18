@@ -42,6 +42,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
 		topics: make(map[string]*rpc.Topic),
+		db:     db,
 	}
 
 	defaultOpts := []grpc.DialOption{
@@ -80,6 +81,7 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 
 // PushLog recieves a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
+	log.Debug("Recieved a pushLog request...")
 	return nil, nil
 }
 
@@ -147,6 +149,7 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
 		return fmt.Errorf("failed publishing to thread %s: %w", dockey, err)
 	}
+	log.Debugf("Published log %s on %s", req.Body.Cid.Cid, dockey)
 	return nil
 }
 
@@ -170,7 +173,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	//@todo: Log Event
+	log.Info("Recieved new pubsub event from %s on %s", from, topic)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

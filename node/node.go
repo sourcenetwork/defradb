@@ -9,10 +9,11 @@ import (
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	format "github.com/ipfs/go-ipld-format"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
@@ -30,15 +31,19 @@ Basically it combines db/DB, net/Peer, and net/Server into a single Node
 object.
 */
 
+var (
+	log = logging.Logger("node")
+)
+
 type Node struct {
 	// embed the DB interface into the node
 	client.DB
 
-	peer *net.Peer
+	*net.Peer
 
-	host   host.Host
-	pubsub *pubsub.PubSub
-	ds     format.DAGService
+	host     host.Host
+	pubsub   *pubsub.PubSub
+	litepeer *ipfslite.Peer
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -86,6 +91,8 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 		rootstore,
 		libp2pOpts...,
 	)
+	log.Info("Created LibP2P host with Peer ID ", h.ID())
+	log.Info(" -> listening on ", options.ListenAddrs)
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
@@ -123,14 +130,18 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 	}
 
 	return &Node{
-		peer:   peer,
-		host:   h,
-		pubsub: ps,
-		DB:     db,
-		ds:     lite,
-		ctx:    ctx,
-		cancel: cancel,
+		Peer:     peer,
+		host:     h,
+		pubsub:   ps,
+		DB:       db,
+		litepeer: lite,
+		ctx:      ctx,
+		cancel:   cancel,
 	}, nil
+}
+
+func (n *Node) Boostrap(addrs []peer.AddrInfo) {
+	n.litepeer.Bootstrap(addrs)
 }
 
 // replace with proper keystore

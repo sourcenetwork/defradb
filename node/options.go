@@ -20,6 +20,20 @@ type Options struct {
 
 type NodeOpt func(*Options) error
 
+func RepoPath(path string) NodeOpt {
+	return func(opt *Options) error {
+		opt.RepoPath = path
+		return nil
+	}
+}
+
+func WithPubSub(enable bool) NodeOpt {
+	return func(opt *Options) error {
+		opt.EnablePubSub = enable
+		return nil
+	}
+}
+
 // ListenAddrStrings sets the address to listen on given as strings
 func ListenAddrStrings(addrs ...string) NodeOpt {
 	return func(opt *Options) error {

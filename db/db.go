@@ -20,6 +20,7 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 	"github.com/sourcenetwork/defradb/store"
@@ -71,6 +72,7 @@ type DB struct {
 
 	crdtFactory *crdt.Factory
 
+	peer        *net.Peer
 	ds          format.DAGService
 	broadcaster corenet.Broadcaster
 
@@ -196,7 +198,12 @@ func (db *DB) Initialize(ctx context.Context) error {
 
 // SetBroadcaster sets the internal broadcaster
 func (db *DB) SetBroadcaster(bs corenet.Broadcaster) {
+	log.Debug("Setting internal broadcaster")
 	db.broadcaster = bs
+}
+
+func (db *DB) SetPeer(p *net.Peer) {
+	db.peer = p
 }
 
 func (db *DB) printDebugDB(ctx context.Context) {

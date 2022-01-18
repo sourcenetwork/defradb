@@ -20,7 +20,7 @@ var addrProtocol = ma.Protocol{
 	Name:  Name,
 	Code:  Code,
 	VCode: ma.CodeToVarint(Code),
-	Size:  ma.LengthPrefixedVarSize,
+	// Size:  ma.LengthPrefixedVarSize,
 }
 
 func init() {
