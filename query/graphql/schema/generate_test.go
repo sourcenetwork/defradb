@@ -74,6 +74,23 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 		}, "")
 }
 
+func Test_Generator_CleansUpInvalidTypes_GivenInvalidFieldType(t *testing.T) {
+	g := newTestGenerator()
+
+	runTestConfigForbuildTypesFromASTSuite(t, g,
+		`
+		type MyObject {
+			myField: string,
+			myOtherField: String
+		}
+		`,
+		[]*gql.Object{},
+		"No type found for given name: string")
+
+	_, exists := g.manager.schema.TypeMap()["MyObject"]
+	assert.False(t, exists, "Invalid object was not cleaned from type map")
+}
+
 func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 	g := newTestGenerator()
 
