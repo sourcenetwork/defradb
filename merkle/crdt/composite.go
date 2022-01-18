@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, bs corenet.Broadcaster) MerkleCRDTInitFn {
+	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
 			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
 		}
@@ -49,8 +49,8 @@ type MerkleCompositeDAG struct {
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT
-func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleCompositeDAG {
-	compositeDag := corecrdt.NewCompositeDAG(datastore, ns, dockey.String() /* stuff like namespace and ID */)
+func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, schemaID string, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleCompositeDAG {
+	compositeDag := corecrdt.NewCompositeDAG(datastore, schemaID, ns, dockey.String() /* stuff like namespace and ID */)
 
 	// strip collection/index identifier from docKey
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])

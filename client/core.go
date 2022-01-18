@@ -28,6 +28,7 @@ type DB interface {
 	// Collections
 	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
 	GetCollection(context.Context, string) (Collection, error)
+	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	ExecQuery(context.Context, string) *QueryResult
 	SchemaManager() *schema.SchemaManager
 	AddSchema(context.Context, string) error

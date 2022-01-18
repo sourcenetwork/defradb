@@ -155,8 +155,10 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	log.Debugf("Handling new pubsub message from %s on %s", from, topic)
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
+		log.Errorf("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 
@@ -173,7 +175,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	log.Info("Recieved new pubsub event from %s on %s", from, topic)
+	log.Infof("Recieved new pubsub event from %s on %s", from, topic)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

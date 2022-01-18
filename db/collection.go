@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/utils"
 
 	"errors"
 
@@ -50,6 +51,8 @@ type Collection struct {
 
 	colID    uint32
 	colIDKey core.Key
+
+	SchemaID string
 
 	desc base.CollectionDescription
 }
@@ -153,6 +156,26 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 
 	//write the collection metadata to the system store
 	err = db.systemstore.Put(ctx, key.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err = json.Marshal(struct {
+		Name   string
+		Schema base.SchemaDescription
+	}{col.desc.Name, col.desc.Schema})
+	if err != nil {
+		return nil, err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := utils.NewCidV1(buf)
+	if err != nil {
+		return nil, err
+	}
+	col.SchemaID = cid.String()
+	key = base.MakeCollectionSchemaSystemKey(cid.String())
+	err = db.systemstore.Put(ctx, key.ToDS(), []byte(desc.Name))
 	return col, err
 }
 
@@ -184,6 +207,23 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		colID:    desc.ID,
 		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
 	}, nil
+}
+
+// GetCollectionBySchemaID returns an existing collection within the database using the
+// schema hash ID
+func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (client.Collection, error) {
+	if schemaID == "" {
+		return nil, fmt.Errorf("Schema ID can't be empty")
+	}
+
+	key := base.MakeCollectionSchemaSystemKey(schemaID)
+	buf, err := db.systemstore.Get(ctx, key.ToDS())
+	if err != nil {
+		return nil, err
+	}
+
+	name := string(buf)
+	return db.GetCollection(ctx, name)
 }
 
 // ValidDescription
@@ -570,7 +610,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.db.broadcaster, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}
@@ -594,7 +634,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.db.broadcaster, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}

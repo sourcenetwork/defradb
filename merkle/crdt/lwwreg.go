@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, bs corenet.Broadcaster) MerkleCRDTInitFn {
+	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, bs corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
 			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
 		}
