@@ -15,6 +15,7 @@ import (
 
 type Config struct {
 	Database Options
+	Net      NetOptions
 }
 
 type Options struct {
@@ -35,6 +36,10 @@ type MemoryOptions struct {
 	Size uint64
 }
 
+type NetOptions struct {
+	P2PAddress string
+}
+
 var (
 	defaultConfig = Config{
 		Database: Options{
@@ -43,6 +48,9 @@ var (
 			Badger: BadgerOptions{
 				Path: "$HOME/.defradb/data",
 			},
+		},
+		Net: NetOptions{
+			P2PAddress: "/ip4/0.0.0.0/tcp/9171",
 		},
 	}
 )

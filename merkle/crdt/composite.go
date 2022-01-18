@@ -25,9 +25,9 @@ import (
 )
 
 var (
-	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ corenet.Broadcaster) MerkleCRDTInitFn {
+	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, bs corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
+			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
 		}
 	})
 )
@@ -49,13 +49,13 @@ type MerkleCompositeDAG struct {
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT
-func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleCompositeDAG {
+func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 
 	// strip collection/index identifier from docKey
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
 	clock := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), compositeDag)
-	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
+	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, broadcaster: bs}
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
@@ -69,6 +69,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 func (m *MerkleCompositeDAG) Set(ctx context.Context, patch []byte, links []core.DAGLink) (cid.Cid, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
+	log.Debug("Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
 	return m.Publish(ctx, delta, true)
 }

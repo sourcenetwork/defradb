@@ -13,13 +13,22 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/db"
+	netutils "github.com/sourcenetwork/defradb/net/utils"
+	"github.com/sourcenetwork/defradb/node"
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/spf13/cobra"
+)
+
+var (
+	p2pAddr  string
+	dataPath string
+	peers    string
 )
 
 // startCmd represents the start command
@@ -65,15 +74,58 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// run the server listener in a separate goroutine
+		// init the p2p node
+		n, err := node.NewNode(
+			ctx,
+			db,
+			node.RepoPath(config.Database.Badger.Path),
+			node.ListenAddrStrings(config.Net.P2PAddress),
+			node.WithPubSub(true))
+		if err != nil {
+			log.Error("Failed to start p2p node:", err)
+			db.Close()
+			os.Exit(1)
+		}
+
+		db.SetPeer(n.Peer)
+
+		// parse peers and bootstrap
+		if len(peers) != 0 {
+			log.Debug("Parsing boostrap peers: ", peers)
+			addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
+			if err != nil {
+				log.Warn("Failed to parse boostrap peers: ", err)
+			}
+			log.Debug("Bootstraping with peers: ", addrs)
+			n.Boostrap(addrs)
+		}
+
+		// run the server listener in a seperate goroutine
+		serveErr := make(chan error)
 		go func() {
-			db.Listen(config.Database.Address)
+			if err := n.Start(); err != nil {
+				log.Error("Failed to start p2p listener:", err)
+				db.Close()
+				os.Exit(1)
+			}
+			if err := db.Listen(config.Database.Address); err != nil {
+				log.Error("Failed to start API listener:", err)
+				db.Close()
+				os.Exit(1)
+			}
 		}()
 
-		<-signalCh
-		log.Info("Recieved interrupt; closing db")
-		db.Close()
-		os.Exit(0)
+		select {
+		case <-signalCh:
+			log.Info("Recieved interrupt; closing db")
+			db.Close()
+			os.Exit(0)
+		case <-serveErr:
+			log.Error("API Server failed: ", err)
+			db.Close()
+			os.Exit(1)
+		}
+
 	},
 }
 
@@ -89,5 +141,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	startCmd.Flags().String("store", "badger", "Specify the data store to use (supported: badger, memory)")
-
+	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
+	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
+	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
 }

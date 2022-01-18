@@ -325,7 +325,15 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 		return err
 	}
 	// write data to DB via MerkleClock/CRDT
-	return c.save(ctx, txn, doc)
+	newCID, err := c.save(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
+
+	// register new document with peer node
+	// @todo: encapsulate this stuff within a DB logger/watcher interface
+	go c.db.peer.RegisterNewDocument(ctx, dockey, newCID)
+	return nil
 }
 
 // Update an existing document with the new values
@@ -361,7 +369,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
 func (c *Collection) update(ctx context.Context, txn *Txn, doc *document.Document) error {
-	err := c.save(ctx, txn, doc)
+	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
@@ -394,7 +402,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document) error {
+func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -409,7 +417,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 			fieldKey := c.getFieldKey(dockey, k)
 			c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
 			if err != nil {
-				return err
+				return cid.Undef, err
 			}
 			if val.IsDelete() {
 				merge[k] = nil
@@ -437,23 +445,23 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	// Update CompositeDAG
 	em, err := cbor.CanonicalEncOptions().EncMode()
 	if err != nil {
-		return err
+		return cid.Undef, err
 	}
 	buf, err := em.Marshal(merge)
 	if err != nil {
-		return nil
+		return cid.Undef, nil
 	}
 
 	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
 	if err != nil {
-		return nil
+		return cid.Undef, err
 	}
 
 	txn.OnSuccess(func() {
 		doc.SetHead(headCID)
 	})
 	// fmt.Printf("final: %s\n\n", docCid)
-	return nil
+	return headCID, nil
 }
 
 // Delete will attempt to delete a document by key

@@ -16,12 +16,14 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+	logging "github.com/ipfs/go-log/v2"
 )
 
-// var (
-//     log = logging.Logger("defradb.merkle.crdt")
-// )
+var (
+	log = logging.Logger("merklecrdt")
+)
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
@@ -82,20 +84,28 @@ func (base *baseMerkleCRDT) ID() string {
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, error) {
+	dockey := ds.NewKey(base.crdt.ID()).List()[2] // @todo: DANGEROUS!!!!
+	log.Debug("Processing CRDT state for ", dockey)
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return cid.Undef, err
 	}
 	// and broadcast
-	if base.broadcaster != nil && broadcast {
+	if base.broadcaster != nil && broadcast && delta.GetPriority() > 1 {
+
+		log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c.String())
 		go func() {
 			log := core.Log{
-				DocKey: base.crdt.ID(),
+				DocKey: dockey,
 				Cid:    c,
 				Block:  nd,
 			}
 			base.broadcaster.Send(log)
 		}()
+	} else if base.broadcaster == nil {
+		log.Debug("Not broadcasting changes due to lack of Broadcaster")
+	} else {
+		log.Debug("Not broadcasting changes because disabled for this op")
 	}
 	return c, nil
 }
