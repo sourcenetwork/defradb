@@ -151,11 +151,11 @@ type ProtoDocKey struct {
 var _ customGogoType = (*ProtoDocKey)(nil)
 
 func (c ProtoDocKey) Marshal() ([]byte, error) {
-	return c.Bytes(), nil
+	return []byte(c.String()), nil
 }
 
 func (c ProtoDocKey) MarshalTo(data []byte) (n int, err error) {
-	return copy(data, c.Bytes()), nil
+	return copy(data, []byte(c.String())), nil
 }
 
 func (c ProtoDocKey) MarshalJSON() ([]byte, error) {
@@ -178,5 +178,5 @@ func (c *ProtoDocKey) UnmarshalJSON(data []byte) error {
 }
 
 func (c ProtoDocKey) Size() int {
-	return len(c.Bytes())
+	return len([]byte(c.String()))
 }
