@@ -20,10 +20,14 @@ coverage:
         flags:
           - unit
 
+    # Disable patch as it is not correct and buggy.
+    # Folks over at amazon's aws and mozilla's firefox tv also did the same LOL:
+    #   - https://github.com/aws/amazon-vpc-cni-k8s/pull/1226/files
+    #   - https://github.com/mozilla-mobile/firefox-tv/pull/779/files
     patch:
       default:
-        target: 50%
-        threshold: 0.05 # allow this much decrease in this commit / change / patch.
+        enabled: no
+        if_not_found: success
 
     changes: false
 
