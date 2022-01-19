@@ -50,8 +50,8 @@ test\:coverage:
 	go test ./... -coverprofile cover.out
 	go tool cover -func cover.out | grep total | awk '{print $$3}'
 
-.PHONY: validate\:yaml
-validate\:yaml:
+.PHONY: validate\:codecov
+validate\:codecov:
 	curl --data-binary @codecov.yml https://codecov.io/validate
 
 .PHONY: lint
