@@ -117,6 +117,20 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
+	generatedFilterBaseArgs := make([]*gql.InputObject, len(g.typeDefs))
+	for i, t := range g.typeDefs {
+		generatedFilterBaseArgs[i] = g.genTypeFilterBaseArgInput(t)
+	}
+
+	for _, t := range generatedFilterBaseArgs {
+		g.manager.schema.AppendType(t)
+	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
 	// for each built type
 	// 		generate query inputs
 	queryType := g.manager.schema.QueryType()
@@ -603,10 +617,6 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	}
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
 		fields := gql.InputObjectConfigFieldMap{}
-
-		// @attention: do we need to explicitly add our "sub types" to the TypeMap
-		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
-		g.manager.schema.AppendType(filterBaseArgType)
 
 		// conditionals
 		compoundListType := &gql.InputObjectFieldConfig{
