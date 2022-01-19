@@ -615,7 +615,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		// conditionals
@@ -650,7 +650,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// fmt.Println("#####################")
 		// spew.Dump(fields)
-		return fields
+		return fields, nil
 	})
 
 	// add the fields thunker
@@ -721,7 +721,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "OrderArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		for f, field := range obj.Fields() {
@@ -739,7 +739,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			}
 		}
 
-		return fields
+		return fields, nil
 	})
 
 	inputCfg.Fields = fieldThunk
