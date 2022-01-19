@@ -33,12 +33,14 @@ message PushLogRequest {
     Body body = 1;
 
     message Body {
-        // threadID is the target thread's ID.
+        // docKey is the target DocKey.
         bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
-        // logID is the target log's ID.
+        // cid is the target CID.
         bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
+        //
+        bytes schemaID = 3;
         // record is the actual record payload.
-        Document.Log log = 3;
+        Document.Log log = 4;
     }
 }
 

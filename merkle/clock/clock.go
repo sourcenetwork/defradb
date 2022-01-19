@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	log = logging.Logger("defradb.merkle.clock")
+	log = logging.Logger("merkleclock")
 )
 
 type MerkleClock struct {
@@ -97,7 +97,7 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 	// @todo Remove NodeGetter as a parameter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
 		ctx,
-		&crdtNodeGetter{deltaExtractor: mc.crdt.DeltaDecode},
+		&CrdtNodeGetter{DeltaExtractor: mc.crdt.DeltaDecode},
 		nd.Cid(),
 		height,
 		delta,
@@ -114,6 +114,7 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 // by
 func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
 	current := node.Cid()
+	log.Debugf("Running ProcessNode on %s", current)
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
@@ -128,13 +129,16 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
+	log.Debug("Stepping through node links")
 	for _, l := range links {
+		log.Debugf("checking link: %s => %s", l.Name, l.Cid)
 		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
+		log.Debug("No heads found")
 		err := mc.headset.Add(ctx, root, rootPrio)
 		if err != nil {
 			return nil, fmt.Errorf("error adding head (when reached the bottom) %s : %w", root, err)
@@ -146,12 +150,14 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 
 	for _, l := range links {
 		child := l.Cid
+		log.Debug("Scanning for replacement heads: ", child)
 		isHead, _, err := mc.headset.IsHead(ctx, child)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if %s is head : %w", child, err)
 		}
 
 		if isHead {
+			log.Debug("Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
 			err = mc.headset.Replace(ctx, child, root, rootPrio)
@@ -164,18 +170,18 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 
 		known, err := mc.dagstore.Has(ctx, child)
 		if err != nil {
-			return nil, fmt.Errorf("error checking for know block %s : %w", child, err)
+			return nil, fmt.Errorf("error checking for known block %s : %w", child, err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
+			log.Debug("Adding head")
 			err := mc.headset.Add(ctx, root, rootPrio)
 			if err != nil {
 				log.Errorf("error adding head (when root is new head): %s : %w", root, err)
 				// OR should this also return like below comment??
 				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
 			}
-
 			continue
 		}
 

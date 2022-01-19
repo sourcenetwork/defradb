@@ -92,13 +92,17 @@ func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broad
 	}
 	// and broadcast
 	if base.broadcaster != nil && broadcast && delta.GetPriority() > 1 {
-
+		netdelta, ok := delta.(core.NetDelta)
+		if !ok {
+			return c, nil
+		}
 		log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c.String())
 		go func() {
 			log := core.Log{
-				DocKey: dockey,
-				Cid:    c,
-				Block:  nd,
+				DocKey:   dockey,
+				Cid:      c,
+				SchemaID: netdelta.GetSchemaID(),
+				Block:    nd,
 			}
 			base.broadcaster.Send(log)
 		}()

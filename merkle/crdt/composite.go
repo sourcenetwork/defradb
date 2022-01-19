@@ -27,7 +27,7 @@ import (
 var (
 	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
+			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), schemaID, bs, ds.NewKey(""), key)
 		}
 	})
 )

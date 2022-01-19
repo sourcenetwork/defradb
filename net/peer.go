@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/host"
 	gostream "github.com/libp2p/go-libp2p-gostream"
@@ -25,6 +25,8 @@ var (
 	busBufferSize = 100
 
 	log = logging.Logger("net")
+
+	numWorkers = 5
 )
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
@@ -36,29 +38,41 @@ type Peer struct {
 
 	host host.Host
 	ps   *pubsub.PubSub
+	ds   DAGSyncer
 
 	rpc    *grpc.Server
 	server *server
 
 	bus *broadcast.Broadcaster
 
+	jobQueue chan *dagJob
+	sendJobs chan *dagJob
+
+	queuedChildren *cidSafeSet
+
+	wg sync.WaitGroup
+
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
-func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, ds format.DAGService, serverOptions []grpc.ServerOption, dialOptions []grpc.DialOption) (*Peer, error) {
+func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, ds DAGSyncer, serverOptions []grpc.ServerOption, dialOptions []grpc.DialOption) (*Peer, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	if db == nil {
 		return nil, fmt.Errorf("Database object can't be empty")
 	}
 	p := &Peer{
-		host:   h,
-		ps:     ps,
-		db:     db,
-		rpc:    grpc.NewServer(serverOptions...),
-		ctx:    ctx,
-		cancel: cancel,
+		host:           h,
+		ps:             ps,
+		db:             db,
+		ds:             ds,
+		rpc:            grpc.NewServer(serverOptions...),
+		ctx:            ctx,
+		cancel:         cancel,
+		jobQueue:       make(chan *dagJob, numWorkers),
+		sendJobs:       make(chan *dagJob),
+		queuedChildren: newCidSafeSet(),
 	}
 	var err error
 	p.server, err = newServer(p, db, dialOptions...)
@@ -89,6 +103,19 @@ func (p *Peer) Start() error {
 		}
 	}()
 
+	// sendJobWorker + NumWorkers
+	p.wg.Add(1 + numWorkers)
+	go func() {
+		defer p.wg.Done()
+		p.sendJobWorker()
+	}()
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			defer p.wg.Done()
+			p.dagWorker()
+		}()
+	}
+
 	return nil
 }
 
@@ -103,7 +130,7 @@ func (p *Peer) handleBroadcastLoop() {
 	l := p.bus.Listen()
 	log.Debug("Waiting for messages on internal broadcaster")
 	for v := range l.Channel() {
-		log.Debug("Handling internal broadcat bus message")
+		log.Debug("Handling internal broadcast bus message")
 		// filter for only messages intended for the pubsub network
 		switch msg := v.(type) {
 		case core.Log:
@@ -112,9 +139,11 @@ func (p *Peer) handleBroadcastLoop() {
 				log.Error("Failed to get DocKeyfrom broadcast message:", err)
 				continue
 			}
+			log.Debugf("Preparing pubsub pushLog request from broadcast for %s at %s using %s", dockey, msg.Cid, msg.SchemaID)
 			body := &pb.PushLogRequest_Body{
-				DocKey: &pb.ProtoDocKey{DocKey: dockey},
-				Cid:    &pb.ProtoCid{Cid: msg.Cid},
+				DocKey:   &pb.ProtoDocKey{DocKey: dockey},
+				Cid:      &pb.ProtoCid{Cid: msg.Cid},
+				SchemaID: []byte(msg.SchemaID),
 				Log: &pb.Document_Log{
 					Block: msg.Block.RawData(),
 				},
@@ -132,7 +161,7 @@ func (p *Peer) handleBroadcastLoop() {
 	}
 }
 
-func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid) error {
+func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid, schemaID string) error {
 	log.Debug("Registering a new document with for our peer node: ", dockey.String())
 
 	block, err := p.db.GetBlock(ctx, c)
@@ -149,8 +178,9 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 
 	// publish log
 	body := &pb.PushLogRequest_Body{
-		DocKey: &pb.ProtoDocKey{DocKey: dockey},
-		Cid:    &pb.ProtoCid{Cid: c},
+		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
+		Cid:      &pb.ProtoCid{Cid: c},
+		SchemaID: []byte(schemaID),
 		Log: &pb.Document_Log{
 			Block: block.RawData(),
 		},

@@ -6,12 +6,11 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
+	format "github.com/ipfs/go-ipld-format"
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	grpcpeer "google.golang.org/grpc/peer"
-	"google.golang.org/grpc/status"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -81,8 +80,51 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 
 // PushLog recieves a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
-	log.Debug("Recieved a pushLog request...")
-	return nil, nil
+	pid, err := peerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Recieved a pushLog request from %s", pid)
+
+	// txn, err := s.db.NewTxnI(ctx, false)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("Failed to create txn: %w", err)
+	// }
+	// defer txn.Discard(ctx)
+
+	// parse request object
+	cid := req.Body.Cid.Cid
+	schemaID := string(req.Body.SchemaID)
+	docKey := req.Body.DocKey.DocKey
+	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get collection from schemaID %s: %w", schemaID, err)
+	}
+
+	var getter format.NodeGetter = s.peer.ds
+	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
+		log.Debug("Upgrading DAGSyncer with a session")
+		getter = sessionMaker.Session(ctx)
+	}
+
+	// handleComposite
+	nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to decode block to ipld.Node: %w", err)
+	}
+	cids, err := s.peer.processLog(ctx, s.db, col, docKey, cid, "", nd, getter)
+	if err != nil {
+		log.Errorf("Failed to process push log node %s at %s: %s", docKey, cid, err)
+	}
+
+	// handleChildren
+	if len(cids) > 0 { // we have child nodes to get
+		var session sync.WaitGroup
+		s.peer.handleChildBlocks(s.db, &session, col, docKey, "", nd, cids, getter)
+		session.Wait()
+	}
+
+	return &pb.PushLogReply{}, nil
 }
 
 // GetHeadLog recieves a get head log request
@@ -158,16 +200,15 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	log.Debugf("Handling new pubsub message from %s on %s", from, topic)
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
-		log.Errorf("Failed to unmarshal pubsub message %s", err)
+		log.Error("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
-	if _, err := s.PushLog(ctx, req); status.Code(err) == codes.NotFound {
-		// log err
-	} else if err != nil {
+	if _, err := s.PushLog(ctx, req); err != nil {
+		log.Errorf("failed pushing log for doc %s: %s", topic, err)
 		return nil, fmt.Errorf("failed pushing log for doc %s: %w", topic, err)
 	}
 	return nil, nil
@@ -186,3 +227,29 @@ func (a addr) Network() string { return "libp2p" }
 
 // String returns the peer ID of this address in string form (B58-encoded).
 func (a addr) String() string { return a.id.Pretty() }
+
+// peerIDFromContext returns peer ID from the GRPC context
+func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
+	ctxPeer, ok := grpcpeer.FromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("unable to identify stream peer")
+	}
+	pid, err := libpeer.Decode(ctxPeer.Addr.String())
+	if err != nil {
+		return "", fmt.Errorf("parsing stream peer id: %v", err)
+	}
+	return pid, nil
+}
+
+// logFromProto returns a thread log from a proto log.
+// func logFromProto(l *pb.Log) thread.LogInfo {
+// 	return thread.LogInfo{
+// 		ID:     l.ID.ID,
+// 		PubKey: l.PubKey.PubKey,
+// 		Addrs:  addrsFromProto(l.Addrs),
+// 		Head: thread.Head{
+// 			ID:      l.Head.Cid,
+// 			Counter: l.Counter,
+// 		},
+// 	}
+// }

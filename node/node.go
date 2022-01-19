@@ -64,7 +64,7 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 
 	// create our peerstore from the underlying defra rootstore
 	// prefixed with "p2p"
-	rootstore := db.Rootstore()
+	rootstore := db.Root()
 	pstore := namespace.Wrap(rootstore, ds.NewKey("peers"))
 	peerstore, err := pstoreds.NewPeerstore(ctx, pstore, pstoreds.DefaultOpts())
 	if err != nil {
@@ -97,7 +97,7 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 		return nil, fin.Cleanup(err)
 	}
 
-	bstore := db.DAGStore()
+	bstore := db.DAGstore()
 	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
 	if err != nil {
 		return nil, fin.Cleanup(err)
