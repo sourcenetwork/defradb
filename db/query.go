@@ -26,11 +26,11 @@ func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	}
 
 	txn, err := db.NewTxn(ctx, false)
-	defer txn.Discard(ctx)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
+	defer txn.Discard(ctx)
 
 	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
 	if err != nil {
