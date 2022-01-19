@@ -186,6 +186,10 @@ const (
 
 type FieldID uint32
 
+func (f FieldID) String() string {
+	return fmt.Sprint(uint32(f))
+}
+
 type FieldDescription struct {
 	Name         string
 	ID           FieldID

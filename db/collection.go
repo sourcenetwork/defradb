@@ -176,6 +176,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	col.SchemaID = cid.String()
 	key = base.MakeCollectionSchemaSystemKey(cid.String())
 	err = db.systemstore.Put(ctx, key.ToDS(), []byte(desc.Name))
+	log.Debugf("Created collection %s with ID %s", col.Name(), col.SchemaID)
 	return col, err
 }
 
@@ -201,11 +202,28 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		return nil, errors.New("Collection must have a schema")
 	}
 
+	buf, err = json.Marshal(struct {
+		Name   string
+		Schema base.SchemaDescription
+	}{desc.Name, desc.Schema})
+	if err != nil {
+		return nil, err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := utils.NewCidV1(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	sid := cid.String()
+	log.Debugf("Retrieved collection %s with ID %s", desc.Name, sid)
 	return &Collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
 		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
+		SchemaID: sid,
 	}, nil
 }
 
@@ -280,6 +298,10 @@ func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
 	panic("not implemented")
 }
 
+func (c *Collection) SchemaCID() string {
+	return c.SchemaID
+}
+
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
 func (c *Collection) WithTxn(txn client.Txn) client.Collection {
@@ -289,6 +311,7 @@ func (c *Collection) WithTxn(txn client.Txn) client.Collection {
 		desc:     c.desc,
 		colID:    c.colID,
 		colIDKey: c.colIDKey,
+		SchemaID: c.SchemaID,
 	}
 }
 
@@ -372,7 +395,7 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 
 	// register new document with peer node
 	// @todo: encapsulate this stuff within a DB logger/watcher interface
-	go c.db.peer.RegisterNewDocument(ctx, dockey, newCID)
+	go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.SchemaID)
 	return nil
 }
 
@@ -634,7 +657,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID, c.db.broadcaster, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaCID(), c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}

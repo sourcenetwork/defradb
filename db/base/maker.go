@@ -25,8 +25,9 @@ var (
 var (
 	// Commented because it's deadcode (unused according to linter).
 	// collectionSeqKey = "collection"
-	collectionNs = ds.NewKey("/collection")
-	schemaNs     = ds.NewKey("/schema")
+	collectionNs       = ds.NewKey("/collection")
+	schemaNs           = ds.NewKey("/schema")
+	collectionSchemaNs = collectionNs.Child(schemaNs)
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
@@ -43,6 +44,10 @@ func MakeIndexKey(col *CollectionDescription, index *IndexDescription, key core.
 // it assumes the name of the collection is non-empty.
 func MakeCollectionSystemKey(name string) core.Key {
 	return core.Key{Key: collectionNs.ChildString(name)}
+}
+
+func MakeCollectionSchemaSystemKey(schemaHash string) core.Key {
+	return core.Key{Key: collectionSchemaNs.ChildString(schemaHash)}
 }
 
 // MakeSchemaSystemKey returns a formatted schema key for the system data store.

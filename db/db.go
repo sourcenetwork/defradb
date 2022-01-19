@@ -141,8 +141,13 @@ func (db *DB) Start(ctx context.Context) error {
 	return db.Initialize(ctx)
 }
 
+// Root
+func (db *DB) Root() ds.Batching {
+	return db.rootstore
+}
+
 // Rootstore gets the internal rootstore handle
-func (db *DB) Rootstore() ds.Batching {
+func (db *DB) Rootstore() core.DSReaderWriter {
 	return db.rootstore
 }
 
@@ -151,8 +156,13 @@ func (db *DB) Headstore() core.DSReaderWriter {
 	return db.headstore
 }
 
-// DAGStore returns the internal DAG store which contains IPLD blocks
-func (db *DB) DAGStore() core.DAGStore {
+// Datastore returns the interal index store for DAG Heads
+func (db *DB) Datastore() core.DSReaderWriter {
+	return db.datastore
+}
+
+// DAGstore returns the internal DAG store which contains IPLD blocks
+func (db *DB) DAGstore() core.DAGStore {
 	return db.dagstore
 }
 
