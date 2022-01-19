@@ -69,6 +69,10 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 	return delta.SubDAGs
 }
 
+func (delta *CompositeDAGDelta) GetSchemaID() string {
+	return delta.SchemaID
+}
+
 // CompositeDAG is a CRDT structure that is used
 // to track a collcetion of sub MerkleCRDTs.
 type CompositeDAG struct {

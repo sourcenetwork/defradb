@@ -35,9 +35,13 @@ type DB interface {
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	SetBroadcaster(bs corenet.Broadcaster)
-	Rootstore() ds.Batching
+	Root() ds.Batching
+	Rootstore() core.DSReaderWriter
 	Headstore() core.DSReaderWriter
-	DAGStore() core.DAGStore
+	Datastore() core.DSReaderWriter
+	DAGstore() core.DAGStore
+
+	NewTxnI(context.Context, bool) (Txn, error)
 }
 
 type Sequence interface{}
@@ -82,6 +86,9 @@ type Collection interface {
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
 	WithTxn(Txn) Collection
+
+	GetPrimaryIndexDocKey(ds.Key) ds.Key
+	SchemaCID() string
 }
 
 type UpdateOpt struct{}

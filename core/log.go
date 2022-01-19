@@ -10,7 +10,8 @@ import (
 // document or sub-field.
 // Note: This may need to be an interface :/
 type Log struct {
-	DocKey string
-	Cid    cid.Cid
-	Block  ipld.Node
+	DocKey   string
+	Cid      cid.Cid
+	SchemaID string
+	Block    ipld.Node
 }
