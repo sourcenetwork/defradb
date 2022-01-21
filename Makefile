@@ -20,17 +20,17 @@ multi-build:
 start: build
 	./build/defradb start
 
-.PHONY: deps\:circle-ci
-deps\:circle-ci:
-	go mod download
-
-.PHONY: deps\:github-ci
-deps\:github-ci:
+.PHONY: deps\:golangci-lint
+deps\:golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
-	go install github.com/ory/go-acc
+
+.PHONY: deps\:go-acc
+deps\:go-acc:
+	go install github.com/ory/go-acc@latest
 
 .PHONY: deps
-deps: deps\:circle-ci deps\:github-ci
+deps: deps\:golangci-lint deps\:go-acc
+	go mod download
 
 .PHONY: clean
 clean:
@@ -51,7 +51,7 @@ test\:bench:
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
-test\:coverage-full:
+test\:coverage-full: deps\:go-acc
 	go-acc ./... --output=coverage-full.txt --covermode=atomic
 	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
 
