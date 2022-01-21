@@ -23,10 +23,14 @@ start: build
 .PHONY: deps\:circle-ci
 deps\:circle-ci:
 	go mod download
+
+.PHONY: deps\:github-ci
+deps\:github-ci:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
+	go install github.com/ory/go-acc
 
 .PHONY: deps
-deps: deps\:circle-ci
+deps: deps\:circle-ci deps\:github-ci
 
 .PHONY: clean
 clean:
@@ -45,10 +49,17 @@ test:
 test\:bench:
 	go test -bench
 
-.PHONY: test\:coverage
-test\:coverage:
-	go test ./... -coverprofile cover.out
-	go tool cover -func cover.out | grep total | awk '{print $$3}'
+# This also takes integration tests into account.
+.PHONY: test\:coverage-full
+test\:coverage-full:
+	go-acc ./... --output=coverage-full.txt --covermode=atomic
+	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
+
+# This only covers how much of the package is tested by itself (unit test).
+.PHONY: test\:coverage-quick
+test\:coverage-quick:
+	go test ./... -race -coverprofile=coverage-quick.txt -covermode=atomic
+	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
 
 .PHONY: validate\:codecov
 validate\:codecov:
