@@ -49,5 +49,5 @@ ignore:
   - ".gitignore"
   - ".golangci.sourceinc.yaml"
   - "Makefile"
-  - "**/*_test.go"
-  - "db/tests"
+  # - "**/*_test.go"
+  # - "db/tests"
