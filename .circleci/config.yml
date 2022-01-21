@@ -20,7 +20,7 @@ jobs:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
           name: Install Dependencies
-          command: make deps:circle-ci
+          command: make deps
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
