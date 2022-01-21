@@ -786,7 +786,7 @@ linters:
     - typecheck
     - unused
     - varcheck
-    # - errcheck
+    - errcheck
     # - wrapcheck
     # - errorlint
     # - gci
