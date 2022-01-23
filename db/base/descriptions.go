@@ -105,12 +105,16 @@ const (
 	FieldKind_None FieldKind = iota
 	FieldKind_DocKey
 	FieldKind_BOOL
+	FieldKind_BOOL_ARRAY
 	FieldKind_INT
+	FieldKind_INT_ARRAY
 	FieldKind_FLOAT
+	FieldKind_FLOAT_ARRAY
 	FieldKind_DECIMNAL
 	FieldKind_DATE
 	FieldKind_TIMESTAMP
 	FieldKind_STRING
+	FieldKind_STRING_ARRAY
 	FieldKind_BYTES
 	FieldKind_OBJECT               // Embedded object within the type
 	FieldKind_OBJECT_ARRAY         // Array of embedded objects

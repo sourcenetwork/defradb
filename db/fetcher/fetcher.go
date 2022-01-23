@@ -280,7 +280,8 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
 	df.doc.Properties[fieldDesc] = &document.EncProperty{
-		Raw: kv.Value,
+		Desc: fieldDesc,
+		Raw:  kv.Value,
 	}
 	// @todo: Extract Index implicit/stored keys
 	return nil
