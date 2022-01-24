@@ -117,7 +117,6 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 	for _, dbi := range dbs {
 		fmt.Println("--------------")
-		//nolint:gosimple
 		fmt.Println(fmt.Sprintf("Running tests with database type: %s", dbi.name))
 
 		db := dbi.db
