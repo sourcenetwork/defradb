@@ -101,25 +101,26 @@ func (sd SchemaDescription) IsEmpty() bool {
 
 type FieldKind uint8
 
+// Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	FieldKind_None FieldKind = iota
-	FieldKind_DocKey
-	FieldKind_BOOL
-	FieldKind_BOOL_ARRAY
-	FieldKind_INT
-	FieldKind_INT_ARRAY
-	FieldKind_FLOAT
-	FieldKind_FLOAT_ARRAY
-	FieldKind_DECIMNAL
-	FieldKind_DATE
-	FieldKind_TIMESTAMP
-	FieldKind_STRING
-	FieldKind_STRING_ARRAY
-	FieldKind_BYTES
-	FieldKind_OBJECT               // Embedded object within the type
-	FieldKind_OBJECT_ARRAY         // Array of embedded objects
-	FieldKind_FOREIGN_OBJECT       // Embedded object, but accessed via foreign keys
-	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accessed via foreign keys
+	FieldKind_None                 FieldKind = 0
+	FieldKind_DocKey               FieldKind = 1
+	FieldKind_BOOL                 FieldKind = 2
+	FieldKind_BOOL_ARRAY           FieldKind = 3
+	FieldKind_INT                  FieldKind = 4
+	FieldKind_INT_ARRAY            FieldKind = 5
+	FieldKind_FLOAT                FieldKind = 6
+	FieldKind_FLOAT_ARRAY          FieldKind = 7
+	FieldKind_DECIMNAL             FieldKind = 8
+	FieldKind_DATE                 FieldKind = 9
+	FieldKind_TIMESTAMP            FieldKind = 10
+	FieldKind_STRING               FieldKind = 11
+	FieldKind_STRING_ARRAY         FieldKind = 12
+	FieldKind_BYTES                FieldKind = 13
+	FieldKind_OBJECT               FieldKind = 14 // Embedded object within the type
+	FieldKind_OBJECT_ARRAY         FieldKind = 15 // Array of embedded objects
+	FieldKind_FOREIGN_OBJECT       FieldKind = 16 // Embedded object, but accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17 // Array of embedded objects, accessed via foreign keys
 )
 
 // type RelationType uint8
