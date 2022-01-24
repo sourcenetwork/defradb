@@ -71,7 +71,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithsWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple inline array with no filter, count of empty integer array",
+		Description: "Simple inline array with no filter, count of integer array",
 		Query: `query {
 					users {
 						Name
