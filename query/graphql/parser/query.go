@@ -452,25 +452,25 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 
 // Returns the source of the aggregate as requested by the consumer
 func (field Field) GetAggregateSource() ([]string, error) {
-	var path []string
 
 	if len(field.Statement.Arguments) == 0 {
-		path = []string{}
-	} else {
-		switch arguementValue := field.Statement.Arguments[0].Value.GetValue().(type) {
-		case string:
-			path = []string{arguementValue}
-		case []*ast.ObjectField:
-			if len(arguementValue) == 0 {
-				return []string{}, fmt.Errorf("Unexpected error: aggregate field contained no child field selector")
-			}
-			innerPath := arguementValue[0].Value.GetValue()
-			if innerPathStringValue, isString := innerPath.(string); isString {
-				path = []string{arguementValue[0].Name.Value, innerPathStringValue}
-			} else {
-				// If the inner path is not a string, this must mean the field is an inline array in which case we only want the base path
-				path = []string{arguementValue[0].Name.Value}
-			}
+		return []string{}, fmt.Errorf("Aggregate must be provided with a property to aggregate.")
+	}
+
+	var path []string
+	switch arguementValue := field.Statement.Arguments[0].Value.GetValue().(type) {
+	case string:
+		path = []string{arguementValue}
+	case []*ast.ObjectField:
+		if len(arguementValue) == 0 {
+			return []string{}, fmt.Errorf("Unexpected error: aggregate field contained no child field selector")
+		}
+		innerPath := arguementValue[0].Value.GetValue()
+		if innerPathStringValue, isString := innerPath.(string); isString {
+			path = []string{arguementValue[0].Name.Value, innerPathStringValue}
+		} else {
+			// If the inner path is not a string, this must mean the field is an inline array in which case we only want the base path
+			path = []string{arguementValue[0].Name.Value}
 		}
 	}
 

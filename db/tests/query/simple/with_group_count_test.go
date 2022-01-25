@@ -133,16 +133,7 @@ func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 				"Age": 19
 			}`)},
 		},
-		Results: []map[string]interface{}{
-			{
-				"Age":    uint64(32),
-				"_count": 0,
-			},
-			{
-				"Age":    uint64(19),
-				"_count": 0,
-			},
-		},
+		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
 
 	executeTestCase(t, test)
