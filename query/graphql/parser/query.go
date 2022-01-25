@@ -252,8 +252,8 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	return q, nil
 }
 
-// parseOperationDefintition parses the individual GraphQL
-// 'query' operations, which there may be mulitple of.
+// parseOperationDefinition parses the individual GraphQL
+// 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
 	qdef := &OperationDefinition{
 		Statement:  def,
@@ -290,7 +290,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	return qdef, nil
 }
 
-// @todo: Create seperate select parse functions
+// @todo: Create separate select parse functions
 // for generated object queries, and general
 // API queries
 

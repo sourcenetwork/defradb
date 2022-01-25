@@ -149,7 +149,7 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 		headset.key = key
 	}
 	dag.headset = headset
-	dag.depthLimit = math.MaxUint32 // inifinite depth
+	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:             p,

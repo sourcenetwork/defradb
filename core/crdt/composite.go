@@ -68,7 +68,7 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 }
 
 // CompositeDAG is a CRDT structure that is used
-// to track a collcetion of sub MerkleCRDTs.
+// to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct{}
 
 func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {
@@ -80,7 +80,7 @@ func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 }
 
 func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
-	// make sure the links are sorted lexigraphically by CID
+	// make sure the links are sorted lexicographically by CID
 	sort.Slice(links, func(i, j int) bool {
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
@@ -91,7 +91,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 }
 
 // Merge implements ReplicatedData interface
-// Merge two LWWRegisty based on the order of the timestamp (ts),
+// Merge two LWWRegistry based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
 // @todo

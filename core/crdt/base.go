@@ -26,7 +26,7 @@ var (
 
 // baseCRDT is embedded as a base layer into all
 // the core CRDT implementations to reduce code
-// duplcation, and better manage the overhead
+// duplication, and better manage the overhead
 // tasks that all the CRDTs need to implement anyway
 type baseCRDT struct {
 	store          core.DSReaderWriter
@@ -59,7 +59,7 @@ func (base baseCRDT) priorityKey(key string) ds.Key {
 	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
 }
 
-// Commented becuase this function is unused (for linter).
+// Commented because this function is unused (for linter).
 // func (base baseCRDT) typeKey(key string) ds.Key {
 // 	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
 // }

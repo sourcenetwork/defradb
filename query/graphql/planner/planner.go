@@ -40,7 +40,7 @@ type planNode interface {
 	// Spans sets the planNodes target
 	// spans. This is primarily only used
 	// for a scanNode, but based on the tree
-	// structure, may need to be propogated
+	// structure, may need to be propagated
 	// Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
@@ -86,8 +86,8 @@ type Statement struct {
 	// requestQuery    parser.Query
 }
 
-// Planner combines session state and databse state to
-// produce a query plan, which is run by the exuction context.
+// Planner combines session state and database state to
+// produce a query plan, which is run by the execution context.
 type Planner struct {
 	txn client.Txn
 	db  client.DB

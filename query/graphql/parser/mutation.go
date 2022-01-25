@@ -123,8 +123,8 @@ func (m Mutation) ToSelect() *Select {
 	}
 }
 
-// parseOperationDefintition parses the individual GraphQL
-// 'query' operations, which there may be mulitple of.
+// parseOperationDefinition parses the individual GraphQL
+// 'query' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
 	qdef := &OperationDefinition{
 		Statement:  def,
@@ -147,7 +147,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	return qdef, nil
 }
 
-// @todo: Create seperate mutation parse functions
+// @todo: Create separate mutation parse functions
 // for generated object mutations, and general
 // API mutations.
 

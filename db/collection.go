@@ -43,7 +43,7 @@ var (
 var _ client.Collection = (*Collection)(nil)
 
 // Collection stores data records at Documents, which are gathered
-// together under a collection name. This is analgeous to SQL Tables.
+// together under a collection name. This is analogous to SQL Tables.
 type Collection struct {
 	db  *DB
 	txn *Txn
@@ -355,7 +355,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-// Contract: DB Exists check is already perfomed, and a doc with the given key exists
+// Contract: DB Exists check is already performed, and a doc with the given key exists
 // Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
@@ -398,7 +398,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
-	//	=> 		instanciate MerkleCRDT objects
+	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
 	dockey := doc.Key().Key
 	links := make([]core.DAGLink, 0)
@@ -440,7 +440,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 }
 
 // Delete will attempt to delete a document by key
-// will return true if a deltion is successful, and
+// will return true if a deletion is successful, and
 // return false, along with an error, if it cannot.
 // If the document doesn't exist, then it will return
 // false, and a ErrDocumentNotFound error.
