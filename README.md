@@ -18,12 +18,12 @@ Table of Contents
 	* [Create a Document Instance](#create-a-document-instance)
 	* [Query our documents](#query-our-documents)
 	* [Interact with Document Commits](#interact-with-document-commits)
-* [Query Documenation](#query-documenation)
+* [Query Documentation](#query-documenation)
 * [CLI Documentation](#cli-documentation)
 * [Next Steps](#next-steps)
 * [Licensing](#licensing)
 * [Contributors](#contributors)
-* [Futher Reading](#futher-reading)
+* [Further Reading](#futher-reading)
 	* [Technical Specification Doc](#technical-specification-doc)
 	* [Design Doc](#design-doc)
 
@@ -33,7 +33,7 @@ DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for
 
 ## Installation
 
-To install a DefraDB node, you can download the pre-compiled binaries available on the releases page, or you can compile it youself if you have a local [Go Toolchain](https://golang.org/) installed.
+To install a DefraDB node, you can download the pre-compiled binaries available on the releases page, or you can compile it yourself if you have a local [Go Toolchain](https://golang.org/) installed.
 
 ### Build
 
@@ -93,7 +93,7 @@ Run the linter (make sure to have had run `make deps` before or have `golangci-l
 make lint
 ```
 
-Find all occurances where the linter errors are explicitly being supressed (need to resolve these):
+Find all occurrences where the linter errors are explicitly being suppressed (need to resolve these):
 ```
 make lint:todo
 ```
@@ -128,7 +128,7 @@ If you are using BadgerDB, and you encounter the following error:
 ```
 Failed to initiate database:Map log file. Path=.defradb/data/000000.vlog. Error=exec format error
 ```
-It means terminal client doesn't support Mmap'ed files. This is common with older version of Ubuntu on Windows va WSL. Unfortuently, BadgerDB uses Mmap to interact with the filesystem, so you will need to use a terminal client which supports it.
+It means terminal client doesn't support Mmap'ed files. This is common with older version of Ubuntu on Windows va WSL. Unfortunately, BadgerDB uses Mmap to interact with the filesystem, so you will need to use a terminal client which supports it.
 
 Once your local environment is setup, you can test your connection with:
 ```
@@ -278,7 +278,7 @@ Here, you can see we use the CID from the previous query to further explore the 
 
 This only scratches the surface of the DefraDB Query Language, see below for the entire language specification.
 
-## Query Documenation
+## Query Documentation
 
 You can access the official DefraDB Query Language documentation online here: [https://hackmd.io/@source/BksQY6Qfw](https://hackmd.io/@source/BksQY6Qfw)
 
@@ -288,11 +288,11 @@ You can find generated documentation for the shipped CLI interface [here](docs/c
 
 ## Next Steps
 
-The current early access release has much of the digial signatute, and identity work removed, until the cryptographic elements can be finalized.
+The current early access release has much of the digital signature, and identity work removed, until the cryptographic elements can be finalized.
 
 The following will ship with the next release:
 - schema type mutation/migration
-- data syncronization between nodes
+- data synchronization between nodes
 - grouping and aggregation on the query language
 - additional CRDT type(s)
 - and more. 
@@ -312,7 +312,7 @@ When contributing to a DefraDB feature, you can find the relevant license in the
 
 > The following documents are internal to the Source Team, if you wish to gain access, please reach out to us at [hello@source.network](mailto:hello@source.network)
 
-## Futher Reading
+## Further Reading
 
 ### Technical Specification Doc
 
