@@ -205,7 +205,9 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 				if subtype.Name == parser.GroupFieldName {
 					n.groupSelect = subtype
 				} else {
-					n.addTypeIndexJoin(subtype)
+					if err := n.addTypeIndexJoin(subtype); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -236,7 +238,10 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 				subtype := &parser.Select{
 					Name: count.Field,
 				}
-				n.addTypeIndexJoin(subtype)
+
+				if err := n.addTypeIndexJoin(subtype); err != nil {
+					return err
+				}
 			}
 		}
 	}

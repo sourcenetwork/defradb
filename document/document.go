@@ -305,14 +305,24 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 		// Check if its actually a float or just an int
 		if float64(int64(val)) == val { //int
-			doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			if err != nil {
+				return err
+			}
+
 		} else { //float
-			doc.setCBOR(core.LWW_REGISTER, field, val)
+			err := doc.setCBOR(core.LWW_REGISTER, field, val)
+			if err != nil {
+				return err
+			}
 		}
 
 	// string, bool, and more
 	case string, bool:
-		doc.setCBOR(core.LWW_REGISTER, field, val)
+		err := doc.setCBOR(core.LWW_REGISTER, field, val)
+		if err != nil {
+			return err
+		}
 
 	// array
 	case []interface{}:
@@ -334,7 +344,10 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 			return err
 		}
 
-		doc.setObject(core.OBJECT, field, subDoc)
+		err = doc.setObject(core.OBJECT, field, subDoc)
+		if err != nil {
+			return err
+		}
 
 	default:
 		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)

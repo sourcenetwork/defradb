@@ -117,12 +117,19 @@ func initConfig() {
 		bs, err := yaml.Marshal(defaultConfig)
 		cobra.CheckErr(err)
 
-		viper.ReadConfig(bytes.NewBuffer(bs))
+		err = viper.ReadConfig(bytes.NewBuffer(bs))
+		cobra.CheckErr(err)
+
 		err = viper.WriteConfigAs(home + "/.defradb/" + "config.yaml")
 		cobra.CheckErr(err)
 	}
 
-	viper.BindPFlag("database.address", rootCmd.Flags().Lookup("url"))
-	viper.BindPFlag("database.store", startCmd.Flags().Lookup("store"))
-	viper.Unmarshal(&config)
+	err := viper.BindPFlag("database.address", rootCmd.Flags().Lookup("url"))
+	cobra.CheckErr(err)
+
+	err = viper.BindPFlag("database.store", startCmd.Flags().Lookup("store"))
+	cobra.CheckErr(err)
+
+	err = viper.Unmarshal(&config)
+	cobra.CheckErr(err)
 }

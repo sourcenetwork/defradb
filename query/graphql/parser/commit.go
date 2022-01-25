@@ -12,6 +12,8 @@ package parser
 import (
 	"errors"
 
+	"log"
+
 	"github.com/graphql-go/graphql/language/ast"
 )
 
@@ -126,7 +128,10 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	var err error
 	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
 
-	parseCounts(commit)
+	parseErr := parseCounts(commit)
+	if parseErr != nil {
+		log.Print("failure while parsing requested _count(s): ", parseErr)
+	}
 
 	return commit, err
 }

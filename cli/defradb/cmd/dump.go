@@ -37,7 +37,15 @@ var dumpCmd = &cobra.Command{
 			log.Error("request failed: ", err)
 			return
 		}
-		defer res.Body.Close()
+
+		defer func() {
+			err = res.Body.Close()
+			if err != nil {
+				// Should this be `log.Fatal` ??
+				log.Error("response body closing failed: ", err)
+			}
+		}()
+
 		buf, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Error("request failed: ", err)

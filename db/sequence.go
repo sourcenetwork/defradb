@@ -37,7 +37,10 @@ func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 
 	_, err := seq.get(ctx)
 	if err == ds.ErrNotFound {
-		seq.update(ctx)
+		err = seq.update(ctx)
+		if err != nil {
+			return nil, err
+		}
 	} else if err != nil {
 		return nil, err
 	}

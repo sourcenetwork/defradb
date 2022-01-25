@@ -12,6 +12,7 @@ package planner
 import (
 	"context"
 	"fmt"
+	"log"
 	"reflect"
 
 	"errors"
@@ -216,7 +217,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.limit != nil {
-		p.expandLimitPlan(plan, parentPlan)
+		err := p.expandLimitPlan(plan, parentPlan)
+		if err != nil {
+			return err
+		}
 	}
 
 	// wire up the render plan
@@ -381,13 +385,13 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	}
 
 	if err = plan.Start(); err != nil {
-		plan.Close()
+		log.Print(plan.Close())
 		return nil, err
 	}
 
 	var next bool
 	if next, err = plan.Next(); err != nil || !next {
-		plan.Close()
+		log.Print(plan.Close())
 		return nil, err
 	}
 
@@ -400,7 +404,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 		next, err = plan.Next()
 		if err != nil {
-			plan.Close()
+			log.Print(plan.Close())
 			return nil, err
 		}
 

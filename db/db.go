@@ -190,7 +190,10 @@ func (db *DB) PrintDump(ctx context.Context) {
 // of resources (IE: Badger instance)
 func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
-	db.rootstore.Close()
+	err := db.rootstore.Close()
+	if err != nil {
+		log.Error("Failure closing running process")
+	}
 	log.Info("Succesfully closed running process")
 }
 
@@ -207,7 +210,12 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 		panic(err)
 	}
 
-	defer results.Close()
+	defer func() {
+		err := results.Close()
+		if err != nil {
+			log.Error("Failure closing set of query store results")
+		}
+	}()
 
 	for r := range results.Next() {
 		fmt.Println(r.Key, ": ", r.Value)

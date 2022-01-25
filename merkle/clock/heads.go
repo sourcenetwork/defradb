@@ -138,7 +138,13 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	defer results.Close()
+
+	defer func() {
+		err := results.Close()
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 
 	heads := make([]cid.Cid, 0)
 	var maxHeight uint64

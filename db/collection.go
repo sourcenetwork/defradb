@@ -412,7 +412,10 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				return err
 			}
 			if val.IsDelete() {
-				doc.SetAs(v.Name(), nil, v.Type())
+				err := doc.SetAs(v.Name(), nil, v.Type())
+				if err != nil {
+					log.Error("Couldn't set document as type: ", v.Type())
+				}
 				merge[k] = nil
 			} else {
 				merge[k] = val.Value()
