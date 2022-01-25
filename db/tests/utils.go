@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -34,6 +35,8 @@ type QueryTestCase struct {
 	// of changes in strinigied JSON format
 	Updates map[int][]string
 	Results []map[string]interface{}
+	// The expected content of an expected error
+	ExpectedError string
 }
 
 type databaseInfo struct {
@@ -144,7 +147,9 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
 	ctx := context.Background()
 	dbs, err := getDatabases(t)
-	assert.NoError(t, err)
+	if assertError(t, err, test) {
+		return
+	}
 	assert.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
@@ -153,12 +158,16 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 		db := dbi.db
 		err = db.AddSchema(ctx, schema)
-		assert.NoError(t, err)
+		if assertError(t, err, test) {
+			return
+		}
 
 		collections := []client.Collection{}
 		for _, collectionName := range collectionNames {
 			col, err := db.GetCollection(ctx, collectionName)
-			assert.NoError(t, err)
+			if assertError(t, err, test) {
+				return
+			}
 			collections = append(collections, col)
 		}
 
@@ -166,18 +175,26 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		for cid, docs := range test.Docs {
 			for i, docStr := range docs {
 				doc, err := document.NewFromJSON([]byte(docStr))
-				assert.NoError(t, err, test.Description)
+				if assertError(t, err, test) {
+					return
+				}
 				err = collections[cid].Save(ctx, doc)
-				assert.NoError(t, err, test.Description)
+				if assertError(t, err, test) {
+					return
+				}
 
 				// check for updates
 				updates, ok := test.Updates[i]
 				if ok {
 					for _, u := range updates {
 						err = doc.SetWithJSON([]byte(u))
-						assert.NoError(t, err, test.Description)
+						if assertError(t, err, test) {
+							return
+						}
 						err = collections[cid].Save(ctx, doc)
-						assert.NoError(t, err, test.Description)
+						if assertError(t, err, test) {
+							return
+						}
 					}
 				}
 			}
@@ -185,7 +202,9 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 		// exec query
 		result := db.ExecQuery(ctx, test.Query)
-		assert.Empty(t, result.Errors, test.Description)
+		if assertErrors(t, result.Errors, test) {
+			return
+		}
 
 		resultantData := result.Data.([]map[string]interface{})
 
@@ -199,5 +218,48 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		for i, result := range resultantData {
 			assert.Equal(t, test.Results[i], result, test.Description)
 		}
+
+		if test.ExpectedError != "" {
+			assert.Fail(t, "Expected an error however none was raised.", test.Description)
+		}
+	}
+}
+
+// Asserts as to whether an error has been raised as expected (or not). If an expected
+// error has been raised it will return true, returns false in all other cases.
+func assertErrors(t *testing.T, errors []interface{}, testCase QueryTestCase) bool {
+	if testCase.ExpectedError == "" {
+		assert.Empty(t, errors, testCase.Description)
+	} else {
+		for _, e := range errors {
+			// This is always a string at the moment, add support for other types as and when needed
+			errorString := e.(string)
+			if !strings.Contains(errorString, testCase.ExpectedError) {
+				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
+				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(testCase.ExpectedError))
+				continue
+			}
+			return true
+		}
+	}
+	return false
+}
+
+// Asserts as to whether an error has been raised as expected (or not). If an expected
+// error has been raised it will return true, returns false in all other cases.
+func assertError(t *testing.T, err error, testCase QueryTestCase) bool {
+	if err == nil {
+		return false
+	}
+
+	if testCase.ExpectedError == "" {
+		assert.NoError(t, err, testCase.Description)
+		return false
+	} else {
+		if !strings.Contains(err.Error(), testCase.ExpectedError) {
+			assert.ErrorIs(t, err, fmt.Errorf(testCase.ExpectedError))
+			return false
+		}
+		return true
 	}
 }
