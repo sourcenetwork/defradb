@@ -12,7 +12,7 @@ package crdt
 // Conflict-Free Replicated Data Types (CRDT)
 // are a data structure which can be replicated across multiple computers in a network,
 // where the replicas can be updated independently and concurrently without coordination
-// between the replicas and are able to deterministic converge to the same state.
+// between the replicas and are able to deterministically converge to the same state.
 
 // This package implements a collection of CRDT types specifically to be used in DefraDB,
 // and use the Delta-State CRDT architecture to update and replicate state. It is based on
