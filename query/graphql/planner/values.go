@@ -10,6 +10,7 @@
 package planner
 
 import (
+	"log"
 	"sort"
 	"strings"
 
@@ -49,7 +50,9 @@ func (n *valuesNode) Start() error           { return nil }
 func (n *valuesNode) Spans(spans core.Spans) {}
 func (n *valuesNode) Close() {
 	if n.docs != nil {
-		n.docs.Close()
+		if err := n.docs.Close(); err != nil {
+			log.Fatal("failure while closing valuesNode : %w", err)
+		}
 	}
 }
 

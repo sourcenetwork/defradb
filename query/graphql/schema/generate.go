@@ -12,6 +12,7 @@ package schema
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -309,7 +310,13 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
+
 					case *gql.List:
 						ltype := subobj.OfType
 						// register the relation
@@ -317,7 +324,12 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
 					}
 
 					fType.Type = ttype
@@ -401,7 +413,11 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 	}
 	countType := gql.NewEnum(inputCfg)
-	g.manager.schema.AppendType(countType)
+	err := g.manager.schema.AppendType(countType)
+	if err != nil {
+		// Todo: better error handle
+		log.Printf("got error while appending runtime schema: %v", err)
+	}
 
 	field := gql.Field{
 		Name: parser.CountFieldName,
@@ -579,7 +595,11 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// @attention: do we need to explicity add our "sub types" to the TypeMap
 		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
-		g.manager.schema.AppendType(filterBaseArgType)
+		err := g.manager.schema.AppendType(filterBaseArgType)
+		if err != nil {
+			// Todo: better error handle
+			log.Printf("got error while appending runtime schema: %v", err)
+		}
 
 		// conditionals
 		compoundListType := &gql.InputObjectFieldConfig{
@@ -720,10 +740,25 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 	name := strings.ToLower(obj.Name())
 
 	// add the generated types to the type map
-	g.manager.schema.AppendType(config.filter)
-	g.manager.schema.AppendType(config.groupBy)
-	g.manager.schema.AppendType(config.having)
-	g.manager.schema.AppendType(config.order)
+	if err := g.manager.schema.AppendType(config.filter); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - filter: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - groupBy: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.having); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - having: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.order); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - order: %v", err)
+	}
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
