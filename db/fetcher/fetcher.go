@@ -384,6 +384,11 @@ func (df *DocumentFetcher) Close() error {
 	if df.kvIter == nil {
 		return nil
 	}
-	df.kvIter.Close()
+
+	err := df.kvIter.Close()
+	if err != nil {
+		return err
+	}
+
 	return df.kvResultsIter.Close()
 }
