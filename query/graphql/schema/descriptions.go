@@ -46,10 +46,14 @@ var (
 	defaultCRDTForFieldKind = map[base.FieldKind]core.CType{
 		base.FieldKind_DocKey:               core.LWW_REGISTER,
 		base.FieldKind_BOOL:                 core.LWW_REGISTER,
+		base.FieldKind_BOOL_ARRAY:           core.LWW_REGISTER,
 		base.FieldKind_INT:                  core.LWW_REGISTER,
+		base.FieldKind_INT_ARRAY:            core.LWW_REGISTER,
 		base.FieldKind_FLOAT:                core.LWW_REGISTER,
+		base.FieldKind_FLOAT_ARRAY:          core.LWW_REGISTER,
 		base.FieldKind_DATE:                 core.LWW_REGISTER,
 		base.FieldKind_STRING:               core.LWW_REGISTER,
+		base.FieldKind_STRING_ARRAY:         core.LWW_REGISTER,
 		base.FieldKind_FOREIGN_OBJECT:       core.NONE_CRDT,
 		base.FieldKind_FOREIGN_OBJECT_ARRAY: core.NONE_CRDT,
 	}
@@ -75,6 +79,18 @@ func gqlTypeToFieldKind(t gql.Type) base.FieldKind {
 	case *gql.Object:
 		return base.FieldKind_FOREIGN_OBJECT
 	case *gql.List:
+		if scalar, isScalar := v.OfType.(*gql.Scalar); isScalar {
+			switch scalar.Name() {
+			case "Boolean":
+				return base.FieldKind_BOOL_ARRAY
+			case "Int":
+				return base.FieldKind_INT_ARRAY
+			case "Float":
+				return base.FieldKind_FLOAT_ARRAY
+			case "String":
+				return base.FieldKind_STRING_ARRAY
+			}
+		}
 		return base.FieldKind_FOREIGN_OBJECT_ARRAY
 	}
 
@@ -145,7 +161,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 			desc.Schema.Fields = append(desc.Schema.Fields, fd)
 		}
 
-		// sort the fields lexigraphically
+		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
 			// make sure that the _key is always at the beginning
 			if desc.Schema.Fields[i].Name == "_key" {

@@ -39,7 +39,7 @@ import (
 // queried sub type ie: {birthday: "June 26, 1990"}.
 //
 // The typeIndexJoin works by using a basic scanNode for the
-// root, and recusively creates a new selectNode for the
+// root, and recursively creates a new selectNode for the
 // subType.
 type typeIndexJoin struct {
 	p *Planner
@@ -290,7 +290,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)
 
-	// re-initalize the sub type plan
+	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
 		// @todo pair up on the error handling / logging properly.
 		fmt.Println("sub-type initalization error with re-initalizing : %w", err)

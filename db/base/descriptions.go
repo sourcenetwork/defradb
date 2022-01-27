@@ -61,7 +61,7 @@ type IndexDescription struct {
 	// local schema.
 	//
 	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Morever, since
+	// and the DocKey of the target relation type. Moreover, since
 	// we use a Composite Key Index system, the ordering of the keys
 	// affects how we can use in the index. The initial Junction
 	// Index for a type, needs to be assigned to the  "Primary"
@@ -88,47 +88,51 @@ func (index IndexDescription) IDString() string {
 type SchemaDescription struct {
 	ID   uint32
 	Name string
-	Key  []byte // DocKey for verioned source schema
+	Key  []byte // DocKey for versioned source schema
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription
 }
 
-//IsEmpty returns true if the SchemaDescription is empty and unitialized
+//IsEmpty returns true if the SchemaDescription is empty and uninitialized
 func (sd SchemaDescription) IsEmpty() bool {
 	return len(sd.Fields) == 0
 }
 
 type FieldKind uint8
 
+// Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	FieldKind_None FieldKind = iota
-	FieldKind_DocKey
-	FieldKind_BOOL
-	FieldKind_INT
-	FieldKind_FLOAT
-	FieldKind_DECIMNAL
-	FieldKind_DATE
-	FieldKind_TIMESTAMP
-	FieldKind_STRING
-	FieldKind_BYTES
-	FieldKind_OBJECT               // Embedded object within the type
-	FieldKind_OBJECT_ARRAY         // Array of embedded objects
-	FieldKind_FOREIGN_OBJECT       // Embedded object, but accessed via foreign keys
-	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
+	FieldKind_None                 FieldKind = 0
+	FieldKind_DocKey               FieldKind = 1
+	FieldKind_BOOL                 FieldKind = 2
+	FieldKind_BOOL_ARRAY           FieldKind = 3
+	FieldKind_INT                  FieldKind = 4
+	FieldKind_INT_ARRAY            FieldKind = 5
+	FieldKind_FLOAT                FieldKind = 6
+	FieldKind_FLOAT_ARRAY          FieldKind = 7
+	FieldKind_DECIMNAL             FieldKind = 8
+	FieldKind_DATE                 FieldKind = 9
+	FieldKind_TIMESTAMP            FieldKind = 10
+	FieldKind_STRING               FieldKind = 11
+	FieldKind_STRING_ARRAY         FieldKind = 12
+	FieldKind_BYTES                FieldKind = 13
+	FieldKind_OBJECT               FieldKind = 14 // Embedded object within the type
+	FieldKind_OBJECT_ARRAY         FieldKind = 15 // Array of embedded objects
+	FieldKind_FOREIGN_OBJECT       FieldKind = 16 // Embedded object, but accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17 // Array of embedded objects, accessed via foreign keys
 )
 
-// type RelationType uint8
-
+// Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	Meta_Relation_ONE      uint8 = 0x01 << iota // 0b0000 0001
-	Meta_Relation_MANY                          // 0b0000 0010
-	Meta_Relation_ONEONE                        // 0b0000 0100
-	Meta_Relation_ONEMANY                       // 0b0000 1000
-	Meta_Relation_MANYMANY                      // 0b0001 0000
-	_                                           // 0b0010 0000
-	_                                           // 0b0100 0000
-	Meta_Relation_Primary                       // 0b1000 0000 Primary reference entity on relation
+	Meta_Relation_ONE      uint8 = 1   // 0b0000 0001
+	Meta_Relation_MANY     uint8 = 2   // 0b0000 0010
+	Meta_Relation_ONEONE   uint8 = 4   // 0b0000 0100
+	Meta_Relation_ONEMANY  uint8 = 8   // 0b0000 1000
+	Meta_Relation_MANYMANY uint8 = 16  // 0b0001 0000
+	_                      uint8 = 32  // 0b0010 0000
+	_                      uint8 = 64  // 0b0100 0000
+	Meta_Relation_Primary  uint8 = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
@@ -138,7 +142,7 @@ type FieldDescription struct {
 	ID           FieldID
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
-	RelationName string // The name of the relation index if the field is of type FORIEGN_OBJECT
+	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          core.CType
 	Meta         uint8
 	// @todo: Add relation name for specifying target relation index

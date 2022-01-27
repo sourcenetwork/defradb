@@ -53,7 +53,7 @@ type selectNode struct {
 	// main data source for the select node.
 	source planNode
 
-	// origal source that was first given when the select node
+	// original source that was first given when the select node
 	// was created
 	origSource planNode
 
@@ -152,7 +152,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 		n.filter = nil
 
 		// if we have a FindByDockey filter, create a span for it
-		// and propogate it to the scanNode
+		// and propagate it to the scanNode
 		// @todo: When running the optimizer, check if the filter object
 		// contains a _key equality condition, and upgrade it to a point lookup
 		// instead of a prefix scan + filter via the Primary Index (0), like here:

@@ -35,7 +35,7 @@ to interact with the database, the reccomended approach is with a
 local GraphiQL application (https://github.com/graphql/graphiql).
 
 To learn more about the DefraDB GraphQL Query Language, you may use
-the additional documenation found at: https://hackmd.io/@source/BksQY6Qfw.
+the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbaddr := viper.GetString("database.address")

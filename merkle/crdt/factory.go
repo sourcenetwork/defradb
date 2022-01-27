@@ -22,14 +22,14 @@ var (
 	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
 )
 
-// MerkleCRDTInitFn intanciates a MerkleCRDT with a given key
+// MerkleCRDTInitFn instantiates a MerkleCRDT with a given key
 type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
 
-// MerkleCRDTFactory instanciates a MerkleCRDTInitFn with a MultiStore
+// MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
 // returns a MerkleCRDTInitFn with all the necessary stores set
 type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
 
-// Factory is a helper utility for intanciating new MerkleCRDTs.
+// Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
@@ -40,7 +40,7 @@ type Factory struct {
 }
 
 var (
-	// DefaultFactory is intanciated with no stores
+	// DefaultFactory is instantiated with no stores
 	// It is recommended to use this only after you call
 	// WithStores(...) so you get a new non-shared instance
 	DefaultFactory = NewFactory(nil, nil, nil)
@@ -57,7 +57,7 @@ func NewFactory(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore
 	}
 }
 
-// Register creates a new entry in the crdts map to register a factory function
+// Register creates a new entry in the CRDTs map to register a factory function
 // to a MerkleCRDT Type.
 func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
 	factory.crdts[t] = fn

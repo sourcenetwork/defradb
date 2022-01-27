@@ -132,7 +132,7 @@ func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
 	return db, err
 }
 
-// Start runs all the inital sub-routines and initialization steps.
+// Start runs all the initial sub-routines and initialization steps.
 func (db *DB) Start(ctx context.Context) error {
 	return db.Initialize(ctx)
 }

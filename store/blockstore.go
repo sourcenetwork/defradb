@@ -31,7 +31,7 @@ import (
 // us to swap between a regular ds.Datastore, and a ds.Txn which as of https://github.com/ipfs/go-datastore/issues/114
 // no longer implements ds.Datastore.
 //
-// The orginal blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
+// The original blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
 // to optimize the PutMany function. However, in DefraDB, since we rely on a single rootstore for all our various
 // substores (data, heads, blocks), which includes a Txn/Batch system already, our respective substores don't need
 // to optimize or worry about Batching/Txn. Hence the simplified core.DSReaderWriter.

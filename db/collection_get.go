@@ -47,7 +47,7 @@ func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*docume
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
 	index := &c.desc.Indexes[0]
-	// initialize it with the priamry index
+	// initialize it with the primary index
 	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
 	if err != nil {
 		return nil, err

@@ -25,7 +25,7 @@ type MultiStore interface {
 // DSReaderWriter simplifies the interface that is exposed by a
 // core.DSReaderWriter into its subcomponents Reader and Writer.
 // Using this simplified interface means that both core.DSReaderWriter
-// and ds.Txn satisy the interface. Due to go-datastore#113 and
+// and ds.Txn satisfy the interface. Due to go-datastore#113 and
 // go-datastore#114 ds.Txn no longer implements core.DSReaderWriter
 // Which means we can't swap between the two for Datastores that
 // support TxnDatastore.

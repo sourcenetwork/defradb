@@ -40,7 +40,7 @@ func (p *Planner) GroupBy(n *parser.GroupBy, childSelect *parser.Select) (*group
 	}
 
 	if childSelect != nil && childSelect.GroupBy != nil {
-		// group by fields have to be propogated downwards to ensure correct sub-grouping, otherwise child
+		// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
 		// groups will only group on the fields they explicitly reference
 		childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
 	}

@@ -32,8 +32,8 @@ import (
 // "NoSQL Document Datastore"
 //
 // This section is not concerned with the outer query layer used to interact with the
-// Document API, but instead is soley consered with carrying out the internal API
-// operations. IE. CRUD.
+// Document API, but instead is solely concerned with carrying out the internal API
+// operations, i.e. CRUD.
 //
 // Note: These actions on the outside are deceivingly simple, but require a number
 // of complex interactions with the underlying KV Datastore, as well as the
@@ -297,6 +297,10 @@ func (doc *Document) setObject(t core.CType, field string, val *Document) error 
 }
 
 func (doc *Document) setAndParseType(field string, value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
 	switch val := value.(type) {
 
 	// int (any number)
@@ -318,19 +322,15 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 
 	// string, bool, and more
-	case string, bool:
+	case string, bool, []interface{}:
 		err := doc.setCBOR(core.LWW_REGISTER, field, val)
 		if err != nil {
 			return err
 		}
 
-	// array
-	case []interface{}:
-		break
-
 	// sub object, recurse down.
 	// @TODO: Object Definitions
-	// You can use an object as a way to override defults
+	// You can use an object as a way to override defaults
 	// and types for JSON literals.
 	// Eg.
 	// Instead of { "Timestamp": 123 }
@@ -384,7 +384,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	// Important: CannonicalEncOpionts ensures consistent serialization of
+	// Important: CanonicalEncOptions ensures consistent serialization of
 	// indeterministic datastructures, like Go Maps
 	em, err := cbor.CanonicalEncOptions().EncMode()
 	if err != nil {
@@ -393,10 +393,10 @@ func (doc *Document) Bytes() ([]byte, error) {
 	return em.Marshal(docMap)
 }
 
-// String returns the document as a strinified JSON Object.
+// String returns the document as a stringified JSON Object.
 // Note: This representation should not be used for any
 // cryptographic operations, such as signatures, or hashes
-// as it does not gurantee cannonical representation or
+// as it does not guarantee canonical representation or
 // ordering.
 func (doc *Document) String() string {
 	docMap, err := doc.toMap()
@@ -502,7 +502,7 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 
 // 		// sub object, recurse down.
 // 		// @TODO: Object Definitions
-// 		// You can use an object as a way to override defults
+// 		// You can use an object as a way to override defaults
 // 		// and types for JSON literals.
 // 		// Eg.
 // 		// Instead of { "Timestamp": 123 }
@@ -534,7 +534,7 @@ func parseFieldPath(path string) (string, string, bool) {
 	return splitKeys[0], strings.Join(splitKeys[1:], ""), len(splitKeys) > 1
 }
 
-// Exmaple Usage: Create/Insert new object
+// Example Usage: Create/Insert new object
 /*
 
 obj := `{
@@ -547,11 +547,11 @@ docA := document.NewFromJSON(objData)
 err := db.Save(document)
 		=> New batch transaction/store
 		=> Loop through doc values
-		=> 		instanciate MerkleCRDT objects
+		=> 		instantiate MerkleCRDT objects
 		=> 		Set/Publish new CRDT values
 
 
-// One-to-one relatioship example
+// One-to-one relationship example
 obj := `{
 	Hello: "world",
 	Author: {

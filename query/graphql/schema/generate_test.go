@@ -71,7 +71,24 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 					}, nil
 				})},
 			),
-		})
+		}, "")
+}
+
+func Test_Generator_CleansUpInvalidTypes_GivenInvalidFieldType(t *testing.T) {
+	g := newTestGenerator()
+
+	runTestConfigForbuildTypesFromASTSuite(t, g,
+		`
+		type MyObject {
+			myField: string,
+			myOtherField: String
+		}
+		`,
+		[]*gql.Object{},
+		"No type found for given name: string")
+
+	_, exists := g.manager.schema.TypeMap()["MyObject"]
+	assert.False(t, exists, "Invalid object was not cleaned from type map")
 }
 
 func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
@@ -111,7 +128,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
@@ -151,7 +168,7 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T) {
@@ -191,7 +208,7 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T) {
@@ -231,7 +248,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *testing.T) {
@@ -271,7 +288,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
@@ -336,7 +353,7 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T) {
@@ -407,7 +424,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) {
@@ -488,7 +505,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T) {
@@ -565,7 +582,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 					}, nil
 				})},
 			),
-		})
+		}, "")
 }
 
 func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
@@ -580,7 +597,7 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 	})
 	g := newTestGenerator()
 
-	err := runTestConfigForbuildTypesFromASTSuite(t, g,
+	runTestConfigForbuildTypesFromASTSuite(t, g,
 		`
 		type MyObject {
 			myField: String
@@ -623,40 +640,41 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 					}, nil
 				})},
 			),
-		})
-
-	// make sure we get back the *correct* error.
-	if err != nil && !strings.Contains(err.Error(), "No type found for given name: UndefinedObject") {
-		t.Error("buildTypesFromAST didn't fail on UndefinedObject:", err)
-	}
+		}, "No type found for given name: UndefinedObject")
 }
 
-func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema string, typeDefs []*gql.Object) error {
+func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema string, typeDefs []*gql.Object, expectedError string) {
 	_, _, err := g.FromSDL(schema)
+
 	if err != nil {
-		return fmt.Errorf("Failed to build types from AST : %w", err)
+		assertError(t, err, expectedError)
+		return
 	}
 
 	for i, objDef := range typeDefs {
 		objName := objDef.Name()
 		myObject, exists := g.manager.schema.TypeMap()[objDef.Name()]
 		if !exists {
-			return fmt.Errorf("%s type doesn't exist in the schema manager TypeMap", objName)
+			assertError(t, fmt.Errorf("%s type doesn't exist in the schema manager TypeMap", objName), expectedError)
+			return
 		}
 		if myObject.Error() != nil {
-			return fmt.Errorf("%s contains an internal error : %w", objName, myObject.Error())
+			assertError(t, myObject.Error(), expectedError)
+			return
 		}
 		if !reflect.DeepEqual(myObject, g.typeDefs[i]) {
 			// add the assert here for its object diff output
 			assert.Equal(t, myObject, g.typeDefs[i], "TypeMap object doesn't match typeDef object")
-			return errors.New("TypeMap object doesn't match typeDef object")
+			assertError(t, errors.New("TypeMap object doesn't match typeDef object"), expectedError)
+			return
 		}
 
 		myObjectActual := myObject.(*gql.Object)
 		spew.Dump(myObjectActual.Fields())
 
 		if myObject.Error() != nil {
-			return fmt.Errorf("%s contains an internal error from the Fields() > definFields() call : %w", objName, myObject.Error())
+			assertError(t, myObject.Error(), expectedError)
+			return
 		}
 
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
@@ -672,7 +690,19 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 		}
 	}
 
-	return nil
+	if expectedError != "" {
+		t.Errorf("Error expected but not found. Expected Error: %s", expectedError)
+	}
+}
+
+func assertError(t *testing.T, err error, expectedError string) {
+	if expectedError == "" {
+		t.Errorf("Expected no errors but found: %v", err)
+	} else {
+		if !strings.Contains(err.Error(), expectedError) {
+			t.Errorf("Expected error containing %s but found: %v", expectedError, err)
+		}
+	}
 }
 
 func Test_Generator_genType_Filter_SingleScalar(t *testing.T) {

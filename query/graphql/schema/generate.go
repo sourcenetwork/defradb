@@ -55,7 +55,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 }
 
 // FromSDL generates the query type definitions from a
-// encoded GraphQL Schema Definition Lanaguage string
+// encoded GraphQL Schema Definition Language string
 func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error) {
 	// parse to AST
 	source := source.NewSource(&source.Source{
@@ -72,9 +72,36 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error)
 	return types, doc, err
 }
 
+func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
+	typeMapBeforeMutation := g.manager.schema.TypeMap()
+	typesBeforeMutation := make(map[string]interface{}, len(typeMapBeforeMutation))
+
+	for typeName := range typeMapBeforeMutation {
+		typesBeforeMutation[typeName] = struct{}{}
+	}
+
+	result, err := g.fromAST(document)
+
+	if err != nil {
+		// If there is an error we should drop any new objects as they may be partial, poluting the in memory cache
+		// This is quite a simple check at the moment (on type name) - this should be expanded when we allow schema mutation/deletion
+		// There is no guarantee that `typeMapBeforeMutation` will still be the object returned by `schema.TypeMap()`, so we should re-fetch it
+		typeMapAfterMutation := g.manager.schema.TypeMap()
+		for typeName := range typeMapAfterMutation {
+			if _, typeExistedBeforeMutation := typesBeforeMutation[typeName]; !typeExistedBeforeMutation {
+				delete(typeMapAfterMutation, typeName)
+			}
+		}
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // FromAST generates the query type definitions from a
 // parsed GraphQL Schema Definition Language AST document
-func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypesFromAST(document)
 	if err != nil {
@@ -170,7 +197,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				return err
 			}
 
-			// new field object with arugments (single)
+			// new field object with arguments (single)
 			expandedField, err := g.createExpandedFieldSingle(def, t)
 			if err != nil {
 				return err
@@ -180,7 +207,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
 
-		case *gql.List: // new field object with aguments (list)
+		case *gql.List: // new field object with arguments (list)
 			listType := t.OfType
 			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
@@ -278,7 +305,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 				fields := gql.Fields{}
 
 				// @todo: Check if this is a collection (relation) type
-				// or just a embedded only type (which doesnt need a key)
+				// or just a embedded only type (which doesn't need a key)
 				// automatically add the _key: ID field to the type
 				fields["_key"] = &gql.Field{Type: gql.ID}
 
@@ -593,7 +620,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
 		fields := gql.InputObjectConfigFieldMap{}
 
-		// @attention: do we need to explicity add our "sub types" to the TypeMap
+		// @attention: do we need to explicitly add our "sub types" to the TypeMap
 		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
 		err := g.manager.schema.AppendType(filterBaseArgType)
 		if err != nil {

@@ -42,16 +42,20 @@ type databaseInfo struct {
 }
 
 var badgerInMemory bool
+var badgerFile bool
 var mapStore bool
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
 	_, badgerInMemory = os.LookupEnv("DEFRA_BADGER_MEMORY")
+	_, badgerFile = os.LookupEnv("DEFRA_BADGER_FILE")
 	_, mapStore = os.LookupEnv("DEFRA_MAP")
 
 	// default is to run against all
-	if !badgerInMemory && !mapStore {
+	if !badgerInMemory && !badgerFile && !mapStore {
 		badgerInMemory = true
+		// Testing against the file system is off by default
+		badgerFile = false
 		mapStore = true
 	}
 }
@@ -87,11 +91,39 @@ func newMapDB() (databaseInfo, error) {
 	}, nil
 }
 
-func getDatabases() ([]databaseInfo, error) {
+func newBadgerFileDB(t *testing.T) (databaseInfo, error) {
+	path := t.TempDir()
+
+	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
+	rootstore, err := badgerds.NewDatastore(path, &opts)
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	db, err := db.NewDB(rootstore, struct{}{})
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	return databaseInfo{
+		name: "badger-file-system",
+		db:   db,
+	}, nil
+}
+
+func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
 		badgerIMDatabase, err := newBadgerMemoryDB()
+		if err != nil {
+			return nil, err
+		}
+		databases = append(databases, badgerIMDatabase)
+	}
+
+	if badgerFile {
+		badgerIMDatabase, err := newBadgerFileDB(t)
 		if err != nil {
 			return nil, err
 		}
@@ -111,13 +143,12 @@ func getDatabases() ([]databaseInfo, error) {
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
 	ctx := context.Background()
-	dbs, err := getDatabases()
+	dbs, err := getDatabases(t)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
 		fmt.Println("--------------")
-		//nolint:gosimple
 		fmt.Println(fmt.Sprintf("Running tests with database type: %s", dbi.name))
 
 		db := dbi.db

@@ -238,7 +238,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 	return false, kv, nil
 }
 
-// processKV continously processes the key value pairs we've recieved
+// processKV continuously processes the key value pairs we've received
 // and step by step constructs the current encoded document
 func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// skip MerkleCRDT meta-data priority key-value pair
@@ -280,7 +280,8 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
 	df.doc.Properties[fieldDesc] = &document.EncProperty{
-		Raw: kv.Value,
+		Desc: fieldDesc,
+		Raw:  kv.Value,
 	}
 	// @todo: Extract Index implicit/stored keys
 	return nil
@@ -317,7 +318,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*document.EncodedDocu
 			return df.doc, nil
 		}
 
-		// // crossed document kv boundry?
+		// // crossed document kv boundary?
 		// // if so, return document
 		// newkeyparts := df.kv.Key.List()
 		// newKey := newkeyparts[len(newkeyparts)-2]

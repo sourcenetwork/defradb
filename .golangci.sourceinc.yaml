@@ -441,7 +441,10 @@ linters-settings:
     # Select the Go version to target. The default is '1.13'.
     go: "1.15"
     # https://staticcheck.io/docs/options#checks
-    checks: [ "all" ]
+    checks: [ "all", "-S1038" ]
+    # Turn on all except (these are disabled):
+    # - S1038 - Unnecessarily complex way of printing formatted string. Which said
+    #   instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...).
 
   govet:
     # report about shadowed variables
