@@ -849,7 +849,8 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 		}
 	})
 
-	go fmt.Print(qrb.Process.CloseAfterChildren())
+	// nolint:errcheck
+	go qrb.Process.CloseAfterChildren()
 
 	return qrb.Results(), nil
 }

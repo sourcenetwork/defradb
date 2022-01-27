@@ -2,3 +2,5 @@ cli/defradb/defradb
 cli/defradb/defradb.exe
 build/defradb*
 cover.out
+coverage-full.txt
+coverage-quick.txt
