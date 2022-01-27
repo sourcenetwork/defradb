@@ -188,7 +188,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	// data = []byte("test")
 	// fmt.Println("PRE", data)
 	nd := dag.NodeWithData(data)
-	// The cid builder defaults to v0, we want to be using v1 Cids
+	// The cid builder defaults to v0, we want to be using v1 CIDs
 	nd.SetCidBuilder(
 		cid.V1Builder{
 			Codec:    cid.Raw,

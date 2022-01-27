@@ -161,7 +161,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 			desc.Schema.Fields = append(desc.Schema.Fields, fd)
 		}
 
-		// sort the fields lexigraphically
+		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
 			// make sure that the _key is always at the beginning
 			if desc.Schema.Fields[i].Name == "_key" {

@@ -61,7 +61,7 @@ type IndexDescription struct {
 	// local schema.
 	//
 	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Morever, since
+	// and the DocKey of the target relation type. Moreover, since
 	// we use a Composite Key Index system, the ordering of the keys
 	// affects how we can use in the index. The initial Junction
 	// Index for a type, needs to be assigned to the  "Primary"
@@ -88,13 +88,13 @@ func (index IndexDescription) IDString() string {
 type SchemaDescription struct {
 	ID   uint32
 	Name string
-	Key  []byte // DocKey for verioned source schema
+	Key  []byte // DocKey for versioned source schema
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription
 }
 
-//IsEmpty returns true if the SchemaDescription is empty and unitialized
+//IsEmpty returns true if the SchemaDescription is empty and uninitialized
 func (sd SchemaDescription) IsEmpty() bool {
 	return len(sd.Fields) == 0
 }
@@ -119,7 +119,7 @@ const (
 	FieldKind_OBJECT               // Embedded object within the type
 	FieldKind_OBJECT_ARRAY         // Array of embedded objects
 	FieldKind_FOREIGN_OBJECT       // Embedded object, but accessed via foreign keys
-	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accessed via foreign keys
 )
 
 // type RelationType uint8
@@ -142,7 +142,7 @@ type FieldDescription struct {
 	ID           FieldID
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
-	RelationName string // The name of the relation index if the field is of type FORIEGN_OBJECT
+	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          core.CType
 	Meta         uint8
 	// @todo: Add relation name for specifying target relation index

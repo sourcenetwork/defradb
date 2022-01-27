@@ -70,7 +70,7 @@ type appendNode interface {
 //
 // In this example, both the friends selection and the _version
 // selection require their own planNode sub graphs to complete.
-// However, they are entirely independant graphs, so they can
+// However, they are entirely independent graphs, so they can
 // be executed in parallel.
 //
 type parallelNode struct { // serialNode?

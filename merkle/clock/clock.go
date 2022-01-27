@@ -94,7 +94,7 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 	}
 
 	// apply the new node and merge the delta with state
-	// @todo Remove NodeGetter as a paramter, and move it to a MerkleClock field
+	// @todo Remove NodeGetter as a parameter, and move it to a MerkleClock field
 	_, err = mc.ProcessNode(
 		ctx,
 		&crdtNodeGetter{deltaExtractor: mc.crdt.DeltaDecode},

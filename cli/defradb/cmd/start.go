@@ -65,7 +65,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// run the server listener in a seperate goroutine
+		// run the server listener in a separate goroutine
 		go func() {
 			db.Listen(config.Database.Address)
 		}()

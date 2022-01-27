@@ -206,7 +206,7 @@ func (r *Relation) finalize() error {
 			return errors.New("relation can only have a single field set as primary")
 		} else if !base.IsSet(xBit, base.Meta_Relation_Primary) {
 			// neither type has primary set, auto add to
-			// lexigraphically first one by schema type name
+			// lexicographically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
 				r.types[1] = r.types[1] | base.Meta_Relation_Primary
 			} else {
@@ -215,11 +215,11 @@ func (r *Relation) finalize() error {
 		}
 	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
 		if IsOne(r.types[0]) {
-			r.types[0] |= base.Meta_Relation_Primary  // set priamry on one
-			r.types[1] &^= base.Meta_Relation_Primary // clear priamry on many
+			r.types[0] |= base.Meta_Relation_Primary  // set primary on one
+			r.types[1] &^= base.Meta_Relation_Primary // clear primary on many
 		} else {
-			r.types[1] |= base.Meta_Relation_Primary  // set priamry on one
-			r.types[0] &^= base.Meta_Relation_Primary // clear priamry on many
+			r.types[1] |= base.Meta_Relation_Primary  // set primary on one
+			r.types[0] &^= base.Meta_Relation_Primary // clear primary on many
 		}
 	}
 
