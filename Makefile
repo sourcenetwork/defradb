@@ -20,13 +20,17 @@ multi-build:
 start: build
 	./build/defradb start
 
-.PHONY: deps\:circle-ci
-deps\:circle-ci:
-	go mod download
+.PHONY: deps\:golangci-lint
+deps\:golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
 
+.PHONY: deps\:go-acc
+deps\:go-acc:
+	go install github.com/ory/go-acc@latest
+
 .PHONY: deps
-deps: deps\:circle-ci
+deps: deps\:golangci-lint deps\:go-acc
+	go mod download
 
 .PHONY: clean
 clean:
@@ -39,16 +43,23 @@ tidy:
 
 .PHONY: test
 test:
-	go test ./...
+	go test ./... -race
 
 .PHONY: test\:bench
 test\:bench:
-	go test -bench
+	go test ./... -race -bench=.
 
-.PHONY: test\:coverage
-test\:coverage:
-	go test ./... -coverprofile cover.out
-	go tool cover -func cover.out | grep total | awk '{print $$3}'
+# This also takes integration tests into account.
+.PHONY: test\:coverage-full
+test\:coverage-full: deps\:go-acc
+	go-acc ./... --output=coverage-full.txt --covermode=atomic
+	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
+
+# This only covers how much of the package is tested by itself (unit test).
+.PHONY: test\:coverage-quick
+test\:coverage-quick:
+	go test ./... -race -coverprofile=coverage-quick.txt -covermode=atomic
+	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
 
 .PHONY: validate\:codecov
 validate\:codecov:
