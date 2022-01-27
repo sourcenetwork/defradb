@@ -135,7 +135,7 @@ func (source *dataSource) mergeParent(keyFields []string, destination *orderedMa
 }
 
 func (source *dataSource) appendChild(keyFields []string, valuesByKey *orderedMap) (map[string]interface{}, bool, error) {
-	// Most of the time this will be the same doument as the parent (with different rendering),
+	// Most of the time this will be the same document as the parent (with different rendering),
 	// however if the child group is sorted it will be different, the child may also be missing
 	// if it is filtered out by a child filter.  The parent will always exist, but may be
 	// processed after the child if inner sorts shift the order.
@@ -154,7 +154,7 @@ func (source *dataSource) appendChild(keyFields []string, valuesByKey *orderedMa
 
 	// Note that even if the source yields both parent and child items, they may not be yielded in
 	// the same order - we need to treat it as a new item, regenerating the key and potentially caching
-	// it without yet recieving the parent-level details
+	// it without yet receiving the parent-level details
 	value := source.childSource.Values()
 	key := generateKey(value, keyFields)
 

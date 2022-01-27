@@ -282,7 +282,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 			return nil, err
 		}
 
-		// add succesful updated doc to results
+		// add successful updated doc to results
 		results.DocKeys = append(results.DocKeys, doc["_key"].(string))
 		results.Count++
 	}
@@ -412,7 +412,7 @@ func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]in
 	// linearization, or any other transaction
 	// semantics, which the user already knows
 	// otherwise they wouldn't use a datastore
-	// that doesnt support proper transactions.
+	// that doesn't support proper transactions.
 	// So lets just commit, and keep going.
 	// @todo: Change this on the Txn.BatchShim
 	// structure

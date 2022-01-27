@@ -22,7 +22,7 @@ package clock
 // which link to previous nodes, with content addressable IDs creating a
 // fully linked graph of content. The linked graph of nodes creates a
 // natural history of events because a parent node contains a CID of a
-// child node, which ensures parents occured AFTER a child.
+// child node, which ensures parents occurred AFTER a child.
 
 //	  A			  	   B			  C
 //	//////   link	//////	 link	//////

@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	// Delta represnts a Delta State update for a CRDT
+	// Delta represents a Delta State update for a CRDT
 	// type Delta {
 	// 	Payload: String
 	// }

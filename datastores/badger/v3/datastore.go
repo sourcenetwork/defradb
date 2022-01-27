@@ -1,5 +1,5 @@
 // Code copy-pasted from https://github.com/ipfs/go-ds-badger2/blob/master/datastore.go
-// then badger version updated to version 3, and some non-compliling badger defaults
+// then badger version updated to version 3, and some non-compiling badger defaults
 // removed from `init()`
 
 package badger
