@@ -10,7 +10,7 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: circleci/golang:1.15.8
+      - image: circleci/golang:1.17.5
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
@@ -20,7 +20,7 @@ jobs:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
           name: Install Dependencies
-          command: make deps:circle-ci
+          command: make deps
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -32,7 +32,7 @@ jobs:
             DEFRA_BADGER_FILE=true
             DEFRA_MAP=true
             mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+            gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race
       - store_test_results:
           path: /tmp/test-reports
 
