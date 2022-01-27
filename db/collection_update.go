@@ -282,7 +282,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 			return nil, err
 		}
 
-		// add succesful updated doc to results
+		// add successful updated doc to results
 		results.DocKeys = append(results.DocKeys, doc["_key"].(string))
 		results.Count++
 	}
@@ -412,7 +412,7 @@ func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]in
 	// linearization, or any other transaction
 	// semantics, which the user already knows
 	// otherwise they wouldn't use a datastore
-	// that doesnt support proper transactions.
+	// that doesn't support proper transactions.
 	// So lets just commit, and keep going.
 	// @todo: Change this on the Txn.BatchShim
 	// structure
@@ -436,30 +436,97 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	switch field.Kind {
 	case base.FieldKind_DocKey, base.FieldKind_STRING:
 		cval, ok = val.(string)
+	case base.FieldKind_STRING_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		stringArray := make([]string, len(untypedCollection))
+		for i, value := range untypedCollection {
+			if value == nil {
+				stringArray[i] = ""
+				continue
+			}
+			stringArray[i], ok = value.(string)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to string", value, value)
+			}
+		}
+		ok = true
+		cval = stringArray
 	case base.FieldKind_BOOL:
 		cval, ok = val.(bool)
+	case base.FieldKind_BOOL_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		boolArray := make([]bool, len(untypedCollection))
+		for i, value := range untypedCollection {
+			boolArray[i], ok = value.(bool)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to bool", value, value)
+			}
+		}
+		ok = true
+		cval = boolArray
 	case base.FieldKind_FLOAT, base.FieldKind_DECIMNAL:
 		cval, ok = val.(float64)
+	case base.FieldKind_FLOAT_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		floatArray := make([]float64, len(untypedCollection))
+		for i, value := range untypedCollection {
+			floatArray[i], ok = value.(float64)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+			}
+		}
+		ok = true
+		cval = floatArray
+
 	case base.FieldKind_DATE:
 		var sval string
 		sval, ok = val.(string)
 		cval, err = time.Parse(time.RFC3339, sval)
 	case base.FieldKind_INT:
-		fmt.Printf("encountered val type: %v\n", val)
 		var fval float64
 		fval, ok = val.(float64)
 		if !ok {
-			fmt.Println("error1")
 			return nil, ErrInvalidMergeValueType
 		}
 		cval = int64(fval)
+	case base.FieldKind_INT_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		intArray := make([]int64, len(untypedCollection))
+		for i, value := range untypedCollection {
+			valueAsFloat, castOk := value.(float64)
+			if !castOk {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+			}
+			intArray[i] = int64(valueAsFloat)
+		}
+		ok = true
+		cval = intArray
 	case base.FieldKind_OBJECT, base.FieldKind_OBJECT_ARRAY,
 		base.FieldKind_FOREIGN_OBJECT, base.FieldKind_FOREIGN_OBJECT_ARRAY:
 		err = errors.New("Merge doesn't support sub types yet")
 	}
 
 	if !ok {
-		fmt.Println("error2")
 		return nil, ErrInvalidMergeValueType
 	}
 	if err != nil {

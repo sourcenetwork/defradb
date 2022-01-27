@@ -75,7 +75,7 @@ type parseFn func(*ast.ObjectValue) (interface{}, error)
 
 // ParseConditionsInOrder is similar to ParseConditions, except instead
 // of returning a map[string]interface{}, we return a []interface{}. This
-// is to maintian the ordering info of the statemens within the ObjectValue.
+// is to maintain the ordering info of the statements within the ObjectValue.
 // This function is mostly used by the Sort parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
@@ -104,7 +104,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 		}
 
 		switch v := val.(type) {
-		case string: // base direction paresed (hopefully, check NameToSortDirection)
+		case string: // base direction parsed (hopefully, check NameToSortDirection)
 			dir, ok := NameToSortDirection[v]
 			if !ok {
 				return nil, errors.New("Invalid sort direction string")
@@ -116,7 +116,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 
 		case []SortCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
-				// prepend the current field name, to the parsed condtion from the slice
+				// prepend the current field name, to the parsed condition from the slice
 				// Eg. sort: {author: {name: ASC, birthday: DESC}}
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].

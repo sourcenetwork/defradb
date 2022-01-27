@@ -23,7 +23,7 @@ import (
 //
 // Create nodes are the simplest of the object mutations
 // Each Iteration of the plan, creates and returns one
-// document, until we've exhaused the payload. No filtering
+// document, until we've exhausted the payload. No filtering
 // or Select plans
 type createNode struct {
 	p *Planner
@@ -32,7 +32,7 @@ type createNode struct {
 	// collection name, meta-data, etc.
 	collection client.Collection
 
-	// newDoc is the JSON string of the new document, unpares
+	// newDoc is the JSON string of the new document, unparsed
 	newDocStr string
 	doc       *document.Document
 

@@ -28,6 +28,9 @@ jobs:
       - run:
           name: Run tests
           command: |
+            DEFRA_BADGER_MEMORY=true
+            DEFRA_BADGER_FILE=true
+            DEFRA_MAP=true
             mkdir -p /tmp/test-reports
             gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- -race
       - store_test_results:

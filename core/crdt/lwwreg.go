@@ -140,7 +140,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	}
 
 	// if the current priority is higher ignore put
-	// else if the current value is lexographically
+	// else if the current value is lexicographically
 	// greater than the new then ignore
 	valueK := reg.valueKey(reg.key)
 	if priority < curPrio {

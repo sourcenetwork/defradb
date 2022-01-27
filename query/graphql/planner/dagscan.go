@@ -179,7 +179,7 @@ func (n *dagScanNode) Close() error {
 func (n *dagScanNode) Source() planNode { return n.headset }
 
 func (n *dagScanNode) Next() (bool, error) {
-	// find target cid either through headset or direct cid.
+	// find target CID either through headset or direct cid.
 	if n.queuedCids.Len() > 0 {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)
@@ -204,7 +204,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		// add this final elseif case in case another function
 		// manually sets the CID. Should prob migrate any remote CID
 		// updates to use the queuedCids.
-		return false, nil // no queued cids and no headset available
+		return false, nil // no queued CIDs and no headset available
 	}
 
 	// skip already visited CIDs
