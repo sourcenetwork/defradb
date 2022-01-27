@@ -43,7 +43,7 @@ tidy:
 
 .PHONY: test
 test:
-	go test ./...
+	go test -race ./...
 
 .PHONY: test\:bench
 test\:bench:
