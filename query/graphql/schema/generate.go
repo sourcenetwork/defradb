@@ -117,6 +117,20 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
+	generatedFilterBaseArgs := make([]*gql.InputObject, len(g.typeDefs))
+	for i, t := range g.typeDefs {
+		generatedFilterBaseArgs[i] = g.genTypeFilterBaseArgInput(t)
+	}
+
+	for _, t := range generatedFilterBaseArgs {
+		g.manager.schema.AppendType(t)
+	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
 	// for each built type
 	// 		generate query inputs
 	queryType := g.manager.schema.QueryType()
@@ -601,12 +615,8 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
-
-		// @attention: do we need to explicitly add our "sub types" to the TypeMap
-		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
-		g.manager.schema.AppendType(filterBaseArgType)
 
 		// conditionals
 		compoundListType := &gql.InputObjectFieldConfig{
@@ -640,7 +650,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// fmt.Println("#####################")
 		// spew.Dump(fields)
-		return fields
+		return fields, nil
 	})
 
 	// add the fields thunker
@@ -711,7 +721,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "OrderArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		for f, field := range obj.Fields() {
@@ -729,7 +739,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			}
 		}
 
-		return fields
+		return fields, nil
 	})
 
 	inputCfg.Fields = fieldThunk

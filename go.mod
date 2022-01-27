@@ -36,6 +36,6 @@ replace (
 	github.com/SierraSoftworks/connor => github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12
 
 	// temp bug fixing
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20211201133854-7e4c02b364c3
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc
 // github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20210211004004-07fce0d1409f
 )
