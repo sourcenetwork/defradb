@@ -233,13 +233,14 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 					Name: parser.GroupFieldName,
 				}
 			} else if parsed.Root != parser.CommitSelection {
-				subtype := &parser.Select{
-					Name: count.Field,
-				}
-
-				if err := n.addTypeIndexJoin(subtype); err != nil {
-					// return err
-					// TODO: Fix the test this fails ^
+				fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(count.Field)
+				if fieldDescription.Kind == base.FieldKind_FOREIGN_OBJECT_ARRAY {
+					subtype := &parser.Select{
+						Name: count.Field,
+					}
+					if err := n.addTypeIndexJoin(subtype); err != nil {
+						return err
+					}
 				}
 			}
 		}
