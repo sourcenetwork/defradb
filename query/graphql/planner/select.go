@@ -284,7 +284,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			case parser.CountFieldName:
 				plan, aggregateError = n.p.Count(f)
 			case parser.SumFieldName:
-				plan, aggregateError = n.p.Sum(&n.sourceInfo, f)
+				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
 			default:
 				continue
 			}
