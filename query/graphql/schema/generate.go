@@ -111,7 +111,9 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
-	g.genAggregateFields()
+	if err := g.genAggregateFields(); err != nil {
+		return nil, err
+	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -421,14 +423,19 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	return genRelationName(hostName.Name, targetName.Name())
 }
 
-func (g *Generator) genAggregateFields() {
+func (g *Generator) genAggregateFields() error {
 	for _, t := range g.typeDefs {
-		countField := g.genCountFieldConfig(t)
+		countField, err := g.genCountFieldConfig(t)
+		if err != nil {
+			return err
+		}
 		t.AddFieldConfig(countField.Name, &countField)
 	}
+
+	return nil
 }
 
-func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
+func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	inputCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "CountArg"),
 		Values: gql.EnumValueConfigMap{},
@@ -442,7 +449,10 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 	}
 	countType := gql.NewEnum(inputCfg)
-	g.manager.schema.AppendType(countType)
+	err := g.manager.schema.AppendType(countType)
+	if err != nil {
+		return gql.Field{}, err
+	}
 
 	field := gql.Field{
 		Name: parser.CountFieldName,
@@ -452,7 +462,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		},
 	}
 
-	return field
+	return field, nil
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
