@@ -43,11 +43,11 @@ tidy:
 
 .PHONY: test
 test:
-	go test -race ./...
+	go test ./... -race
 
 .PHONY: test\:bench
 test\:bench:
-	go test -bench
+	go test ./... -race -bench=.
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
