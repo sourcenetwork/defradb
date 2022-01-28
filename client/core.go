@@ -68,13 +68,24 @@ type Collection interface {
 	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
+	DeleteWith(context.Context, interface{}, interface{}, ...DeleteOpt) error
+	DeleteWithFilter(context.Context, interface{}, interface{}, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKey(context.Context, key.DocKey, interface{}, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKeys(context.Context, []key.DocKey, interface{}, ...DeleteOpt) (*DeleteResult, error)
+
 	WithTxn(Txn) Collection
 }
 
 type UpdateOpt struct{}
 type CreateOpt struct{}
+type DeleteOpt struct{}
 
 type UpdateResult struct {
+	Count   int64
+	DocKeys []string
+}
+
+type DeleteResult struct {
 	Count   int64
 	DocKeys []string
 }

@@ -138,6 +138,8 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 		return p.CreateDoc(stmt)
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
+	case parser.DeleteObjects:
+		return p.DeleteDocs(stmt)
 	default:
 		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
@@ -180,6 +182,8 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case MultiNode:
 		return p.expandMultiNode(n, parentPlan)
 	case *updateNode:
+		return p.expandPlan(n.results, parentPlan)
+	case *deleteNode:
 		return p.expandPlan(n.results, parentPlan)
 	default:
 		return nil
