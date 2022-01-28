@@ -68,10 +68,10 @@ type Collection interface {
 	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
-	DeleteWith(context.Context, interface{}, interface{}, ...DeleteOpt) error
-	DeleteWithFilter(context.Context, interface{}, interface{}, ...DeleteOpt) (*DeleteResult, error)
-	DeleteWithKey(context.Context, key.DocKey, interface{}, ...DeleteOpt) (*DeleteResult, error)
-	DeleteWithKeys(context.Context, []key.DocKey, interface{}, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWith(context.Context, interface{}, ...DeleteOpt) error
+	DeleteWithFilter(context.Context, interface{}, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKey(context.Context, key.DocKey, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKeys(context.Context, []key.DocKey, ...DeleteOpt) (*DeleteResult, error)
 
 	WithTxn(Txn) Collection
 }

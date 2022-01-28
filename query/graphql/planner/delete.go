@@ -21,8 +21,6 @@ type deleteNode struct {
 	filter *parser.Filter
 	ids    []string
 
-	patch string
-
 	isDeleting bool
 	deleteIter *valuesNode
 
@@ -53,7 +51,7 @@ func (n *deleteNode) Next() (bool, error) {
 			if err2 != nil {
 				return false, err2
 			}
-			results, err = n.collection.DeleteWithKey(n.p.ctx, key, n.patch)
+			results, err = n.collection.DeleteWithKey(n.p.ctx, key)
 		} else if numids > 1 {
 			fmt.Println("multi key")
 			// todo
@@ -64,10 +62,10 @@ func (n *deleteNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys, n.patch)
+			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
 		} else {
 			fmt.Println("filter")
-			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter, n.patch)
+			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
 		}
 
 		fmt.Println("delete node error:", err)
@@ -133,7 +131,6 @@ func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {
 		filter:     parsed.Filter,
 		ids:        parsed.IDs,
 		isDeleting: true,
-		patch:      parsed.Data,
 	}
 
 	// get collection

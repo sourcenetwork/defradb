@@ -12,6 +12,7 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document"
@@ -39,7 +40,7 @@ func (c *Collection) Delete2(doc *document.SimpleDocument, opts ...client.Delete
 // an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
 // Eg: DeleteWithFilter or DeleteWithKey
-func (c *Collection) DeleteWith(ctx context.Context, target interface{}, deleter interface{}, opts ...client.DeleteOpt) error {
+func (c *Collection) DeleteWith(ctx context.Context, target interface{}, opts ...client.DeleteOpt) error {
 	// switch t := target.(type) {
 	// case string, map[string]interface{}, *parser.Filter:
 	// _, err := c.DeleteWithFilter(ctx, t, deleter, opts...)
@@ -63,7 +64,7 @@ func (c *Collection) DeleteWith(ctx context.Context, target interface{}, deleter
 // DeleteWithFilter deletes using a filter to target documents for delete.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) DeleteWithFilter(ctx context.Context, filter interface{}, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithFilter(ctx context.Context, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// txn, err := c.getTxn(ctx, false)
 	// if err != nil {
 	// 	return nil, err
@@ -79,17 +80,23 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter interface{}, d
 }
 
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
-// An deleter value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-	// txn, err := c.getTxn(ctx, false)
-	// if err != nil {
-	// return nil, err
-	// }
-	// defer c.discardImplicitTxn(ctx, txn)
+func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	fmt.Println("--------------------------------------")
+	fmt.Println("ctx: ", ctx)
+	fmt.Println("key: ", key)
+	fmt.Println("opts: ", opts)
+	fmt.Println("--------------------------------------")
+
 	// res, err := c.deleteWithKey(ctx, txn, key, deleter, opts...)
 	// if err != nil {
-	// return nil, err
+	// 	return nil, err
 	// }
 	// return res, c.commitImplicitTxn(ctx, txn)
 
@@ -99,7 +106,7 @@ func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, deleter 
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) DeleteWithKeys(ctx context.Context, keys []key.DocKey, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) DeleteWithKeys(ctx context.Context, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// txn, err := c.getTxn(ctx, false)
 	// if err != nil {
 	// return nil, err
@@ -117,18 +124,18 @@ func (c *Collection) DeleteWithKeys(ctx context.Context, keys []key.DocKey, dele
 // DeleteWithDoc deletes targeting the supplied document.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) DeleteWithDoc(doc *document.SimpleDocument, deleter interface{}, opts ...client.DeleteOpt) error {
+func (c *Collection) DeleteWithDoc(doc *document.SimpleDocument, opts ...client.DeleteOpt) error {
 	return nil
 }
 
 // DeleteWithDocs deletes all the supplied documents in the slice.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, deleter interface{}, opts ...client.DeleteOpt) error {
+func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...client.DeleteOpt) error {
 	return nil
 }
 
-func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
 	// 	return nil, err
@@ -171,7 +178,7 @@ func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey
 	return nil, nil
 }
 
-func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// fmt.Println("updating keys:", keys)
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
@@ -219,7 +226,7 @@ func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 	return nil, nil
 }
 
-func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter interface{}, deleter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
 	// 	return nil, err
