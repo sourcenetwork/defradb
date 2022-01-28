@@ -22,7 +22,6 @@ import (
 var (
 	ErrInvalidDeleteTarget = errors.New("The doc delete targeter is an unknown type")
 	ErrDeleteTargetEmpty   = errors.New("The doc delete targeter cannot be empty")
-	ErrInvalidDeleter      = errors.New("The doc deleter is an unknown type")
 	ErrDeleteEmpty         = errors.New("The doc delete cannot be empty")
 )
 
@@ -88,10 +87,11 @@ func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
+	res, err := c.deleteWithKey(ctx, txn, key, opts...)
+
 	fmt.Println("--------------------------------------")
-	fmt.Println("ctx: ", ctx)
-	fmt.Println("key: ", key)
-	fmt.Println("opts: ", opts)
+	fmt.Println("res: ", res)
+	fmt.Println("err: ", err)
 	fmt.Println("--------------------------------------")
 
 	// res, err := c.deleteWithKey(ctx, txn, key, deleter, opts...)
@@ -102,6 +102,99 @@ func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...
 
 	return nil, nil
 }
+
+func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+
+	doc, err := c.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := doc.ToMap()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.applyDelete(ctx, txn, v)
+
+	results := &client.DeleteResult{
+		Count:   1,
+		DocKeys: []string{key.String()},
+	}
+	return results, nil
+
+}
+
+func (c *Collection) applyDelete(ctx context.Context, txn *Txn, doc map[string]interface{}) error {
+	// keyStr, ok := doc["_key"].(string)
+	// if !ok {
+	// 	return errors.New("Document is missing key")
+	// }
+	// key := ds.NewKey(keyStr)
+	// links := make([]core.DAGLink, 0)
+	// for mfield, mval := range merge {
+	// 	if _, ok := mval.(map[string]interface{}); ok {
+	// 		return ErrInvalidMergeValueType
+	// 	}
+
+	// 	fd, valid := c.desc.GetField(mfield)
+	// 	if !valid {
+	// 		return errors.New("Invalid field in Patch")
+	// 	}
+
+	// 	cval, err := validateFieldSchema(mval, fd)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	val := document.NewCBORValue(fd.Typ, cval)
+	// 	fieldKey := c.getFieldKey(key, mfield)
+	// 	c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	// links[mfield] = c
+	// 	links = append(links, core.DAGLink{
+	// 		Name: mfield,
+	// 		Cid:  c,
+	// 	})
+	// }
+
+	// // Update CompositeDAG
+	// em, err := cbor.CanonicalEncOptions().EncMode()
+	// if err != nil {
+	// 	return err
+	// }
+	// buf, err := em.Marshal(merge)
+	// if err != nil {
+	// 	return err
+	// }
+	// if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
+	// 	return err
+	// }
+
+	// // if this a a Batch masked as a Transaction
+	// // commit our writes so we can see them.
+	// // Batches don't maintain serializability, or
+	// // linearization, or any other transaction
+	// // semantics, which the user already knows
+	// // otherwise they wouldn't use a datastore
+	// // that doesn't support proper transactions.
+	// // So lets just commit, and keep going.
+	// // @todo: Change this on the Txn.BatchShim
+	// // structure
+	// if txn.IsBatch() {
+	// 	if err := txn.Commit(ctx); err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	// return nil
+
+	return nil
+}
+
+// =================================== UNIMPLEMENTED ===================================
 
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
@@ -133,49 +226,6 @@ func (c *Collection) DeleteWithDoc(doc *document.SimpleDocument, opts ...client.
 // or a parsed Patch, or parsed Merge Patch.
 func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...client.DeleteOpt) error {
 	return nil
-}
-
-func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-	// patch, err := parseDeleter(deleter)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// isPatch := false
-	// switch patch.(type) {
-	// case []map[string]interface{}:
-	// 	isPatch = true
-	// case map[string]interface{}:
-	// 	isPatch = false
-	// default:
-	// 	return nil, ErrInvalidDeleter
-	// }
-
-	// doc, err := c.Get(ctx, key)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// v, err := doc.ToMap()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// if isPatch {
-	// 	// todo
-	// } else {
-	// 	err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
-	// }
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// results := &client.DeleteResult{
-	// 	Count:   1,
-	// 	DocKeys: []string{key.String()},
-	// }
-	// return results, nil
-
-	return nil, nil
 }
 
 func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
