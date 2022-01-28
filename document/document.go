@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -68,9 +69,8 @@ type Document struct {
 	fields map[string]Field
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
-
 	head cid.Cid
-
+	mu   sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
 }
@@ -270,9 +270,9 @@ func (doc *Document) Delete(fields ...string) error {
 // 	return doc.set(t, field, value)
 // }
 
-// set implementation
-// @todo Apply locking on  Document field/value operations
 func (doc *Document) set(t core.CType, field string, value Value) error {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
