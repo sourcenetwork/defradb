@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -128,6 +129,21 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 				continue
 			}
 
+			// check if we already have a defined field
+			// with the same name.
+			// NOTE: This will happen for the virtual ID
+			// field associated with a related type, as
+			// its defined down below in the IsObject block.
+			if _, exists := desc.GetField(fname); exists {
+				// lets make sure its an _id field, otherwise
+				// we might have an error here
+				if strings.HasSuffix(fname, "_id") {
+					continue
+				} else {
+					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())
+				}
+			}
+
 			fd := base.FieldDescription{
 				Name: fname,
 				Kind: gqlTypeToFieldKind(field.Type),
@@ -156,6 +172,37 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 				}
 
 				fd.Meta = rel.Kind() | fieldRelationType
+				// if  {
+				// 	fd.Meta = fieldRelationType // Primary is embedded within fieldRelationType
+				// } else if base.IsSet(rel.Kind(), base.Meta_Relation_ONEMANY) {
+				// 	// are we the one side or the many side
+
+				// }
+
+				// handle object id field, defined as {{object_name}}_id
+				// with type gql.ID
+				// If it exists we need to delete and redefine
+				// if it doesn't exist we simply define, and make sure we
+				// skip later
+
+				if !fd.IsObjectArray() {
+					for i, sf := range desc.Schema.Fields {
+						if sf.Name == fmt.Sprintf("%s_id", fname) {
+							// delete element matching
+							desc.Schema.Fields = append(desc.Schema.Fields[:i], desc.Schema.Fields[i+1:]...)
+							break
+						}
+					}
+
+					// create field
+					fdRelated := base.FieldDescription{
+						Name: fmt.Sprintf("%s_id", fname),
+						Kind: gqlTypeToFieldKind(gql.ID),
+						Meta: base.Meta_Relation_INTERNAL_ID,
+					}
+					fdRelated.Typ = defaultCRDTForFieldKind[fdRelated.Kind]
+					desc.Schema.Fields = append(desc.Schema.Fields, fdRelated)
+				}
 			}
 
 			desc.Schema.Fields = append(desc.Schema.Fields, fd)

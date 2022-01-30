@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -868,7 +867,7 @@ type queryInputTypeConfig struct {
 }
 
 func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
-	name := strings.ToLower(obj.Name())
+	name := obj.Name() // strings.ToLower(obj.Name())
 
 	// add the generated types to the type map
 	if err := g.manager.schema.AppendType(config.filter); err != nil {
