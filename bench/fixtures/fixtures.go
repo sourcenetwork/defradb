@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
+	"text/template"
 
 	"github.com/bxcodec/faker"
+	"github.com/sourcenetwork/defradb/db/base"
 )
 
 var (
@@ -70,6 +73,54 @@ func (ctx Context) GenerateDocs() ([]string, error) {
 	}
 
 	return results, nil
+}
+
+// func  GenerateFullQueryString() ([]string, error) {
+// 	// q := ""
+// 	queries := make([]string, len(ctx.types))
+// 	for i, t := range ctx.types {
+// 		q, err := queryStringFromSchema(ctx.schema, nil)
+// 	}
+// 	return nil, nil
+// }
+
+type queryTemplateContext struct {
+	Schema  base.SchemaDescription
+	HasArgs bool
+	Args    string
+}
+
+func QueryStringFromSchema(schema base.SchemaDescription, args map[string]interface{}) (string, error) {
+	hasArgs := len(args) != 0
+	argString := collectionArgString(args)
+	tctx := queryTemplateContext{
+		Schema:  schema,
+		HasArgs: hasArgs,
+		Args:    argString,
+	}
+	queryString := `
+	query {
+		{{.Schema.Name }}{{if .HasArgs}} ( {{.Args}} ) {{end}} {
+			{{range .Schema.Fields}} {{if eq .Meta 0}} 
+			{{.Name}} {{end}} {{end}}
+		}
+	}
+	`
+	funcMap := template.FuncMap{
+		"ToLower": strings.ToLower,
+	}
+	t, err := template.New("query").Funcs(funcMap).Parse(queryString)
+	if err != nil {
+		return "", err
+	}
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, tctx)
+
+	return string(buf.Bytes()), err
+}
+
+func collectionArgString(args map[string]interface{}) string {
+	return ""
 }
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
