@@ -125,14 +125,14 @@ const (
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	Meta_Relation_ONE      uint8 = 1   // 0b0000 0001
-	Meta_Relation_MANY     uint8 = 2   // 0b0000 0010
-	Meta_Relation_ONEONE   uint8 = 4   // 0b0000 0100
-	Meta_Relation_ONEMANY  uint8 = 8   // 0b0000 1000
-	Meta_Relation_MANYMANY uint8 = 16  // 0b0001 0000
-	_                      uint8 = 32  // 0b0010 0000
-	_                      uint8 = 64  // 0b0100 0000
-	Meta_Relation_Primary  uint8 = 128 // 0b1000 0000 Primary reference entity on relation
+	Meta_Relation_ONE         uint8 = 1   // 0b0000 0001
+	Meta_Relation_MANY        uint8 = 2   // 0b0000 0010
+	Meta_Relation_ONEONE      uint8 = 4   // 0b0000 0100
+	Meta_Relation_ONEMANY     uint8 = 8   // 0b0000 1000
+	Meta_Relation_MANYMANY    uint8 = 16  // 0b0001 0000
+	_                         uint8 = 32  // 0b0010 0000
+	Meta_Relation_INTERNAL_ID uint8 = 64  // 0b0100 0000
+	Meta_Relation_Primary     uint8 = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
@@ -155,6 +155,10 @@ type FieldDescription struct {
 func (f FieldDescription) IsObject() bool {
 	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+func (f FieldDescription) IsObjectArray() bool {
+	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
 func IsSet(val, target uint8) bool {
