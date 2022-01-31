@@ -14,9 +14,9 @@ options:
   commit_groups:
     title_maps:
       feat: Features
-      fix: Bug Fixes
-      perf: Performance Improvements
-      refactor: Code Refactoring
+      fix: Bug fixes
+      perf: Performance
+      refactor: Refactoring
       ci: Continous integration
     sort_by: Custom
     title_order:

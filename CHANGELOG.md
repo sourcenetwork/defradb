@@ -14,7 +14,7 @@
 * Add basic group by functionality ([#43](https://github.com/sourcenetwork/defradb/issues/43))
 * Update datastore packages to allow use of context ([#48](https://github.com/sourcenetwork/defradb/issues/48))
 
-### Bug Fixes
+### Bug fixes
 
 * Handle errors generated during input object thunks ([#123](https://github.com/sourcenetwork/defradb/issues/123))
 * Remove new types from in-memory cache on generate error ([#122](https://github.com/sourcenetwork/defradb/issues/122))
@@ -31,7 +31,7 @@
 * Allow running of tests using badger-file as well as IM options ([#128](https://github.com/sourcenetwork/defradb/issues/128))
 * Add test datastore selection support ([#88](https://github.com/sourcenetwork/defradb/issues/88))
 
-### Code Refactoring
+### Refactoring
 
 * Datatype modification protection ([#138](https://github.com/sourcenetwork/defradb/issues/138))
 * Cleanup Linter Complaints and Setup Makefile ([#63](https://github.com/sourcenetwork/defradb/issues/63))
