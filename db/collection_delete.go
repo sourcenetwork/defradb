@@ -14,9 +14,16 @@ import (
 	"errors"
 	"fmt"
 
+	block "github.com/ipfs/go-block-format"
+	cid "github.com/ipfs/go-cid"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	dag "github.com/ipfs/go-merkledag"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
 var (
@@ -24,15 +31,6 @@ var (
 	ErrDeleteTargetEmpty   = errors.New("The doc delete targeter cannot be empty")
 	ErrDeleteEmpty         = errors.New("The doc delete cannot be empty")
 )
-
-// Delete2 deletes the given doc. It will scan through the field/value pairs
-// and find those marked for delete, and apply the appropriate delete.
-// Delete only works on root level field/value pairs. So not foreign or related
-// types can be deleted. If you wish to delete sub types, use DeleteWith, and supply
-// an delete payload in the form of a Patch or a Merge Patch.
-func (c *Collection) Delete2(doc *document.SimpleDocument, opts ...client.DeleteOpt) error {
-	return nil
-}
 
 // DeleteWith deletes a target document using the given deleter type. Target
 // can be a Filter statement, a single docKey, a single document,
@@ -85,6 +83,7 @@ func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...
 	if err != nil {
 		return nil, err
 	}
+
 	defer c.discardImplicitTxn(ctx, txn)
 
 	res, err := c.deleteWithKey(ctx, txn, key, opts...)
@@ -336,4 +335,94 @@ func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter inte
 	// return results, nil
 
 	return nil, nil
+}
+
+func (c *Collection) deleteFull(ctx context.Context, txn *Txn, dockey key.DocKey) error {
+	// quick check doc exists via c.exists(ctx, txn, dockey)
+
+	// get head cid
+	// dockey => bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
+	// key => bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
+	// /db
+	// -> datastore /data => /db/data
+	// -> systemstore /system => /db/system
+	// -> block /blocks => /db/blocks
+	// -> headstore /heads => /db/heads
+	// var key ds.Key
+	key := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
+	headset := clock.NewHeadSet(txn.Headstore(), key)
+	heads, _, err := headset.List(ctx)
+	if err != nil {
+		return fmt.Errorf("Failed to get document heads: %w", err)
+	}
+
+	// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
+	// 1. delete datastore state (txn.Datastore.Query({Prefix: c.GetPrimaryIndexDocKey(dockey)})) -> loop over results, and delete
+	// 2. delete headstore state (txn.Headstore.Query({Prefix: dockey.Key})) - > loop over and delete
+
+	// delete block state
+	// /db/blocks/CIQSDFKLJGHFKLSJGHHJKKLGHGLHSKLHKJGS => KLJSFHGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
+	dDel := newDagDeleter(txn.DAGstore())
+	// for head in heads => dDel.run(ctx, head)
+	return dDel.run(ctx, heads[0])
+}
+
+//						   		   | --> (x) HEAD#1->cid1
+// (xx) --> (xx) --> (xx) --> (xx) |
+//						   		   | --> (x) HEAD#2->cid2
+
+type dagDeleter struct {
+	bstore core.DAGStore
+	// queue *list.List
+}
+
+func newDagDeleter(bstore core.DAGStore) dagDeleter {
+	return dagDeleter{
+		bstore: bstore,
+	}
+}
+
+func (d dagDeleter) run(ctx context.Context, c cid.Cid) error {
+	// base case ?
+
+	// nil check
+	if c == cid.Undef {
+		return nil
+	}
+
+	// get block
+	blk, err := d.bstore.Get(ctx, c)
+	if err == blockstore.ErrNotFound {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	// call delete
+	return d.delete(ctx, c, blk)
+
+}
+
+//
+//  (ipld.Block(ipldProtobufNode{Data: (cbor(crdt deltaPayload)), Links: (_head => parentCid, fieldName => fieldCid)))
+//
+func (d dagDeleter) delete(ctx context.Context, c cid.Cid, blk block.Block) error {
+	nd, err := dag.DecodeProtobuf(blk.RawData())
+	if err != nil {
+		return err
+	}
+
+	// delete current block
+	if err := d.bstore.DeleteBlock(ctx, c); err != nil {
+		return err
+	}
+
+	for _, link := range nd.Links() {
+		// link.Name, link.Cid
+		if err := d.run(ctx, link.Cid); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

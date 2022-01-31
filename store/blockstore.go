@@ -40,6 +40,8 @@ import (
 // is different than expected.
 var ErrHashMismatch = errors.New("block in storage has different hash than requested")
 
+// defradb/store.ErrNotFound => error
+// ipfs-blockstore.ErrNotFound => error
 // ErrNotFound is an error returned when a block is not found.
 var ErrNotFound = errors.New("blockstore: block not found")
 
@@ -64,11 +66,11 @@ func (bs *bstore) HashOnRead(_ context.Context, enabled bool) {
 func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		log.Error("undefined cid in blockstore")
-		return nil, ErrNotFound
+		return nil, blockstore.ErrNotFound
 	}
 	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return nil, ErrNotFound
+		return nil, blockstore.ErrNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -122,7 +124,7 @@ func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
 	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return -1, ErrNotFound
+		return -1, blockstore.ErrNotFound
 	}
 	return size, err
 }
