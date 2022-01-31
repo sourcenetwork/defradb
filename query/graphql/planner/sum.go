@@ -79,8 +79,7 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 
 		isFloat = childFieldDescription.Kind == base.FieldKind_FLOAT
 	} else {
-		sourceCollection = ""
-		sourceProperty = ""
+		return nil, fmt.Errorf("Sum must be provided with a property to sum.")
 	}
 
 	return &sumNode{

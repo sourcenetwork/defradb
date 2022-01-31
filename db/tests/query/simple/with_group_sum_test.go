@@ -33,12 +33,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 				"Age": 32
 			}`)},
 		},
-		Results: []map[string]interface{}{
-			{
-				"Name": "John",
-				"_sum": int64(0),
-			},
-		},
+		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
 
 	executeTestCase(t, test)
