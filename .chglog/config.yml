@@ -18,6 +18,8 @@ options:
       perf: Performance
       refactor: Refactoring
       ci: Continous integration
+      docs: Documentation
+      test: Testing
     sort_by: Custom
     title_order:
       - feat

@@ -26,13 +26,12 @@
 * Move discard to after error check ([#88](https://github.com/sourcenetwork/defradb/pull/88)) (did result in panic if transaction creation fails)
 * Check for nil iterator before closing document fetcher ([#108](https://github.com/sourcenetwork/defradb/pull/108))
 
-
-### Docs
+### Documentation
 
 * Correcting comment typos ([#142](https://github.com/sourcenetwork/defradb/issues/142))
 * Correcting README typos ([#140](https://github.com/sourcenetwork/defradb/issues/140))
 
-### Test
+### Testing
 
 * Allow running of tests using badger-file as well as IM options ([#128](https://github.com/sourcenetwork/defradb/issues/128))
 * Add test datastore selection support ([#88](https://github.com/sourcenetwork/defradb/issues/88))
