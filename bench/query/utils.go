@@ -12,7 +12,7 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-func runQueryBenchGet(b *testing.B, fixture fixtures.Context, docCount, opCount int, doSync bool) error {
+func runQueryBenchGet(b *testing.B, fixture fixtures.Context, docCount, opCount int, query string, doSync bool) error {
 	b.StopTimer()
 	ctx := context.Background()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
@@ -27,7 +27,7 @@ func runQueryBenchGet(b *testing.B, fixture fixtures.Context, docCount, opCount 
 	}
 
 	numTypes := len(fixture.Types())
-	return runQueryBenchGetSync(b, ctx, db, collections, fixture, docCount, opCount, numTypes, dockeys)
+	return runQueryBenchGetSync(b, ctx, db, collections, fixture, docCount, opCount, numTypes, dockeys, query)
 }
 
 func runQueryBenchGetSync(
@@ -38,11 +38,8 @@ func runQueryBenchGetSync(
 	fixture fixtures.Context,
 	docCount, opCount, numTypes int,
 	dockeys [][]key.DocKey,
+	query string,
 ) error {
-	query, err := fixtures.QueryStringFromSchema(collections[0].Schema(), nil)
-	if err != nil {
-		return err
-	}
 	// fmt.Printf("Query:\n%s\n", query)
 	b.StartTimer()
 
@@ -52,7 +49,7 @@ func runQueryBenchGetSync(
 			return fmt.Errorf("Query error: %v", res.Errors)
 		}
 		l := len(res.Data.([]map[string]interface{}))
-		if l != docCount {
+		if l != opCount {
 			return fmt.Errorf("Invalid response, returned data doesn't match length, expected %v actual %v", docCount, l)
 		}
 		// fmt.Println(res)
