@@ -21,13 +21,10 @@
 * Support relationships where both fields have the same name ([#109](https://github.com/sourcenetwork/defradb/issues/109))
 * Handle errors generated in fields thunk ([#66](https://github.com/sourcenetwork/defradb/issues/66))
 * Ensure OperationDefinition case has at least one selection([#24](https://github.com/sourcenetwork/defradb/pull/24))
-* Close datastore iterator on scan close ([#56](https://github.com/sourcenetwork/defradb/pull/56))
-    Resulted in a panic when using limit
-* Close superseded iterators before orphaning
-    Fixes a panic in the join code
-* Move discard to after error check
-    Did result in panic if transaction creation fails
-* Check for nil iterator before closing document fetcher
+* Close datastore iterator on scan close ([#56](https://github.com/sourcenetwork/defradb/pull/56)) (resulted in a panic when using limit)
+* Close superseded iterators before orphaning ([#56](https://github.com/sourcenetwork/defradb/pull/56)) (fixes a panic in the join code) 
+* Move discard to after error check ([#88](https://github.com/sourcenetwork/defradb/pull/88)) (did result in panic if transaction creation fails)
+* Check for nil iterator before closing document fetcher ([#108](https://github.com/sourcenetwork/defradb/pull/108))
 
 
 ### Docs
@@ -47,8 +44,8 @@
 * Rework document rendering to avoid data duplication and mutation ([#68](https://github.com/sourcenetwork/defradb/issues/68))
 * Remove dependency on concrete datastore implementations from db package ([#51](https://github.com/sourcenetwork/defradb/issues/51))
 * Remove all `errors.Wrap` and update them with `fmt.Errorf`. ([#41](https://github.com/sourcenetwork/defradb/issues/41))
-* Restructure integration tests to provide better visibility
-* Remove schemaless code branches
+* Restructure integration tests to provide better visibility ([#15](https://github.com/sourcenetwork/defradb/pull/15))
+* Remove schemaless code branches ([#23](https://github.com/sourcenetwork/defradb/pull/23))
 
 ### Continous integration
 
