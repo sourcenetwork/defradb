@@ -2,10 +2,11 @@
 <a name="v0.2.0"></a>
 ## [v0.2.0](https://github.com/sourcenetwork/defradb/compare/v0.1.0...v0.2.0)
 
-> 2022-01-27
+> 2022-01-31
 
 ### Features
 
+* Add support for sum aggregate ([#121](https://github.com/sourcenetwork/defradb/issues/121))
 * Add support for lwwr scalar arrays (full replace on update) ([#115](https://github.com/sourcenetwork/defradb/issues/115))
 * Add count aggregate support ([#102](https://github.com/sourcenetwork/defradb/issues/102))
 * Add support for named relationships ([#108](https://github.com/sourcenetwork/defradb/issues/108))
