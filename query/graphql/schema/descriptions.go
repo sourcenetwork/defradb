@@ -172,12 +172,6 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 				}
 
 				fd.Meta = rel.Kind() | fieldRelationType
-				// if  {
-				// 	fd.Meta = fieldRelationType // Primary is embedded within fieldRelationType
-				// } else if base.IsSet(rel.Kind(), base.Meta_Relation_ONEMANY) {
-				// 	// are we the one side or the many side
-
-				// }
 
 				// handle object id field, defined as {{object_name}}_id
 				// with type gql.ID
