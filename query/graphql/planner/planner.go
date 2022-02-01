@@ -387,7 +387,7 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 }
 
 func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
-	plan, err := p.query(query)
+	plan, err := p.makePlan(query)
 	if err != nil {
 		return nil, err
 	}
@@ -431,11 +431,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	return docs, err
 }
 
-func (p *Planner) Query(query *parser.Query) (planNode, error) {
-	return p.makePlan(query)
-}
-
-func (p *Planner) query(query *parser.Query) (planNode, error) {
+func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
 }
 
