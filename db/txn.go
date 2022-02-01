@@ -170,7 +170,6 @@ func (txn *Txn) OnError(fn func()) {
 
 func (txn *Txn) runErrorFns(ctx context.Context) {
 	for _, fn := range txn.errorFns {
-		// do we need ctx on the callback funcs?
 		fn()
 	}
 }
