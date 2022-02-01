@@ -23,7 +23,7 @@ var (
 
 func Benchmark_Planner_UserSimple_ParseQuery(b *testing.B) {
 	ctx := context.Background()
-	err := runQueryParserBench(b, ctx, fixtures.WithSchema(ctx, "user_simple"), userSimpleQuery)
+	err := runQueryParserBench(b, ctx, fixtures.ForSchema(ctx, "user_simple"), userSimpleQuery)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func Benchmark_Planner_UserSimple_ParseQuery(b *testing.B) {
 
 func Benchmark_Planner_UserSimple_MakePlan(b *testing.B) {
 	ctx := context.Background()
-	err := runMakePlanBench(b, ctx, fixtures.WithSchema(ctx, "user_simple"), userSimpleQuery)
+	err := runMakePlanBench(b, ctx, fixtures.ForSchema(ctx, "user_simple"), userSimpleQuery)
 	if err != nil {
 		b.Fatal(err)
 	}
