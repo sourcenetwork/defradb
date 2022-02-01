@@ -207,9 +207,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				if f.Name == parser.GroupFieldName {
 					n.groupSelect = f
 				} else {
-					if err := n.addTypeIndexJoin(f); err != nil {
-						return nil, err
-					}
+					// nolint:errcheck
+					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 				}
 			}
 		case *parser.Field:
@@ -272,9 +271,8 @@ func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Fi
 			subtype := &parser.Select{
 				Name: fieldName,
 			}
-			if err := n.addTypeIndexJoin(subtype); err != nil {
-				return err
-			}
+			// nolint:errcheck
+			n.addTypeIndexJoin(subtype) // @TODO: ISSUE#158
 		}
 	}
 
