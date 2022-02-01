@@ -18,9 +18,8 @@ const (
 	writeBatchGroup = 100
 )
 
-func runCollectionBenchGet(b *testing.B, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
 	b.StopTimer()
-	ctx := context.Background()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -91,9 +90,8 @@ func runCollectionBenchGetAsync(b *testing.B,
 	return nil
 }
 
-func runCollectionBenchCreate(b *testing.B, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
 	b.StopTimer()
-	ctx := context.Background()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -115,9 +113,8 @@ func runCollectionBenchCreate(b *testing.B, fixture fixtures.Generator, docCount
 	return runCollectionBenchCreateAsync2(b, ctx, collections, fixture, docCount, opCount, numTypes)
 }
 
-func runCollectionBenchCreateMany(b *testing.B, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
 	b.StopTimer()
-	ctx := context.Background()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
