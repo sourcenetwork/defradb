@@ -112,7 +112,9 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
-	g.genAggregateFields()
+	if err := g.genAggregateFields(); err != nil {
+		return nil, err
+	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -437,14 +439,22 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	return genRelationName(hostName.Name, targetName.Name())
 }
 
-func (g *Generator) genAggregateFields() {
+func (g *Generator) genAggregateFields() error {
 	for _, t := range g.typeDefs {
-		countField := g.genCountFieldConfig(t)
+		countField, err := g.genCountFieldConfig(t)
+		if err != nil {
+			return err
+		}
 		t.AddFieldConfig(countField.Name, &countField)
+
+		sumField := g.genSumFieldConfig(t)
+		t.AddFieldConfig(sumField.Name, &sumField)
 	}
+
+	return nil
 }
 
-func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
+func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	inputCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "CountArg"),
 		Values: gql.EnumValueConfigMap{},
@@ -460,8 +470,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 	countType := gql.NewEnum(inputCfg)
 	err := g.manager.schema.AppendType(countType)
 	if err != nil {
-		// Todo: better error handle
-		log.Printf("got error while appending runtime schema: %v", err)
+		return gql.Field{}, err
 	}
 
 	field := gql.Field{
@@ -472,7 +481,92 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		},
 	}
 
+	return field, nil
+}
+
+func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
+	var sumType *gql.InputObject
+
+	inputCfg := gql.InputObjectConfig{
+		Name: genTypeName(obj, "SumArg"),
+	}
+
+	inputCfg.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		sumBaseArgType, isSumable := g.genSumBaseArgInput(obj)
+		if isSumable {
+			err := g.manager.schema.AppendType(sumBaseArgType)
+			if err != nil {
+				return gql.InputObjectConfigFieldMap{}, err
+			}
+		}
+
+		for _, field := range obj.Fields() {
+			// we can only sum list items
+			listType, isList := field.Type.(*gql.List)
+			if !isList {
+				continue
+			}
+
+			if listType.OfType == gql.Float || listType.OfType == gql.Int {
+				// If it is an inline scalar array then we require an empty object as an argument due to the lack of union input types
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: &gql.Object{},
+				}
+			} else {
+				subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[genTypeName(field.Type, "SumBaseArg")]
+				// If the item is not in the type map, it must contain no summable fields (e.g. no Int/Floats)
+				if !isSubTypeSumable {
+					continue
+				}
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: subSumType,
+				}
+			}
+
+		}
+
+		return fields, nil
+	})
+	sumType = gql.NewInputObject(inputCfg)
+
+	//this might resolve the thunk?  Race issue?
+	err := g.manager.schema.AppendType(sumType)
+	if err != nil {
+		log.Printf("failure appending sumType : %v", err)
+	}
+
+	field := gql.Field{
+		Name: parser.SumFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{
+			"field": newArgConfig(sumType),
+		},
+	}
 	return field
+}
+
+func (g *Generator) genSumBaseArgInput(obj *gql.Object) (*gql.Enum, bool) {
+	inputCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, "SumBaseArg"),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	hasSumableFields := false
+	// generate basic filter operator blocks for all the sumable types
+	for _, field := range obj.Fields() {
+		if field.Type == gql.Float || field.Type == gql.Int {
+			hasSumableFields = true
+			inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+		}
+	}
+
+	if !hasSumableFields {
+		return nil, false
+	}
+
+	return gql.NewEnum(inputCfg), true
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
