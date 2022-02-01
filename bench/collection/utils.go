@@ -2,6 +2,7 @@ package collection
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync"
 	"testing"
@@ -106,11 +107,6 @@ func runCollectionBenchCreate(b *testing.B, fixture fixtures.Context, docCount, 
 
 	numTypes := len(fixture.Types())
 
-	// docs := make([][]string, opCount/numTypes)
-	// for j := 0; j < opCount/numTypes; j++ {
-	// 	docs[j], _ = fixture.GenerateDocs()
-	// }
-
 	// run benchmark
 	b.StartTimer()
 	if doSync {
@@ -133,13 +129,12 @@ func runCollectionBenchCreateMany(b *testing.B, fixture fixtures.Context, docCou
 		return err
 	}
 
-	// numTypes := len(fixture.Types())
-	// @todo for CreateMany make sure numTypes == 1
-
-	// docs := make([][]string, opCount/numTypes)
-	// for j := 0; j < opCount/numTypes; j++ {
-	// 	docs[j], _ = fixture.GenerateDocs()
-	// }
+	numTypes := len(fixture.Types())
+	// CreateMany make sure numTypes == 1 since we only support that for now
+	// @todo: Add support for numTypes > 1 later
+	if numTypes != 1 {
+		return fmt.Errorf("Invalid number of types for create many, have %v but max is 1", numTypes)
+	}
 
 	// run benchmark
 
@@ -149,10 +144,6 @@ func runCollectionBenchCreateMany(b *testing.B, fixture fixtures.Context, docCou
 		for j := 0; j < opCount; j++ {
 			d, _ := fixture.GenerateDocs()
 			docs[j], _ = document.NewFromJSON([]byte(d[0]))
-			// for k := 0; k < numTypes; k++ {
-			// 	doc, _ := document.NewFromJSON([]byte(docs[k]))
-			// 	collections[k].Create(ctx, doc)
-			// }
 		}
 
 		collections[0].CreateMany(ctx, docs)
@@ -240,7 +231,6 @@ func runCollectionBenchCreateAsync2(b *testing.B,
 	docCount, opCount, numTypes int,
 ) error {
 
-	// load fixtures
 	for bi := 0; bi < b.N; bi++ {
 		var wg sync.WaitGroup
 		wg.Add(opCount)

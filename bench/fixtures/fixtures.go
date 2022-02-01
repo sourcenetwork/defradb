@@ -24,7 +24,7 @@ type Context struct {
 	types  []interface{}
 }
 
-func WithSchema(ctx context.Context, schemaName string) Context {
+func ForSchema(ctx context.Context, schemaName string) Context {
 	return Context{
 		ctx:    ctx,
 		schema: schemaName,

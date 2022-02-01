@@ -40,7 +40,6 @@ func hashToInt64(s string) int64 {
 }
 
 func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Context) ([]client.Collection, error) {
-	// create collection
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
 	var schema string
