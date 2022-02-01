@@ -61,6 +61,8 @@ func runCollectionBenchGetSync(b *testing.B,
 	return nil
 }
 
+// pretty basic async loop, one goroutine for
+// each operation we need to do
 func runCollectionBenchGetAsync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
@@ -181,6 +183,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 }
 
 // workers
+// IGNORE THIS, unused, sorry andy :).
 func runCollectionBenchCreateAsync1(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
@@ -227,6 +230,9 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 }
 
 // batching
+// uses an async method similar to the BackFill implementaion
+// cuts the total task up into batchs up to writeBatchGroup size
+// and wait for it all to finish.
 func runCollectionBenchCreateAsync2(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
