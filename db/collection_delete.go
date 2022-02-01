@@ -16,6 +16,8 @@ import (
 
 	block "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
+	query "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	dag "github.com/ipfs/go-merkledag"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 var (
@@ -32,31 +35,244 @@ var (
 	ErrDeleteEmpty         = errors.New("The doc delete cannot be empty")
 )
 
-// DeleteWith deletes a target document using the given deleter type. Target
-// can be a Filter statement, a single docKey, a single document,
-// an array of docKeys, or an array of documents.
+// DeleteWith deletes a target document. Target can be a Filter statement,
+//  a single docKey, a single document, an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
 // Eg: DeleteWithFilter or DeleteWithKey
-func (c *Collection) DeleteWith(ctx context.Context, target interface{}, opts ...client.DeleteOpt) error {
-	// switch t := target.(type) {
-	// case string, map[string]interface{}, *parser.Filter:
-	// _, err := c.DeleteWithFilter(ctx, t, deleter, opts...)
-	// return err
-	// case key.DocKey:
-	// _, err := c.DeleteWithKey(ctx, t, deleter, opts...)
-	// return err
-	// case []key.DocKey:
-	// _, err := c.DeleteWithKeys(ctx, t, deleter, opts...)
-	// return err
-	// case *document.SimpleDocument:
-	// return c.DeleteWithDoc(t, deleter, opts...)
-	// case []*document.SimpleDocument:
-	// return c.DeleteWithDocs(t, deleter, opts...)
-	// default:
-	// return ErrInvalidTarget
-	// }
+func (c *Collection) DeleteWith(
+	ctx context.Context,
+	target interface{},
+	opts ...client.DeleteOpt) error {
+
+	switch t := target.(type) {
+
+	case string, map[string]interface{}, *parser.Filter:
+		_, err := c.DeleteWithFilter(ctx, t, opts...)
+		return err
+
+	case key.DocKey:
+		_, err := c.DeleteWithKey(ctx, t, opts...)
+		return err
+
+	case []key.DocKey:
+		_, err := c.DeleteWithKeys(ctx, t, opts...)
+		return err
+
+	case *document.SimpleDocument:
+		return c.DeleteWithDoc(t, opts...)
+
+	case []*document.SimpleDocument:
+		return c.DeleteWithDocs(t, opts...)
+
+	default:
+		return ErrInvalidDeleteTarget
+
+	}
 	return nil
 }
+
+// DeleteWithKey deletes using a DocKey to target a single document for delete.
+func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+
+	txn, err := c.getTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	defer c.discardImplicitTxn(ctx, txn)
+
+	res, err := c.deleteWithKey(ctx, txn, key, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, c.commitImplicitTxn(ctx, txn)
+}
+
+func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+	// Check the docKey we have been given to delete with actually has a corresponding
+	//  document (i.e. document actually exists in the collection).
+	found, err := c.exists(ctx, txn, key)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, ErrDocumentNotFound
+	}
+
+	// Apply the function that will perform the full deletion of the document.
+	err = c.applyFullDelete(ctx, txn, key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Upon successfull deletion, record a summary.
+	results := &client.DeleteResult{
+		Count:   1,
+		DocKeys: []string{key.String()},
+	}
+
+	return results, nil
+}
+
+type dagDeleter struct {
+	bstore core.DAGStore
+	// queue *list.List
+}
+
+func newDagDeleter(bstore core.DAGStore) dagDeleter {
+	return dagDeleter{
+		bstore: bstore,
+	}
+}
+
+// Here is what our db stores look like:
+//   /db
+//   -> datastore /data => /db/data
+//   -> headstore /heads => /db/heads
+//   -> block /blocks => /db/blocks
+//   -> systemstore /system => /db/system
+// For the delete operation we are concerned with:
+//   1) Deleting datastore state.
+//   2) Deleting headstore state.
+//   3) Deleting the actual blocks (blockstore).
+func (c *Collection) applyFullDelete(
+	ctx context.Context,
+	txn *Txn, dockey key.DocKey) error {
+
+	// Check the docKey we have been given to delete with actually has a corresponding
+	//  document (i.e. document actually exists in the collection).
+	found, err := c.exists(ctx, txn, dockey)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return ErrDocumentNotFound
+	}
+
+	// 1. =========== Delete datastore state ===========
+	dataQuery := query.Query{
+		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
+		KeysOnly: true,
+	}
+	dataResult, err := txn.datastore.Query(ctx, dataQuery)
+	for e := range dataResult.Next() {
+		if e.Error != nil {
+			return err
+		}
+		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
+		err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		if err != nil {
+			return err
+		}
+	} // Successfully deleted the datastore state of this document.
+
+	// 2. =========== Delete headstore state ===========
+	headQuery := query.Query{
+		Prefix:   dockey.Key.String(),
+		KeysOnly: true,
+	}
+	headResult, err := txn.headstore.Query(ctx, headQuery)
+	for e := range headResult.Next() {
+		if e.Error != nil {
+			return err
+		}
+		err = txn.headstore.Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		if err != nil {
+			return err
+		}
+	} // Successfully deleted the headstore state of this document.
+
+	fmt.Println("--------------------------------------")
+	fmt.Println("dataResult: ", dataResult)
+	fmt.Println("headResult: ", headResult)
+	fmt.Println("err: ", err)
+	fmt.Println("--------------------------------------")
+
+	// 3. =========== Delete blockstore state ===========
+	// blocks: /db/blocks/CIQSDFKLJGHFKLSJGHHJKKLGHGLHSKLHKJGS => KLJSFHGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
+
+	// Covert dockey to compositeKey as follows:
+	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
+	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
+	compositeKey := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
+	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
+
+	// Get all the heads (cids).
+	heads, _, err := headset.List(ctx)
+	if err != nil {
+		return fmt.Errorf("Failed to get document heads: %w", err)
+	}
+
+	dagDeleter := newDagDeleter(txn.DAGstore())
+	// Delete DAG of all heads (and the heads themselves)
+	for _, head := range heads {
+		if err := dagDeleter.run(ctx, head); err != nil {
+			return err
+		}
+	} // Successfully deleted the blocks.
+
+	return nil
+}
+
+func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
+
+	// Validate the cid.
+	if targetCid == cid.Undef {
+		return nil
+	}
+
+	// Get the block using the cid.
+	block, err := d.bstore.Get(ctx, targetCid)
+	if err == blockstore.ErrNotFound {
+		// If we have multiple heads corresponding to a dockey, one of the heads
+		//  could have already deleted the parantal dag chain.
+		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
+		//          all the parental nodes. Currently HEAD#2 goes to delete
+		//          itself (represented by `:d`) and it's parental nodes, but as we see
+		//          the parents were already deleted by HEAD#1 so we just stop there.
+		//                                     | --> (E:x) HEAD#1->cid1
+		// (A:x) --> (B:x) --> (C:x) --> (D:x) |
+		//                                     | --> (F:d) HEAD#2->cid2
+		return nil
+
+	} else if err != nil {
+		return err
+	}
+
+	// Attempt deleting the current block and it's links (in a mutally recursive fashion.)
+	return d.delete(ctx, targetCid, block)
+}
+
+//
+//  (ipld.Block(ipldProtobufNode{Data: (cbor(crdt deltaPayload)), Links: (_head => parentCid, fieldName => fieldCid)))
+//
+func (d dagDeleter) delete(
+	ctx context.Context,
+	targetCid cid.Cid,
+	targetBlock block.Block) error {
+
+	targetNode, err := dag.DecodeProtobuf(targetBlock.RawData())
+	if err != nil {
+		return err
+	}
+
+	// delete current block
+	if err := d.bstore.DeleteBlock(ctx, targetCid); err != nil {
+		return err
+	}
+
+	for _, link := range targetNode.Links() {
+		// Call run on all the links (eventually delete is called on them too.)
+		if err := d.run(ctx, link.Cid); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// =================================== UNIMPLEMENTED ===================================
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
@@ -75,125 +291,6 @@ func (c *Collection) DeleteWithFilter(ctx context.Context, filter interface{}, o
 
 	return nil, nil
 }
-
-// DeleteWithKey deletes using a DocKey to target a single document for delete.
-func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-
-	defer c.discardImplicitTxn(ctx, txn)
-
-	res, err := c.deleteWithKey(ctx, txn, key, opts...)
-
-	fmt.Println("--------------------------------------")
-	fmt.Println("res: ", res)
-	fmt.Println("err: ", err)
-	fmt.Println("--------------------------------------")
-
-	// res, err := c.deleteWithKey(ctx, txn, key, deleter, opts...)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return res, c.commitImplicitTxn(ctx, txn)
-
-	return nil, nil
-}
-
-func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
-	doc, err := c.Get(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := doc.ToMap()
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.applyDelete(ctx, txn, v)
-
-	results := &client.DeleteResult{
-		Count:   1,
-		DocKeys: []string{key.String()},
-	}
-	return results, nil
-
-}
-
-func (c *Collection) applyDelete(ctx context.Context, txn *Txn, doc map[string]interface{}) error {
-	// keyStr, ok := doc["_key"].(string)
-	// if !ok {
-	// 	return errors.New("Document is missing key")
-	// }
-	// key := ds.NewKey(keyStr)
-	// links := make([]core.DAGLink, 0)
-	// for mfield, mval := range merge {
-	// 	if _, ok := mval.(map[string]interface{}); ok {
-	// 		return ErrInvalidMergeValueType
-	// 	}
-
-	// 	fd, valid := c.desc.GetField(mfield)
-	// 	if !valid {
-	// 		return errors.New("Invalid field in Patch")
-	// 	}
-
-	// 	cval, err := validateFieldSchema(mval, fd)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	val := document.NewCBORValue(fd.Typ, cval)
-	// 	fieldKey := c.getFieldKey(key, mfield)
-	// 	c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// links[mfield] = c
-	// 	links = append(links, core.DAGLink{
-	// 		Name: mfield,
-	// 		Cid:  c,
-	// 	})
-	// }
-
-	// // Update CompositeDAG
-	// em, err := cbor.CanonicalEncOptions().EncMode()
-	// if err != nil {
-	// 	return err
-	// }
-	// buf, err := em.Marshal(merge)
-	// if err != nil {
-	// 	return err
-	// }
-	// if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
-	// 	return err
-	// }
-
-	// // if this a a Batch masked as a Transaction
-	// // commit our writes so we can see them.
-	// // Batches don't maintain serializability, or
-	// // linearization, or any other transaction
-	// // semantics, which the user already knows
-	// // otherwise they wouldn't use a datastore
-	// // that doesn't support proper transactions.
-	// // So lets just commit, and keep going.
-	// // @todo: Change this on the Txn.BatchShim
-	// // structure
-	// if txn.IsBatch() {
-	// 	if err := txn.Commit(ctx); err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// return nil
-
-	return nil
-}
-
-// =================================== UNIMPLEMENTED ===================================
 
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
 // An deleter value is provided, which could be a string Patch, string Merge Patch
@@ -335,94 +432,4 @@ func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter inte
 	// return results, nil
 
 	return nil, nil
-}
-
-func (c *Collection) deleteFull(ctx context.Context, txn *Txn, dockey key.DocKey) error {
-	// quick check doc exists via c.exists(ctx, txn, dockey)
-
-	// get head cid
-	// dockey => bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
-	// key => bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
-	// /db
-	// -> datastore /data => /db/data
-	// -> systemstore /system => /db/system
-	// -> block /blocks => /db/blocks
-	// -> headstore /heads => /db/heads
-	// var key ds.Key
-	key := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
-	headset := clock.NewHeadSet(txn.Headstore(), key)
-	heads, _, err := headset.List(ctx)
-	if err != nil {
-		return fmt.Errorf("Failed to get document heads: %w", err)
-	}
-
-	// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
-	// 1. delete datastore state (txn.Datastore.Query({Prefix: c.GetPrimaryIndexDocKey(dockey)})) -> loop over results, and delete
-	// 2. delete headstore state (txn.Headstore.Query({Prefix: dockey.Key})) - > loop over and delete
-
-	// delete block state
-	// /db/blocks/CIQSDFKLJGHFKLSJGHHJKKLGHGLHSKLHKJGS => KLJSFHGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
-	dDel := newDagDeleter(txn.DAGstore())
-	// for head in heads => dDel.run(ctx, head)
-	return dDel.run(ctx, heads[0])
-}
-
-//						   		   | --> (x) HEAD#1->cid1
-// (xx) --> (xx) --> (xx) --> (xx) |
-//						   		   | --> (x) HEAD#2->cid2
-
-type dagDeleter struct {
-	bstore core.DAGStore
-	// queue *list.List
-}
-
-func newDagDeleter(bstore core.DAGStore) dagDeleter {
-	return dagDeleter{
-		bstore: bstore,
-	}
-}
-
-func (d dagDeleter) run(ctx context.Context, c cid.Cid) error {
-	// base case ?
-
-	// nil check
-	if c == cid.Undef {
-		return nil
-	}
-
-	// get block
-	blk, err := d.bstore.Get(ctx, c)
-	if err == blockstore.ErrNotFound {
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	// call delete
-	return d.delete(ctx, c, blk)
-
-}
-
-//
-//  (ipld.Block(ipldProtobufNode{Data: (cbor(crdt deltaPayload)), Links: (_head => parentCid, fieldName => fieldCid)))
-//
-func (d dagDeleter) delete(ctx context.Context, c cid.Cid, blk block.Block) error {
-	nd, err := dag.DecodeProtobuf(blk.RawData())
-	if err != nil {
-		return err
-	}
-
-	// delete current block
-	if err := d.bstore.DeleteBlock(ctx, c); err != nil {
-		return err
-	}
-
-	for _, link := range nd.Links() {
-		// link.Name, link.Cid
-		if err := d.run(ctx, link.Cid); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
