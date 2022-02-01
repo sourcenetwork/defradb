@@ -78,7 +78,8 @@ func formatQuery(b *testing.B, query string, dockeys [][]key.DocKey) string {
 
 	for i := 0; i < numPlaceholders; i++ {
 		// pick a random dockey, needs to be unique accross all
-		// calls, so remove the selected one between calls
+		// loop iterations, so remove the selected one so the next
+		// iteration cant potentially pick it.
 		rIndex := rand.Intn(len(dockeysCopy))
 		key := dockeysCopy[rIndex][0]
 

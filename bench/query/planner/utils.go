@@ -50,7 +50,7 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	for i := 0; i < b.N; i++ {
 		_, err := exec.MakePlanFromParser(ctx, db, txn, q)
 		if err != nil {
-			fmt.Errorf("Failed to make plan: %w", err)
+			return fmt.Errorf("Failed to make plan: %w", err)
 		}
 	}
 	b.StopTimer()
