@@ -137,7 +137,7 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 	if !hasHeads { // reached the bottom, at a leaf
 		err := mc.headset.Add(ctx, root, rootPrio)
 		if err != nil {
-			return nil, fmt.Errorf("error adding head %s : %w", root, err)
+			return nil, fmt.Errorf("error adding head (when reached the bottom) %s : %w", root, err)
 		}
 		return nil, nil
 	}
@@ -169,7 +169,13 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			mc.headset.Add(ctx, root, rootPrio)
+			err := mc.headset.Add(ctx, root, rootPrio)
+			if err != nil {
+				log.Errorf("error adding head (when root is new head): %s : %w", root, err)
+				// OR should this also return like below comment??
+				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
+			}
+
 			continue
 		}
 

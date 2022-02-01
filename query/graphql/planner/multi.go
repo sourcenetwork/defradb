@@ -12,6 +12,8 @@ package planner
 import (
 	"errors"
 
+	"log"
+
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -117,10 +119,13 @@ func (p *parallelNode) Start() error {
 }
 
 func (p *parallelNode) Spans(spans core.Spans) {
-	p.applyToPlans(func(n planNode) error {
+	err := p.applyToPlans(func(n planNode) error {
 		n.Spans(spans)
 		return nil
 	})
+	if err != nil {
+		log.Print("applying spans to plans failed : ", err)
+	}
 }
 
 func (p *parallelNode) Close() error {
@@ -173,7 +178,10 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 		// pass the doc key as a reference through the spans interface
 		spans := core.Spans{core.NewSpan(core.NewKey(key), core.Key{})}
 		plan.Spans(spans)
-		plan.Init()
+		err := plan.Init()
+		if err != nil {
+			return false, err
+		}
 	} else {
 		return false, nil
 	}

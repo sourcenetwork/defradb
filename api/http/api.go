@@ -13,6 +13,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/multiformats/go-multihash"
@@ -39,7 +40,10 @@ func NewServer(db client.DB) *Server {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
+		_, err := w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
+		if err != nil {
+			log.Printf("DefraDB HTTP API Welcome message writing failed: %v", err)
+		}
 	})
 
 	r.Get("/ping", s.ping)
@@ -52,35 +56,61 @@ func NewServer(db client.DB) *Server {
 }
 
 func (s *Server) Listen(addr string) {
-	http.ListenAndServe(addr, s.router)
+	if err := http.ListenAndServe(addr, s.router); err != nil {
+		log.Fatalln("Error: HTTP Listening and Serving Failed: ", err)
+	}
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
+	_, err := w.Write([]byte("pong"))
+	if err != nil {
+		log.Printf("Writing pong with HTTP failed: %v", err)
+	}
 }
 
 func (s *Server) dump(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	s.db.PrintDump(ctx)
-	w.Write([]byte("ok"))
+
+	_, err := w.Write([]byte("ok"))
+	if err != nil {
+		log.Printf("Writing ok with HTTP failed: %v", err)
+	}
 }
 
 func (s *Server) execGQL(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	query := r.URL.Query().Get("query")
 	result := s.db.ExecQuery(ctx, query)
-	json.NewEncoder(w).Encode(result)
+
+	err := json.NewEncoder(w).Encode(result)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 }
 
 func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var result client.QueryResult
 	sdl, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+
+	defer func() {
+		err = r.Body.Close()
+		if err != nil {
+			log.Print(err) // Should this be `log.Fatal(err)` ??
+		}
+	}()
 
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -88,7 +118,13 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	err = s.db.AddSchema(ctx, string(sdl))
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -96,7 +132,12 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	result.Data = map[string]string{
 		"result": "success",
 	}
-	json.NewEncoder(w).Encode(result)
+
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 }
 
 func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +156,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			result.Errors = []interface{}{err.Error()}
 			result.Data = err.Error()
-			json.NewEncoder(w).Encode(result)
+
+			err = json.NewEncoder(w).Encode(result)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -125,7 +172,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	block, err := s.db.GetBlock(ctx, c)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -134,14 +187,26 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		result.Data = err.Error()
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	buf, err := nd.MarshalJSON()
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -151,7 +216,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	delta, err := reg.DeltaDecode(nd)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -159,7 +230,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	data, err := delta.Marshal()
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -167,10 +244,14 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	// var val interface{}
 	// err = cbor.Unmarshal(delta.Value().([]byte), &val)
 	// if err != nil {
-	// 	result.Errors = []interface{}{err.Error()}
-	// 	json.NewEncoder(w).Encode(result)
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	return
+	//   result.Errors = []interface{}{err.Error()}
+	//   err = json.NewEncoder(w).Encode(result)
+	//   if err != nil {
+	//     http.Error(w, err.Error(), 500)
+	//     return
+	//   }
+	//   w.WriteHeader(http.StatusBadRequest)
+	//   return
 	// }
 	result.Data = map[string]interface{}{
 		"block": string(buf),
@@ -184,7 +265,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		result.Data = nil
-		json.NewEncoder(w).Encode(result)
+
+		err := json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

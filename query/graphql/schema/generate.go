@@ -12,6 +12,7 @@ package schema
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -125,7 +126,11 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 	}
 
 	for _, t := range generatedFilterBaseArgs {
-		g.manager.schema.AppendType(t)
+		err := g.manager.schema.AppendType(t)
+		if err != nil {
+			// Todo: better error handle
+			log.Printf("failure appending type while generating query type defs from an AST : %v", err)
+		}
 	}
 
 	// resolve types
@@ -352,7 +357,13 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
+
 					case *gql.List:
 						ltype := subobj.OfType
 						// register the relation
@@ -360,7 +371,12 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
 					}
 
 					fType.Type = ttype
@@ -514,7 +530,12 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
 		return fields, nil
 	})
 	sumType = gql.NewInputObject(inputCfg)
-	g.manager.schema.AppendType(sumType) //this might resolve the thunk?  Race issue?
+
+	//this might resolve the thunk?  Race issue?
+	err := g.manager.schema.AppendType(sumType)
+	if err != nil {
+		log.Printf("failure appending sumType : %v", err)
+	}
 
 	field := gql.Field{
 		Name: parser.SumFieldName,
@@ -850,10 +871,25 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 	name := strings.ToLower(obj.Name())
 
 	// add the generated types to the type map
-	g.manager.schema.AppendType(config.filter)
-	g.manager.schema.AppendType(config.groupBy)
-	g.manager.schema.AppendType(config.having)
-	g.manager.schema.AppendType(config.order)
+	if err := g.manager.schema.AppendType(config.filter); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - filter: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - groupBy: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.having); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - having: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.order); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - order: %v", err)
+	}
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive

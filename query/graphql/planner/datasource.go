@@ -45,7 +45,10 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 	}
 
 	scan := p.Scan()
-	scan.initCollection(colDesc)
+	err = scan.initCollection(colDesc)
+	if err != nil {
+		return planSource{}, err
+	}
 
 	return planSource{
 		plan: scan,
