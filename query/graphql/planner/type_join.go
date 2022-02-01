@@ -289,7 +289,14 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)
-	n.subType.Init() // re-initialize the sub type plan
+
+	// re-initialize the sub type plan
+	if err := n.subType.Init(); err != nil {
+		// @todo pair up on the error handling / logging properly.
+		fmt.Println("sub-type initalization error with re-initalizing : %w", err)
+		return doc
+	}
+
 	// if we don't find any docs from our point span lookup
 	// or if we encounter an error just return the base doc,
 	// with an empty map for the subdoc
@@ -417,7 +424,11 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 		}
 
 		// reset scan node
-		n.subType.Init()
+		if err := n.subType.Init(); err != nil {
+			// @todo pair up on the error handling / logging properly.
+			fmt.Println("sub-type initalization error at scan node reset : %w", err)
+		}
+
 		for {
 			next, err := n.subType.Next()
 			if !next || err != nil {

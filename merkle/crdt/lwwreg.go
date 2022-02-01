@@ -11,6 +11,7 @@ package crdt
 
 import (
 	"context"
+	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -31,7 +32,10 @@ var (
 )
 
 func init() {
-	DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	err := DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister

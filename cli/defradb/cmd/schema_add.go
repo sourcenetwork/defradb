@@ -54,10 +54,18 @@ var addCmd = &cobra.Command{
 		endpoint, err := url.Parse(endpointStr)
 		cobra.CheckErr(err)
 
-		r, err := http.Post(endpoint.String(), "text", bytes.NewBuffer(schema))
+		res, err := http.Post(endpoint.String(), "text", bytes.NewBuffer(schema))
 		cobra.CheckErr(err)
-		defer r.Body.Close()
-		result, err := ioutil.ReadAll(r.Body)
+
+		defer func() {
+			err = res.Body.Close()
+			if err != nil {
+				// Should this be `log.Fatal` ??
+				log.Error("response body closing failed: ", err)
+			}
+		}()
+
+		result, err := ioutil.ReadAll(res.Body)
 		cobra.CheckErr(err)
 		fmt.Println(string(result))
 	},
