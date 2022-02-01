@@ -68,8 +68,3 @@
 ## v0.1.0
 
 > 2021-03-15
-
-### Core
-
-* Updated MerkleClock interface to support DAG operations directly
-
