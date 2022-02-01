@@ -29,10 +29,6 @@ type deleteNode struct {
 
 // Next only returns once.
 func (n *deleteNode) Next() (bool, error) {
-	// if err := n.collection.WithTxn(n.p.txn).Create(n.doc); err != nil {
-	// 	return false, err
-	// }
-
 	if n.isDeleting {
 		// create our result values node
 		if n.deleteIter == nil {
@@ -75,9 +71,9 @@ func (n *deleteNode) Next() (bool, error) {
 
 		// consume the deletes into our valuesNode
 		fmt.Println(results)
-		for _, resKey := range results.DocKeys {
-			n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
-		}
+		// for _, resKey := range results.DocKeys {
+		// 	n.deleteIter.docs.DeleteDoc(map[string]interface{}{"_key": resKey})
+		// }
 		n.isDeleting = false
 
 		// lets release the results dockeys slice memory
@@ -112,8 +108,13 @@ func (n *deleteNode) Values() map[string]interface{} {
 	return n.results.Values()
 }
 
-func (n *deleteNode) Spans(spans core.Spans) { /* no-op */ }
-func (n *deleteNode) Init() error            { return nil }
+func (n *deleteNode) Spans(spans core.Spans) {
+	/* no-op */
+}
+
+func (n *deleteNode) Init() error {
+	return nil
+}
 
 func (n *deleteNode) Start() error {
 	return n.results.Start()
@@ -123,7 +124,9 @@ func (n *deleteNode) Close() error {
 	return n.results.Close()
 }
 
-func (n *deleteNode) Source() planNode { return nil }
+func (n *deleteNode) Source() planNode {
+	return nil
+}
 
 func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {
 	delete := &deleteNode{
