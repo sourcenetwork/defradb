@@ -58,7 +58,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 }
 
 func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Context) (*defradb.DB, []client.Collection, error) {
-	db, err := testutils.NewTestDB()
+	db, err := testutils.NewTestDB(b)
 	if err != nil {
 		return nil, nil, err
 	}

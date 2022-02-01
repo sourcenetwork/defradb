@@ -11,7 +11,7 @@ import (
 )
 
 func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := testutils.NewTestStorage()
+	db, err := testutils.NewTestStorage(b)
 	if err != nil {
 		return err
 	}
