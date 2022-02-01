@@ -27,14 +27,12 @@ import (
 )
 
 const (
-	storageEnvName      = "DEFRA_BENCH_STORAGE"
 	memoryBadgerEnvName = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName   = "DEFRA_BADGER_FILE"
 	memoryMapEnvName    = "DEFRA_MAP"
 )
 
 var (
-	storage        string = "memory"
 	badgerInMemory bool
 	badgerFile     bool
 	mapStore       bool
@@ -62,6 +60,14 @@ type databaseInfo struct {
 	rootstore ds.Batching
 }
 
+func (dbi databaseInfo) Rootstore() ds.Batching {
+	return dbi.rootstore
+}
+
+func (dbi databaseInfo) DB() *db.DB {
+	return dbi.db
+}
+
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
 	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
@@ -75,45 +81,9 @@ func init() {
 		badgerFile = false
 		mapStore = true
 	}
-
-	// assign if not empty
-	if s := os.Getenv(storageEnvName); s != "" {
-		storage = s
-	}
 }
 
-func NewTestDB(t testing.TB) (*db.DB, error) {
-	dbInfo, err := newBenchStoreInfo(t)
-	return dbInfo.db, err
-}
-
-func NewTestStorage(t testing.TB) (ds.Batching, error) {
-	dbInfo, err := newBenchStoreInfo(t)
-	return dbInfo.rootstore, err
-}
-
-func newBenchStoreInfo(t testing.TB) (databaseInfo, error) {
-	var dbInfo databaseInfo
-	var err error
-
-	switch storage {
-	case "memory":
-		dbInfo, err = newBadgerMemoryDB()
-	case "badger":
-		dbInfo, err = newBadgerFileDB(t)
-	case "memorymap":
-		dbInfo, err = newMapDB()
-	default:
-		return databaseInfo{}, fmt.Errorf("invalid storage engine backend: %s", storage)
-	}
-
-	if err != nil {
-		return databaseInfo{}, fmt.Errorf("Failed to create storage backend: %w", err)
-	}
-	return dbInfo, err
-}
-
-func newBadgerMemoryDB() (databaseInfo, error) {
+func NewBadgerMemoryDB() (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -132,7 +102,7 @@ func newBadgerMemoryDB() (databaseInfo, error) {
 	}, nil
 }
 
-func newMapDB() (databaseInfo, error) {
+func NewMapDB() (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
 	db, err := db.NewDB(rootstore, struct{}{})
 	if err != nil {
@@ -146,7 +116,7 @@ func newMapDB() (databaseInfo, error) {
 	}, nil
 }
 
-func newBadgerFileDB(t testing.TB) (databaseInfo, error) {
+func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 	path := t.TempDir()
 
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
@@ -171,7 +141,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
-		badgerIMDatabase, err := newBadgerMemoryDB()
+		badgerIMDatabase, err := NewBadgerMemoryDB()
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +149,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	if badgerFile {
-		badgerIMDatabase, err := newBadgerFileDB(t)
+		badgerIMDatabase, err := NewBadgerFileDB(t)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +157,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	if mapStore {
-		mapDatabase, err := newMapDB()
+		mapDatabase, err := NewMapDB()
 		if err != nil {
 			return nil, err
 		}

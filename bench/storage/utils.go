@@ -7,11 +7,11 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
-	testutils "github.com/sourcenetwork/defradb/db/tests"
+	benchutils "github.com/sourcenetwork/defradb/bench"
 )
 
 func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := testutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(b)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 }
 
 func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := testutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(b)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 }
 
 func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := testutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(b)
 	if err != nil {
 		return err
 	}

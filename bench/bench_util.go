@@ -6,13 +6,16 @@ import (
 	"hash/fnv"
 	"math"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 
 	"github.com/dgraph-io/badger/v3"
+	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/db"
 	defradb "github.com/sourcenetwork/defradb/db"
 	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
@@ -21,6 +24,11 @@ import (
 
 const (
 	writeBatchGroup = 100
+	storageEnvName  = "DEFRA_BENCH_STORAGE"
+)
+
+var (
+	storage string = "memory"
 )
 
 func init() {
@@ -29,6 +37,11 @@ func init() {
 	// (specifically thinking about the fixture generation stuff)
 	seed := hashToInt64("https://xkcd.com/221/")
 	rand.Seed(seed)
+
+	// assign if not empty
+	if s := os.Getenv(storageEnvName); s != "" {
+		storage = s
+	}
 }
 
 // hashToInt64 uses the FNV-1 hash to int
@@ -75,7 +88,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 }
 
 func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (*defradb.DB, []client.Collection, error) {
-	db, err := testutils.NewTestDB(b)
+	db, err := NewTestDB(b)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,4 +187,40 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 		return nil, err
 	}
 
+}
+
+type dbInfo interface {
+	Rootstore() ds.Batching
+	DB() *db.DB
+}
+
+func NewTestDB(t testing.TB) (*db.DB, error) {
+	dbInfo, err := newBenchStoreInfo(t)
+	return dbInfo.DB(), err
+}
+
+func NewTestStorage(t testing.TB) (ds.Batching, error) {
+	dbInfo, err := newBenchStoreInfo(t)
+	return dbInfo.Rootstore(), err
+}
+
+func newBenchStoreInfo(t testing.TB) (dbInfo, error) {
+	var dbInfo dbInfo
+	var err error
+
+	switch storage {
+	case "memory":
+		dbInfo, err = testutils.NewBadgerMemoryDB()
+	case "badger":
+		dbInfo, err = testutils.NewBadgerFileDB(t)
+	case "memorymap":
+		dbInfo, err = testutils.NewMapDB()
+	default:
+		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create storage backend: %w", err)
+	}
+	return dbInfo, err
 }
