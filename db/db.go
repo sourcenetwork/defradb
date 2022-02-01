@@ -188,6 +188,10 @@ func (db *DB) PrintDump(ctx context.Context) {
 	printStore(ctx, db.rootstore)
 }
 
+func (db *DB) Executor() *planner.QueryExecutor {
+	return db.queryExecutor
+}
+
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releaseing
 // of resources (IE: Badger instance)

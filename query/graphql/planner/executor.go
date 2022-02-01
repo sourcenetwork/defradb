@@ -67,7 +67,7 @@ func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn c
 }
 
 func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
-	q, err := e.parseQueryString(query)
+	q, err := e.ParseQueryString(query)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,12 @@ func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn client.
 	return planner.queryDocs(q)
 }
 
-func (e *QueryExecutor) parseQueryString(query string) (*parser.Query, error) {
+func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn client.Txn, query *parser.Query) (planNode, error) {
+	planner := makePlanner(ctx, db, txn)
+	return planner.makePlan(query)
+}
+
+func (e *QueryExecutor) ParseQueryString(query string) (*parser.Query, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(query),
 		Name: "GraphQL request",

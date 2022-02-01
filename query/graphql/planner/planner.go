@@ -141,6 +141,7 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 	default:
 		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
+
 }
 
 func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
@@ -428,6 +429,10 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 	err = plan.Close()
 	return docs, err
+}
+
+func (p *Planner) Query(query *parser.Query) (planNode, error) {
+	return p.makePlan(query)
 }
 
 func (p *Planner) query(query *parser.Query) (planNode, error) {
