@@ -23,11 +23,6 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 		return err
 	}
 
-	//shuffle keys
-	// rand.Shuffle(len(keys), func(i, j int) {
-	// 	keys[i], keys[j] = keys[j], keys[i]
-	// })
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
@@ -55,11 +50,6 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 	if err != nil {
 		return err
 	}
-
-	//shuffle keys
-	// rand.Shuffle(len(keys), func(i, j int) {
-	// 	keys[i], keys[j] = keys[j], keys[i]
-	// })
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -89,7 +79,7 @@ func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCou
 	if err != nil {
 		return err
 	}
-	defer db.Close() // @todo: File based needs to handle proper temp file cleanup
+	defer db.Close()
 
 	// backfill
 	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)

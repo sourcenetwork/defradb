@@ -8,9 +8,6 @@ import (
 )
 
 func Benchmark_Storage_Simple_WriteMany_Sync_0_1(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
@@ -24,9 +21,6 @@ func Benchmark_Storage_Simple_WriteMany_Sync_0_1(b *testing.B) {
 }
 
 func Benchmark_Storage_Simple_WriteMany_Sync_0_10(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
@@ -40,9 +34,6 @@ func Benchmark_Storage_Simple_WriteMany_Sync_0_10(b *testing.B) {
 }
 
 func Benchmark_Storage_Simple_WriteMany_Sync_0_100(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
@@ -56,9 +47,6 @@ func Benchmark_Storage_Simple_WriteMany_Sync_0_100(b *testing.B) {
 }
 
 func Benchmark_Storage_Simple_WriteMany_Sync_100_1(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
@@ -72,9 +60,6 @@ func Benchmark_Storage_Simple_WriteMany_Sync_100_1(b *testing.B) {
 }
 
 func Benchmark_Storage_Simple_WriteMany_Sync_100_10(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
@@ -88,9 +73,6 @@ func Benchmark_Storage_Simple_WriteMany_Sync_100_10(b *testing.B) {
 }
 
 func Benchmark_Storage_Simple_WriteMany_Sync_100_100(b *testing.B) {
-	valueSize := []int{
-		64, 128, 256, 512, 1024,
-	}
 
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
