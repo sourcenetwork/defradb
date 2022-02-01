@@ -27,8 +27,7 @@ func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Genera
 		return err
 	}
 
-	numTypes := len(fixture.Types())
-	return runQueryBenchGetSync(b, ctx, db, collections, fixture, docCount, numTypes, dockeys, query)
+	return runQueryBenchGetSync(b, ctx, db, collections, fixture, docCount, dockeys, query)
 }
 
 func runQueryBenchGetSync(
@@ -37,12 +36,11 @@ func runQueryBenchGetSync(
 	db *db.DB,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, numTypes int,
+	docCount int,
 	dockeys [][]key.DocKey,
 	query string,
 ) error {
 	// fmt.Printf("Query:\n%s\n", query)
-
 	// any preprocessing?
 	query = formatQuery(b, query, dockeys)
 	b.StartTimer()
@@ -52,6 +50,8 @@ func runQueryBenchGetSync(
 		if len(res.Errors) > 0 {
 			return fmt.Errorf("Query error: %v", res.Errors)
 		}
+
+		// leave comments for debug!!
 		// l := len(res.Data.([]map[string]interface{}))
 		// if l != opCount {
 		// 	return fmt.Errorf("Invalid response, returned data doesn't match length, expected %v actual %v", docCount, l)

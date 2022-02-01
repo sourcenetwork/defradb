@@ -32,24 +32,23 @@ func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.G
 	}
 
 	// fmt.Println("Finished backfill...")
-	numTypes := len(fixture.Types())
 
 	// run benchmark
-	b.StartTimer()
 	if doSync {
-		return runCollectionBenchGetSync(b, ctx, collections, fixture, docCount, opCount, numTypes, dockeys)
+		return runCollectionBenchGetSync(b, ctx, collections, fixture, docCount, opCount, dockeys)
 	}
-	return runCollectionBenchGetAsync(b, ctx, collections, fixture, docCount, opCount, numTypes, dockeys)
+	return runCollectionBenchGetAsync(b, ctx, collections, fixture, docCount, opCount, dockeys)
 }
 
 func runCollectionBenchGetSync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, opCount, numTypes int,
+	docCount, opCount int,
 	dockeys [][]key.DocKey,
 ) error {
-
+	numTypes := len(fixture.Types())
+	b.StartTimer()
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
@@ -67,12 +66,12 @@ func runCollectionBenchGetAsync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, opCount, numTypes int,
+	docCount, opCount int,
 	dockeys [][]key.DocKey,
 ) error {
-
 	var wg sync.WaitGroup
-
+	numTypes := len(fixture.Types())
+	b.StartTimer()
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
@@ -103,14 +102,12 @@ func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixture
 		return err
 	}
 
-	numTypes := len(fixture.Types())
-
 	// run benchmark
 	b.StartTimer()
 	if doSync {
-		return runCollectionBenchCreateSync(b, ctx, collections, fixture, docCount, opCount, numTypes)
+		return runCollectionBenchCreateSync(b, ctx, collections, fixture, docCount, opCount)
 	}
-	return runCollectionBenchCreateAsync2(b, ctx, collections, fixture, docCount, opCount, numTypes)
+	return runCollectionBenchCreateAsync2(b, ctx, collections, fixture, docCount, opCount)
 }
 
 func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
@@ -153,9 +150,10 @@ func runCollectionBenchCreateSync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, opCount, numTypes int,
+	docCount, opCount int,
 ) error {
-
+	numTypes := len(fixture.Types())
+	b.StartTimer()
 	runs := opCount / numTypes
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < runs; j++ {
@@ -176,11 +174,11 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, opCount, numTypes int,
+	docCount, opCount int,
 ) error {
 	// fmt.Println("----------------------------------------------------------")
 	// init the workers
-	b.StopTimer()
+	numTypes := len(fixture.Types())
 	closeCh := make(chan struct{})
 	workerCh := make(chan struct{}, writeBatchGroup)
 	var wg sync.WaitGroup
@@ -201,10 +199,9 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 			}
 		}()
 	}
-
 	runs := opCount / numTypes
-	b.StartTimer()
 
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		wg.Add(runs)
 		for j := 0; j < runs; j++ {
@@ -225,8 +222,10 @@ func runCollectionBenchCreateAsync2(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
-	docCount, opCount, numTypes int,
+	docCount, opCount int,
 ) error {
+	numTypes := len(fixture.Types())
+	b.StartTimer()
 
 	for bi := 0; bi < b.N; bi++ {
 		var wg sync.WaitGroup
