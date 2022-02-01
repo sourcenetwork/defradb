@@ -14,6 +14,7 @@ package planner
 // aggregates in.
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -28,11 +29,23 @@ type countNode struct {
 	virtualFieldId string
 }
 
-func (p *Planner) Count(c *parser.Count, virtualFieldId string) (*countNode, error) {
+func (p *Planner) Count(field *parser.Field) (*countNode, error) {
+	source, err := field.GetAggregateSource()
+	if err != nil {
+		return nil, err
+	}
+
+	var sourceProperty string
+	if len(source) == 1 {
+		sourceProperty = source[0]
+	} else {
+		return nil, fmt.Errorf("Count must be provided with a property to count.")
+	}
+
 	return &countNode{
 		p:              p,
-		sourceProperty: c.Field,
-		virtualFieldId: virtualFieldId,
+		sourceProperty: sourceProperty,
+		virtualFieldId: field.Name,
 	}, nil
 }
 
@@ -67,3 +80,5 @@ func (n *countNode) Values() map[string]interface{} {
 func (n *countNode) Next() (bool, error) {
 	return n.plan.Next()
 }
+
+func (n *countNode) SetPlan(p planNode) { n.plan = p }

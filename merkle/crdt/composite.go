@@ -11,6 +11,7 @@ package crdt
 
 import (
 	"context"
+	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -31,7 +32,10 @@ var (
 )
 
 func init() {
-	DefaultFactory.Register(core.COMPOSITE, &compFactoryFn)
+	err := DefaultFactory.Register(core.COMPOSITE, &compFactoryFn)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG

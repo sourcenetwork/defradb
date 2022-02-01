@@ -76,7 +76,7 @@ func (n *updateNode) Next() (bool, error) {
 			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
 		}
 
-		fmt.Println("update node error:", err)
+		fmt.Println("update node error : ", err)
 		if err != nil {
 			return false, err
 		}
@@ -84,7 +84,11 @@ func (n *updateNode) Next() (bool, error) {
 		// consume the updates into our valuesNode
 		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
-			n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			if err != nil {
+				fmt.Println("document adding error : ", err)
+				return false, err
+			}
 		}
 		n.isUpdating = false
 
@@ -108,7 +112,11 @@ func (n *updateNode) Values() map[string]interface{} {
 	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
 
 	n.results.Spans(spans)
-	n.results.Init()
+
+	err := n.results.Init()
+	if err != nil {
+		fmt.Println("failure while initializing results : ", err)
+	}
 
 	// get the next result based on our point lookup
 	next, err := n.results.Next()

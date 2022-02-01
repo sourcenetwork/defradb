@@ -12,6 +12,7 @@ package schema
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -111,7 +112,9 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
-	g.genAggregateFields()
+	if err := g.genAggregateFields(); err != nil {
+		return nil, err
+	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -123,7 +126,11 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 	}
 
 	for _, t := range generatedFilterBaseArgs {
-		g.manager.schema.AppendType(t)
+		err := g.manager.schema.AppendType(t)
+		if err != nil {
+			// Todo: better error handle
+			log.Printf("failure appending type while generating query type defs from an AST : %v", err)
+		}
 	}
 
 	// resolve types
@@ -350,7 +357,13 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
+
 					case *gql.List:
 						ltype := subobj.OfType
 						// register the relation
@@ -358,7 +371,12 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						if err != nil {
 							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
 					}
 
 					fType.Type = ttype
@@ -421,14 +439,22 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	return genRelationName(hostName.Name, targetName.Name())
 }
 
-func (g *Generator) genAggregateFields() {
+func (g *Generator) genAggregateFields() error {
 	for _, t := range g.typeDefs {
-		countField := g.genCountFieldConfig(t)
+		countField, err := g.genCountFieldConfig(t)
+		if err != nil {
+			return err
+		}
 		t.AddFieldConfig(countField.Name, &countField)
+
+		sumField := g.genSumFieldConfig(t)
+		t.AddFieldConfig(sumField.Name, &sumField)
 	}
+
+	return nil
 }
 
-func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
+func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	inputCfg := gql.EnumConfig{
 		Name:   genTypeName(obj, "CountArg"),
 		Values: gql.EnumValueConfigMap{},
@@ -442,7 +468,10 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 	}
 	countType := gql.NewEnum(inputCfg)
-	g.manager.schema.AppendType(countType)
+	err := g.manager.schema.AppendType(countType)
+	if err != nil {
+		return gql.Field{}, err
+	}
 
 	field := gql.Field{
 		Name: parser.CountFieldName,
@@ -452,7 +481,92 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) gql.Field {
 		},
 	}
 
+	return field, nil
+}
+
+func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
+	var sumType *gql.InputObject
+
+	inputCfg := gql.InputObjectConfig{
+		Name: genTypeName(obj, "SumArg"),
+	}
+
+	inputCfg.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		sumBaseArgType, isSumable := g.genSumBaseArgInput(obj)
+		if isSumable {
+			err := g.manager.schema.AppendType(sumBaseArgType)
+			if err != nil {
+				return gql.InputObjectConfigFieldMap{}, err
+			}
+		}
+
+		for _, field := range obj.Fields() {
+			// we can only sum list items
+			listType, isList := field.Type.(*gql.List)
+			if !isList {
+				continue
+			}
+
+			if listType.OfType == gql.Float || listType.OfType == gql.Int {
+				// If it is an inline scalar array then we require an empty object as an argument due to the lack of union input types
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: &gql.Object{},
+				}
+			} else {
+				subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[genTypeName(field.Type, "SumBaseArg")]
+				// If the item is not in the type map, it must contain no summable fields (e.g. no Int/Floats)
+				if !isSubTypeSumable {
+					continue
+				}
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: subSumType,
+				}
+			}
+
+		}
+
+		return fields, nil
+	})
+	sumType = gql.NewInputObject(inputCfg)
+
+	//this might resolve the thunk?  Race issue?
+	err := g.manager.schema.AppendType(sumType)
+	if err != nil {
+		log.Printf("failure appending sumType : %v", err)
+	}
+
+	field := gql.Field{
+		Name: parser.SumFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{
+			"field": newArgConfig(sumType),
+		},
+	}
 	return field
+}
+
+func (g *Generator) genSumBaseArgInput(obj *gql.Object) (*gql.Enum, bool) {
+	inputCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, "SumBaseArg"),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	hasSumableFields := false
+	// generate basic filter operator blocks for all the sumable types
+	for _, field := range obj.Fields() {
+		if field.Type == gql.Float || field.Type == gql.Int {
+			hasSumableFields = true
+			inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+		}
+	}
+
+	if !hasSumableFields {
+		return nil, false
+	}
+
+	return gql.NewEnum(inputCfg), true
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
@@ -757,10 +871,25 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 	name := strings.ToLower(obj.Name())
 
 	// add the generated types to the type map
-	g.manager.schema.AppendType(config.filter)
-	g.manager.schema.AppendType(config.groupBy)
-	g.manager.schema.AppendType(config.having)
-	g.manager.schema.AppendType(config.order)
+	if err := g.manager.schema.AppendType(config.filter); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - filter: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - groupBy: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.having); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - having: %v", err)
+	}
+
+	if err := g.manager.schema.AppendType(config.order); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - order: %v", err)
+	}
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive

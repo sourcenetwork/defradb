@@ -27,8 +27,8 @@ type selectTopNode struct {
 	group      *groupNode
 	sort       *sortNode
 	limit      planNode
-	countPlans []*countNode
 	render     *renderNode
+	aggregates []aggregateNode
 
 	// top of the plan graph
 	plan planNode
@@ -130,13 +130,13 @@ func (n *selectNode) Close() error {
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource(parsed *parser.Select) error {
+func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) {
 	if parsed.CollectionName == "" {
 		parsed.CollectionName = parsed.Name
 	}
 	sourcePlan, err := n.p.getSource(parsed.CollectionName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
@@ -170,7 +170,7 @@ func (n *selectNode) initSource(parsed *parser.Select) error {
 	return n.initFields(parsed)
 }
 
-func (n *selectNode) initFields(parsed *parser.Select) error {
+func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) {
 	// re-organize the fields slice into reverse-alphabetical
 	// this makes sure the reserved database fields that start with
 	// a "_" end up at the end. So if/when we build our MultiNode
@@ -179,65 +179,100 @@ func (n *selectNode) initFields(parsed *parser.Select) error {
 		return !(strings.Compare(parsed.Fields[i].GetName(), parsed.Fields[j].GetName()) < 0)
 	})
 
+	aggregates := []aggregateNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, field := range parsed.Fields {
-		if subtype, ok := field.(*parser.Select); ok {
+		switch f := field.(type) {
+		case *parser.Select:
 			// @todo: check select type:
 			// - TypeJoin
 			// - commitScan
-			if subtype.Name == "_version" { // reserved sub type for object queries
+			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
-					Name:   subtype.Name,
-					Alias:  subtype.Alias,
+					Name:   f.Name,
+					Alias:  f.Alias,
 					Type:   parser.LatestCommits,
-					Fields: subtype.Fields,
+					Fields: f.Fields,
 				}
 				commitPlan, err := n.p.CommitSelect(commitSlct)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				if err := n.addSubPlan(field.GetName(), commitPlan); err != nil {
-					return err
+					return nil, err
 				}
-			} else if subtype.Root == parser.ObjectSelection {
-				if subtype.Name == parser.GroupFieldName {
-					n.groupSelect = subtype
+			} else if f.Root == parser.ObjectSelection {
+				if f.Name == parser.GroupFieldName {
+					n.groupSelect = f
 				} else {
-					n.addTypeIndexJoin(subtype)
+					// nolint:errcheck
+					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 				}
+			}
+		case *parser.Field:
+			var plan aggregateNode
+			var aggregateError error
+
+			switch f.Statement.Name.Value {
+			case parser.CountFieldName:
+				plan, aggregateError = n.p.Count(f)
+			case parser.SumFieldName:
+				plan, aggregateError = n.p.Sum(&n.sourceInfo, f)
+			default:
+				continue
+			}
+
+			if aggregateError != nil {
+				return nil, aggregateError
+			}
+
+			aggregates = append(aggregates, plan)
+
+			aggregateError = n.joinAggregatedChild(parsed, f)
+			if aggregateError != nil {
+				return nil, aggregateError
 			}
 		}
 	}
 
-	// Handle aggregates of child collection that are not rendered
-	for _, count := range parsed.Counts {
-		if count.Field == "" {
-			continue
-		}
+	return aggregates, nil
+}
 
-		hasChildProperty := false
-		for _, field := range parsed.Fields {
-			if count.Field == field.GetName() {
-				hasChildProperty = true
-				break
-			}
-		}
+// Join any child collections required by the given transformation if the child collections have not been requested for render by the consumer
+func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Field) error {
+	source, err := field.GetAggregateSource()
+	if err != nil {
+		return err
+	}
 
-		// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
-		if !hasChildProperty {
-			if count.Field == parser.GroupFieldName {
-				// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
-				n.groupSelect = &parser.Select{
-					Name: parser.GroupFieldName,
-				}
-			} else if parsed.Root != parser.CommitSelection {
-				subtype := &parser.Select{
-					Name: count.Field,
-				}
-				n.addTypeIndexJoin(subtype)
+	if len(source) == 0 {
+		return nil
+	}
+
+	fieldName := source[0]
+	hasChildProperty := false
+	for _, field := range parsed.Fields {
+		if fieldName == field.GetName() {
+			hasChildProperty = true
+			break
+		}
+	}
+
+	// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
+	if !hasChildProperty {
+		if fieldName == parser.GroupFieldName {
+			// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
+			n.groupSelect = &parser.Select{
+				Name: parser.GroupFieldName,
 			}
+		} else if parsed.Root != parser.CommitSelection {
+			subtype := &parser.Select{
+				Name: fieldName,
+			}
+			// nolint:errcheck
+			n.addTypeIndexJoin(subtype) // @TODO: ISSUE#158
 		}
 	}
 
@@ -307,7 +342,8 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		s.sourceInfo = sourceInfo{desc}
 	}
 
-	if err := s.initFields(parsed); err != nil {
+	aggregates, err := s.initFields(parsed)
+	if err != nil {
 		return nil, err
 	}
 
@@ -326,22 +362,13 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		return nil, err
 	}
 
-	countPlans := []*countNode{}
-	for _, countItem := range parsed.Counts {
-		countNode, err := p.Count(&countItem, countItem.Name)
-		if err != nil {
-			return nil, err
-		}
-		countPlans = append(countPlans, countNode)
-	}
-
 	top := &selectTopNode{
 		source:     s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,
 		group:      groupPlan,
-		countPlans: countPlans,
+		aggregates: aggregates,
 	}
 	return top, nil
 }
@@ -355,7 +382,8 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
 
-	if err := s.initSource(parsed); err != nil {
+	aggregates, err := s.initSource(parsed)
+	if err != nil {
 		return nil, err
 	}
 
@@ -374,22 +402,13 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 		return nil, err
 	}
 
-	countPlans := []*countNode{}
-	for _, countItem := range parsed.Counts {
-		countNode, err := p.Count(&countItem, countItem.Name)
-		if err != nil {
-			return nil, err
-		}
-		countPlans = append(countPlans, countNode)
-	}
-
 	top := &selectTopNode{
 		source:     s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,
 		group:      groupPlan,
-		countPlans: countPlans,
+		aggregates: aggregates,
 	}
 	return top, nil
 }
