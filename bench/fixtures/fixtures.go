@@ -17,15 +17,15 @@ var (
 	}
 )
 
-type Context struct {
+type Generator struct {
 	ctx context.Context
 
 	schema string
 	types  []interface{}
 }
 
-func ForSchema(ctx context.Context, schemaName string) Context {
-	return Context{
+func ForSchema(ctx context.Context, schemaName string) Generator {
+	return Generator{
 		ctx:    ctx,
 		schema: schemaName,
 		types:  registeredFixtures[schemaName],
@@ -33,27 +33,27 @@ func ForSchema(ctx context.Context, schemaName string) Context {
 }
 
 // Types returns the defined types for this fixture set
-func (ctx Context) Types() []interface{} {
-	return ctx.types
+func (g Generator) Types() []interface{} {
+	return g.types
 }
 
 // Type returns type at the given index in the fixture set
-func (ctx Context) Type(index int) interface{} {
-	return ctx.types[index]
+func (g Generator) Type(index int) interface{} {
+	return g.types[index]
 }
 
 // TypeName returns the name of the type at the given index
 // in the fixture set
-func (ctx Context) TypeName(index int) string {
-	return reflect.TypeOf(ctx.types[index]).Name()
+func (g Generator) TypeName(index int) string {
+	return reflect.TypeOf(g.types[index]).Name()
 }
 
 // GenerateFixtureDocs uses the faker fixture system to
 // randomly generate a new set of documents matching the defined
 // struct types within the context.
-func (ctx Context) GenerateDocs() ([]string, error) {
-	results := make([]string, len(ctx.types))
-	for i, t := range ctx.types {
+func (g Generator) GenerateDocs() ([]string, error) {
+	results := make([]string, len(g.types))
+	for i, t := range g.types {
 		val := reflect.New(reflect.TypeOf(t)).Interface()
 
 		// generate our new random struct and
@@ -71,15 +71,6 @@ func (ctx Context) GenerateDocs() ([]string, error) {
 
 	return results, nil
 }
-
-// func  GenerateFullQueryString() ([]string, error) {
-// 	// q := ""
-// 	queries := make([]string, len(ctx.types))
-// 	for i, t := range ctx.types {
-// 		q, err := queryStringFromSchema(ctx.schema, nil)
-// 	}
-// 	return nil, nil
-// }
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct

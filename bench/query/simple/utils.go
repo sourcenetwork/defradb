@@ -14,7 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-func runQueryBenchGet(b *testing.B, fixture fixtures.Context, docCount int, query string, doSync bool) error {
+func runQueryBenchGet(b *testing.B, fixture fixtures.Generator, docCount int, query string, doSync bool) error {
 	b.StopTimer()
 	ctx := context.Background()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
@@ -37,7 +37,7 @@ func runQueryBenchGetSync(
 	ctx context.Context,
 	db *db.DB,
 	collections []client.Collection,
-	fixture fixtures.Context,
+	fixture fixtures.Generator,
 	docCount, numTypes int,
 	dockeys [][]key.DocKey,
 	query string,

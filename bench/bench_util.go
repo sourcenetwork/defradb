@@ -39,7 +39,7 @@ func hashToInt64(s string) int64 {
 	return int64(h.Sum64())
 }
 
-func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Context) ([]client.Collection, error) {
+func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Generator) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
 	var schema string
@@ -74,7 +74,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 	return collections, nil
 }
 
-func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Context) (*defradb.DB, []client.Collection, error) {
+func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (*defradb.DB, []client.Collection, error) {
 	db, err := testutils.NewTestDB(b)
 	if err != nil {
 		return nil, nil, err
@@ -93,7 +93,7 @@ func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.C
 // Loads the given test database using the provided fixture context.
 // It loads docCount number of documents asyncronously in batches of *upto*
 // writeBatchGroup.
-func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Context, docCount, opCount int, doSync bool) ([][]key.DocKey, error) {
+func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]key.DocKey, error) {
 	numTypes := len(fixture.Types())
 
 	// load fixtures

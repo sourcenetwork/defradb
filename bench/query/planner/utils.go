@@ -9,7 +9,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Context, query string) error {
+func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
 	b.StopTimer()
 	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
@@ -28,7 +28,7 @@ func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Con
 	return nil
 }
 
-func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Context, query string) error {
+func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
 	b.StopTimer()
 	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
