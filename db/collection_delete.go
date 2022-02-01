@@ -149,51 +149,7 @@ func (c *Collection) applyFullDelete(
 		return ErrDocumentNotFound
 	}
 
-	// 1. =========== Delete datastore state ===========
-	dataQuery := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
-		KeysOnly: true,
-	}
-	dataResult, err := txn.datastore.Query(ctx, dataQuery)
-	for e := range dataResult.Next() {
-		if e.Error != nil {
-			return err
-		}
-
-		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
-		err = txn.datastore.Delete(ctx, ds.NewKey(e.Key))
-		if err != nil {
-			return err
-		}
-	}
-	fmt.Println("--------------------------------------")
-	fmt.Println("--------------datastore---------------")
-	fmt.Println("--------------------------------------")
-	fmt.Println("correct: ", c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
-	fmt.Println("incorrect: ", dockey.Key.Instance("v"))
-	fmt.Println("--------------------------------------")
-	// Delete the parent marker key for this document.
-	err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
-
-	// Successfully deleted the datastore state of this document.
-
-	// 2. =========== Delete headstore state ===========
-	headQuery := query.Query{
-		Prefix:   dockey.Key.String(),
-		KeysOnly: true,
-	}
-	headResult, err := txn.headstore.Query(ctx, headQuery)
-	for e := range headResult.Next() {
-		if e.Error != nil {
-			return err
-		}
-		err = txn.headstore.Delete(ctx, ds.NewKey(e.Key))
-		if err != nil {
-			return err
-		}
-	} // Successfully deleted the headstore state of this document.
-
-	// 3. =========== Delete blockstore state ===========
+	// 1. =========================== Delete blockstore state ===========================
 	// blocks: /db/blocks/CIQSDFKLJGHFKLSJGHHJKKLGHGLHSKLHKJGS => KLJSFHGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
 
 	// Covert dockey to compositeKey as follows:
@@ -214,13 +170,56 @@ func (c *Collection) applyFullDelete(
 		if err := dagDel.run(ctx, head); err != nil {
 			return err
 		}
-	} // Successfully deleted the blocks.
+	} // ================================================ Successfully deleted the blocks
+
+	// 2. =========================== Delete datastore state ============================
+	dataQuery := query.Query{
+		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
+		KeysOnly: true,
+	}
+	dataResult, err := txn.datastore.Query(ctx, dataQuery)
+	for e := range dataResult.Next() {
+		if e.Error != nil {
+			return err
+		}
+
+		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
+		err = txn.datastore.Delete(ctx, ds.NewKey(e.Key))
+		if err != nil {
+			return err
+		}
+	}
+	// Delete the parent marker key for this document.
+	err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	// ======================== Successfully deleted the datastore state of this document
+
+	// 3. =========================== Delete headstore state ===========================
+	headQuery := query.Query{
+		Prefix:   dockey.Key.String(),
+		KeysOnly: true,
+	}
+	headResult, err := txn.headstore.Query(ctx, headQuery)
+	for e := range headResult.Next() {
+		if e.Error != nil {
+			return err
+		}
+		err = txn.headstore.Delete(ctx, ds.NewKey(e.Key))
+		if err != nil {
+			return err
+		}
+	} // ====================== Successfully deleted the headstore state of this document
+
+	// fmt.Println("--------------------------------------")
+	// fmt.Println("--------------DeleteBlock---------------")
+	// fmt.Println("--------------------------------------")
+	// fmt.Println("cid: ", targetCid)
+	// fmt.Println("err: ", err)
+	// fmt.Println("--------------------------------------")
 
 	return nil
 }
 
 func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
-
 	// Validate the cid.
 	if targetCid == cid.Undef {
 		return nil
@@ -248,9 +247,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 	return d.delete(ctx, targetCid, block)
 }
 
-//
 //  (ipld.Block(ipldProtobufNode{Data: (cbor(crdt deltaPayload)), Links: (_head => parentCid, fieldName => fieldCid)))
-//
 func (d dagDeleter) delete(
 	ctx context.Context,
 	targetCid cid.Cid,

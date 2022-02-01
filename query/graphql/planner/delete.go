@@ -67,11 +67,11 @@ func (n *deleteNode) Next() (bool, error) {
 			return false, err
 		}
 
-		// consume the deletes into our valuesNode
+		// Consume the deletes into our valuesNode
 		fmt.Println(results)
-		// for _, resKey := range results.DocKeys {
-		// 	n.deleteIter.docs.DeleteDoc(map[string]interface{}{"_key": resKey})
-		// }
+		for _, resKey := range results.DocKeys {
+			n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+		}
 		n.isDeleting = false
 
 		// lets release the results dockeys slice memory
