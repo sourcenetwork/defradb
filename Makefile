@@ -20,6 +20,10 @@ multi-build:
 start: build
 	./build/defradb start
 
+.PHONY: dump
+dump: build
+	./build/defradb client dump
+
 .PHONY: deps\:golangci-lint
 deps\:golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0

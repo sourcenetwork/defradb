@@ -8,7 +8,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -36,8 +35,7 @@ func (n *deleteNode) Next() (bool, error) {
 			n.deleteIter = vnode
 		}
 
-		// apply the deletes
-		// @todo: handle filter vs ID based
+		// Apply the deletes
 		var results *client.DeleteResult
 		var err error
 		numids := len(n.ids)
@@ -59,7 +57,7 @@ func (n *deleteNode) Next() (bool, error) {
 				}
 			}
 			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
-		} else {
+		} else { // @todo: handle filter vs ID based
 			fmt.Println("filter")
 			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
 		}
@@ -80,32 +78,11 @@ func (n *deleteNode) Next() (bool, error) {
 		results.DocKeys = nil
 	}
 
-	// next, err := n.deleteIter.Next()
-	// if !next {
-	// 	return false, err
-	// }
 	return n.deleteIter.Next()
 }
 
 func (n *deleteNode) Values() map[string]interface{} {
-	deletedDoc := n.deleteIter.Values()
-	// create a new span with the deleteDoc._key
-	docKeyStr := deletedDoc["_key"].(string)
-	desc := n.collection.Description()
-	deletedDocKeyIndex := base.MakeIndexKey(&desc, &desc.Indexes[0], core.NewKey(docKeyStr))
-	spans := core.Spans{core.NewSpan(deletedDocKeyIndex, deletedDocKeyIndex.PrefixEnd())}
-
-	n.results.Spans(spans)
-	n.results.Init()
-
-	// get the next result based on our point lookup
-	next, err := n.results.Next()
-	if !next || err != nil {
-		panic(err) //handle better?
-	}
-
-	// we're only expecting a single value from our pointlookup
-	return n.results.Values()
+	return n.deleteIter.Values()
 }
 
 func (n *deleteNode) Spans(spans core.Spans) {

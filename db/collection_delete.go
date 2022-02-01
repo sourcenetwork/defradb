@@ -68,7 +68,6 @@ func (c *Collection) DeleteWith(
 		return ErrInvalidDeleteTarget
 
 	}
-	return nil
 }
 
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
@@ -160,12 +159,23 @@ func (c *Collection) applyFullDelete(
 		if e.Error != nil {
 			return err
 		}
+
 		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
-		err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		err = txn.datastore.Delete(ctx, ds.NewKey(e.Key))
 		if err != nil {
 			return err
 		}
-	} // Successfully deleted the datastore state of this document.
+	}
+	fmt.Println("--------------------------------------")
+	fmt.Println("--------------datastore---------------")
+	fmt.Println("--------------------------------------")
+	fmt.Println("correct: ", c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	fmt.Println("incorrect: ", dockey.Key.Instance("v"))
+	fmt.Println("--------------------------------------")
+	// Delete the parent marker key for this document.
+	err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+
+	// Successfully deleted the datastore state of this document.
 
 	// 2. =========== Delete headstore state ===========
 	headQuery := query.Query{
@@ -177,17 +187,11 @@ func (c *Collection) applyFullDelete(
 		if e.Error != nil {
 			return err
 		}
-		err = txn.headstore.Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		err = txn.headstore.Delete(ctx, ds.NewKey(e.Key))
 		if err != nil {
 			return err
 		}
 	} // Successfully deleted the headstore state of this document.
-
-	fmt.Println("--------------------------------------")
-	fmt.Println("dataResult: ", dataResult)
-	fmt.Println("headResult: ", headResult)
-	fmt.Println("err: ", err)
-	fmt.Println("--------------------------------------")
 
 	// 3. =========== Delete blockstore state ===========
 	// blocks: /db/blocks/CIQSDFKLJGHFKLSJGHHJKKLGHGLHSKLHKJGS => KLJSFHGLKJFHJKDLGKHDGLHGLFDHGLFDGKGHL
@@ -204,10 +208,10 @@ func (c *Collection) applyFullDelete(
 		return fmt.Errorf("Failed to get document heads: %w", err)
 	}
 
-	dagDeleter := newDagDeleter(txn.DAGstore())
+	dagDel := newDagDeleter(txn.DAGstore())
 	// Delete DAG of all heads (and the heads themselves)
 	for _, head := range heads {
-		if err := dagDeleter.run(ctx, head); err != nil {
+		if err := dagDel.run(ctx, head); err != nil {
 			return err
 		}
 	} // Successfully deleted the blocks.
@@ -324,6 +328,7 @@ func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...cli
 	return nil
 }
 
+//nolint:unused
 func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// fmt.Println("updating keys:", keys)
 	// patch, err := parseDeleter(deleter)
@@ -372,6 +377,7 @@ func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 	return nil, nil
 }
 
+//nolint:unused
 func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
