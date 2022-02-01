@@ -12,7 +12,6 @@ package planner
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 
 	"errors"
@@ -385,13 +384,17 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	}
 
 	if err = plan.Start(); err != nil {
-		log.Print(plan.Close())
+		if err2 := (plan.Close()); err2 != nil {
+			fmt.Println(err2)
+		}
 		return nil, err
 	}
 
 	var next bool
 	if next, err = plan.Next(); err != nil || !next {
-		log.Print(plan.Close())
+		if err2 := (plan.Close()); err2 != nil {
+			fmt.Println(err2)
+		}
 		return nil, err
 	}
 
@@ -404,7 +407,9 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 		next, err = plan.Next()
 		if err != nil {
-			log.Print(plan.Close())
+			if err2 := (plan.Close()); err2 != nil {
+				fmt.Println(err2)
+			}
 			return nil, err
 		}
 

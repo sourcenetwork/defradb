@@ -56,7 +56,9 @@ func NewServer(db client.DB) *Server {
 }
 
 func (s *Server) Listen(addr string) {
-	log.Fatal(http.ListenAndServe(addr, s.router))
+	if err := http.ListenAndServe(addr, s.router); err != nil {
+		log.Fatalln("Error: HTTP Listening and Serving Failed: ", err)
+	}
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
