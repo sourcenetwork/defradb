@@ -70,7 +70,11 @@ func (n *deleteNode) Next() (bool, error) {
 		// Consume the deletes into our valuesNode
 		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
-			n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			if err != nil {
+				fmt.Println("document adding error while deletion : ", err)
+				return false, err
+			}
 		}
 
 		n.isDeleting = false

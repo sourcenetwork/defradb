@@ -167,7 +167,7 @@ func (c *Collection) applyFullDelete(
 	dagDel := newDagDeleter(txn.DAGstore())
 	// Delete DAG of all heads (and the heads themselves)
 	for _, head := range heads {
-		if err := dagDel.run(ctx, head); err != nil {
+		if err = dagDel.run(ctx, head); err != nil {
 			return err
 		}
 	} // ================================================ Successfully deleted the blocks
@@ -191,6 +191,9 @@ func (c *Collection) applyFullDelete(
 	}
 	// Delete the parent marker key for this document.
 	err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	if err != nil {
+		return err
+	}
 	// ======================== Successfully deleted the datastore state of this document
 
 	// 3. =========================== Delete headstore state ===========================
