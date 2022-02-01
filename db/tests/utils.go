@@ -62,10 +62,6 @@ type databaseInfo struct {
 	rootstore ds.Batching
 }
 
-type TempDirMaker interface {
-	TempDir() string
-}
-
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
 	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
@@ -86,17 +82,17 @@ func init() {
 	}
 }
 
-func NewTestDB(t TempDirMaker) (*db.DB, error) {
+func NewTestDB(t testing.TB) (*db.DB, error) {
 	dbInfo, err := newBenchStoreInfo(t)
 	return dbInfo.db, err
 }
 
-func NewTestStorage(t TempDirMaker) (ds.Batching, error) {
+func NewTestStorage(t testing.TB) (ds.Batching, error) {
 	dbInfo, err := newBenchStoreInfo(t)
 	return dbInfo.rootstore, err
 }
 
-func newBenchStoreInfo(t TempDirMaker) (databaseInfo, error) {
+func newBenchStoreInfo(t testing.TB) (databaseInfo, error) {
 	var dbInfo databaseInfo
 	var err error
 
@@ -150,7 +146,7 @@ func newMapDB() (databaseInfo, error) {
 	}, nil
 }
 
-func newBadgerFileDB(t TempDirMaker) (databaseInfo, error) {
+func newBadgerFileDB(t testing.TB) (databaseInfo, error) {
 	path := t.TempDir()
 
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
