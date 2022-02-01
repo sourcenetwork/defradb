@@ -127,14 +127,14 @@ func newDagDeleter(bstore core.DAGStore) dagDeleter {
 
 // Here is what our db stores look like:
 //   /db
+//   -> block /blocks => /db/blocks
 //   -> datastore /data => /db/data
 //   -> headstore /heads => /db/heads
-//   -> block /blocks => /db/blocks
 //   -> systemstore /system => /db/system
 // For the delete operation we are concerned with:
-//   1) Deleting datastore state.
-//   2) Deleting headstore state.
-//   3) Deleting the actual blocks (blockstore).
+//   1) Deleting the actual blocks (blockstore).
+//   2) Deleting datastore state.
+//   3) Deleting headstore state.
 func (c *Collection) applyFullDelete(
 	ctx context.Context,
 	txn *Txn, dockey key.DocKey) error {
@@ -234,6 +234,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 		//          all the parental nodes. Currently HEAD#2 goes to delete
 		//          itself (represented by `:d`) and it's parental nodes, but as we see
 		//          the parents were already deleted by HEAD#1 so we just stop there.
+		//
 		//                                     | --> (E:x) HEAD#1->cid1
 		// (A:x) --> (B:x) --> (C:x) --> (D:x) |
 		//                                     | --> (F:d) HEAD#2->cid2

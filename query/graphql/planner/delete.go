@@ -72,6 +72,7 @@ func (n *deleteNode) Next() (bool, error) {
 		for _, resKey := range results.DocKeys {
 			n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 		}
+
 		n.isDeleting = false
 
 		// lets release the results dockeys slice memory
