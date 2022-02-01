@@ -59,6 +59,8 @@ func runQueryBenchGetSync(
 		// fmt.Println(res)
 		// fmt.Println("--------------------")
 	}
+	b.StopTimer()
+
 	return nil
 }
 

@@ -38,6 +38,7 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 			}
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -78,6 +79,7 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 			}
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -125,6 +127,7 @@ func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCou
 			return err
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }

@@ -24,6 +24,7 @@ func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Gen
 			return fmt.Errorf("Failed to parse query string: %w", err)
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -54,6 +55,6 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 			fmt.Errorf("Failed to make plan: %w", err)
 		}
 	}
-
+	b.StopTimer()
 	return nil
 }

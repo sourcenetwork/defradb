@@ -56,6 +56,7 @@ func runCollectionBenchGetSync(b *testing.B,
 			}
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -85,6 +86,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 
 		wg.Wait()
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -142,6 +144,7 @@ func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fix
 
 		collections[0].CreateMany(ctx, docs)
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -164,6 +167,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 			}
 		}
 	}
+	b.StopTimer()
 
 	return nil
 }
@@ -209,6 +213,7 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 		}
 		wg.Wait()
 	}
+	b.StopTimer()
 
 	close(closeCh)
 	return nil
