@@ -19,7 +19,6 @@ const (
 )
 
 func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
-	b.StopTimer()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -48,7 +47,7 @@ func runCollectionBenchGetSync(b *testing.B,
 	dockeys [][]key.DocKey,
 ) error {
 	numTypes := len(fixture.Types())
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
@@ -72,7 +71,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 ) error {
 	var wg sync.WaitGroup
 	numTypes := len(fixture.Types())
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
@@ -113,7 +112,6 @@ func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixture
 }
 
 func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
-	b.StopTimer()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -134,7 +132,7 @@ func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fix
 
 	// run benchmark
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		docs := make([]*document.Document, opCount)
 		for j := 0; j < opCount; j++ {
@@ -156,7 +154,7 @@ func runCollectionBenchCreateSync(b *testing.B,
 	docCount, opCount int,
 ) error {
 	numTypes := len(fixture.Types())
-	b.StartTimer()
+	b.ResetTimer()
 	runs := opCount / numTypes
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < runs; j++ {
@@ -205,7 +203,7 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 	}
 	runs := opCount / numTypes
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		wg.Add(runs)
 		for j := 0; j < runs; j++ {

@@ -9,13 +9,11 @@ import (
 
 	benchutils "github.com/sourcenetwork/defradb/bench"
 	"github.com/sourcenetwork/defradb/bench/fixtures"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
 func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount int, query string, doSync bool) error {
-	b.StopTimer()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -27,24 +25,23 @@ func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Genera
 		return err
 	}
 
-	return runQueryBenchGetSync(b, ctx, db, collections, fixture, docCount, dockeys, query)
+	return runQueryBenchGetSync(b, ctx, db, docCount, dockeys, query)
 }
 
 func runQueryBenchGetSync(
 	b *testing.B,
 	ctx context.Context,
 	db *db.DB,
-	collections []client.Collection,
-	fixture fixtures.Generator,
 	docCount int,
 	dockeys [][]key.DocKey,
 	query string,
 ) error {
 	// fmt.Printf("Query:\n%s\n", query)
-	// any preprocessing?
-	query = formatQuery(b, query, dockeys)
-	b.StartTimer()
 
+	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
+	query = formatQuery(b, query, dockeys)
+
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res := db.ExecQuery(ctx, query)
 		if len(res.Errors) > 0 {

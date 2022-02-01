@@ -10,14 +10,13 @@ import (
 )
 
 func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
-	b.StopTimer()
 	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := db.Executor().ParseQueryString(query)
 		if err != nil {
@@ -30,7 +29,6 @@ func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Gen
 }
 
 func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
-	b.StopTimer()
 	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -48,7 +46,7 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 		return fmt.Errorf("Failed to create txn: %w", err)
 	}
 
-	b.StartTimer()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := exec.MakePlanFromParser(ctx, db, txn, q)
 		if err != nil {
