@@ -151,7 +151,8 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		}
 	}
 
-	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, df.spans[nextSpanIndex].Start().ToDS())
+	span := df.spans[nextSpanIndex]
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
 	if err != nil {
 		return false, err
 	}
