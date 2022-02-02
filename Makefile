@@ -20,6 +20,10 @@ multi-build:
 start: build
 	./build/defradb start
 
+.PHONY: dump
+dump: build
+	./build/defradb client dump
+
 .PHONY: deps\:golangci-lint
 deps\:golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
@@ -32,18 +36,25 @@ deps\:go-acc:
 deps: deps\:golangci-lint deps\:go-acc
 	go mod download
 
+.PHONY: tidy
+tidy:
+	go mod tidy
+
 .PHONY: clean
 clean:
 	go clean cli/defradb/main.go
 	rm -f build/defradb
 
-.PHONY: tidy
-tidy:
-	go mod tidy
+.PHONY: clean\:test
+clean\:test:
+	go clean -testcache
 
 .PHONY: test
 test:
 	go test ./... -race
+
+.PHONY: test\:clean
+test\:clean: clean\:test test
 
 .PHONY: test\:bench
 test\:bench:

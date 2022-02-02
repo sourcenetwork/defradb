@@ -68,6 +68,11 @@ type Collection interface {
 	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
+	DeleteWith(context.Context, interface{}, ...DeleteOpt) error
+	DeleteWithFilter(context.Context, interface{}, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKey(context.Context, key.DocKey, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWithKeys(context.Context, []key.DocKey, ...DeleteOpt) (*DeleteResult, error)
+
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
 	WithTxn(Txn) Collection
@@ -75,8 +80,14 @@ type Collection interface {
 
 type UpdateOpt struct{}
 type CreateOpt struct{}
+type DeleteOpt struct{}
 
 type UpdateResult struct {
+	Count   int64
+	DocKeys []string
+}
+
+type DeleteResult struct {
 	Count   int64
 	DocKeys []string
 }

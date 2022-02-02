@@ -33,8 +33,8 @@ type UpdateOpt struct{}
 type CreateOpt struct{}
 
 var (
-	ErrInvalidTarget         = errors.New("The doc targeter is an unknown type")
-	ErrTargetEmpty           = errors.New("The doc targeter cannot be empty")
+	ErrInvalidUpdateTarget   = errors.New("The doc update targeter is an unknown type")
+	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
 	ErrInvalidUpdater        = errors.New("The doc updater is an unknown type")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
 	ErrInvalidMergeValueType = errors.New("The type of value in the merge patch doesn't match the schema")
@@ -75,7 +75,7 @@ func (c *Collection) UpdateWith(ctx context.Context, target interface{}, updater
 	case []*document.SimpleDocument:
 		return c.UpdateWithDocs(t, updater, opts...)
 	default:
-		return ErrInvalidTarget
+		return ErrInvalidUpdateTarget
 	}
 }
 

@@ -138,6 +138,8 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 		return p.CreateDoc(stmt)
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
+	case parser.DeleteObjects:
+		return p.DeleteDocs(stmt)
 	default:
 		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}

@@ -54,14 +54,12 @@ func (n *updateNode) Next() (bool, error) {
 		var err error
 		numids := len(n.ids)
 		if numids == 1 {
-			fmt.Println("single key")
 			key, err2 := key.NewFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
 			results, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
 		} else if numids > 1 {
-			fmt.Println("multi key")
 			// todo
 			keys := make([]key.DocKey, len(n.ids))
 			for i, v := range n.ids {
@@ -72,7 +70,6 @@ func (n *updateNode) Next() (bool, error) {
 			}
 			results, err = n.collection.UpdateWithKeys(n.p.ctx, keys, n.patch)
 		} else {
-			fmt.Println("filter")
 			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
 		}
 
@@ -86,7 +83,6 @@ func (n *updateNode) Next() (bool, error) {
 		for _, resKey := range results.DocKeys {
 			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {
-				fmt.Println("document adding error : ", err)
 				return false, err
 			}
 		}
