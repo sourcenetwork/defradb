@@ -31,6 +31,7 @@ type BadgerIterator struct {
 	sent           int
 	closedEarly    bool
 	iteratorLock   sync.RWMutex
+	reversedOrder  bool
 }
 
 func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
@@ -38,14 +39,17 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 	// Prefetching prevents the re-use of the iterator
 	opt.PrefetchValues = false
 
+	var reversedOrder bool
 	// Handle ordering
 	if len(q.Orders) > 0 {
 		switch orderType := q.Orders[0].(type) {
 		case dsq.OrderByKey, *dsq.OrderByKey:
-		// We order by key by default.
+			// We order by key by default.
+			reversedOrder = false
 		case dsq.OrderByKeyDescending, *dsq.OrderByKeyDescending:
 			// Reverse order by key
 			opt.Reverse = true
+			reversedOrder = true
 		default:
 			return nil, fmt.Errorf("Order format not supported: %v", orderType)
 		}
@@ -54,8 +58,9 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 	badgerIterator := t.txn.NewIterator(opt)
 
 	iterator := BadgerIterator{
-		iterator: badgerIterator,
-		txn:      *t,
+		iterator:      badgerIterator,
+		txn:           *t,
+		reversedOrder: reversedOrder,
 	}
 
 	return &iterator, nil
@@ -76,12 +81,9 @@ func (iterator *BadgerIterator) next() {
 	iterator.iteratorLock.RUnlock()
 }
 
-func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, prefix ds.Key) (dsq.Results, error) {
-	prefixString := prefix.String()
-	if prefixString != "/" {
-		prefixString = prefixString + "/"
-	}
-	prefixAsByteArray := []byte(prefixString)
+func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
+	formattedStartPrefix := asFormattedString(startPrefix)
+	formattedEndPrefix := asFormattedString(endPrefix)
 
 	iterator.resultsBuilder = dsq.NewResultBuilder(iterator.query)
 
@@ -104,10 +106,10 @@ func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, prefix ds.Key
 			iterator.closedEarly = true
 			return
 		}
-		iterator.iterator.Seek(prefixAsByteArray)
+		iterator.iterator.Seek([]byte(formattedStartPrefix))
 
-		iterator.scanThroughToOffset(prefixAsByteArray, worker)
-		iterator.yieldResults(prefixAsByteArray, worker)
+		iterator.scanThroughToOffset(formattedStartPrefix, formattedEndPrefix, worker)
+		iterator.yieldResults(formattedStartPrefix, formattedEndPrefix, worker)
 	})
 
 	go iterator.resultsBuilder.Process.CloseAfterChildren() //nolint
@@ -115,9 +117,42 @@ func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, prefix ds.Key
 	return iterator.resultsBuilder.Results(), nil
 }
 
-func (iterator *BadgerIterator) scanThroughToOffset(prefix []byte, worker goprocess.Process) { //  we might also not need/use this at all
+func asFormattedString(prefix ds.Key) string {
+	prefixString := prefix.String()
+	if prefixString != "/" {
+		prefixString = prefixString + "/"
+	}
+	return prefixString
+}
+
+type itemKeyValidator = func(key string, startPrefix string, endPrefix string) bool
+
+func isValidAscending(key string, startPrefix string, endPrefix string) bool {
+	return key >= startPrefix && key < endPrefix
+}
+
+func isValidDescending(key string, startPrefix string, endPrefix string) bool {
+	return key <= startPrefix && key >= endPrefix
+}
+
+func (iterator *BadgerIterator) getItemKeyValidator() itemKeyValidator {
+	if iterator.reversedOrder {
+		return isValidDescending
+	}
+	return isValidAscending
+}
+
+func (iterator *BadgerIterator) scanThroughToOffset(startPrefix string, endPrefix string, worker goprocess.Process) { //  we might also not need/use this at all
+	itemKeyValidator := iterator.getItemKeyValidator()
+
 	// skip to the offset
-	for _ = 0; iterator.skipped < iterator.query.Offset && iterator.iterator.ValidForPrefix(prefix); iterator.next() {
+	for _ = 0; iterator.skipped < iterator.query.Offset && iterator.iterator.Valid(); iterator.next() {
+		item := iterator.iterator.Item()
+		key := string(item.Key())
+		if !itemKeyValidator(key, startPrefix, endPrefix) {
+			return
+		}
+
 		// On the happy path, we have no filters and we can go
 		// on our way.
 		if len(iterator.query.Filters) == 0 {
@@ -125,15 +160,10 @@ func (iterator *BadgerIterator) scanThroughToOffset(prefix []byte, worker goproc
 			continue
 		}
 
-		// On the sad path, we need to apply filters before
-		// counting the item as "skipped" as the offset comes
-		// _after_ the filter.
-		item := iterator.iterator.Item()
-
 		matches := true
 		check := func(value []byte) error {
 			e := dsq.Entry{
-				Key:   string(item.Key()),
+				Key:   key,
 				Value: value,
 				Size:  int(item.ValueSize()), // this function is basically free
 			}
@@ -171,13 +201,19 @@ func (iterator *BadgerIterator) scanThroughToOffset(prefix []byte, worker goproc
 	}
 }
 
-func (iterator *BadgerIterator) yieldResults(prefix []byte, worker goprocess.Process) {
+func (iterator *BadgerIterator) yieldResults(startPrefix string, endPrefix string, worker goprocess.Process) {
+	itemKeyValidator := iterator.getItemKeyValidator()
+
 	for _ = 0; iterator.query.Limit <= 0 || iterator.sent < iterator.query.Limit; iterator.next() {
-		if !iterator.iterator.ValidForPrefix(prefix) {
+		if !iterator.iterator.Valid() {
 			return
 		}
 		item := iterator.iterator.Item()
-		e := dsq.Entry{Key: string(item.Key())}
+		key := string(item.Key())
+		if !itemKeyValidator(key, startPrefix, endPrefix) {
+			return
+		}
+		e := dsq.Entry{Key: key}
 
 		// Maybe get the value
 		var result dsq.Result

@@ -161,7 +161,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			for i, docKey := range parsed.DocKeys {
 				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
 					&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(docKey))
-				spans[i] = core.NewSpan(dockeyIndexKey, core.Key{})
+				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
 			origScan.Spans(spans)
 		}
