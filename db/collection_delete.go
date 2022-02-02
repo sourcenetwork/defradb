@@ -212,13 +212,6 @@ func (c *Collection) applyFullDelete(
 		}
 	} // ====================== Successfully deleted the headstore state of this document
 
-	// fmt.Println("--------------------------------------")
-	// fmt.Println("--------------DeleteBlock---------------")
-	// fmt.Println("--------------------------------------")
-	// fmt.Println("cid: ", targetCid)
-	// fmt.Println("err: ", err)
-	// fmt.Println("--------------------------------------")
-
 	return nil
 }
 

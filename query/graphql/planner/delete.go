@@ -1,3 +1,9 @@
+// Copyright 2020 Source Inc.
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
@@ -38,14 +44,12 @@ func (n *deleteNode) Next() (bool, error) {
 		var err error
 		numids := len(n.ids)
 		if numids == 1 {
-			fmt.Println("single key")
 			key, err2 := key.NewFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
 			results, err = n.collection.DeleteWithKey(n.p.ctx, key)
 		} else if numids > 1 {
-			fmt.Println("multi key")
 			// todo
 			keys := make([]key.DocKey, len(n.ids))
 			for i, v := range n.ids {
@@ -56,7 +60,6 @@ func (n *deleteNode) Next() (bool, error) {
 			}
 			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
 		} else { // @todo: handle filter vs ID based
-			fmt.Println("filter")
 			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
 		}
 
