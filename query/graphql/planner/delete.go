@@ -22,8 +22,6 @@ type deleteNode struct {
 
 	isDeleting bool
 	deleteIter *valuesNode
-
-	results planNode
 }
 
 // Next only returns once.
@@ -72,7 +70,6 @@ func (n *deleteNode) Next() (bool, error) {
 		for _, resKey := range results.DocKeys {
 			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {
-				fmt.Println("document adding error while deletion : ", err)
 				return false, err
 			}
 		}
@@ -99,11 +96,11 @@ func (n *deleteNode) Init() error {
 }
 
 func (n *deleteNode) Start() error {
-	return n.results.Start()
+	return nil
 }
 
 func (n *deleteNode) Close() error {
-	return n.results.Close()
+	return nil
 }
 
 func (n *deleteNode) Source() planNode {
@@ -123,14 +120,9 @@ func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	delete.collection = col.WithTxn(p.txn)
 
-	// create the results Select node
 	slct := parsed.ToSelect()
-	slctNode, err := p.Select(slct)
-	if err != nil {
-		return nil, err
-	}
-	delete.results = slctNode
-	return delete, nil
+	return p.SelectFromSource(slct, delete, true, nil)
 }

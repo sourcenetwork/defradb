@@ -110,6 +110,30 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 			},
 			ExpectedError: "",
 		},
+
+		{
+			Description: "Simple delete mutation with an aliased _key name.",
+			Query: `mutation {
+						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+							FancyKey: _key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.5,
+						"verified": true
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+				},
+			},
+			ExpectedError: "",
+		},
 	}
 
 	for _, test := range tests {

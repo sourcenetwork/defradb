@@ -183,8 +183,6 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 		return p.expandMultiNode(n, parentPlan)
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
-	case *deleteNode:
-		return p.expandPlan(n.results, parentPlan)
 	default:
 		return nil
 	}

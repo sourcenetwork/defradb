@@ -86,7 +86,6 @@ func (n *updateNode) Next() (bool, error) {
 		for _, resKey := range results.DocKeys {
 			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {
-				fmt.Println("document adding error while update : ", err)
 				return false, err
 			}
 		}
