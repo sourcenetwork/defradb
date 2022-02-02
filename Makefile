@@ -36,18 +36,25 @@ deps\:go-acc:
 deps: deps\:golangci-lint deps\:go-acc
 	go mod download
 
+.PHONY: tidy
+tidy:
+	go mod tidy
+
 .PHONY: clean
 clean:
 	go clean cli/defradb/main.go
 	rm -f build/defradb
 
-.PHONY: tidy
-tidy:
-	go mod tidy
+.PHONY: clean\:test
+clean\:test:
+	go clean -testcache
 
 .PHONY: test
 test:
 	go test ./... -race
+
+.PHONY: test\:clean
+test\:clean: clean\:test test
 
 .PHONY: test\:bench
 test\:bench:
