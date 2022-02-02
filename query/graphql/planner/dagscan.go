@@ -9,6 +9,27 @@
 // licenses/APL.txt.
 package planner
 
+//			   -> D1 -> E1 -> F1
+// A -> B -> C |
+//			   -> D2 -> E2 -> F2
+
+/*
+
+/db/blocks/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmHLSHDFLHJSDFLHJFSLDKSH => IPLD_BLOCK_BYTE_ARRAY  => []byte("hello")
+/db/blocks/QmSFHLSDHLHJSDLFHJLSD => IPLD_BLOCK_BYTE_ARRA	=> []byte("zgoodbye")
+/db/blocks/QmSKFJHLSDHJFLSFHD => IPLD_BLOCK_BYTE_ARRAY	=> []byte("stupid")
+
+/db/data/1/0/bae-ALICE/1:v => "stupid"
+/db/data/1/0/bae-ALICE/C:v => []byte...
+
+/db/heads/bae-ALICE/C/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => [priority=1]
+/db/heads/bae-ALICE/C/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => [priority=1]
+/db/heads/bae-ALICE/1/QmSKFJHLSDHJFLSFHD => [priority=2]
+
+*/
+
 import (
 	"container/list"
 	"errors"

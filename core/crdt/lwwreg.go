@@ -38,6 +38,7 @@ var (
 type LWWRegDelta struct {
 	Priority uint64
 	Data     []byte
+	DocKey   []byte
 }
 
 // GetPriority gets the current priority for this delta
@@ -59,7 +60,8 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	err := enc.Encode(struct {
 		Priority uint64
 		Data     []byte
-	}{delta.Priority, delta.Data})
+		DocKey   []byte
+	}{delta.Priority, delta.Data, delta.DocKey})
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +110,8 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
-		Data: value,
+		Data:   value,
+		DocKey: []byte(reg.key),
 	}
 }
 
