@@ -18,6 +18,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	logger "github.com/ipfs/go-log/v2"
 	goprocess "github.com/jbenet/goprocess"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 	"go.uber.org/zap"
 )
 
@@ -222,6 +223,16 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 // Implicit transactions are created by Datastore methods performing single operations.
 func (d *Datastore) newImplicitTransaction(readOnly bool) *txn {
 	return &txn{d, d.DB.NewTransaction(!readOnly), true}
+}
+
+func (d *Datastore) NewIterableTransaction(ctx context.Context, readOnly bool) (iterable.IterableTxn, error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	return &txn{d, d.DB.NewTransaction(!readOnly), false}, nil
 }
 
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) error {

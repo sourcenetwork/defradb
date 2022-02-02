@@ -252,7 +252,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 	if err != nil {
 		return nil, err
 	}
-	if err := query.Start(); err != nil {
+	if err = query.Start(); err != nil {
 		return nil, err
 	}
 
@@ -262,8 +262,8 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 
 	// loop while we still have results from the filter query
 	for {
-		next, err := query.Next()
-		if err != nil {
+		next, nextErr := query.Next()
+		if nextErr != nil {
 			return nil, err
 		}
 		// if theres no more records from the query, jump out of the loop
@@ -287,6 +287,10 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 		results.Count++
 	}
 
+	err = query.Close()
+	if err != nil {
+		return nil, err
+	}
 	return results, nil
 }
 
