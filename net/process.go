@@ -124,7 +124,7 @@ func (p *Peer) handleChildBlocks(
 				}
 			}
 		}
-		// handle no match case ^^
+		// @todo: handle no match case ^^
 
 		// heads of subfields are still subfields, not composites
 		if fieldName == "" && field != "" {
