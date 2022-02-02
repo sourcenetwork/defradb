@@ -42,6 +42,7 @@ type DB interface {
 	DAGstore() core.DAGStore
 
 	NewTxnI(context.Context, bool) (Txn, error)
+	GetAllCollections(ctx context.Context) ([]Collection, error)
 }
 
 type Sequence interface{}
@@ -89,6 +90,12 @@ type Collection interface {
 
 	GetPrimaryIndexDocKey(ds.Key) ds.Key
 	SchemaCID() string
+	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
+}
+
+type DocKeysResult struct {
+	Key key.DocKey
+	Err error
 }
 
 type UpdateOpt struct{}
