@@ -13,6 +13,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
@@ -242,6 +243,92 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 
 	name := string(buf)
 	return db.GetCollection(ctx, name)
+}
+
+// GetAllCollections gets all the currently defined collections in the
+// database
+func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+	// create collection system prefix query
+	prefix := base.MakeCollectionSystemKey("")
+	q, err := db.systemstore.Query(ctx, query.Query{
+		Prefix:   prefix.String(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
+	}
+	defer q.Close()
+
+	cols := make([]client.Collection, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		colName := ds.NewKey(res.Key).BaseNamespace()
+		col, err := db.GetCollection(ctx, colName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get collection %s: %w", colName, err)
+		}
+		cols = append(cols, col)
+	}
+
+	return cols, nil
+}
+
+// GetAllDocKeys returns all the document keys that exist in the collection
+// @todo: We probably need a lock on the collection for this kind of op since
+// it hits every key and will cause Tx conflicts for concurrent Txs
+func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+	prefix := c.getPrimaryIndexDocKey(ds.NewKey("")) // empty path for all keys prefix
+	q, err := c.db.datastore.Query(ctx, query.Query{
+		Prefix:   prefix.String(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resCh := make(chan client.DocKeysResult)
+	go func() {
+		defer q.Close()
+		defer close(resCh)
+		for res := range q.Next() {
+			if res.Error != nil {
+				resCh <- client.DocKeysResult{
+					Err: res.Error,
+				}
+				return
+			}
+
+			// looking for /<colID>/1/<Dockey>:v
+
+			// not it - prob a child key
+			if strings.Count(res.Key, "/") != 3 {
+				continue
+			}
+
+			// not it - missing value suffix
+			if !strings.HasSuffix(res.Key, ":v") {
+				continue
+			}
+
+			// now we have a doc key
+			rawDocKey := ds.NewKey(res.Key).Type()
+			key, err := key.NewFromString(rawDocKey)
+			if err != nil {
+				resCh <- client.DocKeysResult{
+					Err: res.Error,
+				}
+				return
+			}
+			resCh <- client.DocKeysResult{
+				Key: key,
+			}
+		}
+	}()
+
+	return resCh, nil
 }
 
 // ValidDescription

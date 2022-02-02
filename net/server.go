@@ -13,7 +13,6 @@ import (
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/document/key"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -51,13 +50,29 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 	s.opts = append(defaultOpts, opts...)
 	if s.peer.ps != nil {
-		var keys []key.DocKey // @todo: Get all DocKeys across all collections in the DB
-		for _, key := range keys {
-			if err := s.addPubSubTopic(key.String()); err != nil {
-				return nil, err
-			}
+		// Get all DocKeys across all collections in the DB
+		log.Debug("Getting all existing dockeys...")
+		keyResults, err := s.listAllDocKeys()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get dockeys for pubsub topic registration: %w", err)
 		}
 
+		i := 0
+		if keyResults != nil {
+
+			for key := range keyResults {
+				if key.Err != nil {
+					log.Warn("Failed to get a key to register pubsub topic: %w", key.Err)
+					continue
+				}
+				log.Debug("Registering existing DocKey pubsub topic %v", key.Key.String())
+				if err := s.addPubSubTopic(key.Key.String()); err != nil {
+					return nil, err
+				}
+				i++
+			}
+		}
+		log.Debugf("Finished registering all DocKey pubsub topics, %v in total", i)
 	}
 
 	return s, nil
@@ -217,6 +232,39 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 	log.Infof("Recieved new pubsub event from %s on %s", from, topic)
+}
+
+func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
+
+	// get all collections
+	cols, err := s.db.GetAllCollections(s.peer.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cols) == 0 {
+		return nil, nil
+	}
+
+	keyCh := make(chan client.DocKeysResult)
+
+	for _, col := range cols {
+		resCh, err := col.GetAllDocKeys(s.peer.ctx)
+		if err != nil {
+			return nil, err
+		}
+		go pipeDocKeyResults(keyCh, resCh)
+	}
+
+	return keyCh, nil
+}
+
+// @todo handle the case if the dest is closed before we're done (select)
+func pipeDocKeyResults(dest chan client.DocKeysResult, src <-chan client.DocKeysResult) {
+	for res := range src {
+		dest <- res
+	}
+	close(dest)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
