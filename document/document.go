@@ -422,7 +422,7 @@ func (doc *Document) Clean() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
 			if val.IsDelete() {
-				doc.SetAs(v.Name(), nil, v.Type())
+				doc.SetAs(v.Name(), nil, v.Type()) //nolint
 			}
 			val.Clean()
 		}

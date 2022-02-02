@@ -51,7 +51,7 @@ func runCollectionBenchGetSync(b *testing.B,
 	for i := 0; i < b.N; i++ { // outer benchmark loop
 		for j := 0; j < opCount/numTypes; j++ { // number of Get operations we want to execute
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
-				collections[k].Get(ctx, dockeys[j][k])
+				collections[k].Get(ctx, dockeys[j][k]) //nolint
 			}
 		}
 	}
@@ -77,7 +77,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 			for k := 0; k < numTypes; k++ { // apply op to all the related types
 				wg.Add(1)
 				go func(ctx context.Context, col client.Collection, dockey key.DocKey) {
-					col.Get(ctx, dockey)
+					col.Get(ctx, dockey) //nolint
 					wg.Done()
 				}(ctx, collections[k], dockeys[j][k])
 			}
@@ -108,7 +108,7 @@ func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixture
 	if doSync {
 		return runCollectionBenchCreateSync(b, ctx, collections, fixture, docCount, opCount)
 	}
-	return runCollectionBenchCreateAsync2(b, ctx, collections, fixture, docCount, opCount)
+	return runCollectionBenchCreateAsync(b, ctx, collections, fixture, docCount, opCount)
 }
 
 func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
@@ -140,7 +140,7 @@ func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fix
 			docs[j], _ = document.NewFromJSON([]byte(d[0]))
 		}
 
-		collections[0].CreateMany(ctx, docs)
+		collections[0].CreateMany(ctx, docs) //nolint
 	}
 	b.StopTimer()
 
@@ -161,59 +161,12 @@ func runCollectionBenchCreateSync(b *testing.B,
 			docs, _ := fixture.GenerateDocs()
 			for k := 0; k < numTypes; k++ {
 				doc, _ := document.NewFromJSON([]byte(docs[k]))
-				collections[k].Create(ctx, doc)
+				collections[k].Create(ctx, doc) //nolint
 			}
 		}
 	}
 	b.StopTimer()
 
-	return nil
-}
-
-// workers
-// IGNORE THIS, unused, sorry andy :).
-func runCollectionBenchCreateAsync1(b *testing.B,
-	ctx context.Context,
-	collections []client.Collection,
-	fixture fixtures.Generator,
-	docCount, opCount int,
-) error {
-	// fmt.Println("----------------------------------------------------------")
-	// init the workers
-	numTypes := len(fixture.Types())
-	closeCh := make(chan struct{})
-	workerCh := make(chan struct{}, writeBatchGroup)
-	var wg sync.WaitGroup
-	for i := 0; i < writeBatchGroup; i++ {
-		go func() {
-			for {
-				select {
-				case <-workerCh:
-					docs, _ := fixture.GenerateDocs()
-					for k := 0; k < numTypes; k++ {
-						doc, _ := document.NewFromJSON([]byte(docs[k]))
-						collections[k].Create(ctx, doc)
-					}
-					wg.Done()
-				case <-closeCh:
-					return
-				}
-			}
-		}()
-	}
-	runs := opCount / numTypes
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		wg.Add(runs)
-		for j := 0; j < runs; j++ {
-			workerCh <- struct{}{} // send job notification
-		}
-		wg.Wait()
-	}
-	b.StopTimer()
-
-	close(closeCh)
 	return nil
 }
 
@@ -221,7 +174,7 @@ func runCollectionBenchCreateAsync1(b *testing.B,
 // uses an async method similar to the BackFill implementaion
 // cuts the total task up into batchs up to writeBatchGroup size
 // and wait for it all to finish.
-func runCollectionBenchCreateAsync2(b *testing.B,
+func runCollectionBenchCreateAsync(b *testing.B,
 	ctx context.Context,
 	collections []client.Collection,
 	fixture fixtures.Generator,
@@ -245,7 +198,7 @@ func runCollectionBenchCreateAsync2(b *testing.B,
 					// create the documents
 					for j := 0; j < numTypes; j++ {
 						doc, _ := document.NewFromJSON([]byte(docs[j]))
-						collections[j].Create(ctx, doc)
+						collections[j].Create(ctx, doc) //nolint
 					}
 
 					wg.Done()

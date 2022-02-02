@@ -195,26 +195,27 @@ type dbInfo interface {
 }
 
 func NewTestDB(t testing.TB) (*db.DB, error) {
-	dbInfo, err := newBenchStoreInfo(t)
-	return dbInfo.DB(), err
+	//nolint
+	dbi, err := newBenchStoreInfo(t)
+	return dbi.DB(), err
 }
 
 func NewTestStorage(t testing.TB) (ds.Batching, error) {
-	dbInfo, err := newBenchStoreInfo(t)
-	return dbInfo.Rootstore(), err
+	dbi, err := newBenchStoreInfo(t)
+	return dbi.Rootstore(), err
 }
 
 func newBenchStoreInfo(t testing.TB) (dbInfo, error) {
-	var dbInfo dbInfo
+	var dbi dbInfo
 	var err error
 
 	switch storage {
 	case "memory":
-		dbInfo, err = testutils.NewBadgerMemoryDB()
+		dbi, err = testutils.NewBadgerMemoryDB()
 	case "badger":
-		dbInfo, err = testutils.NewBadgerFileDB(t)
+		dbi, err = testutils.NewBadgerFileDB(t)
 	case "memorymap":
-		dbInfo, err = testutils.NewMapDB()
+		dbi, err = testutils.NewMapDB()
 	default:
 		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
 	}
@@ -222,5 +223,5 @@ func newBenchStoreInfo(t testing.TB) (dbInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create storage backend: %w", err)
 	}
-	return dbInfo, err
+	return dbi, err
 }

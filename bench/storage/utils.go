@@ -15,7 +15,7 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 	if err != nil {
 		return err
 	}
-	defer db.Close() // @todo: File based needs to handle proper temp file cleanup
+	defer db.Close() //nolint
 
 	// backfill
 	keys, err := backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
@@ -43,7 +43,7 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 	if err != nil {
 		return err
 	}
-	defer db.Close() // @todo: File based needs to handle proper temp file cleanup
+	defer db.Close() //nolint
 
 	// backfill
 	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
@@ -79,7 +79,7 @@ func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCou
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close() //nolint
 
 	// backfill
 	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)

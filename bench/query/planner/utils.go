@@ -41,6 +41,9 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	}
 
 	q, err := exec.ParseQueryString(query)
+	if err != nil {
+		return fmt.Errorf("Failed to parse query string: %w", err)
+	}
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create txn: %w", err)
