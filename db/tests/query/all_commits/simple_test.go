@@ -36,14 +36,14 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid": "bafkreiercmxn6e3qryxvuped5pplg733c5fj6gjypj5wykk63ouvcfb25m",
+				"cid": "bafkreie33v5gnk4vlkzedrm5tofkhhwwrb3mlnpibfsa6qzgvhpiv5qzl4",
 				"links": []map[string]interface{}{
 					{
-						"cid":  "bafybeiasnjaz6bohhhqopk77ksivqed5wgbog7575wunleaq57nar6otui",
+						"cid":  "bafybeiftyjqxyzqtfpi65kde4hla4xm3v4dvtr7fr2p2p5ng5lfg7rrcve",
 						"name": "Age",
 					},
 					{
-						"cid":  "bafybeifxin4fbdnc4hrn5tyimnzy53jj6oxtu5kpgohzv5y5wsrpjoih6a",
+						"cid":  "bafybeierejzn3m6pesium3cml4flyjoe2wd2pxbmxxi5v42yqw2w4fpcxm",
 						"name": "Name",
 					},
 				},
@@ -78,11 +78,11 @@ func TestQueryAllCommitsMultipleDAG(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid":    "bafkreicewiwopwgdrnrdnbh4qnv45yk6vhlmdvdmeri6rue34zpbouyxsq",
+				"cid":    "bafkreiap6dmsuhgzfbnj6zeobmhhmra37v3hokal7ef7dhaqp4qtpou2sa",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafkreiercmxn6e3qryxvuped5pplg733c5fj6gjypj5wykk63ouvcfb25m",
+				"cid":    "bafkreie33v5gnk4vlkzedrm5tofkhhwwrb3mlnpibfsa6qzgvhpiv5qzl4",
 				"height": int64(1),
 			},
 		},

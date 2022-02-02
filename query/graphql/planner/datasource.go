@@ -12,6 +12,7 @@ package planner
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/db/base"
 )
@@ -63,7 +64,7 @@ func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, er
 	var desc base.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
-		return desc, err
+		return desc, fmt.Errorf("Failed to get collection description: %w", err)
 	}
 
 	err = json.Unmarshal(buf, &desc)

@@ -68,6 +68,8 @@ type Collection interface {
 	UpdateWithKey(context.Context, key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []key.DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
 
+	Get(context.Context, key.DocKey) (*document.Document, error)
+
 	WithTxn(Txn) Collection
 }
 

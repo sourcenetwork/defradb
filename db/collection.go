@@ -412,16 +412,19 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				return err
 			}
 			if val.IsDelete() {
-				err := doc.SetAs(v.Name(), nil, v.Type())
-				if err != nil {
-					log.Error("Couldn't set document as type: ", v.Type())
-				}
 				merge[k] = nil
 			} else {
 				merge[k] = val.Value()
 			}
-			// set value as clean
-			val.Clean()
+
+			// NOTE: We delay the final Clean() call till we know
+			// the commit on the transaction is successfull. If we didn't
+			// wait, and just did it here, then *if* the commit fails down
+			// the line, then we have no way to roll back the state
+			// side-effect on the documnet func called here.
+			txn.OnSuccess(func() {
+				doc.Clean()
+			})
 
 			links = append(links, core.DAGLink{
 				Name: k,

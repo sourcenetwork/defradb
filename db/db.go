@@ -48,7 +48,10 @@ var (
 )
 
 // make sure we match our client interface
-var _ client.DB = (*DB)(nil)
+var (
+	_ client.DB         = (*DB)(nil)
+	_ client.Collection = (*Collection)(nil)
+)
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.
@@ -183,6 +186,10 @@ func (db *DB) printDebugDB(ctx context.Context) {
 
 func (db *DB) PrintDump(ctx context.Context) {
 	printStore(ctx, db.rootstore)
+}
+
+func (db *DB) Executor() *planner.QueryExecutor {
+	return db.queryExecutor
 }
 
 // Close is called when we are shutting down the database.
