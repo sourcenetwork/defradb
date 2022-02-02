@@ -15,13 +15,13 @@ import (
 	"os/signal"
 	"strings"
 
+	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/spf13/cobra"
 )
 

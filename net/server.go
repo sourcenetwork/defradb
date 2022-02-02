@@ -65,7 +65,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 					log.Warn("Failed to get a key to register pubsub topic: %w", key.Err)
 					continue
 				}
-				log.Debug("Registering existing DocKey pubsub topic %v", key.Key.String())
+				log.Debugf("Registering existing DocKey pubsub topic %v", key.Key.String())
 				if err := s.addPubSubTopic(key.Key.String()); err != nil {
 					return nil, err
 				}
@@ -248,13 +248,33 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 
 	keyCh := make(chan client.DocKeysResult)
 
+	// ctx, cancel := context.WithCancel(s.peer.ctx)
+	var wg sync.WaitGroup
+	wg.Add(1) // add an init blocker on close routine
+	go func() {
+		wg.Wait()
+		close(keyCh)
+	}()
+
 	for _, col := range cols {
 		resCh, err := col.GetAllDocKeys(s.peer.ctx)
 		if err != nil {
 			return nil, err
 		}
-		go pipeDocKeyResults(keyCh, resCh)
+
+		// run a goroutune for each channel we get from the GetAllDocKeys func for each
+		// collection. Pipe the results from res to keys, and handle potentially
+		// closed channel edge cases
+		wg.Add(1)
+		go func(colName string) {
+			fmt.Println("starting routine for:", colName)
+			for res := range resCh {
+				keyCh <- res
+			}
+			wg.Done()
+		}(col.Name())
 	}
+	wg.Done() // cleanup the init blocker on close routine
 
 	return keyCh, nil
 }

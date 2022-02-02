@@ -268,7 +268,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		colName := ds.NewKey(res.Key).BaseNamespace()
 		col, err := db.GetCollection(ctx, colName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get collection %s: %w", colName, err)
+			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
 		}
 		cols = append(cols, col)
 	}
@@ -294,6 +294,15 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 		defer q.Close()
 		defer close(resCh)
 		for res := range q.Next() {
+			// check for Done on context first
+			select {
+			case <-ctx.Done():
+				// we've been cancelled! ;)
+				return
+			default:
+				// noop, just continue on the with the for loop
+			}
+
 			if res.Error != nil {
 				resCh <- client.DocKeysResult{
 					Err: res.Error,
