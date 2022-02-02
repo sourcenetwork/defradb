@@ -33,6 +33,11 @@ type heads struct {
 	namespace ds.Key
 }
 
+// NewHeadSet
+func NewHeadSet(store core.DSReaderWriter, namespace ds.Key) *heads {
+	return newHeadset(store, namespace)
+}
+
 func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
 	return &heads{
 		store:     store,
