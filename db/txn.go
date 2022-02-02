@@ -12,6 +12,7 @@ package db
 import (
 	"context"
 	"errors"
+	"math/rand"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -19,7 +20,18 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 )
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
 
 var (
 	// ErrNoTxnSupport occurs when a new transaction is trying to be created from a
@@ -38,13 +50,17 @@ var _ client.Txn = (*Txn)(nil)
 // If the rootstore is a ds.MemoryStore than it'll only have the Batching
 // semantics. With no Commit/Discord functionality
 type Txn struct {
-	ds.Txn
+	iterable.IterableTxn
+	isBatch bool
 
 	// wrapped DS
 	systemstore core.DSReaderWriter // wrapped txn /system namespace
 	datastore   core.DSReaderWriter // wrapped txn /data namespace
 	headstore   core.DSReaderWriter // wrapped txn /heads namespace
 	dagstore    core.DAGStore       // wrapped txn /blocks namespace
+
+	successFns []func()
+	errorFns   []func()
 }
 
 // Txn creates a new transaction which can be set to readonly mode
@@ -59,16 +75,19 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 
 	txn := new(Txn)
 
-	// check if our datastore natively supports transactions or Batching
-	txnStore, ok := db.rootstore.(ds.TxnDatastore)
-	if ok { // we support transactions
+	// check if our datastore natively supports iterable transaction, transactions or batching
+	if iterableTxnStore, ok := db.rootstore.(iterable.IterableTxnDatastore); ok {
+		dstxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
+		if err != nil {
+			return nil, err
+		}
+		txn.IterableTxn = dstxn
+	} else if txnStore, ok := db.rootstore.(ds.TxnDatastore); ok {
 		dstxn, err := txnStore.NewTransaction(ctx, readonly)
 		if err != nil {
 			return nil, err
 		}
-
-		txn.Txn = dstxn
-
+		txn.IterableTxn = iterable.NewIterableTransaction(dstxn)
 		// Note: db.rootstore now has type `ds.Batching`.
 	} else {
 		batcher, err := db.rootstore.Batch(ctx)
@@ -81,16 +100,27 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 			Read:  db.rootstore,
 			Batch: batcher,
 		}
-		txn.Txn = rb
+		txn.IterableTxn = iterable.NewIterableTransaction(rb)
+		txn.isBatch = true
 	}
 
 	// add the wrapped datastores using the existing KeyTransform functions from the db
 	// @todo Check if KeyTransforms are nil beforehand
-	shimStore := shimTxnStore{txn.Txn}
+
+	// debug stuff... ignore
+	//
+	// txnid := RandStringRunes(5)
+	// txn.systemstore = ds.NewLogDatastore(ktds.Wrap(shimStore, db.ssKeyTransform), fmt.Sprintf("%s:systemstore", txnid))
+	// txn.datastore = ds.NewLogDatastore(ktds.Wrap(shimStore, db.dsKeyTransform), fmt.Sprintf("%s:datastore", txnid))
+	// txn.headstore = ds.NewLogDatastore(ktds.Wrap(shimStore, db.hsKeyTransform), fmt.Sprintf("%s:headstore", txnid))
+	// batchstore := ds.NewLogDatastore(ktds.Wrap(shimStore, db.dagKeyTransform), fmt.Sprintf("%s:dagstore", txnid))
+
+	shimStore := shimTxnStore{txn.IterableTxn}
 	txn.systemstore = ktds.Wrap(shimStore, db.ssKeyTransform)
 	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
 	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)
 	batchstore := ktds.Wrap(shimStore, db.dagKeyTransform)
+
 	txn.dagstore = store.NewDAGStore(batchstore)
 
 	return txn, nil
@@ -117,8 +147,42 @@ func (txn *Txn) DAGstore() core.DAGStore {
 }
 
 func (txn *Txn) IsBatch() bool {
-	_, ok := txn.Txn.(shimBatcherTxn)
-	return ok
+	return txn.isBatch
+}
+
+func (txn *Txn) Commit(ctx context.Context) error {
+	if err := txn.IterableTxn.Commit(ctx); err != nil {
+		txn.runErrorFns(ctx)
+		return err
+	}
+	txn.runSuccessFns(ctx)
+	return nil
+}
+
+func (txn *Txn) OnSuccess(fn func()) {
+	if fn == nil {
+		return
+	}
+	txn.successFns = append(txn.successFns, fn)
+}
+
+func (txn *Txn) OnError(fn func()) {
+	if fn == nil {
+		return
+	}
+	txn.errorFns = append(txn.errorFns, fn)
+}
+
+func (txn *Txn) runErrorFns(ctx context.Context) {
+	for _, fn := range txn.errorFns {
+		fn()
+	}
+}
+
+func (txn *Txn) runSuccessFns(ctx context.Context) {
+	for _, fn := range txn.successFns {
+		fn()
+	}
 }
 
 // Shim to make ds.Txn support ds.Datastore

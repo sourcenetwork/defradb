@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -20,7 +21,6 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 )
 
 type DB interface {
@@ -37,7 +37,7 @@ type DB interface {
 type Sequence interface{}
 
 type Txn interface {
-	ds.Txn
+	iterable.IterableTxn
 	core.MultiStore
 	Systemstore() core.DSReaderWriter
 	IsBatch() bool
@@ -72,6 +72,8 @@ type Collection interface {
 	DeleteWithFilter(context.Context, interface{}, ...DeleteOpt) (*DeleteResult, error)
 	DeleteWithKey(context.Context, key.DocKey, ...DeleteOpt) (*DeleteResult, error)
 	DeleteWithKeys(context.Context, []key.DocKey, ...DeleteOpt) (*DeleteResult, error)
+
+	Get(context.Context, key.DocKey) (*document.Document, error)
 
 	WithTxn(Txn) Collection
 }

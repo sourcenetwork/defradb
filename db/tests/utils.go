@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
-package tests_test
+package tests
 
 import (
 	"context"
@@ -18,19 +18,34 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
-	"github.com/stretchr/testify/assert"
+)
+
+const (
+	memoryBadgerEnvName = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName   = "DEFRA_BADGER_FILE"
+	memoryMapEnvName    = "DEFRA_MAP"
+)
+
+var (
+	badgerInMemory bool
+	badgerFile     bool
+	mapStore       bool
 )
 
 type QueryTestCase struct {
 	Description string
 	Query       string
+
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
 	Docs map[int][]string
+
 	// updates is a map from document index, to a list
 	// of changes in strinigied JSON format
 	Updates map[int][]string
@@ -40,19 +55,24 @@ type QueryTestCase struct {
 }
 
 type databaseInfo struct {
-	name string
-	db   *db.DB
+	name      string
+	db        *db.DB
+	rootstore ds.Batching
 }
 
-var badgerInMemory bool
-var badgerFile bool
-var mapStore bool
+func (dbi databaseInfo) Rootstore() ds.Batching {
+	return dbi.rootstore
+}
+
+func (dbi databaseInfo) DB() *db.DB {
+	return dbi.db
+}
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
-	_, badgerInMemory = os.LookupEnv("DEFRA_BADGER_MEMORY")
-	_, badgerFile = os.LookupEnv("DEFRA_BADGER_FILE")
-	_, mapStore = os.LookupEnv("DEFRA_MAP")
+	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
+	_, badgerFile = os.LookupEnv(fileBadgerEnvName)
+	_, mapStore = os.LookupEnv(memoryMapEnvName)
 
 	// default is to run against all
 	if !badgerInMemory && !badgerFile && !mapStore {
@@ -63,7 +83,7 @@ func init() {
 	}
 }
 
-func newBadgerMemoryDB() (databaseInfo, error) {
+func NewBadgerMemoryDB() (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -76,12 +96,13 @@ func newBadgerMemoryDB() (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "badger-in-memory",
-		db:   db,
+		name:      "badger-in-memory",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
-func newMapDB() (databaseInfo, error) {
+func NewMapDB() (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
 	db, err := db.NewDB(rootstore, struct{}{})
 	if err != nil {
@@ -89,12 +110,13 @@ func newMapDB() (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "ipfs-map-datastore",
-		db:   db,
+		name:      "ipfs-map-datastore",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
-func newBadgerFileDB(t *testing.T) (databaseInfo, error) {
+func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 	path := t.TempDir()
 
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
@@ -109,8 +131,9 @@ func newBadgerFileDB(t *testing.T) (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "badger-file-system",
-		db:   db,
+		name:      "badger-file-system",
+		db:        db,
+		rootstore: rootstore,
 	}, nil
 }
 
@@ -118,7 +141,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
-		badgerIMDatabase, err := newBadgerMemoryDB()
+		badgerIMDatabase, err := NewBadgerMemoryDB()
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +149,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	if badgerFile {
-		badgerIMDatabase, err := newBadgerFileDB(t)
+		badgerIMDatabase, err := NewBadgerFileDB(t)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +157,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 	}
 
 	if mapStore {
-		mapDatabase, err := newMapDB()
+		mapDatabase, err := NewMapDB()
 		if err != nil {
 			return nil, err
 		}

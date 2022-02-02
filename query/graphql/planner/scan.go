@@ -10,8 +10,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -69,7 +67,7 @@ func (n *scanNode) initScan() error {
 		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
 	}
 
-	fmt.Println("Initializing scan with the following spans:", n.spans)
+	// fmt.Println("Initializing scan with the following spans:", n.spans)
 	err := n.fetcher.Start(n.p.ctx, n.p.txn, n.spans)
 	if err != nil {
 		return err

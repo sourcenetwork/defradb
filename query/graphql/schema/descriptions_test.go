@@ -184,6 +184,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "author_id",
 								Kind: base.FieldKind_DocKey,
 								Typ:  core.LWW_REGISTER,
+								Meta: base.Meta_Relation_INTERNAL_ID,
 							},
 							{
 								Name: "name",
@@ -231,6 +232,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "published_id",
 								Kind: base.FieldKind_DocKey,
 								Typ:  core.LWW_REGISTER,
+								Meta: base.Meta_Relation_INTERNAL_ID,
 							},
 						},
 					},
@@ -276,6 +278,7 @@ func TestSingleSimpleType(t *testing.T) {
 								Name: "author_id",
 								Kind: base.FieldKind_DocKey,
 								Typ:  core.LWW_REGISTER,
+								Meta: base.Meta_Relation_INTERNAL_ID,
 							},
 							{
 								Name: "name",
