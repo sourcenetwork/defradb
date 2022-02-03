@@ -149,7 +149,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	output := make(chan cid.Cid, dsq.KeysOnlyBufSize)
 	go func() {
 		defer func() {
-			log.Error(res.Close()) // ensure exit (signals early exit, too)
+			_ = res.Close() // ensure exit (signals early exit, too)
 			close(output)
 		}()
 
