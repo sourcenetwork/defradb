@@ -52,6 +52,10 @@ type QueryTestCase struct {
 	Results []map[string]interface{}
 	// The expected content of an expected error
 	ExpectedError string
+
+	// If this is set to true, test case will not be run against the mapStore.
+	// Useful if the functionality under test is not supported by it.
+	DisableMapStore bool
 }
 
 type databaseInfo struct {
@@ -137,7 +141,7 @@ func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 	}, nil
 }
 
-func getDatabases(t *testing.T) ([]databaseInfo, error) {
+func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
@@ -156,7 +160,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 		databases = append(databases, badgerIMDatabase)
 	}
 
-	if mapStore {
+	if !test.DisableMapStore && mapStore {
 		mapDatabase, err := NewMapDB()
 		if err != nil {
 			return nil, err
@@ -169,7 +173,7 @@ func getDatabases(t *testing.T) ([]databaseInfo, error) {
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
 	ctx := context.Background()
-	dbs, err := getDatabases(t)
+	dbs, err := getDatabases(t, test)
 	if assertError(t, err, test) {
 		return
 	}
