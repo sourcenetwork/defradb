@@ -11,7 +11,6 @@ package crdt
 
 import (
 	"context"
-	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
@@ -35,7 +34,7 @@ var (
 func init() {
 	err := DefaultFactory.Register(core.COMPOSITE, &compFactoryFn)
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 	}
 }
 

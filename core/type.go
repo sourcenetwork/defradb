@@ -23,6 +23,7 @@ const (
 
 const (
 	COMPOSITE_NAMESPACE = "C"
+	HEAD                = "_head"
 )
 
 var (

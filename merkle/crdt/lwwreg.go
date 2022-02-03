@@ -37,7 +37,7 @@ var (
 func init() {
 	err := DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 	}
 }
 
@@ -52,7 +52,7 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
+func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 

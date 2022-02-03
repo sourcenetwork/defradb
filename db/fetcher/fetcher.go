@@ -100,7 +100,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 }
 
 // Start implements DocumentFetcher
-func (df *DocumentFetcher) Start(ctx context.Context, txn core.MultiStore, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}

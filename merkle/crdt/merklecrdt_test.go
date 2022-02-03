@@ -42,7 +42,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
 	dagstore := store.NewDAGStore(batchStore)
 
-	id := "MyKey"
+	id := "/1/0/MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
 	clk := clock.NewMerkleClock(headstore, dagstore, id, reg)
 	return &baseMerkleCRDT{clock: clk, crdt: reg}, s
@@ -55,7 +55,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	c, err := bCRDT.Publish(ctx, delta)
+	c, err := bCRDT.Publish(ctx, delta, false)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return

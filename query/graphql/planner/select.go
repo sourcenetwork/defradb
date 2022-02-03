@@ -14,12 +14,11 @@ import (
 	"sort"
 	"strings"
 
+	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	"github.com/ipfs/go-cid"
 )
 
 /*
@@ -164,7 +163,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 	if parsed.CollectionName == "" {
 		parsed.CollectionName = parsed.Name
 	}
-	sourcePlan, err := n.p.getSource(parsed.CollectionName, parsed.QueryType == parser.VersionedScanQuery)
+	sourcePlan, err := n.p.getSource(parsed.CollectionName)
 	if err != nil {
 		return nil, err
 	}
