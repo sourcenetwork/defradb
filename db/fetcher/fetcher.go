@@ -32,6 +32,7 @@ type Fetcher interface {
 	FetchNext(ctx context.Context) (*document.EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*document.Document, error)
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
+	Close() error
 }
 
 var (

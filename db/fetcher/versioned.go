@@ -78,12 +78,12 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher
 
-	txn core.MultiStore
+	txn core.Txn
 	ctx context.Context
 
 	// Transient version store
 	root  ds.Datastore
-	store core.MultiStore
+	store core.Txn
 
 	key     core.Key
 	version cid.Cid
@@ -125,7 +125,7 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 }
 
 // Start serializes the correct state accoriding to the Key and CID
-func (vf *VersionedFetcher) Start(ctx context.Context, txn core.MultiStore, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
@@ -158,8 +158,12 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.MultiStore, span
 	vf.version = c
 
 	// create store
-	vf.root = ds.NewMapDatastore()
-	vf.store = store.MultiStoreFrom(vf.root)
+	root := ds.NewMapDatastore()
+	vf.root = root
+	vf.store, err = store.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
+	if err != nil {
+		return err
+	}
 
 	if err := vf.seekTo(vf.version); err != nil {
 		return err
@@ -187,13 +191,13 @@ err := VersionFetcher.Start(txn, spans) {
 */
 
 // SeekTo exposes the private seekTo
-func (vf *VersionedFetcher) SeekTo(c cid.Cid) error {
+func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 	err := vf.seekTo(c)
 	if err != nil {
 		return err
 	}
 
-	return vf.DocumentFetcher.initQuery()
+	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
 }
 
 // seekTo seeks to the given CID version by steping through the CRDT
@@ -407,6 +411,15 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get node
 	// decode the block
 	return dag.DecodeProtobuf(blk.RawData())
+}
+
+func (vf *VersionedFetcher) Close() error {
+	vf.store.Discard(vf.ctx)
+	if err := vf.root.Close(); err != nil {
+		return err
+	}
+
+	return vf.DocumentFetcher.Close()
 }
 
 func NewVersionedSpan(dockey core.Key, version cid.Cid) core.Spans {

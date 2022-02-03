@@ -378,7 +378,7 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			}
 		}
 
-		if len(slct.DocKey) != 0 && len(slct.CID) != 0 {
+		if len(slct.DocKeys) != 0 && len(slct.CID) != 0 {
 			slct.QueryType = VersionedScanQuery
 		} else {
 			slct.QueryType = ScanQuery

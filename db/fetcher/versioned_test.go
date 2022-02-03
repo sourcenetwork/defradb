@@ -163,7 +163,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
-	_, doc, err := vf.FetchNextMap()
+	_, doc, err := vf.FetchNextMap(ctx)
 	assert.NoError(t, err)
 
 	var state map[string]interface{}
@@ -206,7 +206,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
-	_, doc, err := vf.FetchNextMap()
+	_, doc, err := vf.FetchNextMap(ctx)
 	assert.NoError(t, err)
 
 	var state map[string]interface{}
@@ -249,7 +249,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
-	_, doc, err := vf.FetchNextMap()
+	_, doc, err := vf.FetchNextMap(ctx)
 	assert.NoError(t, err)
 
 	var state map[string]interface{}
@@ -292,7 +292,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
 
-	_, doc, err := vf.FetchNextMap()
+	_, doc, err := vf.FetchNextMap(ctx)
 	assert.NoError(t, err)
 
 	var state map[string]interface{}
@@ -340,10 +340,10 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 		c, err := cid.Decode(update.cid)
 		assert.NoError(t, err)
 
-		err = vf.SeekTo(c)
+		err = vf.SeekTo(ctx, c)
 		assert.NoError(t, err)
 
-		_, doc, err := vf.FetchNextMap()
+		_, doc, err := vf.FetchNextMap(ctx)
 		assert.NoError(t, err)
 
 		var state map[string]interface{}

@@ -96,7 +96,7 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 		}
 
 		// hide a ds.Batching store as a ds.Txn
-		rb := shimBatcherTxn{
+		rb := store.ShimBatcherTxn{
 			Read:  db.rootstore,
 			Batch: batcher,
 		}
@@ -115,7 +115,7 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 	// txn.headstore = ds.NewLogDatastore(ktds.Wrap(shimStore, db.hsKeyTransform), fmt.Sprintf("%s:headstore", txnid))
 	// batchstore := ds.NewLogDatastore(ktds.Wrap(shimStore, db.dagKeyTransform), fmt.Sprintf("%s:dagstore", txnid))
 
-	shimStore := shimTxnStore{txn.IterableTxn}
+	shimStore := store.ShimTxnStore{txn.IterableTxn}
 	txn.systemstore = ktds.Wrap(shimStore, db.ssKeyTransform)
 	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
 	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)
@@ -149,7 +149,7 @@ func (txn *Txn) DAGstore() core.DAGStore {
 // Rootstore returns the underlying txn as a DSReaderWriter to implement
 // the MultiStore interface
 func (txn *Txn) Rootstore() core.DSReaderWriter {
-	return txn.Txn
+	return txn.IterableTxn
 }
 
 func (txn *Txn) IsBatch() bool {
@@ -189,30 +189,6 @@ func (txn *Txn) runSuccessFns(ctx context.Context) {
 	for _, fn := range txn.successFns {
 		fn()
 	}
-}
-
-// Shim to make ds.Txn support ds.Datastore
-type shimTxnStore struct {
-	ds.Txn
-}
-
-func (ts shimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
-	return ts.Txn.Commit(ctx)
-}
-
-func (ts shimTxnStore) Close() error {
-	ts.Discard(context.TODO())
-	return nil
-}
-
-// shim to make ds.Batch implement ds.Datastore
-type shimBatcherTxn struct {
-	ds.Read
-	ds.Batch
-}
-
-func (shimBatcherTxn) Discard(_ context.Context) {
-	// noop
 }
 
 // txn := db.NewTxn()

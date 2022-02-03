@@ -306,7 +306,6 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	// int (any number)
 	case int:
-		val := value.(int)
 		doc.setCBOR(core.LWW_REGISTER, field, int64(val))
 	case float64:
 		// case int64:
