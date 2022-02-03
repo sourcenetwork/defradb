@@ -162,7 +162,7 @@ func (p *Peer) handleBroadcastLoop() {
 }
 
 func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid, schemaID string) error {
-	log.Debug("Registering a new document with for our peer node: ", dockey.String())
+	log.Debug("Registering a new document for our peer node: ", dockey.String())
 
 	block, err := p.db.GetBlock(ctx, c)
 	if err != nil {

@@ -19,7 +19,7 @@ func TestQueryOneCommit(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by CID",
 		Query: `query {
-					commit(cid: "bafkreie33v5gnk4vlkzedrm5tofkhhwwrb3mlnpibfsa6qzgvhpiv5qzl4") {
+					commit(cid: "bafkreiatyttzyajjsw5lshkz6unhei6k4mr3rcmapmooeamkeamx72cuny") {
 						cid
 						height
 						delta
@@ -34,7 +34,7 @@ func TestQueryOneCommit(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid":    "bafkreie33v5gnk4vlkzedrm5tofkhhwwrb3mlnpibfsa6qzgvhpiv5qzl4",
+				"cid":    "bafkreiatyttzyajjsw5lshkz6unhei6k4mr3rcmapmooeamkeamx72cuny",
 				"height": int64(1),
 				// cbor encoded delta
 				"delta": []uint8{0xa2, 0x63, 0x41, 0x67, 0x65, 0x15, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x64, 0x4a, 0x6f, 0x68, 0x6e},

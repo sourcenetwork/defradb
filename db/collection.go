@@ -491,7 +491,9 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 
 	// register new document with peer node
 	// @todo: encapsulate this stuff within a DB logger/watcher interface
-	go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.SchemaID)
+	if c.db.peer != nil {
+		go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.SchemaID)
+	}
 	return nil
 }
 

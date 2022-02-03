@@ -70,7 +70,7 @@ func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocK
 	} else {
 		fd, ok := col.Description().GetField(field)
 		if !ok {
-			return nil, fmt.Errorf("Couldn't find field %s for log %s", field)
+			return nil, fmt.Errorf("Couldn't find field %s for doc %s", field, docKey)
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
