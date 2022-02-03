@@ -38,9 +38,24 @@ var (
 	mapStore       bool
 )
 
+// Represents a query assigned to a particular transaction.
+type TransactionQuery struct {
+	// Used to identify the transaction for this to run against (allows multiple queries to share a single transaction)
+	TransactionId int
+	// The query to run against the transaction
+	Query string
+	// The expected (data) results of the query
+	Results []map[string]interface{}
+	// The expected error resulting from the query.  Also checked against the txn commit.
+	ExpectedError string
+}
+
 type QueryTestCase struct {
 	Description string
 	Query       string
+	// A collection of queries tied to a specific transaction.
+	// These will be executed before `Query` (if specified), in the order that they are listed here.
+	TransactionalQueries []TransactionQuery
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -174,7 +189,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
 	ctx := context.Background()
 	dbs, err := getDatabases(t, test)
-	if assertError(t, err, test) {
+	if assertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}
 	assert.NotEmpty(t, dbs)
@@ -186,14 +201,14 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 		db := dbi.db
 		err = db.AddSchema(ctx, schema)
-		if assertError(t, err, test) {
+		if assertError(t, test.Description, err, test.ExpectedError) {
 			return
 		}
 
 		collections := []client.Collection{}
 		for _, collectionName := range collectionNames {
 			col, err := db.GetCollection(ctx, collectionName)
-			if assertError(t, err, test) {
+			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}
 			collections = append(collections, col)
@@ -203,11 +218,11 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		for cid, docs := range test.Docs {
 			for i, docStr := range docs {
 				doc, err := document.NewFromJSON([]byte(docStr))
-				if assertError(t, err, test) {
+				if assertError(t, test.Description, err, test.ExpectedError) {
 					return
 				}
 				err = collections[cid].Save(ctx, doc)
-				if assertError(t, err, test) {
+				if assertError(t, test.Description, err, test.ExpectedError) {
 					return
 				}
 
@@ -216,11 +231,11 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 				if ok {
 					for _, u := range updates {
 						err = doc.SetWithJSON([]byte(u))
-						if assertError(t, err, test) {
+						if assertError(t, test.Description, err, test.ExpectedError) {
 							return
 						}
 						err = collections[cid].Save(ctx, doc)
-						if assertError(t, err, test) {
+						if assertError(t, test.Description, err, test.ExpectedError) {
 							return
 						}
 					}
@@ -228,65 +243,120 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 			}
 		}
 
-		// exec query
-		result := db.ExecQuery(ctx, test.Query)
-		if assertErrors(t, result.Errors, test) {
-			return
+		// Create the transactions before executing and queries
+		transactions := make([]client.Txn, 0, len(test.TransactionalQueries))
+		for _, tq := range test.TransactionalQueries {
+			if len(transactions) < tq.TransactionId {
+				continue
+			}
+
+			txn, err := db.NewTxn(ctx, false)
+			if err != nil {
+				if assertError(t, test.Description, err, tq.ExpectedError) {
+					return
+				}
+			}
+			defer txn.Discard(ctx)
+			if len(transactions) <= tq.TransactionId {
+				transactions = transactions[:tq.TransactionId+1]
+			}
+			transactions[tq.TransactionId] = txn
 		}
 
-		resultantData := result.Data.([]map[string]interface{})
-
-		fmt.Println(result.Data)
-		fmt.Println("--------------")
-		fmt.Println("")
-
-		// compare results
-		assert.Equal(t, len(test.Results), len(resultantData), test.Description)
-		for i, result := range resultantData {
-			assert.Equal(t, test.Results[i], result, test.Description)
+		for _, tq := range test.TransactionalQueries {
+			result := db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
+			if assertQueryResults(t, test.Description, result, tq.Results, tq.ExpectedError) {
+				return
+			}
 		}
 
-		if test.ExpectedError != "" {
-			assert.Fail(t, "Expected an error however none was raised.", test.Description)
+		txnIndexesCommited := map[int]struct{}{}
+		for _, tq := range test.TransactionalQueries {
+			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
+				continue
+			}
+			txnIndexesCommited[tq.TransactionId] = struct{}{}
+
+			err := transactions[tq.TransactionId].Commit(ctx)
+			if assertError(t, test.Description, err, tq.ExpectedError) {
+				return
+			}
 		}
+
+		for _, tq := range test.TransactionalQueries {
+			if tq.ExpectedError != "" {
+				assert.Fail(t, "Expected an error however none was raised.", test.Description)
+			}
+		}
+
+		// We run the core query after the explicitly transactional ones to permit tests to query the commited result of the transactional queries
+		if test.Query != "" {
+			result := db.ExecQuery(ctx, test.Query)
+			if assertQueryResults(t, test.Description, result, test.Results, test.ExpectedError) {
+				continue
+			}
+
+			if test.ExpectedError != "" {
+				assert.Fail(t, "Expected an error however none was raised.", test.Description)
+			}
+		}
+	}
+}
+
+func assertQueryResults(t *testing.T, description string, result *client.QueryResult, expectedResults []map[string]interface{}, expectedError string) bool {
+	if assertErrors(t, description, result.Errors, expectedError) {
+		return true
+	}
+	resultantData := result.Data.([]map[string]interface{})
+
+	fmt.Println(result.Data)
+	fmt.Println("--------------")
+	fmt.Println("")
+
+	// compare results
+	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	for i, result := range resultantData {
+		assert.Equal(t, expectedResults[i], result, description)
+	}
+
+	return false
+}
+
+// Asserts as to whether an error has been raised as expected (or not). If an expected
+// error has been raised it will return true, returns false in all other cases.
+func assertError(t *testing.T, description string, err error, expectedError string) bool {
+	if err == nil {
+		return false
+	}
+
+	if expectedError == "" {
+		assert.NoError(t, err, description)
+		return false
+	} else {
+		if !strings.Contains(err.Error(), expectedError) {
+			assert.ErrorIs(t, err, fmt.Errorf(expectedError))
+			return false
+		}
+		return true
 	}
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-func assertErrors(t *testing.T, errors []interface{}, testCase QueryTestCase) bool {
-	if testCase.ExpectedError == "" {
-		assert.Empty(t, errors, testCase.Description)
+func assertErrors(t *testing.T, description string, errors []interface{}, expectedError string) bool {
+	if expectedError == "" {
+		assert.Empty(t, errors, description)
 	} else {
 		for _, e := range errors {
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
-			if !strings.Contains(errorString, testCase.ExpectedError) {
+			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
-				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(testCase.ExpectedError))
+				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(expectedError))
 				continue
 			}
 			return true
 		}
 	}
 	return false
-}
-
-// Asserts as to whether an error has been raised as expected (or not). If an expected
-// error has been raised it will return true, returns false in all other cases.
-func assertError(t *testing.T, err error, testCase QueryTestCase) bool {
-	if err == nil {
-		return false
-	}
-
-	if testCase.ExpectedError == "" {
-		assert.NoError(t, err, testCase.Description)
-		return false
-	} else {
-		if !strings.Contains(err.Error(), testCase.ExpectedError) {
-			assert.ErrorIs(t, err, fmt.Errorf(testCase.ExpectedError))
-			return false
-		}
-		return true
-	}
 }
