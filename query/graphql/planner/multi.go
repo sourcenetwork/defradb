@@ -33,7 +33,6 @@ type MultiNode interface {
 	planNode
 	Children() []planNode
 	AddChild(string, planNode) error
-	ReplaceChildAt(int, string, planNode) error
 	SetMultiScanner(*multiScanNode)
 }
 
@@ -173,6 +172,51 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 	return true, nil
 }
 
+/*
+
+scan node
+=========
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false
+}
+
+typeJoin node(merge)
+=============
+{
+	friends: [
+		{
+			_key: bae-BOB,
+			name: bob,
+			points: 99.9,
+			verified: true,
+		}
+	]
+}
+
+output
+======
+
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false,
+
+	friends: [
+		{
+			_key: bae-BOB,
+			name: bob,
+			points: 99.9,
+			verified: true,
+		}
+	]
+}
+
+*/
+
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	if key, ok := p.doc["_key"].(string); ok {
 		// pass the doc key as a reference through the spans interface
@@ -203,6 +247,45 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	return true, nil
 }
 
+/*
+
+query {
+	user {
+		_key
+		name
+		points
+		verified
+
+		_version {
+			cid
+		}
+	}
+}
+
+scan node
+=========
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false
+}
+
+_version: commitSelectTopNode(append)
+===================
+[
+	{
+		cid: QmABC
+	},
+	{
+		cid: QmDEF
+	}
+	...
+]
+
+
+*/
+
 func (p *parallelNode) Values() map[string]interface{} {
 	// result := make(map[string]interface{})
 	// for i, plan := range p.children {
@@ -230,16 +313,6 @@ func (p *parallelNode) Children() []planNode {
 func (p *parallelNode) AddChild(field string, node planNode) error {
 	p.children = append(p.children, node)
 	p.childFields = append(p.childFields, field)
-	return nil
-}
-
-func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
-	if i >= len(p.children) {
-		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
-	}
-
-	p.children[i] = node
-	p.childFields[i] = field
 	return nil
 }
 

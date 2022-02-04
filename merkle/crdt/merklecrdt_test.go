@@ -45,7 +45,7 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 	id := "MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
 	clk := clock.NewMerkleClock(headstore, dagstore, id, reg)
-	return &baseMerkleCRDT{clk, reg}, s
+	return &baseMerkleCRDT{clock: clk, crdt: reg}, s
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {

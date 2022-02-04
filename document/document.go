@@ -68,6 +68,8 @@ type Document struct {
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
 
+	head cid.Cid
+
 	// marks if document has unsaved changes
 	isDirty bool
 }
@@ -154,6 +156,14 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 	}
 
 	return NewFromMap(data, schema...)
+}
+
+func (doc *Document) Head() cid.Cid {
+	return doc.head
+}
+
+func (doc *Document) SetHead(head cid.Cid) {
+	doc.head = head
 }
 
 // Key returns the generated DocKey for this document
@@ -296,6 +306,7 @@ func (doc *Document) setObject(t core.CType, field string, val *Document) error 
 	return doc.set(t, field, &value)
 }
 
+// @todo: Update with document schemas
 func (doc *Document) setAndParseType(field string, value interface{}) error {
 	if value == nil {
 		return nil
@@ -304,6 +315,11 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 	switch val := value.(type) {
 
 	// int (any number)
+	case int:
+		err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+		if err != nil {
+			return err
+		}
 	case float64:
 		// case int64:
 

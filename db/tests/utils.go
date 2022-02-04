@@ -192,6 +192,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 				return
 			}
 			collections = append(collections, col)
+			fmt.Printf("Collection name:%s id%v\n", col.Name(), col.ID())
 		}
 
 		// insert docs

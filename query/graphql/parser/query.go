@@ -32,6 +32,14 @@ const (
 	HiddenFieldName  = "_hidden"
 )
 
+// Enum for different types of read Select queries
+type SelectQueryType int
+
+const (
+	ScanQuery = iota
+	VersionedScanQuery
+)
+
 var dbAPIQueryNames = map[string]bool{
 	"latestCommits": true,
 	"allCommits":    true,
@@ -93,6 +101,10 @@ type Select struct {
 	Name           string
 	Alias          string
 	CollectionName string
+
+	// QueryType indicates what kind of query this is
+	// Currently supports: ScanQuery, VersionedScanQuery
+	QueryType SelectQueryType
 
 	// Root is the top level query parsed type
 	Root SelectionType
@@ -364,6 +376,12 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			slct.GroupBy = &GroupBy{
 				Fields: fields,
 			}
+		}
+
+		if len(slct.DocKeys) != 0 && len(slct.CID) != 0 {
+			slct.QueryType = VersionedScanQuery
+		} else {
+			slct.QueryType = ScanQuery
 		}
 	}
 

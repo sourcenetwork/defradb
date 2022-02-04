@@ -15,8 +15,34 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	"github.com/ipfs/go-cid"
+	"github.com/pkg/errors"
 )
+
+/*
+
+SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
+
+{
+	query {
+		user {
+			age
+
+			friend {
+				name
+			}
+
+			address {
+				street
+			}
+		}
+	}
+}
+
+*/
 
 // wraps a selectNode and all the logic of a plan
 // graph into a single struct for proper plan
@@ -32,6 +58,10 @@ type selectTopNode struct {
 
 	// top of the plan graph
 	plan planNode
+
+	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRADEGY) -> render -> source
+
+	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
 func (n *selectTopNode) Init() error                    { return n.plan.Init() }
@@ -134,7 +164,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 	if parsed.CollectionName == "" {
 		parsed.CollectionName = parsed.Name
 	}
-	sourcePlan, err := n.p.getSource(parsed.CollectionName)
+	sourcePlan, err := n.p.getSource(parsed.CollectionName, parsed.QueryType == parser.VersionedScanQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -151,12 +181,22 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 		origScan.filter = n.filter
 		n.filter = nil
 
-		// if we have a FindByDockey filter, create a span for it
-		// and propagate it to the scanNode
-		// @todo: When running the optimizer, check if the filter object
-		// contains a _key equality condition, and upgrade it to a point lookup
-		// instead of a prefix scan + filter via the Primary Index (0), like here:
-		if parsed.DocKeys != nil {
+		// If we have both a DocKey and a CID, then we need to run
+		// a TimeTravel (History-Traversing Versioned) query, which means
+		// we need to propogate the values to the underlying VersionedFetcher
+		if parsed.QueryType == parser.VersionedScanQuery {
+			c, err := cid.Decode(parsed.CID)
+			if err != nil {
+				return nil, errors.Wrap(err, "Failed to propagate VersionFetcher span, invalid CID")
+			}
+			spans := fetcher.NewVersionedSpan(core.NewKey(parsed.DocKeys[0]), c) // @todo check len
+			origScan.Spans(spans)
+		} else if parsed.DocKeys != nil { // If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
+			// if we have a FindByDockey filter, create a span for it
+			// and propogate it to the scanNode
+			// @todo: When running the optimizer, check if the filter object
+			// contains a _key equality condition, and upgrade it to a point lookup
+			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make(core.Spans, len(parsed.DocKeys))
 			for i, docKey := range parsed.DocKeys {
 				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
@@ -190,10 +230,25 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			// - commitScan
 			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
-					Name:   f.Name,
-					Alias:  f.Alias,
-					Type:   parser.LatestCommits,
+					Name:  f.Name,
+					Alias: f.Alias,
+					// Type:   parser.LatestCommits,
 					Fields: f.Fields,
+				}
+				// handle _version sub selection query differently
+				// if we are executing a regular Scan query
+				// or a TimeTravel query.
+				if parsed.QueryType == parser.VersionedScanQuery {
+					// for a TimeTravel query, we don't need the Latest
+					// commit. Instead, _version references the CID
+					// of that Target version we are querying.
+					// So instead of a LatestCommit subquery, we need
+					// a OneCommit subquery, with the supplied parameters.
+					commitSlct.DocKey = parsed.DocKeys[0] // @todo check length
+					commitSlct.Cid = parsed.CID
+					commitSlct.Type = parser.OneCommit
+				} else {
+					commitSlct.Type = parser.LatestCommits
 				}
 				commitPlan, err := n.p.CommitSelect(commitSlct)
 				if err != nil {

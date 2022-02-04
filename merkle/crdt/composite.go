@@ -54,7 +54,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 	// strip collection/index identifier from docKey
 	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
 	clock := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), compositeDag)
-	base := &baseMerkleCRDT{clock, compositeDag}
+	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag}
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
