@@ -73,13 +73,11 @@ func (n *updateNode) Next() (bool, error) {
 			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
 		}
 
-		fmt.Println("update node error : ", err)
 		if err != nil {
 			return false, err
 		}
 
 		// consume the updates into our valuesNode
-		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
 			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {

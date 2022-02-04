@@ -426,10 +426,12 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				doc.Clean()
 			})
 
-			links = append(links, core.DAGLink{
+			link := core.DAGLink{
 				Name: k,
 				Cid:  c,
-			})
+			}
+			links = append(links, link)
+			// fmt.Println("links:", link)
 		}
 	}
 	// Update CompositeDAG
@@ -441,8 +443,17 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	if err != nil {
 		return nil
 	}
-	_, err = c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
-	return err
+
+	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	if err != nil {
+		return nil
+	}
+
+	txn.OnSuccess(func() {
+		doc.SetHead(headCID)
+	})
+	// fmt.Printf("final: %s\n\n", docCid)
+	return nil
 }
 
 // Delete will attempt to delete a document by key
@@ -627,8 +638,16 @@ func (c *Collection) commitImplicitTxn(ctx context.Context, txn *Txn) error {
 	return nil
 }
 
+func (c *Collection) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
+	return c.getIndexDocKey(key, indexID)
+}
+
 func (c *Collection) getIndexDocKey(key ds.Key, indexID uint32) ds.Key {
 	return c.colIDKey.ChildString(fmt.Sprint(indexID)).Child(key)
+}
+
+func (c *Collection) GetPrimaryIndexDocKey(key ds.Key) ds.Key {
+	return c.getPrimaryIndexDocKey(key)
 }
 
 func (c *Collection) getPrimaryIndexDocKey(key ds.Key) ds.Key {

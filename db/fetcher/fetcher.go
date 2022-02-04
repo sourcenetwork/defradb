@@ -22,20 +22,22 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 )
 
-/*
-var DocumentFetcher DocumentFetcher = &Fetcher{}
-DocumentFetcher.Init()
-*/
-// type DocumentFetcher interface {
-// 	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
-// 	Start(txn core.Txn, spans core.Spans) error
-// 	FetchNext() (*document.EncodedDocument, error)
-// 	FetchNextDecoded() (*document.Document, error)
-// }
+// Fetcher is the interface for collecting documents
+// from the underlying data store. It handles all
+// the key/value scanning, aggregation, and document
+// encoding.
+type Fetcher interface {
+	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
+	Start(ctx context.Context, txn core.Txn, spans core.Spans) error
+	FetchNext(ctx context.Context) (*document.EncodedDocument, error)
+	FetchNextDecoded(ctx context.Context) (*document.Document, error)
+	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
+	Close() error
+}
 
-// var (
-// 	_ DocumentFetcher = &DocFetcher{}
-// )
+var (
+	_ Fetcher = (*DocumentFetcher)(nil)
+)
 
 type DocumentFetcher struct {
 	col     *base.CollectionDescription
@@ -76,7 +78,18 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.initialized = true
 	df.doc = new(document.EncodedDocument)
 	df.doc.Schema = &col.Schema
+
+	if df.kvResultsIter != nil {
+		if err := df.kvResultsIter.Close(); err != nil {
+			return err
+		}
+	}
 	df.kvResultsIter = nil
+	if df.kvIter != nil {
+		if err := df.kvIter.Close(); err != nil {
+			return err
+		}
+	}
 	df.kvIter = nil
 
 	df.schemaFields = make(map[uint32]base.FieldDescription)
@@ -112,7 +125,6 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 			}
 		}
 	}
-
 	df.indexKey = nil
 	df.spans = uniqueSpans
 	df.curSpanIndex = -1

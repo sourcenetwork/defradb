@@ -68,6 +68,11 @@ func (hf *HeadFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans
 	}
 
 	var err error
+	if hf.kvIter != nil {
+		if err := hf.kvIter.Close(); err != nil {
+			return err
+		}
+	}
 	hf.kvIter, err = txn.Headstore().Query(ctx, q)
 	if err != nil {
 		return err
@@ -140,6 +145,14 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, err
 	}
 	return hf.cid, nil
+}
+
+func (hf *HeadFetcher) Close() error {
+	if hf.kvIter == nil {
+		return nil
+	}
+
+	return hf.kvIter.Close()
 }
 
 /*

@@ -156,7 +156,9 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	return plan, nil
+
+	err = plan.Init()
+	return plan, err
 }
 
 // plan optimization. Includes plan expansion and wiring
