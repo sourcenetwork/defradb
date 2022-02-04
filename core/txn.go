@@ -18,4 +18,5 @@ type Txn interface {
 	iterable.IterableTxn
 	MultiStore
 	Systemstore() DSReaderWriter
+	IsBatch() bool
 }

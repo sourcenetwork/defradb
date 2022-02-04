@@ -444,9 +444,16 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 		return nil
 	}
 
-	_, err = c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	if err != nil {
+		return nil
+	}
+
+	txn.OnSuccess(func() {
+		doc.SetHead(headCID)
+	})
 	// fmt.Printf("final: %s\n\n", docCid)
-	return err
+	return nil
 }
 
 // Delete will attempt to delete a document by key

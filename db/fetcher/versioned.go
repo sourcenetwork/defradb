@@ -107,6 +107,7 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(col, &col.Indexes[0], fields, reverse)
+
 }
 
 // Start serializes the correct state accoriding to the Key and CID
@@ -151,7 +152,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.
 	}
 
 	if err := vf.seekTo(vf.version); err != nil {
-		return err
+		return fmt.Errorf("Failed seeking state to %v: %w", c, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
@@ -204,6 +205,12 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	// after seekNext is completed, we have a populated
 	// queuedCIDs list, and all the necessary
 	// blocks in our local store
+	// If we are using a batch store, then we need to commit
+	if vf.store.IsBatch() {
+		if err := vf.store.Commit(vf.ctx); err != nil {
+			return err
+		}
+	}
 
 	// if we have a queuedCIDs length of 0, means we don't need
 	// to do any more state serialization
@@ -225,6 +232,13 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		}
 		err := vf.merge(cc)
 		if err != nil {
+			return fmt.Errorf("Failed merging state: %w", err)
+		}
+	}
+
+	// If we are using a batch store, then we need to commit
+	if vf.store.IsBatch() {
+		if err := vf.store.Commit(vf.ctx); err != nil {
 			return err
 		}
 	}
@@ -390,7 +404,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get DAG Node: %w", err)
 	}
 
 	// get node

@@ -68,6 +68,8 @@ type Document struct {
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
 
+	head cid.Cid
+
 	// marks if document has unsaved changes
 	isDirty bool
 }
@@ -154,6 +156,14 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 	}
 
 	return NewFromMap(data, schema...)
+}
+
+func (doc *Document) Head() cid.Cid {
+	return doc.head
+}
+
+func (doc *Document) SetHead(head cid.Cid) {
+	doc.head = head
 }
 
 // Key returns the generated DocKey for this document

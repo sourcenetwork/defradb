@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -33,7 +34,7 @@ var (
 				"verified": true
 			}`),
 			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
-			cid: "bafybeihs23iizmjh6wpjat2ximlr3tocz6l6wie6qazjxiertjdlcsuhn4",
+			cid: "bafybeicxbqhopabjap7f6vvjx3yhv3rpwmhg6i424c4wzifvjm2tva4pam",
 		},
 		{
 			payload: []byte(`{
@@ -47,7 +48,7 @@ var (
 				"points": 99.9,
 			},
 			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeiephwqi4sz4y4oq5t4ny5ihdtfyvr6g36igcb5cjyuza7trueq5be",
+			cid: "bafybeihzfah32hooz7enj77wzav2exnzkrwloy3ktucc4kqjo6xjgubtvm",
 		},
 		{
 			payload: []byte(`{
@@ -61,7 +62,7 @@ var (
 				"age":      22,
 			},
 			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeibdjsxta6grha3dn7jftm6uyl5lb4k3qc5bhitjw5isstnjnoe2ki",
+			cid: "bafybeicvdptyfvhjznlwnp6mki46evmavrv7hhdyv4aegk6gcmtfvxizri",
 		},
 		{
 			payload: []byte(`{
@@ -74,7 +75,7 @@ var (
 				"points": 129.99,
 			},
 			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju",
+			cid: "bafybeiefvibtjye66scc2nrnhvjpl7hhf4hvqrk2gyswnxvdwivrww42ly",
 		},
 	}
 )
@@ -111,6 +112,12 @@ func TestVersionedFetcherStart(t *testing.T) {
 	// db.PrintDump()
 	// assert.True(t, false) // force printing dump
 
+	// c, err := cid.Decode(testStates[3].cid)
+	// require.NoError(t, err)
+
+	// require.NoError(t, err)
+	// fmt.Println(bl)
+
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
 	err = vf.Init(&desc, nil, nil, false)
@@ -120,7 +127,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju")
+	version, err := cid.Decode(testStates[3].cid)
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -199,7 +206,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("bafybeiephwqi4sz4y4oq5t4ny5ihdtfyvr6g36igcb5cjyuza7trueq5be")
+	version, err := cid.Decode(testStates[1].cid)
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -242,7 +249,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("bafybeibdjsxta6grha3dn7jftm6uyl5lb4k3qc5bhitjw5isstnjnoe2ki")
+	version, err := cid.Decode(testStates[2].cid)
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -285,7 +292,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	key := core.NewKey("bae-ed7f0bd5-3f5b-5e93-9310-4b2e71ac460d")
-	version, err := cid.Decode("bafybeifj2lcpngff6mqyqipenacfzpwi3ira4m6lkqttpyhheezfrz5jju")
+	version, err := cid.Decode(testStates[3].cid)
 	assert.NoError(t, err)
 
 	span := fetcher.NewVersionedSpan(key, version)
@@ -337,6 +344,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	// loop over updates so we can seek to them
 	// skip first (create)
 	for _, update := range testStates[1:] {
+		fmt.Println("Seeking to:", update.cid)
 		c, err := cid.Decode(update.cid)
 		assert.NoError(t, err)
 
@@ -345,6 +353,8 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 
 		_, doc, err := vf.FetchNextMap(ctx)
 		assert.NoError(t, err)
+
+		fmt.Println("fetched doc:", doc)
 
 		var state map[string]interface{}
 		err = json.Unmarshal(update.payload, &state)
@@ -460,6 +470,7 @@ func createDocUpdates(col *db.Collection) error {
 				return err
 			}
 		}
+		fmt.Printf("Update #%v cid %v\n", i+1, doc.Head())
 	}
 
 	return err
