@@ -32,8 +32,6 @@ type BadgerIterator struct {
 	closedEarly    bool
 	iteratorLock   sync.RWMutex
 	reversedOrder  bool
-
-	prefix string
 }
 
 func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
@@ -86,8 +84,6 @@ func (iterator *BadgerIterator) next() {
 func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
 	formattedStartPrefix := asFormattedString(startPrefix)
 	formattedEndPrefix := asFormattedString(endPrefix)
-
-	iterator.prefix = formattedStartPrefix
 
 	iterator.resultsBuilder = dsq.NewResultBuilder(iterator.query)
 

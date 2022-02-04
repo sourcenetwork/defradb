@@ -383,8 +383,6 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 		} else {
 			slct.QueryType = ScanQuery
 		}
-
-		// @todo: parse groupby
 	}
 
 	// if theres no field selections, just return

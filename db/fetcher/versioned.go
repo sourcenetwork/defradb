@@ -107,21 +107,6 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(col, &col.Indexes[0], fields, reverse)
-	// df.index = index
-	// df.fields = fields
-	// df.reverse = reverse
-	// df.initialized = true
-	// df.doc = new(document.EncodedDocument)
-	// if !col.Schema.IsEmpty() {
-	// 	df.hasSchema = true
-	// 	df.doc.Schema = &col.Schema
-
-	// 	df.schemaFields = make(map[uint32]base.FieldDescription)
-	// 	for _, field := range col.Schema.Fields {
-	// 		df.schemaFields[uint32(field.ID)] = field
-	// 	}
-	// }
-	// return nil
 }
 
 // Start serializes the correct state accoriding to the Key and CID
