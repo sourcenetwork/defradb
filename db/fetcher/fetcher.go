@@ -78,7 +78,18 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.initialized = true
 	df.doc = new(document.EncodedDocument)
 	df.doc.Schema = &col.Schema
+
+	if df.kvResultsIter != nil {
+		if err := df.kvResultsIter.Close(); err != nil {
+			return err
+		}
+	}
 	df.kvResultsIter = nil
+	if df.kvIter != nil {
+		if err := df.kvIter.Close(); err != nil {
+			return err
+		}
+	}
 	df.kvIter = nil
 
 	df.schemaFields = make(map[uint32]base.FieldDescription)

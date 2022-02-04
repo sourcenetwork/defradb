@@ -458,7 +458,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
 		// @todo pair up on the error handling / logging properly.
-		fmt.Println("sub-type initalization error with re-initalizing : %w", err)
 		return doc
 	}
 
@@ -469,7 +468,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// @todo pair up on the error handling / logging properly.
 	if err != nil {
-		fmt.Println("Internal primary value error : %w", err)
 		return doc
 	}
 
@@ -610,10 +608,10 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 }
 
 func (n *typeJoinMany) Close() error {
-	err := n.root.Close()
-	if err != nil {
+	if err := n.root.Close(); err != nil {
 		return err
 	}
+
 	return n.subType.Close()
 }
 
