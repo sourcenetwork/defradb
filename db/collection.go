@@ -639,7 +639,7 @@ func (c *Collection) commitImplicitTxn(ctx context.Context, txn *Txn) error {
 }
 
 func (c *Collection) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
-	return c.GetIndexDocKey(key, indexID)
+	return c.getIndexDocKey(key, indexID)
 }
 
 func (c *Collection) getIndexDocKey(key ds.Key, indexID uint32) ds.Key {

@@ -54,7 +54,7 @@ func MakeSchemaSystemKey(name string) core.Key {
 // MakeIndexPrefixKeyRaw is the same as MakeIndexPrefixKey but it takes as inputs
 // the raw datastore keys, instead of the collection and index objects respectively.
 func MakeIndexPrefixKeyRaw(collectionID ds.Key, indexID ds.Key) core.Key {
-	return core.Key{core.NewKey(DATA).
+	return core.Key{Key: core.NewKey(DATA).
 		Child(collectionID).
 		Child(indexID)}
 }

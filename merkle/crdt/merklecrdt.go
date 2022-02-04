@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -56,18 +55,6 @@ var (
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
-
-	// reference to schema
-	// @todo: Abstract schema definitions to CORE
-	// @body: Currently schema definitions are stored in db/base/descriptions
-	// which is suppose to be reserved for implementation specific data.
-	// However we need to have some reference of schema here in the MerkleCRDT
-	// system, which is a protocol design, and shouldn't rely on implementation
-	// specific utilities.
-	// So we need to abstract schema work into core or something else to seperate
-	// schema from implementation, so that we can reference it here in the protocol
-	// sections freely without violating our design isolation.
-	schema base.SchemaDescription
 }
 
 func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta, id string) error {

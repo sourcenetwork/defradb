@@ -90,8 +90,8 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col    *base.CollectionDescription
-	index  *base.IndexDescription
+	col *base.CollectionDescription
+	// @todo index  *base.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 

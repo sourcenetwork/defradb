@@ -19,10 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-const (
-	indexJoinBatchSize = 100
-)
-
 /*
 
 type User {

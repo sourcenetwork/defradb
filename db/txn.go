@@ -115,7 +115,7 @@ func (db *DB) newTxn(ctx context.Context, readonly bool) (*Txn, error) {
 	// txn.headstore = ds.NewLogDatastore(ktds.Wrap(shimStore, db.hsKeyTransform), fmt.Sprintf("%s:headstore", txnid))
 	// batchstore := ds.NewLogDatastore(ktds.Wrap(shimStore, db.dagKeyTransform), fmt.Sprintf("%s:dagstore", txnid))
 
-	shimStore := store.ShimTxnStore{txn.IterableTxn}
+	shimStore := store.ShimTxnStore{Txn: txn.IterableTxn}
 	txn.systemstore = ktds.Wrap(shimStore, db.ssKeyTransform)
 	txn.datastore = ktds.Wrap(shimStore, db.dsKeyTransform)
 	txn.headstore = ktds.Wrap(shimStore, db.hsKeyTransform)

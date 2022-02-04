@@ -23,21 +23,13 @@ type versionedScanNode struct {
 	key     core.Key
 	version cid.Cid
 
-	desc  base.CollectionDescription
-	index *base.IndexDescription
+	desc base.CollectionDescription
 
 	fields []*base.FieldDescription
 	doc    map[string]interface{}
 	docKey []byte
 
-	// map between fieldID and index in fields
-	fieldIdxMap map[base.FieldID]int
-
-	spans            core.Spans
-	isSecondaryIndex bool
-	reverse          bool
-
-	// rowIndex int64
+	reverse bool
 
 	// filter data
 	filter *parser.Filter
@@ -53,18 +45,6 @@ func (n *versionedScanNode) Init() error {
 		return err
 	}
 	return n.initScan()
-}
-
-func (n *versionedScanNode) initCollection(desc base.CollectionDescription) error {
-	n.desc = desc
-	n.index = &desc.Indexes[0]
-	return nil
-}
-
-func (n *versionedScanNode) initVersion(key core.Key, c cid.Cid) error {
-	n.key = key
-	n.version = c
-	return nil
 }
 
 // Start starts the internal logic of the scanner
