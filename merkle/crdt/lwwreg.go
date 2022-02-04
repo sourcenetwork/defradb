@@ -12,7 +12,6 @@ package crdt
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"

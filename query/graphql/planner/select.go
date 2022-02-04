@@ -163,7 +163,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 	if parsed.CollectionName == "" {
 		parsed.CollectionName = parsed.Name
 	}
-	sourcePlan, err := n.p.getSource(parsed.CollectionName)
+	sourcePlan, err := n.p.getSource(parsed.CollectionName, parsed.QueryType == parser.VersionedScanQuery)
 	if err != nil {
 		return nil, err
 	}

@@ -34,9 +34,3 @@ var (
 		byte(3): COMPOSITE,
 	}
 )
-
-// reserved names
-const (
-	HEAD         = "_head"
-	COMPOSITE_ID = "C"
-)

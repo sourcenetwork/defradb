@@ -382,7 +382,7 @@ func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype 
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", nil, ctype, key)
 		if err != nil {
 			return err
 		}
