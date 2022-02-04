@@ -220,8 +220,5 @@ replace (
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc
 
 	// dev branch for ipfslite until merged
-	// github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220116215235-9025f621a707
-	github.com/hsanjuan/ipfs-lite => ../ipfs-lite
-
-	github.com/ipfs/go-blockservice => ../go-blockservice
+	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f
 )
