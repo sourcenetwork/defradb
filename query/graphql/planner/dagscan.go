@@ -74,7 +74,6 @@ func (h *headsetScanNode) initScan() error {
 		h.spans = append(h.spans, core.NewSpan(h.key, h.key.PrefixEnd()))
 	}
 
-	// fmt.Println("startin fetcher with spans:", h.spans[0].Start())
 	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans)
 	if err != nil {
 		return err
@@ -108,7 +107,9 @@ func (h *headsetScanNode) Values() map[string]interface{} {
 	}
 }
 
-func (h *headsetScanNode) Close() error { return nil }
+func (h *headsetScanNode) Close() error {
+	return h.fetcher.Close()
+}
 
 func (h *headsetScanNode) Source() planNode { return nil }
 

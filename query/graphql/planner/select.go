@@ -230,9 +230,9 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			// - commitScan
 			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
-					Name:   f.Name,
-					Alias:  f.Alias,
-					Type:   parser.LatestCommits,
+					Name:  f.Name,
+					Alias: f.Alias,
+					// Type:   parser.LatestCommits,
 					Fields: f.Fields,
 				}
 				// handle _version sub selection query differently
