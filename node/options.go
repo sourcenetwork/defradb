@@ -11,7 +11,7 @@ import (
 
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
-	RepoPath          string
+	DataPath          string
 	ConnManager       cconnmgr.ConnManager
 	EnablePubSub      bool
 	GRPCServerOptions []grpc.ServerOption
@@ -20,9 +20,9 @@ type Options struct {
 
 type NodeOpt func(*Options) error
 
-func RepoPath(path string) NodeOpt {
+func DataPath(path string) NodeOpt {
 	return func(opt *Options) error {
-		opt.RepoPath = path
+		opt.DataPath = path
 		return nil
 	}
 }
