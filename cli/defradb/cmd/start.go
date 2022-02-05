@@ -78,7 +78,7 @@ var startCmd = &cobra.Command{
 		n, err := node.NewNode(
 			ctx,
 			db,
-			node.RepoPath(config.Database.Badger.Path),
+			node.DataPath(config.Database.Badger.Path),
 			node.ListenAddrStrings(config.Net.P2PAddress),
 			node.WithPubSub(true))
 		if err != nil {

@@ -72,7 +72,7 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 	}
 	fin.Add(peerstore)
 
-	hostKey, err := getHostKey(options.RepoPath)
+	hostKey, err := getHostKey(options.DataPath)
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
