@@ -26,11 +26,10 @@ type server struct {
 	opts []grpc.DialOption
 	db   client.DB
 
-	topics map[string]*rpc.Topic
+	topics    map[string]*rpc.Topic
+	topicLock sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
-
-	sync.Mutex
 }
 
 // newServer creates a new network server that handle/directs RPC requests to the
@@ -101,12 +100,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	log.Debugf("Recieved a pushLog request from %s", pid)
 
-	// txn, err := s.db.NewTxnI(ctx, false)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Failed to create txn: %w", err)
-	// }
-	// defer txn.Discard(ctx)
-
 	// parse request object
 	cid := req.Body.Cid.Cid
 	schemaID := string(req.Body.SchemaID)
@@ -153,8 +146,8 @@ func (s *server) addPubSubTopic(dockey string) error {
 		return nil
 	}
 
-	s.Lock()
-	defer s.Unlock()
+	s.topicLock.Lock()
+	defer s.topicLock.Unlock()
 	if _, ok := s.topics[dockey]; ok {
 		return nil
 	}
@@ -176,11 +169,26 @@ func (s *server) removePubSubTopic(dockey string) error {
 		return nil
 	}
 
-	s.Lock()
-	defer s.Unlock()
+	s.topicLock.Lock()
+	defer s.topicLock.Unlock()
 	if t, ok := s.topics[dockey]; ok {
 		delete(s.topics, dockey)
 		return t.Close()
+	}
+	return nil
+}
+
+func (s *server) removeAllPubsubTopics() error {
+	if s.peer.ps == nil {
+		return nil
+	}
+	s.topicLock.Lock()
+	defer s.topicLock.Unlock()
+	for id, t := range s.topics {
+		delete(s.topics, id)
+		if err := t.Close(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -191,9 +199,9 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
-	s.Lock()
+	s.topicLock.Lock()
 	t, ok := s.topics[dockey]
-	s.Unlock()
+	s.topicLock.Unlock()
 	if !ok {
 		return fmt.Errorf("No pubsub topic found for doc %s", dockey)
 	}
@@ -248,7 +256,6 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 
 	keyCh := make(chan client.DocKeysResult)
 
-	// ctx, cancel := context.WithCancel(s.peer.ctx)
 	var wg sync.WaitGroup
 	wg.Add(1) // add an init blocker on close routine
 	go func() {
@@ -309,6 +316,8 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	return pid, nil
 }
 
+// KEEPING AS REFERENCE
+//
 // logFromProto returns a thread log from a proto log.
 // func logFromProto(l *pb.Log) thread.LogInfo {
 // 	return thread.LogInfo{

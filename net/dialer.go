@@ -24,13 +24,14 @@ var (
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
 func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.topicLock.Lock()
+	defer s.topicLock.Unlock()
 	conn, ok := s.conns[peerID]
 	if ok {
 		if conn.GetState() == connectivity.Shutdown {
 			if err := conn.Close(); err != nil && status.Code(err) != codes.Canceled {
 				// log.Errorf("error closing connection: %v", err)
+				return nil, err
 			}
 		} else {
 			return pb.NewServiceClient(conn), nil

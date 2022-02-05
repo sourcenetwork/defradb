@@ -11,6 +11,7 @@ package crdt
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
@@ -84,7 +85,11 @@ func (base *baseMerkleCRDT) ID() string {
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, error) {
-	dockey := ds.NewKey(base.crdt.ID()).List()[2] // @todo: DANGEROUS!!!!
+	parts := ds.NewKey(base.crdt.ID()).List()
+	if len(parts) < 3 {
+		return cid.Undef, fmt.Errorf("Invalid dockey for MerkleCRDT")
+	}
+	dockey := parts[2]
 	log.Debug("Processing CRDT state for ", dockey)
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {

@@ -104,8 +104,6 @@ func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) 
 	}
 }
 
-// func (p *Peer) processComposite
-
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
 	col client.Collection,
@@ -132,7 +130,6 @@ func (p *Peer) handleChildBlocks(
 				}
 			}
 		}
-		// @todo: handle no match case ^^
 
 		// heads of subfields are still subfields, not composites
 		if fieldName == "" && field != "" {
@@ -160,8 +157,7 @@ func (p *Peer) handleChildBlocks(
 		select {
 		case p.sendJobs <- job:
 		case <-p.ctx.Done():
-			session.Done()
-			return
+			return // jump out
 		}
 
 	}

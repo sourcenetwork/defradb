@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
@@ -103,19 +104,31 @@ func (p *Peer) Start() error {
 		}
 	}()
 
-	// sendJobWorker + NumWorkers
-	p.wg.Add(1 + numWorkers)
-	go func() {
-		defer p.wg.Done()
-		p.sendJobWorker()
-	}()
+	// start sendJobWorker + NumWorkers goroutines
+	go p.sendJobWorker()
 	for i := 0; i < numWorkers; i++ {
-		go func() {
-			defer p.wg.Done()
-			p.dagWorker()
-		}()
+		go p.dagWorker()
 	}
 
+	return nil
+}
+
+func (p *Peer) Close() error {
+	// close topics
+	if err := p.server.removeAllPubsubTopics(); err != nil {
+		log.Errorf("Error closing pubsub topics: %w", err)
+	}
+
+	// stop grpc server
+	for _, c := range p.server.conns {
+		if err := c.Close(); err != nil {
+			log.Errorf("Failed closing server RPC connections: %w", err)
+		}
+	}
+	stopGRPCServer(p.rpc)
+
+	p.bus.Discard()
+	p.cancel()
 	return nil
 }
 
@@ -190,4 +203,20 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 	}
 
 	return p.server.publishLog(p.ctx, dockey.String(), req)
+}
+
+func stopGRPCServer(server *grpc.Server) {
+	stopped := make(chan struct{})
+	go func() {
+		server.GracefulStop()
+		close(stopped)
+	}()
+	timer := time.NewTimer(10 * time.Second)
+	select {
+	case <-timer.C:
+		server.Stop()
+		log.Warn("peer GRPC server was shutdown ungracefully")
+	case <-stopped:
+		timer.Stop()
+	}
 }

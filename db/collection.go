@@ -53,7 +53,7 @@ type Collection struct {
 	colID    uint32
 	colIDKey core.Key
 
-	SchemaID string
+	schemaID string
 
 	desc base.CollectionDescription
 }
@@ -174,7 +174,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	if err != nil {
 		return nil, err
 	}
-	col.SchemaID = cid.String()
+	col.schemaID = cid.String()
 	key = base.MakeCollectionSchemaSystemKey(cid.String())
 	err = db.systemstore.Put(ctx, key.ToDS(), []byte(desc.Name))
 	log.Debugf("Created collection %s with ID %s", col.Name(), col.SchemaID)
@@ -224,7 +224,7 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		desc:     desc,
 		colID:    desc.ID,
 		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
-		SchemaID: sid,
+		schemaID: sid,
 	}, nil
 }
 
@@ -394,8 +394,8 @@ func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
 	panic("not implemented")
 }
 
-func (c *Collection) SchemaCID() string {
-	return c.SchemaID
+func (c *Collection) SchemaID() string {
+	return c.schemaID
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
@@ -407,7 +407,7 @@ func (c *Collection) WithTxn(txn client.Txn) client.Collection {
 		desc:     c.desc,
 		colID:    c.colID,
 		colIDKey: c.colIDKey,
-		SchemaID: c.SchemaID,
+		schemaID: c.schemaID,
 	}
 }
 
@@ -492,7 +492,7 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 	// register new document with peer node
 	// @todo: encapsulate this stuff within a DB logger/watcher interface
 	if c.db.peer != nil {
-		go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.SchemaID)
+		go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.schemaID)
 	}
 	return nil
 }
@@ -731,7 +731,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID, c.db.broadcaster, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.schemaID, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}
