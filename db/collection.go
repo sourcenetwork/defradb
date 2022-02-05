@@ -755,7 +755,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaCID(), c.db.broadcaster, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID(), c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}

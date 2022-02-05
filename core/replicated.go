@@ -26,10 +26,10 @@ var (
 // to deterministically merge other replicated data so as to
 // converge on the same state
 type ReplicatedData interface {
+	ID() string
 	Merge(ctx context.Context, other Delta, id string) error
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 	Value(ctx context.Context) ([]byte, error)
-	ID() string
 }
 
 // PersistedReplicatedData persists a ReplicatedData to an underlying datastore

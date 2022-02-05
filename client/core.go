@@ -62,6 +62,7 @@ type Collection interface {
 	Name() string
 	Schema() base.SchemaDescription
 	ID() uint32
+	SchemaID() string
 
 	Indexes() []base.IndexDescription
 	PrimaryIndex() base.IndexDescription
@@ -90,7 +91,6 @@ type Collection interface {
 	WithTxn(Txn) Collection
 
 	GetPrimaryIndexDocKey(ds.Key) ds.Key
-	SchemaCID() string
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 }
 

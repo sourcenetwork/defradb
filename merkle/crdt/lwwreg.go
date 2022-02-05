@@ -36,7 +36,7 @@ var (
 func init() {
 	err := DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	if err != nil {
-		log.Error(err)
+		panic(err)
 	}
 }
 

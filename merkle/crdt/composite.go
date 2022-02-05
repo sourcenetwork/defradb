@@ -34,7 +34,7 @@ var (
 func init() {
 	err := DefaultFactory.Register(core.COMPOSITE, &compFactoryFn)
 	if err != nil {
-		log.Error(err)
+		panic(err)
 	}
 }
 

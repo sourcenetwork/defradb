@@ -86,7 +86,7 @@ func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocK
 		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(fieldID)
 	}
 	log.Debugf("Got CRDT Type: %v for %s", ctype, field)
-	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaCID(), nil, ctype, key)
+	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {

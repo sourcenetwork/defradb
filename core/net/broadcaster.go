@@ -10,16 +10,4 @@ type Broadcaster interface {
 
 	// SendWithTimeout broadcasts a message, blocks upto timeout duration
 	SendWithTimeout(v interface{}, d time.Duration) error
-
-	// // Obtain the next payload received from the network.
-	// Listen() Listener
 }
-
-// // Listener allows clients to subscribe to a Broadcaster channel
-// type Listener interface {
-// 	// Discard closes the listener channel
-// 	Discard()
-
-// 	// Channel returns the underlying channel
-// 	Channel() <-chan interface{}
-// }
