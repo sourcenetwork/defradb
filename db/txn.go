@@ -64,12 +64,12 @@ type Txn struct {
 }
 
 // NewTxnI returns a new transaction, but using the /client interface
-func (db *DB) NewTxnI(ctx context.Context, readonly bool) (client.Txn, error) {
-	return db.NewTxn(ctx, readonly)
-}
+// func (db *DB) NewTxnI(ctx context.Context, readonly bool) (client.Txn, error) {
+// 	return db.NewTxn(ctx, readonly)
+// }
 
 // Txn creates a new transaction which can be set to readonly mode
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (*Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	return db.newTxn(ctx, readonly)
 }
 

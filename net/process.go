@@ -22,7 +22,6 @@ import (
 // of CRDT blocks
 func (p *Peer) processLog(
 	ctx context.Context,
-	txn core.MultiStore,
 	col client.Collection,
 	dockey key.DocKey,
 	c cid.Cid,
@@ -39,6 +38,12 @@ func (p *Peer) processLog(
 	// 	log.Debugf("Already have block %s locally, skipping.", c)
 	// 	return nil, nil
 	// }
+
+	txn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
 
 	crdt, err := initCRDTForType(txn, col, dockey, field)
 	if err != nil {
@@ -58,7 +63,11 @@ func (p *Peer) processLog(
 	}
 
 	ng := p.createNodeGetter(crdt, getter)
-	return crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
+	cid, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
+	if err != nil {
+		return nil, err
+	}
+	return cid, txn.Commit(ctx)
 }
 
 func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
@@ -98,7 +107,6 @@ func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) 
 // func (p *Peer) processComposite
 
 func (p *Peer) handleChildBlocks(
-	txn core.MultiStore,
 	session *sync.WaitGroup,
 	col client.Collection,
 	dockey key.DocKey,
@@ -141,7 +149,6 @@ func (p *Peer) handleChildBlocks(
 		log.Debugf("Submitting new job to dag queue - col: %s, key: %s, field: %s, cid: %s", col.Name(), dockey, fieldName, cNode.Cid())
 		session.Add(1)
 		job := &dagJob{
-			txn:        txn,
 			collection: col,
 			dockey:     dockey,
 			fieldName:  fieldName,

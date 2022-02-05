@@ -37,12 +37,12 @@ type DB interface {
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	SetBroadcaster(bs corenet.Broadcaster)
 	Root() ds.Batching
-	Rootstore() core.DSReaderWriter
-	Headstore() core.DSReaderWriter
-	Datastore() core.DSReaderWriter
+	// Rootstore() core.DSReaderWriter
+	// Headstore() core.DSReaderWriter
+	// Datastore() core.DSReaderWriter
 	DAGstore() core.DAGStore
 
-	NewTxnI(context.Context, bool) (Txn, error)
+	NewTxn(context.Context, bool) (Txn, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
 }
 

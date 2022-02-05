@@ -165,7 +165,6 @@ func (p *Peer) dagWorker() {
 
 		children, err := p.processLog(
 			p.ctx,
-			job.txn,
 			job.collection,
 			job.dockey,
 			job.node.Cid(),
@@ -180,7 +179,7 @@ func (p *Peer) dagWorker() {
 			continue
 		}
 		go func(j *dagJob) {
-			p.handleChildBlocks(j.txn, j.session, j.collection, j.dockey, job.fieldName, job.node, children, j.nodeGetter)
+			p.handleChildBlocks(j.session, j.collection, j.dockey, job.fieldName, job.node, children, j.nodeGetter)
 			j.session.Done()
 		}(job)
 	}

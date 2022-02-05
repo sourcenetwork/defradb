@@ -127,7 +127,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, fmt.Errorf("Failed to decode block to ipld.Node: %w", err)
 	}
-	cids, err := s.peer.processLog(ctx, s.db, col, docKey, cid, "", nd, getter)
+	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {
 		log.Errorf("Failed to process push log node %s at %s: %s", docKey, cid, err)
 	}
@@ -135,7 +135,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// handleChildren
 	if len(cids) > 0 { // we have child nodes to get
 		var session sync.WaitGroup
-		s.peer.handleChildBlocks(s.db, &session, col, docKey, "", nd, cids, getter)
+		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
 		session.Wait()
 	}
 
