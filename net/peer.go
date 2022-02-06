@@ -23,8 +23,6 @@ import (
 )
 
 var (
-	busBufferSize = 100
-
 	log = logging.Logger("net")
 
 	numWorkers = 5
@@ -58,7 +56,16 @@ type Peer struct {
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
-func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, ds DAGSyncer, serverOptions []grpc.ServerOption, dialOptions []grpc.DialOption) (*Peer, error) {
+func NewPeer(
+	ctx context.Context,
+	db client.DB,
+	h host.Host,
+	ps *pubsub.PubSub,
+	bs *broadcast.Broadcaster,
+	ds DAGSyncer,
+	serverOptions []grpc.ServerOption,
+	dialOptions []grpc.DialOption,
+) (*Peer, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	if db == nil {
 		return nil, fmt.Errorf("Database object can't be empty")
@@ -68,6 +75,7 @@ func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, 
 		ps:             ps,
 		db:             db,
 		ds:             ds,
+		bus:            bs,
 		rpc:            grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
@@ -84,6 +92,8 @@ func NewPeer(ctx context.Context, db client.DB, h host.Host, ps *pubsub.PubSub, 
 	return p, nil
 }
 
+// Start all the internal workers/goroutines/loops that manage the P2P
+// state
 func (p *Peer) Start() error {
 	listener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
@@ -92,8 +102,6 @@ func (p *Peer) Start() error {
 
 	if p.ps != nil {
 		log.Info("Starting internal broadcaster for pubsub network")
-		p.bus = broadcast.NewBroadcaster(busBufferSize)
-		p.server.db.SetBroadcaster(p.bus)
 		go p.handleBroadcastLoop()
 	}
 
@@ -147,28 +155,20 @@ func (p *Peer) handleBroadcastLoop() {
 		// filter for only messages intended for the pubsub network
 		switch msg := v.(type) {
 		case core.Log:
-			dockey, err := key.NewFromString(msg.DocKey)
+
+			// check log priority, 1 is new doc log
+			// 2 is update log
+			var err error
+			if msg.Priority == 1 {
+				err = p.handleDocCreateLog(msg)
+			} else if msg.Priority > 1 {
+				err = p.handleDocUpdateLog(msg)
+			} else {
+				log.Warnf("Skipping log %s with invalid priority of 0", msg.Cid)
+			}
+
 			if err != nil {
-				log.Error("Failed to get DocKeyfrom broadcast message:", err)
-				continue
-			}
-			log.Debugf("Preparing pubsub pushLog request from broadcast for %s at %s using %s", dockey, msg.Cid, msg.SchemaID)
-			body := &pb.PushLogRequest_Body{
-				DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-				Cid:      &pb.ProtoCid{Cid: msg.Cid},
-				SchemaID: []byte(msg.SchemaID),
-				Log: &pb.Document_Log{
-					Block: msg.Block.RawData(),
-				},
-			}
-			req := &pb.PushLogRequest{
-				Body: body,
-			}
-
-			// @todo: push to each peer
-
-			if err := p.server.publishLog(p.ctx, msg.DocKey, req); err != nil {
-				log.Errorf("Error publishing log %s for %s: %s", msg.Cid, msg.DocKey, err)
+				log.Errorf("Error while handling broadcast log: %s", err)
 			}
 		}
 	}
@@ -203,6 +203,41 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 	}
 
 	return p.server.publishLog(p.ctx, dockey.String(), req)
+}
+
+func (p *Peer) handleDocCreateLog(lg core.Log) error {
+	dockey, err := key.NewFromString(lg.DocKey)
+	if err != nil {
+		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
+	}
+
+	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.SchemaID)
+}
+
+func (p *Peer) handleDocUpdateLog(lg core.Log) error {
+	dockey, err := key.NewFromString(lg.DocKey)
+	if err != nil {
+		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
+	}
+	log.Debugf("Preparing pubsub pushLog request from broadcast for %s at %s using %s", dockey, lg.Cid, lg.SchemaID)
+	body := &pb.PushLogRequest_Body{
+		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
+		Cid:      &pb.ProtoCid{Cid: lg.Cid},
+		SchemaID: []byte(lg.SchemaID),
+		Log: &pb.Document_Log{
+			Block: lg.Block.RawData(),
+		},
+	}
+	req := &pb.PushLogRequest{
+		Body: body,
+	}
+
+	// @todo: push to each peer (replicator)
+
+	if err := p.server.publishLog(p.ctx, lg.DocKey, req); err != nil {
+		return fmt.Errorf("Error publishing log %s for %s: %w", lg.Cid, lg.DocKey, err)
+	}
+	return nil
 }
 
 func stopGRPCServer(server *grpc.Server) {

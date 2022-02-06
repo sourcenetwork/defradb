@@ -20,7 +20,6 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 	"github.com/sourcenetwork/defradb/store"
@@ -30,7 +29,6 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	format "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -72,8 +70,6 @@ type DB struct {
 
 	crdtFactory *crdt.Factory
 
-	peer        *net.Peer
-	ds          format.DAGService
 	broadcaster corenet.Broadcaster
 
 	schema        *schema.SchemaManager
@@ -88,8 +84,17 @@ type DB struct {
 	options interface{}
 }
 
+// functional option type
+type Option func(*DB)
+
+func WithBroadcaster(bs corenet.Broadcaster) Option {
+	return func(db *DB) {
+		db.broadcaster = bs
+	}
+}
+
 // NewDB creates a new instance of the DB using the given options
-func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
+func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug("loading: internal datastores")
 	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
 	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
@@ -131,6 +136,14 @@ func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
 		schema:        sm,
 		queryExecutor: exec,
 		options:       options,
+	}
+
+	// apply options
+	for _, opt := range options {
+		if opt == nil {
+			continue
+		}
+		opt(db)
 	}
 
 	return db, err
@@ -204,16 +217,6 @@ func (db *DB) Initialize(ctx context.Context) error {
 
 	db.initialized = true
 	return nil
-}
-
-// SetBroadcaster sets the internal broadcaster
-func (db *DB) SetBroadcaster(bs corenet.Broadcaster) {
-	log.Debug("Setting internal broadcaster")
-	db.broadcaster = bs
-}
-
-func (db *DB) SetPeer(p *net.Peer) {
-	db.peer = p
 }
 
 func (db *DB) printDebugDB(ctx context.Context) {

@@ -17,6 +17,7 @@ import (
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
+	"github.com/textileio/go-threads/broadcast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
@@ -50,10 +51,13 @@ type Node struct {
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into Libp2p
-func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) {
+func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts ...NodeOpt) (*Node, error) {
 	// merge all the options args together
 	var options Options
 	for _, opt := range append(opts, DefaultOpts()) {
+		if opt == nil {
+			continue
+		}
 		if err := opt(&options); err != nil {
 			return nil, err
 		}
@@ -121,6 +125,7 @@ func NewNode(ctx context.Context, db client.DB, opts ...NodeOpt) (*Node, error) 
 		db,
 		h,
 		ps,
+		bs,
 		lite,
 		options.GRPCServerOptions,
 		options.GRPCDialOptions,

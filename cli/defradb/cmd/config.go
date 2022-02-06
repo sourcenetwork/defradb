@@ -37,7 +37,8 @@ type MemoryOptions struct {
 }
 
 type NetOptions struct {
-	P2PAddress string
+	P2PAddress  string
+	P2PDisabled bool
 }
 
 var (

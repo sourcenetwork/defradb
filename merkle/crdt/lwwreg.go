@@ -26,9 +26,9 @@ import (
 )
 
 var (
-	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, bs corenet.Broadcaster) MerkleCRDTInitFn {
+	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, _ corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), bs, ds.NewKey(""), key)
+			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
 		}
 	})
 )
@@ -51,7 +51,7 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleLWWRegister {
+func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, dockey ds.Key) *MerkleLWWRegister {
 	// New Register
 	reg := corecrdt.NewLWWRegister(datastore, ns, dockey.String() /* stuff like namespace and ID */)
 
@@ -95,7 +95,8 @@ func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Ci
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	return mlwwreg.Publish(ctx, delta, false)
+	c, _, err := mlwwreg.Publish(ctx, delta, false)
+	return c, err
 }
 
 // Value will retrieve the current value from the db

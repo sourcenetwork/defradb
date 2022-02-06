@@ -34,12 +34,10 @@ var srvDumpCmd = &cobra.Command{
 		signal.Notify(signalCh, os.Interrupt)
 
 		var rootstore ds.Batching
-		var options interface{}
 		var err error
 		if config.Database.Store == "badger" {
 			log.Info("opening badger store: ", config.Database.Badger.Path)
 			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
-			options = config.Database.Badger
 		} else {
 			log.Error("Server side dump is only supported for the Badger datastore")
 			os.Exit(1)
@@ -49,7 +47,7 @@ var srvDumpCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		db, err := db.NewDB(rootstore, options)
+		db, err := db.NewDB(rootstore)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)

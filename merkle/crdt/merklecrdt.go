@@ -84,37 +84,46 @@ func (base *baseMerkleCRDT) ID() string {
 }
 
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, error) {
-	parts := ds.NewKey(base.crdt.ID()).List()
-	if len(parts) < 3 {
-		return cid.Undef, fmt.Errorf("Invalid dockey for MerkleCRDT")
-	}
-	dockey := parts[2]
-	log.Debug("Processing CRDT state for ", dockey)
+func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, ipld.Node, error) {
+	log.Debug("Processing CRDT state for ", base.crdt.ID())
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
-		return cid.Undef, err
+		return cid.Undef, nil, err
 	}
-	// and broadcast
-	if base.broadcaster != nil && broadcast && delta.GetPriority() > 1 {
-		netdelta, ok := delta.(core.NetDelta)
-		if !ok {
-			return c, nil
+	return c, nd, nil
+}
+
+func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {
+	if base.broadcaster == nil {
+		return nil // just skip if we dont have a broadcaster set
+	}
+
+	parts := ds.NewKey(base.crdt.ID()).List()
+	if len(parts) < 3 {
+		return fmt.Errorf("Invalid dockey for MerkleCRDT")
+	}
+	dockey := parts[2]
+
+	c := nd.Cid()
+	netdelta, ok := delta.(core.NetDelta)
+	if !ok {
+		return fmt.Errorf("Can't broadcast a delta payload that doesn't implement core.NetDelta")
+	}
+
+	log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c)
+	// we dont want to wait around for the broadcast
+	go func() {
+		lg := core.Log{
+			DocKey:   dockey,
+			Cid:      c,
+			SchemaID: netdelta.GetSchemaID(),
+			Block:    nd,
+			Priority: netdelta.GetPriority(),
 		}
-		log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c.String())
-		go func() {
-			log := core.Log{
-				DocKey:   dockey,
-				Cid:      c,
-				SchemaID: netdelta.GetSchemaID(),
-				Block:    nd,
-			}
-			base.broadcaster.Send(log)
-		}()
-	} else if base.broadcaster == nil {
-		log.Debug("Not broadcasting changes due to lack of Broadcaster")
-	} else {
-		log.Debug("Not broadcasting changes because disabled for this op")
-	}
-	return c, nil
+		if err := base.broadcaster.Send(lg); err != nil {
+			log.Errorf("Failed to broadcast MerkleCRDT update %s for %s: %w", c, dockey, err)
+		}
+	}()
+
+	return nil
 }

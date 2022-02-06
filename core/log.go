@@ -14,4 +14,5 @@ type Log struct {
 	Cid      cid.Cid
 	SchemaID string
 	Block    ipld.Node
+	Priority uint64
 }

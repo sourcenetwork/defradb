@@ -484,17 +484,8 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 		return err
 	}
 	// write data to DB via MerkleClock/CRDT
-	newCID, err := c.save(ctx, txn, doc)
-	if err != nil {
-		return err
-	}
-
-	// register new document with peer node
-	// @todo: encapsulate this stuff within a DB logger/watcher interface
-	if c.db.peer != nil {
-		go c.db.peer.RegisterNewDocument(ctx, dockey, newCID, c.schemaID)
-	}
-	return nil
+	_, err = c.save(ctx, txn, doc)
+	return err
 }
 
 // Update an existing document with the new values

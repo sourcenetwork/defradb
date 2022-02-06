@@ -151,14 +151,15 @@ func initConfig() {
 	err = viper.BindPFlag("database.store", startCmd.Flags().Lookup("store"))
 	cobra.CheckErr(err)
 
-	err = viper.Unmarshal(&config)
-	cobra.CheckErr(err)
-
 	err = viper.BindPFlag("database.badger.path", startCmd.Flags().Lookup("data"))
 	cobra.CheckErr(err)
 
 	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
 	cobra.CheckErr(err)
 
+	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("nop2p"))
+	cobra.CheckErr(err)
+
 	viper.Unmarshal(&config)
+	cobra.CheckErr(err)
 }

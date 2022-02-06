@@ -23,12 +23,15 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/spf13/cobra"
+	"github.com/textileio/go-threads/broadcast"
 )
 
 var (
 	p2pAddr  string
 	dataPath string
 	peers    string
+
+	busBufferSize = 100
 )
 
 // startCmd represents the start command
@@ -45,17 +48,15 @@ var startCmd = &cobra.Command{
 		signal.Notify(signalCh, os.Interrupt)
 
 		var rootstore ds.Batching
-		var options interface{}
+
 		var err error
 		if config.Database.Store == "badger" {
 			log.Info("opening badger store: ", config.Database.Badger.Path)
 			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
-			options = config.Database.Badger
 		} else if config.Database.Store == "memory" {
 			log.Info("building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
-			options = config.Database.Memory
 		}
 
 		if err != nil {
@@ -63,7 +64,16 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		db, err := db.NewDB(rootstore, options)
+		var options []db.Option
+
+		// check for p2p
+		var bs *broadcast.Broadcaster
+		if !config.Net.P2PDisabled {
+			bs := broadcast.NewBroadcaster(busBufferSize)
+			options = append(options, db.WithBroadcaster(bs))
+		}
+
+		db, err := db.NewDB(rootstore, options...)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
 			os.Exit(1)
@@ -75,39 +85,40 @@ var startCmd = &cobra.Command{
 		}
 
 		// init the p2p node
-		n, err := node.NewNode(
-			ctx,
-			db,
-			node.DataPath(config.Database.Badger.Path),
-			node.ListenAddrStrings(config.Net.P2PAddress),
-			node.WithPubSub(true))
-		if err != nil {
-			log.Error("Failed to start p2p node:", err)
-			db.Close()
-			os.Exit(1)
-		}
-
-		db.SetPeer(n.Peer)
-
-		// parse peers and bootstrap
-		if len(peers) != 0 {
-			log.Debug("Parsing boostrap peers: ", peers)
-			addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
+		if !config.Net.P2PDisabled {
+			n, err := node.NewNode(
+				ctx,
+				db,
+				bs,
+				node.DataPath(config.Database.Badger.Path),
+				node.ListenAddrStrings(config.Net.P2PAddress),
+				node.WithPubSub(true))
 			if err != nil {
-				log.Warn("Failed to parse boostrap peers: ", err)
+				log.Error("Failed to start p2p node:", err)
+				db.Close()
+				os.Exit(1)
 			}
-			log.Debug("Bootstraping with peers: ", addrs)
-			n.Boostrap(addrs)
-		}
 
-		// run the server listener in a seperate goroutine
-		serveErr := make(chan error)
-		go func() {
+			// parse peers and bootstrap
+			if len(peers) != 0 {
+				log.Debug("Parsing boostrap peers: ", peers)
+				addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
+				if err != nil {
+					log.Warn("Failed to parse boostrap peers: ", err)
+				}
+				log.Debug("Bootstraping with peers: ", addrs)
+				n.Boostrap(addrs)
+			}
+
 			if err := n.Start(); err != nil {
 				log.Error("Failed to start p2p listener:", err)
 				db.Close()
 				os.Exit(1)
 			}
+		}
+
+		// run the server listener in a seperate goroutine
+		go func() {
 			if err := db.Listen(config.Database.Address); err != nil {
 				log.Error("Failed to start API listener:", err)
 				db.Close()
@@ -120,10 +131,6 @@ var startCmd = &cobra.Command{
 			log.Info("Recieved interrupt; closing db")
 			db.Close()
 			os.Exit(0)
-		case <-serveErr:
-			log.Error("API Server failed: ", err)
-			db.Close()
-			os.Exit(1)
 		}
 
 	},
@@ -144,4 +151,5 @@ func init() {
 	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
 	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
+	startCmd.Flags().Bool("nop2p", false, "Turn off the peer-to-peer network synchroniation system")
 }
