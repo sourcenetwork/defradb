@@ -69,7 +69,7 @@ var startCmd = &cobra.Command{
 		// check for p2p
 		var bs *broadcast.Broadcaster
 		if !config.Net.P2PDisabled {
-			bs := broadcast.NewBroadcaster(busBufferSize)
+			bs = broadcast.NewBroadcaster(busBufferSize)
 			options = append(options, db.WithBroadcaster(bs))
 		}
 
