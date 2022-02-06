@@ -84,7 +84,7 @@ func (base *baseMerkleCRDT) ID() string {
 }
 
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta, broadcast bool) (cid.Cid, ipld.Node, error) {
+func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
 	log.Debug("Processing CRDT state for ", base.crdt.ID())
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {

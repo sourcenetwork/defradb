@@ -55,7 +55,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	c, _, err := bCRDT.Publish(ctx, delta, false)
+	c, _, err := bCRDT.Publish(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
