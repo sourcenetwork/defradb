@@ -29,6 +29,14 @@ func (p *Peer) processLog(
 	nd ipld.Node,
 	getter format.NodeGetter) ([]cid.Cid, error) {
 	log.Debugf("running processLog")
+
+	txn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	// KEEPING FOR REFERENCE FOR NOW
 	// check if we already have this block
 	// exists, err := txn.DAGstore().Has(ctx, c)
 	// if err != nil {
@@ -38,12 +46,6 @@ func (p *Peer) processLog(
 	// 	log.Debugf("Already have block %s locally, skipping.", c)
 	// 	return nil, nil
 	// }
-
-	txn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
 
 	crdt, err := initCRDTForType(txn, col, dockey, field)
 	if err != nil {

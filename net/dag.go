@@ -96,7 +96,7 @@ func (p *Peer) dagWorker() {
 			continue
 		}
 		go func(j *dagJob) {
-			p.handleChildBlocks(j.session, j.collection, j.dockey, job.fieldName, job.node, children, j.nodeGetter)
+			p.handleChildBlocks(j.session, j.collection, j.dockey, j.fieldName, j.node, children, j.nodeGetter)
 			j.session.Done()
 		}(job)
 	}
