@@ -151,5 +151,5 @@ func init() {
 	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
 	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
-	startCmd.Flags().Bool("nop2p", false, "Turn off the peer-to-peer network synchroniation system")
+	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchroniation system")
 }
