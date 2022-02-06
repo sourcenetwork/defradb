@@ -90,7 +90,7 @@ func NewBadgerMemoryDB() (databaseInfo, error) {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore, struct{}{})
+	db, err := db.NewDB(rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -104,7 +104,7 @@ func NewBadgerMemoryDB() (databaseInfo, error) {
 
 func NewMapDB() (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
-	db, err := db.NewDB(rootstore, struct{}{})
+	db, err := db.NewDB(rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -125,7 +125,7 @@ func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore, struct{}{})
+	db, err := db.NewDB(rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}

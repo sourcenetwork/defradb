@@ -82,7 +82,7 @@ var (
 
 func newMemoryDB() (*db.DB, error) {
 	rootstore := ds.NewMapDatastore()
-	return db.NewDB(rootstore, struct{}{})
+	return db.NewDB(rootstore)
 }
 
 func TestVersionedFetcherInit(t *testing.T) {
