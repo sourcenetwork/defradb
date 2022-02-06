@@ -164,6 +164,7 @@ func (s *server) addPubSubTopic(dockey string) error {
 }
 
 // removePubSubTopic unsubscribes to a DocKey topic
+// nolint
 func (s *server) removePubSubTopic(dockey string) error {
 	if s.peer.ps == nil {
 		return nil
@@ -284,14 +285,6 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 	wg.Done() // cleanup the init blocker on close routine
 
 	return keyCh, nil
-}
-
-// @todo handle the case if the dest is closed before we're done (select)
-func pipeDocKeyResults(dest chan client.DocKeysResult, src <-chan client.DocKeysResult) {
-	for res := range src {
-		dest <- res
-	}
-	close(dest)
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.

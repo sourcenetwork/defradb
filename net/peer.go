@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -49,8 +48,6 @@ type Peer struct {
 
 	queuedChildren *cidSafeSet
 
-	wg sync.WaitGroup
-
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -66,10 +63,10 @@ func NewPeer(
 	serverOptions []grpc.ServerOption,
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {
-	ctx, cancel := context.WithCancel(ctx)
 	if db == nil {
 		return nil, fmt.Errorf("Database object can't be empty")
 	}
+	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
 		host:           h,
 		ps:             ps,

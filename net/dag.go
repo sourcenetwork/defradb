@@ -9,7 +9,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
@@ -41,7 +40,6 @@ type dagJob struct {
 	nodeGetter ipld.NodeGetter // a node getter to use
 	node       ipld.Node       // the current ipld Node
 
-	txn        core.MultiStore   // txn our job is running within
 	collection client.Collection // collection our document belongs to
 	dockey     key.DocKey        // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to

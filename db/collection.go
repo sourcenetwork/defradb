@@ -257,7 +257,11 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
 	}
-	defer q.Close()
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.Errorf("Failed to close collection query: %w", err)
+		}
+	}()
 
 	cols := make([]client.Collection, 0)
 	for res := range q.Next() {
@@ -291,8 +295,12 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 
 	resCh := make(chan client.DocKeysResult)
 	go func() {
-		defer q.Close()
-		defer close(resCh)
+		defer func() {
+			if err := q.Close(); err != nil {
+				log.Errorf("Failed to close AllDocKeys query: %w", err)
+			}
+			close(resCh)
+		}()
 		for res := range q.Next() {
 			// check for Done on context first
 			select {

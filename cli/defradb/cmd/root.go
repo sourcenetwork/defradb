@@ -92,9 +92,13 @@ func initLogger() {
 		for _, l := range lvls[1:] {
 			lvl := strings.Split(l, "=")
 			if len(lvl) != 2 {
-				panic(fmt.Errorf("Invalid format for log level: %s", l))
+				fmt.Printf("Invalid format for log level: %s\n", l)
+				os.Exit(1)
 			}
-			logging.SetLogLevel(lvl[0], lvl[1])
+			if err := logging.SetLogLevel(lvl[0], lvl[1]); err != nil {
+				fmt.Printf("Failed to set log level: %s\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 }
@@ -160,6 +164,6 @@ func initConfig() {
 	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	cobra.CheckErr(err)
 
-	viper.Unmarshal(&config)
+	err = viper.Unmarshal(&config)
 	cobra.CheckErr(err)
 }

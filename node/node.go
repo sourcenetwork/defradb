@@ -46,8 +46,7 @@ type Node struct {
 	pubsub   *pubsub.PubSub
 	litepeer *ipfslite.Peer
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx context.Context
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into Libp2p
@@ -63,7 +62,6 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		}
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
 	fin := finalizer.NewFinalizer()
 
 	// create our peerstore from the underlying defra rootstore
@@ -141,7 +139,6 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		DB:       db,
 		litepeer: lite,
 		ctx:      ctx,
-		cancel:   cancel,
 	}, nil
 }
 

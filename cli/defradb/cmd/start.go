@@ -85,8 +85,9 @@ var startCmd = &cobra.Command{
 		}
 
 		// init the p2p node
+		var n *node.Node
 		if !config.Net.P2PDisabled {
-			n, err := node.NewNode(
+			n, err = node.NewNode(
 				ctx,
 				db,
 				bs,
@@ -95,6 +96,7 @@ var startCmd = &cobra.Command{
 				node.WithPubSub(true))
 			if err != nil {
 				log.Error("Failed to start p2p node:", err)
+				n.Close() //nolint
 				db.Close()
 				os.Exit(1)
 			}
@@ -112,6 +114,7 @@ var startCmd = &cobra.Command{
 
 			if err := n.Start(); err != nil {
 				log.Error("Failed to start p2p listener:", err)
+				n.Close() //nolint
 				db.Close()
 				os.Exit(1)
 			}
@@ -121,18 +124,22 @@ var startCmd = &cobra.Command{
 		go func() {
 			if err := db.Listen(config.Database.Address); err != nil {
 				log.Error("Failed to start API listener:", err)
+				if n != nil {
+					n.Close() //nolint
+				}
 				db.Close()
 				os.Exit(1)
 			}
 		}()
 
-		select {
-		case <-signalCh:
-			log.Info("Recieved interrupt; closing db")
-			db.Close()
-			os.Exit(0)
+		// wait for shutdown signal
+		<-signalCh
+		log.Info("Recieved interrupt; closing db")
+		if n != nil {
+			n.Close() //nolint
 		}
-
+		db.Close()
+		os.Exit(0)
 	},
 }
 
