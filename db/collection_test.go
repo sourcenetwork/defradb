@@ -105,6 +105,22 @@ func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 	assert.Errorf(t, err, "Collection already exists")
 }
 
+func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema has no fields")
+}
+
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB()
