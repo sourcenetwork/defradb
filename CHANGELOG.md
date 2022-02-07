@@ -2,10 +2,13 @@
 <a name="v0.2.0"></a>
 ## [v0.2.0](https://github.com/sourcenetwork/defradb/compare/v0.1.0...v0.2.0)
 
-> 2022-01-31
+> 2022-02-07
 
 ### Features
 
+* Added Peer-to-Peer networking data synchronization ([#177](https://github.com/sourcenetwork/defradb/issues/177))
+* TimeTraveling (History Traversing) query engine and doc fetcher ([#59](https://github.com/sourcenetwork/defradb/issues/59))
+* Add Document Deletion with a Key ([#150](https://github.com/sourcenetwork/defradb/issues/150))
 * Add support for sum aggregate ([#121](https://github.com/sourcenetwork/defradb/issues/121))
 * Add support for lwwr scalar arrays (full replace on update) ([#115](https://github.com/sourcenetwork/defradb/issues/115))
 * Add count aggregate support ([#102](https://github.com/sourcenetwork/defradb/issues/102))
@@ -16,6 +19,7 @@
 
 ### Bug fixes
 
+* Only add join if aggregating child object collection ([#188](https://github.com/sourcenetwork/defradb/issues/188))
 * Handle errors generated during input object thunks ([#123](https://github.com/sourcenetwork/defradb/issues/123))
 * Remove new types from in-memory cache on generate error ([#122](https://github.com/sourcenetwork/defradb/issues/122))
 * Support relationships where both fields have the same name ([#109](https://github.com/sourcenetwork/defradb/issues/109))
@@ -33,6 +37,7 @@
 
 ### Testing
 
+* Add transaction integration tests ([#175](https://github.com/sourcenetwork/defradb/issues/175))
 * Allow running of tests using badger-file as well as IM options ([#128](https://github.com/sourcenetwork/defradb/issues/128))
 * Add test datastore selection support ([#88](https://github.com/sourcenetwork/defradb/issues/88))
 
@@ -45,6 +50,10 @@
 * Remove all `errors.Wrap` and update them with `fmt.Errorf`. ([#41](https://github.com/sourcenetwork/defradb/issues/41))
 * Restructure integration tests to provide better visibility ([#15](https://github.com/sourcenetwork/defradb/pull/15))
 * Remove schemaless code branches ([#23](https://github.com/sourcenetwork/defradb/pull/23))
+
+### Performance
+* Add badger multi scan support ([#85](https://github.com/sourcenetwork/defradb/pull/85))
+* Add support for range spans ([#86](https://github.com/sourcenetwork/defradb/pull/86))
 
 ### Continous integration
 
