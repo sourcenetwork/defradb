@@ -137,6 +137,54 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	assert.EqualError(t, err, "Collection requires name to not be empty")
 }
 
+func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+}
+
+func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+}
+
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB()
