@@ -284,8 +284,18 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 // @todo: We probably need a lock on the collection for this kind of op since
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+	txn, err := c.getTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	return c.getAllDocKeysChan(ctx, txn)
+}
+
+func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan client.DocKeysResult, error) {
 	prefix := c.getPrimaryIndexDocKey(ds.NewKey("")) // empty path for all keys prefix
-	q, err := c.db.datastore.Query(ctx, query.Query{
+	q, err := txn.datastore.Query(ctx, query.Query{
 		Prefix:   prefix.String(),
 		KeysOnly: true,
 	})

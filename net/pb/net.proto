@@ -50,6 +50,15 @@ message PushLogReply {}
 
 message GetHeadLogReply {}
 
+message AddReplicatorRequest {
+    bytes collection = 1;
+    bytes addr = 2;
+}
+
+message AddReplicatorReply {
+    bytes peerID = 1;
+}
+
 // Service is the peer-to-peer network API for document sync
 service Service {
     // GetDocGraph from this peer.
@@ -62,4 +71,6 @@ service Service {
     rpc PushLog(PushLogRequest) returns (PushLogReply) {}
     // GetHeadLog from this peer
     rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
+    // AddReplicator for this peer
+    rpc AddReplicator(AddReplicatorRequest) returns (AddReplicatorReply) {}
 }

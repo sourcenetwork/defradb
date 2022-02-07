@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
@@ -29,4 +31,20 @@ func ParsePeers(addrs []string) ([]peer.AddrInfo, error) {
 		}
 	}
 	return peer.AddrInfosFromP2pAddrs(maddrs...)
+}
+
+func TCPAddrFromMultiAddr(maddr ma.Multiaddr) (string, error) {
+	var addr string
+	if maddr == nil {
+		return addr, fmt.Errorf("address can't be empty")
+	}
+	ip4, err := maddr.ValueForProtocol(ma.P_IP4)
+	if err != nil {
+		return addr, err
+	}
+	tcp, err := maddr.ValueForProtocol(ma.P_TCP)
+	if err != nil {
+		return addr, err
+	}
+	return fmt.Sprintf("%s:%s", ip4, tcp), nil
 }

@@ -8,9 +8,12 @@ import (
 	"github.com/gogo/protobuf/proto"
 	format "github.com/ipfs/go-ipld-format"
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
+	ma "github.com/multiformats/go-multiaddr"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	grpcpeer "google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 
 	"github.com/sourcenetwork/defradb/client"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -92,6 +95,27 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
+func (s *server) AddReplicator(ctx context.Context, req *pb.AddReplicatorRequest) (*pb.AddReplicatorReply, error) {
+	log.Debug("Recieved AddReplicator requeust")
+
+	collection := string(req.Collection)
+	if len(collection) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Collection can't be empty")
+	}
+	addr, err := ma.NewMultiaddrBytes(req.Addr)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	pid, err := s.peer.AddReplicator(ctx, collection, addr)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.AddReplicatorReply{
+		PeerID: marshalPeerID(pid),
+	}, nil
+}
+
 // PushLog recieves a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
@@ -102,6 +126,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	// parse request object
 	cid := req.Body.Cid.Cid
+
+	// make sure were not processing twice
+	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
+		return &pb.PushLogReply{}, nil
+	}
+
 	schemaID := string(req.Body.SchemaID)
 	docKey := req.Body.DocKey.DocKey
 	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
@@ -323,3 +353,8 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 // 		},
 // 	}
 // }
+
+func marshalPeerID(id libpeer.ID) []byte {
+	b, _ := id.Marshal() // This will never return an error
+	return b
+}

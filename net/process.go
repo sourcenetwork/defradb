@@ -65,11 +65,15 @@ func (p *Peer) processLog(
 	}
 
 	ng := p.createNodeGetter(crdt, getter)
-	cid, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
+	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
 	if err != nil {
 		return nil, err
 	}
-	return cid, txn.Commit(ctx)
+
+	// mark this obj as done
+	p.queuedChildren.Remove(c)
+
+	return cids, txn.Commit(ctx)
 }
 
 func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
@@ -123,6 +127,10 @@ func (p *Peer) handleChildBlocks(
 	defer cancel()
 
 	for _, c := range children {
+		if !p.queuedChildren.Visit(c) { // reserve for processing
+			continue
+		}
+
 		var fieldName string
 		// loop over our children to get the cooresponding field names from the DAG
 		for _, l := range nd.Links() {

@@ -111,6 +111,8 @@ func newCidSafeSet() *cidSafeSet {
 	}
 }
 
+// Visit checks if we can visit this node, or
+// if its already being visited
 func (s *cidSafeSet) Visit(c cid.Cid) bool {
 	var b bool
 	s.mux.Lock()
