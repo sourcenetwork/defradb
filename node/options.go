@@ -11,6 +11,7 @@ import (
 
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
+	TCPAddr           ma.Multiaddr
 	DataPath          string
 	ConnManager       cconnmgr.ConnManager
 	EnablePubSub      bool
@@ -34,8 +35,8 @@ func WithPubSub(enable bool) NodeOpt {
 	}
 }
 
-// ListenAddrStrings sets the address to listen on given as strings
-func ListenAddrStrings(addrs ...string) NodeOpt {
+// ListenP2PAddrStrings sets the address to listen on given as strings
+func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	return func(opt *Options) error {
 		for _, addrstr := range addrs {
 			a, err := ma.NewMultiaddr(addrstr)
@@ -44,6 +45,18 @@ func ListenAddrStrings(addrs ...string) NodeOpt {
 			}
 			opt.ListenAddrs = append(opt.ListenAddrs, a)
 		}
+		return nil
+	}
+}
+
+// ListenP2PAddrStrings sets the address to listen on given as strings
+func ListenTCPAddrStrings(addr string) NodeOpt {
+	return func(opt *Options) error {
+		a, err := ma.NewMultiaddr(addr)
+		if err != nil {
+			return err
+		}
+		opt.ListenAddrs = append(opt.ListenAddrs, a)
 		return nil
 	}
 }
@@ -60,11 +73,18 @@ func ListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
 func DefaultOpts() NodeOpt {
 	return func(opt *Options) error {
 		if opt.ListenAddrs == nil {
-			addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/0")
+			addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/9171")
 			if err != nil {
 				return err
 			}
 			opt.ListenAddrs = []ma.Multiaddr{addr}
+		}
+		if opt.TCPAddr == nil {
+			addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/9161")
+			if err != nil {
+				return err
+			}
+			opt.TCPAddr = addr
 		}
 		if opt.ConnManager == nil {
 			opt.ConnManager = connmgr.NewConnManager(100, 400, time.Second*20)

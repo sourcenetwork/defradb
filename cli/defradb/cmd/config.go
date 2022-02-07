@@ -39,6 +39,7 @@ type MemoryOptions struct {
 type NetOptions struct {
 	P2PAddress  string
 	P2PDisabled bool
+	TCPAddress  string
 }
 
 var (
@@ -52,6 +53,7 @@ var (
 		},
 		Net: NetOptions{
 			P2PAddress: "/ip4/0.0.0.0/tcp/9171",
+			TCPAddress: "/ip4/0.0.0.0/tcp/9161",
 		},
 	}
 )

@@ -60,7 +60,7 @@ type Peer struct {
 	queuedChildren *cidSafeSet
 
 	// replicators is a map from collectionName => peerId
-	replicators map[string]peer.ID
+	replicators map[string]map[peer.ID]struct{}
 	mu          sync.Mutex
 
 	ctx    context.Context
@@ -75,6 +75,7 @@ func NewPeer(
 	ps *pubsub.PubSub,
 	bs *broadcast.Broadcaster,
 	ds DAGSyncer,
+	tcpAddr ma.Multiaddr,
 	serverOptions []grpc.ServerOption,
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {
@@ -94,7 +95,7 @@ func NewPeer(
 		cancel:         cancel,
 		jobQueue:       make(chan *dagJob, numWorkers),
 		sendJobs:       make(chan *dagJob),
-		replicators:    make(map[string]peer.ID),
+		replicators:    make(map[string]map[peer.ID]struct{}),
 		queuedChildren: newCidSafeSet(),
 	}
 	var err error
@@ -138,6 +139,7 @@ func (p *Peer) Start() error {
 
 	// register the tcp gRPC server
 	go func() {
+		log.Infof("Start gRPC server listning on %s", addr)
 		pb.RegisterServiceServer(p.tcpRPC, p.server)
 		if err := p.tcpRPC.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			log.Fatal("Fatal tcp rpc serve error:", err)
@@ -267,8 +269,10 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	// make sure were not duplicating things
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if repID, exists := p.replicators[col.SchemaID()]; exists && repID == pid {
-		return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collection, pid)
+	if reps, exists := p.replicators[col.SchemaID()]; exists {
+		if _, exists := reps[pid]; exists {
+			return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collection, pid)
+		}
 	}
 
 	// add peer to peerstore
@@ -283,7 +287,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	p.host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
 
 	// add to replicators list
-	p.replicators[col.SchemaID()] = pid
+	p.replicators[col.SchemaID()][pid] = struct{}{}
 
 	// create read only txn and assign to col
 	txn, err := p.db.NewTxn(ctx, true)
@@ -351,6 +355,9 @@ func (p *Peer) handleDocCreateLog(lg core.Log) error {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
 
+	// push to each peer (replicator)
+	p.pushLogToReplicators(p.ctx, lg)
+
 	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.SchemaID)
 }
 
@@ -372,12 +379,27 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 		Body: body,
 	}
 
-	// @todo: push to each peer (replicator)
+	// push to each peer (replicator)
+	p.pushLogToReplicators(p.ctx, lg)
 
 	if err := p.server.publishLog(p.ctx, lg.DocKey, req); err != nil {
 		return fmt.Errorf("Error publishing log %s for %s: %w", lg.Cid, lg.DocKey, err)
 	}
 	return nil
+}
+
+func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
+	// push to each peer (replicator)
+	if reps, exists := p.replicators[lg.SchemaID]; exists {
+		for pid, _ := range reps {
+			go func(peerID peer.ID) {
+				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
+					log.Error("Failed pushing log %s of %s to replicator %s: %w",
+						lg.Cid, lg.DocKey, peerID, err)
+				}
+			}(pid)
+		}
+	}
 }
 
 func stopGRPCServer(server *grpc.Server) {

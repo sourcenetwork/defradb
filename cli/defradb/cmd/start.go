@@ -28,6 +28,7 @@ import (
 
 var (
 	p2pAddr  string
+	tcpAddr  string
 	dataPath string
 	peers    string
 
@@ -92,7 +93,8 @@ var startCmd = &cobra.Command{
 				db,
 				bs,
 				node.DataPath(config.Database.Badger.Path),
-				node.ListenAddrStrings(config.Net.P2PAddress),
+				node.ListenP2PAddrStrings(config.Net.P2PAddress),
+				node.ListenTCPAddrStrings(config.Net.TCPAddress),
 				node.WithPubSub(true))
 			if err != nil {
 				log.Error("Failed to start p2p node:", err)
@@ -157,6 +159,7 @@ func init() {
 	startCmd.Flags().String("store", "badger", "Specify the data store to use (supported: badger, memory)")
 	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
 	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
+	startCmd.Flags().StringVar(&tcpAddr, "tcpaddr", "/ip4/0.0.0.0/tcp/9161", "listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
 	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchroniation system")
 }

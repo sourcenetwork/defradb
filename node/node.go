@@ -125,6 +125,7 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		ps,
 		bs,
 		lite,
+		options.TCPAddr,
 		options.GRPCServerOptions,
 		options.GRPCDialOptions,
 	)

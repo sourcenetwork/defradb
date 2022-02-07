@@ -161,6 +161,9 @@ func initConfig() {
 	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
 	cobra.CheckErr(err)
 
+	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
+	cobra.CheckErr(err)
+
 	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	cobra.CheckErr(err)
 
