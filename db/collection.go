@@ -75,10 +75,6 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 		return nil, errors.New("Collection ID must be greater than 0")
 	}
 
-	if desc.Schema.IsEmpty() {
-		return nil, errors.New("Collection must have a schema")
-	}
-
 	if len(desc.Schema.Fields) == 0 {
 		return nil, errors.New("Collection schema has no fields")
 	}
