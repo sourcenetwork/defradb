@@ -359,11 +359,6 @@ func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan cl
 	return resCh, nil
 }
 
-// ValidDescription
-// func (c *Collection) ValidDescription() bool {
-// 	return false
-// }
-
 // Description returns the base.CollectionDescription
 func (c *Collection) Description() base.CollectionDescription {
 	return c.desc
