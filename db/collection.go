@@ -200,10 +200,6 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		return nil, err
 	}
 
-	if desc.Schema.IsEmpty() {
-		return nil, errors.New("Collection must have a schema")
-	}
-
 	buf, err = json.Marshal(struct {
 		Name   string
 		Schema base.SchemaDescription
@@ -220,6 +216,7 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 
 	sid := cid.String()
 	log.Debugf("Retrieved collection %s with ID %s", desc.Name, sid)
+
 	return &Collection{
 		db:       db,
 		desc:     desc,
