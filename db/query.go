@@ -47,6 +47,23 @@ func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
+func (db *DB) ExecTransactionalQuery(ctx context.Context, query string, txn client.Txn) *client.QueryResult {
+	res := &client.QueryResult{}
+	// check if its Introspection query
+	if strings.Contains(query, "IntrospectionQuery") {
+		return db.ExecIntrospection(query)
+	}
+
+	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
+	if err != nil {
+		res.Errors = []interface{}{err.Error()}
+		return res
+	}
+
+	res.Data = results
+	return res
+}
+
 func (db *DB) ExecIntrospection(query string) *client.QueryResult {
 	schema := db.schema.Schema()
 	// t := schema.Type("userFilterArg")
