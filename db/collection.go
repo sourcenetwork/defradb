@@ -755,11 +755,6 @@ func (c *Collection) saveValueToMerkleCRDT(
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
-	case core.OBJECT:
-		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
-		c.db.log.Debug("Sub objects not yet supported")
-		// Redundant break statement (S103 gosimple linter).
-		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID(), c.db.broadcaster, ctype, key)
