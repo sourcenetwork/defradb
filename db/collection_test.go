@@ -121,6 +121,22 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	assert.EqualError(t, err, "Collection schema has no fields")
 }
 
+func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection requires name to not be empty")
+}
+
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB()
