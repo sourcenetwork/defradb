@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionWithSchema(ctx context.Context, db *DB) (*Collection, error) {
+func newTestCollectionWithSchema(ctx context.Context, db *DB) (client.Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
@@ -50,7 +50,7 @@ func newTestCollectionWithSchema(ctx context.Context, db *DB) (*Collection, erro
 	}
 
 	col, err := db.CreateCollection(ctx, desc)
-	return col.(*Collection), err
+	return col, err
 }
 
 func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, error) {
@@ -91,6 +91,18 @@ func TestNewCollectionWithSchema(t *testing.T) {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
 		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
+}
+
+func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	_, err = newTestCollectionWithSchema(ctx, db)
+	assert.NoError(t, err)
+
+	_, err = newTestCollectionWithSchema(ctx, db)
+	assert.Errorf(t, err, "Collection already exists")
 }
 
 func TestGetCollection(t *testing.T) {
