@@ -8,7 +8,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 
-	pb "github.com/sourcenetwork/defradb/net/pb"
+	pb "github.com/sourcenetwork/defradb/net/api/pb"
 )
 
 type Client struct {
@@ -47,7 +47,7 @@ func (c *Client) AddReplicator(ctx context.Context, collection string, paddr ma.
 		Addr:       paddr.Bytes(),
 	})
 	if err != nil {
-		return pid, err
+		return pid, fmt.Errorf("AddReplicator request failed: %w", err)
 	}
 	return peer.IDFromBytes(resp.PeerID)
 }

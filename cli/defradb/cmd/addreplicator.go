@@ -14,6 +14,8 @@ import (
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
@@ -36,14 +38,15 @@ for the p2p data sync system.
 		collection := args[0]
 		peerAddr, err := ma.NewMultiaddr(args[1])
 		if err != nil {
-			log.Fatalf("Invalid peer address: %w", err)
+			log.Fatalf("Invalid peer address: %v", err)
 		}
 
 		log.Infof("Adding replicator %s for collection %s to %s", peerAddr, collection, rpcAddr)
 
-		client, err := netclient.NewClient(rpcAddr)
+		cred := insecure.NewCredentials()
+		client, err := netclient.NewClient(rpcAddr, grpc.WithTransportCredentials(cred))
 		if err != nil {
-			log.Fatalf("Couldn't create RPC client: %w", err)
+			log.Fatalf("Couldn't create RPC client: %v", err)
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
@@ -51,14 +54,14 @@ for the p2p data sync system.
 
 		pid, err := client.AddReplicator(ctx, collection, peerAddr)
 		if err != nil {
-			log.Fatal("Request failed: %w", err)
+			log.Fatalf("Request failed: %v", err)
 		}
 		log.Infof("Succesfully added replicator %s", pid)
 	},
 }
 
 func init() {
-	clientCmd.AddCommand(queryCmd)
+	rpcCmd.AddCommand(addReplicatorCmd)
 
 	// Here you will define your flags and configuration settings.
 

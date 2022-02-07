@@ -50,7 +50,9 @@ func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
 
 // getLibp2pDialer returns a WithContextDialer option for libp2p dialing.
 func (s *server) getLibp2pDialer() grpc.DialOption {
+	log.Debug("error1")
 	return grpc.WithContextDialer(func(ctx context.Context, peerIDStr string) (gonet.Conn, error) {
+		log.Debug("error1")
 		id, err := libpeer.Decode(peerIDStr)
 		if err != nil {
 			return nil, fmt.Errorf("grpc tried to dial non peerID: %w", err)

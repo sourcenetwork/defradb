@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
-	"github.com/sourcenetwork/defradb/net/utils"
 )
 
 var (
@@ -46,10 +44,10 @@ type Peer struct {
 	ps   *pubsub.PubSub
 	ds   DAGSyncer
 
-	server  *server
-	p2pRPC  *grpc.Server // rpc server over the p2p network
-	tcpRPC  *grpc.Server // rpc server for regular tcp clients
-	tcpAddr ma.Multiaddr
+	server *server
+	p2pRPC *grpc.Server // rpc server over the p2p network
+	// tcpRPC  *grpc.Server // rpc server for regular tcp clients
+	// tcpAddr ma.Multiaddr
 
 	bus *broadcast.Broadcaster
 
@@ -82,15 +80,17 @@ func NewPeer(
 	if db == nil {
 		return nil, fmt.Errorf("Database object can't be empty")
 	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
-		host:           h,
-		ps:             ps,
-		db:             db,
-		ds:             ds,
-		bus:            bs,
-		p2pRPC:         grpc.NewServer(serverOptions...),
-		tcpRPC:         grpc.NewServer(),
+		host:   h,
+		ps:     ps,
+		db:     db,
+		ds:     ds,
+		bus:    bs,
+		p2pRPC: grpc.NewServer(serverOptions...),
+		// tcpRPC:         grpc.NewServer(),
+		// tcpAddr:        tcpAddr,
 		ctx:            ctx,
 		cancel:         cancel,
 		jobQueue:       make(chan *dagJob, numWorkers),
@@ -115,14 +115,14 @@ func (p *Peer) Start() error {
 		return err
 	}
 
-	addr, err := utils.TCPAddrFromMultiAddr(p.tcpAddr)
-	if err != nil {
-		return fmt.Errorf("Failed to parse TCP address: %w", err)
-	}
-	tcplistener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
+	// addr, err := utils.TCPAddrFromMultiAddr(p.tcpAddr)
+	// if err != nil {
+	// 	return fmt.Errorf("Failed to parse TCP address: %w", err)
+	// }
+	// tcplistener, err := net.Listen("tcp", addr)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if p.ps != nil {
 		log.Info("Starting internal broadcaster for pubsub network")
@@ -138,13 +138,13 @@ func (p *Peer) Start() error {
 	}()
 
 	// register the tcp gRPC server
-	go func() {
-		log.Infof("Start gRPC server listning on %s", addr)
-		pb.RegisterServiceServer(p.tcpRPC, p.server)
-		if err := p.tcpRPC.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.Fatal("Fatal tcp rpc serve error:", err)
-		}
-	}()
+	// go func() {
+	// 	log.Infof("Starting gRPC server listning on %s", addr)
+	// 	pb.RegisterServiceServer(p.tcpRPC, p.server)
+	// 	if err := p.tcpRPC.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+	// 		log.Fatal("Fatal tcp rpc serve error:", err)
+	// 	}
+	// }()
 
 	// start sendJobWorker + NumWorkers goroutines
 	go p.sendJobWorker()
@@ -168,7 +168,7 @@ func (p *Peer) Close() error {
 		}
 	}
 	stopGRPCServer(p.p2pRPC)
-	stopGRPCServer(p.tcpRPC)
+	// stopGRPCServer(p.tcpRPC)
 
 	p.bus.Discard()
 	p.cancel()
@@ -273,6 +273,8 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 		if _, exists := reps[pid]; exists {
 			return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collection, pid)
 		}
+	} else {
+		p.replicators[col.SchemaID()] = make(map[peer.ID]struct{})
 	}
 
 	// add peer to peerstore
@@ -394,7 +396,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 		for pid, _ := range reps {
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
-					log.Error("Failed pushing log %s of %s to replicator %s: %w",
+					log.Errorf("Failed pushing log %s of %s to replicator %s: %w",
 						lg.Cid, lg.DocKey, peerID, err)
 				}
 			}(pid)

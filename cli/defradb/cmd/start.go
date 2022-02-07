@@ -11,14 +11,23 @@ package cmd
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	gonet "net"
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
+	ma "github.com/multiformats/go-multiaddr"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	netapi "github.com/sourcenetwork/defradb/net/api"
+	netpb "github.com/sourcenetwork/defradb/net/api/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
@@ -88,13 +97,13 @@ var startCmd = &cobra.Command{
 		// init the p2p node
 		var n *node.Node
 		if !config.Net.P2PDisabled {
+			log.Infof("tcp address: %v", config.Net.TCPAddress)
 			n, err = node.NewNode(
 				ctx,
 				db,
 				bs,
 				node.DataPath(config.Database.Badger.Path),
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
-				node.ListenTCPAddrStrings(config.Net.TCPAddress),
 				node.WithPubSub(true))
 			if err != nil {
 				log.Error("Failed to start p2p node:", err)
@@ -115,11 +124,38 @@ var startCmd = &cobra.Command{
 			}
 
 			if err := n.Start(); err != nil {
-				log.Error("Failed to start p2p listener:", err)
+				log.Error("Failed to start p2p listeners:", err)
 				n.Close() //nolint
 				db.Close()
 				os.Exit(1)
 			}
+
+			MtcpAddr, err := ma.NewMultiaddr(tcpAddr)
+			if err != nil {
+				panic(err)
+			}
+			addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
+			if err != nil {
+				panic(fmt.Errorf("Failed to parse TCP address: %w", err))
+			}
+
+			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
+				MaxConnectionIdle: 5 * time.Minute, // <--- This fixes it!
+			}))
+			tcplistener, err := gonet.Listen("tcp", addr)
+			if err != nil {
+				panic(err)
+			}
+
+			netService := netapi.NewService(n.Peer)
+
+			go func() {
+				log.Info("Started gRPC server, listening on %s", addr)
+				netpb.RegisterServiceServer(server, netService)
+				if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+					log.Fatalf("serve error: %v", err)
+				}
+			}()
 		}
 
 		// run the server listener in a seperate goroutine

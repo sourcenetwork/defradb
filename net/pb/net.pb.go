@@ -540,102 +540,6 @@ func (m *GetHeadLogReply) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GetHeadLogReply proto.InternalMessageInfo
 
-type AddReplicatorRequest struct {
-	Collection []byte `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	Addr       []byte `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-}
-
-func (m *AddReplicatorRequest) Reset()         { *m = AddReplicatorRequest{} }
-func (m *AddReplicatorRequest) String() string { return proto.CompactTextString(m) }
-func (*AddReplicatorRequest) ProtoMessage()    {}
-func (*AddReplicatorRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5b10ce944527a32, []int{11}
-}
-func (m *AddReplicatorRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *AddReplicatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_AddReplicatorRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *AddReplicatorRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddReplicatorRequest.Merge(m, src)
-}
-func (m *AddReplicatorRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *AddReplicatorRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddReplicatorRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AddReplicatorRequest proto.InternalMessageInfo
-
-func (m *AddReplicatorRequest) GetCollection() []byte {
-	if m != nil {
-		return m.Collection
-	}
-	return nil
-}
-
-func (m *AddReplicatorRequest) GetAddr() []byte {
-	if m != nil {
-		return m.Addr
-	}
-	return nil
-}
-
-type AddReplicatorReply struct {
-	PeerID []byte `protobuf:"bytes,1,opt,name=peerID,proto3" json:"peerID,omitempty"`
-}
-
-func (m *AddReplicatorReply) Reset()         { *m = AddReplicatorReply{} }
-func (m *AddReplicatorReply) String() string { return proto.CompactTextString(m) }
-func (*AddReplicatorReply) ProtoMessage()    {}
-func (*AddReplicatorReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5b10ce944527a32, []int{12}
-}
-func (m *AddReplicatorReply) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *AddReplicatorReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_AddReplicatorReply.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *AddReplicatorReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddReplicatorReply.Merge(m, src)
-}
-func (m *AddReplicatorReply) XXX_Size() int {
-	return m.Size()
-}
-func (m *AddReplicatorReply) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddReplicatorReply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AddReplicatorReply proto.InternalMessageInfo
-
-func (m *AddReplicatorReply) GetPeerID() []byte {
-	if m != nil {
-		return m.PeerID
-	}
-	return nil
-}
-
 func init() {
 	proto.RegisterType((*Document)(nil), "net.pb.Document")
 	proto.RegisterType((*Document_Log)(nil), "net.pb.Document.Log")
@@ -650,48 +554,41 @@ func init() {
 	proto.RegisterType((*GetHeadLogRequest)(nil), "net.pb.GetHeadLogRequest")
 	proto.RegisterType((*PushLogReply)(nil), "net.pb.PushLogReply")
 	proto.RegisterType((*GetHeadLogReply)(nil), "net.pb.GetHeadLogReply")
-	proto.RegisterType((*AddReplicatorRequest)(nil), "net.pb.AddReplicatorRequest")
-	proto.RegisterType((*AddReplicatorReply)(nil), "net.pb.AddReplicatorReply")
 }
 
 func init() { proto.RegisterFile("net.proto", fileDescriptor_a5b10ce944527a32) }
 
 var fileDescriptor_a5b10ce944527a32 = []byte{
-	// 537 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xd1, 0x6e, 0x12, 0x4d,
-	0x18, 0x65, 0x7f, 0xf8, 0x29, 0x7e, 0x40, 0xb1, 0x1f, 0xb4, 0x6e, 0xa7, 0x66, 0xdb, 0x70, 0xa1,
-	0x5e, 0xe8, 0x92, 0x60, 0x62, 0xe2, 0xa5, 0x88, 0xa1, 0xb5, 0xbd, 0x68, 0xd6, 0x27, 0xd8, 0x9d,
-	0x19, 0x97, 0x8d, 0x0b, 0x83, 0xcb, 0x60, 0xc2, 0x5b, 0x98, 0x78, 0xef, 0xf3, 0x78, 0xd9, 0x3b,
-	0x4d, 0x2f, 0x1a, 0x03, 0x2f, 0x62, 0x66, 0x86, 0x05, 0x96, 0xae, 0x89, 0x77, 0xf3, 0x7d, 0xe7,
-	0xcc, 0x61, 0xcf, 0x39, 0x13, 0xe0, 0xc1, 0x98, 0x4b, 0x77, 0x92, 0x08, 0x29, 0xb0, 0xac, 0x8f,
-	0x01, 0x79, 0x11, 0x46, 0x72, 0x38, 0x0b, 0x5c, 0x2a, 0x46, 0x9d, 0x50, 0x84, 0xa2, 0xa3, 0xe1,
-	0x60, 0xf6, 0x51, 0x4f, 0x7a, 0xd0, 0x27, 0x73, 0xad, 0x9d, 0x40, 0xa5, 0x2f, 0xe8, 0x6c, 0xc4,
-	0xc7, 0x12, 0x9f, 0x42, 0x99, 0x09, 0x7a, 0xc9, 0xe7, 0xb6, 0x75, 0x66, 0x3d, 0xab, 0xf5, 0x1a,
-	0xb7, 0x77, 0xa7, 0xd5, 0x6b, 0x45, 0xeb, 0xeb, 0xb5, 0xb7, 0x82, 0xf1, 0x0c, 0x4a, 0x43, 0xee,
-	0x33, 0xbb, 0xa4, 0x69, 0xb5, 0xdb, 0xbb, 0xd3, 0x8a, 0xa6, 0xbd, 0x8d, 0x98, 0xa7, 0x11, 0x72,
-	0x02, 0xc5, 0x2b, 0x11, 0x62, 0x0b, 0xfe, 0x0f, 0x62, 0x41, 0x3f, 0x19, 0x41, 0xcf, 0x0c, 0xed,
-	0x16, 0xe0, 0x80, 0xcb, 0xbe, 0xa0, 0x83, 0xc4, 0x9f, 0x0c, 0x3d, 0xfe, 0x79, 0xc6, 0xa7, 0xb2,
-	0x8d, 0xf0, 0x30, 0xb3, 0x9d, 0xc4, 0xf3, 0xf6, 0x21, 0x34, 0xaf, 0x67, 0xd3, 0xe1, 0x2e, 0xb5,
-	0x09, 0x07, 0xd9, 0xb5, 0xe2, 0x36, 0xa0, 0x3e, 0xe0, 0xf2, 0x4a, 0x84, 0x29, 0xab, 0x0e, 0xd5,
-	0x74, 0xa1, 0xf0, 0x9f, 0x16, 0xec, 0xab, 0x5b, 0x1b, 0x06, 0x76, 0xa0, 0x14, 0x08, 0x66, 0xec,
-	0x56, 0xbb, 0x27, 0xae, 0x89, 0xd0, 0xcd, 0xb2, 0xdc, 0x9e, 0x60, 0x73, 0x4f, 0x13, 0xc9, 0x37,
-	0x0b, 0x4a, 0x6a, 0xfc, 0xf7, 0xa8, 0x1c, 0x28, 0xd2, 0x88, 0xd9, 0xff, 0xe5, 0x24, 0xa5, 0x00,
-	0x24, 0x50, 0x99, 0xd2, 0x21, 0x1f, 0xf9, 0x17, 0x7d, 0xbb, 0xa8, 0x43, 0x5a, 0xcf, 0xf8, 0x04,
-	0x8a, 0xb1, 0x08, 0x75, 0xca, 0xd5, 0x6e, 0x2b, 0xfd, 0xba, 0xb4, 0x2e, 0x57, 0x7d, 0xa2, 0x22,
-	0xa8, 0x38, 0x06, 0x5c, 0x9e, 0x73, 0x9f, 0x6d, 0xb9, 0xdf, 0x87, 0xda, 0xda, 0x87, 0xb2, 0x7f,
-	0x00, 0x8d, 0x6d, 0x92, 0x5a, 0xbd, 0x87, 0xd6, 0x1b, 0xc6, 0xd4, 0x39, 0xa2, 0xbe, 0x14, 0x49,
-	0x1a, 0x8b, 0x03, 0x40, 0x45, 0x1c, 0x73, 0x2a, 0x23, 0x31, 0x5e, 0x55, 0xb7, 0xb5, 0x41, 0x84,
-	0x92, 0xcf, 0x58, 0x62, 0x4c, 0x79, 0xfa, 0xdc, 0x7e, 0x0e, 0xb8, 0xa3, 0x35, 0x89, 0xe7, 0x78,
-	0x04, 0xe5, 0x09, 0xe7, 0xc9, 0x45, 0x7f, 0xa5, 0xb2, 0x9a, 0xba, 0xdf, 0x8b, 0xb0, 0xf7, 0x81,
-	0x27, 0x5f, 0x22, 0xca, 0xf1, 0x9d, 0xae, 0x29, 0xed, 0x12, 0x49, 0xea, 0xf3, 0xfe, 0x13, 0x21,
-	0x76, 0x2e, 0xa6, 0xac, 0x14, 0xf0, 0xdc, 0xf8, 0x5d, 0xeb, 0x64, 0xda, 0xdc, 0x15, 0x3a, 0xce,
-	0x07, 0x8d, 0xd2, 0x2b, 0x28, 0x9b, 0x77, 0x83, 0x87, 0x5b, 0xbf, 0xb7, 0x89, 0x96, 0x34, 0x77,
-	0xd7, 0xe6, 0xde, 0x6b, 0xd8, 0x5b, 0x25, 0x8e, 0x47, 0xf9, 0x4f, 0x89, 0xb4, 0xee, 0xed, 0xcd,
-	0xd5, 0x1e, 0xc0, 0xa6, 0x1c, 0x3c, 0xde, 0xd2, 0xcf, 0xb6, 0x4a, 0x1e, 0xe5, 0x41, 0x46, 0xe3,
-	0x12, 0xea, 0x99, 0x06, 0xf0, 0x71, 0xca, 0xcd, 0x2b, 0x99, 0x90, 0xbf, 0xa0, 0x5a, 0xac, 0x67,
-	0xff, 0x58, 0x38, 0xd6, 0xcd, 0xc2, 0xb1, 0x7e, 0x2f, 0x1c, 0xeb, 0xeb, 0xd2, 0x29, 0xdc, 0x2c,
-	0x9d, 0xc2, 0xaf, 0xa5, 0x53, 0x08, 0xca, 0xfa, 0x7f, 0xe3, 0xe5, 0x9f, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x61, 0x1a, 0x76, 0xba, 0x7b, 0x04, 0x00, 0x00,
+	// 464 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x8d, 0x9b, 0x90, 0x86, 0x49, 0xda, 0xd0, 0x4d, 0x0a, 0xee, 0x56, 0x72, 0x2b, 0x1f, 0x80,
+	0x0b, 0x8e, 0x14, 0x24, 0x24, 0xae, 0xc6, 0xc8, 0x45, 0xf4, 0x50, 0x99, 0x2f, 0xb0, 0xd7, 0x8b,
+	0x6d, 0xe1, 0x74, 0x8d, 0xb3, 0x46, 0xf2, 0x5f, 0x20, 0xf1, 0x53, 0x1c, 0xcb, 0x09, 0xd4, 0x43,
+	0x85, 0x92, 0x1f, 0x41, 0xbb, 0x5b, 0x27, 0x76, 0xea, 0x03, 0x37, 0xcf, 0xbc, 0x37, 0x6f, 0xf6,
+	0xbd, 0x91, 0xe1, 0xf1, 0x35, 0xe5, 0x56, 0x96, 0x33, 0xce, 0x50, 0x5f, 0x7e, 0x06, 0xf8, 0x55,
+	0x94, 0xf0, 0xb8, 0x08, 0x2c, 0xc2, 0x16, 0xb3, 0x88, 0x45, 0x6c, 0x26, 0xe1, 0xa0, 0xf8, 0x2c,
+	0x2b, 0x59, 0xc8, 0x2f, 0x35, 0x66, 0xe6, 0x30, 0x70, 0x18, 0x29, 0x16, 0xf4, 0x9a, 0xa3, 0x17,
+	0xd0, 0x0f, 0x19, 0xf9, 0x48, 0x4b, 0x5d, 0x3b, 0xd7, 0x5e, 0x8e, 0xec, 0xf1, 0xed, 0xdd, 0xd9,
+	0xf0, 0x4a, 0xd0, 0x1c, 0xd9, 0xf6, 0xee, 0x61, 0x74, 0x0e, 0xbd, 0x98, 0xfa, 0xa1, 0xde, 0x93,
+	0xb4, 0xd1, 0xed, 0xdd, 0xd9, 0x40, 0xd2, 0xde, 0x25, 0xa1, 0x27, 0x11, 0x7c, 0x0a, 0xdd, 0x4b,
+	0x16, 0xa1, 0x29, 0x3c, 0x0a, 0x52, 0x46, 0xbe, 0x28, 0x41, 0x4f, 0x15, 0xe6, 0x14, 0x90, 0x4b,
+	0xb9, 0xc3, 0x88, 0x9b, 0xfb, 0x59, 0xec, 0xd1, 0xaf, 0x05, 0x5d, 0x72, 0x13, 0xc1, 0x93, 0x46,
+	0x37, 0x4b, 0x4b, 0xf3, 0x18, 0x26, 0x57, 0xc5, 0x32, 0xde, 0xa5, 0x4e, 0xe0, 0xa8, 0xd9, 0x16,
+	0xdc, 0x31, 0x1c, 0xb8, 0x94, 0x5f, 0xb2, 0xa8, 0x62, 0x1d, 0xc0, 0xb0, 0x6a, 0x08, 0xfc, 0xb7,
+	0x06, 0x87, 0x62, 0x6a, 0xcb, 0x40, 0x33, 0xe8, 0x05, 0x2c, 0x54, 0x76, 0x87, 0xf3, 0x53, 0x4b,
+	0x45, 0x68, 0x35, 0x59, 0x96, 0xcd, 0xc2, 0xd2, 0x93, 0x44, 0xfc, 0x43, 0x83, 0x9e, 0x28, 0xff,
+	0x3f, 0x2a, 0x03, 0xba, 0x24, 0x09, 0xf5, 0xbd, 0x96, 0xa4, 0x04, 0x80, 0x30, 0x0c, 0x96, 0x24,
+	0xa6, 0x0b, 0xff, 0x83, 0xa3, 0x77, 0x65, 0x48, 0x9b, 0x1a, 0x3d, 0x87, 0x6e, 0xca, 0x22, 0x99,
+	0xf2, 0x70, 0x3e, 0xad, 0x5e, 0x57, 0x9d, 0xcb, 0x12, 0x4f, 0x14, 0x04, 0x11, 0x87, 0x4b, 0xf9,
+	0x05, 0xf5, 0xc3, 0x9a, 0xfb, 0x43, 0x18, 0x6d, 0x7c, 0x08, 0xfb, 0x47, 0x30, 0xae, 0x93, 0xb2,
+	0xb4, 0x9c, 0xff, 0xda, 0x83, 0xfd, 0x4f, 0x34, 0xff, 0x96, 0x10, 0x8a, 0xde, 0xcb, 0xb0, 0xaa,
+	0x44, 0x11, 0xae, 0xb6, 0x3d, 0x3c, 0x14, 0xd6, 0x5b, 0x31, 0xb1, 0xa3, 0x83, 0x2e, 0xd4, 0xd6,
+	0x8d, 0x4e, 0x23, 0xd3, 0x5d, 0xa1, 0x93, 0x76, 0x50, 0x29, 0xbd, 0x81, 0xbe, 0xba, 0x1e, 0x3a,
+	0xae, 0xed, 0xdb, 0x1a, 0xc4, 0x93, 0xdd, 0xb6, 0x9a, 0x7b, 0x0b, 0xfb, 0xf7, 0xbe, 0xd1, 0xd3,
+	0xf6, 0x83, 0xe2, 0xe9, 0x83, 0xbe, 0x1a, 0xb5, 0x01, 0xb6, 0x11, 0xa1, 0x93, 0x9a, 0x7e, 0x33,
+	0x5b, 0xfc, 0xac, 0x0d, 0x92, 0x1a, 0xb6, 0xfe, 0x73, 0x65, 0x68, 0x37, 0x2b, 0x43, 0xfb, 0xbb,
+	0x32, 0xb4, 0xef, 0x6b, 0xa3, 0x73, 0xb3, 0x36, 0x3a, 0x7f, 0xd6, 0x46, 0x27, 0xe8, 0xcb, 0x1f,
+	0xee, 0xf5, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x34, 0x33, 0x6e, 0x34, 0xb4, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -716,8 +613,6 @@ type ServiceClient interface {
 	PushLog(ctx context.Context, in *PushLogRequest, opts ...grpc.CallOption) (*PushLogReply, error)
 	// GetHeadLog from this peer
 	GetHeadLog(ctx context.Context, in *GetHeadLogRequest, opts ...grpc.CallOption) (*GetHeadLogReply, error)
-	// AddReplicator for this peer
-	AddReplicator(ctx context.Context, in *AddReplicatorRequest, opts ...grpc.CallOption) (*AddReplicatorReply, error)
 }
 
 type serviceClient struct {
@@ -773,15 +668,6 @@ func (c *serviceClient) GetHeadLog(ctx context.Context, in *GetHeadLogRequest, o
 	return out, nil
 }
 
-func (c *serviceClient) AddReplicator(ctx context.Context, in *AddReplicatorRequest, opts ...grpc.CallOption) (*AddReplicatorReply, error) {
-	out := new(AddReplicatorReply)
-	err := c.cc.Invoke(ctx, "/net.pb.Service/AddReplicator", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ServiceServer is the server API for Service service.
 type ServiceServer interface {
 	// GetDocGraph from this peer.
@@ -794,8 +680,6 @@ type ServiceServer interface {
 	PushLog(context.Context, *PushLogRequest) (*PushLogReply, error)
 	// GetHeadLog from this peer
 	GetHeadLog(context.Context, *GetHeadLogRequest) (*GetHeadLogReply, error)
-	// AddReplicator for this peer
-	AddReplicator(context.Context, *AddReplicatorRequest) (*AddReplicatorReply, error)
 }
 
 // UnimplementedServiceServer can be embedded to have forward compatible implementations.
@@ -816,9 +700,6 @@ func (*UnimplementedServiceServer) PushLog(ctx context.Context, req *PushLogRequ
 }
 func (*UnimplementedServiceServer) GetHeadLog(ctx context.Context, req *GetHeadLogRequest) (*GetHeadLogReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHeadLog not implemented")
-}
-func (*UnimplementedServiceServer) AddReplicator(ctx context.Context, req *AddReplicatorRequest) (*AddReplicatorReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddReplicator not implemented")
 }
 
 func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
@@ -915,24 +796,6 @@ func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_AddReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddReplicatorRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ServiceServer).AddReplicator(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/net.pb.Service/AddReplicator",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).AddReplicator(ctx, req.(*AddReplicatorRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Service_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "net.pb.Service",
 	HandlerType: (*ServiceServer)(nil),
@@ -956,10 +819,6 @@ var _Service_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetHeadLog",
 			Handler:    _Service_GetHeadLog_Handler,
-		},
-		{
-			MethodName: "AddReplicator",
-			Handler:    _Service_AddReplicator_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1351,73 +1210,6 @@ func (m *GetHeadLogReply) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *AddReplicatorRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AddReplicatorRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AddReplicatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Addr) > 0 {
-		i -= len(m.Addr)
-		copy(dAtA[i:], m.Addr)
-		i = encodeVarintNet(dAtA, i, uint64(len(m.Addr)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Collection) > 0 {
-		i -= len(m.Collection)
-		copy(dAtA[i:], m.Collection)
-		i = encodeVarintNet(dAtA, i, uint64(len(m.Collection)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *AddReplicatorReply) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AddReplicatorReply) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AddReplicatorReply) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.PeerID) > 0 {
-		i -= len(m.PeerID)
-		copy(dAtA[i:], m.PeerID)
-		i = encodeVarintNet(dAtA, i, uint64(len(m.PeerID)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintNet(dAtA []byte, offset int, v uint64) int {
 	offset -= sovNet(v)
 	base := offset
@@ -1575,36 +1367,6 @@ func (m *GetHeadLogReply) Size() (n int) {
 	}
 	var l int
 	_ = l
-	return n
-}
-
-func (m *AddReplicatorRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Collection)
-	if l > 0 {
-		n += 1 + l + sovNet(uint64(l))
-	}
-	l = len(m.Addr)
-	if l > 0 {
-		n += 1 + l + sovNet(uint64(l))
-	}
-	return n
-}
-
-func (m *AddReplicatorReply) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.PeerID)
-	if l > 0 {
-		n += 1 + l + sovNet(uint64(l))
-	}
 	return n
 }
 
@@ -2559,214 +2321,6 @@ func (m *GetHeadLogReply) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: GetHeadLogReply: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipNet(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthNet
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthNet
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AddReplicatorRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowNet
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AddReplicatorRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddReplicatorRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Collection", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowNet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthNet
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthNet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Collection = append(m.Collection[:0], dAtA[iNdEx:postIndex]...)
-			if m.Collection == nil {
-				m.Collection = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowNet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthNet
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthNet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Addr = append(m.Addr[:0], dAtA[iNdEx:postIndex]...)
-			if m.Addr == nil {
-				m.Addr = []byte{}
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipNet(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthNet
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthNet
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AddReplicatorReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowNet
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AddReplicatorReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddReplicatorReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PeerID", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowNet
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthNet
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthNet
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PeerID = append(m.PeerID[:0], dAtA[iNdEx:postIndex]...)
-			if m.PeerID == nil {
-				m.PeerID = []byte{}
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipNet(dAtA[iNdEx:])

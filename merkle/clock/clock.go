@@ -143,7 +143,6 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 		if err != nil {
 			return nil, fmt.Errorf("error adding head (when reached the bottom) %s : %w", root, err)
 		}
-		return nil, nil
 	}
 
 	children := []cid.Cid{}
