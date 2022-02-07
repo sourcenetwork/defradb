@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
@@ -69,6 +70,8 @@ type DB struct {
 
 	crdtFactory *crdt.Factory
 
+	broadcaster corenet.Broadcaster
+
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
 
@@ -81,8 +84,17 @@ type DB struct {
 	options interface{}
 }
 
+// functional option type
+type Option func(*DB)
+
+func WithBroadcaster(bs corenet.Broadcaster) Option {
+	return func(db *DB) {
+		db.broadcaster = bs
+	}
+}
+
 // NewDB creates a new instance of the DB using the given options
-func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
+func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug("loading: internal datastores")
 	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
 	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
@@ -126,12 +138,45 @@ func NewDB(rootstore ds.Batching, options interface{}) (*DB, error) {
 		options:       options,
 	}
 
+	// apply options
+	for _, opt := range options {
+		if opt == nil {
+			continue
+		}
+		opt(db)
+	}
+
 	return db, err
 }
 
 // Start runs all the initial sub-routines and initialization steps.
 func (db *DB) Start(ctx context.Context) error {
 	return db.Initialize(ctx)
+}
+
+// Root
+func (db *DB) Root() ds.Batching {
+	return db.rootstore
+}
+
+// Rootstore gets the internal rootstore handle
+func (db *DB) Rootstore() core.DSReaderWriter {
+	return db.rootstore
+}
+
+// Headstore returns the interal index store for DAG Heads
+func (db *DB) Headstore() core.DSReaderWriter {
+	return db.headstore
+}
+
+// Datastore returns the interal index store for DAG Heads
+func (db *DB) Datastore() core.DSReaderWriter {
+	return db.datastore
+}
+
+// DAGstore returns the internal DAG store which contains IPLD blocks
+func (db *DB) DAGstore() core.DAGStore {
+	return db.dagstore
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data

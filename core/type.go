@@ -23,6 +23,7 @@ const (
 
 const (
 	COMPOSITE_NAMESPACE = "C"
+	HEAD                = "_head"
 )
 
 var (
@@ -32,10 +33,4 @@ var (
 		byte(2): OBJECT,
 		byte(3): COMPOSITE,
 	}
-)
-
-// reserved names
-const (
-	HEAD         = "_head"
-	COMPOSITE_ID = "C"
 )

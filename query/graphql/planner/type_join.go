@@ -10,7 +10,6 @@
 package planner
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -230,7 +229,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, errors.New("Unknown field on sub selection")
+		// return nil, fmt.Errorf("Unknown field on sub selection")
 		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
 	}
 
@@ -240,7 +239,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, errors.New("Failed sub selection, unknow relation type")
+		return nil, fmt.Errorf("Failed sub selection, unknow relation type")
 	}
 	if err != nil {
 		return nil, err
@@ -331,18 +330,18 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
 
 	// get relation
 	rm := p.db.SchemaManager().Relations
 	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
 	if rel == nil {
-		return nil, errors.New("Relation does not exists")
+		return nil, fmt.Errorf("Relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
 	if !ok {
-		return nil, errors.New("Relation is missing referenced field")
+		return nil, fmt.Errorf("Relation is missing referenced field")
 	}
 
 	subType.CollectionName = subTypeFieldDesc.Schema
@@ -511,7 +510,7 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
 	subType.CollectionName = subTypeFieldDesc.Schema
 
@@ -519,11 +518,11 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	rm := p.db.SchemaManager().Relations
 	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
 	if rel == nil {
-		return nil, errors.New("Relation does not exists")
+		return nil, fmt.Errorf("Relation does not exists")
 	}
 	subTypeLookupFieldName, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
 	if !ok {
-		return nil, errors.New("Relation is missing referenced field")
+		return nil, fmt.Errorf("Relation is missing referenced field")
 	}
 
 	selectPlan, err := p.SubSelect(subType)

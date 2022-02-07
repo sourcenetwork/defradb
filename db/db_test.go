@@ -34,7 +34,7 @@ func newMemoryDB() (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(rootstore, struct{}{})
+	return NewDB(rootstore)
 }
 
 func TestNewDB(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNewDB(t *testing.T) {
 		return
 	}
 
-	_, err = NewDB(rootstore, struct{}{})
+	_, err = NewDB(rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
 	rootstore := ds.NewMapDatastore()
 
-	db, err := NewDB(rootstore, struct{}{})
+	db, err := NewDB(rootstore)
 	if err != nil {
 		t.Error(err)
 	}

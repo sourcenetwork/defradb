@@ -11,6 +11,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 
@@ -63,7 +64,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.defradb.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.defradb/config.yaml)")
 	rootCmd.PersistentFlags().StringVar(&dbURL, "url", "http://localhost:9181", "url of the target database")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -74,11 +75,32 @@ func init() {
 }
 
 func initLogger() {
-	lvl, err := logging.LevelFromString(logLvl)
-	if err != nil {
-		panic(err)
+	lvls := strings.Split(logLvl, ",")
+	if len(lvls) == 1 {
+		lvl, err := logging.LevelFromString(logLvl)
+		if err != nil {
+			panic(err)
+		}
+		logging.SetAllLoggers(lvl)
+	} else {
+		lvl, err := logging.LevelFromString(lvls[0])
+		if err != nil {
+			panic(err)
+		}
+		logging.SetAllLoggers(lvl)
+
+		for _, l := range lvls[1:] {
+			lvl := strings.Split(l, "=")
+			if len(lvl) != 2 {
+				fmt.Printf("Invalid format for log level: %s\n", l)
+				os.Exit(1)
+			}
+			if err := logging.SetLogLevel(lvl[0], lvl[1]); err != nil {
+				fmt.Printf("Failed to set log level: %s\n", err)
+				os.Exit(1)
+			}
+		}
 	}
-	logging.SetAllLoggers(lvl)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -106,8 +128,11 @@ func initConfig() {
 		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 		log.Debug("Loading config file:", viper.ConfigFileUsed())
 	} else {
-		if err := os.Mkdir(home+"/.defradb", os.ModePerm); err != nil {
-			cobra.CheckErr(err)
+		dir := home + "/.defradb"
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if err := os.Mkdir(dir, os.ModePerm); err != nil {
+				cobra.CheckErr(err)
+			}
 		}
 		// if err != nil {
 		// 	cobra.CheckErr(err)
@@ -128,6 +153,18 @@ func initConfig() {
 	cobra.CheckErr(err)
 
 	err = viper.BindPFlag("database.store", startCmd.Flags().Lookup("store"))
+	cobra.CheckErr(err)
+
+	err = viper.BindPFlag("database.badger.path", startCmd.Flags().Lookup("data"))
+	cobra.CheckErr(err)
+
+	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
+	cobra.CheckErr(err)
+
+	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
+	cobra.CheckErr(err)
+
+	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	cobra.CheckErr(err)
 
 	err = viper.Unmarshal(&config)

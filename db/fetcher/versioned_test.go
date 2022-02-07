@@ -34,7 +34,7 @@ var (
 				"verified": true
 			}`),
 			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
-			cid: "bafybeicxbqhopabjap7f6vvjx3yhv3rpwmhg6i424c4wzifvjm2tva4pam",
+			cid: "bafybeig4fwvzsiwb3jk3okr4goibmgjt2m2to3duyfy5ejldpxtgq5hdo4",
 		},
 		{
 			payload: []byte(`{
@@ -48,7 +48,7 @@ var (
 				"points": 99.9,
 			},
 			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeihzfah32hooz7enj77wzav2exnzkrwloy3ktucc4kqjo6xjgubtvm",
+			cid: "bafybeihlfvqiwtdpzzxjlsvkxv5ignjgdqer5gwe2pgo5wr5qj4k4dqfjq",
 		},
 		{
 			payload: []byte(`{
@@ -62,7 +62,7 @@ var (
 				"age":      22,
 			},
 			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeicvdptyfvhjznlwnp6mki46evmavrv7hhdyv4aegk6gcmtfvxizri",
+			cid: "bafybeigwekvyc3lmrtqyxrxh5dgd3n5wl5ljhbwvl2eqmlznzuxhiryo7q",
 		},
 		{
 			payload: []byte(`{
@@ -75,14 +75,14 @@ var (
 				"points": 129.99,
 			},
 			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeiefvibtjye66scc2nrnhvjpl7hhf4hvqrk2gyswnxvdwivrww42ly",
+			cid: "bafybeibaollpiaq7x2etrsrhbxxwpqyddeaf6njqblo7rrg5on4zv3w45q",
 		},
 	}
 )
 
 func newMemoryDB() (*db.DB, error) {
 	rootstore := ds.NewMapDatastore()
-	return db.NewDB(rootstore, struct{}{})
+	return db.NewDB(rootstore)
 }
 
 func TestVersionedFetcherInit(t *testing.T) {

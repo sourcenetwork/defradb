@@ -76,7 +76,7 @@ func (c CollectionDescription) GetFieldKey(key ds.Key, fieldName string) ds.Key 
 func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key ds.Key, fieldName string) (ds.Key, error) {
 	switch ctype {
 	case core.COMPOSITE:
-		return c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_ID), nil
+		return c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_NAMESPACE), nil
 	case core.LWW_REGISTER:
 		fieldKey := c.GetFieldKey(key, fieldName)
 		return c.GetPrimaryIndexDocKey(fieldKey), nil
@@ -185,6 +185,10 @@ const (
 )
 
 type FieldID uint32
+
+func (f FieldID) String() string {
+	return fmt.Sprint(uint32(f))
+}
 
 type FieldDescription struct {
 	Name         string

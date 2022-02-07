@@ -10,8 +10,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -109,7 +107,7 @@ func (n *updateNode) Values() map[string]interface{} {
 
 	err := n.results.Init()
 	if err != nil {
-		fmt.Println("failure while initializing results : ", err)
+		panic(err) //handle better?
 	}
 
 	// get the next result based on our point lookup

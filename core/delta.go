@@ -27,6 +27,12 @@ type CompositeDelta interface {
 	Links() []DAGLink
 }
 
+type NetDelta interface {
+	Delta
+	GetSchemaID() string
+	// DocKey() key.DocKey
+}
+
 type DAGLink struct {
 	Name string
 	Cid  cid.Cid

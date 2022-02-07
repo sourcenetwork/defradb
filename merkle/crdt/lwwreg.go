@@ -12,10 +12,10 @@ package crdt
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore) MerkleCRDTInitFn {
+	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, _ corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key ds.Key) MerkleCRDT {
 			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), ds.NewKey(""), key)
 		}
@@ -36,7 +36,7 @@ var (
 func init() {
 	err := DefaultFactory.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	if err != nil {
-		log.Print(err)
+		panic(err)
 	}
 }
 
@@ -95,7 +95,8 @@ func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Ci
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	return mlwwreg.Publish(ctx, delta)
+	c, _, err := mlwwreg.Publish(ctx, delta)
+	return c, err
 }
 
 // Value will retrieve the current value from the db

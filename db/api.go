@@ -13,11 +13,11 @@ import (
 	api "github.com/sourcenetwork/defradb/api/http"
 )
 
-func (db *DB) Listen(address string) {
+func (db *DB) Listen(address string) error {
 	db.log.Infof("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", address, address)
 
 	s := api.NewServer(db)
-	s.Listen(address)
+	return s.Listen(address)
 }
 
 // func (db *DB) handlePing(w http.ResponseWriter, r *http.Request) {
