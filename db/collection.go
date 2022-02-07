@@ -482,7 +482,7 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 	if err != nil {
 		return err
 	}
-	// fmt.Println(c)
+
 	dockey := key.NewDocKeyV0(doccid)
 	if !dockey.Key.Equal(doc.Key().Key) {
 		return fmt.Errorf("Expected %s, got %s : %w", doc.Key().UUID(), dockey.UUID(), ErrDocVerification)
@@ -610,7 +610,6 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				Cid:  c,
 			}
 			links = append(links, link)
-			// fmt.Println("links:", link)
 		}
 	}
 	// Update CompositeDAG
@@ -631,7 +630,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	txn.OnSuccess(func() {
 		doc.SetHead(headCID)
 	})
-	// fmt.Printf("final: %s\n\n", docCid)
+
 	return headCID, nil
 }
 
@@ -643,7 +642,6 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 // This operation will all state relating to the given
 // DocKey. This includes data, block, and head storage.
 func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
-	// create txn
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -691,7 +689,6 @@ func (c *Collection) delete(ctx context.Context, txn *Txn, key key.DocKey) (bool
 
 // Exists checks if a given document exists with supplied DocKey
 func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
-	// create txn
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
