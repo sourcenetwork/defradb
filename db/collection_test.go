@@ -120,3 +120,12 @@ func TestGetCollection(t *testing.T) {
 		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
 }
+
+func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	_, err = db.GetCollection(ctx, "doesNotExist")
+	assert.EqualError(t, err, "datastore: key not found")
+}
