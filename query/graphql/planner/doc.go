@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,7 +19,7 @@
 // query the database for. It defines what should be done at each execution step, and if it
 // should be done in parallel or sequentially.
 //
-// The plan is structured as a graph of nodes using the Volcano iterator Method Query 
+// The plan is structured as a graph of nodes using the Volcano iterator Method Query
 //Evaluation approach.
 // Volcano - An Extensible and Parallel Query Evaluation System
 // [Paper](https://paperhub.s3.amazonaws.com/dace52a42c07f7f8348b08dc2b186061.pdf).
