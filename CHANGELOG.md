@@ -4,6 +4,14 @@
 
 > 2022-02-07
 
+DefraDB v0.2 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+This release is jam-packed with new features and a small number of breaking changes. Read the full changelog for a detailed description. Most notable features include a new Peer-to-Peer (P2P) data synchronization system, an expanded query system to support GroupBy & Aggregate operations, and lastly TimeTraveling queries allowing to query previous states of a document.
+
+Much more than just that has been added to ensure we're building reliable software expected of any database, such as expanded test & benchmark suites, automated bug detection, performance gains, and more.
+
+This release does include a Breaking Change to existing v0.1 databases regarding the internal data model, which affects the "Content Identifiers" we use to generate DocKeys and VersionIDs. If you need help migrating an existing deployment, reach out at hello@source.network or join our Discord at https://discord.source.network.
+
 ### Features
 
 * Added Peer-to-Peer networking data synchronization ([#177](https://github.com/sourcenetwork/defradb/issues/177))
@@ -29,6 +37,9 @@
 * Close superseded iterators before orphaning ([#56](https://github.com/sourcenetwork/defradb/pull/56)) (fixes a panic in the join code) 
 * Move discard to after error check ([#88](https://github.com/sourcenetwork/defradb/pull/88)) (did result in panic if transaction creation fails)
 * Check for nil iterator before closing document fetcher ([#108](https://github.com/sourcenetwork/defradb/pull/108))
+
+### Tooling
+* Added benchmark suite ([#160](https://github.com/sourcenetwork/defradb/issues/160))
 
 ### Documentation
 
