@@ -129,3 +129,12 @@ func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
 	_, err = db.GetCollection(ctx, "doesNotExist")
 	assert.EqualError(t, err, "datastore: key not found")
 }
+
+func TestGetCollectionReturnsErrorGivenEmptyString(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	_, err = db.GetCollection(ctx, "")
+	assert.EqualError(t, err, "Collection name can't be empty")
+}
