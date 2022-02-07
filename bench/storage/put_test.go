@@ -9,6 +9,7 @@
 // licenses/APL.txt.
 
 //go:build test
+// +build test
 
 package storage
 
