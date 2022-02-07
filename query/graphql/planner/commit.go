@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"errors"
 	"fmt"
 	"math"
 
@@ -43,7 +43,6 @@ func (n *commitSelectNode) Next() (bool, error) {
 	}
 
 	n.doc = n.source.Values()
-	n.renderDoc()
 	return true, nil
 }
 
@@ -55,8 +54,8 @@ func (n *commitSelectNode) Spans(spans core.Spans) {
 	n.source.Spans(spans)
 }
 
-func (n *commitSelectNode) Close() {
-	n.source.Close()
+func (n *commitSelectNode) Close() error {
+	return n.source.Close()
 }
 
 func (n *commitSelectNode) Source() planNode {
@@ -80,17 +79,13 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	case parser.AllCommits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
-		return nil, errors.New("Invalid CommitSelect type")
+		return nil, fmt.Errorf("Invalid CommitSelect type")
 	}
-	if err != nil {
-		return nil, err
-	}
-	err = commit.initFields(parsed)
 	if err != nil {
 		return nil, err
 	}
 	slct := parsed.ToSelect()
-	plan, err := p.SelectFromSource(slct, commit, false)
+	plan, err := p.SelectFromSource(slct, commit, false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +118,9 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	return commit, nil
 }
 
+// commitSelectBlock is a CommitSelect node intialized witout a headsetScanNode, and is
+// expected to be given a target CID in the parser.CommitSelect object. It returns
+// a single commit if found
 func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan()
 	if parsed.Cid != "" {
@@ -131,8 +129,8 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 			return nil, err
 		}
 		dag.cid = &c
-		fmt.Println("got cid:", c)
-	}
+		// fmt.Println("got cid:", c)
+	} // @todo: handle error if no CID is given
 
 	return &commitSelectNode{
 		p:             p,
@@ -141,6 +139,8 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 	}, nil
 }
 
+// commitSelectAll is a CommitSelect initialized with a headsetScanNode, and will
+// recursively return all graph commits in order.
 func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan()
 	headset := p.HeadScan()
@@ -154,7 +154,7 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 		headset.key = key
 	}
 	dag.headset = headset
-	dag.depthLimit = math.MaxUint32 // inifinite depth
+	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:             p,
@@ -163,39 +163,6 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 	}
 
 	return commit, nil
-}
-
-// renderDoc applies the render meta-data to the
-// links/previous sub selections for a commit type
-// query.
-func (n *commitSelectNode) renderDoc() {
-	for subfield, info := range n.subRenderInfo {
-		renderData := map[string]interface{}{
-			"numResults": info.numResults,
-			"fields":     info.fields,
-			"aliases":    info.aliases,
-		}
-		for _, subcommit := range n.doc[subfield].([]map[string]interface{}) {
-			subcommit["__render"] = renderData
-		}
-
-	}
-}
-
-func (n *commitSelectNode) initFields(parsed parser.Selection) error {
-	for _, selection := range parsed.GetSelections() {
-		switch node := selection.(type) {
-		case *parser.Select:
-			info := renderInfo{}
-			for _, f := range node.Fields {
-				info.fields = append(info.fields, f.GetName())
-				info.aliases = append(info.aliases, f.GetAlias())
-				info.numResults++
-			}
-			n.subRenderInfo[node.Name] = info
-		}
-	}
-	return nil
 }
 
 // commitSelectTopNode is a wrapper for the selectTopNode
@@ -211,10 +178,11 @@ func (n *commitSelectTopNode) Next() (bool, error)            { return n.plan.Ne
 func (n *commitSelectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
 func (n *commitSelectTopNode) Values() map[string]interface{} { return n.plan.Values() }
 func (n *commitSelectTopNode) Source() planNode               { return n.plan }
-func (n *commitSelectTopNode) Close() {
-	if n.plan != nil {
-		n.plan.Close()
+func (n *commitSelectTopNode) Close() error {
+	if n.plan == nil {
+		return nil
 	}
+	return n.plan.Close()
 }
 
 func (n *commitSelectTopNode) Append() bool { return true }

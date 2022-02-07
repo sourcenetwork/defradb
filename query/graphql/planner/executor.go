@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -44,7 +45,7 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 	// 	return nil, nil
 	// }
 	if manager == nil {
-		return nil, errors.New("SchemaManager cannot be nil")
+		return nil, fmt.Errorf("SchemaManager cannot be nil")
 	}
 
 	// g := schema.NewGenerator(sm)
@@ -57,25 +58,30 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 // }
 
-func (e *QueryExecutor) MakeSelectQuery(db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
+func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn client.Txn, selectStmt *parser.Select) (Query, error) {
 	if selectStmt == nil {
-		return nil, errors.New("Cannot create query without a selection")
+		return nil, fmt.Errorf("Cannot create query without a selection")
 	}
-	planner := makePlanner(db, txn)
+	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
-	q, err := e.parseQueryString(query)
+func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn client.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+	q, err := e.ParseQueryString(query)
 	if err != nil {
 		return nil, err
 	}
 
-	planner := makePlanner(db, txn)
+	planner := makePlanner(ctx, db, txn)
 	return planner.queryDocs(q)
 }
 
-func (e *QueryExecutor) parseQueryString(query string) (*parser.Query, error) {
+func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn client.Txn, query *parser.Query) (planNode, error) {
+	planner := makePlanner(ctx, db, txn)
+	return planner.makePlan(query)
+}
+
+func (e *QueryExecutor) ParseQueryString(query string) (*parser.Query, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(query),
 		Name: "GraphQL request",

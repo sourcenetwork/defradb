@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
@@ -14,12 +15,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	"github.com/graphql-go/graphql/language/ast"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement
@@ -41,7 +39,7 @@ type planNode interface {
 	// Spans sets the planNodes target
 	// spans. This is primarily only used
 	// for a scanNode, but based on the tree
-	// structure, may need to be propogated
+	// structure, may need to be propagated
 	// Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
@@ -55,22 +53,22 @@ type planNode interface {
 	Source() planNode
 
 	// Close terminates the planNode execution releases its resources.
-	Close()
+	Close() error
 }
 
 // basic plan Node that implements the planNode interface
 // can be added to any struct to turn it into a planNode
-type baseNode struct {
+type baseNode struct { //nolint:unused
 	plan planNode
 }
 
-func (n *baseNode) Init() error                    { return n.plan.Init() }
-func (n *baseNode) Start() error                   { return n.plan.Start() }
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *baseNode) Close()                         { n.plan.Close() }
-func (n *baseNode) Source() planNode               { return n.plan }
+func (n *baseNode) Init() error                    { return n.plan.Init() }   //nolint:unused
+func (n *baseNode) Start() error                   { return n.plan.Start() }  //nolint:unused
+func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }   //nolint:unused
+func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }    //nolint:unused
+func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() } //nolint:unused
+func (n *baseNode) Close() error                   { return n.plan.Close() }  //nolint:unused
+func (n *baseNode) Source() planNode               { return n.plan }          //nolint:unused
 
 type ExecutionContext struct {
 	context.Context
@@ -81,13 +79,14 @@ type PlanContext struct {
 }
 
 type Statement struct {
-	requestString   string
-	requestDocument *ast.Document // parser.Statement -> parser.Query - >
-	requestQuery    parser.Query
+	// Commenting out because unused code (structcheck) according to linter.
+	// requestString   string
+	// requestDocument *ast.Document parser.Statement -> parser.Query - >
+	// requestQuery    parser.Query
 }
 
-// Planner combines session state and databse state to
-// produce a query plan, which is run by the exuction context.
+// Planner combines session state and database state to
+// produce a query plan, which is run by the execution context.
 type Planner struct {
 	txn client.Txn
 	db  client.DB
@@ -99,8 +98,7 @@ type Planner struct {
 
 }
 
-func makePlanner(db client.DB, txn client.Txn) *Planner {
-	ctx := context.Background()
+func makePlanner(ctx context.Context, db client.DB, txn client.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
@@ -116,11 +114,11 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, errors.New("Query is missing query or mutation statements")
+			return nil, fmt.Errorf("Query is missing query or mutation statements")
 		}
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, errors.New("OperationDefinition is missing selections")
+			return nil, fmt.Errorf("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 	case *parser.Select:
@@ -130,7 +128,7 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 	case *parser.Mutation:
 		return p.newObjectMutationPlan(n)
 	}
-	return nil, errors.Errorf("unknown statement type %T", stmt)
+	return nil, fmt.Errorf("unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
@@ -139,9 +137,12 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 		return p.CreateDoc(stmt)
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
+	case parser.DeleteObjects:
+		return p.DeleteDocs(stmt)
 	default:
-		return nil, errors.Errorf("unknown mutation action %T", stmt.Type)
+		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
+
 }
 
 func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
@@ -154,52 +155,59 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	return plan, nil
-}
 
-func (p *Planner) GroupBy() {}
+	err = plan.Init()
+	return plan, err
+}
 
 // plan optimization. Includes plan expansion and wiring
 func (p *Planner) optimizePlan(plan planNode) error {
-	err := p.expandPlan(plan)
+	err := p.expandPlan(plan, nil)
 	return err
 }
 
 // full plan graph expansion and optimization
-func (p *Planner) expandPlan(plan planNode) error {
+func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	switch n := plan.(type) {
 	case *selectTopNode:
-		return p.expandSelectTopNodePlan(n)
+		return p.expandSelectTopNodePlan(n, parentPlan)
 	case *commitSelectTopNode:
-		return p.expandPlan(n.plan)
+		return p.expandPlan(n.plan, parentPlan)
 	case *selectNode:
-		return p.expandPlan(n.source)
+		return p.expandPlan(n.source, parentPlan)
 	case *typeIndexJoin:
-		return p.expandTypeIndexJoinPlan(n)
+		return p.expandTypeIndexJoinPlan(n, parentPlan)
+	case *groupNode:
+		// We only care about expanding the child source here, it is assumed that the parent source
+		// is expanded elsewhere/already
+		return p.expandPlan(n.dataSource.childSource, parentPlan)
 	case MultiNode:
-		return p.expandMultiNode(n)
+		return p.expandMultiNode(n, parentPlan)
 	case *updateNode:
-		return p.expandPlan(n.results)
+		return p.expandPlan(n.results, parentPlan)
 	default:
 		return nil
 	}
 }
 
-func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
-	if err := p.expandPlan(plan.source); err != nil {
+func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selectTopNode) error {
+	if err := p.expandPlan(plan.source, plan); err != nil {
 		return err
 	}
 
 	// wire up source to plan
 	plan.plan = plan.source
 
-	// wire up the render plan
-	if plan.render != nil {
-		plan.render.plan = plan.plan
-		plan.plan = plan.render
+	// if group
+	if plan.group != nil {
+		err := p.expandGroupNodePlan(plan)
+		if err != nil {
+			return err
+		}
+		plan.plan = plan.group
 	}
 
-	// if group
+	p.expandAggregatePlans(plan)
 
 	// if order
 	if plan.sort != nil {
@@ -208,16 +216,36 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode) error {
 	}
 
 	if plan.limit != nil {
-		plan.limit.plan = plan.plan
-		plan.plan = plan.limit
+		err := p.expandLimitPlan(plan, parentPlan)
+		if err != nil {
+			return err
+		}
+	}
+
+	// wire up the render plan
+	if plan.render != nil {
+		plan.render.plan = plan.plan
+		plan.plan = plan.render
 	}
 
 	return nil
 }
 
-func (p *Planner) expandMultiNode(plan MultiNode) error {
+type aggregateNode interface {
+	planNode
+	SetPlan(plan planNode)
+}
+
+func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
+	for _, aggregate := range plan.aggregates {
+		aggregate.SetPlan(plan.plan)
+		plan.plan = aggregate
+	}
+}
+
+func (p *Planner) expandMultiNode(plan MultiNode, parentPlan *selectTopNode) error {
 	for _, child := range plan.Children() {
-		if err := p.expandPlan(child); err != nil {
+		if err := p.expandPlan(child, parentPlan); err != nil {
 			return err
 		}
 	}
@@ -229,19 +257,87 @@ func (p *Planner) expandMultiNode(plan MultiNode) error {
 // 	return p.expandPlan(plan.source)
 // }
 
-func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin) error {
+func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandPlan(node.subType)
+		return p.expandPlan(node.subType, parentPlan)
 	case *typeJoinMany:
-		return p.expandPlan(node.subType)
+		return p.expandPlan(node.subType, parentPlan)
 	}
-	return errors.New("Unknown type index join plan")
+	return fmt.Errorf("Unknown type index join plan")
 }
 
-// func (p *Planner) QueryDocs(query parser.Query) {
+func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
+	var childSource planNode
+	// Find the first scan node in the plan, we assume that it will be for the correct collection
+	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
+	// Check for any existing pipe nodes in the plan, we should use it if there is one
+	pipe, hasPipe := p.walkAndFindPlanType(plan.plan, &pipeNode{}).(*pipeNode)
 
-// }
+	if !hasPipe {
+		newPipeNode := newPipeNode()
+		pipe = &newPipeNode
+		pipe.source = scanNode
+	}
+
+	if plan.group.childSelect != nil {
+		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
+		if err != nil {
+			return err
+		}
+		// We need to remove the render so that any child records are preserved on arrival at the parent
+		childSelectNode.(*selectTopNode).render = nil
+
+		childSource = childSelectNode
+	}
+
+	plan.group.dataSource.childSource = childSource
+	plan.group.dataSource.parentSource = plan.plan
+	plan.group.dataSource.pipeNode = pipe
+
+	if err := p.walkAndReplacePlan(plan.group, scanNode, pipe); err != nil {
+		return err
+	}
+
+	return p.expandPlan(childSource, plan)
+}
+
+func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {
+	switch l := plan.limit.(type) {
+	case *hardLimitNode:
+		if l == nil {
+			return nil
+		}
+
+		// if this is a child node, and the parent select has an aggregate then we need to
+		// replace the hard limit with a render limit to allow the full set of child records
+		// to be aggregated
+		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
+			renderLimit, err := p.RenderLimit(&parser.Limit{
+				Offset: l.offset,
+				Limit:  l.limit,
+			})
+			if err != nil {
+				return err
+			}
+			plan.limit = renderLimit
+
+			renderLimit.plan = plan.plan
+			plan.plan = plan.limit
+		} else {
+			l.plan = plan.plan
+			plan.plan = plan.limit
+		}
+	case *renderLimitNode:
+		if l == nil {
+			return nil
+		}
+
+		l.plan = plan.plan
+		plan.plan = plan.limit
+	}
+	return nil
+}
 
 // walkAndReplace walks through the provided plan, and searches for an instance
 // of the target plan, and replaces it with the replace plan
@@ -266,6 +362,8 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		node.root = replace
 	case *typeJoinMany:
 		node.root = replace
+	case *pipeNode:
+		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
 		return fmt.Errorf("Unknown plan node type to replace: %T", node)
@@ -292,17 +390,23 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 }
 
 func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
-	plan, err := p.query(query)
+	plan, err := p.makePlan(query)
 	if err != nil {
 		return nil, err
 	}
 
-	defer plan.Close()
-	if err := plan.Start(); err != nil {
+	if err = plan.Start(); err != nil {
+		if err2 := (plan.Close()); err2 != nil {
+			fmt.Println(err2)
+		}
 		return nil, err
 	}
 
-	if next, err := plan.Next(); err != nil || !next {
+	var next bool
+	if next, err = plan.Next(); err != nil || !next {
+		if err2 := (plan.Close()); err2 != nil {
+			fmt.Println(err2)
+		}
 		return nil, err
 	}
 
@@ -313,8 +417,11 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 			docs = append(docs, copy)
 		}
 
-		next, err := plan.Next()
+		next, err = plan.Next()
 		if err != nil {
+			if err2 := (plan.Close()); err2 != nil {
+				fmt.Println(err2)
+			}
 			return nil, err
 		}
 
@@ -323,10 +430,11 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		}
 	}
 
-	return docs, nil
+	err = plan.Close()
+	return docs, err
 }
 
-func (p *Planner) query(query *parser.Query) (planNode, error) {
+func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
 }
 

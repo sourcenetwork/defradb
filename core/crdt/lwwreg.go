@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,14 +7,17 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package crdt
 
 import (
 	// "time"
 
 	"bytes"
+	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 
@@ -32,10 +35,11 @@ var (
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
-// TODO: Expand delta metadata (investigate if needed)
+// @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
 	Priority uint64
 	Data     []byte
+	DocKey   []byte
 }
 
 // GetPriority gets the current priority for this delta
@@ -57,7 +61,8 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	err := enc.Encode(struct {
 		Priority uint64
 		Data     []byte
-	}{delta.Priority, delta.Data})
+		DocKey   []byte
+	}{delta.Priority, delta.Data, delta.DocKey})
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +78,7 @@ func (delta *LWWRegDelta) Value() interface{} {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	baseCRDT
-	key  string
-	data []byte
+	key string
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
@@ -91,9 +95,9 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 
 // Value gets the current register value
 // RETURN STATE
-func (reg LWWRegister) Value() ([]byte, error) {
+func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(valueK)
+	buf, err := reg.store.Get(ctx, valueK)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +111,13 @@ func (reg LWWRegister) Value() ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
-		Data: value,
+		Data:   value,
+		DocKey: []byte(reg.key),
 	}
+}
+
+func (reg LWWRegister) ID() string {
+	return reg.key
 }
 
 // RETURN DELTA
@@ -123,29 +132,29 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg LWWRegister) Merge(delta core.Delta, id string) error {
+func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
 		return core.ErrMismatchedMergeType
 	}
 
-	return reg.setValue(d.Data, d.GetPriority())
+	return reg.setValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg LWWRegister) setValue(val []byte, priority uint64) error {
-	curPrio, err := reg.getPriority(reg.key)
+func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
+	curPrio, err := reg.getPriority(ctx, reg.key)
 	if err != nil {
-		return errors.Wrap(err, "Failed to get priority for Set")
+		return fmt.Errorf("Failed to get priority for Set : %w", err)
 	}
 
 	// if the current priority is higher ignore put
-	// else if the current value is lexographically
+	// else if the current value is lexicographically
 	// greater than the new then ignore
 	valueK := reg.valueKey(reg.key)
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(valueK)
+		curValue, _ := reg.store.Get(ctx, valueK)
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -153,12 +162,12 @@ func (reg LWWRegister) setValue(val []byte, priority uint64) error {
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(valueK, buf)
+	err = reg.store.Put(ctx, valueK, buf)
 	if err != nil {
-		return errors.Wrap(err, "Failed to store new value")
+		return fmt.Errorf("Failed to store new value : %w", err)
 	}
 
-	return reg.setPriority(reg.key, priority)
+	return reg.setPriority(ctx, reg.key, priority)
 }
 
 // DeltaDecode is a typed helper to extract

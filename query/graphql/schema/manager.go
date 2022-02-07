@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package schema
 
 import (
@@ -18,9 +19,7 @@ import (
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
-	schema       gql.Schema
-	definedTypes []*gql.Object // base defined types
-
+	schema    gql.Schema
 	Generator *Generator
 	Relations *RelationManager
 }
@@ -64,6 +63,20 @@ func (s *SchemaManager) ResolveTypes() error {
 	// ATM, there is no function to easily call the internal
 	// typeMapReducer function, so as a hack, we are just
 	// going to re-add the Query type.
+
+	for _, gqlType := range s.schema.TypeMap() {
+		object, isObject := gqlType.(*gql.Object)
+		if !isObject {
+			continue
+		}
+		// We need to make sure the object's fields are resolved
+		object.Fields()
+
+		if object.Error() != nil {
+			return object.Error()
+		}
+	}
+
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
 }

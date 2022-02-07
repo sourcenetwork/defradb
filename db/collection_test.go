@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,9 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package db
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -19,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionWithSchema(db *DB) (*Collection, error) {
+func newTestCollectionWithSchema(ctx context.Context, db *DB) (*Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
@@ -47,29 +49,31 @@ func newTestCollectionWithSchema(db *DB) (*Collection, error) {
 		},
 	}
 
-	col, err := db.CreateCollection(desc)
+	col, err := db.CreateCollection(ctx, desc)
 	return col.(*Collection), err
 }
 
-func createNewTestCollection(db *DB) (client.Collection, error) {
-	return db.CreateCollection(base.CollectionDescription{
+func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, error) {
+	return db.CreateCollection(ctx, base.CollectionDescription{
 		Name: "test",
 	})
 }
 
 func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	_, err = createNewTestCollection(db)
+	_, err = createNewTestCollection(ctx, db)
 	assert.Error(t, err)
 }
 
 func TestNewCollectionWithSchema(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(db)
+	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
 	schema := col.Schema()
@@ -90,13 +94,14 @@ func TestNewCollectionWithSchema(t *testing.T) {
 }
 
 func TestGetCollection(t *testing.T) {
+	ctx := context.Background()
 	db, err := newMemoryDB()
 	assert.NoError(t, err)
 
-	_, err = newTestCollectionWithSchema(db)
+	_, err = newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	col, err := db.GetCollection("users")
+	col, err := db.GetCollection(ctx, "users")
 	assert.NoError(t, err)
 
 	schema := col.Schema()

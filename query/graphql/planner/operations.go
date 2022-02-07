@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,12 +7,16 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 var (
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*headsetScanNode)(nil)
-	_ planNode = (*limitNode)(nil)
+	_ planNode = (*hardLimitNode)(nil)
+	_ planNode = (*renderLimitNode)(nil)
+	_ planNode = (*groupNode)(nil)
+	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*selectNode)(nil)
 	_ planNode = (*selectTopNode)(nil)
 	_ planNode = (*sortNode)(nil)
@@ -20,37 +24,33 @@ var (
 	_ planNode = (*typeIndexJoin)(nil)
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*typeJoinMany)(nil)
+	_ planNode = (*countNode)(nil)
 )
 
-type joinNode struct {
-	p *Planner
-}
-
-// applys a 'Group By' operation
-type groupNode struct {
-	p *Planner
-} // gatherNode?
-
-// scatter group by or aggregate operations
-type scatterNode struct {
-	p *Planner
-}
-
-// apply an aggregate function to a result
-type aggregateNode struct {
-	p *Planner
-}
-
+// type joinNode struct {
+// 	p *Planner
+// }
+//
+// // scatter group by or aggregate operations
+// type scatterNode struct {
+// 	p *Planner
+// }
+//
+// // apply an aggregate function to a result
+// type aggregateNode struct {
+// 	p *Planner
+// }
+//
 // // apply a "Having" operation
 // type filterHavingNode struct {
 // 	p *Planner
 // }
-
-// noop
-type noopNode struct {
-	p *Planner
-}
-
+//
+// // noop
+// type noopNode struct {
+// 	p *Planner
+// }
+//
 // // parellel planner, that is used to execute multiple plan trees in parallel.
 // type parallelNode struct {
 // 	pNodes []planNode

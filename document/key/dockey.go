@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package key
 
 import (
@@ -124,7 +125,7 @@ func (key DocKey) Bytes() []byte {
 
 // Verify ensures that the given DocKey is valid as per the DefraDB spec
 // to prevent against collions from both honest and dishonest validators
-// TODO: Check into better utilizing or dropping context, since we dont recurse
+// TODO: Check into better utilizing or dropping context, since we don't recurse
 // down
 func (key DocKey) Verify(ctx context.Context, data cid.Cid, peerID string) bool {
 	parent, ok := ctx.Value("parent").(uuid.UUID)

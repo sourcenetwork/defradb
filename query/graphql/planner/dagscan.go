@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,13 +7,34 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
+
+//			   -> D1 -> E1 -> F1
+// A -> B -> C |
+//			   -> D2 -> E2 -> F2
+
+/*
+
+/db/blocks/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmHLSHDFLHJSDFLHJFSLDKSH => IPLD_BLOCK_BYTE_ARRAY  => []byte("hello")
+/db/blocks/QmSFHLSDHLHJSDLFHJLSD => IPLD_BLOCK_BYTE_ARRA	=> []byte("zgoodbye")
+/db/blocks/QmSKFJHLSDHJFLSFHD => IPLD_BLOCK_BYTE_ARRAY	=> []byte("stupid")
+
+/db/data/1/0/bae-ALICE/1:v => "stupid"
+/db/data/1/0/bae-ALICE/C:v => []byte...
+
+/db/heads/bae-ALICE/C/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => [priority=1]
+/db/heads/bae-ALICE/C/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => [priority=1]
+/db/heads/bae-ALICE/1/QmSKFJHLSDHJFLSFHD => [priority=2]
+
+*/
 
 import (
 	"container/list"
+	"fmt"
 	"strings"
-
-	// "errors"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -23,7 +44,6 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
-	"github.com/pkg/errors"
 )
 
 type headsetScanNode struct {
@@ -55,8 +75,7 @@ func (h *headsetScanNode) initScan() error {
 		h.spans = append(h.spans, core.NewSpan(h.key, h.key.PrefixEnd()))
 	}
 
-	// fmt.Println("startin fetcher with spans:", h.spans[0].Start())
-	err := h.fetcher.Start(h.p.txn, h.spans)
+	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans)
 	if err != nil {
 		return err
 	}
@@ -89,7 +108,9 @@ func (h *headsetScanNode) Values() map[string]interface{} {
 	}
 }
 
-func (h *headsetScanNode) Close() {}
+func (h *headsetScanNode) Close() error {
+	return h.fetcher.Close()
+}
 
 func (h *headsetScanNode) Source() planNode { return nil }
 
@@ -98,9 +119,7 @@ func (p *Planner) HeadScan() *headsetScanNode {
 }
 
 type dagScanNode struct {
-	p *Planner
-
-	key   *core.Key
+	p     *Planner
 	cid   *cid.Cid
 	field string
 
@@ -173,23 +192,22 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	}
 }
 
-func (n *dagScanNode) Close() {
-	if n.headset != nil {
-		n.headset.Close()
+func (n *dagScanNode) Close() error {
+	if n.headset == nil {
+		return nil
 	}
+	return n.headset.Close()
 }
 
 func (n *dagScanNode) Source() planNode { return n.headset }
 
 func (n *dagScanNode) Next() (bool, error) {
-	// find target cid either through headset or direct cid.
-	// if n.cid == nil {
-
+	// find target CID either through headset or direct cid.
 	if n.queuedCids.Len() > 0 {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)
 		if !ok {
-			return false, errors.New("Queued value in DAGScan isn't a CID")
+			return false, fmt.Errorf("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
 		n.cid = &cid
@@ -201,7 +219,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		val := n.headset.Values()
 		cid, ok := val["cid"].(cid.Cid)
 		if !ok {
-			return false, errors.New("Headset scan node returned an invalid cid")
+			return false, fmt.Errorf("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
 
@@ -209,7 +227,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		// add this final elseif case in case another function
 		// manually sets the CID. Should prob migrate any remote CID
 		// updates to use the queuedCids.
-		return false, nil // no queued cids and no headset available
+		return false, nil // no queued CIDs and no headset available
 	}
 
 	// skip already visited CIDs
@@ -225,7 +243,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
 	store := n.p.txn.DAGstore()
-	block, err := store.Get(*n.cid)
+	block, err := store.Get(n.p.ctx, *n.cid)
 	if err != nil { // handle error?
 		return false, err
 	}
@@ -256,6 +274,25 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.cid = nil // clear cid for next round
 	return true, nil
 }
+
+//			   -> D1 -> E1 -> F1
+// A -> B -> C |
+//			   -> D2 -> E2 -> F2
+
+/*
+
+/db/blocks/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmHLSHDFLHJSDFLHJFSLDKSH => IPLD_BLOCK_BYTE_ARRAY  => []byte("hello")
+/db/blocks/QmSFHLSDHLHJSDLFHJLSD => IPLD_BLOCK_BYTE_ARRAY	=> []byte("goodbye")
+/db/data/1/0/bae-ALICE/1:v => "hello"
+/db/data/1/0/bae-ALICE/C:v => []byte...
+/db/heads/bae-ALICE/C/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => [priority=1]
+/db/heads/bae-ALICE/C/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => [priority=1]
+/db/heads/bae-ALICE/1/QmHLSHDFLHJSDFLHJFSLDKSH => [priority=1]
+/db/heads/bae-ALICE/1/QmSFHLSDHLHJSDLFHJLSD => [priority=1]
+
+*/
 
 // func (n *dagScanNode) nextHead() (cid.Cid, error) {
 
@@ -299,7 +336,7 @@ func dagBlockToNodeMap(block blocks.Block) (map[string]interface{}, []*ipld.Link
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return nil, nil, errors.New("Commit Delta missing priority key")
+		return nil, nil, fmt.Errorf("Commit Delta missing priority key")
 	}
 
 	commit["height"] = int64(prio)

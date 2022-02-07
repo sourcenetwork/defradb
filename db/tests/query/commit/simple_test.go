@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package commit
 
 import (
@@ -19,7 +20,7 @@ func TestQueryOneCommit(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by CID",
 		Query: `query {
-					commit(cid: "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV") {
+					commit(cid: "bafkreiatyttzyajjsw5lshkz6unhei6k4mr3rcmapmooeamkeamx72cuny") {
 						cid
 						height
 						delta
@@ -34,7 +35,7 @@ func TestQueryOneCommit(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid":    "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+				"cid":    "bafkreiatyttzyajjsw5lshkz6unhei6k4mr3rcmapmooeamkeamx72cuny",
 				"height": int64(1),
 				// cbor encoded delta
 				"delta": []uint8{0xa2, 0x63, 0x41, 0x67, 0x65, 0x15, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x64, 0x4a, 0x6f, 0x68, 0x6e},

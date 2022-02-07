@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,13 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"errors"
+	"fmt"
+
+	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -31,7 +34,6 @@ type MultiNode interface {
 	planNode
 	Children() []planNode
 	AddChild(string, planNode) error
-	ReplaceChildAt(int, string, planNode) error
 	SetMultiScanner(*multiScanNode)
 }
 
@@ -70,7 +72,7 @@ type appendNode interface {
 //
 // In this example, both the friends selection and the _version
 // selection require their own planNode sub graphs to complete.
-// However, they are entirely independant graphs, so they can
+// However, they are entirely independent graphs, so they can
 // be executed in parallel.
 //
 type parallelNode struct { // serialNode?
@@ -117,16 +119,18 @@ func (p *parallelNode) Start() error {
 }
 
 func (p *parallelNode) Spans(spans core.Spans) {
-	p.applyToPlans(func(n planNode) error {
+	err := p.applyToPlans(func(n planNode) error {
 		n.Spans(spans)
 		return nil
 	})
+	if err != nil {
+		log.Print("applying spans to plans failed : ", err)
+	}
 }
 
-func (p *parallelNode) Close() {
-	p.applyToPlans(func(n planNode) error {
-		n.Close()
-		return nil
+func (p *parallelNode) Close() error {
+	return p.applyToPlans(func(n planNode) error {
+		return n.Close()
 	})
 }
 
@@ -169,12 +173,60 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 	return true, nil
 }
 
+/*
+
+scan node
+=========
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false
+}
+
+typeJoin node(merge)
+=============
+{
+	friends: [
+		{
+			_key: bae-BOB,
+			name: bob,
+			points: 99.9,
+			verified: true,
+		}
+	]
+}
+
+output
+======
+
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false,
+
+	friends: [
+		{
+			_key: bae-BOB,
+			name: bob,
+			points: 99.9,
+			verified: true,
+		}
+	]
+}
+
+*/
+
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	if key, ok := p.doc["_key"].(string); ok {
 		// pass the doc key as a reference through the spans interface
 		spans := core.Spans{core.NewSpan(core.NewKey(key), core.Key{})}
 		plan.Spans(spans)
-		plan.Init()
+		err := plan.Init()
+		if err != nil {
+			return false, err
+		}
 	} else {
 		return false, nil
 	}
@@ -195,6 +247,45 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 	p.doc[p.childFields[index]] = results
 	return true, nil
 }
+
+/*
+
+query {
+	user {
+		_key
+		name
+		points
+		verified
+
+		_version {
+			cid
+		}
+	}
+}
+
+scan node
+=========
+{
+	_key: bae-ALICE,
+	name: Alice,
+	points: 124,
+	verified: false
+}
+
+_version: commitSelectTopNode(append)
+===================
+[
+	{
+		cid: QmABC
+	},
+	{
+		cid: QmDEF
+	}
+	...
+]
+
+
+*/
 
 func (p *parallelNode) Values() map[string]interface{} {
 	// result := make(map[string]interface{})
@@ -223,16 +314,6 @@ func (p *parallelNode) Children() []planNode {
 func (p *parallelNode) AddChild(field string, node planNode) error {
 	p.children = append(p.children, node)
 	p.childFields = append(p.childFields, field)
-	return nil
-}
-
-func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
-	if i >= len(p.children) {
-		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
-	}
-
-	p.children[i] = node
-	p.childFields[i] = field
 	return nil
 }
 
@@ -353,7 +434,7 @@ Select {
 // 		// get original scanNode
 // 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
 // 		if origScan == nil {
-// 			return errors.New("Failed to find original scan node in plan graph")
+// 			return fmt.Errorf("Failed to find original scan node in plan graph")
 // 		}
 // 		// create our new multiscanner
 // 		multiscan = &multiScanNode{scanNode: origScan}
@@ -390,7 +471,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 	src := s.source
 	switch node := src.(type) {
 	// if its a scan node, we either replace or create a multinode
-	case *scanNode:
+	case *scanNode, *pipeNode:
 		switch plan.(type) {
 		case mergeNode:
 			s.source = plan
@@ -404,14 +485,14 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			}
 			s.source = m
 		default:
-			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
+			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 
 	// source is a mergeNode, like a TypeJoin
 	case mergeNode:
 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
 		if origScan == nil {
-			return errors.New("Failed to find original scan node in plan graph")
+			return fmt.Errorf("Failed to find original scan node in plan graph")
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
@@ -484,7 +565,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 				children[0] = plan
 			}
 		default:
-			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
+			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 	}
 	return nil

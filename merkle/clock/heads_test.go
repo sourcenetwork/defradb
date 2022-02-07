@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,12 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package clock
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"math/rand"
 	"reflect"
@@ -50,9 +52,10 @@ func newHeadSet() *heads {
 }
 
 func TestHeadsWrite(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(heads.store, c, uint64(1))
+	err := heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -60,15 +63,16 @@ func TestHeadsWrite(t *testing.T) {
 }
 
 func TestHeadsLoad(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(heads.store, c, uint64(1))
+	err := heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	h, err := heads.load(c)
+	h, err := heads.load(ctx, c)
 	if err != nil {
 		t.Error("failed to load from head set:", err)
 		return
@@ -81,21 +85,22 @@ func TestHeadsLoad(t *testing.T) {
 }
 
 func TestHeadsDelete(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(heads.store, c, uint64(1))
+	err := heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	err = heads.delete(heads.store, c)
+	err = heads.delete(ctx, heads.store, c)
 	if err != nil {
 		t.Error("Failed to delete from head set:", err)
 		return
 	}
 
-	_, err = heads.load(c)
+	_, err = heads.load(ctx, c)
 	if err != ds.ErrNotFound {
 		t.Error("failed to delete from head set, value still set")
 		return
@@ -103,15 +108,16 @@ func TestHeadsDelete(t *testing.T) {
 }
 
 func TestHeadsIsHead(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(heads.store, c, uint64(1))
+	err := heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	ishead, h, err := heads.IsHead(c)
+	ishead, h, err := heads.IsHead(ctx, c)
 	if err != nil {
 		t.Error("Failedd to check isHead:", err)
 		return
@@ -129,15 +135,16 @@ func TestHeadsIsHead(t *testing.T) {
 }
 
 func TestHeadsLen(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(heads.store, c, uint64(1))
+	err := heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	l, err := heads.Len()
+	l, err := heads.Len(ctx)
 	if err != nil {
 		t.Error("Failed to get head set length:", err)
 		return
@@ -149,13 +156,13 @@ func TestHeadsLen(t *testing.T) {
 	}
 
 	c = newRandomCID()
-	err = heads.write(heads.store, c, uint64(1))
+	err = heads.write(ctx, heads.store, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	l, err = heads.Len()
+	l, err = heads.Len(ctx)
 	if err != nil {
 		t.Error("Failed to get head set length (second call):", err)
 		return
@@ -168,16 +175,17 @@ func TestHeadsLen(t *testing.T) {
 }
 
 func TestHeadsReplaceEmpty(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
 	c2 := newRandomCID()
-	err := heads.Replace(c1, c2, uint64(3))
+	err := heads.Replace(ctx, c1, c2, uint64(3))
 	if err != nil {
 		t.Error("Failed to Replace items in head set:", err)
 		return
 	}
 
-	h, err := heads.load(c2)
+	h, err := heads.load(ctx, c2)
 	if err != nil {
 		t.Error("Failed to load items in head set:", err)
 		return
@@ -190,22 +198,23 @@ func TestHeadsReplaceEmpty(t *testing.T) {
 }
 
 func TestHeadsReplaceNonEmpty(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
-	err := heads.write(heads.store, c1, uint64(1))
+	err := heads.write(ctx, heads.store, c1, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
 	c2 := newRandomCID()
-	err = heads.Replace(c1, c2, uint64(3))
+	err = heads.Replace(ctx, c1, c2, uint64(3))
 	if err != nil {
 		t.Error("Failed to Replace items in head set:", err)
 		return
 	}
 
-	h, err := heads.load(c2)
+	h, err := heads.load(ctx, c2)
 	if err != nil {
 		t.Error("Failed to load items in head set:", err)
 		return
@@ -222,9 +231,10 @@ func TestHeadsReplaceNonEmpty(t *testing.T) {
 // Add() is an exposed function so to ensure the public API doesnt
 // break we'll include it
 func TestHeadsAdd(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
-	err := heads.Add(c1, uint64(1))
+	err := heads.Add(ctx, c1, uint64(1))
 	if err != nil {
 		t.Error("Failed to Add element to head set:", err)
 		return
@@ -232,13 +242,14 @@ func TestHeadsAdd(t *testing.T) {
 }
 
 func TestHeaddsList(t *testing.T) {
+	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
 	c2 := newRandomCID()
-	heads.Add(c1, uint64(1))
-	heads.Add(c2, uint64(2))
+	heads.Add(ctx, c1, uint64(1))
+	heads.Add(ctx, c2, uint64(2))
 
-	list, h, err := heads.List()
+	list, h, err := heads.List(ctx)
 	if err != nil {
 		t.Error("Failed to List head set:", err)
 		return

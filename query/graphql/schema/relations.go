@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package schema
 
 import (
@@ -206,7 +207,7 @@ func (r *Relation) finalize() error {
 			return errors.New("relation can only have a single field set as primary")
 		} else if !base.IsSet(xBit, base.Meta_Relation_Primary) {
 			// neither type has primary set, auto add to
-			// lexigraphically first one by schema type name
+			// lexicographically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
 				r.types[1] = r.types[1] | base.Meta_Relation_Primary
 			} else {
@@ -215,16 +216,20 @@ func (r *Relation) finalize() error {
 		}
 	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
 		if IsOne(r.types[0]) {
-			r.types[0] |= base.Meta_Relation_Primary  // set priamry on one
-			r.types[1] &^= base.Meta_Relation_Primary // clear priamry on many
+			r.types[0] |= base.Meta_Relation_Primary  // set primary on one
+			r.types[1] &^= base.Meta_Relation_Primary // clear primary on many
 		} else {
-			r.types[1] |= base.Meta_Relation_Primary  // set priamry on one
-			r.types[0] &^= base.Meta_Relation_Primary // clear priamry on many
+			r.types[1] |= base.Meta_Relation_Primary  // set primary on one
+			r.types[0] &^= base.Meta_Relation_Primary // clear primary on many
 		}
 	}
 
 	r.finalized = true
 	return nil
+}
+
+func (r Relation) GetFields() []string {
+	return r.fields
 }
 
 // Type returns what kind of relation it is
@@ -281,9 +286,9 @@ func (r Relation) schemaTypeExists(t string) (int, bool) {
 	return -1, false
 }
 
-func (r Relation) GetField(field string) (string, uint8, bool) {
+func (r Relation) GetField(schemaType string, field string) (string, uint8, bool) {
 	for i, f := range r.fields {
-		if f == field {
+		if f == field && r.schemaTypes[i] == schemaType {
 			return f, r.types[i], true
 		}
 	}

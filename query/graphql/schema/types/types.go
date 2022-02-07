@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package types
 
 import (
@@ -14,7 +15,7 @@ import (
 )
 
 var (
-	// Delta represnts a Delta State update for a CRDT
+	// Delta represents a Delta State update for a CRDT
 	// type Delta {
 	// 	Payload: String
 	// }
@@ -38,6 +39,13 @@ var (
 			"cid": &gql.Field{
 				Type: gql.String,
 			},
+		},
+	})
+
+	CommitCountFieldArg = gql.NewEnum(gql.EnumConfig{
+		Name: "commitCountFieldArg",
+		Values: gql.EnumValueConfigMap{
+			"links": &gql.EnumValueConfig{Value: "links"},
 		},
 	})
 
@@ -70,6 +78,14 @@ var (
 			"links": &gql.Field{
 				Type: gql.NewList(CommitLink),
 			},
+			"_count": &gql.Field{
+				Type: gql.Int,
+				Args: gql.FieldConfigArgument{
+					"field": &gql.ArgumentConfig{
+						Type: CommitCountFieldArg,
+					},
+				},
+			},
 			// "tests": &gql.Field{
 			// 	Type: gql.NewList(gql.String),
 			// },
@@ -80,16 +96,3 @@ var (
 func init() {
 
 }
-
-/*
-type Commit {
-	Height: Int
-	CID: String
-	Delta: Delta
-	Previous: [Commit]
-}
-
-type Delta {
-	Payload: String
-}
-*/

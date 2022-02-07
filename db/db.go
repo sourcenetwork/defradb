@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,16 +7,19 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package db
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
@@ -27,7 +30,6 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	badgerds "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -38,18 +40,14 @@ var (
 
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
 
-	// Individual Store Keys
-	rootStoreKey   = ds.NewKey("/db")
-	systemStoreKey = rootStoreKey.ChildString("/system")
-	dataStoreKey   = rootStoreKey.ChildString("/data")
-	headStoreKey   = rootStoreKey.ChildString("/heads")
-	blockStoreKey  = rootStoreKey.ChildString("/blocks")
-
 	log = logging.Logger("defra.db")
 )
 
 // make sure we match our client interface
-var _ client.DB = (*DB)(nil)
+var (
+	_ client.DB         = (*DB)(nil)
+	_ client.Collection = (*Collection)(nil)
+)
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.
@@ -73,6 +71,8 @@ type DB struct {
 
 	crdtFactory *crdt.Factory
 
+	broadcaster corenet.Broadcaster
+
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
 
@@ -81,51 +81,26 @@ type DB struct {
 
 	log logging.StandardLogger
 
-	options *Options
+	// The options used to init the database
+	options interface{}
 }
 
-// Options for database
-type Options struct {
-	Store   string
-	Memory  MemoryOptions
-	Badger  BadgerOptions
-	Address string
-}
+// functional option type
+type Option func(*DB)
 
-// BadgerOptions for the badger instance of the backing datastore
-type BadgerOptions struct {
-	Path string
-	*badgerds.Options
-}
-
-// MemoryOptions for the memory instance of the backing datastore
-type MemoryOptions struct {
-	Size uint64
+func WithBroadcaster(bs corenet.Broadcaster) Option {
+	return func(db *DB) {
+		db.broadcaster = bs
+	}
 }
 
 // NewDB creates a new instance of the DB using the given options
-func NewDB(options *Options) (*DB, error) {
-	var rootstore ds.Batching
-	var err error
-	if options == nil {
-		return nil, ErrOptionsEmpty
-	}
-	if options.Store == "badger" {
-		log.Info("opening badger store: ", options.Badger.Path)
-		rootstore, err = badgerds.NewDatastore(options.Badger.Path, options.Badger.Options)
-		if err != nil {
-			return nil, err
-		}
-	} else if options.Store == "memory" {
-		log.Info("building new memory store")
-		rootstore = ds.NewMapDatastore()
-	}
-
+func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug("loading: internal datastores")
-	systemstore := namespace.Wrap(rootstore, systemStoreKey)
-	datastore := namespace.Wrap(rootstore, dataStoreKey)
-	headstore := namespace.Wrap(rootstore, headStoreKey)
-	blockstore := namespace.Wrap(rootstore, blockStoreKey)
+	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
+	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
+	headstore := namespace.Wrap(rootstore, base.HeadStoreKey)
+	blockstore := namespace.Wrap(rootstore, base.BlockStoreKey)
 	dagstore := store.NewDAGStore(blockstore)
 	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
 
@@ -161,21 +136,53 @@ func NewDB(options *Options) (*DB, error) {
 
 		schema:        sm,
 		queryExecutor: exec,
+		options:       options,
+	}
 
-		options: options,
+	// apply options
+	for _, opt := range options {
+		if opt == nil {
+			continue
+		}
+		opt(db)
 	}
 
 	return db, err
 }
 
-// Start runs all the inital sub-routines and initialization steps.
-func (db *DB) Start() error {
-	return db.Initialize()
+// Start runs all the initial sub-routines and initialization steps.
+func (db *DB) Start(ctx context.Context) error {
+	return db.Initialize(ctx)
+}
+
+// Root
+func (db *DB) Root() ds.Batching {
+	return db.rootstore
+}
+
+// Rootstore gets the internal rootstore handle
+func (db *DB) Rootstore() core.DSReaderWriter {
+	return db.rootstore
+}
+
+// Headstore returns the interal index store for DAG Heads
+func (db *DB) Headstore() core.DSReaderWriter {
+	return db.headstore
+}
+
+// Datastore returns the interal index store for DAG Heads
+func (db *DB) Datastore() core.DSReaderWriter {
+	return db.datastore
+}
+
+// DAGstore returns the internal DAG store which contains IPLD blocks
+func (db *DB) DAGstore() core.DAGStore {
+	return db.dagstore
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters
-func (db *DB) Initialize() error {
+func (db *DB) Initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
@@ -185,7 +192,7 @@ func (db *DB) Initialize() error {
 	}
 
 	log.Debug("Checking if db has already been initialized...")
-	exists, err := db.systemstore.Has(ds.NewKey("init"))
+	exists, err := db.systemstore.Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -193,18 +200,18 @@ func (db *DB) Initialize() error {
 	// and finish intialization
 	if exists {
 		log.Debug("db has already been initalized, conitnuing.")
-		return db.loadSchema()
+		return db.loadSchema(ctx)
 	}
 
 	log.Debug("opened a new db, needs full intialization")
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence("collection")
+	_, err = db.getSequence(ctx, "collection")
 	if err != nil {
 		return err
 	}
 
-	err = db.systemstore.Put(ds.NewKey("init"), []byte{1})
+	err = db.systemstore.Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -213,12 +220,16 @@ func (db *DB) Initialize() error {
 	return nil
 }
 
-func (db *DB) printDebugDB() {
-	printStore(db.rootstore)
+func (db *DB) printDebugDB(ctx context.Context) {
+	printStore(ctx, db.rootstore)
 }
 
-func (db *DB) PrintDump() {
-	printStore(db.rootstore)
+func (db *DB) PrintDump(ctx context.Context) {
+	printStore(ctx, db.rootstore)
+}
+
+func (db *DB) Executor() *planner.QueryExecutor {
+	return db.queryExecutor
 }
 
 // Close is called when we are shutting down the database.
@@ -226,26 +237,32 @@ func (db *DB) PrintDump() {
 // of resources (IE: Badger instance)
 func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
-	if db.options.Store == "badger" {
-		if db.rootstore != nil {
-			db.rootstore.Close()
-		}
+	err := db.rootstore.Close()
+	if err != nil {
+		log.Error("Failure closing running process")
 	}
 	log.Info("Succesfully closed running process")
 }
 
-func printStore(store core.DSReaderWriter) {
+func printStore(ctx context.Context, store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsq.Order{dsq.OrderByKey{}},
 	}
 
-	results, err := store.Query(q)
-	defer results.Close()
+	results, err := store.Query(ctx, q)
+
 	if err != nil {
 		panic(err)
 	}
+
+	defer func() {
+		err := results.Close()
+		if err != nil {
+			log.Error("Failure closing set of query store results")
+		}
+	}()
 
 	for r := range results.Next() {
 		fmt.Println(r.Key, ": ", r.Value)

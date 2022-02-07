@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package parser
 
 import (
@@ -123,8 +124,8 @@ func (m Mutation) ToSelect() *Select {
 	}
 }
 
-// parseOperationDefintition parses the individual GraphQL
-// 'query' operations, which there may be mulitple of.
+// parseOperationDefinition parses the individual GraphQL
+// 'query' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
 	qdef := &OperationDefinition{
 		Statement:  def,
@@ -147,7 +148,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	return qdef, nil
 }
 
-// @todo: Create seperate mutation parse functions
+// @todo: Create separate mutation parse functions
 // for generated object mutations, and general
 // API mutations.
 

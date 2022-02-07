@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package simple
 
 import (
@@ -16,30 +17,185 @@ import (
 )
 
 func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple query with basic filter (key by DocKey arg)",
-		Query: `query {
-					users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						Name
-						Age
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "Simple query with basic filter (key by DocKey arg)",
+			Query: `query {
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
 		},
-		Results: []map[string]interface{}{
-			{
-				"Name": "John",
-				"Age":  uint64(21),
+		{
+			Description: "Simple query with basic filter (key by DocKey arg), no results",
+			Query: `query {
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{},
+		},
+		{
+			Description: "Simple query with basic filter (key by DocKey arg), partial results",
+			Query: `query {
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+					}`),
+					(`{
+						"Name": "Bob",
+						"Age": 32
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
+}
+
+func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "Simple query with basic filter (single key by DocKeys arg)",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			Description: "Simple query with basic filter (single key by DocKeys arg), no results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+			},
+			Results: []map[string]interface{}{},
+		},
+		{
+			Description: "Simple query with basic filter (duplicate key by DocKeys arg), partial results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+					}`),
+					(`{
+						"Name": "Bob",
+						"Age": 32
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			Description: "Simple query with basic filter (multiple key by DocKeys arg), partial results",
+			Query: `query {
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+					"Name": "John",
+					"Age": 21
+					}`),
+					(`{
+						"Name": "Bob",
+						"Age": 32
+					}`),
+					(`{
+						"Name": "Jim",
+						"Age": 27
+					}`)},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "Jim",
+					"Age":  uint64(27),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
 }
 
 func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {

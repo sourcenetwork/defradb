@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package clock
 
 // CRDTs are composed of two structures, the payload and a clock. The
@@ -22,7 +23,7 @@ package clock
 // which link to previous nodes, with content addressable IDs creating a
 // fully linked graph of content. The linked graph of nodes creates a
 // natural history of events because a parent node contains a CID of a
-// child node, which ensures parents occured AFTER a child.
+// child node, which ensures parents occurred AFTER a child.
 
 //	  A			  	   B			  C
 //	//////   link	//////	 link	//////

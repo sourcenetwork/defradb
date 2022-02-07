@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,9 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package crdt
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -22,6 +24,7 @@ import (
 
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+	mh "github.com/multiformats/go-multihash"
 )
 
 func newMockStore() core.DSReaderWriter {
@@ -35,10 +38,10 @@ func setupLWWRegister() LWWRegister {
 	return NewLWWRegister(store, ns, id)
 }
 
-func setupLoadedLWWRegster() LWWRegister {
+func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 	return lww
 }
 
@@ -52,15 +55,16 @@ func TestLWWRegisterAddDelta(t *testing.T) {
 }
 
 func TestLWWRegisterInitialMerge(t *testing.T) {
+	ctx := context.Background()
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
-	err := lww.Merge(addDelta, "test")
+	err := lww.Merge(ctx, addDelta, "test")
 	if err != nil {
 		t.Errorf("Unexpected error: %s\n", err)
 		return
 	}
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 		return
@@ -73,12 +77,13 @@ func TestLWWRegisterInitialMerge(t *testing.T) {
 }
 
 func TestLWWReisterFollowupMerge(t *testing.T) {
-	lww := setupLoadedLWWRegster()
+	ctx := context.Background()
+	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test2"))
 	addDelta.SetPriority(2)
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,12 +94,13 @@ func TestLWWReisterFollowupMerge(t *testing.T) {
 }
 
 func TestLWWRegisterOldMerge(t *testing.T) {
-	lww := setupLoadedLWWRegster()
+	ctx := context.Background()
+	lww := setupLoadedLWWRegster(ctx)
 	addDelta := lww.Set([]byte("test-1"))
 	addDelta.SetPriority(0)
-	lww.Merge(addDelta, "test")
+	lww.Merge(ctx, addDelta, "test")
 
-	val, err := lww.Value()
+	val, err := lww.Value(ctx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -183,6 +189,14 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	// data = []byte("test")
 	// fmt.Println("PRE", data)
 	nd := dag.NodeWithData(data)
+	// The cid builder defaults to v0, we want to be using v1 CIDs
+	nd.SetCidBuilder(
+		cid.V1Builder{
+			Codec:    cid.Raw,
+			MhType:   mh.SHA2_256,
+			MhLength: -1,
+		})
+
 	for _, h := range heads {
 		err = nd.AddRawLink("", &ipld.Link{Cid: h})
 		if err != nil {

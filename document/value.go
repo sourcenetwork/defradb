@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package document
 
 import (
@@ -15,7 +16,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 // Value is an interface that points to a concrete Value implementation
@@ -50,7 +50,6 @@ type ReadableValue interface {
 type simpleValue struct {
 	t       core.CType
 	value   interface{}
-	crdt    crdt.MerkleCRDT
 	isDirty bool
 	delete  bool
 }

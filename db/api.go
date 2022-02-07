@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,17 +7,18 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package db
 
 import (
 	api "github.com/sourcenetwork/defradb/api/http"
 )
 
-func (db *DB) Listen() {
-	db.log.Infof("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", db.options.Address, db.options.Address)
+func (db *DB) Listen(address string) error {
+	db.log.Infof("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", address, address)
 
 	s := api.NewServer(db)
-	s.Listen(db.options.Address)
+	return s.Listen(address)
 }
 
 // func (db *DB) handlePing(w http.ResponseWriter, r *http.Request) {

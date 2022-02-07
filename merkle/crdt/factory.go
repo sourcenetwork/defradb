@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,12 +7,15 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package crdt
 
 import (
 	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
+
 	// "github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
@@ -22,14 +25,14 @@ var (
 	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
 )
 
-// MerkleCRDTInitFn intanciates a MerkleCRDT with a given key
+// MerkleCRDTInitFn instantiates a MerkleCRDT with a given key
 type MerkleCRDTInitFn func(ds.Key) MerkleCRDT
 
-// MerkleCRDTFactory instanciates a MerkleCRDTInitFn with a MultiStore
+// MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
 // returns a MerkleCRDTInitFn with all the necessary stores set
-type MerkleCRDTFactory func(mstore core.MultiStore) MerkleCRDTInitFn
+type MerkleCRDTFactory func(mstore core.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn
 
-// Factory is a helper utility for intanciating new MerkleCRDTs.
+// Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
@@ -40,7 +43,7 @@ type Factory struct {
 }
 
 var (
-	// DefaultFactory is intanciated with no stores
+	// DefaultFactory is instantiated with no stores
 	// It is recommended to use this only after you call
 	// WithStores(...) so you get a new non-shared instance
 	DefaultFactory = NewFactory(nil, nil, nil)
@@ -57,7 +60,7 @@ func NewFactory(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore
 	}
 }
 
-// Register creates a new entry in the crdts map to register a factory function
+// Register creates a new entry in the CRDTs map to register a factory function
 // to a MerkleCRDT Type.
 func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
 	factory.crdts[t] = fn
@@ -66,25 +69,25 @@ func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a core.MultiStore object)
-func (factory Factory) Instance(t core.CType, key ds.Key) (MerkleCRDT, error) {
+func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t core.CType, key ds.Key) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
 	}
-	return (*fn)(factory)(key), nil
+	return (*fn)(factory, schemaID, bs)(key), nil
 }
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied core.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStores(store core.MultiStore, t core.CType, key ds.Key) (MerkleCRDT, error) {
+func (factory Factory) InstanceWithStores(store core.MultiStore, schemaID string, bs corenet.Broadcaster, t core.CType, key ds.Key) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
 	}
 
-	return (*fn)(store)(key), nil
+	return (*fn)(store, schemaID, bs)(key), nil
 }
 
 func (factory Factory) getRegisteredFactory(t core.CType) (*MerkleCRDTFactory, error) {
@@ -145,6 +148,11 @@ func (factory *Factory) SetDagstore(dagstore core.DAGStore) error {
 func (factory Factory) WithDagstore(dagstore core.DAGStore) Factory {
 	factory.dagstore = dagstore
 	return factory
+}
+
+// Rootstore impements MultiStore
+func (factory Factory) Rootstore() core.DSReaderWriter {
+	return nil
 }
 
 // SetLogger sets the current logger

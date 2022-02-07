@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,12 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package parser
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -26,6 +28,17 @@ const (
 	VersionFieldName = "_version"
 	GroupFieldName   = "_group"
 	DocKeyFieldName  = "_key"
+	CountFieldName   = "_count"
+	SumFieldName     = "_sum"
+	HiddenFieldName  = "_hidden"
+)
+
+// Enum for different types of read Select queries
+type SelectQueryType int
+
+const (
+	ScanQuery = iota
+	VersionedScanQuery
 )
 
 var dbAPIQueryNames = map[string]bool{
@@ -37,7 +50,15 @@ var dbAPIQueryNames = map[string]bool{
 var ReservedFields = map[string]bool{
 	VersionFieldName: true,
 	GroupFieldName:   true,
+	CountFieldName:   true,
+	SumFieldName:     true,
+	HiddenFieldName:  true,
 	DocKeyFieldName:  true,
+}
+
+var aggregates = map[string]struct{}{
+	CountFieldName: {},
+	SumFieldName:   {},
 }
 
 type Query struct {
@@ -73,21 +94,24 @@ type Selection interface {
 	GetRoot() SelectionType
 }
 
-// type
-
 // Select is a complex Field with strong typing
 // It used for sub types in a query. Includes
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name  string
-	Alias string
+	Name           string
+	Alias          string
+	CollectionName string
+
+	// QueryType indicates what kind of query this is
+	// Currently supports: ScanQuery, VersionedScanQuery
+	QueryType SelectQueryType
 
 	// Root is the top level query parsed type
 	Root SelectionType
 
-	DocKey string
-	CID    string
+	DocKeys []string
+	CID     string
 
 	Filter  *Filter
 	Limit   *Limit
@@ -152,7 +176,9 @@ func (f Field) GetStatement() ast.Node {
 	return f.Statement
 }
 
-type GroupBy struct{}
+type GroupBy struct {
+	Fields []string
+}
 
 type SortDirection string
 
@@ -231,8 +257,8 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	return q, nil
 }
 
-// parseOperationDefintition parses the individual GraphQL
-// 'query' operations, which there may be mulitple of.
+// parseOperationDefinition parses the individual GraphQL
+// 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
 	qdef := &OperationDefinition{
 		Statement:  def,
@@ -269,7 +295,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	return qdef, nil
 }
 
-// @todo: Create seperate select parse functions
+// @todo: Create separate select parse functions
 // for generated object queries, and general
 // API queries
 
@@ -300,7 +326,14 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			slct.Filter = filter
 		} else if prop == "dockey" { // parse single dockey query field
 			val := argument.Value.(*ast.StringValue)
-			slct.DocKey = val.Value
+			slct.DocKeys = []string{val.Value}
+		} else if prop == "dockeys" {
+			docKeyValues := argument.Value.(*ast.ListValue).Values
+			docKeys := make([]string, len(docKeyValues))
+			for i, value := range docKeyValues {
+				docKeys[i] = value.(*ast.StringValue).Value
+			}
+			slct.DocKeys = docKeys
 		} else if prop == "cid" { // parse single CID query field
 			val := argument.Value.(*ast.StringValue)
 			slct.CID = val.Value
@@ -334,9 +367,23 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 				Conditions: cond,
 				Statement:  obj,
 			}
+		} else if prop == "groupBy" {
+			obj := argument.Value.(*ast.ListValue)
+			fields := make([]string, 0)
+			for _, v := range obj.Values {
+				fields = append(fields, v.GetValue().(string))
+			}
+
+			slct.GroupBy = &GroupBy{
+				Fields: fields,
+			}
 		}
 
-		// @todo: parse groupby
+		if len(slct.DocKeys) != 0 && len(slct.CID) != 0 {
+			slct.QueryType = VersionedScanQuery
+		} else {
+			slct.QueryType = ScanQuery
+		}
 	}
 
 	// if theres no field selections, just return
@@ -347,6 +394,10 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 	// parse field selections
 	var err error
 	slct.Fields, err = parseSelectFields(slct.Root, field.SelectionSet)
+	if err != nil {
+		return nil, err
+	}
+
 	return slct, err
 }
 
@@ -357,7 +408,10 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 		switch node := selection.(type) {
 		case *ast.Field:
 			if node.SelectionSet == nil { // regular field
-				f := parseField(root, node)
+				f, err := parseField(i, root, node)
+				if err != nil {
+					return nil, err
+				}
 				selections[i] = f
 			} else { // sub type with extra fields
 				subroot := root
@@ -377,41 +431,33 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	return selections, nil
 }
 
-// iterates over the given map, and replaces the string instance
-// of the sort direction, with a SortDirection type
-func replaceSortDirection(obj map[string]interface{}) error {
-	for k, v := range obj {
-		switch n := v.(type) {
-		case string:
-			dir, ok := NameToSortDirection[n]
-			if !ok {
-				return errors.New("Invalid sort direction string")
-			}
-			obj[k] = dir
-		case map[string]interface{}:
-			err := replaceSortDirection(n)
-			if err != nil {
-				return err
-			}
-			obj[k] = n
+// parseField simply parses the Name/Alias
+// into a Field type
+func parseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
+	var name string
+	var alias string
+
+	if _, isAggregate := aggregates[field.Name.Value]; isAggregate {
+		name = fmt.Sprintf("_agg%v", i)
+		if field.Alias == nil {
+			alias = field.Name.Value
+		} else {
+			alias = field.Alias.Value
+		}
+	} else {
+		name = field.Name.Value
+		if field.Alias != nil {
+			alias = field.Alias.Value
 		}
 	}
 
-	return nil
-}
-
-// parseField simply parses the Name/Alias
-// into a Field type
-func parseField(root SelectionType, field *ast.Field) *Field {
 	f := &Field{
 		Root:      root,
-		Name:      field.Name.Value,
+		Name:      name,
 		Statement: field,
+		Alias:     alias,
 	}
-	if field.Alias != nil {
-		f.Alias = field.Alias.Value
-	}
-	return f
+	return f, nil
 }
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {
@@ -421,4 +467,31 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	default:
 		return nil, errors.New("Unknown query")
 	}
+}
+
+// Returns the source of the aggregate as requested by the consumer
+func (field Field) GetAggregateSource() ([]string, error) {
+
+	if len(field.Statement.Arguments) == 0 {
+		return []string{}, fmt.Errorf("Aggregate must be provided with a property to aggregate.")
+	}
+
+	var path []string
+	switch arguementValue := field.Statement.Arguments[0].Value.GetValue().(type) {
+	case string:
+		path = []string{arguementValue}
+	case []*ast.ObjectField:
+		if len(arguementValue) == 0 {
+			return []string{}, fmt.Errorf("Unexpected error: aggregate field contained no child field selector")
+		}
+		innerPath := arguementValue[0].Value.GetValue()
+		if innerPathStringValue, isString := innerPath.(string); isString {
+			path = []string{arguementValue[0].Name.Value, innerPathStringValue}
+		} else {
+			// If the inner path is not a string, this must mean the field is an inline array in which case we only want the base path
+			path = []string{arguementValue[0].Name.Value}
+		}
+	}
+
+	return path, nil
 }

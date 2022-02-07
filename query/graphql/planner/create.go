@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -23,21 +24,18 @@ import (
 //
 // Create nodes are the simplest of the object mutations
 // Each Iteration of the plan, creates and returns one
-// document, until we've exhaused the payload. No filtering
+// document, until we've exhausted the payload. No filtering
 // or Select plans
 type createNode struct {
 	p *Planner
 
 	// cache information about the original data source
 	// collection name, meta-data, etc.
-	sourceInfo sourceInfo
 	collection client.Collection
 
-	// newDoc is the JSON string of the new document, unpares
+	// newDoc is the JSON string of the new document, unparsed
 	newDocStr string
 	doc       *document.Document
-	// result is the target document as a map after creation
-	result map[string]interface{}
 
 	err error
 
@@ -49,7 +47,7 @@ func (n *createNode) Init() error { return nil }
 func (n *createNode) Start() error {
 	// parse the doc
 	if n.newDocStr == "" {
-		return errors.New("Invalid document to create")
+		return fmt.Errorf("Invalid document to create")
 	}
 
 	doc, err := document.NewFromJSON([]byte(n.newDocStr))
@@ -71,7 +69,7 @@ func (n *createNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	if err := n.collection.WithTxn(n.p.txn).Create(n.doc); err != nil {
+	if err := n.collection.WithTxn(n.p.txn).Create(n.p.ctx, n.doc); err != nil {
 		return false, err
 	}
 
@@ -86,7 +84,7 @@ func (n *createNode) Values() map[string]interface{} {
 	return val
 }
 
-func (n *createNode) Close() { /* no-op?? */ }
+func (n *createNode) Close() error { return nil }
 
 func (n *createNode) Source() planNode { return nil }
 
@@ -98,7 +96,7 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(parsed.Schema)
+	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
 	if err != nil {
 		return nil, err
 	}
@@ -110,5 +108,5 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	// which uses the new create node as its
 	// source, instead of a scan node.
 	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create, true)
+	return p.SelectFromSource(slct, create, true, nil)
 }

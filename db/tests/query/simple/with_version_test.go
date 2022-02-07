@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package simple
 
 import (
@@ -44,14 +45,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]interface{}{
 					{
-						"cid": "QmaXdKKsc5GRWXtMytZj4PEf5hFgFxjZaKToQpDY8cAocV",
+						"cid": "bafkreibbpmufrnx2zyl66xcxcas25ztyihtkguhtaevyqt72syvplooube",
 						"links": []map[string]interface{}{
 							{
-								"cid":  "QmPaY2DNmd7LtRDpReswc5UTGoU5Q32Py1aEVG7Shq6Np1",
+								"cid":  "bafybeiftyjqxyzqtfpi65kde4hla4xm3v4dvtr7fr2p2p5ng5lfg7rrcve",
 								"name": "Age",
 							},
 							{
-								"cid":  "Qmag2zKKGGQwVSss9pQn3hjTu9opdF5mkJXUR9rt2A651h",
+								"cid":  "bafybeif67ysvfnusidyuoxwztrwhunuihtbrunet42422wgp22sf6ninki",
 								"name": "Name",
 							},
 						},

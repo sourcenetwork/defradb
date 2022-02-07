@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,23 +7,24 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package crdt
 
 import (
+	"context"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	logging "github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 )
 
-var (
-	factoryTestLog = logging.Logger("defradb.tests.factory")
-)
+// var (
+//     factoryTestLog = logging.Logger("defradb.tests.factory")
+// )
 
 func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 	root := ds.NewMapDatastore()
@@ -36,7 +37,7 @@ func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
 func TestNewBlankFactory(t *testing.T) {
 	f := NewFactory(nil, nil, nil)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 }
 
@@ -44,7 +45,7 @@ func TestNewFactoryWithStores(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 
 	assert.Equal(t, d, f.datastore)
@@ -56,7 +57,7 @@ func TestFactoryMultiStoreInterface(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 	if f == nil {
-		t.Error("Returned factory is a nil pointer")
+		t.Fatal("Returned factory is a nil pointer")
 	}
 
 	// check interface implement
@@ -128,7 +129,7 @@ func TestFactoryInstanceMissing(t *testing.T) {
 	d, h, s := newStores()
 	f := NewFactory(d, h, s)
 
-	_, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
+	_, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
@@ -138,7 +139,7 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	f := f1.WithStores(d, h, s)
 
-	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -151,7 +152,7 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 	f1.Register(core.COMPOSITE, &compFactoryFn)
 	f := f1.WithStores(d, h, s)
 
-	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -163,7 +164,7 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	f := NewFactory(d, h, s)
 	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 
-	crdt, err := f.Instance(core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -175,7 +176,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 	f := NewFactory(d, h, s)
 	f.Register(core.COMPOSITE, &compFactoryFn)
 
-	crdt, err := f.Instance(core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -183,25 +184,27 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 }
 
 func TestLWWRegisterFactoryFn(t *testing.T) {
+	ctx := context.Background()
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
-	crdt := lwwFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
+	crdt := lwwFactoryFn(f, "", nil)(ds.NewKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
 
-	_, err := lwwreg.Set([]byte("hi"))
+	_, err := lwwreg.Set(ctx, []byte("hi"))
 	assert.NoError(t, err)
 }
 
 func TestCompositeRegisterFactoryFn(t *testing.T) {
+	ctx := context.Background()
 	d, h, s := newStores()
 	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
-	crdt := compFactoryFn(f)(ds.NewKey("/1/0/MyKey"))
+	crdt := compFactoryFn(f, "", nil)(ds.NewKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)
 
-	_, err := merkleReg.Set([]byte("hi"), []core.DAGLink{})
+	_, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{})
 	assert.NoError(t, err)
 }

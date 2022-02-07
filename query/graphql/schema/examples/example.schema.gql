@@ -1,4 +1,4 @@
-# This is an exmaple schema for DefraDB GraphQL Query Language.
+# This is an example schema for DefraDB GraphQL Query Language.
 # It is the design of the auto-generated schema for a given developer
 # defined type.
 
@@ -35,12 +35,12 @@ enum BookFields {
 }
 
 # Note: Currently (Aug 2020) the GraphQL spec does not allow input union types. So the filter block fields must take another input object exclusively.
-# This means, insted of "filter: {name: 'John'}", we MUST use "filter: {name: {_eq: 'John'}}"
+# This means, instead of "filter: {name: 'John'}", we MUST use "filter: {name: {_eq: 'John'}}"
 # See the following RFC for updates: https://github.com/graphql/graphql-spec/pull/733
 
 # Book filters with conditionals and relations
 input BookFilterArg {
-    # condiationals
+    # conditionals
     _and: [BookFilterArg]
     _or: [BookFilterArg]
     _not: BookFilterArg
@@ -57,14 +57,14 @@ input BookFilterArg {
 
 # All the *BaseArg input types are used 
 # when being filtered from a related type. This prevents
-# malformed conditional positioning and infitite depth filters
+# malformed conditional positioning and infinite depth filters
 # Conditionals are only allowed at the root level filter
 # or directly inside another conditional.
 # IE:   {_and: [{book: {rating: {_eq: 3}}}, {book: {title: {_eq: "A Painted}}}]} -  CORRECT
 #       {book: {_and: [{rating: {_eq: 3}}, {title: {_eq: "A Painted}}]}} - INCORRECT
 #
 # Although this results in a few extra characters of syntax, its *much* easier to reason about
-# Infinite depth filters would result from accessing both sides of a relationship indefinately
+# Infinite depth filters would result from accessing both sides of a relationship indefinitely
 # within a filter
 # IE: {book: {author: {book: {author: ...}}}}
 # By removing the relation objects from the base arg type we avoid this.
@@ -108,7 +108,7 @@ enum AuthorFields {
 
 # Author  with conditionals and relations
 input AuthorFilterArg {
-    # condiationals
+    # conditionals
     _and: [AuthorFilterArg!]
     _or: [AuthorFilterArg!]
     _not: AuthorFilterArg

@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,11 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -22,7 +21,6 @@ import (
 type updateNode struct {
 	p *Planner
 
-	sourceInfo sourceInfo
 	collection client.Collection
 
 	filter *parser.Filter
@@ -55,14 +53,12 @@ func (n *updateNode) Next() (bool, error) {
 		var err error
 		numids := len(n.ids)
 		if numids == 1 {
-			fmt.Println("single key")
 			key, err2 := key.NewFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
-			results, err = n.collection.UpdateWithKey(key, n.patch)
+			results, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
 		} else if numids > 1 {
-			fmt.Println("multi key")
 			// todo
 			keys := make([]key.DocKey, len(n.ids))
 			for i, v := range n.ids {
@@ -71,21 +67,21 @@ func (n *updateNode) Next() (bool, error) {
 					return false, err
 				}
 			}
-			results, err = n.collection.UpdateWithKeys(keys, n.patch)
+			results, err = n.collection.UpdateWithKeys(n.p.ctx, keys, n.patch)
 		} else {
-			fmt.Println("filter")
-			results, err = n.collection.UpdateWithFilter(n.filter, n.patch)
+			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
 		}
 
-		fmt.Println("update node error:", err)
 		if err != nil {
 			return false, err
 		}
 
 		// consume the updates into our valuesNode
-		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
-			n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			if err != nil {
+				return false, err
+			}
 		}
 		n.isUpdating = false
 
@@ -109,7 +105,11 @@ func (n *updateNode) Values() map[string]interface{} {
 	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
 
 	n.results.Spans(spans)
-	n.results.Init()
+
+	err := n.results.Init()
+	if err != nil {
+		panic(err) //handle better?
+	}
 
 	// get the next result based on our point lookup
 	next, err := n.results.Next()
@@ -128,8 +128,8 @@ func (n *updateNode) Start() error {
 	return n.results.Start()
 }
 
-func (n *updateNode) Close() {
-	n.results.Close()
+func (n *updateNode) Close() error {
+	return n.results.Close()
 }
 
 func (n *updateNode) Source() planNode { return nil }
@@ -144,7 +144,7 @@ func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(parsed.Schema)
+	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
 	if err != nil {
 		return nil, err
 	}

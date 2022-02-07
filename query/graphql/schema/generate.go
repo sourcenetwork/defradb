@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,12 +7,13 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package schema
 
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"log"
 
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -40,21 +41,21 @@ type Generator struct {
 	typeDefs []*gql.Object
 	manager  *SchemaManager
 
-	expandedTypes map[string]bool
+	expandedFields map[string]bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
 func (m *SchemaManager) NewGenerator() *Generator {
 	m.Generator = &Generator{
-		manager:       m,
-		expandedTypes: make(map[string]bool),
+		manager:        m,
+		expandedFields: make(map[string]bool),
 	}
 	return m.Generator
 }
 
 // FromSDL generates the query type definitions from a
-// encoded GraphQL Schema Definition Lanaguage string
+// encoded GraphQL Schema Definition Language string
 func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error) {
 	// parse to AST
 	source := source.NewSource(&source.Source{
@@ -71,14 +72,67 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error)
 	return types, doc, err
 }
 
+func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
+	typeMapBeforeMutation := g.manager.schema.TypeMap()
+	typesBeforeMutation := make(map[string]interface{}, len(typeMapBeforeMutation))
+
+	for typeName := range typeMapBeforeMutation {
+		typesBeforeMutation[typeName] = struct{}{}
+	}
+
+	result, err := g.fromAST(document)
+
+	if err != nil {
+		// If there is an error we should drop any new objects as they may be partial, poluting the in memory cache
+		// This is quite a simple check at the moment (on type name) - this should be expanded when we allow schema mutation/deletion
+		// There is no guarantee that `typeMapBeforeMutation` will still be the object returned by `schema.TypeMap()`, so we should re-fetch it
+		typeMapAfterMutation := g.manager.schema.TypeMap()
+		for typeName := range typeMapAfterMutation {
+			if _, typeExistedBeforeMutation := typesBeforeMutation[typeName]; !typeExistedBeforeMutation {
+				delete(typeMapAfterMutation, typeName)
+			}
+		}
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // FromAST generates the query type definitions from a
 // parsed GraphQL Schema Definition Language AST document
-func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypesFromAST(document)
 	if err != nil {
 		return nil, err
 	}
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	if err := g.genAggregateFields(); err != nil {
+		return nil, err
+	}
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	generatedFilterBaseArgs := make([]*gql.InputObject, len(g.typeDefs))
+	for i, t := range g.typeDefs {
+		generatedFilterBaseArgs[i] = g.genTypeFilterBaseArgInput(t)
+	}
+
+	for _, t := range generatedFilterBaseArgs {
+		err := g.manager.schema.AppendType(t)
+		if err != nil {
+			// Todo: better error handle
+			log.Printf("failure appending type while generating query type defs from an AST : %v", err)
+		}
+	}
+
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -144,23 +198,26 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
-		// ignore reserved fields
-		if _, ok := parser.ReservedFields[f]; ok {
+		// ignore reserved fields, execpt the Group field (as that requires typing)
+		if _, ok := parser.ReservedFields[f]; ok && f != parser.GroupFieldName {
 			continue
 		}
+		// Both the object name and the field name should be used as the key
+		// in case the child object type is referenced multiple times from the same parent type
+		fieldKey := obj.Name() + f
 		switch t := def.Type.(type) {
 		case *gql.Object:
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 			// make sure all the sub fields are expanded first
 			if err := g.expandInputArgument(t); err != nil {
 				return err
 			}
 
-			// new field object with arugments (single)
+			// new field object with arguments (single)
 			expandedField, err := g.createExpandedFieldSingle(def, t)
 			if err != nil {
 				return err
@@ -169,13 +226,13 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			// obj.AddFieldConfig(f, expandedField)
 			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
-			break
-		case *gql.List: // new field object with aguments (list)
+
+		case *gql.List: // new field object with arguments (list)
 			listType := t.OfType
-			if _, complete := g.expandedTypes[obj.Name()]; complete {
+			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
 			} else {
-				g.expandedTypes[obj.Name()] = true
+				g.expandedFields[fieldKey] = true
 			}
 
 			if listObjType, ok := listType.(*gql.Object); ok {
@@ -189,7 +246,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-			// todo: check if NonNull is possible here
+			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
 			// get subtype
 		}
@@ -264,11 +321,11 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 			// Wrap field definition in a thunk so we can
 			// handle any embedded object which is defined
 			// at a future point in time.
-			fieldsThunk := (gql.FieldsThunk)(func() gql.Fields {
+			fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
 				fields := gql.Fields{}
 
 				// @todo: Check if this is a collection (relation) type
-				// or just a embedded only type (which doesnt need a key)
+				// or just a embedded only type (which doesn't need a key)
 				// automatically add the _key: ID field to the type
 				fields["_key"] = &gql.Field{Type: gql.ID}
 
@@ -284,8 +341,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					t := field.Type
 					ttype, err := astNodeToGqlType(g.manager.schema.TypeMap(), t)
 					if err != nil {
-						// @todo: Handle errors during type genation within a Thunk
-						// panic(err)
+						return nil, err
 					}
 
 					// check if ttype is a Object value
@@ -297,20 +353,30 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 						fields[fType.Name+"_id"] = &gql.Field{Type: gql.ID}
 
 						// register the relation
-						relName, err := genRelationName(objconf.Name, ttype.Name())
+						relName, err := getRelationshipName(field, objconf, ttype)
 						if err != nil {
-							// todo again handle errors
+							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
+
 					case *gql.List:
 						ltype := subobj.OfType
 						// register the relation
-						relName, err := genRelationName(objconf.Name, ltype.Name())
+						relName, err := getRelationshipName(field, objconf, ltype)
 						if err != nil {
-							// todo again handle errors
+							return nil, err
 						}
-						g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
-						break
+
+						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
+						if err != nil {
+							// Todo: better error handle
+							log.Printf("got error while registering single relation: %v", err)
+						}
 					}
 
 					fType.Type = ttype
@@ -322,7 +388,17 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 					Type: gql.NewList(types.Commit),
 				}
 
-				return fields
+				// @todo Pairup on removing the staticcheck linter error below.
+				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
+				if !ok {
+					return nil, fmt.Errorf("object not found whilst executing fields thunk: %s", defType.Name.Value)
+				}
+
+				fields[parser.GroupFieldName] = &gql.Field{
+					Type: gql.NewList(gqlType),
+				}
+
+				return fields, nil
 			})
 
 			objconf.Fields = fieldsThunk
@@ -339,6 +415,158 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 	}
 
 	return objs, nil
+}
+
+// Gets the name of the relationship. Will return the provided name if one is specified,
+// otherwise will generate one
+func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, targetName gql.Type) (string, error) {
+	// search for a user-defined name, and return it if found
+	for _, directive := range field.Directives {
+		if directive.Name.Value == "relation" {
+			for _, arguement := range directive.Arguments {
+				if arguement.Name.Value == "name" {
+					name, isString := arguement.Value.GetValue().(string)
+					if !isString {
+						return "", fmt.Errorf("Relationship name must be of type string, but was: %v", arguement.Value.GetKind())
+					}
+					return name, nil
+				}
+			}
+		}
+	}
+
+	// if no name is provided, generate one
+	return genRelationName(hostName.Name, targetName.Name())
+}
+
+func (g *Generator) genAggregateFields() error {
+	for _, t := range g.typeDefs {
+		countField, err := g.genCountFieldConfig(t)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(countField.Name, &countField)
+
+		sumField := g.genSumFieldConfig(t)
+		t.AddFieldConfig(sumField.Name, &sumField)
+	}
+
+	return nil
+}
+
+func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
+	inputCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, "CountArg"),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	for _, field := range obj.Fields() {
+		// Only lists can be counted
+		if _, isList := field.Type.(*gql.List); !isList {
+			continue
+		}
+		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+	}
+	countType := gql.NewEnum(inputCfg)
+	err := g.manager.schema.AppendType(countType)
+	if err != nil {
+		return gql.Field{}, err
+	}
+
+	field := gql.Field{
+		Name: parser.CountFieldName,
+		Type: gql.Int,
+		Args: gql.FieldConfigArgument{
+			"field": newArgConfig(countType),
+		},
+	}
+
+	return field, nil
+}
+
+func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
+	var sumType *gql.InputObject
+
+	inputCfg := gql.InputObjectConfig{
+		Name: genTypeName(obj, "SumArg"),
+	}
+
+	inputCfg.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		sumBaseArgType, isSumable := g.genSumBaseArgInput(obj)
+		if isSumable {
+			err := g.manager.schema.AppendType(sumBaseArgType)
+			if err != nil {
+				return gql.InputObjectConfigFieldMap{}, err
+			}
+		}
+
+		for _, field := range obj.Fields() {
+			// we can only sum list items
+			listType, isList := field.Type.(*gql.List)
+			if !isList {
+				continue
+			}
+
+			if listType.OfType == gql.Float || listType.OfType == gql.Int {
+				// If it is an inline scalar array then we require an empty object as an argument due to the lack of union input types
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: &gql.Object{},
+				}
+			} else {
+				subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[genTypeName(field.Type, "SumBaseArg")]
+				// If the item is not in the type map, it must contain no summable fields (e.g. no Int/Floats)
+				if !isSubTypeSumable {
+					continue
+				}
+				fields[field.Name] = &gql.InputObjectFieldConfig{
+					Type: subSumType,
+				}
+			}
+
+		}
+
+		return fields, nil
+	})
+	sumType = gql.NewInputObject(inputCfg)
+
+	//this might resolve the thunk?  Race issue?
+	err := g.manager.schema.AppendType(sumType)
+	if err != nil {
+		log.Printf("failure appending sumType : %v", err)
+	}
+
+	field := gql.Field{
+		Name: parser.SumFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{
+			"field": newArgConfig(sumType),
+		},
+	}
+	return field
+}
+
+func (g *Generator) genSumBaseArgInput(obj *gql.Object) (*gql.Enum, bool) {
+	inputCfg := gql.EnumConfig{
+		Name:   genTypeName(obj, "SumBaseArg"),
+		Values: gql.EnumValueConfigMap{},
+	}
+
+	hasSumableFields := false
+	// generate basic filter operator blocks for all the sumable types
+	for _, field := range obj.Fields() {
+		if field.Type == gql.Float || field.Type == gql.Int {
+			hasSumableFields = true
+			inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+		}
+	}
+
+	if !hasSumableFields {
+		return nil, false
+	}
+
+	return gql.NewEnum(inputCfg), true
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
@@ -375,7 +603,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	name := t.(*ast.Named).Name.Value
 	ttype, ok := typeMap[name]
 	if !ok {
-		return nil, errors.New("No type found for given name")
+		return nil, fmt.Errorf("No type found for given name: %s", name)
 	}
 
 	return ttype, nil
@@ -487,8 +715,8 @@ func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 		Values: gql.EnumValueConfigMap{},
 	}
 
-	for i, field := range obj.Fields() {
-		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: i}
+	for f, field := range obj.Fields() {
+		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}
 	}
 
 	return gql.NewEnum(enumFieldsCfg)
@@ -501,12 +729,8 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
-
-		// @attention: do we need to explicity add our "sub types" to the TypeMap
-		filterBaseArgType := g.genTypeFilterBaseArgInput(obj)
-		g.manager.schema.AppendType(filterBaseArgType)
 
 		// conditionals
 		compoundListType := &gql.InputObjectFieldConfig{
@@ -540,7 +764,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		// fmt.Println("#####################")
 		// spew.Dump(fields)
-		return fields
+		return fields, nil
 	})
 
 	// add the fields thunker
@@ -611,7 +835,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "OrderArg"),
 	}
-	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() gql.InputObjectConfigFieldMap {
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 		fields := gql.InputObjectConfigFieldMap{}
 
 		for f, field := range obj.Fields() {
@@ -629,7 +853,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			}
 		}
 
-		return fields
+		return fields, nil
 	})
 
 	inputCfg.Fields = fieldThunk
@@ -637,41 +861,35 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 type queryInputTypeConfig struct {
-	key     *gql.Scalar
-	cid     *gql.Scalar
 	filter  *gql.InputObject
 	groupBy *gql.Enum
 	having  *gql.InputObject
 	order   *gql.InputObject
 }
 
-// generate the type Query { ... }  field for the given type
-func (g *Generator) genTypeQueryableField(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
-	name := strings.ToLower(obj.Name())
+func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
+	name := obj.Name()
 
 	// add the generated types to the type map
-	// g.manager.schema.AppendType(config.filter)
-
-	field := &gql.Field{
-		// @todo: Handle collection name from @collection directive
-		Name: name,
-		Type: obj,
-		Args: gql.FieldConfigArgument{
-			"filter": newArgConfig(config.filter),
-		},
+	if err := g.manager.schema.AppendType(config.filter); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - filter: %v", err)
 	}
 
-	return field
-}
+	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - groupBy: %v", err)
+	}
 
-func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
-	name := strings.ToLower(obj.Name())
+	if err := g.manager.schema.AppendType(config.having); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - having: %v", err)
+	}
 
-	// add the generated types to the type map
-	g.manager.schema.AppendType(config.filter)
-	g.manager.schema.AppendType(config.groupBy)
-	g.manager.schema.AppendType(config.having)
-	g.manager.schema.AppendType(config.order)
+	if err := g.manager.schema.AppendType(config.order); err != nil {
+		// Todo: better error handle
+		log.Printf("failure appending runtime schema - order: %v", err)
+	}
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
@@ -679,6 +897,7 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"dockey":  newArgConfig(gql.String),
+			"dockeys": newArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
 			"cid":     newArgConfig(gql.String),
 			"filter":  newArgConfig(config.filter),
 			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
@@ -696,7 +915,7 @@ func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInput
 // Usually called after a round of type generation
 func (g *Generator) Reset() {
 	g.typeDefs = make([]*gql.Object, 0)
-	g.expandedTypes = make(map[string]bool)
+	g.expandedFields = make(map[string]bool)
 }
 
 func newArgConfig(t gql.Input) *gql.ArgumentConfig {

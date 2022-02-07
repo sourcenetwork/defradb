@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,9 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package db
 
 import (
+	"context"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -17,27 +19,44 @@ import (
 	gql "github.com/graphql-go/graphql"
 )
 
-func (db *DB) ExecQuery(query string) *client.QueryResult {
+func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	res := &client.QueryResult{}
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {
 		return db.ExecIntrospection(query)
 	}
 
-	txn, err := db.NewTxn(false)
-	defer txn.Discard()
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		res.Errors = []interface{}{err.Error()}
+		return res
+	}
+	defer txn.Discard(ctx)
+
+	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
 
-	results, err := db.queryExecutor.ExecQuery(db, txn, query)
-	if err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}
 
-	if err := txn.Commit(); err != nil {
+	res.Data = results
+	return res
+}
+
+func (db *DB) ExecTransactionalQuery(ctx context.Context, query string, txn client.Txn) *client.QueryResult {
+	res := &client.QueryResult{}
+	// check if its Introspection query
+	if strings.Contains(query, "IntrospectionQuery") {
+		return db.ExecIntrospection(query)
+	}
+
+	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
+	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
 	}

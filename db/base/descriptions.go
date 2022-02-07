@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,16 +7,31 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package base
 
 import (
+	"errors"
 	"fmt"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 )
 
 const (
 	ObjectMarker = byte(0xff) // @todo: Investigate object marker values
+)
+
+// Reserved system index identifiers. Any index that defra requires
+// to enable any internal feature, requires a reserved index ID.
+// Changing an existing system index ID is A BREAKING CHANGE.
+// Adding new IDs incrementally is not breaking.
+const (
+	PrimaryIndex int32 = 0
+
+	// VersionIndex is a Reserved secondary index that represents a
+	// versioned instance of the PrimaryIndex
+	VersionIndex int32 = -1 * iota
 )
 
 // CollectionDescription describes a Collection and
@@ -25,7 +40,7 @@ type CollectionDescription struct {
 	Name    string
 	ID      uint32
 	Schema  SchemaDescription
-	Indexes []IndexDescription
+	Indexes []IndexDescription // @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
 }
 
 // IDString returns the collection ID as a string
@@ -42,6 +57,32 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 		}
 	}
 	return FieldDescription{}, false
+}
+
+func (c CollectionDescription) GetIndexDocKey(key ds.Key, indexID uint32) ds.Key {
+	return ds.NewKey(c.IDString()).ChildString(fmt.Sprint(indexID)).Child(key)
+}
+
+func (c CollectionDescription) GetPrimaryIndexDocKey(key ds.Key) ds.Key {
+	return c.GetIndexDocKey(key, c.Indexes[0].ID)
+}
+
+func (c CollectionDescription) GetFieldKey(key ds.Key, fieldName string) ds.Key {
+	if !c.Schema.IsEmpty() {
+		return key.ChildString(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
+	}
+	return key.ChildString(fieldName)
+}
+
+func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key ds.Key, fieldName string) (ds.Key, error) {
+	switch ctype {
+	case core.COMPOSITE:
+		return c.GetPrimaryIndexDocKey(key).ChildString(core.COMPOSITE_NAMESPACE), nil
+	case core.LWW_REGISTER:
+		fieldKey := c.GetFieldKey(key, fieldName)
+		return c.GetPrimaryIndexDocKey(fieldKey), nil
+	}
+	return ds.Key{}, errors.New("Invalid CRDT type")
 }
 
 // IndexDescription describes an Index on a Collection
@@ -61,7 +102,7 @@ type IndexDescription struct {
 	// local schema.
 	//
 	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Morever, since
+	// and the DocKey of the target relation type. Moreover, since
 	// we use a Composite Key Index system, the ordering of the keys
 	// affects how we can use in the index. The initial Junction
 	// Index for a type, needs to be assigned to the  "Primary"
@@ -88,60 +129,74 @@ func (index IndexDescription) IDString() string {
 type SchemaDescription struct {
 	ID   uint32
 	Name string
-	Key  []byte // DocKey for verioned source schema
+	Key  []byte // DocKey for versioned source schema
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription
 }
 
-//IsEmpty returns true if the SchemaDescription is empty and unitialized
+//IsEmpty returns true if the SchemaDescription is empty and uninitialized
 func (sd SchemaDescription) IsEmpty() bool {
-	if len(sd.Fields) == 0 {
-		return true
+	return len(sd.Fields) == 0
+}
+
+func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
+	for _, field := range sd.Fields {
+		if field.Name == fieldName {
+			return uint32(field.ID)
+		}
 	}
-	return false
+	return uint32(0)
 }
 
 type FieldKind uint8
 
+// Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	FieldKind_None FieldKind = iota
-	FieldKind_DocKey
-	FieldKind_BOOL
-	FieldKind_INT
-	FieldKind_FLOAT
-	FieldKind_DECIMNAL
-	FieldKind_DATE
-	FieldKind_TIMESTAMP
-	FieldKind_STRING
-	FieldKind_BYTES
-	FieldKind_OBJECT               // Embedded object within the type
-	FieldKind_OBJECT_ARRAY         // Array of embedded objects
-	FieldKind_FOREIGN_OBJECT       // Embedded object, but accessed via foreign keys
-	FieldKind_FOREIGN_OBJECT_ARRAY // Array of embedded objects, accesed via foreign keys
+	FieldKind_None                 FieldKind = 0
+	FieldKind_DocKey               FieldKind = 1
+	FieldKind_BOOL                 FieldKind = 2
+	FieldKind_BOOL_ARRAY           FieldKind = 3
+	FieldKind_INT                  FieldKind = 4
+	FieldKind_INT_ARRAY            FieldKind = 5
+	FieldKind_FLOAT                FieldKind = 6
+	FieldKind_FLOAT_ARRAY          FieldKind = 7
+	FieldKind_DECIMNAL             FieldKind = 8
+	FieldKind_DATE                 FieldKind = 9
+	FieldKind_TIMESTAMP            FieldKind = 10
+	FieldKind_STRING               FieldKind = 11
+	FieldKind_STRING_ARRAY         FieldKind = 12
+	FieldKind_BYTES                FieldKind = 13
+	FieldKind_OBJECT               FieldKind = 14 // Embedded object within the type
+	FieldKind_OBJECT_ARRAY         FieldKind = 15 // Array of embedded objects
+	FieldKind_FOREIGN_OBJECT       FieldKind = 16 // Embedded object, but accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17 // Array of embedded objects, accessed via foreign keys
 )
 
-// type RelationType uint8
-
+// Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	Meta_Relation_ONE      uint8 = 0x01 << iota // 0b0000 0001
-	Meta_Relation_MANY                          // 0b0000 0010
-	Meta_Relation_ONEONE                        // 0b0000 0100
-	Meta_Relation_ONEMANY                       // 0b0000 1000
-	Meta_Relation_MANYMANY                      // 0b0001 0000
-	_                                           // 0b0010 0000
-	_                                           // 0b0100 0000
-	Meta_Relation_Primary                       // 0b1000 0000 Primary reference entity on relation
+	Meta_Relation_ONE         uint8 = 1   // 0b0000 0001
+	Meta_Relation_MANY        uint8 = 2   // 0b0000 0010
+	Meta_Relation_ONEONE      uint8 = 4   // 0b0000 0100
+	Meta_Relation_ONEMANY     uint8 = 8   // 0b0000 1000
+	Meta_Relation_MANYMANY    uint8 = 16  // 0b0001 0000
+	_                         uint8 = 32  // 0b0010 0000
+	Meta_Relation_INTERNAL_ID uint8 = 64  // 0b0100 0000
+	Meta_Relation_Primary     uint8 = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
+
+func (f FieldID) String() string {
+	return fmt.Sprint(uint32(f))
+}
 
 type FieldDescription struct {
 	Name         string
 	ID           FieldID
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
-	RelationName string // The name of the relation index if the field is of type FORIEGN_OBJECT
+	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          core.CType
 	Meta         uint8
 	// @todo: Add relation name for specifying target relation index
@@ -154,6 +209,10 @@ type FieldDescription struct {
 func (f FieldDescription) IsObject() bool {
 	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
+}
+
+func (f FieldDescription) IsObjectArray() bool {
+	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
 func IsSet(val, target uint8) bool {
