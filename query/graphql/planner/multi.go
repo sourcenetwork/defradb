@@ -14,8 +14,6 @@ import (
 	"errors"
 	"fmt"
 
-	"log"
-
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -109,13 +107,10 @@ func (p *parallelNode) Start() error {
 }
 
 func (p *parallelNode) Spans(spans core.Spans) {
-	err := p.applyToPlans(func(n planNode) error {
+	_ = p.applyToPlans(func(n planNode) error {
 		n.Spans(spans)
 		return nil
 	})
-	if err != nil {
-		log.Print("applying spans to plans failed : ", err)
-	}
 }
 
 func (p *parallelNode) Close() error {
