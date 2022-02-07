@@ -10,6 +10,7 @@ import (
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -42,9 +43,10 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		db:     db,
 	}
 
+	cred := insecure.NewCredentials()
 	defaultOpts := []grpc.DialOption{
 		s.getLibp2pDialer(),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(cred),
 	}
 
 	s.opts = append(defaultOpts, opts...)

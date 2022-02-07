@@ -293,6 +293,9 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 
 	// create read only txn and assign to col
 	txn, err := p.db.NewTxn(ctx, true)
+	if err != nil {
+		return pid, fmt.Errorf("Failed to get txn: %w", err)
+	}
 	col = col.WithTxn(txn)
 
 	// get dockeys (all)
@@ -393,7 +396,7 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 	// push to each peer (replicator)
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
-		for pid, _ := range reps {
+		for pid := range reps {
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
 					log.Errorf("Failed pushing log %s of %s to replicator %s: %w",
