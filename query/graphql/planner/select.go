@@ -323,11 +323,13 @@ func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Fi
 				Name: parser.GroupFieldName,
 			}
 		} else if parsed.Root != parser.CommitSelection {
-			subtype := &parser.Select{
-				Name: fieldName,
+			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(fieldName)
+			if fieldDescription.Kind == base.FieldKind_FOREIGN_OBJECT_ARRAY {
+				subtype := &parser.Select{
+					Name: fieldName,
+				}
+				return n.addTypeIndexJoin(subtype)
 			}
-			// nolint:errcheck
-			n.addTypeIndexJoin(subtype) // @TODO: ISSUE#158
 		}
 	}
 
