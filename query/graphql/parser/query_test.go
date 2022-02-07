@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package parser
 
 import (
@@ -60,7 +61,7 @@ func TestQueryParse_FindByDockey(t *testing.T) {
 	q, err := ParseQuery(doc)
 	assert.NoError(t, err)
 
-	dockey := q.Queries[0].Selections[0].(*Select).DocKey
+	dockey := q.Queries[0].Selections[0].(*Select).DocKeys[0]
 	assert.Equal(t, dockey, "test")
 }
 
@@ -111,7 +112,7 @@ func TestQueryParse_Limit_Offset(t *testing.T) {
 func TestQueryParse_Commit_Latest(t *testing.T) {
 	var query = (`
 	query {
-		latestCommits(dockey: "Qm123") {
+		latestCommits(dockey: "baf123") {
 			cid
 		}
 	}`)
@@ -128,6 +129,6 @@ func TestQueryParse_Commit_Latest(t *testing.T) {
 	assert.NoError(t, err)
 
 	commit := q.Queries[0].Selections[0].(*CommitSelect)
-	assert.Equal(t, commit.DocKey, "Qm123")
+	assert.Equal(t, commit.DocKey, "baf123")
 	assert.Len(t, commit.Fields, 1)
 }

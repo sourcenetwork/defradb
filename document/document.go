@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package document
 
 import (
@@ -32,8 +33,8 @@ import (
 // "NoSQL Document Datastore"
 //
 // This section is not concerned with the outer query layer used to interact with the
-// Document API, but instead is soley consered with carrying out the internal API
-// operations. IE. CRUD.
+// Document API, but instead is solely concerned with carrying out the internal API
+// operations, i.e. CRUD.
 //
 // Note: These actions on the outside are deceivingly simple, but require a number
 // of complex interactions with the underlying KV Datastore, as well as the
@@ -67,6 +68,8 @@ type Document struct {
 	fields map[string]Field
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
+
+	head cid.Cid
 
 	// marks if document has unsaved changes
 	isDirty bool
@@ -154,6 +157,14 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 	}
 
 	return NewFromMap(data, schema...)
+}
+
+func (doc *Document) Head() cid.Cid {
+	return doc.head
+}
+
+func (doc *Document) SetHead(head cid.Cid) {
+	doc.head = head
 }
 
 // Key returns the generated DocKey for this document
@@ -281,49 +292,62 @@ func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error 
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setString(t core.CType, field string, val string) error {
-	value := NewStringValue(t, val)
-	return doc.set(t, field, value)
-}
-
-func (doc *Document) setInt64(t core.CType, field string, val int64) error {
-	value := NewInt64Value(t, val)
-	return doc.set(t, field, value)
-}
+// func (doc *Document) setString(t core.CType, field string, val string) error {
+// 	value := NewStringValue(t, val)
+// 	return doc.set(t, field, value)
+// }
+//
+// func (doc *Document) setInt64(t core.CType, field string, val int64) error {
+// 	value := NewInt64Value(t, val)
+// 	return doc.set(t, field, value)
+// }
 
 func (doc *Document) setObject(t core.CType, field string, val *Document) error {
 	value := newValue(t, val)
 	return doc.set(t, field, &value)
 }
 
+// @todo: Update with document schemas
 func (doc *Document) setAndParseType(field string, value interface{}) error {
-	switch value.(type) {
+	if value == nil {
+		return nil
+	}
+
+	switch val := value.(type) {
 
 	// int (any number)
+	case int:
+		err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+		if err != nil {
+			return err
+		}
 	case float64:
 		// case int64:
 
 		// Check if its actually a float or just an int
-		val := value.(float64)
 		if float64(int64(val)) == val { //int
-			doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			if err != nil {
+				return err
+			}
+
 		} else { //float
-			doc.setCBOR(core.LWW_REGISTER, field, value)
+			err := doc.setCBOR(core.LWW_REGISTER, field, val)
+			if err != nil {
+				return err
+			}
 		}
-		break
 
 	// string, bool, and more
-	case string, bool:
-		doc.setCBOR(core.LWW_REGISTER, field, value)
-		break
-
-	// array
-	case []interface{}:
-		break
+	case string, bool, []interface{}:
+		err := doc.setCBOR(core.LWW_REGISTER, field, val)
+		if err != nil {
+			return err
+		}
 
 	// sub object, recurse down.
 	// @TODO: Object Definitions
-	// You can use an object as a way to override defults
+	// You can use an object as a way to override defaults
 	// and types for JSON literals.
 	// Eg.
 	// Instead of { "Timestamp": 123 }
@@ -332,16 +356,18 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 	//			- Which is parsed as an uint64
 	case map[string]interface{}:
 		subDoc := newEmptyDoc()
-		err := subDoc.setAndParseObjectType(value.(map[string]interface{}))
+		err := subDoc.setAndParseObjectType(val)
 		if err != nil {
 			return err
 		}
 
-		doc.setObject(core.OBJECT, field, subDoc)
-		break
+		err = doc.setObject(core.OBJECT, field, subDoc)
+		if err != nil {
+			return err
+		}
 
 	default:
-		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, value)
+		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
 
 	}
 	return nil
@@ -375,7 +401,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	// Important: CannonicalEncOpionts ensures consistent serialization of
+	// Important: CanonicalEncOptions ensures consistent serialization of
 	// indeterministic datastructures, like Go Maps
 	em, err := cbor.CanonicalEncOptions().EncMode()
 	if err != nil {
@@ -384,10 +410,10 @@ func (doc *Document) Bytes() ([]byte, error) {
 	return em.Marshal(docMap)
 }
 
-// String returns the document as a strinified JSON Object.
+// String returns the document as a stringified JSON Object.
 // Note: This representation should not be used for any
 // cryptographic operations, such as signatures, or hashes
-// as it does not gurantee cannonical representation or
+// as it does not guarantee canonical representation or
 // ordering.
 func (doc *Document) String() string {
 	docMap, err := doc.toMap()
@@ -406,6 +432,18 @@ func (doc *Document) String() string {
 // object.
 func (doc *Document) ToMap() (map[string]interface{}, error) {
 	return doc.toMapWithKey()
+}
+
+func (doc *Document) Clean() {
+	for _, v := range doc.Fields() {
+		val, _ := doc.GetValueWithField(v)
+		if val.IsDirty() {
+			if val.IsDelete() {
+				doc.SetAs(v.Name(), nil, v.Type()) //nolint
+			}
+			val.Clean()
+		}
+	}
 }
 
 // converts the document into a map[string]interface{}
@@ -493,7 +531,7 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 
 // 		// sub object, recurse down.
 // 		// @TODO: Object Definitions
-// 		// You can use an object as a way to override defults
+// 		// You can use an object as a way to override defaults
 // 		// and types for JSON literals.
 // 		// Eg.
 // 		// Instead of { "Timestamp": 123 }
@@ -525,7 +563,7 @@ func parseFieldPath(path string) (string, string, bool) {
 	return splitKeys[0], strings.Join(splitKeys[1:], ""), len(splitKeys) > 1
 }
 
-// Exmaple Usage: Create/Insert new object
+// Example Usage: Create/Insert new object
 /*
 
 obj := `{
@@ -538,11 +576,11 @@ docA := document.NewFromJSON(objData)
 err := db.Save(document)
 		=> New batch transaction/store
 		=> Loop through doc values
-		=> 		instanciate MerkleCRDT objects
+		=> 		instantiate MerkleCRDT objects
 		=> 		Set/Publish new CRDT values
 
 
-// One-to-one relatioship example
+// One-to-one relationship example
 obj := `{
 	Hello: "world",
 	Author: {

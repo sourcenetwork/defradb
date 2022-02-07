@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
@@ -58,7 +59,7 @@ type sortNode struct {
 
 // OrderBy creates a new sortNode which returns the underlying
 // plans values in a sorted mannor. The field to sort by, and the
-// direction of sorting is determined by the givein parser.OrderBy
+// direction of sorting is determined by the given parser.OrderBy
 // object.
 func (p *Planner) OrderBy(n *parser.OrderBy) (*sortNode, error) {
 	if n == nil { // no orderby info
@@ -87,7 +88,7 @@ func (n *sortNode) Values() map[string]interface{} {
 
 func (n *sortNode) Next() (bool, error) {
 	for n.needSort {
-		// make sure our sortStragey is initialized
+		// make sure our sortStrategy is initialized
 		if n.sortStrategy == nil {
 			v := n.p.newContainerValuesNode(n.ordering)
 			n.sortStrategy = newAllSortStrategy(v)
@@ -121,14 +122,19 @@ func (n *sortNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *sortNode) Close() {
-	n.plan.Close()
+func (n *sortNode) Close() error {
+	err := n.plan.Close()
+	if err != nil {
+		return err
+	}
+
 	if n.valueIter != nil {
 		n.valueIter.Close()
 	}
 	if n.sortStrategy != nil {
 		n.sortStrategy.Close()
 	}
+	return nil
 }
 
 func (n *sortNode) Source() planNode { return n.plan }

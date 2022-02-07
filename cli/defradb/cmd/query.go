@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package cmd
 
 import (
@@ -21,7 +22,8 @@ import (
 )
 
 var (
-	queryStr string
+// Commented because it is deadcode, for linter.
+// queryStr string
 )
 
 // queryCmd represents the query command
@@ -34,7 +36,7 @@ to interact with the database, the reccomended approach is with a
 local GraphiQL application (https://github.com/graphql/graphiql).
 
 To learn more about the DefraDB GraphQL Query Language, you may use
-the additional documenation found at: https://hackmd.io/@source/BksQY6Qfw.
+the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbaddr := viper.GetString("database.address")
@@ -68,7 +70,15 @@ the additional documenation found at: https://hackmd.io/@source/BksQY6Qfw.
 			log.Error("request failed: ", err)
 			return
 		}
-		defer res.Body.Close()
+
+		defer func() {
+			err = res.Body.Close()
+			if err != nil {
+				// Should this be `log.Fatal` ??
+				log.Error("response body closing failed: ", err)
+			}
+		}()
+
 		buf, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Error("request failed: ", err)

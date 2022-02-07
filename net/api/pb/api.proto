@@ -1,0 +1,17 @@
+syntax = "proto3";
+package api.pb;
+
+message AddReplicatorRequest {
+    bytes collection = 1;
+    bytes addr = 2;
+}
+
+message AddReplicatorReply {
+    bytes peerID = 1;
+}
+
+// Service is the peer-to-peer network API for document sync
+service Service {
+    // AddReplicator for this peer
+    rpc AddReplicator(AddReplicatorRequest) returns (AddReplicatorReply) {}
+}

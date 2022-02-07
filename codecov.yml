@@ -1,0 +1,53 @@
+# Source Network's codecov configuration file.
+
+github_checks:
+    annotations: true
+
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: 65...100
+
+  status:
+    # Learn more at https://docs.codecov.io/docs/commit-status
+    project:
+      default:
+        target: 50%
+        threshold: 0.05 # allow this much decrease on project
+        flags:
+          - unit
+
+    # Disable patch as it is not correct and buggy.
+    # Folks over at amazon's aws and mozilla's firefox tv also did the same LOL:
+    #   - https://github.com/aws/amazon-vpc-cni-k8s/pull/1226/files
+    #   - https://github.com/mozilla-mobile/firefox-tv/pull/779/files
+    patch:
+      default:
+        enabled: no
+        if_not_found: success
+
+    changes: false
+
+
+comment:
+  layout: "reach, diff, files"
+  behavior: default # update if exists else create new
+  require_changes: true
+
+ignore:
+  - "docs"
+  - ".circleci"
+  - ".github"
+  - "build"
+  - "**/*.graphql"
+  - "**/*.md"
+  - "**/*.txt"
+  - "licenses"
+  - ".gitignore"
+  - ".golangci.sourceinc.yaml"
+  - "Makefile"
+  # - "**/*_test.go"
+  # - "db/tests"

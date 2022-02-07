@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,9 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package fetcher
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"strings"
@@ -30,20 +32,22 @@ type BlockFetcher struct {
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
-	// key core.Key
 
-	txn   core.Txn
-	spans core.Spans
+	// Commented because this code is not used yet according to the linter.
+	// txn   core.Txn
+
+	// key core.Key
 	// curSpanIndex int
 
-	cid *cid.Cid
+	spans core.Spans
+	cid   *cid.Cid
 
 	kv     *core.KeyValue
 	kvIter dsq.Results
 	kvEnd  bool
 }
 
-func (hf *HeadFetcher) Start(txn core.Txn, spans core.Spans) error {
+func (hf *HeadFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	numspans := len(spans)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")
@@ -65,7 +69,12 @@ func (hf *HeadFetcher) Start(txn core.Txn, spans core.Spans) error {
 	}
 
 	var err error
-	hf.kvIter, err = txn.Headstore().Query(q)
+	if hf.kvIter != nil {
+		if err := hf.kvIter.Close(); err != nil {
+			return err
+		}
+	}
+	hf.kvIter, err = txn.Headstore().Query(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -109,10 +118,12 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
 	// convert Value from KV value to cid.Cid
 	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.String(), hf.spans[0].Start().String()))
-	headCid, err := dshelp.DsKeyToCid(headKey)
+
+	hash, err := dshelp.DsKeyToMultihash(headKey)
 	if err != nil {
 		return err
 	}
+	headCid := cid.NewCidV1(cid.Raw, hash)
 	hf.cid = &headCid
 	return nil
 }
@@ -137,6 +148,14 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 	return hf.cid, nil
 }
 
+func (hf *HeadFetcher) Close() error {
+	if hf.kvIter == nil {
+		return nil
+	}
+
+	return hf.kvIter.Close()
+}
+
 /*
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
@@ -156,13 +175,13 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, errors.Wrap(r.Error, "Failed to get next query result")
+			return nil, 0, fmt.Errorf("Failed to get next query result : %w", err)
 		}
 		// fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, errors.Wrap(err, "Failed to get CID from key")
+			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {

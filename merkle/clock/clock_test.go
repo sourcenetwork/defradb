@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package clock
 
 import (
@@ -62,11 +63,12 @@ func TestNewMerkleClock(t *testing.T) {
 }
 
 func TestMerkleClockPutBlock(t *testing.T) {
+	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
-	node, err := clk.putBlock(nil, 0, delta)
+	node, err := clk.putBlock(ctx, nil, 0, delta)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
 	}
@@ -82,6 +84,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 }
 
 func TetMerkleClockPutBlockWithHeads(t *testing.T) {
+	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
@@ -100,7 +103,7 @@ func TetMerkleClockPutBlockWithHeads(t *testing.T) {
 		return
 	}
 	heads := []cid.Cid{c}
-	node, err := clk.putBlock(heads, 0, delta)
+	node, err := clk.putBlock(ctx, heads, 0, delta)
 	if err != nil {
 		t.Error("Failed to putBlock with heads:", err)
 		return
@@ -112,12 +115,13 @@ func TetMerkleClockPutBlockWithHeads(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNode(t *testing.T) {
+	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
 
-	c, err := clk.AddDAGNode(delta)
+	c, _, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
@@ -127,12 +131,13 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 }
 
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
+	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
 		Data: []byte("test1"),
 	}
 
-	_, err := clk.AddDAGNode(delta)
+	_, _, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
@@ -142,7 +147,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		Data: []byte("test2"),
 	}
 
-	_, err = clk.AddDAGNode(delta2)
+	_, _, err = clk.AddDAGNode(ctx, delta2)
 	if err != nil {
 		t.Error("Failed to add second dag node with err:", err)
 		return
@@ -156,7 +161,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 
 	// check if lww state is correct (val is test2)
 	// check if head/blockstore state is correct (one head, two blocks)
-	nHeads, err := clk.headset.Len()
+	nHeads, err := clk.headset.Len(ctx)
 	if err != nil {
 		t.Error("Error getting MerkleClock heads size:", err)
 		return
@@ -167,7 +172,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	}
 
 	numBlocks := 0
-	cids, err := clk.dagstore.AllKeysChan(context.Background())
+	cids, err := clk.dagstore.AllKeysChan(ctx)
 	if err != nil {
 		t.Error("Failed to get blockstore content for merkle clock:", err)
 		return

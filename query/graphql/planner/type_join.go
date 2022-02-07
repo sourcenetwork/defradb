@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -19,9 +19,166 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-const (
-	indexJoinBatchSize = 100
-)
+/*
+
+type User {
+	name: String
+	age: Int
+	friends: [Friend]
+}
+
+type Friend {
+	name: String
+	friendsDate: DateTime
+	user_id: DocKey
+}
+
+- >
+
+/graphql
+/explain
+
+
+{
+	query {
+		user { selectTopNode -> (source) selectNode -> (source) scanNode(user) -> filter: NIL
+			[_key]
+			name
+
+			// key = bae-KHDFLGHJFLDG
+			friends selectNode -> (source) scanNode(friend) -> filter: {user_id: {_eq: "bae-KHDFLGHJFLDG"}} {
+				name
+				date: friendsDate
+			}
+		}
+	}
+}
+
+selectTopNode - > selectNode -> MultiNode.children: []planNode  -> multiScanNode(scanNode(user)**)											-> } -> scanNode(user).Next() -> FETCHER_STUFF + FILTER_STUFF + OTHER_STUFF
+										  						-> TypeJoinNode(merge**) -> TypeJoinOneMany -> (one) multiScanNode(scanNode(user)**)	-> } -> scanNode(user).Value() -> doc
+																			 					   -> (many) selectNode - > scanNode(friend)
+
+1. NEXT/VALUES MultiNode.doc = {_key: bae-KHDFLGHJFLDG, name: "BOB"}
+2. NEXT/VALUES TypeJoinOneMany.one {_key: bae-KHDFLGHJFLDG, name: "BOB"}
+3. NEXT/VALUES (many).selectNode.doc = {name: "Eric", date: Oct29}
+LOOP
+4. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{{name: "Eric", date: Oct29}}]}
+5. NEXT/VALUES (many).selectNode.doc = {name: "Jimmy", date: Oct21}
+6. NEXT/VALUES TypeJoinNode {_key: bae-KHDFLGHJFLDG, name: "BOB"} + {friends: [{name: "Eric", date: Oct29}, {name: "Jimmy", date: Oct21}]}
+GOTO LOOP
+
+// SPLIT FILTER
+query {
+		user {
+			age
+			name
+			points
+
+			friends {
+				name
+				points
+		}
+	}
+}
+
+{
+	data: [
+		{
+			_key: bae-ALICE
+			age: 22,
+			name: "Alice",
+			points: 45,
+
+			friends: [
+				{
+					name: "Bob",
+					points:  11
+					user_id: "bae-ALICE"
+				},
+			]
+		},
+
+		{
+			_key: bae-CHARLIE
+			age: 22,
+			name: "Charlie",
+			points: 45,
+
+			friends: [
+				// {
+				// 	name: "Mickey",
+				// 	points:  6
+				// }
+			]
+		},
+	]
+}
+
+ALL EMPTY
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode.filter = NIL
+
+ROOT EMPTY / SUB FULL
+{friends: {points: {_gt: 10}}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode.filter = NIL
+
+ROOT FULL / SUB EMPTY
+{age: {_gte: 21}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+
+ROOT FULL / SUB FULL
+{age: {_gte: 21}, friends: {points: {_gt: 10}}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																																-> scanNode(friends).filter = NIL
+
+ROOT FULL / SUB EMPTY / SUB SUB FULL
+{age: {_gte: 21}}
+friends: {points: {_gt: 10}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																									 -> scanNode(friends).filter = {points: {_gt: 10}}
+
+ROOT FULL / SUB FULL / SUB SUB FULL
+{age: {_gte: 21}}
+friends: {points: {_gt: 10}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+																									 							-> scanNode(friends).filter = {points: {_gt: 10}}
+
+
+ONE-TO-ONE EXAMPLE WITH FILTER TRACKING
+type user {
+	age: Int
+	points: Float
+	name: String
+
+	address: Address @primary
+	address_id: bae-address-VALUE
+}
+
+type Address: {
+	street_name: String
+	house_number: Int
+	city: String
+	country: String
+	...
+
+	user: user
+	# user_id: DocKey
+}
+
+query {
+	user {
+		age
+		points
+		name
+
+		address {
+			street_name
+			city
+			country
+		}
+	}
+}
+
+*/
 
 // typeIndexJoin provides the needed join functionality
 // for querying relationship based sub types.
@@ -43,7 +200,7 @@ const (
 // queried sub type ie: {birthday: "June 26, 1990"}.
 //
 // The typeIndexJoin works by using a basic scanNode for the
-// root, and recusively creates a new selectNode for the
+// root, and recursively creates a new selectNode for the
 // subType.
 type typeIndexJoin struct {
 	p *Planner
@@ -73,7 +230,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, errors.New("Unknown field on sub selection")
+		// return nil, fmt.Errorf("Unknown field on sub selection")
 		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
 	}
 
@@ -83,7 +240,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, errors.New("Failed sub selection, unknow relation type")
+		return nil, fmt.Errorf("Failed sub selection, unknow relation type")
 	}
 	if err != nil {
 		return nil, err
@@ -111,8 +268,8 @@ func (n *typeIndexJoin) Values() map[string]interface{} {
 	return n.joinPlan.Values()
 }
 
-func (n *typeIndexJoin) Close() {
-	n.joinPlan.Close()
+func (n *typeIndexJoin) Close() error {
+	return n.joinPlan.Close()
 }
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
@@ -155,7 +312,6 @@ type typeJoinOne struct {
 	root    planNode
 	subType planNode
 
-	rootName         string
 	subTypeName      string
 	subTypeFieldName string
 
@@ -175,21 +331,21 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
 
 	// get relation
 	rm := p.db.SchemaManager().Relations
 	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
 	if rel == nil {
-		return nil, errors.New("Relation does not exists")
+		return nil, fmt.Errorf("Relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
 	if !ok {
-		return nil, errors.New("Relation is missing referenced field")
+		return nil, fmt.Errorf("Relation is missing referenced field")
 	}
 
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -199,7 +355,6 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 
 	typeJoin.subTypeName = subTypeFieldDesc.Name
 	typeJoin.subTypeFieldName = subtypefieldname
-	typeJoin.rootName = desc.Name // @todo: Correctly handle getting sub/root names
 
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
@@ -282,7 +437,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	subDoc := make(map[string]interface{})
 	subDocField := n.subTypeName
 	doc[subDocField] = map[string]interface{}{}
 
@@ -296,26 +450,39 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)
-	n.subType.Init() // re-initalize the sub type plan
-	for {
-		// if we don't find any docs from our point span lookup
-		// or if we encounter an error just return the base doc,
-		// with an empty map for the subdoc
-		next, err := n.subType.Next()
-		if !next || err != nil {
-			return doc
-		}
 
-		subDoc = n.subType.Values()
-		doc[subDocField] = subDoc
-		break
+	// re-initialize the sub type plan
+	if err := n.subType.Init(); err != nil {
+		// @todo pair up on the error handling / logging properly.
+		return doc
 	}
+
+	// if we don't find any docs from our point span lookup
+	// or if we encounter an error just return the base doc,
+	// with an empty map for the subdoc
+	next, err := n.subType.Next()
+
+	// @todo pair up on the error handling / logging properly.
+	if err != nil {
+		return doc
+	}
+
+	if !next {
+		return doc
+	}
+
+	subDoc := n.subType.Values()
+	doc[subDocField] = subDoc
+
 	return doc
 }
 
-func (n *typeJoinOne) Close() {
-	n.root.Close()
-	n.subType.Close()
+func (n *typeJoinOne) Close() error {
+	err := n.root.Close()
+	if err != nil {
+		return err
+	}
+	return n.subType.Close()
 }
 
 func (n *typeJoinOne) Source() planNode { return n.root }
@@ -331,8 +498,6 @@ type typeJoinMany struct {
 	// the subtype plan to get the subtype docs
 	subType     planNode
 	subTypeName string
-
-	spans core.Spans
 }
 
 func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType *parser.Select) (*typeJoinMany, error) {
@@ -346,9 +511,20 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
-	subType.Name = subTypeFieldDesc.Schema
+	subType.CollectionName = subTypeFieldDesc.Schema
+
+	// get relation
+	rm := p.db.SchemaManager().Relations
+	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
+	if rel == nil {
+		return nil, fmt.Errorf("Relation does not exists")
+	}
+	subTypeLookupFieldName, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
+	if !ok {
+		return nil, fmt.Errorf("Relation is missing referenced field")
+	}
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
@@ -356,7 +532,7 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	}
 	typeJoin.subType = selectPlan
 	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.rootName = desc.Name
+	typeJoin.rootName = subTypeLookupFieldName
 
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
@@ -398,7 +574,7 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	} else {
 		docKey := doc["_key"].(string)
 		filter := map[string]interface{}{
-			n.rootName + "_id": docKey,
+			n.rootName + "_id": docKey, // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
@@ -407,7 +583,11 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 		}
 
 		// reset scan node
-		n.subType.Init()
+		if err := n.subType.Init(); err != nil {
+			// @todo pair up on the error handling / logging properly.
+			fmt.Println("sub-type initalization error at scan node reset : %w", err)
+		}
+
 		for {
 			next, err := n.subType.Next()
 			if !next || err != nil {
@@ -423,9 +603,12 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	return doc
 }
 
-func (n *typeJoinMany) Close() {
-	n.root.Close()
-	n.subType.Close()
+func (n *typeJoinMany) Close() error {
+	if err := n.root.Close(); err != nil {
+		return err
+	}
+
+	return n.subType.Close()
 }
 
 func (n *typeJoinMany) Source() planNode { return n.root }

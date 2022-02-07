@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,35 +7,38 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package fetcher
 
 import (
 	"bytes"
+	"context"
 	"errors"
-	"sort"
-	"strings"
 
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 )
 
-/*
-var DocumentFetcher DocumentFetcher = &Fetcher{}
-DocumentFetcher.Init()
-*/
-// type DocumentFetcher interface {
-// 	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
-// 	Start(txn core.Txn, spans core.Spans) error
-// 	FetchNext() (*document.EncodedDocument, error)
-// 	FetchNextDecoded() (*document.Document, error)
-// }
+// Fetcher is the interface for collecting documents
+// from the underlying data store. It handles all
+// the key/value scanning, aggregation, and document
+// encoding.
+type Fetcher interface {
+	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
+	Start(ctx context.Context, txn core.Txn, spans core.Spans) error
+	FetchNext(ctx context.Context) (*document.EncodedDocument, error)
+	FetchNextDecoded(ctx context.Context) (*document.Document, error)
+	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
+	Close() error
+}
 
-// var (
-// 	_ DocumentFetcher = &DocFetcher{}
-// )
+var (
+	_ Fetcher = (*DocumentFetcher)(nil)
+)
 
 type DocumentFetcher struct {
 	col     *base.CollectionDescription
@@ -44,6 +47,8 @@ type DocumentFetcher struct {
 
 	txn          core.Txn
 	spans        core.Spans
+	order        []dsq.Order
+	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
 	curSpanIndex int
 
 	schemaFields map[uint32]base.FieldDescription
@@ -53,10 +58,10 @@ type DocumentFetcher struct {
 	decodedDoc  *document.Document
 	initialized bool
 
-	kv     *core.KeyValue
-	kvIter dsq.Results
-	kvEnd  bool
-	// kvIndex int
+	kv            *core.KeyValue
+	kvIter        iterable.Iterator
+	kvResultsIter dsq.Results
+	kvEnd         bool
 
 	indexKey []byte
 }
@@ -75,6 +80,19 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.doc = new(document.EncodedDocument)
 	df.doc.Schema = &col.Schema
 
+	if df.kvResultsIter != nil {
+		if err := df.kvResultsIter.Close(); err != nil {
+			return err
+		}
+	}
+	df.kvResultsIter = nil
+	if df.kvIter != nil {
+		if err := df.kvIter.Close(); err != nil {
+			return err
+		}
+	}
+	df.kvIter = nil
+
 	df.schemaFields = make(map[uint32]base.FieldDescription)
 	for _, field := range col.Schema.Fields {
 		df.schemaFields[uint32(field.ID)] = field
@@ -83,7 +101,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 }
 
 // Start implements DocumentFetcher
-func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
@@ -96,38 +114,65 @@ func (df *DocumentFetcher) Start(txn core.Txn, spans core.Spans) error {
 	//@todo: Handle fields Description
 	// check spans
 	numspans := len(spans)
+	var uniqueSpans core.Spans
 	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
 		start := base.MakeIndexPrefixKey(df.col, df.index)
-		spans = append(spans, core.NewSpan(start, start.PrefixEnd()))
-	} else if numspans > 1 {
-		// if we have multiple spans, we need to sort them by their start position
-		// so we can do a single iterative sweep
-		sort.Slice(spans, func(i, j int) bool {
-			// compare by strings if i < j.
-			// apply the '!= df.reverse' to reverse the sort
-			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0) != df.reverse
-		})
+		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
+	} else {
+		uniqueSpans = spans.MergeAscending()
+		if df.reverse {
+			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
+				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
+			}
+		}
 	}
 	df.indexKey = nil
+	df.spans = uniqueSpans
+	df.curSpanIndex = -1
+	df.txn = txn
 
-	q := dsq.Query{
-		Prefix: spans[0].Start().String(), // @todo: Support multiple spans
-	}
 	if df.reverse {
-		q.Orders = []dsq.Order{dsq.OrderByKeyDescending{}}
+		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
 	} else {
-		q.Orders = []dsq.Order{dsq.OrderByKey{}}
+		df.order = []dsq.Order{dsq.OrderByKey{}}
+	}
+
+	_, err := df.startNextSpan(ctx)
+	return err
+}
+
+func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
+	nextSpanIndex := df.curSpanIndex + 1
+	if nextSpanIndex >= len(df.spans) {
+		return false, nil
 	}
 
 	var err error
-	df.kvIter, err = txn.Query(q)
+	if df.kvIter == nil {
+		df.kvIter, err = df.txn.GetIterator(dsq.Query{
+			Orders: df.order,
+		})
+	}
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	_, err = df.nextKey()
-	return err
+	if df.kvResultsIter != nil {
+		err = df.kvResultsIter.Close()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	span := df.spans[nextSpanIndex]
+	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+	if err != nil {
+		return false, err
+	}
+	df.curSpanIndex = nextSpanIndex
+
+	_, err = df.nextKey(ctx)
+	return err == nil, err
 }
 
 func (df *DocumentFetcher) KVEnd() bool {
@@ -138,8 +183,8 @@ func (df *DocumentFetcher) KV() *core.KeyValue {
 	return df.kv
 }
 
-func (df *DocumentFetcher) NextKey() (docDone bool, err error) {
-	return df.nextKey()
+func (df *DocumentFetcher) NextKey(ctx context.Context) (docDone bool, err error) {
+	return df.nextKey(ctx)
 }
 
 func (df *DocumentFetcher) NextKV() (iterDone bool, kv *core.KeyValue, err error) {
@@ -152,7 +197,7 @@ func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
-func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
+func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error) {
 	// get the next kv from nextKV()
 	for {
 		docDone, df.kv, err = df.nextKV()
@@ -162,6 +207,13 @@ func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 		}
 		df.kvEnd = docDone
 		if df.kvEnd {
+			hasNextSpan, err := df.startNextSpan(ctx)
+			if err != nil {
+				return false, err
+			}
+			if hasNextSpan {
+				return true, nil
+			}
 			return true, nil
 		}
 
@@ -189,7 +241,7 @@ func (df *DocumentFetcher) nextKey() (docDone bool, err error) {
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
 func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
-	res, available := df.kvIter.NextSync()
+	res, available := df.kvResultsIter.NextSync()
 	if !available {
 		return true, nil, nil
 	}
@@ -205,7 +257,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 	return false, kv, nil
 }
 
-// processKV continously processes the key value pairs we've recieved
+// processKV continuously processes the key value pairs we've received
 // and step by step constructs the current encoded document
 func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// skip MerkleCRDT meta-data priority key-value pair
@@ -247,7 +299,8 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
 	df.doc.Properties[fieldDesc] = &document.EncProperty{
-		Raw: kv.Value,
+		Desc: fieldDesc,
+		Raw:  kv.Value,
 	}
 	// @todo: Extract Index implicit/stored keys
 	return nil
@@ -255,7 +308,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (*document.EncodedDocument, error) {
 	if df.kvEnd {
 		return nil, nil
 	}
@@ -276,7 +329,7 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 			return nil, err
 		}
 
-		end, err := df.nextKey()
+		end, err := df.nextKey(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -284,7 +337,7 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 			return df.doc, nil
 		}
 
-		// // crossed document kv boundry?
+		// // crossed document kv boundary?
 		// // if so, return document
 		// newkeyparts := df.kv.Key.List()
 		// newKey := newkeyparts[len(newkeyparts)-2]
@@ -295,8 +348,8 @@ func (df *DocumentFetcher) FetchNext() (*document.EncodedDocument, error) {
 }
 
 // FetchNextDecoded implements DocumentFetcher
-func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
-	encdoc, err := df.FetchNext()
+func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*document.Document, error) {
+	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -314,8 +367,8 @@ func (df *DocumentFetcher) FetchNextDecoded() (*document.Document, error) {
 
 // FetchNextMap returns the next document as a map[string]interface{}
 // The first return value is the parsed document key
-func (df *DocumentFetcher) FetchNextMap() ([]byte, map[string]interface{}, error) {
-	encdoc, err := df.FetchNext()
+func (df *DocumentFetcher) FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error) {
+	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -339,4 +392,17 @@ func (df *DocumentFetcher) ReadIndexKey(key core.Key) core.Key {
 	// We only care about the data up to /<dockey>
 	// so were just going to do a quick hack
 	return core.Key{Key: key.Parent()}
+}
+
+func (df *DocumentFetcher) Close() error {
+	if df.kvIter == nil {
+		return nil
+	}
+
+	err := df.kvIter.Close()
+	if err != nil {
+		return err
+	}
+
+	return df.kvResultsIter.Close()
 }

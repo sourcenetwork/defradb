@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package cmd
 
 import (
@@ -38,7 +39,15 @@ var pingCmd = &cobra.Command{
 			log.Error("request failed: ", err)
 			return
 		}
-		defer res.Body.Close()
+
+		defer func() {
+			err = res.Body.Close()
+			if err != nil {
+				// Should this be `log.Fatal` ??
+				log.Error("response body closing failed: ", err)
+			}
+		}()
+
 		buf, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Error("request failed: ", err)

@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,9 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package crdt
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -22,13 +24,12 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
-	logging "github.com/ipfs/go-log"
 )
 
-var (
-	merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-	// store core.DSReaderWriter
-)
+// var (
+//     merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
+//     store core.DSReaderWriter
+// )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
@@ -42,19 +43,20 @@ func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
 	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
 	dagstore := store.NewDAGStore(batchStore)
 
-	id := "MyKey"
+	id := "/1/0/MyKey"
 	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
 	clk := clock.NewMerkleClock(headstore, dagstore, id, reg)
-	return &baseMerkleCRDT{clk, reg}, s
+	return &baseMerkleCRDT{clock: clk, crdt: reg}, s
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
+	ctx := context.Background()
 	bCRDT, store := newTestBaseMerkleCRDT()
 	delta := &corecrdt.LWWRegDelta{
 		Data: []byte("test"),
 	}
 
-	c, err := bCRDT.Publish(delta)
+	c, _, err := bCRDT.Publish(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
@@ -65,20 +67,22 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		return
 	}
 
-	printStore(store)
+	printStore(ctx, store)
 }
 
-func printStore(store core.DSReaderWriter) {
+func printStore(ctx context.Context, store core.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
 	}
 
-	results, err := store.Query(q)
-	defer results.Close()
+	results, err := store.Query(ctx, q)
+
 	if err != nil {
 		panic(err)
 	}
+
+	defer results.Close()
 
 	for r := range results.Next() {
 		fmt.Println(r.Key, ": ", r.Value)

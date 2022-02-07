@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,13 +7,17 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
+	"github.com/multiformats/go-multihash"
 	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 
@@ -37,7 +41,10 @@ func NewServer(db client.DB) *Server {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
+		_, err := w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
+		if err != nil {
+			log.Printf("DefraDB HTTP API Welcome message writing failed: %v", err)
+		}
 	})
 
 	r.Get("/ping", s.ping)
@@ -49,41 +56,78 @@ func NewServer(db client.DB) *Server {
 	return s
 }
 
-func (s *Server) Listen(addr string) {
-	http.ListenAndServe(addr, s.router)
+func (s *Server) Listen(addr string) error {
+	if err := http.ListenAndServe(addr, s.router); err != nil {
+		log.Fatalln("Error: HTTP Listening and Serving Failed: ", err)
+		return err
+	}
+	return nil
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
+	_, err := w.Write([]byte("pong"))
+	if err != nil {
+		log.Printf("Writing pong with HTTP failed: %v", err)
+	}
 }
 
 func (s *Server) dump(w http.ResponseWriter, r *http.Request) {
-	s.db.PrintDump()
-	w.Write([]byte("ok"))
+	ctx := context.Background()
+	s.db.PrintDump(ctx)
+
+	_, err := w.Write([]byte("ok"))
+	if err != nil {
+		log.Printf("Writing ok with HTTP failed: %v", err)
+	}
 }
 
 func (s *Server) execGQL(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	query := r.URL.Query().Get("query")
-	result := s.db.ExecQuery(query)
-	json.NewEncoder(w).Encode(result)
+	result := s.db.ExecQuery(ctx, query)
+
+	err := json.NewEncoder(w).Encode(result)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 }
 
 func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	var result client.QueryResult
 	sdl, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+
+	defer func() {
+		err = r.Body.Close()
+		if err != nil {
+			log.Print(err) // Should this be `log.Fatal(err)` ??
+		}
+	}()
 
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = s.db.AddSchema(string(sdl))
+	err = s.db.AddSchema(ctx, string(sdl))
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -91,10 +135,16 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	result.Data = map[string]string{
 		"result": "success",
 	}
-	json.NewEncoder(w).Encode(result)
+
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 }
 
 func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	var result client.QueryResult
 	cidStr := chi.URLParam(r, "cid")
 
@@ -104,21 +154,34 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		// if we cant try to parse DSKeyToCID
 		// return error if we still cant
 		key := ds.NewKey(cidStr)
-		c, err = dshelp.DsKeyToCid(key)
+		var hash multihash.Multihash
+		hash, err = dshelp.DsKeyToMultihash(key)
 		if err != nil {
 			result.Errors = []interface{}{err.Error()}
 			result.Data = err.Error()
-			json.NewEncoder(w).Encode(result)
+
+			err = json.NewEncoder(w).Encode(result)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		c = cid.NewCidV1(cid.Raw, hash)
 	}
-	// c, err := cid.Decode(cidStr)
 
-	block, err := s.db.GetBlock(c)
+	block, err := s.db.GetBlock(ctx, c)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -127,14 +190,26 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		result.Data = err.Error()
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	buf, err := nd.MarshalJSON()
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -144,7 +219,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	delta, err := reg.DeltaDecode(nd)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -152,7 +233,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	data, err := delta.Marshal()
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
-		json.NewEncoder(w).Encode(result)
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -160,10 +247,14 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	// var val interface{}
 	// err = cbor.Unmarshal(delta.Value().([]byte), &val)
 	// if err != nil {
-	// 	result.Errors = []interface{}{err.Error()}
-	// 	json.NewEncoder(w).Encode(result)
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	return
+	//   result.Errors = []interface{}{err.Error()}
+	//   err = json.NewEncoder(w).Encode(result)
+	//   if err != nil {
+	//     http.Error(w, err.Error(), 500)
+	//     return
+	//   }
+	//   w.WriteHeader(http.StatusBadRequest)
+	//   return
 	// }
 	result.Data = map[string]interface{}{
 		"block": string(buf),
@@ -177,7 +268,13 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 		result.Data = nil
-		json.NewEncoder(w).Encode(result)
+
+		err := json.NewEncoder(w).Encode(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,13 +7,14 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package core
 
 import (
+	"fmt"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -62,7 +63,7 @@ func (k Key) FieldID() (uint32, error) {
 	fieldIDStr := k.Type()
 	fieldID, err := strconv.Atoi(fieldIDStr)
 	if err != nil {
-		return 0, errors.Wrap(err, "Failed to get FieldID of Key")
+		return 0, fmt.Errorf("Failed to get FieldID of Key: %w", err)
 	}
 	return uint32(fieldID), nil
 }

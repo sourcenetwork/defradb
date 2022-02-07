@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,11 +7,12 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/db/base"
 )
@@ -29,23 +30,26 @@ type planSource struct {
 
 // datasource is a set of utilities for constructing scan/index/join nodes
 // from a given query statement
-func (p *Planner) getSource(collection string) (planSource, error) {
+func (p *Planner) getSource(collection string, versioned bool) (planSource, error) {
 	// for now, we only handle simple collection scannodes
-	return p.getCollectionScanPlan(collection)
+	return p.getCollectionScanPlan(collection, versioned)
 }
 
 // @todo: Add field selection
-func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
+func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (planSource, error) {
 	if collection == "" {
-		return planSource{}, errors.New("collection name cannot be empty")
+		return planSource{}, fmt.Errorf("collection name cannot be empty")
 	}
 	colDesc, err := p.getCollectionDesc(collection)
 	if err != nil {
 		return planSource{}, err
 	}
 
-	scan := p.Scan()
-	scan.initCollection(colDesc)
+	scan := p.Scan(versioned)
+	err = scan.initCollection(colDesc)
+	if err != nil {
+		return planSource{}, err
+	}
 
 	return planSource{
 		plan: scan,
@@ -58,9 +62,9 @@ func (p *Planner) getCollectionScanPlan(collection string) (planSource, error) {
 func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, error) {
 	key := base.MakeCollectionSystemKey(name)
 	var desc base.CollectionDescription
-	buf, err := p.txn.Systemstore().Get(key.ToDS())
+	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
-		return desc, err
+		return desc, fmt.Errorf("Failed to get collection description: %w", err)
 	}
 
 	err = json.Unmarshal(buf, &desc)

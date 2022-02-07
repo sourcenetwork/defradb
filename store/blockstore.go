@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package store
 
 import (
@@ -31,7 +32,7 @@ import (
 // us to swap between a regular ds.Datastore, and a ds.Txn which as of https://github.com/ipfs/go-datastore/issues/114
 // no longer implements ds.Datastore.
 //
-// The orginal blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
+// The original blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
 // to optimize the PutMany function. However, in DefraDB, since we rely on a single rootstore for all our various
 // substores (data, heads, blocks), which includes a Txn/Batch system already, our respective substores don't need
 // to optimize or worry about Batching/Txn. Hence the simplified core.DSReaderWriter.
@@ -40,6 +41,8 @@ import (
 // is different than expected.
 var ErrHashMismatch = errors.New("block in storage has different hash than requested")
 
+// defradb/store.ErrNotFound => error
+// ipfs-blockstore.ErrNotFound => error
 // ErrNotFound is an error returned when a block is not found.
 var ErrNotFound = errors.New("blockstore: block not found")
 
@@ -61,14 +64,14 @@ func (bs *bstore) HashOnRead(enabled bool) {
 	bs.rehash = enabled
 }
 
-func (bs *bstore) Get(k cid.Cid) (blocks.Block, error) {
+func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		log.Error("undefined cid in blockstore")
-		return nil, ErrNotFound
+		return nil, blockstore.ErrNotFound
 	}
-	bdata, err := bs.store.Get(dshelp.CidToDsKey(k))
+	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return nil, ErrNotFound
+		return nil, blockstore.ErrNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -88,26 +91,26 @@ func (bs *bstore) Get(k cid.Cid) (blocks.Block, error) {
 	return blocks.NewBlockWithCid(bdata, k)
 }
 
-func (bs *bstore) Put(block blocks.Block) error {
-	k := dshelp.CidToDsKey(block.Cid())
+func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
+	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
 	// Has is cheaper than Put, so see if we already have it
-	exists, err := bs.store.Has(k)
+	exists, err := bs.store.Has(ctx, k)
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	return bs.store.Put(k, block.RawData())
+	return bs.store.Put(ctx, k, block.RawData())
 }
 
-func (bs *bstore) PutMany(blocks []blocks.Block) error {
+func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
-		k := dshelp.CidToDsKey(b.Cid())
-		exists, err := bs.store.Has(k)
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k)
 		if err == nil && exists {
 			continue
 		}
 
-		err = bs.store.Put(k, b.RawData())
+		err = bs.store.Put(ctx, k, b.RawData())
 		if err != nil {
 			return err
 		}
@@ -115,20 +118,20 @@ func (bs *bstore) PutMany(blocks []blocks.Block) error {
 	return nil
 }
 
-func (bs *bstore) Has(k cid.Cid) (bool, error) {
-	return bs.store.Has(dshelp.CidToDsKey(k))
+func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
+	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
-func (bs *bstore) GetSize(k cid.Cid) (int, error) {
-	size, err := bs.store.GetSize(dshelp.CidToDsKey(k))
+func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
+	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return -1, ErrNotFound
+		return -1, blockstore.ErrNotFound
 	}
 	return size, err
 }
 
-func (bs *bstore) DeleteBlock(k cid.Cid) error {
-	return bs.store.Delete(dshelp.CidToDsKey(k))
+func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
+	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
 // AllKeysChan runs a query for keys from the blockstore.
@@ -139,7 +142,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 
 	// KeysOnly, because that would be _a lot_ of data.
 	q := dsq.Query{KeysOnly: true}
-	res, err := bs.store.Query(q)
+	res, err := bs.store.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +150,7 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	output := make(chan cid.Cid, dsq.KeysOnlyBufSize)
 	go func() {
 		defer func() {
+			//nolint
 			res.Close() // ensure exit (signals early exit, too)
 			close(output)
 		}()
@@ -161,13 +165,12 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 				return
 			}
 
-			// need to convert to key.Key using key.KeyFromDsKey.
-			bk, err := dshelp.BinaryFromDsKey(ds.RawKey(e.Key))
+			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(e.Key))
 			if err != nil {
-				log.Warningf("error parsing key from binary: %s", err)
+				log.Warnf("error parsing key from binary: %s", err)
 				continue
 			}
-			k := cid.NewCidV1(cid.Raw, bk)
+			k := cid.NewCidV1(cid.Raw, hash)
 			select {
 			case <-ctx.Done():
 				return

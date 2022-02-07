@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,36 +7,98 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
-// @todo: Rebuild render system.
-// @body: Current render system embeds render meta-data
-// into EVERY SINGLE returned object map. This can be drastically
-// reduced. Related: Replace Values() result with a typed object
-// instead of a raw map[string]interface{}
-
 // the final field select and render
-type renderNode struct { // selectNode??
+type renderNode struct {
 	p    *Planner
 	plan planNode
 
-	// fields []*base.FieldDescription
-	// aliases []string
+	renderInfo topLevelRenderInfo
 }
 
-func (p *Planner) render() *renderNode {
-	return &renderNode{p: p}
+type topLevelRenderInfo struct {
+	children []renderInfo
 }
 
-func (n *renderNode) Init() error            { return n.plan.Init() }
-func (n *renderNode) Start() error           { return n.plan.Start() }
-func (n *renderNode) Next() (bool, error)    { return n.plan.Next() }
+type renderInfo struct {
+	sourceFieldName      string
+	destinationFieldName string
+	children             []renderInfo
+}
+
+func (p *Planner) render(parsed *parser.Select) *renderNode {
+	return &renderNode{
+		p:          p,
+		renderInfo: buildTopLevelRenderInfo(parsed),
+	}
+}
+
+func buildTopLevelRenderInfo(parsed parser.Selection) topLevelRenderInfo {
+	childSelections := parsed.GetSelections()
+
+	info := topLevelRenderInfo{
+		children: make([]renderInfo, len(childSelections)),
+	}
+
+	for i, selection := range childSelections {
+		info.children[i] = buildRenderInfo(selection)
+	}
+
+	return info
+}
+
+func buildRenderInfo(parsed parser.Selection) renderInfo {
+	childSelections := parsed.GetSelections()
+	sourceFieldName := parsed.GetName()
+	alias := parsed.GetAlias()
+
+	var destinationFieldName string
+	if alias == "" {
+		destinationFieldName = sourceFieldName
+	} else {
+		destinationFieldName = alias
+	}
+
+	info := renderInfo{
+		sourceFieldName:      sourceFieldName,
+		destinationFieldName: destinationFieldName,
+		children:             make([]renderInfo, len(childSelections)),
+	}
+
+	for i, selection := range childSelections {
+		info.children[i] = buildRenderInfo(selection)
+	}
+
+	return info
+}
+
+func (n *renderNode) Init() error  { return n.plan.Init() }
+func (n *renderNode) Start() error { return n.plan.Start() }
+func (n *renderNode) Next() (bool, error) {
+	hasNext, err := n.plan.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
+
+	doc := n.plan.Values()
+	if doc == nil {
+		return n.Next()
+	}
+
+	if _, isHidden := doc[parser.HiddenFieldName]; isHidden {
+		return n.Next()
+	}
+	return hasNext, err
+}
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *renderNode) Close()                 { n.plan.Close() }
+func (n *renderNode) Close() error           { return n.plan.Close() }
 func (n *renderNode) Source() planNode       { return n.plan }
 
 // we only need to implement the Values() func of the planNode
@@ -46,58 +108,53 @@ func (r *renderNode) Values() map[string]interface{} {
 	if doc == nil {
 		return doc
 	}
-	return r.render(doc)
-}
 
-// render uses the __render map within the return doc via Values().
-// it extracts the associated render meta-data, and returns a newly
-// rendered map.
-// The render rules are as follows:
-// The doc returned by the plan has the following values:
-// {
-//	... document fields returned by scanPlan
-// 	__render: {
-// 		numRender: ... 	=> the number of fields in the actual selectionset
-// 		fields: ... 	=> array of fields extracted from the raw query (Includes selection set + filter dependencies)
-// 		aliases: ...	=> array of aliases, index matched to fields array.
-// 	}
-// }
-func (r *renderNode) render(src map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	if renderMap, ok := src["__render"].(map[string]interface{}); ok {
-		numRenderFields := renderMap["numResults"].(int)
-		fields := renderMap["fields"].([]string)
-		aliases := renderMap["aliases"].([]string)
-
-		for i := 0; i < numRenderFields; i++ {
-			field := fields[i]
-			var dst string
-			name := field
-			dst = name
-			alias := aliases[i]
-			if alias != "" {
-				dst = alias
-			}
-
-			if val, ok := src[name]; ok {
-				switch v := val.(type) {
-				case map[string]interface{}:
-					result[dst] = r.render(v)
-				case []map[string]interface{}:
-					subdocs := make([]map[string]interface{}, 0)
-					for _, subv := range v {
-						subdocs = append(subdocs, r.render(subv))
-					}
-					result[dst] = subdocs
-				default:
-					result[dst] = v
-				}
-			} else {
-				result[dst] = nil
-			}
-		}
-	} else {
-		return src
+	result := map[string]interface{}{}
+	for _, renderInfo := range r.renderInfo.children {
+		renderInfo.render(doc, result)
 	}
 	return result
+}
+
+// Renders the source document into the destination document using the given renderInfo.
+// Function recursively handles any nested children defined in the render info.
+func (r *renderInfo) render(src map[string]interface{}, destination map[string]interface{}) {
+	var resultValue interface{}
+	if val, ok := src[r.sourceFieldName]; ok {
+		switch v := val.(type) {
+		// If the current property is itself a map, we should render any properties of the child
+		case map[string]interface{}:
+			inner := map[string]interface{}{}
+
+			if _, isHidden := v[parser.HiddenFieldName]; isHidden {
+				return
+			}
+
+			for _, child := range r.children {
+				child.render(v, inner)
+			}
+			resultValue = inner
+		// If the current property is an array of maps, we should render each child map
+		case []map[string]interface{}:
+			subdocs := make([]map[string]interface{}, 0)
+			for _, subv := range v {
+				if _, isHidden := subv[parser.HiddenFieldName]; isHidden {
+					continue
+				}
+
+				inner := map[string]interface{}{}
+				for _, child := range r.children {
+					child.render(subv, inner)
+				}
+				subdocs = append(subdocs, inner)
+			}
+			resultValue = subdocs
+		default:
+			resultValue = v
+		}
+	} else {
+		resultValue = nil
+	}
+
+	destination[r.destinationFieldName] = resultValue
 }

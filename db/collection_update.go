@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,10 +7,13 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package db
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,28 +26,22 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
-	"github.com/fxamacker/cbor/v2"
+	cbor "github.com/fxamacker/cbor/v2"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/pkg/errors"
 )
 
 type UpdateOpt struct{}
 type CreateOpt struct{}
 
 var (
-	ErrInvalidTarget         = errors.New("The doc targeter is an unknown type")
-	ErrTargetEmpty           = errors.New("The doc targeter cannot be empty")
+	ErrInvalidUpdateTarget   = errors.New("The doc update targeter is an unknown type")
+	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
 	ErrInvalidUpdater        = errors.New("The doc updater is an unknown type")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
 	ErrInvalidMergeValueType = errors.New("The type of value in the merge patch doesn't match the schema")
 )
 
 func (c *Collection) Create2(doc *document.SimpleDocument, opts ...CreateOpt) error {
-
-	return nil
-}
-
-func (c *Collection) save2(txn *Txn, doc *document.SimpleDocument) error {
 
 	return nil
 }
@@ -63,74 +60,74 @@ func (c *Collection) Update2(doc *document.SimpleDocument, opts ...client.Update
 // an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Update.
 // Eg: UpdateWithFilter or UpdateWithKey
-func (c *Collection) UpdateWith(target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *Collection) UpdateWith(ctx context.Context, target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.UpdateWithFilter(t, updater, opts...)
+		_, err := c.UpdateWithFilter(ctx, t, updater, opts...)
 		return err
 	case key.DocKey:
-		_, err := c.UpdateWithKey(t, updater, opts...)
+		_, err := c.UpdateWithKey(ctx, t, updater, opts...)
 		return err
 	case []key.DocKey:
-		_, err := c.UpdateWithKeys(t, updater, opts...)
+		_, err := c.UpdateWithKeys(ctx, t, updater, opts...)
 		return err
 	case *document.SimpleDocument:
 		return c.UpdateWithDoc(t, updater, opts...)
 	case []*document.SimpleDocument:
 		return c.UpdateWithDocs(t, updater, opts...)
 	default:
-		return ErrInvalidTarget
+		return ErrInvalidUpdateTarget
 	}
 }
 
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithFilter(filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(false)
+func (c *Collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(txn)
-	res, err := c.updateWithFilter(txn, filter, updater, opts...)
+	defer c.discardImplicitTxn(ctx, txn)
+	res, err := c.updateWithFilter(ctx, txn, filter, updater, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return res, c.commitImplicitTxn(txn)
+	return res, c.commitImplicitTxn(ctx, txn)
 }
 
 // UpdateWithKey updates using a DocKey to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKey(key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(false)
+func (c *Collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(txn)
-	res, err := c.updateWithKey(txn, key, updater, opts...)
+	defer c.discardImplicitTxn(ctx, txn)
+	res, err := c.updateWithKey(ctx, txn, key, updater, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(txn)
+	return res, c.commitImplicitTxn(ctx, txn)
 }
 
 // UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKeys(keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	txn, err := c.getTxn(false)
+func (c *Collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(txn)
-	res, err := c.updateWithKeys(txn, keys, updater, opts...)
+	defer c.discardImplicitTxn(ctx, txn)
+	res, err := c.updateWithKeys(ctx, txn, keys, updater, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, c.commitImplicitTxn(txn)
+	return res, c.commitImplicitTxn(ctx, txn)
 }
 
 // UpdateWithDoc updates targeting the supplied document.
@@ -147,7 +144,7 @@ func (c *Collection) UpdateWithDocs(docs []*document.SimpleDocument, updater int
 	return nil
 }
 
-func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -163,7 +160,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 		return nil, ErrInvalidUpdater
 	}
 
-	doc, err := c.Get(key)
+	doc, err := c.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +172,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMerge(txn, v, patch.(map[string]interface{}))
+		err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
 	}
 	if err != nil {
 		return nil, err
@@ -188,8 +185,7 @@ func (c *Collection) updateWithKey(txn *Txn, key key.DocKey, updater interface{}
 	return results, nil
 }
 
-func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
-	fmt.Println("updating keys:", keys)
+func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -209,7 +205,7 @@ func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interfa
 		DocKeys: make([]string, len(keys)),
 	}
 	for i, key := range keys {
-		doc, err := c.Get(key)
+		doc, err := c.Get(ctx, key)
 		if err != nil {
 			fmt.Println("error getting key to update:", key)
 			return nil, err
@@ -222,7 +218,7 @@ func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interfa
 		if isPatch {
 			// todo
 		} else {
-			err = c.applyMerge(txn, v, patch.(map[string]interface{}))
+			err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
 		}
 		if err != nil {
 			return nil, nil
@@ -234,7 +230,7 @@ func (c *Collection) updateWithKeys(txn *Txn, keys []key.DocKey, updater interfa
 	return results, nil
 }
 
-func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -252,11 +248,11 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionQuery(txn, filter, opts...)
+	query, err := c.makeSelectionQuery(ctx, txn, filter, opts...)
 	if err != nil {
 		return nil, err
 	}
-	if err := query.Start(); err != nil {
+	if err = query.Start(); err != nil {
 		return nil, err
 	}
 
@@ -266,8 +262,8 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 
 	// loop while we still have results from the filter query
 	for {
-		next, err := query.Next()
-		if err != nil {
+		next, nextErr := query.Next()
+		if nextErr != nil {
 			return nil, err
 		}
 		// if theres no more records from the query, jump out of the loop
@@ -280,17 +276,21 @@ func (c *Collection) updateWithFilter(txn *Txn, filter interface{}, updater inte
 		if isPatch {
 			err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
 		} else if isMerge { // else is fine here
-			err = c.applyMerge(txn, doc, patch.(map[string]interface{}))
+			err = c.applyMerge(ctx, txn, doc, patch.(map[string]interface{}))
 		}
 		if err != nil {
 			return nil, err
 		}
 
-		// add succesful updated doc to results
+		// add successful updated doc to results
 		results.DocKeys = append(results.DocKeys, doc["_key"].(string))
 		results.Count++
 	}
 
+	err = query.Close()
+	if err != nil {
+		return nil, err
+	}
 	return results, nil
 }
 
@@ -348,7 +348,7 @@ func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []ma
 		if err != nil {
 			return err
 		}
-		field, val, ok := getValFromDocForPatchPath(doc, path)
+		field, val, _ := getValFromDocForPatchPath(doc, path)
 		if err := targetCollection.applyPatchOp(txn, key, field, val, op); err != nil {
 			return err
 		}
@@ -362,7 +362,7 @@ func (c *Collection) applyPatchOp(txn *Txn, dockey string, field string, current
 	return nil
 }
 
-func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[string]interface{}) error {
+func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]interface{}, merge map[string]interface{}) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
 		return errors.New("Document is missing key")
@@ -384,9 +384,21 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 			return err
 		}
 
+		// handle Int/Float case
+		// JSON is annoying in that it represents all numbers
+		// as Float64s. So our merge object contains float64s
+		// even for fields defined as Ints, which causes issues
+		// when we serialize that in CBOR. To generate the delta
+		// payload.
+		// So lets just make sure ints are ints
+		// ref: https://play.golang.org/p/djThEqGXtvR
+		if fd.Kind == base.FieldKind_INT {
+			merge[mfield] = int64(mval.(float64))
+		}
+
 		val := document.NewCBORValue(fd.Typ, cval)
 		fieldKey := c.getFieldKey(key, mfield)
-		c, err := c.saveDocValue(txn, c.getPrimaryIndexDocKey(fieldKey), val)
+		c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
 		if err != nil {
 			return err
 		}
@@ -406,7 +418,7 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
+	if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
 		return err
 	}
 
@@ -416,12 +428,12 @@ func (c *Collection) applyMerge(txn *Txn, doc map[string]interface{}, merge map[
 	// linearization, or any other transaction
 	// semantics, which the user already knows
 	// otherwise they wouldn't use a datastore
-	// that doesnt support proper transactions.
+	// that doesn't support proper transactions.
 	// So lets just commit, and keep going.
 	// @todo: Change this on the Txn.BatchShim
 	// structure
 	if txn.IsBatch() {
-		if err := txn.Commit(); err != nil {
+		if err := txn.Commit(ctx); err != nil {
 			return err
 		}
 	}
@@ -440,30 +452,97 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	switch field.Kind {
 	case base.FieldKind_DocKey, base.FieldKind_STRING:
 		cval, ok = val.(string)
+	case base.FieldKind_STRING_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		stringArray := make([]string, len(untypedCollection))
+		for i, value := range untypedCollection {
+			if value == nil {
+				stringArray[i] = ""
+				continue
+			}
+			stringArray[i], ok = value.(string)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to string", value, value)
+			}
+		}
+		ok = true
+		cval = stringArray
 	case base.FieldKind_BOOL:
 		cval, ok = val.(bool)
+	case base.FieldKind_BOOL_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		boolArray := make([]bool, len(untypedCollection))
+		for i, value := range untypedCollection {
+			boolArray[i], ok = value.(bool)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to bool", value, value)
+			}
+		}
+		ok = true
+		cval = boolArray
 	case base.FieldKind_FLOAT, base.FieldKind_DECIMNAL:
 		cval, ok = val.(float64)
+	case base.FieldKind_FLOAT_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		floatArray := make([]float64, len(untypedCollection))
+		for i, value := range untypedCollection {
+			floatArray[i], ok = value.(float64)
+			if !ok {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+			}
+		}
+		ok = true
+		cval = floatArray
+
 	case base.FieldKind_DATE:
 		var sval string
 		sval, ok = val.(string)
 		cval, err = time.Parse(time.RFC3339, sval)
 	case base.FieldKind_INT:
-		fmt.Printf("encountered val type: %v\n", val)
 		var fval float64
 		fval, ok = val.(float64)
 		if !ok {
-			fmt.Println("error1")
 			return nil, ErrInvalidMergeValueType
 		}
 		cval = int64(fval)
+	case base.FieldKind_INT_ARRAY:
+		if val == nil {
+			ok = true
+			cval = nil
+			break
+		}
+		untypedCollection := val.([]interface{})
+		intArray := make([]int64, len(untypedCollection))
+		for i, value := range untypedCollection {
+			valueAsFloat, castOk := value.(float64)
+			if !castOk {
+				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+			}
+			intArray[i] = int64(valueAsFloat)
+		}
+		ok = true
+		cval = intArray
 	case base.FieldKind_OBJECT, base.FieldKind_OBJECT_ARRAY,
 		base.FieldKind_FOREIGN_OBJECT, base.FieldKind_FOREIGN_OBJECT_ARRAY:
 		err = errors.New("Merge doesn't support sub types yet")
 	}
 
 	if !ok {
-		fmt.Println("error2")
 		return nil, ErrInvalidMergeValueType
 	}
 	if err != nil {
@@ -473,7 +552,12 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	return cval, err
 }
 
-func (c *Collection) applyMergePatchOp(txn *Txn, docKey string, field string, currentVal interface{}, targetVal interface{}) error {
+func (c *Collection) applyMergePatchOp( //nolint:unused
+	txn *Txn,
+	docKey string,
+	field string,
+	currentVal interface{},
+	targetVal interface{}) error {
 	return nil
 }
 
@@ -481,7 +565,11 @@ func (c *Collection) applyMergePatchOp(txn *Txn, docKey string, field string, cu
 // currently it doesn't support any other query operation other than filters.
 // (IE: No limit, order, etc)
 // Additionally it only queries for the root scalar fields of the object
-func (c *Collection) makeSelectionQuery(txn *Txn, filter interface{}, opts ...client.UpdateOpt) (planner.Query, error) {
+func (c *Collection) makeSelectionQuery(
+	ctx context.Context,
+	txn *Txn,
+	filter interface{},
+	opts ...client.UpdateOpt) (planner.Query, error) {
 	var f *parser.Filter
 	var err error
 	switch fval := filter.(type) {
@@ -506,7 +594,7 @@ func (c *Collection) makeSelectionQuery(txn *Txn, filter interface{}, opts ...cl
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectQuery(c.db, txn, slct)
+	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
 }
 
 func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
@@ -551,9 +639,7 @@ func (c *Collection) getTargetKeyForPatchPath(txn *Txn, doc map[string]interface
 }
 
 func splitPatchPath(path string) ([]string, int) {
-	if strings.HasPrefix(path, "/") {
-		path = path[1:]
-	}
+	path = strings.TrimPrefix(path, "/")
 	pathParts := strings.Split(path, "/")
 	return pathParts, len(pathParts)
 }

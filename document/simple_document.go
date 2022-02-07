@@ -1,4 +1,4 @@
-// Copyright 2020 Source Inc.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
+
 package document
 
 import (
@@ -21,19 +22,15 @@ type ValueType interface {
 
 // Scalar Value Type
 type Scalar struct {
-	value interface{}
+	// value interface{}
 }
 
 // List Value Type
 type List struct {
-	vals []ValueType
+	// vals []ValueType
 }
 
-type SimpleDocument struct {
-	schema *base.SchemaDescription
-
-	data map[string]ValueType
-}
+type SimpleDocument struct{}
 
 func NewSimpleFromJSON(schema *base.SchemaDescription, data []byte) (*SimpleDocument, error) {
 	return nil, nil
