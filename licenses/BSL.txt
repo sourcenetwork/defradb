@@ -4,33 +4,21 @@ Business Source License 1.1
 Parameters
 
 
-Licensor:                   Source Inc.
+Licensor:                   Democratized Data (D2) Foundation
 
 
-Licensed Work:              DefraDB v0.1
-                            The Licensed Work is (c) 2021 Source Inc.
+Licensed Work:              DefraDB v0.2
+                            The Licensed Work is (c) 2022 D2 Foundation.
 
 
-Additional Use Grant:       You may use the Licensed Work when your 
-                            application uses the Licensed Work with a total 
-                            of less than three server instances for any 
-                            purpose.
+Additional Use Grant:       You may only use the Licensed Work for an
+                            application that is connected  to the SourceHub
+                            mainnet or another protocol connected to the
+                            SourceHub by way of the Inter-Blockchain
+                            Communication (IBC) protocol. 
 
 
-                            You may make use of the Licensed Work, provided 
-                            that you may not use the Licensed Work for a 
-                            Interoperable Data Network
-
-
-                            A “Interoperable Data Network” is a commercial 
-                            offering that allows third parties (other than 
-                            your employees and contractors) to access the 
-                            functionality of the Licensed Work by creating 
-                            shareable or portable data and schemas between 
-                            applications controlled by such third parties. 
-
-
-Change Date:                2025-03-01
+Change Date:                2026-02-07
 
 
 Change License:             Apache License, Version 2.0
