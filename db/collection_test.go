@@ -185,6 +185,82 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
 }
 
+func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing Name")
+}
+
+func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "Name",
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing FieldKind")
+}
+
+func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB()
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing CRDT type")
+}
+
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB()
