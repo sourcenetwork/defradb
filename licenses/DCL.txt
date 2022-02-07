@@ -17,7 +17,7 @@ Agreement, to the exclusion of all other terms.
    
     a.  “DefraDB Core” shall mean the NoSQL Peer-to-Peer Embeddable Edge
         database software made available free of charge by the the
-        Democratzied Data Foundation under the terms of the Business Source
+        Democratized Data Foundation under the terms of the Business Source
         License 1.1 at: https://github.com/sourcenetwork/defradb. The terms of
         the Business Source License 1.1, and not this Agreement, govern your
         use of DefraDB Core.

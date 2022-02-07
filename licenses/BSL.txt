@@ -4,7 +4,7 @@ Business Source License 1.1
 Parameters
 
 
-Licensor:                   Democratzied Data (D2) Foundation
+Licensor:                   Democratized Data (D2) Foundation
 
 
 Licensed Work:              DefraDB v0.2
@@ -13,7 +13,7 @@ Licensed Work:              DefraDB v0.2
 
 Additional Use Grant:       You may only use the Licensed Work for an
                             application that is connected  to the SourceHub
-                            mainnet or another protocl connected to the
+                            mainnet or another protocol connected to the
                             SourceHub by way of the Inter-Blockchain
                             Communication (IBC) protocol. 
 
