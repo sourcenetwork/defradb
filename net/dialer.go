@@ -25,8 +25,8 @@ var (
 // dial attempts to open a gRPC connection over libp2p to a peer.
 // nolint
 func (s *server) dial(peerID libpeer.ID) (pb.ServiceClient, error) {
-	s.topicLock.Lock()
-	defer s.topicLock.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	conn, ok := s.conns[peerID]
 	if ok {
 		if conn.GetState() == connectivity.Shutdown {

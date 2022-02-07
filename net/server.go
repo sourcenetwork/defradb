@@ -26,8 +26,8 @@ type server struct {
 	opts []grpc.DialOption
 	db   client.DB
 
-	topics    map[string]*rpc.Topic
-	topicLock sync.Mutex
+	topics map[string]*rpc.Topic
+	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
 }
@@ -146,8 +146,8 @@ func (s *server) addPubSubTopic(dockey string) error {
 		return nil
 	}
 
-	s.topicLock.Lock()
-	defer s.topicLock.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, ok := s.topics[dockey]; ok {
 		return nil
 	}
@@ -170,8 +170,8 @@ func (s *server) removePubSubTopic(dockey string) error {
 		return nil
 	}
 
-	s.topicLock.Lock()
-	defer s.topicLock.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if t, ok := s.topics[dockey]; ok {
 		delete(s.topics, dockey)
 		return t.Close()
@@ -183,8 +183,8 @@ func (s *server) removeAllPubsubTopics() error {
 	if s.peer.ps == nil {
 		return nil
 	}
-	s.topicLock.Lock()
-	defer s.topicLock.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for id, t := range s.topics {
 		delete(s.topics, id)
 		if err := t.Close(); err != nil {
@@ -200,9 +200,9 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
-	s.topicLock.Lock()
+	s.mu.Lock()
 	t, ok := s.topics[dockey]
-	s.topicLock.Unlock()
+	s.mu.Unlock()
 	if !ok {
 		return fmt.Errorf("No pubsub topic found for doc %s", dockey)
 	}
