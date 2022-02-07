@@ -46,8 +46,6 @@ type Peer struct {
 
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
-	// tcpRPC  *grpc.Server // rpc server for regular tcp clients
-	// tcpAddr ma.Multiaddr
 
 	bus *broadcast.Broadcaster
 
@@ -83,14 +81,12 @@ func NewPeer(
 
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
-		host:   h,
-		ps:     ps,
-		db:     db,
-		ds:     ds,
-		bus:    bs,
-		p2pRPC: grpc.NewServer(serverOptions...),
-		// tcpRPC:         grpc.NewServer(),
-		// tcpAddr:        tcpAddr,
+		host:           h,
+		ps:             ps,
+		db:             db,
+		ds:             ds,
+		bus:            bs,
+		p2pRPC:         grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
 		jobQueue:       make(chan *dagJob, numWorkers),
@@ -115,15 +111,6 @@ func (p *Peer) Start() error {
 		return err
 	}
 
-	// addr, err := utils.TCPAddrFromMultiAddr(p.tcpAddr)
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to parse TCP address: %w", err)
-	// }
-	// tcplistener, err := net.Listen("tcp", addr)
-	// if err != nil {
-	// 	return err
-	// }
-
 	if p.ps != nil {
 		log.Info("Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
@@ -136,15 +123,6 @@ func (p *Peer) Start() error {
 			log.Fatal("Fatal p2p rpc serve error:", err)
 		}
 	}()
-
-	// register the tcp gRPC server
-	// go func() {
-	// 	log.Infof("Starting gRPC server listning on %s", addr)
-	// 	pb.RegisterServiceServer(p.tcpRPC, p.server)
-	// 	if err := p.tcpRPC.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-	// 		log.Fatal("Fatal tcp rpc serve error:", err)
-	// 	}
-	// }()
 
 	// start sendJobWorker + NumWorkers goroutines
 	go p.sendJobWorker()

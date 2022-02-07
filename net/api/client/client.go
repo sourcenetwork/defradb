@@ -35,19 +35,18 @@ func (c *Client) Close() error {
 
 // AddReplicator sends a request to add a target replicator to the DB peer
 func (c *Client) AddReplicator(ctx context.Context, collection string, paddr ma.Multiaddr) (peer.ID, error) {
-	var pid peer.ID
 	if len(collection) == 0 {
-		return pid, fmt.Errorf("Collection can't be empty")
+		return "", fmt.Errorf("Collection can't be empty")
 	}
 	if paddr == nil {
-		return pid, fmt.Errorf("target address can't be empty")
+		return "", fmt.Errorf("target address can't be empty")
 	}
 	resp, err := c.c.AddReplicator(ctx, &pb.AddReplicatorRequest{
 		Collection: []byte(collection),
 		Addr:       paddr.Bytes(),
 	})
 	if err != nil {
-		return pid, fmt.Errorf("AddReplicator request failed: %w", err)
+		return "", fmt.Errorf("AddReplicator request failed: %w", err)
 	}
 	return peer.IDFromBytes(resp.PeerID)
 }

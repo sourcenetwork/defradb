@@ -140,7 +140,7 @@ var startCmd = &cobra.Command{
 			}
 
 			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-				MaxConnectionIdle: 5 * time.Minute, // <--- This fixes it!
+				MaxConnectionIdle: 5 * time.Minute,
 			}))
 			tcplistener, err := gonet.Listen("tcp", addr)
 			if err != nil {
