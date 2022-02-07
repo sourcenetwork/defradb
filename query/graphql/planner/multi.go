@@ -87,17 +87,6 @@ type parallelNode struct { // serialNode?
 	doc map[string]interface{}
 }
 
-// func (n *selectTopNode) Init() error                    { return n.plan.Init() }
-// func (n *selectTopNode) Start() error                   { return n.plan.Start() }
-// func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
-// func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-// func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-// func (n *selectTopNode) Close() {
-// 	if n.plan != nil {
-// 		n.plan.Close()
-// 	}
-// }
-
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
 	for _, plan := range p.children {
 		if err := fn(plan); err != nil {
@@ -289,20 +278,6 @@ _version: commitSelectTopNode(append)
 */
 
 func (p *parallelNode) Values() map[string]interface{} {
-	// result := make(map[string]interface{})
-	// for i, plan := range p.children {
-	// 	if doc := plan.Values(); doc != nil {
-	// 		switch plan.(type) {
-	// 		case mergeNode:
-	// 			for k, v := range doc {
-	// 				p.result[k] = v
-	// 			}
-	// 		case appendNode:
-	// 			p.result[p.childFields[i]] = doc
-	// 		}
-	// 	}
-	// }
-
 	return p.doc
 }
 
@@ -417,61 +392,7 @@ Select {
 		}
 	]}
 }
-
-
-
 */
-
-// document
-// func (s *selectNode) addSubPlan(field string, plan planNode) error {
-// 	var multinode MultiNode
-// 	var multiscan *multiScanNode
-// 	switch src := s.source.(type) {
-// 	case MultiNode:
-// 		multinode = src
-// 		multiscan = multinode.Source().(*multiScanNode)
-// 	case *scanNode:
-// 		// we have a simple scanNode as our source
-// 		// if the new sub plan is a MergePlan, then just replace the
-// 		// source
-// 		// if its an append plan, then we need to create MultiNode
-// 		s.source = plan
-// 		return nil
-// 	default: // no existing multinode, and our current source is a complex non scanNode node.
-// 		// get original scanNode
-// 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
-// 		if origScan == nil {
-// 			return fmt.Errorf("Failed to find original scan node in plan graph")
-// 		}
-// 		// create our new multiscanner
-// 		multiscan = &multiScanNode{scanNode: origScan}
-// 		multiscan.addReader()
-// 		// create multinode
-// 		multinode = &parallelNode{
-// 			multiscan: multiscan,
-// 		}
-// 		// replace our current source internal scanNode with our new multiscanner
-// 		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
-// 			return err
-// 		}
-// 		// add our newly updated source to the multinode
-// 		if err := multinode.AddChild("", src); err != nil {
-// 			return err
-// 		}
-// 		s.source = multinode
-// 	}
-
-// 	// if we've got here, then we have an instanciated multinode ready to add
-// 	// our new plan to
-// 	multiscan.addReader()
-// 	scan := multiscan.Source()
-// 	// replace our current source internal scanNode with our new multiscanner
-// 	if err := s.p.walkAndReplacePlan(plan, scan, multiscan); err != nil {
-// 		return err
-// 	}
-// 	// add our newly updated source to the multinode
-// 	return multinode.AddChild("", plan)
-// }
 
 // @todo: Document AddSubPlan method
 func (s *selectNode) addSubPlan(field string, plan planNode) error {
@@ -560,17 +481,3 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 	}
 	return nil
 }
-
-// func (n *selectNode) addSubMergePlan(plan mergePlan) error {
-// 	return nil
-// }
-
-// func (n *selectNode) addSubAppendPlan(plan appendPlan) error {
-// 	return nil
-// }
-
-// func (p *Planner) parallelNode() (*parallelNode, error) {
-// 	mp := &parallelNode{
-// 		children: nodes,
-// 	}
-// }
