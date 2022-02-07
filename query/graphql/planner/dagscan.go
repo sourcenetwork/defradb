@@ -32,7 +32,7 @@ package planner
 
 import (
 	"container/list"
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -206,7 +206,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)
 		if !ok {
-			return false, errors.New("Queued value in DAGScan isn't a CID")
+			return false, fmt.Errorf("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
 		n.cid = &cid
@@ -218,7 +218,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		val := n.headset.Values()
 		cid, ok := val["cid"].(cid.Cid)
 		if !ok {
-			return false, errors.New("Headset scan node returned an invalid cid")
+			return false, fmt.Errorf("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
 
@@ -335,7 +335,7 @@ func dagBlockToNodeMap(block blocks.Block) (map[string]interface{}, []*ipld.Link
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return nil, nil, errors.New("Commit Delta missing priority key")
+		return nil, nil, fmt.Errorf("Commit Delta missing priority key")
 	}
 
 	commit["height"] = int64(prio)

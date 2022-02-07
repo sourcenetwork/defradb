@@ -1,0 +1,65 @@
+syntax = "proto3";
+package net.pb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+// Log represents a thread log.
+message Document {
+    // ID of the document.
+    bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+    // head of the log.
+    bytes head = 4 [(gogoproto.customtype) = "ProtoCid"];
+
+    // Record is a thread record containing link data.
+    message Log {
+        // block is the top-level node's raw data as an ipld.Block.
+        bytes block = 1;
+    }
+}
+
+message GetDocGraphRequest {}
+
+message GetDocGraphReply {}
+
+message PushDocGraphRequest {}
+
+message PushDocGraphReply {}
+
+message GetLogRequest {}
+
+message GetLogReply {}
+
+message PushLogRequest {
+    Body body = 1;
+
+    message Body {
+        // docKey is the target DocKey.
+        bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
+        // cid is the target CID.
+        bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
+        //
+        bytes schemaID = 3;
+        // record is the actual record payload.
+        Document.Log log = 4;
+    }
+}
+
+message GetHeadLogRequest {}
+
+message PushLogReply {}
+
+message GetHeadLogReply {}
+
+// Service is the peer-to-peer network API for document sync
+service Service {
+    // GetDocGraph from this peer.
+    rpc GetDocGraph(GetDocGraphRequest) returns (GetDocGraphReply) {}
+    // PushDocGraph to this peer.
+    rpc PushDocGraph(PushDocGraphRequest) returns (PushDocGraphReply) {}
+    // GetLog from this peer.
+    rpc GetLog(GetLogRequest) returns (GetLogReply) {}
+    // PushLog to this peer.
+    rpc PushLog(PushLogRequest) returns (PushLogReply) {}
+    // GetHeadLog from this peer
+    rpc GetHeadLog(GetHeadLogRequest) returns (GetHeadLogReply) {}
+}

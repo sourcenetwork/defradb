@@ -13,6 +13,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
@@ -21,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/utils"
 
 	"errors"
 
@@ -50,6 +52,8 @@ type Collection struct {
 
 	colID    uint32
 	colIDKey core.Key
+
+	schemaID string
 
 	desc base.CollectionDescription
 }
@@ -153,6 +157,27 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 
 	//write the collection metadata to the system store
 	err = db.systemstore.Put(ctx, key.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err = json.Marshal(struct {
+		Name   string
+		Schema base.SchemaDescription
+	}{col.desc.Name, col.desc.Schema})
+	if err != nil {
+		return nil, err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := utils.NewCidV1(buf)
+	if err != nil {
+		return nil, err
+	}
+	col.schemaID = cid.String()
+	key = base.MakeCollectionSchemaSystemKey(cid.String())
+	err = db.systemstore.Put(ctx, key.ToDS(), []byte(desc.Name))
+	log.Debugf("Created collection %s with ID %s", col.Name(), col.SchemaID)
 	return col, err
 }
 
@@ -178,12 +203,159 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 		return nil, errors.New("Collection must have a schema")
 	}
 
+	buf, err = json.Marshal(struct {
+		Name   string
+		Schema base.SchemaDescription
+	}{desc.Name, desc.Schema})
+	if err != nil {
+		return nil, err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := utils.NewCidV1(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	sid := cid.String()
+	log.Debugf("Retrieved collection %s with ID %s", desc.Name, sid)
 	return &Collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
 		colIDKey: core.NewKey(fmt.Sprint(desc.ID)),
+		schemaID: sid,
 	}, nil
+}
+
+// GetCollectionBySchemaID returns an existing collection within the database using the
+// schema hash ID
+func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (client.Collection, error) {
+	if schemaID == "" {
+		return nil, fmt.Errorf("Schema ID can't be empty")
+	}
+
+	key := base.MakeCollectionSchemaSystemKey(schemaID)
+	buf, err := db.systemstore.Get(ctx, key.ToDS())
+	if err != nil {
+		return nil, err
+	}
+
+	name := string(buf)
+	return db.GetCollection(ctx, name)
+}
+
+// GetAllCollections gets all the currently defined collections in the
+// database
+func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+	// create collection system prefix query
+	prefix := base.MakeCollectionSystemKey("")
+	q, err := db.systemstore.Query(ctx, query.Query{
+		Prefix:   prefix.String(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
+	}
+	defer func() {
+		if err := q.Close(); err != nil {
+			log.Errorf("Failed to close collection query: %w", err)
+		}
+	}()
+
+	cols := make([]client.Collection, 0)
+	for res := range q.Next() {
+		if res.Error != nil {
+			return nil, err
+		}
+
+		colName := ds.NewKey(res.Key).BaseNamespace()
+		col, err := db.GetCollection(ctx, colName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
+		}
+		cols = append(cols, col)
+	}
+
+	return cols, nil
+}
+
+// GetAllDocKeys returns all the document keys that exist in the collection
+// @todo: We probably need a lock on the collection for this kind of op since
+// it hits every key and will cause Tx conflicts for concurrent Txs
+func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+	txn, err := c.getTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer c.discardImplicitTxn(ctx, txn)
+
+	return c.getAllDocKeysChan(ctx, txn)
+}
+
+func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan client.DocKeysResult, error) {
+	prefix := c.getPrimaryIndexDocKey(ds.NewKey("")) // empty path for all keys prefix
+	q, err := txn.datastore.Query(ctx, query.Query{
+		Prefix:   prefix.String(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resCh := make(chan client.DocKeysResult)
+	go func() {
+		defer func() {
+			if err := q.Close(); err != nil {
+				log.Errorf("Failed to close AllDocKeys query: %w", err)
+			}
+			close(resCh)
+		}()
+		for res := range q.Next() {
+			// check for Done on context first
+			select {
+			case <-ctx.Done():
+				// we've been cancelled! ;)
+				return
+			default:
+				// noop, just continue on the with the for loop
+			}
+
+			if res.Error != nil {
+				resCh <- client.DocKeysResult{
+					Err: res.Error,
+				}
+				return
+			}
+
+			// looking for /<colID>/1/<Dockey>:v
+
+			// not it - prob a child key
+			if strings.Count(res.Key, "/") != 3 {
+				continue
+			}
+
+			// not it - missing value suffix
+			if !strings.HasSuffix(res.Key, ":v") {
+				continue
+			}
+
+			// now we have a doc key
+			rawDocKey := ds.NewKey(res.Key).Type()
+			key, err := key.NewFromString(rawDocKey)
+			if err != nil {
+				resCh <- client.DocKeysResult{
+					Err: res.Error,
+				}
+				return
+			}
+			resCh <- client.DocKeysResult{
+				Key: key,
+			}
+		}
+	}()
+
+	return resCh, nil
 }
 
 // ValidDescription
@@ -240,6 +412,10 @@ func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
 	panic("not implemented")
 }
 
+func (c *Collection) SchemaID() string {
+	return c.schemaID
+}
+
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
 func (c *Collection) WithTxn(txn client.Txn) client.Collection {
@@ -249,6 +425,7 @@ func (c *Collection) WithTxn(txn client.Txn) client.Collection {
 		desc:     c.desc,
 		colID:    c.colID,
 		colIDKey: c.colIDKey,
+		schemaID: c.schemaID,
 	}
 }
 
@@ -325,7 +502,8 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 		return err
 	}
 	// write data to DB via MerkleClock/CRDT
-	return c.save(ctx, txn, doc)
+	_, err = c.save(ctx, txn, doc)
+	return err
 }
 
 // Update an existing document with the new values
@@ -361,7 +539,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
 func (c *Collection) update(ctx context.Context, txn *Txn, doc *document.Document) error {
-	err := c.save(ctx, txn, doc)
+	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
 	}
@@ -394,7 +572,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document) error {
+func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -409,7 +587,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 			fieldKey := c.getFieldKey(dockey, k)
 			c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
 			if err != nil {
-				return err
+				return cid.Undef, err
 			}
 			if val.IsDelete() {
 				merge[k] = nil
@@ -437,23 +615,23 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	// Update CompositeDAG
 	em, err := cbor.CanonicalEncOptions().EncMode()
 	if err != nil {
-		return err
+		return cid.Undef, err
 	}
 	buf, err := em.Marshal(merge)
 	if err != nil {
-		return nil
+		return cid.Undef, nil
 	}
 
 	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
 	if err != nil {
-		return nil
+		return cid.Undef, err
 	}
 
 	txn.OnSuccess(func() {
 		doc.SetHead(headCID)
 	})
 	// fmt.Printf("final: %s\n\n", docCid)
-	return nil
+	return headCID, nil
 }
 
 // Delete will attempt to delete a document by key
@@ -562,7 +740,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
 	case core.LWW_REGISTER:
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.schemaID, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}
@@ -586,7 +764,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, ctype, key)
+		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID(), c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
 		}

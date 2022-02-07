@@ -33,7 +33,7 @@ func TestQueryAllCommitsSingleDAGWithLinkCount(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid":    "bafkreie33v5gnk4vlkzedrm5tofkhhwwrb3mlnpibfsa6qzgvhpiv5qzl4",
+				"cid":    "bafkreiatyttzyajjsw5lshkz6unhei6k4mr3rcmapmooeamkeamx72cuny",
 				"_count": 2,
 			},
 		},

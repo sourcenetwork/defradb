@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"errors"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -115,11 +113,11 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, errors.New("Query is missing query or mutation statements")
+			return nil, fmt.Errorf("Query is missing query or mutation statements")
 		}
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, errors.New("OperationDefinition is missing selections")
+			return nil, fmt.Errorf("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 	case *parser.Select:
@@ -265,7 +263,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return errors.New("Unknown type index join plan")
+	return fmt.Errorf("Unknown type index join plan")
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {

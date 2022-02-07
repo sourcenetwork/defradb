@@ -30,6 +30,7 @@ var (
 )
 
 type CompositeDAGDelta struct {
+	SchemaID string
 	Priority uint64
 	Data     []byte
 	SubDAGs  []core.DAGLink
@@ -50,9 +51,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
+		SchemaID string
 		Priority uint64
 		Data     []byte
-	}{delta.Priority, delta.Data})
+	}{delta.SchemaID, delta.Priority, delta.Data})
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +69,26 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 	return delta.SubDAGs
 }
 
-// CompositeDAG is a CRDT structure that is used
-// to track a collection of sub MerkleCRDTs.
-type CompositeDAG struct{}
+func (delta *CompositeDAGDelta) GetSchemaID() string {
+	return delta.SchemaID
+}
 
-func NewCompositeDAG(store core.DSReaderWriter, namespace ds.Key, key string) CompositeDAG {
-	return CompositeDAG{}
+// CompositeDAG is a CRDT structure that is used
+// to track a collcetion of sub MerkleCRDTs.
+type CompositeDAG struct {
+	key      string
+	schemaID string
+}
+
+func NewCompositeDAG(store core.DSReaderWriter, schemaID string, namespace ds.Key, key string) CompositeDAG {
+	return CompositeDAG{
+		key:      key,
+		schemaID: schemaID,
+	}
+}
+
+func (c CompositeDAG) ID() string {
+	return c.key
 }
 
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
@@ -85,8 +101,9 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:    patch,
-		SubDAGs: links,
+		Data:     patch,
+		SubDAGs:  links,
+		SchemaID: c.schemaID,
 	}
 }
 

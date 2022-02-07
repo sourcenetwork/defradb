@@ -11,7 +11,6 @@ package planner
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -38,7 +37,7 @@ func (p *Planner) getSource(collection string, versioned bool) (planSource, erro
 // @todo: Add field selection
 func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (planSource, error) {
 	if collection == "" {
-		return planSource{}, errors.New("collection name cannot be empty")
+		return planSource{}, fmt.Errorf("collection name cannot be empty")
 	}
 	colDesc, err := p.getCollectionDesc(collection)
 	if err != nil {

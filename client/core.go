@@ -21,17 +21,27 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 )
 
 type DB interface {
 	// Collections
 	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
 	GetCollection(context.Context, string) (Collection, error)
+	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	ExecQuery(context.Context, string) *QueryResult
 	SchemaManager() *schema.SchemaManager
 	AddSchema(context.Context, string) error
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
+	Root() ds.Batching
+	// Rootstore() core.DSReaderWriter
+	// Headstore() core.DSReaderWriter
+	// Datastore() core.DSReaderWriter
+	DAGstore() core.DAGStore
+
+	NewTxn(context.Context, bool) (Txn, error)
+	GetAllCollections(ctx context.Context) ([]Collection, error)
 }
 
 type Sequence interface{}
@@ -50,6 +60,7 @@ type Collection interface {
 	Name() string
 	Schema() base.SchemaDescription
 	ID() uint32
+	SchemaID() string
 
 	Indexes() []base.IndexDescription
 	PrimaryIndex() base.IndexDescription
@@ -76,6 +87,14 @@ type Collection interface {
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
 	WithTxn(Txn) Collection
+
+	GetPrimaryIndexDocKey(ds.Key) ds.Key
+	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
+}
+
+type DocKeysResult struct {
+	Key key.DocKey
+	Err error
 }
 
 type UpdateOpt struct{}

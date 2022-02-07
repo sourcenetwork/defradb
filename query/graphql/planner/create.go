@@ -10,7 +10,7 @@
 package planner
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -46,7 +46,7 @@ func (n *createNode) Init() error { return nil }
 func (n *createNode) Start() error {
 	// parse the doc
 	if n.newDocStr == "" {
-		return errors.New("Invalid document to create")
+		return fmt.Errorf("Invalid document to create")
 	}
 
 	doc, err := document.NewFromJSON([]byte(n.newDocStr))

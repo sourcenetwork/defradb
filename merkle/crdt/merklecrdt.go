@@ -11,16 +11,20 @@ package crdt
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
 
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
+	logging "github.com/ipfs/go-log/v2"
 )
 
-// var (
-//     log = logging.Logger("defradb.merkle.crdt")
-// )
+var (
+	log = logging.Logger("merklecrdt")
+)
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
@@ -55,6 +59,12 @@ var (
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
+
+	broadcaster corenet.Broadcaster
+}
+
+func (base *baseMerkleCRDT) Clock() core.MerkleClock {
+	return base.clock
 }
 
 func (base *baseMerkleCRDT) Merge(ctx context.Context, other core.Delta, id string) error {
@@ -69,22 +79,51 @@ func (base *baseMerkleCRDT) Value(ctx context.Context) ([]byte, error) {
 	return base.crdt.Value(ctx)
 }
 
-func (base *baseMerkleCRDT) Clock() core.MerkleClock {
-	return base.clock
+func (base *baseMerkleCRDT) ID() string {
+	return base.crdt.ID()
 }
 
-// func (base *baseMerkleCRDT) ProcessNode(ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
-// 	current := node.Cid()
-// 	err := base.Merge(delta, dshelp.CidToDsKey(current).String())
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
-// 	}
-
-// 	return base.clock.ProcessNode(ng, root, rootPrio, delta, node)
-// }
-
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, error) {
-	return base.clock.AddDAGNode(ctx, delta)
-	// and broadcast
+func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
+	log.Debug("Processing CRDT state for ", base.crdt.ID())
+	c, nd, err := base.clock.AddDAGNode(ctx, delta)
+	if err != nil {
+		return cid.Undef, nil, err
+	}
+	return c, nd, nil
+}
+
+func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {
+	if base.broadcaster == nil {
+		return nil // just skip if we dont have a broadcaster set
+	}
+
+	parts := ds.NewKey(base.crdt.ID()).List()
+	if len(parts) < 3 {
+		return fmt.Errorf("Invalid dockey for MerkleCRDT")
+	}
+	dockey := parts[2]
+
+	c := nd.Cid()
+	netdelta, ok := delta.(core.NetDelta)
+	if !ok {
+		return fmt.Errorf("Can't broadcast a delta payload that doesn't implement core.NetDelta")
+	}
+
+	log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c)
+	// we dont want to wait around for the broadcast
+	go func() {
+		lg := core.Log{
+			DocKey:   dockey,
+			Cid:      c,
+			SchemaID: netdelta.GetSchemaID(),
+			Block:    nd,
+			Priority: netdelta.GetPriority(),
+		}
+		if err := base.broadcaster.Send(lg); err != nil {
+			log.Errorf("Failed to broadcast MerkleCRDT update %s for %s: %w", c, dockey, err)
+		}
+	}()
+
+	return nil
 }
