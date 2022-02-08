@@ -10,7 +10,8 @@ on:
       - develop
     tags:
       - v*
-    types: [completed]
+    types:
+      - completed
 
 jobs:
 
