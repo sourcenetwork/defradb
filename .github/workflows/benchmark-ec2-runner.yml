@@ -71,8 +71,8 @@ jobs:
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
     steps:
-      - name: Setup benchmarks
-        run: echo 'Replace with Johns Benchmarking Command Steps'
+      - name: Start Running the bechmarks
+        run: make test:bench
 
   # Step-4: Stop the runner once the benchmarks have ran.
   stop-runner:
