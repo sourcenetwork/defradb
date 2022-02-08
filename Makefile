@@ -3,7 +3,7 @@ default:
 
 .PHONY: install
 install:
-	go install cli/defradb/main.go
+	go install ./cli/defradb/
 
 .PHONY: build
 build:
