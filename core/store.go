@@ -13,6 +13,7 @@ package core
 import (
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/sourcenetwork/defradb/datastores/iterable"
 )
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
@@ -32,6 +33,10 @@ type MultiStore interface {
 	// as a Blockstore, embedded into a DAGStore
 	// under the /blocks namespace
 	DAGstore() DAGStore
+
+	// Headstore is a wrapped root DSReaderWriter
+	// under the /system namespace
+	Systemstore() DSReaderWriter
 }
 
 // DSReaderWriter simplifies the interface that is exposed by a
@@ -44,6 +49,7 @@ type MultiStore interface {
 type DSReaderWriter interface {
 	ds.Read
 	ds.Write
+	iterable.Iterable
 }
 
 // DAGStore proxies the ipld.DAGService under the /core namespace for future-proofing

@@ -347,7 +347,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.headstore, nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
+	clk := clock.NewMerkleClock(db.Headstore(), nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)
@@ -358,7 +358,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, errGet := db.dagstore.Get(ctx, c)
+		b, errGet := db.DAGstore().Get(ctx, c)
 		assert.NoError(t, errGet)
 
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
@@ -396,7 +396,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	fmt.Printf("-------\n")
 
 	for _, c := range cids {
-		b, err := db.dagstore.Get(ctx, c)
+		b, err := db.DAGstore().Get(ctx, c)
 		assert.NoError(t, err)
 
 		nd, err := dag.DecodeProtobuf(b.RawData())

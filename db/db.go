@@ -19,15 +19,12 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
-	ktds "github.com/ipfs/go-datastore/keytransform"
-	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log/v2"
@@ -55,19 +52,8 @@ var (
 type DB struct {
 	glock sync.RWMutex
 
-	rootstore ds.Batching // main storage interface
-
-	systemstore    core.DSReaderWriter // wrapped store for system data
-	ssKeyTransform ktds.KeyTransform
-
-	datastore      core.DSReaderWriter // wrapped store for data
-	dsKeyTransform ktds.KeyTransform
-
-	headstore      core.DSReaderWriter // wrapped store for heads
-	hsKeyTransform ktds.KeyTransform
-
-	dagstore        core.DAGStore // wrapped store for dags
-	dagKeyTransform ktds.KeyTransform
+	rootstore  ds.Batching
+	multistore core.MultiStore
 
 	crdtFactory *crdt.Factory
 
@@ -94,12 +80,9 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 // NewDB creates a new instance of the DB using the given options
 func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug("loading: internal datastores")
-	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
-	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
-	headstore := namespace.Wrap(rootstore, base.HeadStoreKey)
-	blockstore := namespace.Wrap(rootstore, base.BlockStoreKey)
-	dagstore := store.NewDAGStore(blockstore)
-	crdtFactory := crdt.DefaultFactory.WithStores(datastore, headstore, dagstore)
+	root := store.AsDSReaderWriter(rootstore)
+	multistore := store.MultiStoreFrom(root)
+	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	log.Debug("loading: schema manager")
 	sm, err := schema.NewSchemaManager()
@@ -114,19 +97,8 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 	}
 
 	db := &DB{
-		rootstore: rootstore,
-
-		systemstore:    systemstore,
-		ssKeyTransform: systemstore.KeyTransform,
-
-		datastore:      datastore,
-		dsKeyTransform: datastore.KeyTransform,
-
-		headstore:      headstore,
-		hsKeyTransform: headstore.KeyTransform,
-
-		dagstore:        dagstore,
-		dagKeyTransform: blockstore.KeyTransform,
+		rootstore:  rootstore,
+		multistore: multistore,
 
 		crdtFactory: &crdtFactory,
 		log:         log,
@@ -152,29 +124,36 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 	return db, nil
 }
 
-// Root
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (core.Txn, error) {
+	return store.NewTxnFrom(ctx, db.rootstore, readonly)
+}
+
 func (db *DB) Root() ds.Batching {
 	return db.rootstore
 }
 
 // Rootstore gets the internal rootstore handle
 func (db *DB) Rootstore() core.DSReaderWriter {
-	return db.rootstore
+	return db.multistore.Rootstore()
 }
 
 // Headstore returns the interal index store for DAG Heads
 func (db *DB) Headstore() core.DSReaderWriter {
-	return db.headstore
+	return db.multistore.Headstore()
 }
 
 // Datastore returns the interal index store for DAG Heads
 func (db *DB) Datastore() core.DSReaderWriter {
-	return db.datastore
+	return db.multistore.Datastore()
 }
 
 // DAGstore returns the internal DAG store which contains IPLD blocks
 func (db *DB) DAGstore() core.DAGStore {
-	return db.dagstore
+	return db.multistore.DAGstore()
+}
+
+func (db *DB) Systemstore() core.DSReaderWriter {
+	return db.multistore.Systemstore()
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -184,7 +163,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	defer db.glock.Unlock()
 
 	log.Debug("Checking if db has already been initialized...")
-	exists, err := db.systemstore.Has(ctx, ds.NewKey("init"))
+	exists, err := db.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -203,7 +182,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = db.systemstore.Put(ctx, ds.NewKey("init"), []byte{1})
+	err = db.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -212,11 +191,11 @@ func (db *DB) initialize(ctx context.Context) error {
 }
 
 func (db *DB) printDebugDB(ctx context.Context) {
-	printStore(ctx, db.rootstore)
+	printStore(ctx, db.Rootstore())
 }
 
 func (db *DB) PrintDump(ctx context.Context) {
-	printStore(ctx, db.rootstore)
+	printStore(ctx, db.Rootstore())
 }
 
 func (db *DB) Executor() *planner.QueryExecutor {
