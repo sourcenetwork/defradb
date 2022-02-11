@@ -39,3 +39,26 @@ func TestMutationCreateSimple(t *testing.T) {
 
 	simpleTests.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple create mutation",
+		Query: `mutation {
+					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
+						_key
+						name
+						age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"name": "John",
+				"age": 27
+			}`)},
+		},
+		ExpectedError: "A document with the given key already exists",
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
