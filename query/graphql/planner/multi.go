@@ -11,9 +11,8 @@
 package planner
 
 import (
+	"errors"
 	"fmt"
-
-	"log"
 
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -34,7 +33,7 @@ type MultiNode interface {
 	planNode
 	Children() []planNode
 	AddChild(string, planNode) error
-	SetMultiScanner(*multiScanNode)
+	ReplaceChildAt(int, string, planNode) error
 }
 
 // mergeNode is a special interface for the MultiNode
@@ -86,17 +85,6 @@ type parallelNode struct { // serialNode?
 	doc map[string]interface{}
 }
 
-// func (n *selectTopNode) Init() error                    { return n.plan.Init() }
-// func (n *selectTopNode) Start() error                   { return n.plan.Start() }
-// func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
-// func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-// func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-// func (n *selectTopNode) Close() {
-// 	if n.plan != nil {
-// 		n.plan.Close()
-// 	}
-// }
-
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
 	for _, plan := range p.children {
 		if err := fn(plan); err != nil {
@@ -119,13 +107,10 @@ func (p *parallelNode) Start() error {
 }
 
 func (p *parallelNode) Spans(spans core.Spans) {
-	err := p.applyToPlans(func(n planNode) error {
+	_ = p.applyToPlans(func(n planNode) error {
 		n.Spans(spans)
 		return nil
 	})
-	if err != nil {
-		log.Print("applying spans to plans failed : ", err)
-	}
 }
 
 func (p *parallelNode) Close() error {
@@ -288,20 +273,6 @@ _version: commitSelectTopNode(append)
 */
 
 func (p *parallelNode) Values() map[string]interface{} {
-	// result := make(map[string]interface{})
-	// for i, plan := range p.children {
-	// 	if doc := plan.Values(); doc != nil {
-	// 		switch plan.(type) {
-	// 		case mergeNode:
-	// 			for k, v := range doc {
-	// 				p.result[k] = v
-	// 			}
-	// 		case appendNode:
-	// 			p.result[p.childFields[i]] = doc
-	// 		}
-	// 	}
-	// }
-
 	return p.doc
 }
 
@@ -317,8 +288,14 @@ func (p *parallelNode) AddChild(field string, node planNode) error {
 	return nil
 }
 
-func (p *parallelNode) SetMultiScanner(ms *multiScanNode) {
-	p.multiscan = ms
+func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
+	if i >= len(p.children) {
+		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
+	}
+
+	p.children[i] = node
+	p.childFields[i] = field
+	return nil
 }
 
 /*
@@ -410,61 +387,7 @@ Select {
 		}
 	]}
 }
-
-
-
 */
-
-// document
-// func (s *selectNode) addSubPlan(field string, plan planNode) error {
-// 	var multinode MultiNode
-// 	var multiscan *multiScanNode
-// 	switch src := s.source.(type) {
-// 	case MultiNode:
-// 		multinode = src
-// 		multiscan = multinode.Source().(*multiScanNode)
-// 	case *scanNode:
-// 		// we have a simple scanNode as our source
-// 		// if the new sub plan is a MergePlan, then just replace the
-// 		// source
-// 		// if its an append plan, then we need to create MultiNode
-// 		s.source = plan
-// 		return nil
-// 	default: // no existing multinode, and our current source is a complex non scanNode node.
-// 		// get original scanNode
-// 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
-// 		if origScan == nil {
-// 			return fmt.Errorf("Failed to find original scan node in plan graph")
-// 		}
-// 		// create our new multiscanner
-// 		multiscan = &multiScanNode{scanNode: origScan}
-// 		multiscan.addReader()
-// 		// create multinode
-// 		multinode = &parallelNode{
-// 			multiscan: multiscan,
-// 		}
-// 		// replace our current source internal scanNode with our new multiscanner
-// 		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
-// 			return err
-// 		}
-// 		// add our newly updated source to the multinode
-// 		if err := multinode.AddChild("", src); err != nil {
-// 			return err
-// 		}
-// 		s.source = multinode
-// 	}
-
-// 	// if we've got here, then we have an instanciated multinode ready to add
-// 	// our new plan to
-// 	multiscan.addReader()
-// 	scan := multiscan.Source()
-// 	// replace our current source internal scanNode with our new multiscanner
-// 	if err := s.p.walkAndReplacePlan(plan, scan, multiscan); err != nil {
-// 		return err
-// 	}
-// 	// add our newly updated source to the multinode
-// 	return multinode.AddChild("", plan)
-// }
 
 // @todo: Document AddSubPlan method
 func (s *selectNode) addSubPlan(field string, plan planNode) error {
@@ -531,38 +454,21 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 				return err
 			}
 
-		// harder case. two possibilities:
-		//	A) We have a internal multiscanNode on our MultiNode
-		//	B) We don't. Which means we have a scanNode as a child of MultiNode, and we need
-		//	   to replace it with the updated MergeNode
+		// We have a internal multiscanNode on our MultiNode
 		case mergeNode:
-			if ms := node.Source(); s != nil { // yes, we have a multiscan node. Case A)
-				multiscan := ms.(*multiScanNode)
-				// replace our new node internal scanNode with our existing multiscanner
-				if err := s.p.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
-					return err
-				}
-				multiscan.addReader()
-				// add our newly updated plan to the multinode
-				if err := node.AddChild(field, plan); err != nil {
-					return err
-				}
-			} else { // no multiscan, case B)
-				children := node.Children()
-				// index 0 is always a scan node if there is no multiscanner
-				// origScan is going to match the internal MergeNode scanner
-				origScan := children[0].(*scanNode)
+			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
+			if !sourceIsMultiscan {
+				return errors.New("Merge node source must be a multiScanNode")
+			}
 
-				// create our new multiscanner
-				multiscan := &multiScanNode{scanNode: origScan}
-				node.SetMultiScanner(multiscan)
-				// replace the origal mergePlan scanner with the new multiscan
-				if err := s.p.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
-					return err
-				}
-				multiscan.addReader()
-				// replace our origina scanNode in the mulitnode with our new MergeNode
-				children[0] = plan
+			// replace our new node internal scanNode with our existing multiscanner
+			if err := s.p.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
+				return err
+			}
+			multiscan.addReader()
+			// add our newly updated plan to the multinode
+			if err := node.AddChild(field, plan); err != nil {
+				return err
 			}
 		default:
 			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
@@ -570,17 +476,3 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 	}
 	return nil
 }
-
-// func (n *selectNode) addSubMergePlan(plan mergePlan) error {
-// 	return nil
-// }
-
-// func (n *selectNode) addSubAppendPlan(plan appendPlan) error {
-// 	return nil
-// }
-
-// func (p *Planner) parallelNode() (*parallelNode, error) {
-// 	mp := &parallelNode{
-// 		children: nodes,
-// 	}
-// }
