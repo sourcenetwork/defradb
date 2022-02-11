@@ -15,19 +15,21 @@ options:
     title_maps:
       feat: Features
       fix: Bug fixes
+      tools: Tooling
+      docs: Documentation
       perf: Performance
       refactor: Refactoring
-      ci: Continous integration
-      docs: Documentation
       test: Testing
+      ci: Continuous integration
     sort_by: Custom
     title_order:
       - feat
       - fix
+      - tools
       - docs
-      - test
       - perf
       - refactor
+      - test
       - ci
       - chore
   header:
@@ -38,4 +40,5 @@ options:
       - Subject
   notes:
     keywords:
+      - BREAKING CHANGES
       - BREAKING CHANGE
