@@ -45,7 +45,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Results:       nil,
 			ExpectedError: "No document for the given key exists",
@@ -63,7 +64,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Results:       nil,
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
@@ -82,7 +84,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Results:       nil,
 			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
@@ -102,7 +105,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -126,7 +130,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -149,7 +154,8 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`)},
+					}`),
+				},
 			},
 			Updates: map[int][]string{
 				0: {
@@ -157,11 +163,261 @@ func TestMutationDeleteDocumentUsingSingleKey(t *testing.T) {
 						"age":  27,
 						"points": 48.2,
 						"verified": false
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
 					"MyTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+				},
+			},
+			ExpectedError: "",
+		},
+	}
+
+	for _, test := range tests {
+		simpleTests.ExecuteTestCase(t, test)
+	}
+}
+
+func TestMutationDeleteMultipleDocumentUsingMultipleKeys(t *testing.T) {
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "Deletion of one document using a list when it doesn't exist, in a non-empty collection.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       nil,
+			ExpectedError: "No document for the given key exists",
+		},
+
+		{
+			Description: "Simple multi-key delete mutation while no documents exist.",
+			Query: `mutation {
+						delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+							_key
+						}
+					}`,
+			Docs:          map[int][]string{},
+			Results:       nil,
+			ExpectedError: "No document for the given key exists",
+		},
+
+		{
+			Description: "Simple multi-key delete mutation while one document doesn't exist.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       nil,
+			ExpectedError: "No document for the given key exists",
+		},
+
+		{
+			Description: "Simple multi-key delete mutation with one key that exists.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+				},
+			},
+			ExpectedError: "",
+		},
+
+		{
+			Description: "Delete multiple documents that exist, when given multiple keys.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+				},
+				{
+					"_key": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+				},
+			},
+			ExpectedError: "",
+		},
+
+		{
+			Description: "Delete multiple documents that exist, when given multiple keys with alias.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
+							AliasKey: _key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+				},
+				{
+					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+				},
+			},
+			ExpectedError: "",
+		},
+
+		{
+			Description: "Delete multiple documents that exist without sub selection, should give error.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       nil,
+			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
+		},
+
+		{
+			Description: "Delete multiple documents that exist without _key sub-selection.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       nil,
+			ExpectedError: "Syntax Error GraphQL request (2:114) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(ids: [\"bae-6a6482a8-24e1-5c73-a237-ca569e41507d\", \"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e\"]) {\n                                                                                                                    ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
+		},
+
+		{
+			Description: "Delete multiple documents that exist, where an update happens too.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
+							AliasKey: _key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Updates: map[int][]string{
+				0: {
+					(`{
+								"age":  27,
+								"points": 48.2,
+								"verified": false
+					}`),
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+				},
+				{
+					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 				},
 			},
 			ExpectedError: "",
