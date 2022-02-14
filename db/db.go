@@ -147,7 +147,7 @@ func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
 		opt(db)
 	}
 
-	return db, err
+	return db, nil
 }
 
 // Start runs all the initial sub-routines and initialization steps.
