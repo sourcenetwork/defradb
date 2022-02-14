@@ -58,7 +58,7 @@ test\:clean: clean\:test test
 
 .PHONY: test\:bench
 test\:bench:
-	go test ./... -race -bench=.
+	make -C ./bench/ bench
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
