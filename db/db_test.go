@@ -29,16 +29,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newMemoryDB() (*DB, error) {
+func newMemoryDB(ctx context.Context) (*DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(rootstore)
+	return NewDB(ctx, rootstore)
 }
 
 func TestNewDB(t *testing.T) {
+	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -46,7 +47,7 @@ func TestNewDB(t *testing.T) {
 		return
 	}
 
-	_, err = NewDB(rootstore)
+	_, err = NewDB(ctx, rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +57,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
 	rootstore := ds.NewMapDatastore()
 
-	db, err := NewDB(rootstore)
+	db, err := NewDB(ctx, rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +71,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 
 func TestDBSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -112,7 +113,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 
 func TestDBUpdateDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -165,7 +166,7 @@ func TestDBUpdateDocument(t *testing.T) {
 
 func TestDBUpdateNonExistingDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -188,7 +189,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 
 func TestDBUpdateExistingDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -231,7 +232,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 
 func TestDBGetDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -276,7 +277,7 @@ func TestDBGetDocument(t *testing.T) {
 
 func TestDBGetNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -289,7 +290,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 
 func TestDBDeleteDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -315,7 +316,7 @@ func TestDBDeleteDocument(t *testing.T) {
 
 func TestDBDeleteNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -329,7 +330,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 
 func TestDocumentMerkleDAG(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -416,7 +417,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 // collection with schema
 func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -449,7 +450,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 
 func TestDBUpdateDocWithFilter(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)

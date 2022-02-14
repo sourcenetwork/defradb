@@ -84,14 +84,9 @@ var startCmd = &cobra.Command{
 			options = append(options, db.WithBroadcaster(bs))
 		}
 
-		db, err := db.NewDB(rootstore, options...)
+		db, err := db.NewDB(ctx, rootstore, options...)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
-			os.Exit(1)
-		}
-		if err := db.Start(ctx); err != nil {
-			log.Error("Failed to start the database: ", err)
-			db.Close()
 			os.Exit(1)
 		}
 
