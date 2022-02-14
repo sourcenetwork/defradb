@@ -47,14 +47,9 @@ var srvDumpCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		db, err := db.NewDB(rootstore)
+		db, err := db.NewDB(ctx, rootstore)
 		if err != nil {
 			log.Error("Failed to initiate database:", err)
-			os.Exit(1)
-		}
-		if err := db.Start(ctx); err != nil {
-			log.Error("Failed to start the database: ", err)
-			db.Close()
 			os.Exit(1)
 		}
 

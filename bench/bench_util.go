@@ -98,7 +98,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 }
 
 func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (*defradb.DB, []client.Collection, error) {
-	db, err := NewTestDB(b)
+	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -204,28 +204,28 @@ type dbInfo interface {
 	DB() *db.DB
 }
 
-func NewTestDB(t testing.TB) (*db.DB, error) {
+func NewTestDB(ctx context.Context, t testing.TB) (*db.DB, error) {
 	//nolint
-	dbi, err := newBenchStoreInfo(t)
+	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.DB(), err
 }
 
-func NewTestStorage(t testing.TB) (ds.Batching, error) {
-	dbi, err := newBenchStoreInfo(t)
+func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
+	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.Rootstore(), err
 }
 
-func newBenchStoreInfo(t testing.TB) (dbInfo, error) {
+func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
 	var dbi dbInfo
 	var err error
 
 	switch storage {
 	case "memory":
-		dbi, err = testutils.NewBadgerMemoryDB()
+		dbi, err = testutils.NewBadgerMemoryDB(ctx)
 	case "badger":
-		dbi, err = testutils.NewBadgerFileDB(t)
+		dbi, err = testutils.NewBadgerFileDB(ctx, t)
 	case "memorymap":
-		dbi, err = testutils.NewMapDB()
+		dbi, err = testutils.NewMapDB(ctx)
 	default:
 		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
 	}

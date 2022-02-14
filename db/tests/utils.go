@@ -103,14 +103,14 @@ func init() {
 	}
 }
 
-func NewBadgerMemoryDB() (databaseInfo, error) {
+func NewBadgerMemoryDB(ctx context.Context) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -122,9 +122,9 @@ func NewBadgerMemoryDB() (databaseInfo, error) {
 	}, nil
 }
 
-func NewMapDB() (databaseInfo, error) {
+func NewMapDB(ctx context.Context) (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -136,7 +136,7 @@ func NewMapDB() (databaseInfo, error) {
 	}, nil
 }
 
-func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
 	path := t.TempDir()
 
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
@@ -145,7 +145,7 @@ func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -157,11 +157,11 @@ func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
 	}, nil
 }
 
-func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
+func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
-		badgerIMDatabase, err := NewBadgerMemoryDB()
+		badgerIMDatabase, err := NewBadgerMemoryDB(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +169,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	}
 
 	if badgerFile {
-		badgerIMDatabase, err := NewBadgerFileDB(t)
+		badgerIMDatabase, err := NewBadgerFileDB(ctx, t)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	}
 
 	if !test.DisableMapStore && mapStore {
-		mapDatabase, err := NewMapDB()
+		mapDatabase, err := NewMapDB(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +189,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
 	ctx := context.Background()
-	dbs, err := getDatabases(t, test)
+	dbs, err := getDatabases(ctx, t, test)
 	if assertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}

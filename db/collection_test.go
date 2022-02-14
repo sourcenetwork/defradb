@@ -61,7 +61,7 @@ func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, er
 
 func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = createNewTestCollection(ctx, db)
@@ -70,7 +70,7 @@ func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 
 func TestNewCollectionWithSchema(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -95,7 +95,7 @@ func TestNewCollectionWithSchema(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = newTestCollectionWithSchema(ctx, db)
@@ -107,7 +107,7 @@ func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -123,7 +123,7 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -139,7 +139,7 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -161,7 +161,7 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -187,7 +187,7 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -213,7 +213,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -238,7 +238,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	desc := base.CollectionDescription{
@@ -263,7 +263,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = newTestCollectionWithSchema(ctx, db)
@@ -291,7 +291,7 @@ func TestGetCollection(t *testing.T) {
 
 func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = db.GetCollection(ctx, "doesNotExist")
@@ -300,7 +300,7 @@ func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
 
 func TestGetCollectionReturnsErrorGivenEmptyString(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = db.GetCollection(ctx, "")

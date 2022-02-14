@@ -78,7 +78,7 @@ func TestFetcherInit(t *testing.T) {
 
 func TestFetcherStart(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -97,7 +97,7 @@ func TestFetcherStart(t *testing.T) {
 
 func TestFetcherStartWithoutInit(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -120,7 +120,7 @@ func TestMakeIndexPrefixKey(t *testing.T) {
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -170,7 +170,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -232,7 +232,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -277,7 +277,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -342,7 +342,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
