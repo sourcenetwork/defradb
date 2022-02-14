@@ -149,7 +149,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 
 	var err error
 	if df.kvIter == nil {
-		df.kvIter, err = df.txn.GetIterator(dsq.Query{
+		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
 			Orders: df.order,
 		})
 	}

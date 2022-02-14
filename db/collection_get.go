@@ -43,7 +43,7 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*document.Document, error) {
+func (c *Collection) get(ctx context.Context, txn core.Txn, key key.DocKey) (*document.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc

@@ -89,7 +89,7 @@ func (c *Collection) DeleteWithKey(ctx context.Context, key key.DocKey, opts ...
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) deleteWithKey(ctx context.Context, txn *Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithKey(ctx context.Context, txn core.Txn, key key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, key)
@@ -138,7 +138,7 @@ func newDagDeleter(bstore core.DAGStore) dagDeleter {
 //   3) Deleting headstore state.
 func (c *Collection) applyFullDelete(
 	ctx context.Context,
-	txn *Txn, dockey key.DocKey) error {
+	txn core.Txn, dockey key.DocKey) error {
 
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
@@ -178,20 +178,20 @@ func (c *Collection) applyFullDelete(
 		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
 		KeysOnly: true,
 	}
-	dataResult, err := txn.datastore.Query(ctx, dataQuery)
+	dataResult, err := txn.Datastore().Query(ctx, dataQuery)
 	for e := range dataResult.Next() {
 		if e.Error != nil {
 			return err
 		}
 
 		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
-		err = txn.datastore.Delete(ctx, ds.NewKey(e.Key))
+		err = txn.Datastore().Delete(ctx, ds.NewKey(e.Key))
 		if err != nil {
 			return err
 		}
 	}
 	// Delete the parent marker key for this document.
-	err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
 	if err != nil {
 		return err
 	}
@@ -202,12 +202,12 @@ func (c *Collection) applyFullDelete(
 		Prefix:   dockey.Key.String(),
 		KeysOnly: true,
 	}
-	headResult, err := txn.headstore.Query(ctx, headQuery)
+	headResult, err := txn.Headstore().Query(ctx, headQuery)
 	for e := range headResult.Next() {
 		if e.Error != nil {
 			return err
 		}
-		err = txn.headstore.Delete(ctx, ds.NewKey(e.Key))
+		err = txn.Headstore().Delete(ctx, ds.NewKey(e.Key))
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...cli
 }
 
 //nolint:unused
-func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithKeys(ctx context.Context, txn core.Txn, keys []key.DocKey, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// fmt.Println("updating keys:", keys)
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
@@ -373,7 +373,7 @@ func (c *Collection) deleteWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 }
 
 //nolint:unused
-func (c *Collection) deleteWithFilter(ctx context.Context, txn *Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+func (c *Collection) deleteWithFilter(ctx context.Context, txn core.Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// patch, err := parseDeleter(deleter)
 	// if err != nil {
 	// 	return nil, err

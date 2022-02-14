@@ -22,6 +22,12 @@ type IterableTxn interface {
 	Iterable
 }
 
+type IterableDatastore interface {
+	ds.Read
+	ds.Write
+	Iterable
+}
+
 // IterableTxnDatastore is an interface that should be implemented by datastores that
 // support iterable transactions allowing proper use of native multi-prefix iteration.
 type IterableTxnDatastore interface {

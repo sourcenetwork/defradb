@@ -47,7 +47,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 	q := dsq.Query{
 		Prefix: "/schema",
 	}
-	res, err := db.systemstore.Query(ctx, q)
+	res, err := db.Systemstore().Query(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 		case *ast.ObjectDefinition:
 			body := defType.Loc.Source.Body[defType.Loc.Start:defType.Loc.End]
 			key := base.MakeSchemaSystemKey(defType.Name.Value)
-			if err := db.systemstore.Put(ctx, key.ToDS(), body); err != nil {
+			if err := db.Systemstore().Put(ctx, key.ToDS(), body); err != nil {
 				return err
 			}
 		}

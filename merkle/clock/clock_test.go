@@ -14,8 +14,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ipfs/go-datastore/namespace"
-
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -33,27 +31,23 @@ func newDS() ds.Datastore {
 func newTestMerkleClock() *MerkleClock {
 	ns := ds.NewKey("/test/db")
 	s := newDS()
-	// datastore := namespace.Wrap(store, ns.ChildString("data"))
-	headstore := namespace.Wrap(s, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
-	dagstore := store.NewDAGStore(batchStore)
+	rw := store.AsDSReaderWriter(s)
+	multistore := store.MultiStoreFrom(rw)
 	id := "mydockey"
-	reg := crdt.NewLWWRegister(s, ns, id)
-	return NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(rw, ns, id)
+	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
 	ns := ds.NewKey("/test/db")
 	s := newDS()
-	// datastore := namespace.Wrap(store, ns.ChildString("data"))
-	headstore := namespace.Wrap(s, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
-	dagstore := store.NewDAGStore(batchStore)
+	rw := store.AsDSReaderWriter(s)
+	multistore := store.MultiStoreFrom(rw)
 	id := "mydockey"
-	reg := crdt.NewLWWRegister(s, ns, id)
-	clk := NewMerkleClock(headstore, dagstore, id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(rw, ns, id)
+	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
 
-	if clk.headstore != headstore {
+	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")
 	} else if clk.headset.store == nil {
 		t.Error("MerkleClock head set not correctly set")

@@ -18,5 +18,5 @@ import (
 )
 
 func (db *DB) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
-	return db.dagstore.Get(ctx, c)
+	return db.DAGstore().Get(ctx, c)
 }
