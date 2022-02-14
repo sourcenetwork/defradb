@@ -90,13 +90,14 @@ var (
 	}
 )
 
-func newMemoryDB() (*db.DB, error) {
+func newMemoryDB(ctx context.Context) (*db.DB, error) {
 	rootstore := ds.NewMapDatastore()
-	return db.NewDB(rootstore)
+	return db.NewDB(ctx, rootstore)
 }
 
 func TestVersionedFetcherInit(t *testing.T) {
-	db, err := newMemoryDB()
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -110,7 +111,7 @@ func TestVersionedFetcherInit(t *testing.T) {
 
 func TestVersionedFetcherStart(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -153,7 +154,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 
 func TestVersionedFetcherNextMap(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -196,7 +197,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 
 func TestVersionedFetcherNextMapV1(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -239,7 +240,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 
 func TestVersionedFetcherNextMapV2(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -282,7 +283,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 
 func TestVersionedFetcherNextMapV3(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)
@@ -324,7 +325,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 
 func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(db)

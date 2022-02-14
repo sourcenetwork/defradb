@@ -76,9 +76,6 @@ type DB struct {
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
 
-	// indicates if this references an initalized database
-	initialized bool
-
 	log logging.StandardLogger
 
 	// The options used to init the database
@@ -95,7 +92,7 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 }
 
 // NewDB creates a new instance of the DB using the given options
-func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
+func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug("loading: internal datastores")
 	systemstore := namespace.Wrap(rootstore, base.SystemStoreKey)
 	datastore := namespace.Wrap(rootstore, base.DataStoreKey)
@@ -147,12 +144,12 @@ func NewDB(rootstore ds.Batching, options ...Option) (*DB, error) {
 		opt(db)
 	}
 
-	return db, nil
-}
+	err = db.initialize(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// Start runs all the initial sub-routines and initialization steps.
-func (db *DB) Start(ctx context.Context) error {
-	return db.Initialize(ctx)
+	return db, nil
 }
 
 // Root
@@ -182,14 +179,9 @@ func (db *DB) DAGstore() core.DAGStore {
 
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters
-func (db *DB) Initialize(ctx context.Context) error {
+func (db *DB) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
-
-	// if its already initialized, just load the schema and we're done
-	if db.initialized {
-		return nil
-	}
 
 	log.Debug("Checking if db has already been initialized...")
 	exists, err := db.systemstore.Has(ctx, ds.NewKey("init"))
@@ -216,7 +208,6 @@ func (db *DB) Initialize(ctx context.Context) error {
 		return err
 	}
 
-	db.initialized = true
 	return nil
 }
 
