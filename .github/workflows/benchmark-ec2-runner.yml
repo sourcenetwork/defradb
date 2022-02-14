@@ -1,11 +1,36 @@
 name: benchmark-ec2-runner
 
-on: pull_request
+on:
+  workflow_run:
+    workflows:
+      - "golangci-lint"
+      - "Code Test Coverage"
+    branches:
+      - master
+      - develop
+    tags:
+      - v*
+    types:
+      - completed
 
 jobs:
 
+  # Step-1: Ensure that other workflows ran successfully and passed.
+  ensure-other-workflows-passed:
+    name: Ensure other workflows passed
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Don't run the benchmarks as a workflow failed.
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('Not running benchmarks because a workflow failed!')
+
+  # Step-2: Start the runner and get it registered as a github runner.
   start-runner:
     name: Start self-hosted EC2 runner
+    needs: ensure-other-workflows-passed # only run if the other workflows pass.
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -37,24 +62,25 @@ jobs:
           ##     {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
           ##   ]
 
+  # Step-3: Run the benchmarks on the runner we just started.
   benchmark-ec2-runner:
-
     name: Run the benchmarks on the started EC2 runner
-    needs: start-runner # required to start the main job when the runner is ready
-
+    needs:
+      - ensure-other-workflows-passed # only run if the other workflows pass.
+      - start-runner # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
     steps:
-      - name: Setup benchmarks
-        run: echo 'Replace with Johns Benchmarking Command Steps'
+      - name: Start Running the bechmarks
+        run: make test:bench
 
+  # Step-4: Stop the runner once the benchmarks have ran.
   stop-runner:
-
     name: Stop self-hosted EC2 runner
     needs:
+      - ensure-other-workflows-passed # only run if the other workflows pass.
       - start-runner # required to get output from the start-runner job
       - benchmark-ec2-runner # required to wait when the main job is done
-
     runs-on: ubuntu-latest
 
     if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
