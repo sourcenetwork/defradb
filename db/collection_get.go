@@ -51,6 +51,7 @@ func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*docume
 	// initialize it with the primary index
 	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
 	if err != nil {
+		_ = df.Close()
 		return nil, err
 	}
 
@@ -59,12 +60,14 @@ func (c *Collection) get(ctx context.Context, txn *Txn, key key.DocKey) (*docume
 	// run the doc fetcher
 	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {
+		_ = df.Close()
 		return nil, err
 	}
 
 	// return first matched decoded doc
 	doc, err := df.FetchNextDecoded(ctx)
 	if err != nil {
+		_ = df.Close()
 		return nil, err
 	}
 
