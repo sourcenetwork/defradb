@@ -36,27 +36,23 @@ type MerkleCRDTFactory func(mstore core.MultiStore, schemaID string, bs corenet.
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
-	crdts     map[core.CType]*MerkleCRDTFactory
-	datastore core.DSReaderWriter
-	headstore core.DSReaderWriter
-	dagstore  core.DAGStore
+	crdts      map[core.CType]*MerkleCRDTFactory
+	multistore core.MultiStore
 }
 
 var (
 	// DefaultFactory is instantiated with no stores
 	// It is recommended to use this only after you call
 	// WithStores(...) so you get a new non-shared instance
-	DefaultFactory = NewFactory(nil, nil, nil)
+	DefaultFactory = NewFactory(nil)
 )
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil
-func NewFactory(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) *Factory {
+func NewFactory(multistore core.MultiStore) *Factory {
 	return &Factory{
-		crdts:     make(map[core.CType]*MerkleCRDTFactory),
-		datastore: datastore,
-		headstore: headstore,
-		dagstore:  dagstore,
+		crdts:      make(map[core.CType]*MerkleCRDTFactory),
+		multistore: multistore,
 	}
 }
 
@@ -99,54 +95,14 @@ func (factory Factory) getRegisteredFactory(t core.CType) (*MerkleCRDTFactory, e
 }
 
 // SetStores sets all the current stores on the Factory in one call
-func (factory *Factory) SetStores(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) error {
-	factory.datastore = datastore
-	factory.headstore = headstore
-	factory.dagstore = dagstore
+func (factory *Factory) SetStores(multistore core.MultiStore) error {
+	factory.multistore = multistore
 	return nil
 }
 
 // WithStores returns a new instance of the Factory with all the stores set
-func (factory Factory) WithStores(datastore, headstore core.DSReaderWriter, dagstore core.DAGStore) Factory {
-	factory.datastore = datastore
-	factory.headstore = headstore
-	factory.dagstore = dagstore
-	return factory
-}
-
-// SetDatastore sets the current datastore
-func (factory *Factory) SetDatastore(datastore core.DSReaderWriter) error {
-	factory.datastore = datastore
-	return nil
-}
-
-// WithDatastore returns a new copy of the Factory instance with a new Datastore
-func (factory Factory) WithDatastore(datastore core.DSReaderWriter) Factory {
-	factory.datastore = datastore
-	return factory
-}
-
-// SetHeadstore sets the current headstore
-func (factory *Factory) SetHeadstore(headstore core.DSReaderWriter) error {
-	factory.headstore = headstore
-	return nil
-}
-
-// WithHeadstore returns a new copy of the Factory with a new Headstore
-func (factory Factory) WithHeadstore(headstore core.DSReaderWriter) Factory {
-	factory.headstore = headstore
-	return factory
-}
-
-// SetDagstore sets the current dagstore
-func (factory *Factory) SetDagstore(dagstore core.DAGStore) error {
-	factory.dagstore = dagstore
-	return nil
-}
-
-// WithDagstore returns a new copy of the Factory with a new Dagstore
-func (factory Factory) WithDagstore(dagstore core.DAGStore) Factory {
-	factory.dagstore = dagstore
+func (factory Factory) WithStores(multistore core.MultiStore) Factory {
+	factory.multistore = multistore
 	return factory
 }
 
@@ -169,17 +125,34 @@ func (factory Factory) Rootstore() core.DSReaderWriter {
 
 // Data implements core.MultiStore and returns the current Datastore
 func (factory Factory) Datastore() core.DSReaderWriter {
-	return factory.datastore
+	if factory.multistore == nil {
+		return nil
+	}
+	return factory.multistore.Datastore()
 }
 
 // Head implements core.MultiStore and returns the current Headstore
 func (factory Factory) Headstore() core.DSReaderWriter {
-	return factory.headstore
+	if factory.multistore == nil {
+		return nil
+	}
+	return factory.multistore.Headstore()
+}
+
+// Head implements core.MultiStore and returns the current Headstore
+func (factory Factory) Systemstore() core.DSReaderWriter {
+	if factory.multistore == nil {
+		return nil
+	}
+	return factory.multistore.Systemstore()
 }
 
 // Dag implements core.MultiStore and returns the current Dagstore
 func (factory Factory) DAGstore() core.DAGStore {
-	return factory.dagstore
+	if factory.multistore == nil {
+		return nil
+	}
+	return factory.multistore.DAGstore()
 }
 
 // Log implements core.MultiStore

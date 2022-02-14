@@ -144,7 +144,7 @@ func (c *Collection) UpdateWithDocs(docs []*document.SimpleDocument, updater int
 	return nil
 }
 
-func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithKey(ctx context.Context, txn core.Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey
 	return results, nil
 }
 
-func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -230,7 +230,7 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 	return results, nil
 }
 
-func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -332,7 +332,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 // 	return nil, nil
 // }
 
-func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
+func (c *Collection) applyPatch(txn core.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
 	for _, op := range patch {
 		path, ok := op["path"].(string)
 		if !ok {
@@ -358,11 +358,11 @@ func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []ma
 	return nil
 }
 
-func (c *Collection) applyPatchOp(txn *Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
+func (c *Collection) applyPatchOp(txn core.Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
 	return nil
 }
 
-func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]interface{}, merge map[string]interface{}) error {
+func (c *Collection) applyMerge(ctx context.Context, txn core.Txn, doc map[string]interface{}, merge map[string]interface{}) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
 		return errors.New("Document is missing key")
@@ -553,7 +553,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 }
 
 func (c *Collection) applyMergePatchOp( //nolint:unused
-	txn *Txn,
+	txn core.Txn,
 	docKey string,
 	field string,
 	currentVal interface{},
@@ -567,7 +567,7 @@ func (c *Collection) applyMergePatchOp( //nolint:unused
 // Additionally it only queries for the root scalar fields of the object
 func (c *Collection) makeSelectionQuery(
 	ctx context.Context,
-	txn *Txn,
+	txn core.Txn,
 	filter interface{},
 	opts ...client.UpdateOpt) (planner.Query, error) {
 	var f *parser.Filter
@@ -622,13 +622,13 @@ func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *Collection) getCollectionForPatchOpPath(txn *Txn, path string) (col *Collection, isArray bool, err error) {
+func (c *Collection) getCollectionForPatchOpPath(txn core.Txn, path string) (col *Collection, isArray bool, err error) {
 	return nil, false, nil
 }
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *Collection) getTargetKeyForPatchPath(txn *Txn, doc map[string]interface{}, path string) (string, error) {
+func (c *Collection) getTargetKeyForPatchPath(txn core.Txn, doc map[string]interface{}, path string) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")
