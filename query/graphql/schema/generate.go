@@ -701,8 +701,9 @@ func (g *Generator) genTypeMutationDeleteField(obj *gql.Object, filter *gql.Inpu
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
 			"id":     newArgConfig(gql.ID),
+			"ids":    newArgConfig(gql.NewList(gql.ID)),
 			"filter": newArgConfig(filter),
-			"data":   newArgConfig(gql.String),
+			// "data":   newArgConfig(gql.String),
 		},
 	}
 	return field, nil

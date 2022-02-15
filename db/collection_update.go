@@ -41,20 +41,6 @@ var (
 	ErrInvalidMergeValueType = errors.New("The type of value in the merge patch doesn't match the schema")
 )
 
-func (c *Collection) Create2(doc *document.SimpleDocument, opts ...CreateOpt) error {
-
-	return nil
-}
-
-// Update2 updates the given doc. It will scan through the field/value pairs
-// and find those marked for update, and apply the appropriate update.
-// Update only works on root level field/value pairs. So not foreign or related
-// types can be updated. If you wish to update sub types, use UpdateWith, and supply
-// an update payload in the form of a Patch or a Merge Patch.
-func (c *Collection) Update2(doc *document.SimpleDocument, opts ...client.UpdateOpt) error {
-	return nil
-}
-
 // UpdateWith updates a target document using the given updater type. Target
 // can be a Filter statement, a single docKey, a single document,
 // an array of docKeys, or an array of documents.
