@@ -341,6 +341,7 @@ func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...cli
 	return nil
 }
 
+//nolint:unused
 func (c *Collection) deleteWithFilter(ctx context.Context, txn core.Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	return nil, nil
 }
