@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -61,17 +59,14 @@ func (n *deleteNode) Next() (bool, error) {
 			}
 			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
 		} else { // @todo: handle filter vs ID based
-			fmt.Println("=-=-=-=-=-=-=-=-=-=-===-=-=-=-=-=-=-=-=-=-===-=-=-=-=-=-=-=-=-=-==-")
 			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
 		}
 
-		fmt.Println("delete node error:", err)
 		if err != nil {
 			return false, err
 		}
 
 		// Consume the deletes into our valuesNode
-		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
 			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {
