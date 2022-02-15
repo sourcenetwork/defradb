@@ -234,7 +234,7 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter 
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter, opts...)
+	query, err := c.makeSelectionQuery(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -279,44 +279,6 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter 
 	}
 	return results, nil
 }
-
-// func (c *Collection) updateWithFilterPatch(txn *Txn, filter map[string]interface{}, patch []map[string]interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
-// 	// scan through docs with filter
-// 	query, err := c.makeQuery(filter, opts...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if err := query.Start(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	// loop while we still have results from the filter query
-// 	for {
-// 		next, err := query.Next()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		// if theres no more records from the query, jump out of the loop
-// 		if !next {
-// 			break
-// 		}
-
-// 		// Get the document, and apply the patch
-// 		doc := query.Values()
-// 	}
-
-// 	// loop through patch ops
-// 	// apply each
-// 	// if op is a sub field, get target collection and docID, call c.applyUpdateWithPatch()
-// 	return nil, nil
-// }
-
-// func (c *Collection) updateWithFilterMergePatch(txn *Txn, filter map[string]interface{}, merge map[string]interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
-// 	// loop through the fields of merge patch
-// 	// apply
-// 	return nil, nil
-// }
 
 func (c *Collection) applyPatch(txn core.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
 	for _, op := range patch {

@@ -61,6 +61,7 @@ func (n *deleteNode) Next() (bool, error) {
 			}
 			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
 		} else { // @todo: handle filter vs ID based
+			fmt.Println("=-=-=-=-=-=-=-=-=-=-===-=-=-=-=-=-=-=-=-=-===-=-=-=-=-=-=-=-=-=-==-")
 			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
 		}
 
