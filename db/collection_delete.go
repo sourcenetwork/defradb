@@ -327,95 +327,20 @@ func (d dagDeleter) delete(
 // =================================== UNIMPLEMENTED ===================================
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
-// An deleter value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
 func (c *Collection) DeleteWithFilter(ctx context.Context, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-	// txn, err := c.getTxn(ctx, false)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer c.discardImplicitTxn(ctx, txn)
-	// res, err := c.deleteWithFilter(ctx, txn, filter, deleter, opts...)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return res, c.commitImplicitTxn(ctx, txn)
-
 	return nil, nil
 }
 
 // DeleteWithDoc deletes targeting the supplied document.
-// An deleter value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
 func (c *Collection) DeleteWithDoc(doc *document.SimpleDocument, opts ...client.DeleteOpt) error {
 	return nil
 }
 
 // DeleteWithDocs deletes all the supplied documents in the slice.
-// An deleter value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
 func (c *Collection) DeleteWithDocs(docs []*document.SimpleDocument, opts ...client.DeleteOpt) error {
 	return nil
 }
 
 func (c *Collection) deleteWithFilter(ctx context.Context, txn core.Txn, filter interface{}, opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-	// patch, err := parseDeleter(deleter)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// isPatch := false
-	// isMerge := false
-	// switch patch.(type) {
-	// case []map[string]interface{}:
-	// 	isPatch = true
-	// case map[string]interface{}:
-	// 	isMerge = true
-	// default:
-	// 	return nil, ErrInvalidDeleter
-	// }
-
-	// // scan through docs with filter
-	// query, err := c.makeSelectionQuery(ctx, txn, filter, opts...)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if err := query.Start(); err != nil {
-	// 	return nil, err
-	// }
-
-	// results := &client.DeleteResult{
-	// 	DocKeys: make([]string, 0),
-	// }
-
-	// // loop while we still have results from the filter query
-	// for {
-	// 	next, err := query.Next()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	// if theres no more records from the query, jump out of the loop
-	// 	if !next {
-	// 		break
-	// 	}
-
-	// 	// Get the document, and apply the patch
-	// 	doc := query.Values()
-	// 	if isPatch {
-	// 		err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
-	// 	} else if isMerge { // else is fine here
-	// 		err = c.applyMerge(ctx, txn, doc, patch.(map[string]interface{}))
-	// 	}
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// add successful deleted doc to results
-	// 	results.DocKeys = append(results.DocKeys, doc["_key"].(string))
-	// 	results.Count++
-	// }
-
-	// return results, nil
-
 	return nil, nil
 }
