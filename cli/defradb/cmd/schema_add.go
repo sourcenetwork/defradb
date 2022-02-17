@@ -66,7 +66,6 @@ var addCmd = &cobra.Command{
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				// Should this be `log.Fatal` ??
 				log.ErrorE(ctx, "response body closing failed", err)
 			}
 		}()
