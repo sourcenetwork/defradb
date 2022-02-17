@@ -159,15 +159,21 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 }
 
 func (doc *Document) Head() cid.Cid {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.head
 }
 
 func (doc *Document) SetHead(head cid.Cid) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	doc.head = head
 }
 
 // Key returns the generated DocKey for this document
 func (doc *Document) Key() key.DocKey {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.key
 }
 
@@ -188,6 +194,7 @@ func (doc *Document) Get(field string) (interface{}, error) {
 
 // GetValue given a field as a string, return the Value type
 func (doc *Document) GetValue(field string) (Value, error) {
+	doc.mu.RLock()
 	path, subPaths, hasSubPaths := parseFieldPath(field)
 	f, exists := doc.fields[path]
 	if !exists {
@@ -198,6 +205,7 @@ func (doc *Document) GetValue(field string) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
+	doc.mu.RUnlock()
 
 	if !hasSubPaths {
 		return val, nil
@@ -210,6 +218,8 @@ func (doc *Document) GetValue(field string) (Value, error) {
 
 // GetValueWithField gets the Value type from a given Field type
 func (doc *Document) GetValueWithField(f Field) (Value, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	v, exists := doc.values[f]
 	if !exists {
 		return nil, ErrFieldNotExist
@@ -253,6 +263,8 @@ func (doc *Document) SetAs(field string, value interface{}, t core.CType) error 
 
 // Delete removes a field, and marks it to be deleted on the following db.Update() call
 func (doc *Document) Delete(fields ...string) error {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	for _, f := range fields {
 		field, exists := doc.fields[f]
 		if !exists {
@@ -383,11 +395,15 @@ func (doc *Document) setAndParseObjectType(value map[string]interface{}) error {
 
 // Fields gets the document fields as a map
 func (doc *Document) Fields() map[string]Field {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.fields
 }
 
 // Values gets the document values as a map
 func (doc *Document) Values() map[Field]Value {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.values
 }
 
@@ -433,6 +449,8 @@ func (doc *Document) ToMap() (map[string]interface{}, error) {
 }
 
 func (doc *Document) Clean() {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
@@ -447,6 +465,8 @@ func (doc *Document) Clean() {
 // converts the document into a map[string]interface{}
 // including any sub documents
 func (doc *Document) toMap() (map[string]interface{}, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
@@ -471,6 +491,8 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 }
 
 func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
