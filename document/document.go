@@ -446,8 +446,7 @@ func (doc *Document) ToMap() (map[string]interface{}, error) {
 }
 
 func (doc *Document) Clean() {
-	doc.mu.Lock()
-	defer doc.mu.Unlock()
+	// TODO
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
