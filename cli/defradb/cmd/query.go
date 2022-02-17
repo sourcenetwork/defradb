@@ -11,12 +11,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -39,26 +41,29 @@ To learn more about the DefraDB GraphQL Query Language, you may use
 the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		logging.SetConfig(config.Logging.toLogConfig())
+
 		dbaddr := viper.GetString("database.address")
 		if dbaddr == "" {
-			log.Error("No database url provided")
+			log.Error(ctx, "No database url provided")
 		}
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr
 		}
 
 		if len(args) != 1 {
-			log.Fatal("needs a single query argument")
+			log.Fatal(ctx, "needs a single query argument")
 		}
 		query := args[0]
 		if query == "" {
-			log.Error("missing query")
+			log.Error(ctx, "missing query")
 			return
 		}
 		endpointStr := fmt.Sprintf("%s/graphql", dbaddr)
 		endpoint, err := url.Parse(endpointStr)
 		if err != nil {
-			log.Fatal(err)
+			log.FatalE(ctx, "", err)
 		}
 
 		p := url.Values{}
@@ -67,7 +72,7 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.Error("request failed: ", err)
+			log.ErrorE(ctx, "request failed", err)
 			return
 		}
 
@@ -75,13 +80,13 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 			err = res.Body.Close()
 			if err != nil {
 				// Should this be `log.Fatal` ??
-				log.Error("response body closing failed: ", err)
+				log.ErrorE(ctx, "response body closing failed: ", err)
 			}
 		}()
 
 		buf, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			log.Error("request failed: ", err)
+			log.ErrorE(ctx, "request failed", err)
 			return
 		}
 

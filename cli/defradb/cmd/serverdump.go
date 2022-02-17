@@ -17,6 +17,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/db"
@@ -27,8 +28,9 @@ var srvDumpCmd = &cobra.Command{
 	Use:   "server-dump",
 	Short: "Dumps the state of the entire database (server side)",
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("Starting DefraDB process...")
 		ctx := context.Background()
+		logging.SetConfig(config.Logging.toLogConfig())
+		log.Info(ctx, "Starting DefraDB process...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
@@ -37,24 +39,21 @@ var srvDumpCmd = &cobra.Command{
 		var rootstore ds.Batching
 		var err error
 		if config.Database.Store == "badger" {
-			log.Info("opening badger store: ", config.Database.Badger.Path)
+			log.Info(ctx, "opening badger store", logging.NewKV("Path", config.Database.Badger.Path))
 			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
 		} else {
-			log.Error("Server side dump is only supported for the Badger datastore")
-			os.Exit(1)
+			log.Fatal(ctx, "Server side dump is only supported for the Badger datastore")
 		}
 		if err != nil {
-			log.Error("Failed to initiate datastore:", err)
-			os.Exit(1)
+			log.FatalE(ctx, "Failed to initiate datastore:", err)
 		}
 
 		db, err := db.NewDB(ctx, rootstore)
 		if err != nil {
-			log.Error("Failed to initiate database:", err)
-			os.Exit(1)
+			log.FatalE(ctx, "Failed to initiate database:", err)
 		}
 
-		log.Info("Dumping DB state:")
+		log.Info(ctx, "Dumping DB state:")
 		db.PrintDump(ctx)
 	},
 }

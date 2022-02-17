@@ -12,12 +12,12 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
+	"context"
 	"os"
 	"strings"
 
-	logging "github.com/ipfs/go-log/v2"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
@@ -25,11 +25,12 @@ import (
 
 var (
 	// root flag vars
-	cfgFile string
-	dbURL   string
-	logLvl  string
+	cfgFile           string
+	dbURL             string
+	logLvl            string
+	stackTraceEnabled bool
 
-	log = logging.Logger("defra.cli")
+	log = logging.MustNewLogger("defra.cli")
 
 	config Config
 )
@@ -60,7 +61,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&logLvl, "log", "info", "Log level to use, options are info, debug, error")
+	rootCmd.PersistentFlags().StringVar(&logLvl, "log", "", "Log level to use, options are info, debug, error")
+	rootCmd.PersistentFlags().BoolVar(&stackTraceEnabled, "stacktrace", false, "Include stacktrace in Error and Fatal logs")
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -72,36 +74,7 @@ func init() {
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// cobra.OnInitialize()
-	cobra.OnInitialize(initConfig, initLogger)
-}
-
-func initLogger() {
-	lvls := strings.Split(logLvl, ",")
-	if len(lvls) == 1 {
-		lvl, err := logging.LevelFromString(logLvl)
-		if err != nil {
-			panic(err)
-		}
-		logging.SetAllLoggers(lvl)
-	} else {
-		lvl, err := logging.LevelFromString(lvls[0])
-		if err != nil {
-			panic(err)
-		}
-		logging.SetAllLoggers(lvl)
-
-		for _, l := range lvls[1:] {
-			lvl := strings.Split(l, "=")
-			if len(lvl) != 2 {
-				fmt.Printf("Invalid format for log level: %s\n", l)
-				os.Exit(1)
-			}
-			if err := logging.SetLogLevel(lvl[0], lvl[1]); err != nil {
-				fmt.Printf("Failed to set log level: %s\n", err)
-				os.Exit(1)
-			}
-		}
-	}
+	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -126,8 +99,10 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-		log.Debug("Loading config file:", viper.ConfigFileUsed())
+		ctx := context.Background()
+		applyCliParamsToConfig(ctx)
+		logging.SetConfig(config.Logging.toLogConfig())
+		log.Debug(ctx, "Loaded config file", logging.NewKV("ConfigFile", viper.ConfigFileUsed()))
 	} else {
 		dir := home + "/.defradb"
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -148,6 +123,10 @@ func initConfig() {
 
 		err = viper.WriteConfigAs(home + "/.defradb/" + "config.yaml")
 		cobra.CheckErr(err)
+
+		// we should do this *after* writing the default config to file
+		ctx := context.Background()
+		applyCliParamsToConfig(ctx)
 	}
 
 	err := viper.BindPFlag("database.address", rootCmd.Flags().Lookup("url"))
@@ -170,4 +149,33 @@ func initConfig() {
 
 	err = viper.Unmarshal(&config)
 	cobra.CheckErr(err)
+}
+
+func applyCliParamsToConfig(ctx context.Context) {
+	lvls := strings.Split(logLvl, ",")
+	if lvls[0] == "" {
+		config.Logging.Level = &lvls[0]
+
+		if len(lvls) > 1 {
+			namedOptions := []NamedLoggerOptions{}
+
+			for _, l := range lvls[1:] {
+				namedLevel := strings.Split(l, "=")
+				if len(namedLevel) != 2 {
+					log.Fatal(ctx, "Invalid format for log level", logging.NewKV("Value", l))
+				}
+				namedOptions = append(namedOptions, NamedLoggerOptions{
+					Name:  namedLevel[0],
+					Level: &namedLevel[1],
+				})
+			}
+
+			config.Logging.NamedOptions = &namedOptions
+		}
+	}
+
+	if stackTraceEnabled {
+		// should be nil by default, not false
+		config.Logging.EnableStackTrace = &stackTraceEnabled
+	}
 }
