@@ -172,8 +172,7 @@ func (doc *Document) SetHead(head cid.Cid) {
 
 // Key returns the generated DocKey for this document
 func (doc *Document) Key() key.DocKey {
-	doc.mu.RLock()
-	defer doc.mu.RUnlock()
+	// Reading without a read-lock as we assume the DocKey is immutable
 	return doc.key
 }
 
@@ -195,6 +194,7 @@ func (doc *Document) Get(field string) (interface{}, error) {
 // GetValue given a field as a string, return the Value type
 func (doc *Document) GetValue(field string) (Value, error) {
 	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	path, subPaths, hasSubPaths := parseFieldPath(field)
 	f, exists := doc.fields[path]
 	if !exists {
@@ -205,7 +205,6 @@ func (doc *Document) GetValue(field string) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc.mu.RUnlock()
 
 	if !hasSubPaths {
 		return val, nil
@@ -270,9 +269,7 @@ func (doc *Document) Delete(fields ...string) error {
 		if !exists {
 			return ErrFieldNotExist
 		}
-
-		val := doc.values[field]
-		val.Delete()
+		doc.values[field].Delete()
 	}
 	return nil
 }
