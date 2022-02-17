@@ -73,7 +73,6 @@ func init() {
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	// cobra.OnInitialize()
 	cobra.OnInitialize(initConfig)
 }
 
@@ -110,10 +109,7 @@ func initConfig() {
 				cobra.CheckErr(err)
 			}
 		}
-		// if err != nil {
-		// 	cobra.CheckErr(err)
-		// }
-		// fmt.Fprintln(os.Stdout, "Generating default config file")
+
 		defaultConfig.Database.Badger.Path = strings.Replace(defaultConfig.Database.Badger.Path, "$HOME", home, -1)
 		bs, err := yaml.Marshal(defaultConfig)
 		cobra.CheckErr(err)
