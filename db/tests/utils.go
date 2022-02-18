@@ -318,6 +318,9 @@ func assertQueryResults(t *testing.T, description string, result *client.QueryRe
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	if len(expectedResults) == 0 {
+		assert.Equal(t, expectedResults, resultantData)
+	}
 	for i, result := range resultantData {
 		assert.Equal(t, expectedResults[i], result, description)
 	}
