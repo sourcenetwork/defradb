@@ -207,7 +207,7 @@ func (c *Collection) deleteWithFilter(
 	ctx context.Context,
 	txn core.Txn,
 	filter interface{},
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+	opts ...client.DeleteOpt) (res *client.DeleteResult, e error) {
 
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)
@@ -217,6 +217,17 @@ func (c *Collection) deleteWithFilter(
 	if err := query.Start(); err != nil {
 		return nil, err
 	}
+
+	// If the query object isn't properly closed at any exit point, overwrite
+	//  the error value being returned with the closing error (also the main
+	//  reason for using named return values in this function).
+	defer func() {
+		if err := query.Close(); err != nil {
+			res = nil
+			e = err
+			log.Errorf("Failed to close query after filter delete: %w", err)
+		}
+	}()
 
 	results := &client.DeleteResult{
 		DocKeys: make([]string, 0),
@@ -235,7 +246,7 @@ func (c *Collection) deleteWithFilter(
 		}
 
 		// Extract the dockey in the string format from the document value.
-		docKey := query.Values()["_key"].(string)
+		docKey := query.Values()[parser.DocKeyFieldName].(string)
 
 		// Convert from string to key.DocKey.
 		key, err := key.NewFromString(docKey)

@@ -173,6 +173,71 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			ExpectedError: "",
 		},
+
+		{
+			Description: "Delete using filter - Match everything in this collection.",
+
+			Query: `mutation {
+						delete_user(filter: {}) {
+							DeletedKeyByFilter: _key
+						}
+					}`,
+
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "Shahzad",
+						"age":  25,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "Shahzad",
+						"age":  6,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "Shahzad",
+						"age":  1,
+						"points": 48.48,
+						"verified": true
+					}`),
+					(`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+
+			Results: []map[string]interface{}{
+				{
+					"DeletedKeyByFilter": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+				},
+				{
+					"DeletedKeyByFilter": "bae-4b5b1765-560c-5843-9abc-24d21d8aa598",
+				},
+				{
+					"DeletedKeyByFilter": "bae-5a8530c0-c521-5e83-8243-4ce267bc76fa",
+				},
+				{
+					"DeletedKeyByFilter": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+				},
+				{
+					"DeletedKeyByFilter": "bae-ca88bc10-1415-59b1-a72c-d19ed44d4e15",
+				},
+			},
+
+			ExpectedError: "",
+		},
 	}
 
 	for _, test := range tests {
@@ -202,7 +267,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: nil,
+			Results: []map[string]interface{}{},
 
 			ExpectedError: "",
 		},
@@ -218,7 +283,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Docs: map[int][]string{},
 
-			Results: nil,
+			Results: []map[string]interface{}{},
 
 			ExpectedError: "",
 		},
@@ -247,7 +312,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: nil,
+			Results: []map[string]interface{}{},
 
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},
@@ -277,7 +342,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: nil,
+			Results: []map[string]interface{}{},
 
 			ExpectedError: "Syntax Error GraphQL request (2:53) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(filter: {name: {_eq: \"Shahzad\"}}) {\n                                                       ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},

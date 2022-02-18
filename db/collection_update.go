@@ -216,7 +216,13 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []ke
 	return results, nil
 }
 
-func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithFilter(
+	ctx context.Context,
+	txn core.Txn,
+	filter interface{},
+	updater interface{},
+	opts ...client.UpdateOpt) (res *client.UpdateResult, e error) {
+
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -241,6 +247,17 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter 
 	if err = query.Start(); err != nil {
 		return nil, err
 	}
+
+	// If the query object isn't properly closed at any exit point, overwrite
+	//  the error value being returned with the closing error (also the main
+	//  reason for using named return values in this function).
+	defer func() {
+		if err := query.Close(); err != nil {
+			res = nil
+			e = err
+			log.Errorf("Failed to close query after filter update: %w", err)
+		}
+	}()
 
 	results := &client.UpdateResult{
 		DocKeys: make([]string, 0),
@@ -273,10 +290,6 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn core.Txn, filter 
 		results.Count++
 	}
 
-	err = query.Close()
-	if err != nil {
-		return nil, err
-	}
 	return results, nil
 }
 
