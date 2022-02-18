@@ -248,7 +248,8 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 		// Create the transactions before executing and queries
 		transactions := make([]core.Txn, 0, len(test.TransactionalQueries))
-		for _, tq := range test.TransactionalQueries {
+		erroredQueries := make([]bool, len(test.TransactionalQueries))
+		for i, tq := range test.TransactionalQueries {
 			if len(transactions) < tq.TransactionId {
 				continue
 			}
@@ -256,7 +257,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 			txn, err := db.NewTxn(ctx, false)
 			if err != nil {
 				if assertError(t, test.Description, err, tq.ExpectedError) {
-					return
+					erroredQueries[i] = true
 				}
 			}
 			defer txn.Discard(ctx)
@@ -266,15 +267,21 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 			transactions[tq.TransactionId] = txn
 		}
 
-		for _, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalQueries {
+			if erroredQueries[i] {
+				continue
+			}
 			result := db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
 			if assertQueryResults(t, test.Description, result, tq.Results, tq.ExpectedError) {
-				return
+				erroredQueries[i] = true
 			}
 		}
 
 		txnIndexesCommited := map[int]struct{}{}
-		for _, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalQueries {
+			if erroredQueries[i] {
+				continue
+			}
 			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
 				continue
 			}
@@ -282,12 +289,12 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 			err := transactions[tq.TransactionId].Commit(ctx)
 			if assertError(t, test.Description, err, tq.ExpectedError) {
-				return
+				erroredQueries[i] = true
 			}
 		}
 
-		for _, tq := range test.TransactionalQueries {
-			if tq.ExpectedError != "" {
+		for i, tq := range test.TransactionalQueries {
+			if tq.ExpectedError != "" && !erroredQueries[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
