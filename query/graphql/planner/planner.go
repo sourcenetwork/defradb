@@ -403,11 +403,15 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	}
 
 	var next bool
-	if next, err = plan.Next(); err != nil || !next {
+	if next, err = plan.Next(); err != nil {
 		if err2 := (plan.Close()); err2 != nil {
 			fmt.Println(err2)
 		}
 		return nil, err
+	}
+
+	if !next {
+		return []map[string]interface{}{}, nil
 	}
 
 	var docs []map[string]interface{}
