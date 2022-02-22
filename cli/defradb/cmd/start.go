@@ -13,7 +13,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	gonet "net"
 	"os"
 	"os/signal"
@@ -128,11 +127,11 @@ var startCmd = &cobra.Command{
 
 			MtcpAddr, err := ma.NewMultiaddr(tcpAddr)
 			if err != nil {
-				panic(err)
+				log.FatalE(ctx, "Error parsing multi-address,", err)
 			}
 			addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
 			if err != nil {
-				panic(fmt.Errorf("Failed to parse TCP address: %w", err))
+				log.FatalE(ctx, "Failed to parse TCP address", err)
 			}
 
 			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -140,7 +139,7 @@ var startCmd = &cobra.Command{
 			}))
 			tcplistener, err := gonet.Listen("tcp", addr)
 			if err != nil {
-				panic(err)
+				log.FatalE(ctx, "Failed to listen to TCP address", err, logging.NewKV("Address", addr))
 			}
 
 			netService := netapi.NewService(n.Peer)
