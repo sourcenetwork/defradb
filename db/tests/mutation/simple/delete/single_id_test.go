@@ -119,7 +119,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 						}
 					}`,
 			Docs:          map[int][]string{},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "No document for the given key exists",
 		},
 
@@ -140,7 +140,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "No document for the given key exists",
 		},
 
@@ -159,7 +159,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},
 
@@ -179,7 +179,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
