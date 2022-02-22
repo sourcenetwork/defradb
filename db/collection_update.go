@@ -221,7 +221,7 @@ func (c *Collection) updateWithFilter(
 	txn core.Txn,
 	filter interface{},
 	updater interface{},
-	opts ...client.UpdateOpt) (res *client.UpdateResult, e error) {
+	opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 
 	patch, err := parseUpdater(updater)
 	if err != nil {
@@ -248,13 +248,9 @@ func (c *Collection) updateWithFilter(
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point, overwrite
-	//  the error value being returned with the closing error (also the main
-	//  reason for using named return values in this function).
+	// If the query object isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := query.Close(); err != nil {
-			res = nil
-			e = err
 			log.Errorf("Failed to close query after filter update: %w", err)
 		}
 	}()

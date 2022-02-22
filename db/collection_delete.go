@@ -207,7 +207,7 @@ func (c *Collection) deleteWithFilter(
 	ctx context.Context,
 	txn core.Txn,
 	filter interface{},
-	opts ...client.DeleteOpt) (res *client.DeleteResult, e error) {
+	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)
@@ -218,13 +218,9 @@ func (c *Collection) deleteWithFilter(
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point, overwrite
-	//  the error value being returned with the closing error (also the main
-	//  reason for using named return values in this function).
+	// If the query object isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := query.Close(); err != nil {
-			res = nil
-			e = err
 			log.Errorf("Failed to close query after filter delete: %w", err)
 		}
 	}()
