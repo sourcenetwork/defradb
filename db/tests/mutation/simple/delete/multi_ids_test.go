@@ -181,7 +181,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "No document for the given key exists",
 		},
 
@@ -193,7 +193,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 						}
 					}`,
 			Docs:          map[int][]string{},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "No document for the given key exists",
 		},
 
@@ -214,8 +214,71 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "No document for the given key exists",
+		},
+
+		{
+			Description: "Simple multi-key delete used with filter.",
+			Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"], filter: {}) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       []map[string]interface{}{},
+			ExpectedError: "Error: can't use filter and id / ids together.",
+		},
+
+		{
+			Description: "Simple multi-key delete mutation but no ids given.",
+			Query: `mutation {
+						delete_user(ids: []) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       []map[string]interface{}{},
+			ExpectedError: "Error: no id(s) provided while delete mutation.",
+		},
+
+		{
+			Description: "Simple multi-key delete mutation but no ids given.",
+			Query: `mutation {
+						delete_user(ids: []) {
+							_key
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					(`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`),
+				},
+			},
+			Results:       []map[string]interface{}{},
+			ExpectedError: "Error: no id(s) provided while delete mutation.",
 		},
 
 		{
@@ -239,7 +302,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},
 
@@ -265,7 +328,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`),
 				},
 			},
-			Results:       nil,
+			Results:       []map[string]interface{}{},
 			ExpectedError: "Syntax Error GraphQL request (2:114) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(ids: [\"bae-6a6482a8-24e1-5c73-a237-ca569e41507d\", \"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e\"]) {\n                                                                                                                    ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
