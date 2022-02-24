@@ -387,7 +387,11 @@ func compareVersionedDocs(t *testing.T, doc, expected map[string]interface{}) {
 		// make sure our floats are converted
 		if f, ok := expected[k].(float64); ok {
 			if f == float64(int64(f)) {
-				expected[k] = int64(f)
+				expected[k] = float64(f)
+			}
+
+			if u, ok := v.(uint64); ok {
+				v = float64(u)
 			}
 		}
 
@@ -396,6 +400,7 @@ func compareVersionedDocs(t *testing.T, doc, expected map[string]interface{}) {
 				v = int64(i)
 			}
 		}
+
 		assert.Equal(t, expected[k], v)
 	}
 }
