@@ -446,7 +446,6 @@ func (doc *Document) ToMap() (map[string]interface{}, error) {
 }
 
 func (doc *Document) Clean() {
-	// TODO
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
