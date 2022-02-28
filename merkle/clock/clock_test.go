@@ -115,13 +115,11 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	c, _, err := clk.AddDAGNode(ctx, delta)
+	_, _, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
 	}
-
-	t.Log("Added Delta CID:", c)
 }
 
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
