@@ -11,11 +11,12 @@
 package schema
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
@@ -56,7 +57,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 
 // FromSDL generates the query type definitions from a
 // encoded GraphQL Schema Definition Language string
-func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error) {
+func (g *Generator) FromSDL(ctx context.Context, schema string) ([]*gql.Object, *ast.Document, error) {
 	// parse to AST
 	source := source.NewSource(&source.Source{
 		Body: []byte(schema),
@@ -68,11 +69,11 @@ func (g *Generator) FromSDL(schema string) ([]*gql.Object, *ast.Document, error)
 		return nil, nil, err
 	}
 	// generate from AST
-	types, err := g.FromAST(doc)
+	types, err := g.FromAST(ctx, doc)
 	return types, doc, err
 }
 
-func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]interface{}, len(typeMapBeforeMutation))
 
@@ -80,7 +81,7 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 		typesBeforeMutation[typeName] = struct{}{}
 	}
 
-	result, err := g.fromAST(document)
+	result, err := g.fromAST(ctx, document)
 
 	if err != nil {
 		// If there is an error we should drop any new objects as they may be partial, poluting the in memory cache
@@ -101,9 +102,9 @@ func (g *Generator) FromAST(document *ast.Document) ([]*gql.Object, error) {
 
 // FromAST generates the query type definitions from a
 // parsed GraphQL Schema Definition Language AST document
-func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypesFromAST(document)
+	defs, err := g.buildTypesFromAST(ctx, document)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +113,7 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		return nil, err
 	}
 
-	if err := g.genAggregateFields(); err != nil {
+	if err := g.genAggregateFields(ctx); err != nil {
 		return nil, err
 	}
 	// resolve types
@@ -129,7 +130,7 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 		err := g.manager.schema.AppendType(t)
 		if err != nil {
 			// Todo: better error handle
-			log.Printf("failure appending type while generating query type defs from an AST : %v", err)
+			log.ErrorE(ctx, "Failed to append type while generating query type defs from an AST", err)
 		}
 	}
 
@@ -143,7 +144,7 @@ func (g *Generator) fromAST(document *ast.Document) ([]*gql.Object, error) {
 	queryType := g.manager.schema.QueryType()
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
-		f, err := g.GenerateQueryInputForGQLType(t)
+		f, err := g.GenerateQueryInputForGQLType(ctx, t)
 		if err != nil {
 			return nil, err
 		}
@@ -296,7 +297,7 @@ func (g *Generator) createExpandedFieldList(f *gql.FieldDefinition, t *gql.Objec
 
 // Given a parsed AST of  developer defined types
 // extract and return the correct gql.Object type(s)
-func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, error) {
+func (g *Generator) buildTypesFromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
@@ -360,8 +361,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 
 						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, base.Meta_Relation_ONE)
 						if err != nil {
-							// Todo: better error handle
-							log.Printf("got error while registering single relation: %v", err)
+							log.ErrorE(ctx, "Error while registering single relation", err)
 						}
 
 					case *gql.List:
@@ -374,8 +374,7 @@ func (g *Generator) buildTypesFromAST(document *ast.Document) ([]*gql.Object, er
 
 						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, base.Meta_Relation_MANY)
 						if err != nil {
-							// Todo: better error handle
-							log.Printf("got error while registering single relation: %v", err)
+							log.ErrorE(ctx, "Error while registering single relation", err)
 						}
 					}
 
@@ -439,7 +438,7 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	return genRelationName(hostName.Name, targetName.Name())
 }
 
-func (g *Generator) genAggregateFields() error {
+func (g *Generator) genAggregateFields(ctx context.Context) error {
 	for _, t := range g.typeDefs {
 		countField, err := g.genCountFieldConfig(t)
 		if err != nil {
@@ -447,7 +446,7 @@ func (g *Generator) genAggregateFields() error {
 		}
 		t.AddFieldConfig(countField.Name, &countField)
 
-		sumField := g.genSumFieldConfig(t)
+		sumField := g.genSumFieldConfig(ctx, t)
 		t.AddFieldConfig(sumField.Name, &sumField)
 	}
 
@@ -484,7 +483,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	return field, nil
 }
 
-func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
+func (g *Generator) genSumFieldConfig(ctx context.Context, obj *gql.Object) gql.Field {
 	var sumType *gql.InputObject
 
 	inputCfg := gql.InputObjectConfig{
@@ -534,7 +533,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) gql.Field {
 	//this might resolve the thunk?  Race issue?
 	err := g.manager.schema.AppendType(sumType)
 	if err != nil {
-		log.Printf("failure appending sumType : %v", err)
+		log.ErrorE(ctx, "Failed to append sumType", err)
 	}
 
 	field := gql.Field{
@@ -614,7 +613,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 // GenerateQueryInputForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
-func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) (*gql.Field, error) {
+func (g *Generator) GenerateQueryInputForGQLType(ctx context.Context, obj *gql.Object) (*gql.Field, error) {
 	if obj.Error() != nil {
 		return nil, obj.Error()
 	}
@@ -626,7 +625,7 @@ func (g *Generator) GenerateQueryInputForGQLType(obj *gql.Object) (*gql.Field, e
 	types.having = g.genTypeHavingArgInput(obj)
 	types.order = g.genTypeOrderArgInput(obj)
 	// var queryField *gql.Field
-	queryField := g.genTypeQueryableFieldList(obj, types)
+	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
 
 	// queryType := g.manager.schema.QueryType()
 	// queryType.AddFieldConfig(queryField.Name, queryField)
@@ -866,28 +865,24 @@ type queryInputTypeConfig struct {
 	order   *gql.InputObject
 }
 
-func (g *Generator) genTypeQueryableFieldList(obj *gql.Object, config queryInputTypeConfig) *gql.Field {
+func (g *Generator) genTypeQueryableFieldList(ctx context.Context, obj *gql.Object, config queryInputTypeConfig) *gql.Field {
 	name := obj.Name()
 
 	// add the generated types to the type map
 	if err := g.manager.schema.AppendType(config.filter); err != nil {
-		// Todo: better error handle
-		log.Printf("failure appending runtime schema - filter: %v", err)
+		log.ErrorE(ctx, "Failed to append runtime schema", err, logging.NewKV("SchemaItem", config.filter))
 	}
 
 	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
-		// Todo: better error handle
-		log.Printf("failure appending runtime schema - groupBy: %v", err)
+		log.ErrorE(ctx, "Failed to append runtime schema", err, logging.NewKV("SchemaItem", config.groupBy))
 	}
 
 	if err := g.manager.schema.AppendType(config.having); err != nil {
-		// Todo: better error handle
-		log.Printf("failure appending runtime schema - having: %v", err)
+		log.ErrorE(ctx, "Failed to append runtime schema", err, logging.NewKV("SchemaItem", config.having))
 	}
 
 	if err := g.manager.schema.AppendType(config.order); err != nil {
-		// Todo: better error handle
-		log.Printf("failure appending runtime schema - order: %v", err)
+		log.ErrorE(ctx, "Failed to append runtime schema", err, logging.NewKV("SchemaItem", config.order))
 	}
 
 	field := &gql.Field{

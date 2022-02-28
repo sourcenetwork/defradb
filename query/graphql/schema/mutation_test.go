@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -19,6 +20,7 @@ import (
 )
 
 func TestSimleTypeMutation(t *testing.T) {
+	ctx := context.Background()
 	sdl := `
 	type Book {
 		title: String
@@ -29,7 +31,7 @@ func TestSimleTypeMutation(t *testing.T) {
 
 	sm, err := NewSchemaManager()
 	assert.NoError(t, err)
-	_, _, err = sm.Generator.FromSDL(sdl)
+	_, _, err = sm.Generator.FromSDL(ctx, sdl)
 	assert.NoError(t, err)
 
 	mutationType := sm.schema.MutationType()
