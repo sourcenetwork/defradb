@@ -12,12 +12,14 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -33,6 +35,9 @@ var addCmd = &cobra.Command{
 	Long: `Example Usage:
 > defradb client schema add -f user.sdl`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		logging.SetConfig(config.Logging.toLogConfig())
+
 		var schema []byte
 		if len(args) > 0 {
 			schema = []byte(strings.Join(args, "\n"))
@@ -41,12 +46,12 @@ var addCmd = &cobra.Command{
 			cobra.CheckErr(err)
 			schema = buf
 		} else {
-			log.Fatal("Missing schema")
+			log.Fatal(ctx, "Missing schema")
 		}
 
 		dbaddr := viper.GetString("database.address")
 		if dbaddr == "" {
-			log.Error("No database url provided")
+			log.Error(ctx, "No database url provided")
 		}
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr
@@ -61,8 +66,7 @@ var addCmd = &cobra.Command{
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				// Should this be `log.Fatal` ??
-				log.Error("response body closing failed: ", err)
+				log.ErrorE(ctx, "response body closing failed", err)
 			}
 		}()
 
