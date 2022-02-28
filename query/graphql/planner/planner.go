@@ -252,11 +252,6 @@ func (p *Planner) expandMultiNode(plan MultiNode, parentPlan *selectTopNode) err
 	return nil
 }
 
-// func (p *Planner) expandSelectNodePlan(plan *selectNode) error {
-// 	fmt.Println("Expanding select plan")
-// 	return p.expandPlan(plan.source)
-// }
-
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
