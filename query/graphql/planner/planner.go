@@ -17,7 +17,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+)
+
+var (
+	log = logging.MustNewLogger("defra.query.planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement
@@ -384,7 +389,7 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 	return src
 }
 
-func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, error) {
+func (p *Planner) queryDocs(ctx context.Context, query *parser.Query) ([]map[string]interface{}, error) {
 	plan, err := p.makePlan(query)
 	if err != nil {
 		return nil, err
@@ -392,7 +397,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 
 	if err = plan.Start(); err != nil {
 		if err2 := (plan.Close()); err2 != nil {
-			fmt.Println(err2)
+			log.ErrorE(ctx, "Error closing plan node", err2)
 		}
 		return nil, err
 	}
@@ -400,7 +405,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 	var next bool
 	if next, err = plan.Next(); err != nil {
 		if err2 := (plan.Close()); err2 != nil {
-			fmt.Println(err2)
+			log.ErrorE(ctx, "Error closing plan node", err2)
 		}
 		return nil, err
 	}
@@ -419,7 +424,7 @@ func (p *Planner) queryDocs(query *parser.Query) ([]map[string]interface{}, erro
 		next, err = plan.Next()
 		if err != nil {
 			if err2 := (plan.Close()); err2 != nil {
-				fmt.Println(err2)
+				log.ErrorE(ctx, "Error closing plan node", err2)
 			}
 			return nil, err
 		}
