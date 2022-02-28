@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/sourcenetwork/defradb/logging"
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
@@ -35,29 +36,37 @@ for the p2p data sync system.
 		`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		logging.SetConfig(config.Logging.toLogConfig())
+
 		// get args
 		collection := args[0]
 		peerAddr, err := ma.NewMultiaddr(args[1])
 		if err != nil {
-			log.Fatalf("Invalid peer address: %v", err)
+			log.FatalE(ctx, "Invalid peer address", err)
 		}
 
-		log.Infof("Adding replicator %s for collection %s to %s", peerAddr, collection, rpcAddr)
+		log.Info(
+			ctx,
+			"Adding replicator for collection",
+			logging.NewKV("PeerAddress", peerAddr),
+			logging.NewKV("Collection", collection),
+			logging.NewKV("RPCAddress", rpcAddr))
 
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(rpcAddr, grpc.WithTransportCredentials(cred))
 		if err != nil {
-			log.Fatalf("Couldn't create RPC client: %v", err)
+			log.FatalE(ctx, "Couldn't create RPC client", err)
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
+		ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
 		defer cancel()
 
 		pid, err := client.AddReplicator(ctx, collection, peerAddr)
 		if err != nil {
-			log.Fatalf("Request failed: %v", err)
+			log.FatalE(ctx, "Request failed", err)
 		}
-		log.Infof("Succesfully added replicator %s", pid)
+		log.Info(ctx, "Succesfully added replicator", logging.NewKV("PID", pid))
 	},
 }
 
