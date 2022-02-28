@@ -157,8 +157,6 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 		return
 	}
 
-	// fmt.Println(bytes)
-
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(bytes, h)
 	unmarshaledDelta := &LWWRegDelta{}
@@ -187,8 +185,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 			return nil, err
 		}
 	}
-	// data = []byte("test")
-	// fmt.Println("PRE", data)
+
 	nd := dag.NodeWithData(data)
 	// The cid builder defaults to v0, we want to be using v1 CIDs
 	nd.SetCidBuilder(
@@ -204,8 +201,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 			return nil, err
 		}
 	}
-	// data2 := nd.Data()
-	// fmt.Println("POST", data2)
+
 	return nd, nil
 }
 
