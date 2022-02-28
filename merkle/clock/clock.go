@@ -121,12 +121,6 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
 	}
 
-	// if prio := delta.GetPriority(); prio%10 == 0 {
-	// 	store.logger.Infof("merged delta from %s (priority: %d)", current, prio)
-	// } else {
-	// 	store.logger.Debugf("merged delta from %s (priority: %d)", current, prio)
-	// }
-
 	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
