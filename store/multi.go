@@ -62,21 +62,3 @@ func (ms multistore) Rootstore() core.DSReaderWriter {
 func (ms multistore) Systemstore() core.DSReaderWriter {
 	return ms.system
 }
-
-// func PrintStore(ctx context.Context, store core.DSReaderWriter) {
-// 	q := dsq.Query{
-// 		Prefix:   "",
-// 		KeysOnly: false,
-// 		Orders:   []dsq.Order{dsq.OrderByKey{}},
-// 	}
-
-// 	results, err := store.Query(q)
-// 	defer results.Close()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	for r := range results.Next() {
-// 		fmt.Println(r.Key, ": ", r.Value)
-// 	}
-// }
