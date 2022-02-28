@@ -370,8 +370,6 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 		typeJoin.primary = false
 	}
 
-	// fmt.Println("Parent filter:", parent.filter)
-	// fmt.Println("source filter:", source.filter)
 	return typeJoin, nil
 }
 
