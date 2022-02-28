@@ -25,11 +25,6 @@ import (
 	"github.com/ipfs/go-datastore/query"
 )
 
-// var (
-//     merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-//     store core.DSReaderWriter
-// )
-
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
