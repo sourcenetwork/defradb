@@ -298,7 +298,6 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 		// closed channel edge cases
 		wg.Add(1)
 		go func(colName string) {
-			fmt.Println("starting routine for:", colName)
 			for res := range resCh {
 				keyCh <- res
 			}
