@@ -763,8 +763,6 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 
 		}
 
-		// fmt.Println("#####################")
-		// spew.Dump(fields)
 		return fields, nil
 	})
 

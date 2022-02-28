@@ -350,7 +350,6 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 
 	for i, d := range descs {
-		// fmt.Println(d.Schema.Fields)
 		assert.Equal(t, testcase.targetDescs[i], d, testcase.description)
 	}
 }
