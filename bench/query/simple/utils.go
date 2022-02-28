@@ -28,7 +28,7 @@ func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	dockeys, err := benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, 0, doSync)
 	if err != nil {

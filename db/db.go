@@ -205,7 +205,7 @@ func (db *DB) Executor() *planner.QueryExecutor {
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releaseing
 // of resources (IE: Badger instance)
-func (db *DB) Close() {
+func (db *DB) Close(ctx context.Context) {
 	log.Info("Closing DefraDB process...")
 	err := db.rootstore.Close()
 	if err != nil {

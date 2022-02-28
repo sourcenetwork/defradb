@@ -103,7 +103,7 @@ var startCmd = &cobra.Command{
 			if err != nil {
 				log.ErrorE(ctx, "Failed to start p2p node:", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
@@ -121,7 +121,7 @@ var startCmd = &cobra.Command{
 			if err := n.Start(); err != nil {
 				log.ErrorE(ctx, "Failed to start p2p listeners:", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
@@ -160,7 +160,7 @@ var startCmd = &cobra.Command{
 				if n != nil {
 					n.Close() //nolint
 				}
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 		}()
@@ -171,7 +171,7 @@ var startCmd = &cobra.Command{
 		if n != nil {
 			n.Close() //nolint
 		}
-		db.Close()
+		db.Close(ctx)
 		os.Exit(0)
 	},
 }
