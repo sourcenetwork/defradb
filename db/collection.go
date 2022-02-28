@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/utils"
 
@@ -170,7 +171,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	col.schemaID = cid.String()
 	key = base.MakeCollectionSchemaSystemKey(cid.String())
 	err = db.Systemstore().Put(ctx, key.ToDS(), []byte(desc.Name))
-	log.Debugf("Created collection %s with ID %s", col.Name(), col.SchemaID)
+	log.Debug(ctx, "Created collection", logging.NewKV("Name", col.Name()), logging.NewKV("Id", col.SchemaID))
 	return col, err
 }
 
@@ -207,7 +208,7 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 	}
 
 	sid := cid.String()
-	log.Debugf("Retrieved collection %s with ID %s", desc.Name, sid)
+	log.Debug(ctx, "Retrieved collection", logging.NewKV("Name", desc.Name), logging.NewKV("Id", sid))
 
 	return &Collection{
 		db:       db,
@@ -249,7 +250,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
-			log.Errorf("Failed to close collection query: %w", err)
+			log.ErrorE(ctx, "Failed to close collection query", err)
 		}
 	}()
 
@@ -297,7 +298,7 @@ func (c *Collection) getAllDocKeysChan(ctx context.Context, txn core.Txn) (<-cha
 	go func() {
 		defer func() {
 			if err := q.Close(); err != nil {
-				log.Errorf("Failed to close AllDocKeys query: %w", err)
+				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
 			}
 			close(resCh)
 		}()

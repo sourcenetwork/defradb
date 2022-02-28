@@ -155,7 +155,7 @@ var startCmd = &cobra.Command{
 
 		// run the server listener in a seperate goroutine
 		go func() {
-			if err := db.Listen(config.Database.Address); err != nil {
+			if err := db.Listen(ctx, config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start API listener", err)
 				if n != nil {
 					n.Close() //nolint

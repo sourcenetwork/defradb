@@ -27,17 +27,16 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	logging "github.com/ipfs/go-log/v2"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
+	log = logging.MustNewLogger("defra.db")
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key
 	ErrDocVerification = errors.New("The document verificatioin failed")
 
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
-
-	log = logging.Logger("defra.db")
 )
 
 // make sure we match our client interface
@@ -62,8 +61,6 @@ type DB struct {
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
 
-	log logging.StandardLogger
-
 	// The options used to init the database
 	options interface{}
 }
@@ -79,18 +76,18 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 
 // NewDB creates a new instance of the DB using the given options
 func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
-	log.Debug("loading: internal datastores")
+	log.Debug(ctx, "loading: internal datastores")
 	root := store.AsDSReaderWriter(rootstore)
 	multistore := store.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
-	log.Debug("loading: schema manager")
+	log.Debug(ctx, "loading: schema manager")
 	sm, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debug("loading: query executor")
+	log.Debug(ctx, "loading: query executor")
 	exec, err := planner.NewQueryExecutor(sm)
 	if err != nil {
 		return nil, err
@@ -101,7 +98,6 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 		multistore: multistore,
 
 		crdtFactory: &crdtFactory,
-		log:         log,
 
 		schema:        sm,
 		queryExecutor: exec,
@@ -162,7 +158,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	log.Debug("Checking if db has already been initialized...")
+	log.Debug(ctx, "Checking if db has already been initialized...")
 	exists, err := db.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
@@ -170,11 +166,11 @@ func (db *DB) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and finish intialization
 	if exists {
-		log.Debug("db has already been initalized, conitnuing.")
+		log.Debug(ctx, "db has already been initalized, conitnuing.")
 		return db.loadSchema(ctx)
 	}
 
-	log.Debug("opened a new db, needs full intialization")
+	log.Debug(ctx, "opened a new db, needs full intialization")
 	// init meta data
 	// collection sequence
 	_, err = db.getSequence(ctx, "collection")
@@ -206,12 +202,12 @@ func (db *DB) Executor() *planner.QueryExecutor {
 // This is the place for any last minute cleanup or releaseing
 // of resources (IE: Badger instance)
 func (db *DB) Close(ctx context.Context) {
-	log.Info("Closing DefraDB process...")
+	log.Info(ctx, "Closing DefraDB process...")
 	err := db.rootstore.Close()
 	if err != nil {
-		log.Error("Failure closing running process")
+		log.ErrorE(ctx, "Failure closing running process", err)
 	}
-	log.Info("Succesfully closed running process")
+	log.Info(ctx, "Succesfully closed running process")
 }
 
 func printStore(ctx context.Context, store core.DSReaderWriter) {
@@ -230,7 +226,7 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	defer func() {
 		err := results.Close()
 		if err != nil {
-			log.Error("Failure closing set of query store results")
+			log.ErrorE(ctx, "Failure closing set of query store results", err)
 		}
 	}()
 

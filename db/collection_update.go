@@ -251,7 +251,7 @@ func (c *Collection) updateWithFilter(
 	// If the query object isn't properly closed at any exit point log the error.
 	defer func() {
 		if err := query.Close(); err != nil {
-			log.Errorf("Failed to close query after filter update: %w", err)
+			log.ErrorE(ctx, "Failed to close query after filter update", err)
 		}
 	}()
 
