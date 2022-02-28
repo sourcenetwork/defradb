@@ -21,10 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/store"
 )
 
-// var (
-//     factoryTestLog = logging.Logger("defradb.tests.factory")
-// )
-
 func newStores() core.MultiStore {
 	root := ds.NewMapDatastore()
 	rw := store.AsDSReaderWriter(root)
