@@ -111,18 +111,6 @@ func (factory Factory) Rootstore() core.DSReaderWriter {
 	return nil
 }
 
-// SetLogger sets the current logger
-// func (factory *Factory) SetLogger(l logging.StandardLogger) error {
-// 	factory.log = l
-// 	return nil
-// }
-
-// WithLogger returns a new copy of the Factory with a new logger
-// func (factory Factory) WithLogger(l logging.StandardLogger) Factory {
-// 	factory.log = l
-// 	return factory
-// }
-
 // Data implements core.MultiStore and returns the current Datastore
 func (factory Factory) Datastore() core.DSReaderWriter {
 	if factory.multistore == nil {
@@ -154,16 +142,3 @@ func (factory Factory) DAGstore() core.DAGStore {
 	}
 	return factory.multistore.DAGstore()
 }
-
-// Log implements core.MultiStore
-// @todo Look into abstracting Log from MutliStore
-// func (factory Factory) Log() logging.StandardLogger {
-// 	return factory.log
-// }
-
-/* API Example
-
-factory.RegisterCRDT(LWW_REGISTER, store, InitFn)
-lww := factory.Instance(LWW_REGISTER, key).(*MerkleLWWRegister)
-
-*/
