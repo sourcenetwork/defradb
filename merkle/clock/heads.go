@@ -21,6 +21,7 @@ import (
 	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/logging"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -96,7 +97,12 @@ func (hh *heads) Len(ctx context.Context) (int, error) {
 
 // Replace replaces a head with a new cid.
 func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
-	log.Infof("replacing DAG head: %s -> %s (new height: %d)", h, c, height)
+	log.Info(
+		ctx,
+		"Replacing DAG head",
+		logging.NewKV("Old", h),
+		logging.NewKV("Cid", c),
+		logging.NewKV("Height", height))
 	var store ds.Write = hh.store
 	var err error
 
@@ -128,7 +134,9 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 }
 
 func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
-	log.Infof("adding new DAG head: %s (height: %d)", c, height)
+	log.Info(ctx, "Adding new DAG head",
+		logging.NewKV("Cid", c),
+		logging.NewKV("Height", height))
 	return hh.write(ctx, hh.store, c, height)
 }
 
@@ -148,7 +156,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	defer func() {
 		err := results.Close()
 		if err != nil {
-			log.Error(err)
+			log.ErrorE(ctx, "Error closing results", err)
 		}
 	}()
 
