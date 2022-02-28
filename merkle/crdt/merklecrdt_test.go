@@ -12,7 +12,6 @@ package crdt
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -23,6 +22,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 func newDS() ds.Datastore {
@@ -76,6 +76,6 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	defer results.Close()
 
 	for r := range results.Next() {
-		fmt.Println(r.Key, ": ", r.Value)
+		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
 }

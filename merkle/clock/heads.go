@@ -166,7 +166,6 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
 		}
-		// fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		hash, err := dshelp.DsKeyToMultihash(headKey)
 		if err != nil {
