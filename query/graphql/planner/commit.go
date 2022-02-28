@@ -129,7 +129,6 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 			return nil, err
 		}
 		dag.cid = &c
-		// fmt.Println("got cid:", c)
 	} // @todo: handle error if no CID is given
 
 	return &commitSelectNode{
