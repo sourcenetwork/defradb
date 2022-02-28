@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	log = logging.Logger("merklecrdt")
+	log = logging.Logger("defra.merklecrdt")
 )
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a

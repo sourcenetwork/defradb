@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	log = logging.Logger("merkleclock")
+	log = logging.Logger("defra.merkleclock")
 )
 
 type MerkleClock struct {
