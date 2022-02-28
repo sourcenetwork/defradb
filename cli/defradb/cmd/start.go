@@ -101,7 +101,7 @@ var startCmd = &cobra.Command{
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
 				node.WithPubSub(true))
 			if err != nil {
-				log.ErrorE(ctx, "Failed to start p2p node:", err)
+				log.ErrorE(ctx, "Failed to start p2p node", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
@@ -119,7 +119,7 @@ var startCmd = &cobra.Command{
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(ctx, "Failed to start p2p listeners:", err)
+				log.ErrorE(ctx, "Failed to start p2p listeners", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
