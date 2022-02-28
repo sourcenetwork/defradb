@@ -141,7 +141,6 @@ func NewFromMap(data map[string]interface{}, schema ...base.SchemaDescription) (
 		if err != nil {
 			return nil, err
 		}
-		// fmt.Println(c)
 		doc.key = key.NewDocKeyV0(c)
 	}
 
@@ -230,8 +229,7 @@ func (doc *Document) SetWithJSON(patch []byte) error {
 	}
 
 	for k, v := range patchObj {
-		fmt.Println(k, v)
-		if v == nil { // needs deletion
+		if v == nil {
 			err = doc.Delete(k)
 		} else {
 			err = doc.Set(k, v)
