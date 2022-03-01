@@ -115,13 +115,11 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	c, _, err := clk.AddDAGNode(ctx, delta)
+	_, _, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
 	}
-
-	t.Log("Added Delta CID:", c)
 }
 
 func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
@@ -147,8 +145,6 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		return
 	}
 
-	// fmt.Println(delta.GetPriority())
-	// fmt.Println(delta2.GetPriority())
 	if delta.GetPriority() != 1 && delta2.GetPriority() != 2 {
 		t.Errorf("AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)", 1, 2, delta.GetPriority(), delta2.GetPriority())
 	}
