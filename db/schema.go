@@ -24,7 +24,7 @@ import (
 // and creates the necessary collections, query types, etc.
 func (db *DB) AddSchema(ctx context.Context, schema string) error {
 	// @todo: create collection after generating query types
-	types, astdoc, err := db.schema.Generator.FromSDL(schema)
+	types, astdoc, err := db.schema.Generator.FromSDL(ctx, schema)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 		sdl += "\n" + string(buf)
 	}
 
-	_, _, err = db.schema.Generator.FromSDL(sdl)
+	_, _, err = db.schema.Generator.FromSDL(ctx, sdl)
 	return err
 }
 

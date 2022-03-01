@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -337,10 +338,11 @@ func TestSingleSimpleType(t *testing.T) {
 }
 
 func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
+	ctx := context.Background()
 	sm, err := NewSchemaManager()
 	assert.NoError(t, err, testcase.description)
 
-	types, _, err := sm.Generator.FromSDL(testcase.sdl)
+	types, _, err := sm.Generator.FromSDL(ctx, testcase.sdl)
 	assert.NoError(t, err, testcase.description)
 
 	assert.Len(t, types, len(testcase.targetDescs), testcase.description)
@@ -350,7 +352,6 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 
 	for i, d := range descs {
-		// fmt.Println(d.Schema.Fields)
 		assert.Equal(t, testcase.targetDescs[i], d, testcase.description)
 	}
 }

@@ -74,7 +74,7 @@ func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn core.Tx
 	}
 
 	planner := makePlanner(ctx, db, txn)
-	return planner.queryDocs(q)
+	return planner.queryDocs(ctx, q)
 }
 
 func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn core.Txn, query *parser.Query) (planNode, error) {
