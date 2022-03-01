@@ -106,7 +106,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
 	if df.doc == nil {
-		return errors.New("DocumentFetcher cannot be started without an initialized document obect")
+		return errors.New("DocumentFetcher cannot be started without an initialized document object")
 	}
 	if df.index == nil {
 		return errors.New("DocumentFetcher cannot be started without a IndexDescription")

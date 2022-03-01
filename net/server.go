@@ -113,7 +113,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Recieved a pushLog request", logging.NewKV("Pid", pid))
+	log.Debug(ctx, "Received a pushLog request", logging.NewKV("Pid", pid))
 
 	// parse request object
 	cid := req.Body.Cid.Cid
@@ -264,7 +264,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	log.Info(s.peer.ctx, "Recieved new pubsub event", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
+	log.Info(s.peer.ctx, "Received new pubsub event", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {

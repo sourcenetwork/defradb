@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSimleTypeMutation(t *testing.T) {
+func TestSimpleTypeMutation(t *testing.T) {
 	ctx := context.Background()
 	sdl := `
 	type Book {

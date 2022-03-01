@@ -207,7 +207,7 @@ func (db *DB) Close(ctx context.Context) {
 	if err != nil {
 		log.ErrorE(ctx, "Failure closing running process", err)
 	}
-	log.Info(ctx, "Succesfully closed running process")
+	log.Info(ctx, "Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store core.DSReaderWriter) {
