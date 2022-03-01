@@ -220,7 +220,6 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// fmt.Println(string(buf))
 
 	reg := corecrdt.LWWRegister{}
 	delta, err := reg.DeltaDecode(nd)

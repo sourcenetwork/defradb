@@ -148,8 +148,6 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 						return
 					}
 
-					// fmt.Println(docs)
-
 					// create the documents
 					keys := make([]key.DocKey, numTypes)
 					for j := 0; j < numTypes; j++ {
@@ -183,7 +181,6 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 			}
 
 			batchWg.Wait()
-			// fmt.Printf(".")
 		}
 
 		// wait for our group and signal by closing waitCh

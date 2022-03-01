@@ -50,8 +50,6 @@ func runQueryBenchGetSync(
 	dockeys [][]key.DocKey,
 	query string,
 ) error {
-	// fmt.Printf("Query:\n%s\n", query)
-
 	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
 	query = formatQuery(b, query, dockeys)
 

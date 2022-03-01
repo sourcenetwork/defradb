@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -120,15 +119,6 @@ func TestVersionedFetcherStart(t *testing.T) {
 	err = createDocUpdates(col)
 	assert.NoError(t, err)
 
-	// db.PrintDump()
-	// assert.True(t, false) // force printing dump
-
-	// c, err := cid.Decode(testStates[3].cid)
-	// require.NoError(t, err)
-
-	// require.NoError(t, err)
-	// fmt.Println(bl)
-
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
 	err = vf.Init(&desc, nil, nil, false)
@@ -144,12 +134,6 @@ func TestVersionedFetcherStart(t *testing.T) {
 	span := fetcher.NewVersionedSpan(key, version)
 	err = vf.Start(ctx, txn, span)
 	assert.NoError(t, err)
-
-	// err = vf.SeekTo(version)
-	// assert.NoError(t, err)
-
-	// store.PrintStore(vf.Rootstore())
-	// assert.True(t, false)
 }
 
 func TestVersionedFetcherNextMap(t *testing.T) {
@@ -162,8 +146,6 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 
 	err = createDocUpdates(col)
 	assert.NoError(t, err)
-
-	// assert.True(t, false) // force printing dump
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
@@ -189,10 +171,6 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 	assert.NoError(t, err)
 
 	compareVersionedDocs(t, doc, state)
-
-	// fmt.Println(doc)
-	// assert.True(t, false)
-
 }
 
 func TestVersionedFetcherNextMapV1(t *testing.T) {
@@ -232,10 +210,6 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 	assert.NoError(t, err)
 
 	compareVersionedDocs(t, doc, state)
-
-	// fmt.Println(doc)
-	// assert.True(t, false)
-
 }
 
 func TestVersionedFetcherNextMapV2(t *testing.T) {
@@ -275,10 +249,6 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 	assert.NoError(t, err)
 
 	compareVersionedDocs(t, doc, state)
-
-	// fmt.Println(doc)
-	// assert.True(t, false)
-
 }
 
 func TestVersionedFetcherNextMapV3(t *testing.T) {
@@ -291,8 +261,6 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 
 	err = createDocUpdates(col)
 	assert.NoError(t, err)
-
-	// assert.True(t, false) // force printing dump
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
@@ -318,9 +286,6 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	compareVersionedDocs(t, doc, state)
-
-	// fmt.Println(doc)
-	// assert.True(t, false)
 }
 
 func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
@@ -333,8 +298,6 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 
 	err = createDocUpdates(col)
 	assert.NoError(t, err)
-
-	// assert.True(t, false) // force printing dump
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
@@ -355,7 +318,6 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 	// loop over updates so we can seek to them
 	// skip first (create)
 	for _, update := range testStates[1:] {
-		fmt.Println("Seeking to:", update.cid)
 		c, err := cid.Decode(update.cid)
 		assert.NoError(t, err)
 
@@ -364,8 +326,6 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 
 		_, doc, err := vf.FetchNextMap(ctx)
 		assert.NoError(t, err)
-
-		fmt.Println("fetched doc:", doc)
 
 		var state map[string]interface{}
 		err = json.Unmarshal(update.payload, &state)
@@ -481,7 +441,6 @@ func createDocUpdates(col *db.Collection) error {
 				return err
 			}
 		}
-		fmt.Printf("Update #%v cid %v\n", i+1, doc.Head())
 	}
 
 	return err

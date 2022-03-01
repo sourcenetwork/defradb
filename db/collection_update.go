@@ -193,7 +193,6 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []ke
 	for i, key := range keys {
 		doc, err := c.Get(ctx, key)
 		if err != nil {
-			fmt.Println("error getting key to update:", key)
 			return nil, err
 		}
 		v, err := doc.ToMap()
