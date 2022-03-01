@@ -72,7 +72,7 @@ var addCmd = &cobra.Command{
 
 		result, err := ioutil.ReadAll(res.Body)
 		cobra.CheckErr(err)
-		fmt.Println(string(result))
+		log.Info(ctx, "", logging.NewKV("Result", string(result)))
 	},
 }
 

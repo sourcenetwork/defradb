@@ -40,8 +40,6 @@ func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.G
 		return err
 	}
 
-	// fmt.Println("Finished backfill...")
-
 	// run benchmark
 	if doSync {
 		return runCollectionBenchGetSync(b, ctx, collections, fixture, docCount, opCount, dockeys)
@@ -217,7 +215,6 @@ func runCollectionBenchCreateAsync(b *testing.B,
 			}
 
 			batchWg.Wait()
-			// fmt.Printf(".")
 		}
 
 		// finish or err

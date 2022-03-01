@@ -33,7 +33,6 @@ func (db *DB) AddSchema(ctx context.Context, schema string) error {
 		return err
 	}
 	for _, desc := range colDesc {
-		// fmt.Println(desc)
 		if _, err := db.CreateCollection(ctx, desc); err != nil {
 			return err
 		}

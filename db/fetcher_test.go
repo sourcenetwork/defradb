@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -150,22 +149,9 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	// assert.False(t, df.KVEnd())
-	// kv := df.KV()
-	// assert.NotNil(t, kv)
-	// fmt.Println(kv)
-	// // err = df.ProcessKV(kv)
-	// // assert.Nil(t, err)
-	// // err = df.NextKey()
-	// assert.True(t, false)
-
-	// var _ []*document.EncodedDocument
 	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-
-	// fmt.Println(encdoc)
-	// assert.True(t, false)
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
@@ -208,26 +194,12 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	// assert.False(t, df.KVEnd())
-	// kv := df.KV()
-	// assert.NotNil(t, kv)
-	// fmt.Println(kv)
-	// // err = df.ProcessKV(kv)
-	// // assert.Nil(t, err)
-	// // err = df.NextKey()
-	// assert.True(t, false)
-
-	// var _ []*document.EncodedDocument
 	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-	// fmt.Println(encdoc)
 	encdoc, err = df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-
-	// fmt.Println(encdoc)
-	// assert.True(t, false)
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
@@ -272,7 +244,6 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	assert.Equal(t, "John", name)
 	assert.Equal(t, uint64(21), age)
-	fmt.Println(age)
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
@@ -388,8 +359,4 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	assert.Equal(t, "John", name)
 	assert.Equal(t, uint64(21), age)
-	// fmt.Println(age)
-
-	// db.printDebugDB()
-	// assert.True(t, false)
 }

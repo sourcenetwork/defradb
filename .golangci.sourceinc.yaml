@@ -169,7 +169,6 @@ linters-settings:
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     forbid:
-      - ^print.*$
       - 'fmt\.Print.*'
     # Exclude godoc examples from forbidigo checks.  Default is true.
     exclude_godoc_examples: false
@@ -790,6 +789,7 @@ linters:
     - unused
     - varcheck
     - errcheck
+    - forbidigo
     # - wrapcheck
     # - errorlint
     # - gci
