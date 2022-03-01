@@ -370,8 +370,6 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 		typeJoin.primary = false
 	}
 
-	// fmt.Println("Parent filter:", parent.filter)
-	// fmt.Println("source filter:", source.filter)
 	return typeJoin, nil
 }
 
@@ -453,7 +451,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
-		// @todo pair up on the error handling / logging properly.
+		log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
 		return doc
 	}
 
@@ -462,8 +460,8 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// with an empty map for the subdoc
 	next, err := n.subType.Next()
 
-	// @todo pair up on the error handling / logging properly.
 	if err != nil {
+		log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
 		return doc
 	}
 
@@ -584,8 +582,7 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 
 		// reset scan node
 		if err := n.subType.Init(); err != nil {
-			// @todo pair up on the error handling / logging properly.
-			fmt.Println("sub-type initalization error at scan node reset : %w", err)
+			log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
 		}
 
 		for {
