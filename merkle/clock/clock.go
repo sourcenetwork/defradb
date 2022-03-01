@@ -20,11 +20,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
-	logging "github.com/ipfs/go-log"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
-	log = logging.Logger("merkleclock")
+	log = logging.MustNewLogger("defra.merkleclock")
 )
 
 type MerkleClock struct {
@@ -41,7 +41,7 @@ func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id st
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
-		headset:   newHeadset(headstore, ds.NewKey(id)), //TODO: Config logger param package wide
+		headset:   newHeadset(headstore, ds.NewKey(id)),
 		crdt:      crdt,
 	}
 }
@@ -115,31 +115,25 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 // by
 func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
 	current := node.Cid()
-	log.Debugf("Running ProcessNode on %s", current)
+	log.Debug(ctx, "Running ProcessNode", logging.NewKV("Cid", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
 	}
 
-	// if prio := delta.GetPriority(); prio%10 == 0 {
-	// 	store.logger.Infof("merged delta from %s (priority: %d)", current, prio)
-	// } else {
-	// 	store.logger.Debugf("merged delta from %s (priority: %d)", current, prio)
-	// }
-
 	links := node.Links()
 	// check if we have any HEAD links
 	hasHeads := false
-	log.Debug("Stepping through node links")
+	log.Debug(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.Debugf("checking link: %s => %s", l.Name, l.Cid)
+		log.Debug(ctx, "checking link", logging.NewKV("Name", l.Name), logging.NewKV("Cid", l.Cid))
 		if l.Name == "_head" {
 			hasHeads = true
 			break
 		}
 	}
 	if !hasHeads { // reached the bottom, at a leaf
-		log.Debug("No heads found")
+		log.Debug(ctx, "No heads found")
 		err := mc.headset.Add(ctx, root, rootPrio)
 		if err != nil {
 			return nil, fmt.Errorf("error adding head (when reached the bottom) %s : %w", root, err)
@@ -150,14 +144,14 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 
 	for _, l := range links {
 		child := l.Cid
-		log.Debug("Scanning for replacement heads: ", child)
+		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", child))
 		isHead, _, err := mc.headset.IsHead(ctx, child)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if %s is head : %w", child, err)
 		}
 
 		if isHead {
-			log.Debug("Found head, replacing!")
+			log.Debug(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
 			err = mc.headset.Replace(ctx, child, root, rootPrio)
@@ -175,10 +169,10 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			log.Debug("Adding head")
+			log.Debug(ctx, "Adding head")
 			err := mc.headset.Add(ctx, root, rootPrio)
 			if err != nil {
-				log.Errorf("error adding head (when root is new head): %s : %w", root, err)
+				log.ErrorE(ctx, "error adding head (when root is new head)", err, logging.NewKV("Root", root))
 				// OR should this also return like below comment??
 				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
 			}
