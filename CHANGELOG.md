@@ -1,3 +1,53 @@
+<a name="v0.2.1"></a>
+## [v0.2.1](https://github.com/sourcenetwork/defradb/compare/v0.2.0...v0.2.1)
+
+> 2022-03-01
+
+### Features
+
+* Add ability to delete multiple documents using filter ([#206](https://github.com/sourcenetwork/defradb/issues/206))
+* Add ability to delete multiple documents, using multiple ids ([#196](https://github.com/sourcenetwork/defradb/issues/196))
+
+### Bug fixes
+
+* Return empty array if no values found ([#223](https://github.com/sourcenetwork/defradb/issues/223))
+* Close fetcher on error ([#210](https://github.com/sourcenetwork/defradb/issues/210))
+* Installing binary using defradb name ([#190](https://github.com/sourcenetwork/defradb/issues/190))
+
+### Documentation
+
+* Update generated CLI docs ([#208](https://github.com/sourcenetwork/defradb/issues/208))
+* Updated readme with P2P section ([#220](https://github.com/sourcenetwork/defradb/issues/220))
+* Update old or missing license headers ([#205](https://github.com/sourcenetwork/defradb/issues/205))
+* Update git-chglog config and template ([#195](https://github.com/sourcenetwork/defradb/issues/195))
+
+### Refactoring
+
+* Use new logger in query package ([#236](https://github.com/sourcenetwork/defradb/issues/236))
+* Use new logger in db package ([#234](https://github.com/sourcenetwork/defradb/issues/234))
+* Use new logger in merkle packages ([#241](https://github.com/sourcenetwork/defradb/issues/241))
+* Use new logger in net package ([#244](https://github.com/sourcenetwork/defradb/issues/244))
+* Use new logger in node package ([#246](https://github.com/sourcenetwork/defradb/issues/246))
+* Use new logger in store package ([#248](https://github.com/sourcenetwork/defradb/issues/248))
+* Use new logger for http package ([#250](https://github.com/sourcenetwork/defradb/issues/250))
+* Add logging system to CLI package ([#217](https://github.com/sourcenetwork/defradb/issues/217))
+* Restructure db/txn/multistore structures ([#199](https://github.com/sourcenetwork/defradb/issues/199))
+* Initialize database in constructor ([#211](https://github.com/sourcenetwork/defradb/issues/211))
+
+### Testing
+
+* Boost collection test coverage ([#183](https://github.com/sourcenetwork/defradb/issues/183))
+
+### Continuous integration
+
+* Combine the Lint and Benchmark workflows so that the benchmark job depends on the lint job in one workflow ([#209](https://github.com/sourcenetwork/defradb/issues/209))
+* Add rule to only run benchmark if other check are successful ([#194](https://github.com/sourcenetwork/defradb/issues/194))
+* Increase linter timeout ([#230](https://github.com/sourcenetwork/defradb/issues/230))
+
+### Chore
+
+* Remove dead code from multi node ([#186](https://github.com/sourcenetwork/defradb/issues/186))
+
 
 <a name="v0.2.0"></a>
 ## [v0.2.0](https://github.com/sourcenetwork/defradb/compare/v0.1.0...v0.2.0)
