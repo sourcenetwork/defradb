@@ -24,7 +24,7 @@ func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Gen
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -43,7 +43,7 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	exec := db.Executor()
 	if exec == nil {

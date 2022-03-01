@@ -33,7 +33,7 @@ func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.G
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	dockeys, err := benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, opCount, doSync)
 	if err != nil {
@@ -106,7 +106,7 @@ func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixture
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	_, err = benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, opCount, doSync)
 	if err != nil {
@@ -126,7 +126,7 @@ func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fix
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer db.Close(ctx)
 
 	_, err = benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, opCount, doSync)
 	if err != nil {
