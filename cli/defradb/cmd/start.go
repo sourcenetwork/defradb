@@ -109,10 +109,10 @@ var startCmd = &cobra.Command{
 
 			// parse peers and bootstrap
 			if len(peers) != 0 {
-				log.Debug(ctx, "Parsing boostrap peers", logging.NewKV("Peers", peers))
+				log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
 				addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
 				if err != nil {
-					log.ErrorE(ctx, "Failed to parse boostrap peers", err)
+					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
 				}
 				log.Debug(ctx, "Bootstraping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)

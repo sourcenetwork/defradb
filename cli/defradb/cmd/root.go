@@ -68,7 +68,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.defradb/config.yaml)")
-	rootCmd.PersistentFlags().StringVar(&dbURL, "url", "http://localhost:9181", "url of the target database")
+	rootCmd.PersistentFlags().StringVar(&dbURL, "url", "http://localhost:9181", "URL of the target database")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

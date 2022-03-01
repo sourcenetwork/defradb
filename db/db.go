@@ -165,11 +165,11 @@ func (db *DB) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and finish initialization
 	if exists {
-		log.Debug(ctx, "db has already been initalized, continuing.")
+		log.Debug(ctx, "DB has already been initialized, continuing.")
 		return db.loadSchema(ctx)
 	}
 
-	log.Debug(ctx, "opened a new db, needs full initialization")
+	log.Debug(ctx, "Opened a new DB, needs full initialization")
 	// init meta data
 	// collection sequence
 	_, err = db.getSequence(ctx, "collection")
