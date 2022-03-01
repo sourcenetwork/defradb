@@ -101,9 +101,9 @@ var startCmd = &cobra.Command{
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
 				node.WithPubSub(true))
 			if err != nil {
-				log.ErrorE(ctx, "Failed to start p2p node:", err)
+				log.ErrorE(ctx, "Failed to start p2p node", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
@@ -119,9 +119,9 @@ var startCmd = &cobra.Command{
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(ctx, "Failed to start p2p listeners:", err)
+				log.ErrorE(ctx, "Failed to start p2p listeners", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
@@ -155,12 +155,12 @@ var startCmd = &cobra.Command{
 
 		// run the server listener in a seperate goroutine
 		go func() {
-			if err := db.Listen(config.Database.Address); err != nil {
+			if err := db.Listen(ctx, config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start API listener", err)
 				if n != nil {
 					n.Close() //nolint
 				}
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 		}()
@@ -171,7 +171,7 @@ var startCmd = &cobra.Command{
 		if n != nil {
 			n.Close() //nolint
 		}
-		db.Close()
+		db.Close(ctx)
 		os.Exit(0)
 	},
 }
