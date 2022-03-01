@@ -109,10 +109,10 @@ var startCmd = &cobra.Command{
 
 			// parse peers and bootstrap
 			if len(peers) != 0 {
-				log.Debug(ctx, "Parsing boostrap peers", logging.NewKV("Peers", peers))
+				log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
 				addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
 				if err != nil {
-					log.ErrorE(ctx, "Failed to parse boostrap peers", err)
+					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
 				}
 				log.Debug(ctx, "Bootstraping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)
@@ -153,7 +153,7 @@ var startCmd = &cobra.Command{
 			}()
 		}
 
-		// run the server listener in a seperate goroutine
+		// run the server listener in a separate goroutine
 		go func() {
 			if err := db.Listen(ctx, config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start API listener", err)
@@ -167,7 +167,7 @@ var startCmd = &cobra.Command{
 
 		// wait for shutdown signal
 		<-signalCh
-		log.Info(ctx, "Recieved interrupt; closing db")
+		log.Info(ctx, "Received interrupt; closing db")
 		if n != nil {
 			n.Close() //nolint
 		}
@@ -192,5 +192,5 @@ func init() {
 	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&tcpAddr, "tcpaddr", "/ip4/0.0.0.0/tcp/9161", "listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
-	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchroniation system")
+	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchronization system")
 }

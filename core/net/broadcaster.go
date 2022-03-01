@@ -18,6 +18,6 @@ type Broadcaster interface {
 	// Send broadcasts a message without blocking
 	Send(v interface{}) error
 
-	// SendWithTimeout broadcasts a message, blocks upto timeout duration
+	// SendWithTimeout broadcasts a message, blocks up to timeout duration
 	SendWithTimeout(v interface{}, d time.Duration) error
 }

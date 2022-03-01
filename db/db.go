@@ -34,7 +34,7 @@ var (
 	log = logging.MustNewLogger("defra.db")
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key
-	ErrDocVerification = errors.New("The document verificatioin failed")
+	ErrDocVerification = errors.New("The document verification failed")
 
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
 )
@@ -47,7 +47,6 @@ var (
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.
-//
 type DB struct {
 	glock sync.RWMutex
 
@@ -133,12 +132,12 @@ func (db *DB) Rootstore() core.DSReaderWriter {
 	return db.multistore.Rootstore()
 }
 
-// Headstore returns the interal index store for DAG Heads
+// Headstore returns the internal index store for DAG Heads
 func (db *DB) Headstore() core.DSReaderWriter {
 	return db.multistore.Headstore()
 }
 
-// Datastore returns the interal index store for DAG Heads
+// Datastore returns the internal index store for DAG Heads
 func (db *DB) Datastore() core.DSReaderWriter {
 	return db.multistore.Datastore()
 }
@@ -164,13 +163,13 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
-	// and finish intialization
+	// and finish initialization
 	if exists {
-		log.Debug(ctx, "db has already been initalized, conitnuing.")
+		log.Debug(ctx, "DB has already been initialized, continuing.")
 		return db.loadSchema(ctx)
 	}
 
-	log.Debug(ctx, "opened a new db, needs full intialization")
+	log.Debug(ctx, "Opened a new DB, needs full initialization")
 	// init meta data
 	// collection sequence
 	_, err = db.getSequence(ctx, "collection")
@@ -207,7 +206,7 @@ func (db *DB) Close(ctx context.Context) {
 	if err != nil {
 		log.ErrorE(ctx, "Failure closing running process", err)
 	}
-	log.Info(ctx, "Succesfully closed running process")
+	log.Info(ctx, "Successfully closed running process")
 }
 
 func printStore(ctx context.Context, store core.DSReaderWriter) {

@@ -30,7 +30,7 @@ var (
 type MerkleClock struct {
 	headstore core.DSReaderWriter
 	dagstore  core.DAGStore
-	// daySyncer
+	// dagSyncer
 	headset *heads
 	crdt    core.ReplicatedData
 }

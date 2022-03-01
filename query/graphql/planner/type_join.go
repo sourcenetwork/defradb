@@ -240,7 +240,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, fmt.Errorf("Failed sub selection, unknow relation type")
+		return nil, fmt.Errorf("Failed sub selection, unknown relation type")
 	}
 	if err != nil {
 		return nil, err
@@ -582,7 +582,7 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 
 		// reset scan node
 		if err := n.subType.Init(); err != nil {
-			log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
+			log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
 		}
 
 		for {

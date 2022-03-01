@@ -311,7 +311,7 @@ func (c *Collection) applyPatch(txn core.Txn, doc map[string]interface{}, patch 
 		}
 	}
 
-	// comleted patch update
+	// completed patch update
 	return nil
 }
 
@@ -347,8 +347,7 @@ func (c *Collection) applyMerge(ctx context.Context, txn core.Txn, doc map[strin
 		// even for fields defined as Ints, which causes issues
 		// when we serialize that in CBOR. To generate the delta
 		// payload.
-		// So lets just make sure ints are ints
-		// ref: https://play.golang.org/p/djThEqGXtvR
+		// So let's just make sure ints are ints ref: https://play.golang.org/p/djThEqGXtvR
 		if fd.Kind == base.FieldKind_INT {
 			merge[mfield] = int64(mval.(float64))
 		}
@@ -379,14 +378,14 @@ func (c *Collection) applyMerge(ctx context.Context, txn core.Txn, doc map[strin
 		return err
 	}
 
-	// if this a a Batch masked as a Transaction
+	// If this a a Batch masked as a Transaction
 	// commit our writes so we can see them.
 	// Batches don't maintain serializability, or
 	// linearization, or any other transaction
 	// semantics, which the user already knows
 	// otherwise they wouldn't use a datastore
 	// that doesn't support proper transactions.
-	// So lets just commit, and keep going.
+	// So let's just commit, and keep going.
 	// @todo: Change this on the Txn.BatchShim
 	// structure
 	if txn.IsBatch() {
@@ -447,7 +446,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		}
 		ok = true
 		cval = boolArray
-	case base.FieldKind_FLOAT, base.FieldKind_DECIMNAL:
+	case base.FieldKind_FLOAT, base.FieldKind_DECIMAL:
 		cval, ok = val.(float64)
 	case base.FieldKind_FLOAT_ARRAY:
 		if val == nil {
@@ -573,7 +572,7 @@ func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 
 // getTypeAndCollectionForPatch parses the Patch op path values
 // and compares it against the collection schema.
-// If its within the schema, then patchIsSubType is false
+// If it's within the schema, then patchIsSubType is false
 // subTypeName is empty.
 // If the target type is an array, isArray is true.
 // May need to query the database for other schema types

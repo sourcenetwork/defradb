@@ -84,7 +84,7 @@ func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql
 	result, err := g.fromAST(ctx, document)
 
 	if err != nil {
-		// If there is an error we should drop any new objects as they may be partial, poluting the in memory cache
+		// If there is an error we should drop any new objects as they may be partial, polluting the in-memory cache
 		// This is quite a simple check at the moment (on type name) - this should be expanded when we allow schema mutation/deletion
 		// There is no guarantee that `typeMapBeforeMutation` will still be the object returned by `schema.TypeMap()`, so we should re-fetch it
 		typeMapAfterMutation := g.manager.schema.TypeMap()
@@ -422,11 +422,11 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	// search for a user-defined name, and return it if found
 	for _, directive := range field.Directives {
 		if directive.Name.Value == "relation" {
-			for _, arguement := range directive.Arguments {
-				if arguement.Name.Value == "name" {
-					name, isString := arguement.Value.GetValue().(string)
+			for _, argument := range directive.Arguments {
+				if argument.Name.Value == "name" {
+					name, isString := argument.Value.GetValue().(string)
 					if !isString {
-						return "", fmt.Errorf("Relationship name must be of type string, but was: %v", arguement.Value.GetKind())
+						return "", fmt.Errorf("Relationship name must be of type string, but was: %v", argument.Value.GetKind())
 					}
 					return name, nil
 				}

@@ -59,7 +59,7 @@ type selectTopNode struct {
 	// top of the plan graph
 	plan planNode
 
-	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRADEGY) -> render -> source
+	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRATEGY) -> render -> source
 
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
@@ -183,7 +183,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 
 		// If we have both a DocKey and a CID, then we need to run
 		// a TimeTravel (History-Traversing Versioned) query, which means
-		// we need to propogate the values to the underlying VersionedFetcher
+		// we need to propagate the values to the underlying VersionedFetcher
 		if parsed.QueryType == parser.VersionedScanQuery {
 			c, err := cid.Decode(parsed.CID)
 			if err != nil {
@@ -193,7 +193,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			origScan.Spans(spans)
 		} else if parsed.DocKeys != nil { // If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
-			// and propogate it to the scanNode
+			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _key equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:

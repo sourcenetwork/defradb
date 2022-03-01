@@ -21,7 +21,7 @@ import (
 )
 
 func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Document, error) {
-	//create txn
+	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err

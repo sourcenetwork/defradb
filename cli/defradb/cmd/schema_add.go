@@ -51,7 +51,7 @@ var addCmd = &cobra.Command{
 
 		dbaddr := viper.GetString("database.address")
 		if dbaddr == "" {
-			log.Error(ctx, "No database url provided")
+			log.Error(ctx, "No database URL provided")
 		}
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr

@@ -75,7 +75,7 @@ func (delta *CompositeDAGDelta) GetSchemaID() string {
 }
 
 // CompositeDAG is a CRDT structure that is used
-// to track a collcetion of sub MerkleCRDTs.
+// to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
 	key      string
 	schemaID string

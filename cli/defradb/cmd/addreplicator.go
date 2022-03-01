@@ -66,7 +66,7 @@ for the p2p data sync system.
 		if err != nil {
 			log.FatalE(ctx, "Request failed", err)
 		}
-		log.Info(ctx, "Succesfully added replicator", logging.NewKV("PID", pid))
+		log.Info(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
 	},
 }
 
