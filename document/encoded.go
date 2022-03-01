@@ -99,7 +99,7 @@ type EncodedDocument struct {
 	Properties map[base.FieldDescription]*EncProperty
 }
 
-// Reset re-initalizes the EncodedDocument object.
+// Reset re-initializes the EncodedDocument object.
 func (encdoc *EncodedDocument) Reset() {
 	encdoc.Properties = make(map[base.FieldDescription]*EncProperty)
 	encdoc.Key = nil

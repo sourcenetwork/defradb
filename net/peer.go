@@ -149,7 +149,7 @@ func (p *Peer) Close() error {
 		log.ErrorE(p.ctx, "Error closing pubsub topics", err)
 	}
 
-	// stop grpc server
+	// stop gRPC server
 	for _, c := range p.server.conns {
 		if err := c.Close(); err != nil {
 			log.ErrorE(p.ctx, "Failed closing server RPC connections", err)
@@ -249,12 +249,12 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 		return pid, err
 	}
 
-	// make sure its not ourselves
+	// make sure it's not ourselves
 	if pid == p.host.ID() {
 		return pid, fmt.Errorf("Can't target ourselves as a replicator")
 	}
 
-	// make sure were not duplicating things
+	// make sure we're not duplicating things
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if reps, exists := p.replicators[col.SchemaID()]; exists {

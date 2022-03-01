@@ -86,7 +86,7 @@ func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, ke
 }
 
 // IndexDescription describes an Index on a Collection
-// and its assocatied metadata.
+// and its associated metadata.
 type IndexDescription struct {
 	Name     string
 	ID       uint32
@@ -161,7 +161,7 @@ const (
 	FieldKind_INT_ARRAY            FieldKind = 5
 	FieldKind_FLOAT                FieldKind = 6
 	FieldKind_FLOAT_ARRAY          FieldKind = 7
-	FieldKind_DECIMNAL             FieldKind = 8
+	FieldKind_DECIMAL              FieldKind = 8
 	FieldKind_DATE                 FieldKind = 9
 	FieldKind_TIMESTAMP            FieldKind = 10
 	FieldKind_STRING               FieldKind = 11

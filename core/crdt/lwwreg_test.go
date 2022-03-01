@@ -119,7 +119,7 @@ func TestLWWRegisterDeltaInit(t *testing.T) {
 	var _ core.Delta = delta // checks if LWWRegDelta implements core.Delta (also checked in the implementation code, but w.e)
 }
 
-func TestLWWRegosterDeltaGetPriority(t *testing.T) {
+func TestLWWRegisterDeltaGetPriority(t *testing.T) {
 	delta := &LWWRegDelta{
 		Data:     []byte("test"),
 		Priority: uint64(10),
@@ -153,7 +153,7 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 		return
 	}
 	if len(bytes) == 0 {
-		t.Error("Expected Marhsal to return serialized bytes, but output is empty")
+		t.Error("Expected Marshal to return serialized bytes, but output is empty")
 		return
 	}
 
@@ -167,7 +167,7 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(delta.Data, unmarshaledDelta.Data) {
-		t.Errorf("Unmarhsalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.Data)
+		t.Errorf("Unmarshalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.Data)
 		return
 	}
 
@@ -220,7 +220,7 @@ func TestLWWRegisterDeltaDecode(t *testing.T) {
 	reg := LWWRegister{}
 	extractedDelta, err := reg.DeltaDecode(node)
 	if err != nil {
-		t.Errorf("Recieved error while extracing node: %v", err)
+		t.Errorf("Received error while extracing node: %v", err)
 		return
 	}
 

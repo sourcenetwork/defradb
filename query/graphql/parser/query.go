@@ -477,19 +477,19 @@ func (field Field) GetAggregateSource() ([]string, error) {
 	}
 
 	var path []string
-	switch arguementValue := field.Statement.Arguments[0].Value.GetValue().(type) {
+	switch argumentValue := field.Statement.Arguments[0].Value.GetValue().(type) {
 	case string:
-		path = []string{arguementValue}
+		path = []string{argumentValue}
 	case []*ast.ObjectField:
-		if len(arguementValue) == 0 {
+		if len(argumentValue) == 0 {
 			return []string{}, fmt.Errorf("Unexpected error: aggregate field contained no child field selector")
 		}
-		innerPath := arguementValue[0].Value.GetValue()
+		innerPath := argumentValue[0].Value.GetValue()
 		if innerPathStringValue, isString := innerPath.(string); isString {
-			path = []string{arguementValue[0].Name.Value, innerPathStringValue}
+			path = []string{argumentValue[0].Name.Value, innerPathStringValue}
 		} else {
 			// If the inner path is not a string, this must mean the field is an inline array in which case we only want the base path
-			path = []string{arguementValue[0].Name.Value}
+			path = []string{argumentValue[0].Name.Value}
 		}
 	}
 

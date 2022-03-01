@@ -250,7 +250,7 @@ func (c *Collection) deleteWithFilter(
 			return nil, err
 		}
 
-		// Delete the document that is assosiated with this key we got from the filter.
+		// Delete the document that is associated with this key we got from the filter.
 		err = c.applyFullDelete(ctx, txn, key)
 		if err != nil {
 			return nil, err
@@ -375,7 +375,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 	block, err := d.bstore.Get(ctx, targetCid)
 	if err == blockstore.ErrNotFound {
 		// If we have multiple heads corresponding to a dockey, one of the heads
-		//  could have already deleted the parantal dag chain.
+		//  could have already deleted the parental dag chain.
 		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
 		//          all the parental nodes. Currently HEAD#2 goes to delete
 		//          itself (represented by `:d`) and it's parental nodes, but as we see

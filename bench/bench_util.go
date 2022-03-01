@@ -43,7 +43,7 @@ var (
 
 func init() {
 	// create a consistent seed value for the random package
-	// so we dont have random fluctuations between runs
+	// so we don't have random fluctuations between runs
 	// (specifically thinking about the fixture generation stuff)
 	seed := hashToInt64("https://xkcd.com/221/")
 	rand.Seed(seed)
@@ -114,7 +114,7 @@ func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.G
 }
 
 // Loads the given test database using the provided fixture context.
-// It loads docCount number of documents asyncronously in batches of *upto*
+// It loads docCount number of documents asynchronously in batches of *up to*
 // writeBatchGroup.
 func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]key.DocKey, error) {
 	numTypes := len(fixture.Types())
@@ -127,8 +127,8 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 	dockeys := make([][]key.DocKey, docCount)
 
 	go func() {
-		// cut up the job from into writeBatchGroup size grouped jobs.
-		// Note weird math cus the last batch will likely be smaller then
+		// Cut up the job from into writeBatchGroup size grouped jobs.
+		// Note weird math because the last batch will likely be smaller then
 		// writeBatchGroup ~cus math~.
 		for bid := 0; float64(bid) < math.Ceil(float64(docCount)/writeBatchGroup); bid++ {
 			currentBatchSize := int(math.Min(float64((docCount - (bid * writeBatchGroup))), writeBatchGroup))
@@ -158,7 +158,7 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 							return
 						}
 
-						// loop forever untill commited.
+						// loop forever until committed.
 						// This was necessary when debugging and was left
 						// in place. The error check could prob use a wrap system
 						// but its fine :).

@@ -149,7 +149,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 
 	key = base.MakeCollectionSystemKey(col.desc.Name)
 
-	//write the collection metadata to the system store
+	// write the collection metadata to the system store
 	err = db.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return nil, err
@@ -581,11 +581,11 @@ func (c *Collection) save(ctx context.Context, txn core.Txn, doc *document.Docum
 				merge[k] = val.Value()
 			}
 
-			// NOTE: We delay the final Clean() call till we know
-			// the commit on the transaction is successfull. If we didn't
+			// NOTE: We delay the final Clean() call until we know
+			// the commit on the transaction is successful. If we didn't
 			// wait, and just did it here, then *if* the commit fails down
 			// the line, then we have no way to roll back the state
-			// side-effect on the documnet func called here.
+			// side-effect on the document func called here.
 			txn.OnSuccess(func() {
 				doc.Clean()
 			})
