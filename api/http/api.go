@@ -158,8 +158,8 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 	// try to parse CID
 	c, err := cid.Decode(cidStr)
 	if err != nil {
-		// if we cant try to parse DSKeyToCID
-		// return error if we still cant
+		// If we can't try to parse DSKeyToCID
+		// return error if we still can't
 		key := ds.NewKey(cidStr)
 		var hash multihash.Multihash
 		hash, err = dshelp.DsKeyToMultihash(key)

@@ -145,7 +145,7 @@ func (p *Peer) handleChildBlocks(
 		}
 
 		var fieldName string
-		// loop over our children to get the cooresponding field names from the DAG
+		// loop over our children to get the corresponding field names from the DAG
 		for _, l := range nd.Links() {
 			if c == l.Cid {
 				if l.Name != core.HEAD {

@@ -92,22 +92,22 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	return s, nil
 }
 
-// GetDocGraph recieves a get graph request
+// GetDocGraph receives a get graph request
 func (s *server) GetDocGraph(ctx context.Context, req *pb.GetDocGraphRequest) (*pb.GetDocGraphReply, error) {
 	return nil, nil
 }
 
-// PushDocGraph recieves a push graph request
+// PushDocGraph receives a push graph request
 func (s *server) PushDocGraph(ctx context.Context, req *pb.PushDocGraphRequest) (*pb.PushDocGraphReply, error) {
 	return nil, nil
 }
 
-// GetLog recieves a get log request
+// GetLog receives a get log request
 func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogReply, error) {
 	return nil, nil
 }
 
-// PushLog recieves a push log request
+// PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	return &pb.PushLogReply{}, nil
 }
 
-// GetHeadLog recieves a get head log request
+// GetHeadLog receives a get head log request
 func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb.GetHeadLogReply, error) {
 	return nil, nil
 }
@@ -219,7 +219,7 @@ func (s *server) removeAllPubsubTopics() error {
 }
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
-// cooresponding topic
+// corresponding topic
 func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
@@ -294,7 +294,7 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 			return nil, err
 		}
 
-		// run a goroutune for each channel we get from the GetAllDocKeys func for each
+		// run a goroutine for each channel we get from the GetAllDocKeys func for each
 		// collection. Pipe the results from res to keys, and handle potentially
 		// closed channel edge cases
 		wg.Add(1)
