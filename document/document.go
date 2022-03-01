@@ -25,16 +25,15 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-// This is the main implementation stating point for accessing the internal Document API
-// Which provides API access to the various operations available for Documents
-// IE. CRUD.
+// This is the main implementation starting point for accessing the internal Document API
+// which provides API access to the various operations available for Documents, i.e. CRUD.
 //
 // Documents in this case refer to the core database type of DefraDB which is a
-// "NoSQL Document Datastore"
+// "NoSQL Document Datastore".
 //
 // This section is not concerned with the outer query layer used to interact with the
 // Document API, but instead is solely concerned with carrying out the internal API
-// operations, i.e. CRUD.
+// operations.
 //
 // Note: These actions on the outside are deceivingly simple, but require a number
 // of complex interactions with the underlying KV Datastore, as well as the
@@ -54,8 +53,9 @@ var (
 //
 // Documents are similar to JSON Objects stored in MongoDB, which are collections
 // of Fields and Values.
-// Fields are Key names that point to values
-// Values are literal or complex objects such as strings, integers, or sub documents (objects)
+//
+// Fields are Key names that point to values.
+// Values are literal or complex objects such as strings, integers, or sub documents (objects).
 //
 // Note: Documents represent the serialized state of the underlying MerkleCRDTs
 //
