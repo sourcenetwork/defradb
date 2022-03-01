@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/multiformats/go-multihash"
@@ -27,6 +26,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	dag "github.com/ipfs/go-merkledag"
+	"github.com/sourcenetwork/defradb/logging"
+)
+
+var (
+	log = logging.MustNewLogger("defra.http")
 )
 
 type Server struct {
@@ -39,11 +43,12 @@ func NewServer(db client.DB) *Server {
 		db: db,
 	}
 	r := chi.NewRouter()
+	// todo - we should log via our own log, not middleware.logger
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
 		if err != nil {
-			log.Printf("DefraDB HTTP API Welcome message writing failed: %v", err)
+			log.ErrorE(context.Background(), "DefraDB HTTP API Welcome message writing failed", err)
 		}
 	})
 
@@ -57,17 +62,19 @@ func NewServer(db client.DB) *Server {
 }
 
 func (s *Server) Listen(addr string) error {
+	ctx := context.Background()
 	if err := http.ListenAndServe(addr, s.router); err != nil {
-		log.Fatalln("Error: HTTP Listening and Serving Failed: ", err)
+		log.FatalE(ctx, "Error: HTTP Listening and Serving Failed", err)
 		return err
 	}
 	return nil
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	_, err := w.Write([]byte("pong"))
 	if err != nil {
-		log.Printf("Writing pong with HTTP failed: %v", err)
+		log.ErrorE(ctx, "Writing pong with HTTP failed", err)
 	}
 }
 
@@ -77,7 +84,7 @@ func (s *Server) dump(w http.ResponseWriter, r *http.Request) {
 
 	_, err := w.Write([]byte("ok"))
 	if err != nil {
-		log.Printf("Writing ok with HTTP failed: %v", err)
+		log.ErrorE(ctx, "Writing ok with HTTP failed", err)
 	}
 }
 
@@ -101,7 +108,7 @@ func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err = r.Body.Close()
 		if err != nil {
-			log.Print(err) // Should this be `log.Fatal(err)` ??
+			log.ErrorE(ctx, "Error on body close", err)
 		}
 	}()
 
