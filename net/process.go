@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
@@ -40,7 +41,7 @@ func (p *Peer) processLog(
 	field string,
 	nd ipld.Node,
 	getter format.NodeGetter) ([]cid.Cid, error) {
-	log.Debugf("running processLog")
+	log.Debug(ctx, "Running processLog")
 
 	txn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
@@ -59,7 +60,7 @@ func (p *Peer) processLog(
 	// 	return nil, nil
 	// }
 
-	crdt, err := initCRDTForType(txn, col, dockey, field)
+	crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (p *Peer) processLog(
 		return nil, fmt.Errorf("Failed to decode delta object: %w", err)
 	}
 
-	log.Debugf("Processing push log request for %s at %s", dockey, c)
+	log.Debug(ctx, "Processing push log request", logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
 	height := delta.GetPriority()
 
 	if err := txn.DAGstore().Put(ctx, nd); err != nil {
@@ -88,7 +89,7 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
+func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
 	var key ds.Key
 	var ctype core.CType
 	if field == "" { // empty field name implies composite type
@@ -103,7 +104,7 @@ func initCRDTForType(txn core.MultiStore, col client.Collection, docKey key.DocK
 		fieldID := fd.ID.String()
 		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(fieldID)
 	}
-	log.Debugf("Got CRDT Type: %v for %s", ctype, field)
+	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
 }
 
@@ -161,11 +162,18 @@ func (p *Peer) handleChildBlocks(
 		// get object
 		cNode, err := getter.Get(ctx, c)
 		if err != nil {
-			log.Errorf("Failed to get node %s: %s", c, err)
+			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("Cid", c))
 			continue
 		}
 
-		log.Debugf("Submitting new job to dag queue - col: %s, key: %s, field: %s, cid: %s", col.Name(), dockey, fieldName, cNode.Cid())
+		log.Debug(
+			ctx,
+			"Submitting new job to dag queue",
+			logging.NewKV("Collection", col.Name()),
+			logging.NewKV("DocKey", dockey),
+			logging.NewKV("Field", fieldName),
+			logging.NewKV("Cid", cNode.Cid()))
+
 		session.Add(1)
 		job := &dagJob{
 			collection: col,

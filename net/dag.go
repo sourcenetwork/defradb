@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
@@ -81,7 +82,8 @@ func (p *Peer) sendJobWorker() {
 // initialization in New().
 func (p *Peer) dagWorker() {
 	for job := range p.jobQueue {
-		log.Debugf("Starting new job from dag queue: %s at %s", job.dockey, job.node.Cid())
+		log.Debug(p.ctx, "Starting new job from dag queue", logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+
 		select {
 		case <-p.ctx.Done():
 			// drain jobs from queue when we are done
@@ -101,7 +103,7 @@ func (p *Peer) dagWorker() {
 		)
 
 		if err != nil {
-			log.Errorf("Error processing log for %s at %s: %s", job.dockey, job.node.Cid(), err)
+			log.ErrorE(p.ctx, "Error processing log", err, logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
 			job.session.Done()
 			continue
 		}
