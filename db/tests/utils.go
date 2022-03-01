@@ -26,6 +26,7 @@ import (
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 const (
@@ -35,6 +36,7 @@ const (
 )
 
 var (
+	log            = logging.MustNewLogger("defra.db.tests")
 	badgerInMemory bool
 	badgerFile     bool
 	mapStore       bool
@@ -197,9 +199,8 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 	assert.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
-		fmt.Println("--------------")
-		fmt.Println(test.Description)
-		fmt.Println(fmt.Sprintf("Running tests with database type: %s", dbi.name))
+		// We log with level warn to highlight this item
+		log.Warn(ctx, test.Description, logging.NewKV("Database", dbi.name))
 
 		db := dbi.db
 		err = db.AddSchema(ctx, schema)
@@ -214,7 +215,6 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 				return
 			}
 			collections = append(collections, col)
-			fmt.Printf("Collection name:%s id%v\n", col.Name(), col.ID())
 		}
 
 		// insert docs
@@ -272,7 +272,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 				continue
 			}
 			result := db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
-			if assertQueryResults(t, test.Description, result, tq.Results, tq.ExpectedError) {
+			if assertQueryResults(ctx, t, test.Description, result, tq.Results, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}
 		}
@@ -302,7 +302,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		// We run the core query after the explicitly transactional ones to permit tests to query the commited result of the transactional queries
 		if test.Query != "" {
 			result := db.ExecQuery(ctx, test.Query)
-			if assertQueryResults(t, test.Description, result, test.Results, test.ExpectedError) {
+			if assertQueryResults(ctx, t, test.Description, result, test.Results, test.ExpectedError) {
 				continue
 			}
 
@@ -313,15 +313,14 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 	}
 }
 
-func assertQueryResults(t *testing.T, description string, result *client.QueryResult, expectedResults []map[string]interface{}, expectedError string) bool {
+func assertQueryResults(ctx context.Context, t *testing.T, description string, result *client.QueryResult, expectedResults []map[string]interface{}, expectedError string) bool {
 	if assertErrors(t, description, result.Errors, expectedError) {
 		return true
 	}
 	resultantData := result.Data.([]map[string]interface{})
 
-	fmt.Println(result.Data)
-	fmt.Println("--------------")
-	fmt.Println("")
+	// We log with level warn to highlight this item
+	log.Warn(ctx, "", logging.NewKV("QueryResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
