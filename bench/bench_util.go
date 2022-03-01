@@ -30,6 +30,7 @@ import (
 	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 const (
@@ -39,6 +40,7 @@ const (
 
 var (
 	storage string = "memory"
+	log            = logging.MustNewLogger("defra.bench")
 )
 
 func init() {
@@ -164,7 +166,7 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 						// but its fine :).
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil && err.Error() == badger.ErrConflict.Error() {
-								fmt.Printf("failed to commit TX for doc %s, retrying...\n", doc.Key())
+								log.Info(ctx, "Failed to commit TX for doc %s, retrying...\n", logging.NewKV("DocKey", doc.Key()))
 								continue
 							} else if err != nil {
 								errCh <- fmt.Errorf("Failed to create document: %w", err)
