@@ -75,11 +75,6 @@ type Document struct {
 	isDirty bool
 }
 
-// New returns a newly instanciated Document
-func New() *Document {
-	return newEmptyDoc()
-}
-
 func NewWithKey(key key.DocKey) *Document {
 	doc := newEmptyDoc()
 	doc.key = key
