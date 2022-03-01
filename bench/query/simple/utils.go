@@ -23,6 +23,10 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
+var (
+//log = logging.MustNewLogger("defra.bench")
+)
+
 func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount int, query string, doSync bool) error {
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
@@ -46,8 +50,6 @@ func runQueryBenchGetSync(
 	dockeys [][]key.DocKey,
 	query string,
 ) error {
-	// fmt.Printf("Query:\n%s\n", query)
-
 	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
 	query = formatQuery(b, query, dockeys)
 
@@ -63,8 +65,7 @@ func runQueryBenchGetSync(
 		// if l != opCount {
 		// 	return fmt.Errorf("Invalid response, returned data doesn't match length, expected %v actual %v", docCount, l)
 		// }
-		// fmt.Println(res)
-		// fmt.Println("--------------------")
+		// log.Info(ctx, "", logging.NewKV("Response", res))
 	}
 	b.StopTimer()
 

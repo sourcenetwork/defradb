@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -230,6 +229,6 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	}()
 
 	for r := range results.Next() {
-		fmt.Println(r.Key, ": ", r.Value)
+		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
 }

@@ -89,7 +89,7 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 			return
 		}
 
-		fmt.Printf("Response: %s", string(buf))
+		log.Info(ctx, "", logging.NewKV("Response", string(buf)))
 	},
 }
 

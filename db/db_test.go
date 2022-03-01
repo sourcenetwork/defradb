@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -159,9 +158,6 @@ func TestDBUpdateDocument(t *testing.T) {
 	assert.Equal(t, "Pete", name)
 	assert.Equal(t, int64(21), age)
 	assert.Nil(t, weight)
-
-	// fmt.Println("\n--")
-	// db.printDebugDB()
 }
 
 func TestDBUpdateNonExistingDocument(t *testing.T) {
@@ -247,23 +243,15 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
-	fmt.Println(doc.Get("Name"))
 	assert.NoError(t, err)
-
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	doc, err = col.Get(ctx, key)
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	// value check
 	name, err := doc.Get("Name")
-	fmt.Println("-----------------------------------------------")
-	fmt.Println(name)
 	assert.NoError(t, err)
 	age, err := doc.Get("Age")
 	assert.NoError(t, err)
@@ -352,10 +340,6 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)
 
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
-
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
 		b, errGet := db.DAGstore().Get(ctx, c)
@@ -364,15 +348,11 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
 		assert.NoError(t, errDecode)
 
-		buf, errMarshal := nd.MarshalJSON()
+		_, errMarshal := nd.MarshalJSON()
 		assert.NoError(t, errMarshal)
 
-		fmt.Println(string(buf))
-		delta, errDeltaDecode := reg.DeltaDecode(nd)
+		_, errDeltaDecode := reg.DeltaDecode(nd)
 		assert.NoError(t, errDeltaDecode)
-
-		lwwdelta := delta.(*corecrdt.LWWRegDelta)
-		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
 
 	testJSONObj = []byte(`{
@@ -391,10 +371,6 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	cids, _, err = heads.List(ctx)
 	assert.NoError(t, err)
 
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
-
 	for _, c := range cids {
 		b, err := db.DAGstore().Get(ctx, c)
 		assert.NoError(t, err)
@@ -402,15 +378,11 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		nd, err := dag.DecodeProtobuf(b.RawData())
 		assert.NoError(t, err)
 
-		buf, err := nd.MarshalJSON()
+		_, err = nd.MarshalJSON()
 		assert.NoError(t, err)
 
-		fmt.Println(string(buf))
-		delta, err := reg.DeltaDecode(nd)
+		_, err = reg.DeltaDecode(nd)
 		assert.NoError(t, err)
-
-		lwwdelta := delta.(*corecrdt.LWWRegDelta)
-		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
 }
 
