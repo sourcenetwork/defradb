@@ -44,6 +44,8 @@ var (
 )
 
 func init() {
+	logging.SetConfig(logging.Config{Level: logging.NewLogLevelOption(logging.Error)})
+
 	// create a consistent seed value for the random package
 	// so we don't have random fluctuations between runs
 	// (specifically thinking about the fixture generation stuff)
