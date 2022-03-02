@@ -72,6 +72,10 @@ test\:coverage-quick:
 	go test ./... -race -coverprofile=coverage-quick.txt -covermode=atomic
 	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
 
+.PHONY: test\:changes
+test\:changes:
+	env DEFRA_DETECT_DATABASE_CHANGES=true go test ./... -p 1
+
 .PHONY: validate\:codecov
 validate\:codecov:
 	curl --data-binary @codecov.yml https://codecov.io/validate
