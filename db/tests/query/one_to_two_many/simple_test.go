@@ -309,7 +309,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					},
 					"price": map[string]interface{}{
 						"currency": "SEK",
-						"value":    uint64(129),
+						"value":    float64(129),
 					},
 				},
 				{
@@ -414,7 +414,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						{
 							"name": "A Time for Mercy",
 							"price": map[string]interface{}{
-								"value": uint64(129),
+								"value": float64(129),
 							},
 						},
 						{

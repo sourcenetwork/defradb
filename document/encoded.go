@@ -87,6 +87,20 @@ func (e EncProperty) Decode() (core.CType, interface{}, error) {
 			}
 			val = stringArray
 		}
+	} else { // CBOR often encodes values typed as floats as ints
+		switch e.Desc.Kind {
+		case base.FieldKind_FLOAT:
+			switch v := val.(type) {
+			case int64:
+				return ctype, float64(v), nil
+			case int:
+				return ctype, float64(v), nil
+			case uint64:
+				return ctype, float64(v), nil
+			case uint:
+				return ctype, float64(v), nil
+			}
+		}
 	}
 
 	return ctype, val, nil
