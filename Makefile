@@ -60,6 +60,10 @@ test\:clean: clean\:test test
 test\:bench:
 	make -C ./bench/ bench
 
+.PHONY: test\:bench-short
+test\:bench-short:
+	make -C ./bench/ bench:short
+
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
 test\:coverage-full: deps\:go-acc
