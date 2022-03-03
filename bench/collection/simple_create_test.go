@@ -73,6 +73,14 @@ func Benchmark_Collection_UserSimple_Create_Async_0_1000(b *testing.B) {
 	}
 }
 
+func Benchmark_Collection_UserSimple_Create_Async_0_10000(b *testing.B) {
+	ctx := context.Background()
+	err := runCollectionBenchCreate(b, ctx, fixtures.ForSchema(ctx, "user_simple"), 0, 10000, false)
+	if err != nil {
+		b.Fatal(err)
+	}
+}
+
 func Benchmark_Collection_UserSimple_Create_Async_0_100000(b *testing.B) {
 	ctx := context.Background()
 	err := runCollectionBenchCreate(b, ctx, fixtures.ForSchema(ctx, "user_simple"), 0, 100000, false)
