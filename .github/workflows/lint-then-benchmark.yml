@@ -32,7 +32,6 @@ jobs:
     name: Lint Check
     strategy:
       matrix:
-        go-version: [1.17.5]
         os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
@@ -75,6 +74,11 @@ jobs:
   # This job acts like a switch to simplify our ci control flow later on.
   decide-benchmark-type:
     name: Deciding which benchmarks to run based on flags.
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
 
     needs:
       - golangci # only run if the linter check passed.
