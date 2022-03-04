@@ -19,6 +19,11 @@ permissions:
   contents: read
 
 
+env:
+  # This can be modified to one of 'NONE', 'FULL', 'SHORT'. [Defaut = 'SHORT']
+  BENCHMARK_TYPE: SHORT
+
+
 jobs:
 
 
@@ -43,7 +48,7 @@ jobs:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
           #  version is what will always be used.
-          version: v1.43
+          version: v1.44
 
           # Optional: working directory, useful for monorepos or if we wanted to run this
           #  on a non-root directory.
@@ -67,10 +72,35 @@ jobs:
           only-new-issues: false
 
 
+  # This job acts like a switch to simplify our ci control flow later on.
+  decide-benchmark-type:
+    steps:
+
+      - name: Check for full benchmark label.
+        if: |
+          github.event.action == 'labeled' &&
+          contains(github.event.pull_request.labels.*.name, 'full-benchmark')
+        run: |
+          echo "BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
+
+      - name: Check for label that skips the benchmark.
+        if: |
+          github.event.action == 'labeled' &&
+          contains(github.event.pull_request.labels.*.name, 'no-benchmark')
+        run: |
+          echo "BENCHMARK_TYPE=NONE" >> ${GITHUB_ENV}
+
+
   # ================== Step-2: Start the runner and get it registered as a github runner.
   start-runner:
     name: Start self-hosted EC2 runner
-    needs: golangci # only run if the linter check passed
+
+    needs:
+      - golangci # only run if the linter check passed.
+      - decide-benchmark-type # type of benchmark to run.
+
+    if: ${{ env.BENCHMARK_TYPE != 'NONE' }}
+
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -106,9 +136,14 @@ jobs:
   # ============================Step-3: Run the benchmarks on the runner we just started.
   benchmark-ec2-runner:
     name: Run the benchmarks on the started EC2 runner
+
     needs:
       - golangci # only run if the linter check passed.
-      - start-runner # required to start the main job when the runner is ready
+      - decide-benchmark-type # type of benchmark to run.
+      - start-runner # required to start the main job when the runner is ready.
+
+    if: ${{ env.BENCHMARK_TYPE != 'NONE' }}
+
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
     env:
@@ -120,22 +155,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Start Running the bechmarks
+      - name: Run the full bechmarking suite
+        if: ${{ env.BENCHMARK_TYPE != 'FULL' }}
         run: make test:bench
+
+      - name: Run only the shorter benchmarks
+        if: ${{ env.BENCHMARK_TYPE != 'SHORT' }}
+        run: make test:bench-short
 
 
   # =============================== Step-4: Stop the runner once the benchmarks have ran.
   stop-runner:
     name: Stop self-hosted EC2 runner
+
     needs:
       - golangci # only run if the linter check passed.
-      - start-runner # required to get output from the start-runner job
-      - benchmark-ec2-runner # required to wait when the main job is done
-    runs-on: ubuntu-latest
+      - decide-benchmark-type # type of benchmark to run.
+      - start-runner # required to get output from the start-runner job.
+      - benchmark-ec2-runner # required to wait when the main job is done.
 
     # Stop the runner even if an error happened in the previous jobs. Also ensure that
     #  if the EC2 runner was actually started, only then we stop it.
-    if: ${{ always() && (needs.start-runner.result == 'success') }} 
+    if: |
+      always() &&
+      needs.start-runner.result == 'success' &&
+      env.BENCHMARK_TYPE != 'NONE'
+
+    runs-on: ubuntu-latest
 
     steps:
 
