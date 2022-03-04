@@ -30,7 +30,7 @@ type versionedScanNode struct {
 	p *Planner
 
 	// versioned data
-	key     core.Key
+	key     core.DataStoreKey
 	version cid.Cid
 
 	desc base.CollectionDescription
@@ -64,7 +64,7 @@ func (n *versionedScanNode) Start() error {
 }
 
 func (n *versionedScanNode) initScan() error {
-	if len(n.key.String()) == 0 || n.version.Equals(emptyCID) {
+	if n.key.DocKey == "" || n.version.Equals(emptyCID) {
 		return errors.New("VersionedScan is missing either a DocKey or VersionCID")
 	}
 

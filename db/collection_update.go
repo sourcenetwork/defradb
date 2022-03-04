@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
 	cbor "github.com/fxamacker/cbor/v2"
-	ds "github.com/ipfs/go-datastore"
 )
 
 type UpdateOpt struct{}
@@ -206,10 +205,10 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []ke
 			err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
 		}
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
 
-		results.DocKeys[i] = key.String()
+		results.DocKeys[i] = key.Key.DocKey
 		results.Count++
 	}
 	return results, nil
@@ -323,7 +322,7 @@ func (c *Collection) applyMerge(ctx context.Context, txn core.Txn, doc map[strin
 	if !ok {
 		return errors.New("Document is missing key")
 	}
-	key := ds.NewKey(keyStr)
+	key := core.DataStoreKey{DocKey: keyStr}
 	links := make([]core.DAGLink, 0)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {

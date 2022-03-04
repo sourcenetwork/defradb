@@ -18,16 +18,13 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
-	// "github.com/sourcenetwork/defradb/store"
-
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 )
 
 var (
 	compFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn {
-		return func(key ds.Key) MerkleCRDT {
-			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), schemaID, bs, ds.NewKey(""), key)
+		return func(key core.DataStoreKey) MerkleCRDT {
+			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), schemaID, bs, core.DataStoreKey{}, key)
 		}
 	})
 )
@@ -49,12 +46,10 @@ type MerkleCompositeDAG struct {
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT
-func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, schemaID string, bs corenet.Broadcaster, ns, dockey ds.Key) *MerkleCompositeDAG {
-	compositeDag := corecrdt.NewCompositeDAG(datastore, schemaID, ns, dockey.String() /* stuff like namespace and ID */)
+func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, schemaID string, bs corenet.Broadcaster, ns, key core.DataStoreKey) *MerkleCompositeDAG {
+	compositeDag := corecrdt.NewCompositeDAG(datastore, schemaID, ns, key.ToString() /* stuff like namespace and ID */)
 
-	// strip collection/index identifier from docKey
-	headsetKey := ds.KeyWithNamespaces(dockey.List()[2:])
-	clock := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), compositeDag)
+	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)
 	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, broadcaster: bs}
 
 	return &MerkleCompositeDAG{

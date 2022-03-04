@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
@@ -78,14 +77,12 @@ func (delta *LWWRegDelta) Value() interface{} {
 // arbitrary data type that ensures convergence
 type LWWRegister struct {
 	baseCRDT
-	key string
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
+func NewLWWRegister(store core.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, namespace),
-		key:      key,
+		baseCRDT: newBaseCRDT(store, key),
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -96,8 +93,8 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 // Value gets the current register value
 // RETURN STATE
 func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(ctx, valueK)
+	valueK := reg.key.WithValueFlag()
+	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +109,12 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
 		Data:   value,
-		DocKey: []byte(reg.key),
+		DocKey: reg.key.Bytes(),
 	}
 }
 
 func (reg LWWRegister) ID() string {
-	return reg.key
+	return reg.key.ToString()
 }
 
 // RETURN DELTA
@@ -150,11 +147,11 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, valueK)
+		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
@@ -162,7 +159,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
 	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, valueK, buf)
+	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
 		return fmt.Errorf("Failed to store new value : %w", err)
 	}

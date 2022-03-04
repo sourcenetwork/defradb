@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -22,30 +23,25 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-// var ()
-
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
 func newTestMerkleClock() *MerkleClock {
-	ns := ds.NewKey("/test/db")
 	s := newDS()
+
 	rw := store.AsDSReaderWriter(s)
 	multistore := store.MultiStoreFrom(rw)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(rw, ns, id)
-	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(rw, core.DataStoreKey{})
+	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{DocKey: "dockey", FieldId: "1"}, reg).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	ns := ds.NewKey("/test/db")
 	s := newDS()
 	rw := store.AsDSReaderWriter(s)
 	multistore := store.MultiStoreFrom(rw)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(rw, ns, id)
-	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
+	reg := crdt.NewLWWRegister(rw, core.DataStoreKey{})
+	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg).(*MerkleClock)
 
 	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")

@@ -124,7 +124,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaID := string(req.Body.SchemaID)
-	docKey := req.Body.DocKey.DocKey
+	docKey := req.Body.DocKey.DocKey.Key
 	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get collection from schemaID %s: %w", schemaID, err)

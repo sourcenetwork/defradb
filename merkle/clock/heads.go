@@ -16,7 +16,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sort"
-	"strings"
 
 	"errors"
 
@@ -26,34 +25,32 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
 	store     core.DSReaderWriter
-	namespace ds.Key
+	namespace core.HeadStoreKey
 }
 
-// NewHeadSet
-func NewHeadSet(store core.DSReaderWriter, namespace ds.Key) *heads {
+func NewHeadSet(store core.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return newHeadset(store, namespace)
 }
 
-func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
+func newHeadset(store core.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) ds.Key {
+func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
 	// /<namespace>/<cid>
-	return hh.namespace.Child(dshelp.MultihashToDsKey(c.Hash()))
+	return hh.namespace.WithCid(c)
 }
 
 func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(ctx, hh.key(c))
+	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -70,11 +67,11 @@ func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height ui
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(ctx, hh.key(c), buf[0:n])
+	return store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
 
 func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
-	err := store.Delete(ctx, hh.key(c))
+	err := store.Delete(ctx, hh.key(c).ToDS())
 	if err == ds.ErrNotFound {
 		return nil
 	}
@@ -144,7 +141,7 @@ func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	q := query.Query{
-		Prefix:   hh.namespace.String(),
+		Prefix:   hh.namespace.ToString(),
 		KeysOnly: false,
 	}
 
@@ -166,17 +163,17 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
 		}
-		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		hash, err := dshelp.DsKeyToMultihash(headKey)
+
+		headKey, err := core.NewHeadStoreKey(r.Key)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
+			return nil, 0, err
 		}
-		headCid := cid.NewCidV1(cid.Raw, hash)
+
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
 			return nil, 0, errors.New("error decocding height")
 		}
-		heads = append(heads, headCid)
+		heads = append(heads, headKey.Cid)
 		if height > maxHeight {
 			maxHeight = height
 		}

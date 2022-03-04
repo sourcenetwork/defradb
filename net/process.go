@@ -19,13 +19,11 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -36,7 +34,7 @@ import (
 func (p *Peer) processLog(
 	ctx context.Context,
 	col client.Collection,
-	dockey key.DocKey,
+	dockey core.DataStoreKey,
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
@@ -89,12 +87,12 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
-	var key ds.Key
+func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
+	var key core.DataStoreKey
 	var ctype core.CType
 	if field == "" { // empty field name implies composite type
 		ctype = core.COMPOSITE
-		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(core.COMPOSITE_NAMESPACE)
+		key = col.GetPrimaryIndexDocKey(docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
 	} else {
 		fd, ok := col.Description().GetField(field)
 		if !ok {
@@ -102,7 +100,7 @@ func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collec
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(fieldID)
+		key = col.GetPrimaryIndexDocKey(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
@@ -126,7 +124,7 @@ func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) 
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
 	col client.Collection,
-	dockey key.DocKey,
+	dockey core.DataStoreKey,
 	field string,
 	nd ipld.Node,
 	children []cid.Cid,

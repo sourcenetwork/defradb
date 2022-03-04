@@ -86,7 +86,7 @@ type VersionedFetcher struct {
 	root  ds.Datastore
 	store core.Txn
 
-	key     core.Key
+	key     core.DataStoreKey
 	version cid.Cid
 
 	queuedCids *list.List
@@ -125,18 +125,18 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.
 	// Span{Start: DocKey, End: CID}
 	dk := spans[0].Start()
 	cidRaw := spans[0].End()
-	if len(dk.String()) == 0 {
+	if dk.DocKey == "" {
 		return errors.New("spans missing start DocKey")
-	} else if len(cidRaw.String()) == 0 {
+	} else if cidRaw.DocKey == "" { // todo: dont abuse DataStoreKey/Span like this!
 		return errors.New("span missing end CID")
 	}
 
 	// decode cidRaw from core.Key to cid.Cid
 	// need to remove '/' prefix from the core.Key
 
-	c, err := cid.Decode(cidRaw.String()[1:])
+	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.String()))
+		return errors.Wrap(err, fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey))
 	}
 
 	vf.txn = txn
@@ -379,7 +379,7 @@ func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype 
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key.Key, fieldName)
+		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
@@ -422,8 +422,9 @@ func (vf *VersionedFetcher) Close() error {
 	return vf.DocumentFetcher.Close()
 }
 
-func NewVersionedSpan(dockey core.Key, version cid.Cid) core.Spans {
-	return core.Spans{core.NewSpan(dockey, core.NewKey(version.String()))}
+func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
+	// Todo: Dont abuse DataStoreKey for version cid!
+	return core.Spans{core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()})}
 }
 
 // func createMerkleCRDT(ctype core.CType, key ds.Key, store core.MultiStore) (crdt.MerkleCRDT, error) {

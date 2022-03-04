@@ -79,7 +79,7 @@ type Collection interface {
 
 	WithTxn(core.Txn) Collection
 
-	GetPrimaryIndexDocKey(ds.Key) ds.Key
+	GetPrimaryIndexDocKey(core.DataStoreKey) core.DataStoreKey
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 }
 
