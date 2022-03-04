@@ -10,12 +10,20 @@
 
 ### Bug fixes
 
+* Only log errors and above when benchmarking ([#261](https://github.com/sourcenetwork/defradb/issues/261))
+* Handle proper type conversion on sort nodes. ([#228](https://github.com/sourcenetwork/defradb/issues/228))
 * Return empty array if no values found ([#223](https://github.com/sourcenetwork/defradb/issues/223))
 * Close fetcher on error ([#210](https://github.com/sourcenetwork/defradb/issues/210))
 * Installing binary using defradb name ([#190](https://github.com/sourcenetwork/defradb/issues/190))
 
+### Tooling
+
+* Add short benchmark runner option ([#263](https://github.com/sourcenetwork/defradb/issues/263))
+
 ### Documentation
 
+* Add data format changes documentation folder ([#89](https://github.com/sourcenetwork/defradb/issues/89))
+* Correcting typos ([#143](https://github.com/sourcenetwork/defradb/issues/143))
 * Update generated CLI docs ([#208](https://github.com/sourcenetwork/defradb/issues/208))
 * Updated readme with P2P section ([#220](https://github.com/sourcenetwork/defradb/issues/220))
 * Update old or missing license headers ([#205](https://github.com/sourcenetwork/defradb/issues/205))
@@ -23,6 +31,7 @@
 
 ### Refactoring
 
+* Purge all println and ban it ([#253](https://github.com/sourcenetwork/defradb/issues/253))
 * Use new logger in query package ([#236](https://github.com/sourcenetwork/defradb/issues/236))
 * Use new logger in db package ([#234](https://github.com/sourcenetwork/defradb/issues/234))
 * Use new logger in merkle packages ([#241](https://github.com/sourcenetwork/defradb/issues/241))
@@ -36,6 +45,7 @@
 
 ### Testing
 
+* Detect and force breaking filesystem changes to be documented ([#89](https://github.com/sourcenetwork/defradb/issues/89))
 * Boost collection test coverage ([#183](https://github.com/sourcenetwork/defradb/issues/183))
 
 ### Continuous integration
