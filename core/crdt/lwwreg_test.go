@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
-	// "github.com/sourcenetwork/defradb/store"
 	"github.com/ugorji/go/codec"
 
 	ipld "github.com/ipfs/go-ipld-format"
@@ -34,9 +33,8 @@ func newMockStore() core.DSReaderWriter {
 
 func setupLWWRegister() LWWRegister {
 	store := newMockStore()
-	ns := ds.NewKey("defra/test")
-	id := "AAAA-BBBB"
-	return NewLWWRegister(store, ns, id)
+	key := core.DataStoreKey{DocKey: "AAAA-BBBB"}
+	return NewLWWRegister(store, key)
 }
 
 func setupLoadedLWWRegster(ctx context.Context) LWWRegister {

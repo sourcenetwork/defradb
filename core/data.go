@@ -15,9 +15,9 @@ import "strings"
 // Span is a range of keys from [Start, End)
 type Span interface {
 	// Start returns the starting key of the Span
-	Start() Key
+	Start() DataStoreKey
 	// End returns the ending key of the Span
-	End() Key
+	End() DataStoreKey
 	// Contains returns true of the Span contains the provided Span's range
 	Contains(Span) bool
 	// Equal returns true if the provided Span is equal to the current
@@ -27,11 +27,12 @@ type Span interface {
 }
 
 type span struct {
-	start Key
-	end   Key
+	Span
+	start DataStoreKey
+	end   DataStoreKey
 }
 
-func NewSpan(start, end Key) Span {
+func NewSpan(start, end DataStoreKey) Span {
 	return span{
 		start: start,
 		end:   end,
@@ -39,12 +40,12 @@ func NewSpan(start, end Key) Span {
 }
 
 // Start returns the starting key of the Span
-func (s span) Start() Key {
+func (s span) Start() DataStoreKey {
 	return s.start
 }
 
 // End returns the ending key of the Span
-func (s span) End() Key {
+func (s span) End() DataStoreKey {
 	return s.end
 }
 
@@ -84,10 +85,10 @@ func (this span) Compare(other Span) SpanComparisonResult {
 		return Equal
 	}
 
-	thisStart := this.start.String()
-	thisEnd := this.end.String()
-	otherStart := other.Start().String()
-	otherEnd := other.End().String()
+	thisStart := this.start.ToString()
+	thisEnd := this.end.ToString()
+	otherStart := other.Start().ToString()
+	otherEnd := other.End().ToString()
 
 	if thisStart < otherStart {
 		if thisEnd == otherStart || isAdjacent(this.end, other.Start()) {
@@ -146,16 +147,21 @@ func (this span) Compare(other Span) SpanComparisonResult {
 	return After
 }
 
-func isAdjacent(this Key, other Key) bool {
-	return len(this.String()) == len(other.String()) && (this.PrefixEnd().String() == other.String() || this.String() == other.PrefixEnd().String())
+func isAdjacent(this DataStoreKey, other DataStoreKey) bool {
+	return len(this.ToString()) == len(other.ToString()) && (this.PrefixEnd().ToString() == other.ToString() || this.ToString() == other.PrefixEnd().ToString())
 }
 
 // Spans is a collection of individual spans
 type Spans []Span
 
-// KeyValue is a KV store response containing the resulting ds.Key and byte array value
+// KeyValue is a KV store response containing the resulting core.Key and byte array value
 type KeyValue struct {
-	Key   Key
+	Key   DataStoreKey
+	Value []byte
+}
+
+type HeadKeyValue struct {
+	Key   HeadStoreKey
 	Value []byte
 }
 
@@ -200,7 +206,7 @@ func (spans Spans) MergeAscending() Spans {
 				uniqueSpanFound = true
 				i++
 			case StartBeforeEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
+				uniqueSpans = uniqueSpans.removeBefore(i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(span.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -210,7 +216,7 @@ func (spans Spans) MergeAscending() Spans {
 				// Do nothing, span is contained within an existing unique-span
 				i = len(uniqueSpans)
 			case StartEqualEndAfter, StartWithinEndAfter, StartEqualToEndEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
+				uniqueSpans = uniqueSpans.removeBefore(i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(uniqueSpan.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -234,7 +240,7 @@ func (spans Spans) MergeAscending() Spans {
 func (spans Spans) removeBefore(startIndex int, end string) Spans {
 	indexOfLastMatchingItem := -1
 	for i := startIndex; i < len(spans); i++ {
-		if spans[i].End().String() <= end {
+		if spans[i].End().ToString() <= end {
 			indexOfLastMatchingItem = i
 		}
 	}

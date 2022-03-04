@@ -171,7 +171,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	log.Debug(ctx, "Opened a new DB, needs full initialization")
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, "collection")
+	_, err = db.getSequence(ctx, core.COLLECTION)
 	if err != nil {
 		return err
 	}
