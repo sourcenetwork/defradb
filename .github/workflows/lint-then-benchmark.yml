@@ -107,7 +107,6 @@ jobs:
       - golangci # only run if the linter check passed.
       - decide-benchmark-type # type of benchmark to run.
 
-    if: env.BENCHMARK_TYPE != 'NONE'
 
     runs-on: ubuntu-latest
     outputs:
@@ -117,6 +116,7 @@ jobs:
     steps:
 
       - name: Configure AWS credentials
+        if: env.BENCHMARK_TYPE != 'NONE'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -124,6 +124,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Start EC2 runner
+        if: env.BENCHMARK_TYPE != 'NONE'
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@v2
         with:
@@ -150,8 +151,6 @@ jobs:
       - decide-benchmark-type # type of benchmark to run.
       - start-runner # required to start the main job when the runner is ready.
 
-    if: env.BENCHMARK_TYPE != 'NONE'
-
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
     env:
@@ -161,14 +160,15 @@ jobs:
 
     steps:
       - name: Checkout code
+        if: env.BENCHMARK_TYPE != 'NONE'
         uses: actions/checkout@v2
 
       - name: Run the full bechmarking suite
-        if: ${{ env.BENCHMARK_TYPE != 'FULL' }}
+        if: ${{ env.BENCHMARK_TYPE == 'FULL' }}
         run: make test:bench
 
       - name: Run only the shorter benchmarks
-        if: ${{ env.BENCHMARK_TYPE != 'SHORT' }}
+        if: ${{ env.BENCHMARK_TYPE == 'SHORT' }}
         run: make test:bench-short
 
 
@@ -187,13 +187,13 @@ jobs:
     if: |
       always() &&
       needs.start-runner.result == 'success' &&
-      env.BENCHMARK_TYPE != 'NONE'
 
     runs-on: ubuntu-latest
 
     steps:
 
       - name: Configure AWS credentials
+        if: env.BENCHMARK_TYPE != 'NONE'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -201,6 +201,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Stop EC2 runner
+        if: env.BENCHMARK_TYPE != 'NONE'
         uses: machulav/ec2-github-runner@v2
         with:
           mode: stop
