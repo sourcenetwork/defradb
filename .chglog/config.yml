@@ -14,7 +14,7 @@ options:
   commit_groups:
     title_maps:
       feat: Features
-      fix: Bug fixes
+      fix: Fixes
       tools: Tooling
       docs: Documentation
       perf: Performance

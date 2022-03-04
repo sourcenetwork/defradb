@@ -8,7 +8,7 @@
 * Add ability to delete multiple documents using filter ([#206](https://github.com/sourcenetwork/defradb/issues/206))
 * Add ability to delete multiple documents, using multiple ids ([#196](https://github.com/sourcenetwork/defradb/issues/196))
 
-### Bug fixes
+### Fixes
 
 * Concurrency control of Document using RWMutex ([#213](https://github.com/sourcenetwork/defradb/issues/213))
 * Only log errors and above when benchmarking ([#261](https://github.com/sourcenetwork/defradb/issues/261))
