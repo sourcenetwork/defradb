@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// Package graphql provides the necessary schema tooling, including parsing, validation, and
+// generation for developer defined types for the GraphQL implementation of DefraDB.join
 package schema
 
 import (
