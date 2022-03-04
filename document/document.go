@@ -8,6 +8,69 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// This is the main implementation starting point for accessing the internal Document API
+// which provides API access to the various operations available for Documents, i.e. CRUD.
+//
+// Documents in this case refer to the core database type of DefraDB which is a
+// "NoSQL Document Datastore".
+//
+// This section is not concerned with the outer query layer used to interact with the
+// Document API, but instead is solely concerned with carrying out the internal API
+// operations.
+//
+// Note: These actions on the outside are deceivingly simple, but require a number
+// of complex interactions with the underlying KV Datastore, as well as the
+// Merkle CRDT semantics.
+//
+// Example Usage: Create/Insert new object
+/*
+
+obj := `{
+	Hello: "World"
+}`
+objData := make(map[string]interface{})
+err := json.Unmarshal(&objData, obj)
+
+docA := document.NewFromJSON(objData)
+err := db.Save(document)
+		=> New batch transaction/store
+		=> Loop through doc values
+		=> 		instantiate MerkleCRDT objects
+		=> 		Set/Publish new CRDT values
+
+
+// One-to-one relationship example
+obj := `{
+	Hello: "world",
+	Author: {
+		Name: "Bob",
+	}
+}`
+
+docA := document.NewFromJSON(obj)
+
+// method 1
+docA.Patch(...)
+col.Save(docA)
+
+// method 2
+docA.Get("Author").Set("Name", "Eric")
+col.Save(docA)
+
+// method 3
+docB := docA.GetObject("Author")
+docB.Set("Name", "Eric")
+authorCollection.Save(docB)
+
+// method 4
+docA.Set("Author.Name")
+
+// method 5
+doc := col.GetWithRelations("key")
+// equivalent
+doc := col.Get(key, db.WithRelationsOpt)
+
+*/
 package document
 
 import (
@@ -24,20 +87,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document/key"
 )
-
-// This is the main implementation starting point for accessing the internal Document API
-// which provides API access to the various operations available for Documents, i.e. CRUD.
-//
-// Documents in this case refer to the core database type of DefraDB which is a
-// "NoSQL Document Datastore".
-//
-// This section is not concerned with the outer query layer used to interact with the
-// Document API, but instead is solely concerned with carrying out the internal API
-// operations.
-//
-// Note: These actions on the outside are deceivingly simple, but require a number
-// of complex interactions with the underlying KV Datastore, as well as the
-// Merkle CRDT semantics.
 
 // errors
 var (
@@ -289,16 +338,6 @@ func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error 
 	value := newCBORValue(t, val)
 	return doc.set(t, field, value)
 }
-
-// func (doc *Document) setString(t core.CType, field string, val string) error {
-// 	value := NewStringValue(t, val)
-// 	return doc.set(t, field, value)
-// }
-//
-// func (doc *Document) setInt64(t core.CType, field string, val int64) error {
-// 	value := NewInt64Value(t, val)
-// 	return doc.set(t, field, value)
-// }
 
 func (doc *Document) setObject(t core.CType, field string, val *Document) error {
 	value := newValue(t, val)
@@ -560,53 +599,3 @@ func parseFieldPath(path string) (string, string, bool) {
 	splitKeys := strings.SplitN(path, "/", 2)
 	return splitKeys[0], strings.Join(splitKeys[1:], ""), len(splitKeys) > 1
 }
-
-// Example Usage: Create/Insert new object
-/*
-
-obj := `{
-	Hello: "World"
-}`
-objData := make(map[string]interface{})
-err := json.Unmarshal(&objData, obj)
-
-docA := document.NewFromJSON(objData)
-err := db.Save(document)
-		=> New batch transaction/store
-		=> Loop through doc values
-		=> 		instantiate MerkleCRDT objects
-		=> 		Set/Publish new CRDT values
-
-
-// One-to-one relationship example
-obj := `{
-	Hello: "world",
-	Author: {
-		Name: "Bob",
-	}
-}`
-
-docA := document.NewFromJSON(obj)
-
-// method 1
-docA.Patch(...)
-col.Save(docA)
-
-// method 2
-docA.Get("Author").Set("Name", "Eric")
-col.Save(docA)
-
-// method 3
-docB := docA.GetObject("Author")
-docB.Set("Name", "Eric")
-authorCollection.Save(docB)
-
-// method 4
-docA.Set("Author.Name")
-
-// method 5
-doc := col.GetWithRelations("key")
-// equivalent
-doc := col.Get(key, db.WithRelationsOpt)
-
-*/
