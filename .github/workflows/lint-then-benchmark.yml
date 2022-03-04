@@ -150,7 +150,7 @@ jobs:
       - decide-benchmark-type # type of benchmark to run.
       - start-runner # required to start the main job when the runner is ready.
 
-    if: ${{ env.BENCHMARK_TYPE != 'NONE' }}
+    if: env.BENCHMARK_TYPE != 'NONE'
 
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
