@@ -74,8 +74,12 @@ jobs:
 
   # This job acts like a switch to simplify our ci control flow later on.
   decide-benchmark-type:
-    steps:
+    name: Deciding which benchmarks to run based on flags.
 
+    needs:
+      - golangci # only run if the linter check passed.
+
+    steps:
       - name: Check for full benchmark label.
         if: |
           github.event.action == 'labeled' &&
