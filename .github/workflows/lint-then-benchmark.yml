@@ -107,7 +107,7 @@ jobs:
       - golangci # only run if the linter check passed.
       - decide-benchmark-type # type of benchmark to run.
 
-    if: ${{ BENCHMARK_TYPE != 'NONE' }}
+    if: env.BENCHMARK_TYPE != 'NONE'
 
     runs-on: ubuntu-latest
     outputs:
