@@ -32,17 +32,10 @@
 
 ### Refactoring
 
-* Purge all println and ban it ([#253](https://github.com/sourcenetwork/defradb/issues/253))
-* Use new logger in query package ([#236](https://github.com/sourcenetwork/defradb/issues/236))
-* Use new logger in db package ([#234](https://github.com/sourcenetwork/defradb/issues/234))
-* Use new logger in merkle packages ([#241](https://github.com/sourcenetwork/defradb/issues/241))
-* Use new logger in net package ([#244](https://github.com/sourcenetwork/defradb/issues/244))
-* Use new logger in node package ([#246](https://github.com/sourcenetwork/defradb/issues/246))
-* Use new logger in store package ([#248](https://github.com/sourcenetwork/defradb/issues/248))
-* Use new logger for http package ([#250](https://github.com/sourcenetwork/defradb/issues/250))
-* Add logging system to CLI package ([#217](https://github.com/sourcenetwork/defradb/issues/217))
+* Introduction of logging system ([#67](https://github.com/sourcenetwork/defradb/issues/67))
 * Restructure db/txn/multistore structures ([#199](https://github.com/sourcenetwork/defradb/issues/199))
 * Initialize database in constructor ([#211](https://github.com/sourcenetwork/defradb/issues/211))
+* Purge all println and ban it ([#253](https://github.com/sourcenetwork/defradb/issues/253))
 
 ### Testing
 
@@ -57,6 +50,7 @@
 
 ### Chore
 
+* Remove commented out code ([#238](https://github.com/sourcenetwork/defradb/issues/238))
 * Remove dead code from multi node ([#186](https://github.com/sourcenetwork/defradb/issues/186))
 
 
