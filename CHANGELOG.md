@@ -1,7 +1,7 @@
 <a name="v0.2.1"></a>
 ## [v0.2.1](https://github.com/sourcenetwork/defradb/compare/v0.2.0...v0.2.1)
 
-> 2022-03-01
+> 2022-03-04
 
 ### Features
 
@@ -10,6 +10,7 @@
 
 ### Bug fixes
 
+* Concurrency control of Document using RWMutex ([#213](https://github.com/sourcenetwork/defradb/issues/213))
 * Only log errors and above when benchmarking ([#261](https://github.com/sourcenetwork/defradb/issues/261))
 * Handle proper type conversion on sort nodes. ([#228](https://github.com/sourcenetwork/defradb/issues/228))
 * Return empty array if no values found ([#223](https://github.com/sourcenetwork/defradb/issues/223))
