@@ -12,7 +12,7 @@
 
 * Concurrency control of Document using RWMutex ([#213](https://github.com/sourcenetwork/defradb/issues/213))
 * Only log errors and above when benchmarking ([#261](https://github.com/sourcenetwork/defradb/issues/261))
-* Handle proper type conversion on sort nodes. ([#228](https://github.com/sourcenetwork/defradb/issues/228))
+* Handle proper type conversion on sort nodes ([#228](https://github.com/sourcenetwork/defradb/issues/228))
 * Return empty array if no values found ([#223](https://github.com/sourcenetwork/defradb/issues/223))
 * Close fetcher on error ([#210](https://github.com/sourcenetwork/defradb/issues/210))
 * Installing binary using defradb name ([#190](https://github.com/sourcenetwork/defradb/issues/190))
