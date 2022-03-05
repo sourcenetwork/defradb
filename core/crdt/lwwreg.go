@@ -34,7 +34,6 @@ var (
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
-// @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
 	Priority uint64
 	Data     []byte
