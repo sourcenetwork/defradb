@@ -59,19 +59,13 @@ var (
 // Values are literal or complex objects such as strings, integers, or sub documents (objects).
 //
 // Note: Documents represent the serialized state of the underlying MerkleCRDTs
-//
-// @todo: Extract Document into a Interface
-// @body: A document interface can be implemented by both a TypedDocument and a
-// UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	schema base.SchemaDescription
-	key    key.DocKey
-	fields map[string]Field
-	values map[Field]Value
-	// @TODO: schemaInfo schema.Info
-	head cid.Cid
-	mu   sync.RWMutex
-	// marks if document has unsaved changes
+	schema  base.SchemaDescription
+	key     key.DocKey
+	fields  map[string]Field
+	values  map[Field]Value
+	head    cid.Cid
+	mu      sync.RWMutex
 	isDirty bool
 }
 
