@@ -247,9 +247,6 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-			// @todo: check if NonNull is possible here
-			//case *gql.NonNull:
-			// get subtype
 		}
 	}
 
