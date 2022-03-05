@@ -121,10 +121,8 @@ func (key DocKey) Bytes() []byte {
 	return append(buf, key.uuid.Bytes()...)
 }
 
-// Verify ensures that the given DocKey is valid as per the DefraDB spec
-// to prevent against collions from both honest and dishonest validators
-// TODO: Check into better utilizing or dropping context, since we don't recurse
-// down
+// Verify ensures that the given DocKey is valid as per the DefraDB spec to prevent against
+// collisions from both honest and dishonest validators
 func (key DocKey) Verify(ctx context.Context, data cid.Cid, peerID string) bool {
 	parent, ok := ctx.Value("parent").(uuid.UUID)
 	// if we have a parent then assume were operating  on a sub key
