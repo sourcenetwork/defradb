@@ -387,7 +387,6 @@ func (g *Generator) buildTypesFromAST(ctx context.Context, document *ast.Documen
 					Type: gql.NewList(types.Commit),
 				}
 
-				// @todo Pairup on removing the staticcheck linter error below.
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
 					return nil, fmt.Errorf("object not found whilst executing fields thunk: %s", defType.Name.Value)
