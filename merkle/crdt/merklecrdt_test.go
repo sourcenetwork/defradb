@@ -12,7 +12,6 @@ package crdt
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -22,31 +21,23 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/logging"
 )
-
-// var (
-//     merklecrdtlog = logging.Logger("defradb.tests.merklecrdt")
-//     store core.DSReaderWriter
-// )
 
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
 func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
-	ns := ds.NewKey("/test/db")
 	s := newDS()
-	datastore := namespace.Wrap(s, ns.ChildString("data"))
-	headstore := namespace.Wrap(s, ns.ChildString("heads"))
-	batchStore := namespace.Wrap(s, ds.NewKey("blockstore"))
-	dagstore := store.NewDAGStore(batchStore)
+	rw := store.AsDSReaderWriter(s)
+	multistore := store.MultiStoreFrom(rw)
 
 	id := "/1/0/MyKey"
-	reg := corecrdt.NewLWWRegister(datastore, ds.NewKey(""), id)
-	clk := clock.NewMerkleClock(headstore, dagstore, id, reg)
-	return &baseMerkleCRDT{clock: clk, crdt: reg}, s
+	reg := corecrdt.NewLWWRegister(multistore.Datastore(), ds.NewKey(""), id)
+	clk := clock.NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg)
+	return &baseMerkleCRDT{clock: clk, crdt: reg}, rw
 }
 
 func TestMerkleCRDTPublish(t *testing.T) {
@@ -85,6 +76,6 @@ func printStore(ctx context.Context, store core.DSReaderWriter) {
 	defer results.Close()
 
 	for r := range results.Next() {
-		fmt.Println(r.Key, ": ", r.Value)
+		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
 }

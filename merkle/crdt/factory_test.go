@@ -15,47 +15,41 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 )
 
-// var (
-//     factoryTestLog = logging.Logger("defradb.tests.factory")
-// )
-
-func newStores() (ds.Datastore, ds.Datastore, core.DAGStore) {
+func newStores() core.MultiStore {
 	root := ds.NewMapDatastore()
-	data := namespace.Wrap(root, ds.NewKey("/test/db/data"))
-	heads := namespace.Wrap(root, ds.NewKey("/test/db/heads"))
-	s := store.NewDAGStore(namespace.Wrap(root, ds.NewKey("/test/db/blocks")))
-	return data, heads, s
+	rw := store.AsDSReaderWriter(root)
+	return store.MultiStoreFrom(rw)
 }
 
 func TestNewBlankFactory(t *testing.T) {
-	f := NewFactory(nil, nil, nil)
+	f := NewFactory(nil)
 	if f == nil {
 		t.Fatal("Returned factory is a nil pointer")
 	}
 }
 
 func TestNewFactoryWithStores(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 	if f == nil {
 		t.Fatal("Returned factory is a nil pointer")
 	}
 
-	assert.Equal(t, d, f.datastore)
-	assert.Equal(t, h, f.headstore)
-	assert.Equal(t, s, f.dagstore)
+	assert.Equal(t, m.Datastore(), f.Datastore())
+	assert.Equal(t, m.Headstore(), f.Headstore())
+	assert.Equal(t, m.DAGstore(), f.DAGstore())
+	assert.Equal(t, m.Systemstore(), f.Systemstore())
 }
 
 func TestFactoryMultiStoreInterface(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 	if f == nil {
 		t.Fatal("Returned factory is a nil pointer")
 	}
@@ -65,57 +59,60 @@ func TestFactoryMultiStoreInterface(t *testing.T) {
 	// ms = f
 
 	// check interface functions
-	assert.Equal(t, d, f.Datastore())
-	assert.Equal(t, h, f.Headstore())
-	assert.Equal(t, s, f.DAGstore())
+	assert.Equal(t, m.Datastore(), f.Datastore())
+	assert.Equal(t, m.Headstore(), f.Headstore())
+	assert.Equal(t, m.DAGstore(), f.DAGstore())
+	assert.Equal(t, m.Systemstore(), f.Systemstore())
 }
 
 func TestFactorySetStores(t *testing.T) {
-	f := NewFactory(nil, nil, nil)
-	d, h, s := newStores()
-	err := f.SetStores(d, h, s)
+	f := NewFactory(nil)
+	m := newStores()
+	err := f.SetStores(m)
 	assert.Nil(t, err)
 
-	assert.Equal(t, d, f.Datastore())
-	assert.Equal(t, h, f.Headstore())
-	assert.Equal(t, s, f.DAGstore())
+	assert.Equal(t, m.Datastore(), f.Datastore())
+	assert.Equal(t, m.Headstore(), f.Headstore())
+	assert.Equal(t, m.DAGstore(), f.DAGstore())
+	assert.Equal(t, m.Systemstore(), f.Systemstore())
 }
 
 func TestFactoryWithStores(t *testing.T) {
-	f := NewFactory(nil, nil, nil)
-	d, h, s := newStores()
-	f2 := f.WithStores(d, h, s)
+	f := NewFactory(nil)
+	m := newStores()
+	f2 := f.WithStores(m)
 	// assert.NotEmpty
 
 	assert.Nil(t, f.Datastore())
 	assert.Nil(t, f.Headstore())
 	assert.Nil(t, f.DAGstore())
 
-	assert.Equal(t, d, f2.Datastore())
-	assert.Equal(t, h, f2.Headstore())
-	assert.Equal(t, s, f2.DAGstore())
+	assert.Equal(t, m.Datastore(), f2.Datastore())
+	assert.Equal(t, m.Headstore(), f2.Headstore())
+	assert.Equal(t, m.DAGstore(), f2.DAGstore())
+	assert.Equal(t, m.Systemstore(), f2.Systemstore())
 }
 
 func TestFullFactoryRegister(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
 	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
 }
 
 func TestBlankFactoryRegister(t *testing.T) {
-	f := NewFactory(nil, nil, nil)
+	f := NewFactory(nil)
 	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
 	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
 }
 
 func TestWithStoresFactoryRegister(t *testing.T) {
-	f := NewFactory(nil, nil, nil)
+	f := NewFactory(nil)
 	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
-	d, h, s := newStores()
-	f2 := f.WithStores(d, h, s)
+	m := newStores()
+	f2 := f.WithStores(m)
 
 	assert.Equal(t, &lwwFactoryFn, f2.crdts[core.LWW_REGISTER])
 }
@@ -126,18 +123,18 @@ func TestDefaultFactory(t *testing.T) {
 }
 
 func TestFactoryInstanceMissing(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 
 	_, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
 func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
-	d, h, s := newStores()
-	f1 := NewFactory(nil, nil, nil)
+	m := newStores()
+	f1 := NewFactory(nil)
 	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
-	f := f1.WithStores(d, h, s)
+	f := f1.WithStores(m)
 
 	crdt, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
@@ -147,10 +144,10 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 }
 
 func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
-	d, h, s := newStores()
-	f1 := NewFactory(nil, nil, nil)
+	m := newStores()
+	f1 := NewFactory(nil)
 	f1.Register(core.COMPOSITE, &compFactoryFn)
-	f := f1.WithStores(d, h, s)
+	f := f1.WithStores(m)
 
 	crdt, err := f.Instance("", nil, core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
 	assert.NoError(t, err)
@@ -160,8 +157,8 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 }
 
 func TestFullFactoryInstanceLWWRegister(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
 
 	crdt, err := f.Instance("", nil, core.LWW_REGISTER, ds.NewKey("/1/0/MyKey"))
@@ -172,8 +169,8 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 }
 
 func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
-	d, h, s := newStores()
-	f := NewFactory(d, h, s)
+	m := newStores()
+	f := NewFactory(m)
 	f.Register(core.COMPOSITE, &compFactoryFn)
 
 	crdt, err := f.Instance("", nil, core.COMPOSITE, ds.NewKey("/1/0/MyKey"))
@@ -185,8 +182,8 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 
 func TestLWWRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
-	d, h, s := newStores()
-	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
+	m := newStores()
+	f := NewFactory(m) // here factory is only needed to satisfy core.MultiStore interface
 	crdt := lwwFactoryFn(f, "", nil)(ds.NewKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
@@ -198,8 +195,8 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 
 func TestCompositeRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
-	d, h, s := newStores()
-	f := NewFactory(d, h, s) // here factory is only needed to satisfy core.MultiStore interface
+	m := newStores()
+	f := NewFactory(m) // here factory is only needed to satisfy core.MultiStore interface
 	crdt := compFactoryFn(f, "", nil)(ds.NewKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)

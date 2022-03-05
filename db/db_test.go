@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/db/base"
@@ -29,16 +28,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newMemoryDB() (*DB, error) {
+func newMemoryDB(ctx context.Context) (*DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(rootstore)
+	return NewDB(ctx, rootstore)
 }
 
 func TestNewDB(t *testing.T) {
+	ctx := context.Background()
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
@@ -46,7 +46,7 @@ func TestNewDB(t *testing.T) {
 		return
 	}
 
-	_, err = NewDB(rootstore)
+	_, err = NewDB(ctx, rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +56,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
 	rootstore := ds.NewMapDatastore()
 
-	db, err := NewDB(rootstore)
+	db, err := NewDB(ctx, rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +70,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 
 func TestDBSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -112,7 +112,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 
 func TestDBUpdateDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -158,14 +158,11 @@ func TestDBUpdateDocument(t *testing.T) {
 	assert.Equal(t, "Pete", name)
 	assert.Equal(t, int64(21), age)
 	assert.Nil(t, weight)
-
-	// fmt.Println("\n--")
-	// db.printDebugDB()
 }
 
 func TestDBUpdateNonExistingDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -188,7 +185,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 
 func TestDBUpdateExistingDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -231,7 +228,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 
 func TestDBGetDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -246,23 +243,15 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
-	fmt.Println(doc.Get("Name"))
 	assert.NoError(t, err)
-
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
 
 	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	doc, err = col.Get(ctx, key)
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	// value check
 	name, err := doc.Get("Name")
-	fmt.Println("-----------------------------------------------")
-	fmt.Println(name)
 	assert.NoError(t, err)
 	age, err := doc.Get("Age")
 	assert.NoError(t, err)
@@ -276,7 +265,7 @@ func TestDBGetDocument(t *testing.T) {
 
 func TestDBGetNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -289,7 +278,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 
 func TestDBDeleteDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -315,7 +304,7 @@ func TestDBDeleteDocument(t *testing.T) {
 
 func TestDBDeleteNotFoundDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -329,7 +318,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 
 func TestDocumentMerkleDAG(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -346,32 +335,24 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.headstore, nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
+	clk := clock.NewMerkleClock(db.Headstore(), nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)
 
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
-
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, errGet := db.dagstore.Get(ctx, c)
+		b, errGet := db.DAGstore().Get(ctx, c)
 		assert.NoError(t, errGet)
 
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
 		assert.NoError(t, errDecode)
 
-		buf, errMarshal := nd.MarshalJSON()
+		_, errMarshal := nd.MarshalJSON()
 		assert.NoError(t, errMarshal)
 
-		fmt.Println(string(buf))
-		delta, errDeltaDecode := reg.DeltaDecode(nd)
+		_, errDeltaDecode := reg.DeltaDecode(nd)
 		assert.NoError(t, errDeltaDecode)
-
-		lwwdelta := delta.(*corecrdt.LWWRegDelta)
-		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
 
 	testJSONObj = []byte(`{
@@ -390,33 +371,25 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	cids, _, err = heads.List(ctx)
 	assert.NoError(t, err)
 
-	fmt.Printf("-------\n")
-	db.printDebugDB(ctx)
-	fmt.Printf("-------\n")
-
 	for _, c := range cids {
-		b, err := db.dagstore.Get(ctx, c)
+		b, err := db.DAGstore().Get(ctx, c)
 		assert.NoError(t, err)
 
 		nd, err := dag.DecodeProtobuf(b.RawData())
 		assert.NoError(t, err)
 
-		buf, err := nd.MarshalJSON()
+		_, err = nd.MarshalJSON()
 		assert.NoError(t, err)
 
-		fmt.Println(string(buf))
-		delta, err := reg.DeltaDecode(nd)
+		_, err = reg.DeltaDecode(nd)
 		assert.NoError(t, err)
-
-		lwwdelta := delta.(*corecrdt.LWWRegDelta)
-		fmt.Printf("%+v - %v\n", lwwdelta, string(lwwdelta.Data))
 	}
 }
 
 // collection with schema
 func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
@@ -449,7 +422,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 
 func TestDBUpdateDocWithFilter(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)

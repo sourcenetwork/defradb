@@ -51,7 +51,7 @@ var (
 // 	p *Planner
 // }
 //
-// // parellel planner, that is used to execute multiple plan trees in parallel.
+// // parallel planner, that is used to execute multiple plan trees in parallel.
 // type parallelNode struct {
 // 	pNodes []planNode
 // }

@@ -20,11 +20,11 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
-	logging "github.com/ipfs/go-log/v2"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
-	log = logging.Logger("merklecrdt")
+	log = logging.MustNewLogger("defra.merklecrdt")
 )
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
@@ -86,7 +86,7 @@ func (base *baseMerkleCRDT) ID() string {
 
 // Publishes the delta to state
 func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
-	log.Debug("Processing CRDT state for ", base.crdt.ID())
+	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
 		return cid.Undef, nil, err
@@ -111,7 +111,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 		return fmt.Errorf("Can't broadcast a delta payload that doesn't implement core.NetDelta")
 	}
 
-	log.Debugf("Broadcasting new DAG node for %s at %s...", dockey, c)
+	log.Debug(ctx, "Broadcasting new DAG node", logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
 	// we dont want to wait around for the broadcast
 	go func() {
 		lg := core.Log{
@@ -122,7 +122,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 			Priority: netdelta.GetPriority(),
 		}
 		if err := base.broadcaster.Send(lg); err != nil {
-			log.Errorf("Failed to broadcast MerkleCRDT update %s for %s: %w", c, dockey, err)
+			log.ErrorE(ctx, "Failed to broadcast MerkleCRDT update", err, logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
 		}
 	}()
 

@@ -1,3 +1,15 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package net
 
 import (
@@ -10,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
@@ -69,7 +82,8 @@ func (p *Peer) sendJobWorker() {
 // initialization in New().
 func (p *Peer) dagWorker() {
 	for job := range p.jobQueue {
-		log.Debugf("Starting new job from dag queue: %s at %s", job.dockey, job.node.Cid())
+		log.Debug(p.ctx, "Starting new job from dag queue", logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+
 		select {
 		case <-p.ctx.Done():
 			// drain jobs from queue when we are done
@@ -89,7 +103,7 @@ func (p *Peer) dagWorker() {
 		)
 
 		if err != nil {
-			log.Errorf("Error processing log for %s at %s: %s", job.dockey, job.node.Cid(), err)
+			log.ErrorE(p.ctx, "Error processing log", err, logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
 			job.session.Done()
 			continue
 		}

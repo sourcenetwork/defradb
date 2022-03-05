@@ -282,9 +282,90 @@ This only scratches the surface of the DefraDB Query Language, see below for the
 
 You can access the official DefraDB Query Language documentation online here: [https://hackmd.io/@source/BksQY6Qfw](https://hackmd.io/@source/BksQY6Qfw)
 
-## CLI Documentation
+## Peer-to-Peer Data Syncronization
+DefraDB has a native P2P network builtin to each node, allowing them to exchange, synchronize, and replicate documents and commits.
 
-You can find generated documentation for the shipped CLI interface [here](docs/cmd/defradb.md)
+The P2P network uses a combination of server to server gRPC commands, gossip based pub-sub network, and a shared Distributed Hash Table, all powered by
+[LibP2P](https://libp2p.io/).
+
+Unless specifying `--no-p2p` option when running `start` the default behaviour for a DefraDB node is to intialize the P2P network stack.
+
+When you start a node for the first time, DefraDB will auto generate a private key pair and store it in the `data` folder specified in the config or `--data` CLI option. Each node has a unique `Peer ID` generated based on the public key, which is printed to the console during startup.
+
+You'll see a printed line: `Created LibP2P host with Peer ID XXX` where `XXX` is your nodes `Peer ID`. This is important to know if we want other nodes to connect to this node.
+
+There are two types of relationships a given DefraDB node can establish with another peer, which is a pubsub peer or a replicator peer. 
+
+Pubsub peers can be specified on the command line with `--peers` which accepts a comma seperated list of peer [MultiAddress](https://docs.libp2p.io/concepts/addressing/). Which take the form of `/ip4/IP_ADDRESS/tcp/PORT/p2p/PEER_ID`.
+
+> If a node is listening on port 9000 with the IP address `192.168.1.12` and a Peer ID of `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` then the fully quantified multi address is `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+
+Pubsub nodes *passively* synchronize data between nodes by broadcasting Document Commit updates over the pubsub channel with the document `DocKey` as the topic. This requires nodes to already be listening on this pubsub channel to recieve updates for. This is used when two nodes *already* have a shared document, and want to keep both their changes in sync with one another.
+
+Replicator nodes are specified using the CLI `rpc` command after a node has already started with `defradb rpc add-replicator <collection> <peer_multiaddress>`.
+
+Replicator nodes *actively* push changes from the specific collection *to* the target peer.
+
+> Note: Replicator nodes are initially established in one direction by default, so Node1 *actively replicates* to Node2 but not vice-versa. However, nodes will always broadcast their updates over the document specific pubsub topic so while Node2 doesn't replicate directly to Node1, it will *passively*.
+
+### PubSub Example
+
+Lets construct a simple example of two nodes (node1 & node2) connecting to one another over the pubsub network on the same machine.
+
+On Node1 start a regular node with all the defaults:
+```
+defradb start
+```
+
+Make sure to get the `Peer ID` from the console output. Lets assume its `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+
+One Node2 we need to change some of the default config options if we are running on the same machine.
+```
+defradb start --data $HOME/.defradb/data-node2 --p2paddr /ip4/0.0.0.0/tcp/9172 --url localhost:9182 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+```
+
+Lets break this down
+- `--data` specifies the data folder
+- `--p2paddr` is the multiaddress to listen on for the p2p network (default is port 9171)
+- `--url` is the HTTP address to listen on for the client HTTP and GraphQL API.
+- `--peers`  is a comma-sperated list of peer multiaddresses. This will be our first node we started, with the default config options.
+
+This will startup two nodes, connect to eachother, and establish the P2P gossib pubsub network. 
+
+### Replicator Example
+
+Lets construct a simple example of Node1 *replicating* to Node2.
+
+Node1 is the leader, lets startup the node **and** define a collection.
+```
+defradb start
+```
+
+On Node2 lets startup a node
+```
+defradb start --data $HOME/.defradb/data-node2 --p2paddr /ip4/0.0.0.0/tcp/9172 --url localhost:9182
+```
+
+You'll notice we *don't* specify the `--peers` option as we will be manually defining a replicator after startup via the `rpc` client command.
+
+On Node2 in another terminal run
+```
+defradb client schema add -f <your_schema.gql> # Add a collection with a schema
+```
+
+On Node1, run:
+```
+defradb client schema add -f <your_schema.gql> # Add the same collection as Node2
+defradb rpc add-replicator <collection_name> <node2_peer_address> # Set Node2 as our target replicator peer
+```
+
+Now if we add documents to Node1, they will be *actively* pushed to Node2, and if we make changes to Node2 they will be *passively* published back to Node1. See the below section "CLI Documentation" for help with these commands
+
+
+## CLI Documentation
+You can always access the CLI help docs with the `defradb help` or `defradb <subcommand> help`.
+
+You can also find generated markdown documentation for the shipped CLI interface [here](docs/cmd/defradb.md).
 
 ## Next Steps
 

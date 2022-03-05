@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"fmt"
 	"testing"
 
 	gqlp "github.com/graphql-go/graphql/language/parser"
@@ -33,7 +32,6 @@ func TestMutationParse_Create_Simple(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	q, err := ParseQuery(doc)
@@ -65,7 +63,6 @@ func TestMutationParse_Create_Error_Missing_Data(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	t.Log(doc)
 	assert.NoError(t, err)
 
 	_, err = ParseQuery(doc)
@@ -97,7 +94,6 @@ func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	_, err = ParseQuery(doc)
@@ -129,7 +125,6 @@ func TestMutationParse_Update_Simple_Object(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	q, err := ParseQuery(doc)
@@ -161,7 +156,6 @@ func TestMutationParse_Update_Simple_Array(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	_, err = ParseQuery(doc)
@@ -233,7 +227,6 @@ func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	q, err := ParseQuery(doc)
@@ -265,7 +258,6 @@ func TestMutationParse_Delete_Simple(t *testing.T) {
 	})
 
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	fmt.Println(doc)
 	assert.NoError(t, err)
 
 	q, err := ParseQuery(doc)

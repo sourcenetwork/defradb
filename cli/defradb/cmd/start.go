@@ -13,7 +13,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	gonet "net"
 	"os"
 	"os/signal"
@@ -32,6 +31,7 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/textileio/go-threads/broadcast"
 )
@@ -51,8 +51,9 @@ var startCmd = &cobra.Command{
 	Short: "Start a DefraDB server ",
 	Long:  `Start a new instance of DefraDB server:`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("Starting DefraDB process...")
 		ctx := context.Background()
+		logging.SetConfig(config.Logging.toLogConfig())
+		log.Info(ctx, "Starting DefraDB process...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
@@ -62,17 +63,16 @@ var startCmd = &cobra.Command{
 
 		var err error
 		if config.Database.Store == "badger" {
-			log.Info("opening badger store: ", config.Database.Badger.Path)
+			log.Info(ctx, "opening badger store", logging.NewKV("Path", config.Database.Badger.Path))
 			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
 		} else if config.Database.Store == "memory" {
-			log.Info("building new memory store")
+			log.Info(ctx, "building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
 		}
 
 		if err != nil {
-			log.Error("Failed to initiate datastore:", err)
-			os.Exit(1)
+			log.FatalE(ctx, "Failed to initiate datastore", err)
 		}
 
 		var options []db.Option
@@ -84,21 +84,15 @@ var startCmd = &cobra.Command{
 			options = append(options, db.WithBroadcaster(bs))
 		}
 
-		db, err := db.NewDB(rootstore, options...)
+		db, err := db.NewDB(ctx, rootstore, options...)
 		if err != nil {
-			log.Error("Failed to initiate database:", err)
-			os.Exit(1)
-		}
-		if err := db.Start(ctx); err != nil {
-			log.Error("Failed to start the database: ", err)
-			db.Close()
-			os.Exit(1)
+			log.FatalE(ctx, "Failed to initiate database", err)
 		}
 
 		// init the p2p node
 		var n *node.Node
 		if !config.Net.P2PDisabled {
-			log.Infof("tcp address: %v", config.Net.TCPAddress)
+			log.Info(ctx, "Starting P2P node", logging.NewKV("tcp address", config.Net.TCPAddress))
 			n, err = node.NewNode(
 				ctx,
 				db,
@@ -107,37 +101,37 @@ var startCmd = &cobra.Command{
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
 				node.WithPubSub(true))
 			if err != nil {
-				log.Error("Failed to start p2p node:", err)
+				log.ErrorE(ctx, "Failed to start p2p node", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
 			// parse peers and bootstrap
 			if len(peers) != 0 {
-				log.Debug("Parsing boostrap peers: ", peers)
+				log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
 				addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
 				if err != nil {
-					log.Warn("Failed to parse boostrap peers: ", err)
+					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
 				}
-				log.Debug("Bootstraping with peers: ", addrs)
+				log.Debug(ctx, "Bootstraping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)
 			}
 
 			if err := n.Start(); err != nil {
-				log.Error("Failed to start p2p listeners:", err)
+				log.ErrorE(ctx, "Failed to start p2p listeners", err)
 				n.Close() //nolint
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 
 			MtcpAddr, err := ma.NewMultiaddr(tcpAddr)
 			if err != nil {
-				panic(err)
+				log.FatalE(ctx, "Error parsing multi-address,", err)
 			}
 			addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
 			if err != nil {
-				panic(fmt.Errorf("Failed to parse TCP address: %w", err))
+				log.FatalE(ctx, "Failed to parse TCP address", err)
 			}
 
 			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -145,39 +139,39 @@ var startCmd = &cobra.Command{
 			}))
 			tcplistener, err := gonet.Listen("tcp", addr)
 			if err != nil {
-				panic(err)
+				log.FatalE(ctx, "Failed to listen to TCP address", err, logging.NewKV("Address", addr))
 			}
 
 			netService := netapi.NewService(n.Peer)
 
 			go func() {
-				log.Info("Started gRPC server, listening on %s", addr)
+				log.Info(ctx, "Started gRPC server", logging.NewKV("Address", addr))
 				netpb.RegisterServiceServer(server, netService)
 				if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-					log.Fatalf("serve error: %v", err)
+					log.FatalE(ctx, "serve error", err)
 				}
 			}()
 		}
 
-		// run the server listener in a seperate goroutine
+		// run the server listener in a separate goroutine
 		go func() {
-			if err := db.Listen(config.Database.Address); err != nil {
-				log.Error("Failed to start API listener:", err)
+			if err := db.Listen(ctx, config.Database.Address); err != nil {
+				log.ErrorE(ctx, "Failed to start API listener", err)
 				if n != nil {
 					n.Close() //nolint
 				}
-				db.Close()
+				db.Close(ctx)
 				os.Exit(1)
 			}
 		}()
 
 		// wait for shutdown signal
 		<-signalCh
-		log.Info("Recieved interrupt; closing db")
+		log.Info(ctx, "Received interrupt; closing db")
 		if n != nil {
 			n.Close() //nolint
 		}
-		db.Close()
+		db.Close(ctx)
 		os.Exit(0)
 	},
 }
@@ -198,5 +192,5 @@ func init() {
 	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&tcpAddr, "tcpaddr", "/ip4/0.0.0.0/tcp/9161", "listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)")
 	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
-	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchroniation system")
+	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchronization system")
 }
