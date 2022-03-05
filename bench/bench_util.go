@@ -30,6 +30,7 @@ import (
 	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 const (
@@ -39,11 +40,14 @@ const (
 
 var (
 	storage string = "memory"
+	log            = logging.MustNewLogger("defra.bench")
 )
 
 func init() {
+	logging.SetConfig(logging.Config{Level: logging.NewLogLevelOption(logging.Error)})
+
 	// create a consistent seed value for the random package
-	// so we dont have random fluctuations between runs
+	// so we don't have random fluctuations between runs
 	// (specifically thinking about the fixture generation stuff)
 	seed := hashToInt64("https://xkcd.com/221/")
 	rand.Seed(seed)
@@ -98,7 +102,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 }
 
 func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (*defradb.DB, []client.Collection, error) {
-	db, err := NewTestDB(b)
+	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -114,7 +118,7 @@ func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.G
 }
 
 // Loads the given test database using the provided fixture context.
-// It loads docCount number of documents asyncronously in batches of *upto*
+// It loads docCount number of documents asynchronously in batches of *up to*
 // writeBatchGroup.
 func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]key.DocKey, error) {
 	numTypes := len(fixture.Types())
@@ -127,8 +131,8 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 	dockeys := make([][]key.DocKey, docCount)
 
 	go func() {
-		// cut up the job from into writeBatchGroup size grouped jobs.
-		// Note weird math cus the last batch will likely be smaller then
+		// Cut up the job from into writeBatchGroup size grouped jobs.
+		// Note weird math because the last batch will likely be smaller then
 		// writeBatchGroup ~cus math~.
 		for bid := 0; float64(bid) < math.Ceil(float64(docCount)/writeBatchGroup); bid++ {
 			currentBatchSize := int(math.Min(float64((docCount - (bid * writeBatchGroup))), writeBatchGroup))
@@ -146,8 +150,6 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 						return
 					}
 
-					// fmt.Println(docs)
-
 					// create the documents
 					keys := make([]key.DocKey, numTypes)
 					for j := 0; j < numTypes; j++ {
@@ -158,13 +160,13 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 							return
 						}
 
-						// loop forever untill commited.
+						// loop forever until committed.
 						// This was necessary when debugging and was left
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil && err.Error() == badger.ErrConflict.Error() {
-								fmt.Printf("failed to commit TX for doc %s, retrying...\n", doc.Key())
+								log.Info(ctx, "Failed to commit TX for doc %s, retrying...\n", logging.NewKV("DocKey", doc.Key()))
 								continue
 							} else if err != nil {
 								errCh <- fmt.Errorf("Failed to create document: %w", err)
@@ -181,7 +183,6 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 			}
 
 			batchWg.Wait()
-			// fmt.Printf(".")
 		}
 
 		// wait for our group and signal by closing waitCh
@@ -204,28 +205,28 @@ type dbInfo interface {
 	DB() *db.DB
 }
 
-func NewTestDB(t testing.TB) (*db.DB, error) {
+func NewTestDB(ctx context.Context, t testing.TB) (*db.DB, error) {
 	//nolint
-	dbi, err := newBenchStoreInfo(t)
+	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.DB(), err
 }
 
-func NewTestStorage(t testing.TB) (ds.Batching, error) {
-	dbi, err := newBenchStoreInfo(t)
+func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
+	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.Rootstore(), err
 }
 
-func newBenchStoreInfo(t testing.TB) (dbInfo, error) {
+func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
 	var dbi dbInfo
 	var err error
 
 	switch storage {
 	case "memory":
-		dbi, err = testutils.NewBadgerMemoryDB()
+		dbi, err = testutils.NewBadgerMemoryDB(ctx)
 	case "badger":
-		dbi, err = testutils.NewBadgerFileDB(t)
+		dbi, err = testutils.NewBadgerFileDB(ctx, t)
 	case "memorymap":
-		dbi, err = testutils.NewMapDB()
+		dbi, err = testutils.NewMapDB(ctx)
 	default:
 		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
 	}

@@ -1,3 +1,15 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package net
 
 import (
@@ -6,6 +18,7 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -25,7 +38,13 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
-	log.Debugf("Preparing pushLog request for rpc %s at %s using %s", dockey, lg.Cid, lg.SchemaID)
+	log.Debug(
+		ctx,
+		"Preparing pushLog request",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("SchemaId", lg.SchemaID))
+
 	body := &pb.PushLogRequest_Body{
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
 		Cid:      &pb.ProtoCid{Cid: lg.Cid},
@@ -38,7 +57,12 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 		Body: body,
 	}
 
-	log.Debugf("pushing log %s for %s to %s", lg.Cid, dockey, pid)
+	log.Debug(
+		ctx, "Pushing log",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("Pid", pid))
+
 	client, err := s.dial(pid) // grpc dial over p2p stream
 	if err != nil {
 		return fmt.Errorf("Failed to push log: %w", err)

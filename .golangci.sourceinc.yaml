@@ -6,7 +6,7 @@ run:
   concurrency: 8
 
   # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 1m
+  timeout: 5m
 
   # exit code when at least one issue was found, default is 1
   issues-exit-code: 1
@@ -169,7 +169,6 @@ linters-settings:
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     forbid:
-      - ^print.*$
       - 'fmt\.Print.*'
     # Exclude godoc examples from forbidigo checks.  Default is true.
     exclude_godoc_examples: false
@@ -790,6 +789,7 @@ linters:
     - unused
     - varcheck
     - errcheck
+    - forbidigo
     # - wrapcheck
     # - errorlint
     # - gci

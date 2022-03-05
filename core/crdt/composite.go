@@ -75,7 +75,7 @@ func (delta *CompositeDAGDelta) GetSchemaID() string {
 }
 
 // CompositeDAG is a CRDT structure that is used
-// to track a collcetion of sub MerkleCRDTs.
+// to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
 	key      string
 	schemaID string
@@ -133,7 +133,6 @@ func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
 	}
 	data := pbNode.Data()
-	// fmt.Println(data)
 	h := &codec.CborHandle{}
 	dec := codec.NewDecoderBytes(data, h)
 	err := dec.Decode(delta)

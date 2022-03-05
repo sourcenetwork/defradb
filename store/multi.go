@@ -13,25 +13,28 @@ package store
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/namespace"
 )
 
 type multistore struct {
-	root core.DSReaderWriter
-	data core.DSReaderWriter
-	head core.DSReaderWriter
+	root   core.DSReaderWriter
+	data   core.DSReaderWriter
+	head   core.DSReaderWriter
+	system core.DSReaderWriter
 	// block core.DSReaderWriter
 	dag core.DAGStore
 }
 
-func MultiStoreFrom(rootstore ds.Datastore) core.MultiStore {
-	ms := &multistore{root: rootstore}
-	ms.data = namespace.Wrap(rootstore, base.DataStoreKey)
-	ms.head = namespace.Wrap(rootstore, base.HeadStoreKey)
-	block := namespace.Wrap(rootstore, base.BlockStoreKey)
-	ms.dag = NewDAGStore(block)
+var _ core.MultiStore = (*multistore)(nil)
+
+func MultiStoreFrom(rootstore core.DSReaderWriter) core.MultiStore {
+	block := prefix(rootstore, base.BlockStoreKey)
+	ms := &multistore{
+		root:   rootstore,
+		data:   prefix(rootstore, base.DataStoreKey),
+		head:   prefix(rootstore, base.HeadStoreKey),
+		system: prefix(rootstore, base.SystemStoreKey),
+		dag:    NewDAGStore(block),
+	}
 
 	return ms
 }
@@ -56,20 +59,6 @@ func (ms multistore) Rootstore() core.DSReaderWriter {
 	return ms.root
 }
 
-// func PrintStore(ctx context.Context, store core.DSReaderWriter) {
-// 	q := dsq.Query{
-// 		Prefix:   "",
-// 		KeysOnly: false,
-// 		Orders:   []dsq.Order{dsq.OrderByKey{}},
-// 	}
-
-// 	results, err := store.Query(q)
-// 	defer results.Close()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	for r := range results.Next() {
-// 		fmt.Println(r.Key, ": ", r.Value)
-// 	}
-// }
+func (ms multistore) Systemstore() core.DSReaderWriter {
+	return ms.system
+}

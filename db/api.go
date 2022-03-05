@@ -11,11 +11,14 @@
 package db
 
 import (
+	"context"
+	"fmt"
+
 	api "github.com/sourcenetwork/defradb/api/http"
 )
 
-func (db *DB) Listen(address string) error {
-	db.log.Infof("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", address, address)
+func (db *DB) Listen(ctx context.Context, address string) error {
+	log.Info(ctx, fmt.Sprintf("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", address, address))
 
 	s := api.NewServer(db)
 	return s.Listen(address)

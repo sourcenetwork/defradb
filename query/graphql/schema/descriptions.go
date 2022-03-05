@@ -241,7 +241,7 @@ type book {
 	author: author @primary
 }
 
-// dont need to worry about IDs and FieldIDs
+// don't need to worry about IDs and FieldIDs
 
 return base.CollectionDescription{
 		Name: "book",

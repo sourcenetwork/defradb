@@ -202,7 +202,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 							"published": []map[string]interface{}{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-									"rating": uint64(2),
+									"rating": float64(2),
 								},
 							},
 						},

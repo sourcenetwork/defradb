@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -41,20 +40,11 @@ type DB interface {
 	// Datastore() core.DSReaderWriter
 	DAGstore() core.DAGStore
 
-	NewTxn(context.Context, bool) (Txn, error)
+	NewTxn(context.Context, bool) (core.Txn, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
 }
 
 type Sequence interface{}
-
-type Txn interface {
-	iterable.IterableTxn
-	core.MultiStore
-	Systemstore() core.DSReaderWriter
-	IsBatch() bool
-	// All DB actions are accessible in a transaction
-	//
-}
 
 type Collection interface {
 	Description() base.CollectionDescription
@@ -87,7 +77,7 @@ type Collection interface {
 
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
-	WithTxn(Txn) Collection
+	WithTxn(core.Txn) Collection
 
 	GetPrimaryIndexDocKey(ds.Key) ds.Key
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)

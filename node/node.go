@@ -1,3 +1,13 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package node
 
 import (
@@ -9,13 +19,13 @@ import (
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 	"github.com/textileio/go-threads/broadcast"
 
@@ -33,7 +43,7 @@ object.
 */
 
 var (
-	log = logging.Logger("node")
+	log = logging.MustNewLogger("defra.node")
 )
 
 type Node struct {
@@ -93,8 +103,7 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		rootstore,
 		libp2pOpts...,
 	)
-	log.Info("Created LibP2P host with Peer ID ", h.ID())
-	log.Info(" -> listening on ", options.ListenAddrs)
+	log.Info(ctx, "Created LibP2P host", logging.NewKV("PeerId", h.ID()), logging.NewKV("Address", options.ListenAddrs))
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}

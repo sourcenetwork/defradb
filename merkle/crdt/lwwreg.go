@@ -71,7 +71,7 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 		// splice out the Version CID component of the
 		// VersionIndex compound index key.
 		// Currently, the key is in the following format
-		// /VersionIndexID/DocKey/VersionCID/.../FieldIdentifer
+		// /VersionIndexID/DocKey/VersionCID/.../FieldIdentifier
 		//
 		// We want to remove the VersionIndexID and the VersionCID, but keep the rest.
 		headsetKey = ds.KeyWithNamespaces(append(list[1:2], list[3:]...))
@@ -83,7 +83,7 @@ func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReader
 	clk := clock.NewMerkleClock(headstore, dagstore, headsetKey.String(), reg)
 	// newBaseMerkleCRDT(clock, register)
 	base := &baseMerkleCRDT{clock: clk, crdt: reg}
-	// instatiate MerkleLWWRegister
+	// instantiate MerkleLWWRegister
 	// return
 	return &MerkleLWWRegister{
 		baseMerkleCRDT: base,

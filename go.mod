@@ -10,6 +10,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/go-chi/chi v1.5.2
 	github.com/gogo/protobuf v1.3.2
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/graphql-go/graphql v0.7.9
 	github.com/hsanjuan/ipfs-lite v1.2.0
 	github.com/ipfs/go-block-format v0.0.3

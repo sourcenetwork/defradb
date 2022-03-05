@@ -12,11 +12,13 @@ package cmd
 
 import (
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 type Config struct {
 	Database Options
 	Net      NetOptions
+	Logging  BaseLoggerOptions
 }
 
 type Options struct {
@@ -41,6 +43,73 @@ type NetOptions struct {
 	P2PAddress  string
 	P2PDisabled bool
 	TCPAddress  string
+}
+
+type BaseLoggerOptions struct {
+	Level            *string
+	EnableStackTrace *bool
+	EncoderFormat    *string
+	OutputPaths      *[]string
+	NamedOptions     *[]NamedLoggerOptions
+}
+
+type NamedLoggerOptions struct {
+	Name             string
+	Level            *string
+	EnableStackTrace *bool
+	EncoderFormat    *string
+	OutputPaths      *[]string
+}
+
+func (o BaseLoggerOptions) toLogConfig() logging.Config {
+	var level logging.LogLevelOption
+	if o.Level != nil {
+		level = getLogLevelFromString(*o.Level)
+	}
+
+	var enableStackTrace logging.EnableStackTraceOption
+	if o.EnableStackTrace != nil {
+		enableStackTrace = logging.NewEnableStackTraceOption(*o.EnableStackTrace)
+	}
+
+	var encoderFormat logging.EncoderFormatOption
+	if o.EncoderFormat != nil {
+		switch *o.EncoderFormat {
+		case "json":
+			encoderFormat = logging.NewEncoderFormatOption(logging.JSON)
+		case "csv":
+			encoderFormat = logging.NewEncoderFormatOption(logging.CSV)
+		}
+	}
+
+	var outputPaths []string
+	if o.OutputPaths != nil {
+		outputPaths = *o.OutputPaths
+	}
+
+	return logging.Config{
+		Level:            level,
+		EnableStackTrace: enableStackTrace,
+		EncoderFormat:    encoderFormat,
+		OutputPaths:      outputPaths,
+	}
+}
+
+func getLogLevelFromString(logLevel string) logging.LogLevelOption {
+	switch logLevel {
+	case "debug":
+		return logging.NewLogLevelOption(logging.Debug)
+	case "info":
+		return logging.NewLogLevelOption(logging.Info)
+	case "warn":
+		return logging.NewLogLevelOption(logging.Warn)
+	case "error":
+		return logging.NewLogLevelOption(logging.Error)
+	case "fatal":
+		return logging.NewLogLevelOption(logging.Fatal)
+	default:
+		return logging.LogLevelOption{}
+	}
 }
 
 var (

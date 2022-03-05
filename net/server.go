@@ -1,3 +1,15 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package net
 
 import (
@@ -14,6 +26,7 @@ import (
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -52,7 +65,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	s.opts = append(defaultOpts, opts...)
 	if s.peer.ps != nil {
 		// Get all DocKeys across all collections in the DB
-		log.Debug("Getting all existing dockeys...")
+		log.Debug(p.ctx, "Getting all existing dockeys...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get dockeys for pubsub topic registration: %w", err)
@@ -63,44 +76,44 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 			for key := range keyResults {
 				if key.Err != nil {
-					log.Warn("Failed to get a key to register pubsub topic: %w", key.Err)
+					log.ErrorE(p.ctx, "Failed to get a key to register pubsub topic", key.Err)
 					continue
 				}
-				log.Debugf("Registering existing DocKey pubsub topic %v", key.Key.String())
+				log.Debug(p.ctx, "Registering existing DocKey pubsub topic", logging.NewKV("DocKey", key.Key.String()))
 				if err := s.addPubSubTopic(key.Key.String()); err != nil {
 					return nil, err
 				}
 				i++
 			}
 		}
-		log.Debugf("Finished registering all DocKey pubsub topics, %v in total", i)
+		log.Debug(p.ctx, "Finished registering all DocKey pubsub topics", logging.NewKV("Count", i))
 	}
 
 	return s, nil
 }
 
-// GetDocGraph recieves a get graph request
+// GetDocGraph receives a get graph request
 func (s *server) GetDocGraph(ctx context.Context, req *pb.GetDocGraphRequest) (*pb.GetDocGraphReply, error) {
 	return nil, nil
 }
 
-// PushDocGraph recieves a push graph request
+// PushDocGraph receives a push graph request
 func (s *server) PushDocGraph(ctx context.Context, req *pb.PushDocGraphRequest) (*pb.PushDocGraphReply, error) {
 	return nil, nil
 }
 
-// GetLog recieves a get log request
+// GetLog receives a get log request
 func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogReply, error) {
 	return nil, nil
 }
 
-// PushLog recieves a push log request
+// PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Recieved a pushLog request from %s", pid)
+	log.Debug(ctx, "Received a pushLog request", logging.NewKV("Pid", pid))
 
 	// parse request object
 	cid := req.Body.Cid.Cid
@@ -119,7 +132,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	var getter format.NodeGetter = s.peer.ds
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		log.Debug("Upgrading DAGSyncer with a session")
+		log.Debug(ctx, "Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
 	}
 
@@ -130,23 +143,23 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {
-		log.Errorf("Failed to process push log node %s at %s: %s", docKey, cid, err)
+		log.ErrorE(ctx, "Failed to process push log node", err, logging.NewKV("DocKey", docKey), logging.NewKV("Cid", cid))
 	}
 
 	// handleChildren
 	if len(cids) > 0 { // we have child nodes to get
-		log.Debug("Handling %d children for log %s", len(cids), cid)
+		log.Debug(ctx, "Handling children for log", logging.NewKV("NChildren", len(cids)), logging.NewKV("Cid", cid))
 		var session sync.WaitGroup
 		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
 		session.Wait()
 	} else {
-		log.Debug("No more children to process for log %s", cid)
+		log.Debug(ctx, "No more children to process for log", logging.NewKV("Cid", cid))
 	}
 
 	return &pb.PushLogReply{}, nil
 }
 
-// GetHeadLog recieves a get head log request
+// GetHeadLog receives a get head log request
 func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb.GetHeadLogReply, error) {
 	return nil, nil
 }
@@ -206,7 +219,7 @@ func (s *server) removeAllPubsubTopics() error {
 }
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
-// cooresponding topic
+// corresponding topic
 func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
@@ -226,16 +239,16 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
 		return fmt.Errorf("failed publishing to thread %s: %w", dockey, err)
 	}
-	log.Debugf("Published log %s on %s", req.Body.Cid.Cid, dockey)
+	log.Debug(ctx, "Published log", logging.NewKV("Cid", req.Body.Cid.Cid), logging.NewKV("DocKey", dockey))
 	return nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	log.Debugf("Handling new pubsub message from %s on %s", from, topic)
+	log.Debug(s.peer.ctx, "Handling new pubsub message", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
-		log.Error("Failed to unmarshal pubsub message %s", err)
+		log.ErrorE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
 
@@ -243,7 +256,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
-		log.Errorf("failed pushing log for doc %s: %s", topic, err)
+		log.ErrorE(ctx, "failed pushing log for doc", err, logging.NewKV("Topic", topic))
 		return nil, fmt.Errorf("failed pushing log for doc %s: %w", topic, err)
 	}
 	return nil, nil
@@ -251,7 +264,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	log.Infof("Recieved new pubsub event from %s on %s", from, topic)
+	log.Info(s.peer.ctx, "Received new pubsub event", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
@@ -281,12 +294,11 @@ func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
 			return nil, err
 		}
 
-		// run a goroutune for each channel we get from the GetAllDocKeys func for each
+		// run a goroutine for each channel we get from the GetAllDocKeys func for each
 		// collection. Pipe the results from res to keys, and handle potentially
 		// closed channel edge cases
 		wg.Add(1)
 		go func(colName string) {
-			fmt.Println("starting routine for:", colName)
 			for res := range resCh {
 				keyCh <- res
 			}
