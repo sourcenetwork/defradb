@@ -58,9 +58,7 @@ type DocKey struct {
 // Undef can be defined to be a nil like DocKey
 var Undef = DocKey{}
 
-// NewDocKeyV0 creates a new doc key identified by the root data CID, peer ID, and
-// namespaced by the versionNS
-// TODO: Parameterize namespace Version
+// NewDocKeyV0 creates a new DocKey identified by the root data CID and namespaced by the versionNS
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	dc := DocKey{
 		version: V0,
