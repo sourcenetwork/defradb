@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -78,7 +77,7 @@ func TestFetcherInit(t *testing.T) {
 
 func TestFetcherStart(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -97,7 +96,7 @@ func TestFetcherStart(t *testing.T) {
 
 func TestFetcherStartWithoutInit(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -120,7 +119,7 @@ func TestMakeIndexPrefixKey(t *testing.T) {
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -150,27 +149,14 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	// assert.False(t, df.KVEnd())
-	// kv := df.KV()
-	// assert.NotNil(t, kv)
-	// fmt.Println(kv)
-	// // err = df.ProcessKV(kv)
-	// // assert.Nil(t, err)
-	// // err = df.NextKey()
-	// assert.True(t, false)
-
-	// var _ []*document.EncodedDocument
 	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-
-	// fmt.Println(encdoc)
-	// assert.True(t, false)
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -208,31 +194,17 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = df.Start(ctx, txn, core.Spans{})
 	assert.NoError(t, err)
 
-	// assert.False(t, df.KVEnd())
-	// kv := df.KV()
-	// assert.NotNil(t, kv)
-	// fmt.Println(kv)
-	// // err = df.ProcessKV(kv)
-	// // assert.Nil(t, err)
-	// // err = df.NextKey()
-	// assert.True(t, false)
-
-	// var _ []*document.EncodedDocument
 	encdoc, err := df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-	// fmt.Println(encdoc)
 	encdoc, err = df.FetchNext(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, encdoc)
-
-	// fmt.Println(encdoc)
-	// assert.True(t, false)
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -272,12 +244,11 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	assert.Equal(t, "John", name)
 	assert.Equal(t, uint64(21), age)
-	fmt.Println(age)
 }
 
 func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -342,7 +313,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -388,8 +359,4 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	assert.Equal(t, "John", name)
 	assert.Equal(t, uint64(21), age)
-	// fmt.Println(age)
-
-	// db.printDebugDB()
-	// assert.True(t, false)
 }

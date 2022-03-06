@@ -3,7 +3,7 @@ default:
 
 .PHONY: install
 install:
-	go install cli/defradb/main.go
+	go install ./cli/defradb/
 
 .PHONY: build
 build:
@@ -58,7 +58,11 @@ test\:clean: clean\:test test
 
 .PHONY: test\:bench
 test\:bench:
-	go test ./... -race -bench=.
+	make -C ./bench/ bench
+
+.PHONY: test\:bench-short
+test\:bench-short:
+	make -C ./bench/ bench:short
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
@@ -71,6 +75,10 @@ test\:coverage-full: deps\:go-acc
 test\:coverage-quick:
 	go test ./... -race -coverprofile=coverage-quick.txt -covermode=atomic
 	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
+
+.PHONY: test\:changes
+test\:changes:
+	env DEFRA_DETECT_DATABASE_CHANGES=true go test ./... -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:

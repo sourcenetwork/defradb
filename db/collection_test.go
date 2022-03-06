@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionWithSchema(ctx context.Context, db *DB) (*Collection, error) {
+func newTestCollectionWithSchema(ctx context.Context, db *DB) (client.Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
@@ -50,7 +50,7 @@ func newTestCollectionWithSchema(ctx context.Context, db *DB) (*Collection, erro
 	}
 
 	col, err := db.CreateCollection(ctx, desc)
-	return col.(*Collection), err
+	return col, err
 }
 
 func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, error) {
@@ -61,7 +61,7 @@ func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, er
 
 func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = createNewTestCollection(ctx, db)
@@ -70,7 +70,7 @@ func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 
 func TestNewCollectionWithSchema(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	col, err := newTestCollectionWithSchema(ctx, db)
@@ -93,9 +93,177 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	}
 }
 
+func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	_, err = newTestCollectionWithSchema(ctx, db)
+	assert.NoError(t, err)
+
+	_, err = newTestCollectionWithSchema(ctx, db)
+	assert.Errorf(t, err, "Collection already exists")
+}
+
+func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema has no fields")
+}
+
+func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection requires name to not be empty")
+}
+
+func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+}
+
+func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+}
+
+func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "",
+					Kind: base.FieldKind_STRING,
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing Name")
+}
+
+func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "Name",
+					Typ:  core.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing FieldKind")
+}
+
+func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	desc := base.CollectionDescription{
+		Name: "users",
+		Schema: base.SchemaDescription{
+			Fields: []base.FieldDescription{
+				{
+					Name: "_key",
+					Kind: base.FieldKind_DocKey,
+				},
+				{
+					Name: "Name",
+					Kind: base.FieldKind_STRING,
+				},
+			},
+		},
+	}
+
+	_, err = db.CreateCollection(ctx, desc)
+	assert.EqualError(t, err, "Collection schema field missing CRDT type")
+}
+
 func TestGetCollection(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB()
+	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = newTestCollectionWithSchema(ctx, db)
@@ -119,4 +287,22 @@ func TestGetCollection(t *testing.T) {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
 		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
 	}
+}
+
+func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	_, err = db.GetCollection(ctx, "doesNotExist")
+	assert.EqualError(t, err, "datastore: key not found")
+}
+
+func TestGetCollectionReturnsErrorGivenEmptyString(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	assert.NoError(t, err)
+
+	_, err = db.GetCollection(ctx, "")
+	assert.EqualError(t, err, "Collection name can't be empty")
 }

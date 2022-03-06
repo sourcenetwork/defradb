@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -44,14 +44,20 @@ func (n *deleteNode) Next() (bool, error) {
 		var results *client.DeleteResult
 		var err error
 		numids := len(n.ids)
-		if numids == 1 {
+
+		if n.filter != nil && numids != 0 {
+			return false, errors.New("Error: can't use filter and id / ids together.")
+		} else if n.filter != nil {
+			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
+		} else if numids == 0 {
+			return false, errors.New("Error: no id(s) provided while delete mutation.")
+		} else if numids == 1 {
 			key, err2 := key.NewFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
 			results, err = n.collection.DeleteWithKey(n.p.ctx, key)
 		} else if numids > 1 {
-			// todo
 			keys := make([]key.DocKey, len(n.ids))
 			for i, v := range n.ids {
 				keys[i], err = key.NewFromString(v)
@@ -60,17 +66,15 @@ func (n *deleteNode) Next() (bool, error) {
 				}
 			}
 			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
-		} else { // @todo: handle filter vs ID based
-			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
+		} else {
+			return false, errors.New("Error: out of scope use of delete mutation.")
 		}
 
-		fmt.Println("delete node error:", err)
 		if err != nil {
 			return false, err
 		}
 
 		// Consume the deletes into our valuesNode
-		fmt.Println(results)
 		for _, resKey := range results.DocKeys {
 			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
 			if err != nil {

@@ -24,7 +24,7 @@ import (
 // and creates the necessary collections, query types, etc.
 func (db *DB) AddSchema(ctx context.Context, schema string) error {
 	// @todo: create collection after generating query types
-	types, astdoc, err := db.schema.Generator.FromSDL(schema)
+	types, astdoc, err := db.schema.Generator.FromSDL(ctx, schema)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,6 @@ func (db *DB) AddSchema(ctx context.Context, schema string) error {
 		return err
 	}
 	for _, desc := range colDesc {
-		// fmt.Println(desc)
 		if _, err := db.CreateCollection(ctx, desc); err != nil {
 			return err
 		}
@@ -47,7 +46,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 	q := dsq.Query{
 		Prefix: "/schema",
 	}
-	res, err := db.systemstore.Query(ctx, q)
+	res, err := db.Systemstore().Query(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -57,7 +56,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 		sdl += "\n" + string(buf)
 	}
 
-	_, _, err = db.schema.Generator.FromSDL(sdl)
+	_, _, err = db.schema.Generator.FromSDL(ctx, sdl)
 	return err
 }
 
@@ -68,7 +67,7 @@ func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 		case *ast.ObjectDefinition:
 			body := defType.Loc.Source.Body[defType.Loc.Start:defType.Loc.End]
 			key := base.MakeSchemaSystemKey(defType.Name.Value)
-			if err := db.systemstore.Put(ctx, key.ToDS(), body); err != nil {
+			if err := db.Systemstore().Put(ctx, key.ToDS(), body); err != nil {
 				return err
 			}
 		}

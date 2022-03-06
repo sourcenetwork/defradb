@@ -58,7 +58,7 @@ func (doc *SimpleDocument) Get(field string) interface{} {
 
 /* API
 
-doc := userCollection.GetByID(db.WithRealtions)
+doc := userCollection.GetByID(db.WithRelations)
 doc := userCollection.GetByFilter()
 userCollection.UpdateB(filter | doc | docs | docID | docIDs, patch)
 

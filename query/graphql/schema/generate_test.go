@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -18,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 
 	"github.com/davecgh/go-spew/spew"
@@ -702,7 +704,8 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 }
 
 func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema string, typeDefs []*gql.Object, expectedError string) {
-	_, _, err := g.FromSDL(schema)
+	ctx := context.Background()
+	_, _, err := g.FromSDL(ctx, schema)
 
 	if err != nil {
 		assertError(t, err, expectedError)
@@ -736,9 +739,12 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 		}
 
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
-		fmt.Println("expected vs actual objects:")
-		fmt.Println(objDef.Fields())
-		fmt.Println(myObjectActual.Fields())
+		log.Info(
+			ctx,
+			"expected vs actual objects",
+			logging.NewKV("DefinitionFields", objDef.Fields()),
+			logging.NewKV("ActualFields", myObjectActual.Fields()))
+
 		for _, fieldActual := range myObjectActual.Fields() {
 			fieldExpected, ok := objDef.Fields()[fieldActual.Name]
 			assert.True(t, ok, "Failed to find expected field for matching actual field")

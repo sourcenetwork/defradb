@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/utils"
 
@@ -49,7 +50,7 @@ var _ client.Collection = (*Collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type Collection struct {
 	db  *DB
-	txn *Txn
+	txn core.Txn
 
 	colID    uint32
 	colIDKey core.Key
@@ -69,14 +70,6 @@ type Collection struct {
 func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error) {
 	if desc.Name == "" {
 		return nil, errors.New("Collection requires name to not be empty")
-	}
-
-	if desc.ID == 0 {
-		return nil, errors.New("Collection ID must be greater than 0")
-	}
-
-	if desc.Schema.IsEmpty() {
-		return nil, errors.New("Collection must have a schema")
 	}
 
 	if len(desc.Schema.Fields) == 0 {
@@ -127,7 +120,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescription) (client.Collection, error) {
 	// check if collection by this name exists
 	key := base.MakeCollectionSystemKey(desc.Name)
-	exists, err := db.systemstore.Has(ctx, key.ToDS())
+	exists, err := db.Systemstore().Has(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +149,8 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 
 	key = base.MakeCollectionSystemKey(col.desc.Name)
 
-	//write the collection metadata to the system store
-	err = db.systemstore.Put(ctx, key.ToDS(), buf)
+	// write the collection metadata to the system store
+	err = db.Systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +170,8 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	}
 	col.schemaID = cid.String()
 	key = base.MakeCollectionSchemaSystemKey(cid.String())
-	err = db.systemstore.Put(ctx, key.ToDS(), []byte(desc.Name))
-	log.Debugf("Created collection %s with ID %s", col.Name(), col.SchemaID)
+	err = db.Systemstore().Put(ctx, key.ToDS(), []byte(desc.Name))
+	log.Debug(ctx, "Created collection", logging.NewKV("Name", col.Name()), logging.NewKV("Id", col.SchemaID))
 	return col, err
 }
 
@@ -189,7 +182,7 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 	}
 
 	key := base.MakeCollectionSystemKey(name)
-	buf, err := db.systemstore.Get(ctx, key.ToDS())
+	buf, err := db.Systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -198,10 +191,6 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 	err = json.Unmarshal(buf, &desc)
 	if err != nil {
 		return nil, err
-	}
-
-	if desc.Schema.IsEmpty() {
-		return nil, errors.New("Collection must have a schema")
 	}
 
 	buf, err = json.Marshal(struct {
@@ -219,7 +208,8 @@ func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection
 	}
 
 	sid := cid.String()
-	log.Debugf("Retrieved collection %s with ID %s", desc.Name, sid)
+	log.Debug(ctx, "Retrieved collection", logging.NewKV("Name", desc.Name), logging.NewKV("Id", sid))
+
 	return &Collection{
 		db:       db,
 		desc:     desc,
@@ -237,7 +227,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 	}
 
 	key := base.MakeCollectionSchemaSystemKey(schemaID)
-	buf, err := db.systemstore.Get(ctx, key.ToDS())
+	buf, err := db.Systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +241,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := base.MakeCollectionSystemKey("")
-	q, err := db.systemstore.Query(ctx, query.Query{
+	q, err := db.Systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.String(),
 		KeysOnly: true,
 	})
@@ -260,7 +250,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
-			log.Errorf("Failed to close collection query: %w", err)
+			log.ErrorE(ctx, "Failed to close collection query", err)
 		}
 	}()
 
@@ -294,9 +284,9 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	return c.getAllDocKeysChan(ctx, txn)
 }
 
-func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan client.DocKeysResult, error) {
+func (c *Collection) getAllDocKeysChan(ctx context.Context, txn core.Txn) (<-chan client.DocKeysResult, error) {
 	prefix := c.getPrimaryIndexDocKey(ds.NewKey("")) // empty path for all keys prefix
-	q, err := txn.datastore.Query(ctx, query.Query{
+	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.String(),
 		KeysOnly: true,
 	})
@@ -308,7 +298,7 @@ func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan cl
 	go func() {
 		defer func() {
 			if err := q.Close(); err != nil {
-				log.Errorf("Failed to close AllDocKeys query: %w", err)
+				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
 			}
 			close(resCh)
 		}()
@@ -358,11 +348,6 @@ func (c *Collection) getAllDocKeysChan(ctx context.Context, txn *Txn) (<-chan cl
 
 	return resCh, nil
 }
-
-// ValidDescription
-// func (c *Collection) ValidDescription() bool {
-// 	return false
-// }
 
 // Description returns the base.CollectionDescription
 func (c *Collection) Description() base.CollectionDescription {
@@ -419,10 +404,10 @@ func (c *Collection) SchemaID() string {
 
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
-func (c *Collection) WithTxn(txn client.Txn) client.Collection {
+func (c *Collection) WithTxn(txn core.Txn) client.Collection {
 	return &Collection{
 		db:       c.db,
-		txn:      txn.(*Txn),
+		txn:      txn,
 		desc:     c.desc,
 		colID:    c.colID,
 		colIDKey: c.colIDKey,
@@ -464,7 +449,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*document.Document) 
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Document) error {
+func (c *Collection) create(ctx context.Context, txn core.Txn, doc *document.Document) error {
 	// DocKey verification
 	buf, err := doc.Bytes()
 	if err != nil {
@@ -482,7 +467,7 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 	if err != nil {
 		return err
 	}
-	// fmt.Println(c)
+
 	dockey := key.NewDocKeyV0(doccid)
 	if !dockey.Key.Equal(doc.Key().Key) {
 		return fmt.Errorf("Expected %s, got %s : %w", doc.Key().UUID(), dockey.UUID(), ErrDocVerification)
@@ -498,7 +483,7 @@ func (c *Collection) create(ctx context.Context, txn *Txn, doc *document.Documen
 	}
 
 	// write object marker
-	err = writeObjectMarker(ctx, txn.datastore, c.getPrimaryIndexDocKey(doc.Key().Instance("v")))
+	err = writeObjectMarker(ctx, txn.Datastore(), c.getPrimaryIndexDocKey(doc.Key().Instance("v")))
 	if err != nil {
 		return err
 	}
@@ -539,7 +524,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
-func (c *Collection) update(ctx context.Context, txn *Txn, doc *document.Document) error {
+func (c *Collection) update(ctx context.Context, txn core.Txn, doc *document.Document) error {
 	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
@@ -573,7 +558,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document) (cid.Cid, error) {
+func (c *Collection) save(ctx context.Context, txn core.Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -596,11 +581,11 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				merge[k] = val.Value()
 			}
 
-			// NOTE: We delay the final Clean() call till we know
-			// the commit on the transaction is successfull. If we didn't
+			// NOTE: We delay the final Clean() call until we know
+			// the commit on the transaction is successful. If we didn't
 			// wait, and just did it here, then *if* the commit fails down
 			// the line, then we have no way to roll back the state
-			// side-effect on the documnet func called here.
+			// side-effect on the document func called here.
 			txn.OnSuccess(func() {
 				doc.Clean()
 			})
@@ -610,7 +595,6 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 				Cid:  c,
 			}
 			links = append(links, link)
-			// fmt.Println("links:", link)
 		}
 	}
 	// Update CompositeDAG
@@ -631,7 +615,7 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 	txn.OnSuccess(func() {
 		doc.SetHead(headCID)
 	})
-	// fmt.Printf("final: %s\n\n", docCid)
+
 	return headCID, nil
 }
 
@@ -643,7 +627,6 @@ func (c *Collection) save(ctx context.Context, txn *Txn, doc *document.Document)
 // This operation will all state relating to the given
 // DocKey. This includes data, block, and head storage.
 func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
-	// create txn
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -668,19 +651,19 @@ func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 
 // at the moment, delete only does data storage delete.
 // Dag, and head store will soon follow.
-func (c *Collection) delete(ctx context.Context, txn *Txn, key key.DocKey) (bool, error) {
+func (c *Collection) delete(ctx context.Context, txn core.Txn, key key.DocKey) (bool, error) {
 	q := query.Query{
 		Prefix:   c.getPrimaryIndexDocKey(key.Key).String(),
 		KeysOnly: true,
 	}
-	res, err := txn.datastore.Query(ctx, q)
+	res, err := txn.Datastore().Query(ctx, q)
 
 	for e := range res.Next() {
 		if e.Error != nil {
 			return false, err
 		}
 
-		err = txn.datastore.Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
+		err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(ds.NewKey(e.Key)))
 		if err != nil {
 			return false, err
 		}
@@ -691,7 +674,6 @@ func (c *Collection) delete(ctx context.Context, txn *Txn, key key.DocKey) (bool
 
 // Exists checks if a given document exists with supplied DocKey
 func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
-	// create txn
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -706,11 +688,11 @@ func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 }
 
 // check if a document exists with the given key
-func (c *Collection) exists(ctx context.Context, txn *Txn, key key.DocKey) (bool, error) {
-	return txn.datastore.Has(ctx, c.getPrimaryIndexDocKey(key.Key.Instance("v")))
+func (c *Collection) exists(ctx context.Context, txn core.Txn, key key.DocKey) (bool, error) {
+	return txn.Datastore().Has(ctx, c.getPrimaryIndexDocKey(key.Key.Instance("v")))
 }
 
-func (c *Collection) saveDocValue(ctx context.Context, txn *Txn, key ds.Key, val document.Value) (cid.Cid, error) {
+func (c *Collection) saveDocValue(ctx context.Context, txn core.Txn, key ds.Key, val document.Value) (cid.Cid, error) {
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
@@ -735,7 +717,7 @@ func (c *Collection) saveDocValue(ctx context.Context, txn *Txn, key ds.Key, val
 
 func (c *Collection) saveValueToMerkleCRDT(
 	ctx context.Context,
-	txn *Txn,
+	txn core.Txn,
 	key ds.Key,
 	ctype core.CType,
 	args ...interface{}) (cid.Cid, error) {
@@ -758,11 +740,6 @@ func (c *Collection) saveValueToMerkleCRDT(
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
-	case core.OBJECT:
-		// db.writeObjectMarker(db.datastore, subdoc.Instance("v"))
-		c.db.log.Debug("Sub objects not yet supported")
-		// Redundant break statement (S103 gosimple linter).
-		// break
 	case core.COMPOSITE:
 		key = key.ChildString(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID(), c.db.broadcaster, ctype, key)
@@ -793,24 +770,24 @@ func (c *Collection) saveValueToMerkleCRDT(
 // getTxn gets or creates a new transaction from the underlying db.
 // If the collection already has a txn, return the existing one.
 // Otherwise, create a new implicit transaction.
-func (c *Collection) getTxn(ctx context.Context, readonly bool) (*Txn, error) {
+func (c *Collection) getTxn(ctx context.Context, readonly bool) (core.Txn, error) {
 	if c.txn != nil {
 		return c.txn, nil
 	}
-	return c.db.newTxn(ctx, readonly)
+	return c.db.NewTxn(ctx, readonly)
 }
 
 // discardImplicitTxn is a proxy function used by the collection to execute the Discard() transaction
 // function only if its an implicit transaction.
 // Implicit transactions are transactions that are created *during* an operation execution as a side effect.
 // Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
-func (c *Collection) discardImplicitTxn(ctx context.Context, txn *Txn) {
+func (c *Collection) discardImplicitTxn(ctx context.Context, txn core.Txn) {
 	if c.txn == nil {
 		txn.Discard(ctx)
 	}
 }
 
-func (c *Collection) commitImplicitTxn(ctx context.Context, txn *Txn) error {
+func (c *Collection) commitImplicitTxn(ctx context.Context, txn core.Txn) error {
 	if c.txn == nil {
 		return txn.Commit(ctx)
 	}

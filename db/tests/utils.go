@@ -13,7 +13,12 @@ package tests
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"os"
+	"os/exec"
+	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -22,18 +27,27 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 const (
-	memoryBadgerEnvName = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName   = "DEFRA_BADGER_FILE"
-	memoryMapEnvName    = "DEFRA_MAP"
+	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	memoryMapEnvName           = "DEFRA_MAP"
+	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
+	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
+	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
+	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
+	documentationDirectoryName = "data_format_changes"
 )
 
 var (
+	log            = logging.MustNewLogger("defra.db.tests")
 	badgerInMemory bool
 	badgerFile     bool
 	mapStore       bool
@@ -76,6 +90,7 @@ type QueryTestCase struct {
 
 type databaseInfo struct {
 	name      string
+	path      string
 	db        *db.DB
 	rootstore ds.Batching
 }
@@ -88,29 +103,67 @@ func (dbi databaseInfo) DB() *db.DB {
 	return dbi.db
 }
 
+var databaseDir string
+
+/*
+If this is set to true the integration test suite will instead of it's normal profile do the following:
+
+On [package] Init:
+- Get the (local) latest commit from the target/parent branch // code assumes git fetch has been done
+- Check to see if a clone of that commit/branch is available in the temp dir, and if not clone the target branch
+- Check to see if there are any new .md files in the current branch's data_format_changes dir (vs the target branch)
+
+For each test:
+- If new documentation detected, pass the test and exit
+- Create a new (test/auto-deleted) temp dir for defra to live/run in
+- Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped if test does not exist in target and is new to this branch)
+- Run the test query and assert results (as per normal tests) using the current branch
+*/
+var detectDbChanges bool
+
+var detectDbChangesCodeDir string
+var setupOnly bool
+var areDatabaseFormatChangesDocumented bool
+var previousTestCaseTestName string
+
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages that don't have the flag defined
 	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
 	_, badgerFile = os.LookupEnv(fileBadgerEnvName)
+	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
 	_, mapStore = os.LookupEnv(memoryMapEnvName)
+	_, setupOnly = os.LookupEnv(setupOnlyEnvName)
+	_, detectDbChanges = os.LookupEnv(detectDbChangesEnvName)
+	repository, repositorySpecified := os.LookupEnv(repositoryEnvName)
+	if !repositorySpecified {
+		repository = "git@github.com:sourcenetwork/defradb.git"
+	}
+	targetBranch, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+	if !targetBranchSpecified {
+		targetBranch = "develop"
+	}
 
 	// default is to run against all
-	if !badgerInMemory && !badgerFile && !mapStore {
+	if !badgerInMemory && !badgerFile && !mapStore && !detectDbChanges {
 		badgerInMemory = true
 		// Testing against the file system is off by default
 		badgerFile = false
 		mapStore = true
 	}
+
+	if detectDbChanges {
+		detectDbChangesInit(repository, targetBranch)
+	}
 }
 
-func NewBadgerMemoryDB() (databaseInfo, error) {
+func NewBadgerMemoryDB(ctx context.Context) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -122,9 +175,9 @@ func NewBadgerMemoryDB() (databaseInfo, error) {
 	}, nil
 }
 
-func NewMapDB() (databaseInfo, error) {
+func NewMapDB(ctx context.Context) (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -136,32 +189,42 @@ func NewMapDB() (databaseInfo, error) {
 	}, nil
 }
 
-func NewBadgerFileDB(t testing.TB) (databaseInfo, error) {
-	path := t.TempDir()
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
+	var path string
+	if databaseDir == "" {
+		path = t.TempDir()
+	} else {
+		path = databaseDir
+	}
 
+	return newBadgerFileDB(ctx, t, path)
+}
+
+func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
 	rootstore, err := badgerds.NewDatastore(path, &opts)
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(rootstore)
+	db, err := db.NewDB(ctx, rootstore)
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
 	return databaseInfo{
 		name:      "badger-file-system",
+		path:      path,
 		db:        db,
 		rootstore: rootstore,
 	}, nil
 }
 
-func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
+func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
-		badgerIMDatabase, err := NewBadgerMemoryDB()
+		badgerIMDatabase, err := NewBadgerMemoryDB(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +232,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	}
 
 	if badgerFile {
-		badgerIMDatabase, err := NewBadgerFileDB(t)
+		badgerIMDatabase, err := NewBadgerFileDB(ctx, t)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +240,7 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 	}
 
 	if !test.DisableMapStore && mapStore {
-		mapDatabase, err := NewMapDB()
+		mapDatabase, err := NewMapDB(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -188,74 +251,45 @@ func getDatabases(t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
 }
 
 func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string, test QueryTestCase) {
+	if detectDbChanges && detectDbChangesPreTestChecks(t, collectionNames, test) {
+		return
+	}
+
 	ctx := context.Background()
-	dbs, err := getDatabases(t, test)
+	dbs, err := getDatabases(ctx, t, test)
 	if assertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}
 	assert.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
-		fmt.Println("--------------")
-		fmt.Println(test.Description)
-		fmt.Println(fmt.Sprintf("Running tests with database type: %s", dbi.name))
+		// We log with level warn to highlight this item
+		log.Warn(ctx, test.Description, logging.NewKV("Database", dbi.name))
 
-		db := dbi.db
-		err = db.AddSchema(ctx, schema)
-		if assertError(t, test.Description, err, test.ExpectedError) {
-			return
-		}
-
-		collections := []client.Collection{}
-		for _, collectionName := range collectionNames {
-			col, err := db.GetCollection(ctx, collectionName)
-			if assertError(t, test.Description, err, test.ExpectedError) {
+		if detectDbChanges {
+			if setupOnly {
+				setupDatabase(ctx, t, dbi, schema, collectionNames, test)
+				dbi.db.Close(ctx)
 				return
+			} else {
+				dbi = setupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 			}
-			collections = append(collections, col)
-			fmt.Printf("Collection name:%s id%v\n", col.Name(), col.ID())
-		}
-
-		// insert docs
-		for cid, docs := range test.Docs {
-			for i, docStr := range docs {
-				doc, err := document.NewFromJSON([]byte(docStr))
-				if assertError(t, test.Description, err, test.ExpectedError) {
-					return
-				}
-				err = collections[cid].Save(ctx, doc)
-				if assertError(t, test.Description, err, test.ExpectedError) {
-					return
-				}
-
-				// check for updates
-				updates, ok := test.Updates[i]
-				if ok {
-					for _, u := range updates {
-						err = doc.SetWithJSON([]byte(u))
-						if assertError(t, test.Description, err, test.ExpectedError) {
-							return
-						}
-						err = collections[cid].Save(ctx, doc)
-						if assertError(t, test.Description, err, test.ExpectedError) {
-							return
-						}
-					}
-				}
-			}
+		} else {
+			setupDatabase(ctx, t, dbi, schema, collectionNames, test)
 		}
 
 		// Create the transactions before executing and queries
-		transactions := make([]client.Txn, 0, len(test.TransactionalQueries))
-		for _, tq := range test.TransactionalQueries {
+		transactions := make([]core.Txn, 0, len(test.TransactionalQueries))
+		erroredQueries := make([]bool, len(test.TransactionalQueries))
+		for i, tq := range test.TransactionalQueries {
 			if len(transactions) < tq.TransactionId {
 				continue
 			}
 
-			txn, err := db.NewTxn(ctx, false)
+			txn, err := dbi.db.NewTxn(ctx, false)
 			if err != nil {
 				if assertError(t, test.Description, err, tq.ExpectedError) {
-					return
+					erroredQueries[i] = true
 				}
 			}
 			defer txn.Discard(ctx)
@@ -265,15 +299,21 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 			transactions[tq.TransactionId] = txn
 		}
 
-		for _, tq := range test.TransactionalQueries {
-			result := db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
-			if assertQueryResults(t, test.Description, result, tq.Results, tq.ExpectedError) {
-				return
+		for i, tq := range test.TransactionalQueries {
+			if erroredQueries[i] {
+				continue
+			}
+			result := dbi.db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
+			if assertQueryResults(ctx, t, test.Description, result, tq.Results, tq.ExpectedError) {
+				erroredQueries[i] = true
 			}
 		}
 
 		txnIndexesCommited := map[int]struct{}{}
-		for _, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalQueries {
+			if erroredQueries[i] {
+				continue
+			}
 			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
 				continue
 			}
@@ -281,20 +321,20 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 
 			err := transactions[tq.TransactionId].Commit(ctx)
 			if assertError(t, test.Description, err, tq.ExpectedError) {
-				return
+				erroredQueries[i] = true
 			}
 		}
 
-		for _, tq := range test.TransactionalQueries {
-			if tq.ExpectedError != "" {
+		for i, tq := range test.TransactionalQueries {
+			if tq.ExpectedError != "" && !erroredQueries[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
 
 		// We run the core query after the explicitly transactional ones to permit tests to query the commited result of the transactional queries
 		if test.Query != "" {
-			result := db.ExecQuery(ctx, test.Query)
-			if assertQueryResults(t, test.Description, result, test.Results, test.ExpectedError) {
+			result := dbi.db.ExecQuery(ctx, test.Query)
+			if assertQueryResults(ctx, t, test.Description, result, test.Results, test.ExpectedError) {
 				continue
 			}
 
@@ -305,18 +345,185 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 	}
 }
 
-func assertQueryResults(t *testing.T, description string, result *client.QueryResult, expectedResults []map[string]interface{}, expectedError string) bool {
+func detectDbChangesInit(repository string, targetBranch string) {
+	badgerFile = true
+	badgerInMemory = false
+	mapStore = false
+
+	if setupOnly {
+		// Only the primary test process should perform the setup below
+		return
+	}
+
+	tempDir := os.TempDir()
+
+	latestTargetCommitHash := getLatestCommit(repository, targetBranch)
+	detectDbChangesCodeDir = path.Join(tempDir, "defra", latestTargetCommitHash, "code")
+
+	_, err := os.Stat(detectDbChangesCodeDir)
+	// Warning - there is a race condition here, where if running multiple packages in parallel (as per default) against a new target commit
+	// multiple test pacakges will try and clone the target branch at the same time (and will fail).
+	// This could be solved by using a file lock or similar, however running the change detector in parallel is significantly
+	// slower than running it serially due to machine resource constraints, so I am leaving the race condition in and recommending
+	// running the change detector with the CLI args `-p 1`
+	if os.IsNotExist(err) {
+		cloneCmd := exec.Command("git", "clone", "-b", targetBranch, "--single-branch", repository, detectDbChangesCodeDir)
+		cloneCmd.Stdout = os.Stdout
+		cloneCmd.Stderr = os.Stderr
+		err := cloneCmd.Run()
+		if err != nil {
+			panic(err)
+		}
+	} else if err != nil {
+		panic(err)
+	} else {
+		// Cache must be cleaned, or it might not run the test setup!
+		// Note - this also acts as a race condition if multiple build are running against the same target
+		// if this happens some tests might be silently skipped if the child-setup fails.  Currently I think
+		// it is worth it for slightly faster build times, but feel very free to change this!
+		goTestCacheCmd := exec.Command("go", "clean", "-testcache")
+		goTestCacheCmd.Dir = detectDbChangesCodeDir
+		err = goTestCacheCmd.Run()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	areDatabaseFormatChangesDocumented = checkIfDatabaseFormatChangesAreDocumented()
+}
+
+// Returns true if test should pass early
+func detectDbChangesPreTestChecks(t *testing.T, collectionNames []string, test QueryTestCase) bool {
+	if previousTestCaseTestName == t.Name() {
+		// The database format changer currently only supports running the first test case, if a second case is detected we return early
+		return true
+	}
+	previousTestCaseTestName = t.Name()
+
+	if areDatabaseFormatChangesDocumented {
+		// If we are checking that database formatting changes have been made and documented, and changes are documented,
+		// Then the tests can all pass
+		return true
+	}
+
+	if len(test.TransactionalQueries) > 0 {
+		// Transactional queries are not yet supported by the database change detector, so we skip the test
+		t.SkipNow()
+	}
+
+	if len(collectionNames) == 0 {
+		// If the test doesn't specify any collections, then we can't use it to check the database format, so we skip it
+		t.SkipNow()
+	}
+
+	return false
+}
+
+func setupDatabase(ctx context.Context, t *testing.T, dbi databaseInfo, schema string, collectionNames []string, test QueryTestCase) {
+	db := dbi.db
+	err := db.AddSchema(ctx, schema)
+	if assertError(t, test.Description, err, test.ExpectedError) {
+		return
+	}
+
+	collections := []client.Collection{}
+	for _, collectionName := range collectionNames {
+		col, err := db.GetCollection(ctx, collectionName)
+		if assertError(t, test.Description, err, test.ExpectedError) {
+			return
+		}
+		collections = append(collections, col)
+	}
+
+	// insert docs
+	for cid, docs := range test.Docs {
+		for i, docStr := range docs {
+			doc, err := document.NewFromJSON([]byte(docStr))
+			if assertError(t, test.Description, err, test.ExpectedError) {
+				return
+			}
+			err = collections[cid].Save(ctx, doc)
+			if assertError(t, test.Description, err, test.ExpectedError) {
+				return
+			}
+
+			// check for updates
+			updates, ok := test.Updates[i]
+			if ok {
+				for _, u := range updates {
+					err = doc.SetWithJSON([]byte(u))
+					if assertError(t, test.Description, err, test.ExpectedError) {
+						return
+					}
+					err = collections[cid].Save(ctx, doc)
+					if assertError(t, test.Description, err, test.ExpectedError) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+func setupDatabaseUsingTargetBranch(ctx context.Context, t *testing.T, dbi databaseInfo, collectionNames []string) databaseInfo {
+	// Close this database instance so it may be re-inited in the child process, and this one post-child
+	dbi.db.Close(ctx)
+
+	currentTestPackage, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	targetTestPackage := detectDbChangesCodeDir + "/db/tests/" + strings.Split(currentTestPackage, "/db/tests/")[1]
+
+	// If we are checking for database changes, and we are not seting up the database, then we must be in the main
+	// test process, and need to create a new process setting up the database for this test using the old branch
+	// We should not setup the database using the current branch/process
+	goTestCmd := exec.Command("go", "test", "./...", "--run", fmt.Sprintf("^%s$", t.Name()), "-v")
+	goTestCmd.Dir = targetTestPackage
+	goTestCmd.Env = os.Environ()
+	goTestCmd.Env = append(goTestCmd.Env,
+		setupOnlyEnvName+"=true",
+		fileBadgerPathEnvName+"="+dbi.path,
+	)
+	out, err := goTestCmd.Output()
+	if err != nil {
+		// Only log the output if there is an error, logging child test runs confuses the go test runner
+		// making it think there are no tests in the parent run (it will still run everything though)!
+		log.ErrorE(ctx, string(out), err)
+		panic(err)
+	}
+
+	refreshedDb, err := newBadgerFileDB(ctx, t, dbi.path)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = refreshedDb.db.GetCollection(ctx, collectionNames[0])
+	if err != nil {
+		if err.Error() == "datastore: key not found" {
+			// If collection is not found - this must be a new test and doesn't exist in the target branch, so we pass it
+			t.SkipNow()
+		} else {
+			panic(err)
+		}
+	}
+	return refreshedDb
+}
+
+func assertQueryResults(ctx context.Context, t *testing.T, description string, result *client.QueryResult, expectedResults []map[string]interface{}, expectedError string) bool {
 	if assertErrors(t, description, result.Errors, expectedError) {
 		return true
 	}
 	resultantData := result.Data.([]map[string]interface{})
 
-	fmt.Println(result.Data)
-	fmt.Println("--------------")
-	fmt.Println("")
+	// We log with level warn to highlight this item
+	log.Warn(ctx, "", logging.NewKV("QueryResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	if len(expectedResults) == 0 {
+		assert.Equal(t, expectedResults, resultantData)
+	}
 	for i, result := range resultantData {
 		assert.Equal(t, expectedResults[i], result, description)
 	}
@@ -361,4 +568,99 @@ func assertErrors(t *testing.T, description string, errors []interface{}, expect
 		}
 	}
 	return false
+}
+
+func checkIfDatabaseFormatChangesAreDocumented() bool {
+	previousDbChangeFiles, targetDirFound := getDatabaseFormatDocumentation(detectDbChangesCodeDir, false)
+	if !targetDirFound {
+		panic("Documentation directory not found")
+	}
+
+	previousDbChanges := make(map[string]struct{}, len(previousDbChangeFiles))
+	for _, f := range previousDbChangeFiles {
+		// Note: we assume flat directory for now - sub directories are not expanded
+		previousDbChanges[f.Name()] = struct{}{}
+	}
+
+	_, thisFilePath, _, _ := runtime.Caller(0)
+	currentDbChanges, currentDirFound := getDatabaseFormatDocumentation(thisFilePath, true)
+	if !currentDirFound {
+		panic("Documentation directory not found")
+	}
+
+	for _, f := range currentDbChanges {
+		if _, isChangeOld := previousDbChanges[f.Name()]; !isChangeOld {
+			// If there is a new file in the directory then the change has been documented and the test should pass
+			return true
+		}
+	}
+
+	return false
+}
+
+func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.FileInfo, bool) {
+	startInfo, err := os.Stat(startPath)
+	if err != nil {
+		panic(err)
+	}
+
+	var currentDirectory string
+	if startInfo.IsDir() {
+		currentDirectory = startPath
+	} else {
+		currentDirectory = path.Dir(startPath)
+	}
+
+	for {
+		directoryContents, err := ioutil.ReadDir(currentDirectory)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, directoryItem := range directoryContents {
+			directoryItemPath := path.Join(currentDirectory, directoryItem.Name())
+			if directoryItem.Name() == documentationDirectoryName {
+				probableFormatChangeDirectoryContents, err := ioutil.ReadDir(directoryItemPath)
+				if err != nil {
+					panic(err)
+				}
+				for _, possibleDocumentationItem := range probableFormatChangeDirectoryContents {
+					if path.Ext(possibleDocumentationItem.Name()) == ".md" {
+						// If the directory's name matches the expected, and contains .md files we assume it is the documentation directory
+						return probableFormatChangeDirectoryContents, true
+					}
+				}
+			} else {
+				if directoryItem.IsDir() {
+					childContents, directoryFound := getDatabaseFormatDocumentation(directoryItemPath, false)
+					if directoryFound {
+						return childContents, true
+					}
+				}
+			}
+		}
+
+		if allowDescend {
+			// If not found in this directory, continue down the path
+			currentDirectory = path.Dir(currentDirectory)
+
+			if currentDirectory == "." || currentDirectory == "/" {
+				panic("Database documentation directory not found")
+			}
+		} else {
+			return []fs.FileInfo{}, false
+		}
+	}
+}
+
+func getLatestCommit(repoName string, branchName string) string {
+	cmd := exec.Command("git", "ls-remote", repoName, "refs/heads/"+branchName)
+	result, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+
+	// This is a tab, not a space!
+	seperator := "\t"
+	return strings.Split(string(result), seperator)[0]
 }

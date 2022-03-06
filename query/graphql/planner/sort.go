@@ -48,7 +48,7 @@ type sortNode struct {
 	// an already sorted plan
 	valueIter valueIterator
 
-	// sortStragey is an encapsulate planNode
+	// sortStrategy is an encapsulate planNode
 	// that sorts, then provides the values
 	// sorted
 	sortStrategy sortingStrategy

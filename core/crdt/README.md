@@ -8,7 +8,7 @@ CRDTs are Conflict-Free Replicated Data Types, which is a type of data structure
 Additionally, there are many different classes of CRDTs. DefraDB uses delta-state CRDTs, and is intended to be used with MerkleClocks to create a Merkle CRDT. Check [this](https://arxiv.org/abs/1603.01529) for an overview of delta-state CRDTs. Check [this](https://hector.link/presentations/merkle-crdts/merkle-crdts.pdf) for an overview of Merkle CRDTs.
 
 ## State
-Each CRDT implemented in this /core/crdt  package is a `stateless` CRDT. Meaning, all of the state is internal to the provided Datastore object, almost nothing resides in memory in the ```stuct```.
+Each CRDT implemented in this /core/crdt  package is a `stateless` CRDT. Meaning, all of the state is internal to the provided Datastore object, almost nothing resides in memory in the ```struct```.
 
 All CRDTs need some indication of when some event (update) happened relative to other events. In Distributed Systems this is called a `Clock`. There are various types, including Vector, Logical, or Wall Clocks. The notable difference of Merkle CRDTs, is they use a Merkle Clock to track events.Merkle Clocks keep track of a ```priority``` value each event occurred at.
 

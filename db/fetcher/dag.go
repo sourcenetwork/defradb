@@ -177,7 +177,6 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, fmt.Errorf("Failed to get next query result : %w", err)
 		}
-		// fmt.Println(r.Key, hh.namespace.String())
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
