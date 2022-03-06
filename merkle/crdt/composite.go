@@ -69,7 +69,7 @@ func NewMerkleCompositeDAG(datastore core.DSReaderWriter, headstore core.DSReade
 func (m *MerkleCompositeDAG) Set(ctx context.Context, patch []byte, links []core.DAGLink) (cid.Cid, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
-	log.Debug("Applying delta-mutator 'Set' on CompositeDAG")
+	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
 	c, nd, err := m.Publish(ctx, delta)
 	if err != nil {

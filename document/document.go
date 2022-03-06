@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -25,16 +26,15 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-// This is the main implementation stating point for accessing the internal Document API
-// Which provides API access to the various operations available for Documents
-// IE. CRUD.
+// This is the main implementation starting point for accessing the internal Document API
+// which provides API access to the various operations available for Documents, i.e. CRUD.
 //
 // Documents in this case refer to the core database type of DefraDB which is a
-// "NoSQL Document Datastore"
+// "NoSQL Document Datastore".
 //
 // This section is not concerned with the outer query layer used to interact with the
 // Document API, but instead is solely concerned with carrying out the internal API
-// operations, i.e. CRUD.
+// operations.
 //
 // Note: These actions on the outside are deceivingly simple, but require a number
 // of complex interactions with the underlying KV Datastore, as well as the
@@ -54,8 +54,9 @@ var (
 //
 // Documents are similar to JSON Objects stored in MongoDB, which are collections
 // of Fields and Values.
-// Fields are Key names that point to values
-// Values are literal or complex objects such as strings, integers, or sub documents (objects)
+//
+// Fields are Key names that point to values.
+// Values are literal or complex objects such as strings, integers, or sub documents (objects).
 //
 // Note: Documents represent the serialized state of the underlying MerkleCRDTs
 //
@@ -68,16 +69,10 @@ type Document struct {
 	fields map[string]Field
 	values map[Field]Value
 	// @TODO: schemaInfo schema.Info
-
 	head cid.Cid
-
+	mu   sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
-}
-
-// New returns a newly instanciated Document
-func New() *Document {
-	return newEmptyDoc()
 }
 
 func NewWithKey(key key.DocKey) *Document {
@@ -141,7 +136,6 @@ func NewFromMap(data map[string]interface{}, schema ...base.SchemaDescription) (
 		if err != nil {
 			return nil, err
 		}
-		// fmt.Println(c)
 		doc.key = key.NewDocKeyV0(c)
 	}
 
@@ -160,15 +154,20 @@ func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error
 }
 
 func (doc *Document) Head() cid.Cid {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.head
 }
 
 func (doc *Document) SetHead(head cid.Cid) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	doc.head = head
 }
 
 // Key returns the generated DocKey for this document
 func (doc *Document) Key() key.DocKey {
+	// Reading without a read-lock as we assume the DocKey is immutable
 	return doc.key
 }
 
@@ -189,6 +188,8 @@ func (doc *Document) Get(field string) (interface{}, error) {
 
 // GetValue given a field as a string, return the Value type
 func (doc *Document) GetValue(field string) (Value, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	path, subPaths, hasSubPaths := parseFieldPath(field)
 	f, exists := doc.fields[path]
 	if !exists {
@@ -211,6 +212,8 @@ func (doc *Document) GetValue(field string) (Value, error) {
 
 // GetValueWithField gets the Value type from a given Field type
 func (doc *Document) GetValueWithField(f Field) (Value, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	v, exists := doc.values[f]
 	if !exists {
 		return nil, ErrFieldNotExist
@@ -230,8 +233,7 @@ func (doc *Document) SetWithJSON(patch []byte) error {
 	}
 
 	for k, v := range patchObj {
-		fmt.Println(k, v)
-		if v == nil { // needs deletion
+		if v == nil {
 			err = doc.Delete(k)
 		} else {
 			err = doc.Set(k, v)
@@ -255,14 +257,14 @@ func (doc *Document) SetAs(field string, value interface{}, t core.CType) error 
 
 // Delete removes a field, and marks it to be deleted on the following db.Update() call
 func (doc *Document) Delete(fields ...string) error {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	for _, f := range fields {
 		field, exists := doc.fields[f]
 		if !exists {
 			return ErrFieldNotExist
 		}
-
-		val := doc.values[field]
-		val.Delete()
+		doc.values[field].Delete()
 	}
 	return nil
 }
@@ -272,9 +274,9 @@ func (doc *Document) Delete(fields ...string) error {
 // 	return doc.set(t, field, value)
 // }
 
-// set implementation
-// @todo Apply locking on  Document field/value operations
 func (doc *Document) set(t core.CType, field string, value Value) error {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
@@ -385,11 +387,15 @@ func (doc *Document) setAndParseObjectType(value map[string]interface{}) error {
 
 // Fields gets the document fields as a map
 func (doc *Document) Fields() map[string]Field {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.fields
 }
 
 // Values gets the document values as a map
 func (doc *Document) Values() map[Field]Value {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.values
 }
 
@@ -449,6 +455,8 @@ func (doc *Document) Clean() {
 // converts the document into a map[string]interface{}
 // including any sub documents
 func (doc *Document) toMap() (map[string]interface{}, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
@@ -473,6 +481,8 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 }
 
 func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	docMap := make(map[string]interface{})
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]

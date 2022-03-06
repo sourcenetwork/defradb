@@ -19,29 +19,29 @@ import (
 )
 
 // implement interface check
-var _ IterableTxn = (*iterableTransactionShim)(nil)
+var _ Iterable = (*iterableShim)(nil)
 var _ Iterator = (*iteratorShim)(nil)
 
-type iterableTransactionShim struct {
-	ds.Txn
+type iterableShim struct {
+	ds.Read
 }
 
 type iteratorShim struct {
-	txn     iterableTransactionShim
-	q       dsq.Query
-	results dsq.Results
+	readable iterableShim
+	q        dsq.Query
+	results  dsq.Results
 }
 
-func NewIterableTransaction(txn ds.Txn) IterableTxn {
-	return iterableTransactionShim{
-		txn,
+func NewIterable(readable ds.Read) Iterable {
+	return iterableShim{
+		readable,
 	}
 }
 
-func (shim iterableTransactionShim) GetIterator(q dsq.Query) (Iterator, error) {
+func (shim iterableShim) GetIterator(q dsq.Query) (Iterator, error) {
 	return &iteratorShim{
-		txn: shim,
-		q:   q,
+		readable: shim,
+		q:        q,
 	}, nil
 }
 
@@ -57,7 +57,7 @@ func (shim *iteratorShim) IteratePrefix(ctx context.Context, startPrefix ds.Key,
 	// If the prefix range only covers one prefix then we don't have to do the horrible work-around in the else clause
 	if prefixEnd(startPrefix) == endPrefix {
 		query.Prefix = startPrefix.String()
-		results, err := shim.txn.Query(ctx, query)
+		results, err := shim.readable.Query(ctx, query)
 		if err != nil {
 			return nil, err
 		}

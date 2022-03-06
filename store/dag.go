@@ -14,11 +14,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	logging "github.com/ipfs/go-log"
-)
-
-var (
-	log = logging.Logger("defradb.merkle.crdt")
 )
 
 // DAGStore is the interface to the underlying BlockStore and BlockService

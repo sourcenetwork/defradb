@@ -106,7 +106,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.S
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
 	if df.doc == nil {
-		return errors.New("DocumentFetcher cannot be started without an initialized document obect")
+		return errors.New("DocumentFetcher cannot be started without an initialized document object")
 	}
 	if df.index == nil {
 		return errors.New("DocumentFetcher cannot be started without a IndexDescription")
@@ -149,7 +149,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 
 	var err error
 	if df.kvIter == nil {
-		df.kvIter, err = df.txn.GetIterator(dsq.Query{
+		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
 			Orders: df.order,
 		})
 	}
@@ -276,11 +276,6 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		df.indexKey = ik.Bytes()
 		df.doc.Reset()
 		df.doc.Key = []byte(ik.BaseNamespace())
-		// fmt.Println(df.doc.Key)
-		// keyFD := df.schemaFields[0] // _key
-		// df.doc.Properties[keyFD] = &document.EncProperty{
-		// 	Raw: df.doc.Key[:],
-		// }
 	}
 
 	// extract the FieldID and update the encoded doc properties map

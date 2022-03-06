@@ -50,7 +50,7 @@ func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 }
 
 func (seq *sequence) get(ctx context.Context) (uint64, error) {
-	val, err := seq.db.systemstore.Get(ctx, seq.key)
+	val, err := seq.db.Systemstore().Get(ctx, seq.key)
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +62,7 @@ func (seq *sequence) get(ctx context.Context) (uint64, error) {
 func (seq *sequence) update(ctx context.Context) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := seq.db.systemstore.Put(ctx, seq.key, buf[:]); err != nil {
+	if err := seq.db.Systemstore().Put(ctx, seq.key, buf[:]); err != nil {
 		return err
 	}
 

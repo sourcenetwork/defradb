@@ -21,7 +21,7 @@ import (
 )
 
 func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := benchutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 }
 
 func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := benchutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 }
 
 func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
-	db, err := benchutils.NewTestStorage(b)
+	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
 	}

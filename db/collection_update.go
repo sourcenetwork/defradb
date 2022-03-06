@@ -41,20 +41,6 @@ var (
 	ErrInvalidMergeValueType = errors.New("The type of value in the merge patch doesn't match the schema")
 )
 
-func (c *Collection) Create2(doc *document.SimpleDocument, opts ...CreateOpt) error {
-
-	return nil
-}
-
-// Update2 updates the given doc. It will scan through the field/value pairs
-// and find those marked for update, and apply the appropriate update.
-// Update only works on root level field/value pairs. So not foreign or related
-// types can be updated. If you wish to update sub types, use UpdateWith, and supply
-// an update payload in the form of a Patch or a Merge Patch.
-func (c *Collection) Update2(doc *document.SimpleDocument, opts ...client.UpdateOpt) error {
-	return nil
-}
-
 // UpdateWith updates a target document using the given updater type. Target
 // can be a Filter statement, a single docKey, a single document,
 // an array of docKeys, or an array of documents.
@@ -144,7 +130,7 @@ func (c *Collection) UpdateWithDocs(docs []*document.SimpleDocument, updater int
 	return nil
 }
 
-func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithKey(ctx context.Context, txn core.Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -185,7 +171,7 @@ func (c *Collection) updateWithKey(ctx context.Context, txn *Txn, key key.DocKey
 	return results, nil
 }
 
-func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -207,7 +193,6 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 	for i, key := range keys {
 		doc, err := c.Get(ctx, key)
 		if err != nil {
-			fmt.Println("error getting key to update:", key)
 			return nil, err
 		}
 		v, err := doc.ToMap()
@@ -230,7 +215,13 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn *Txn, keys []key.Do
 	return results, nil
 }
 
-func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *Collection) updateWithFilter(
+	ctx context.Context,
+	txn core.Txn,
+	filter interface{},
+	updater interface{},
+	opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -248,13 +239,20 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter, opts...)
+	query, err := c.makeSelectionQuery(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
 	if err = query.Start(); err != nil {
 		return nil, err
 	}
+
+	// If the query object isn't properly closed at any exit point log the error.
+	defer func() {
+		if err := query.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close query after filter update", err)
+		}
+	}()
 
 	results := &client.UpdateResult{
 		DocKeys: make([]string, 0),
@@ -287,52 +285,10 @@ func (c *Collection) updateWithFilter(ctx context.Context, txn *Txn, filter inte
 		results.Count++
 	}
 
-	err = query.Close()
-	if err != nil {
-		return nil, err
-	}
 	return results, nil
 }
 
-// func (c *Collection) updateWithFilterPatch(txn *Txn, filter map[string]interface{}, patch []map[string]interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
-// 	// scan through docs with filter
-// 	query, err := c.makeQuery(filter, opts...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if err := query.Start(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	// loop while we still have results from the filter query
-// 	for {
-// 		next, err := query.Next()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		// if theres no more records from the query, jump out of the loop
-// 		if !next {
-// 			break
-// 		}
-
-// 		// Get the document, and apply the patch
-// 		doc := query.Values()
-// 	}
-
-// 	// loop through patch ops
-// 	// apply each
-// 	// if op is a sub field, get target collection and docID, call c.applyUpdateWithPatch()
-// 	return nil, nil
-// }
-
-// func (c *Collection) updateWithFilterMergePatch(txn *Txn, filter map[string]interface{}, merge map[string]interface{}, opts ...client.UpdateOpt) (*UpdateResult, error) {
-// 	// loop through the fields of merge patch
-// 	// apply
-// 	return nil, nil
-// }
-
-func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
+func (c *Collection) applyPatch(txn core.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
 	for _, op := range patch {
 		path, ok := op["path"].(string)
 		if !ok {
@@ -354,15 +310,15 @@ func (c *Collection) applyPatch(txn *Txn, doc map[string]interface{}, patch []ma
 		}
 	}
 
-	// comleted patch update
+	// completed patch update
 	return nil
 }
 
-func (c *Collection) applyPatchOp(txn *Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
+func (c *Collection) applyPatchOp(txn core.Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
 	return nil
 }
 
-func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]interface{}, merge map[string]interface{}) error {
+func (c *Collection) applyMerge(ctx context.Context, txn core.Txn, doc map[string]interface{}, merge map[string]interface{}) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
 		return errors.New("Document is missing key")
@@ -390,8 +346,7 @@ func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]in
 		// even for fields defined as Ints, which causes issues
 		// when we serialize that in CBOR. To generate the delta
 		// payload.
-		// So lets just make sure ints are ints
-		// ref: https://play.golang.org/p/djThEqGXtvR
+		// So let's just make sure ints are ints ref: https://play.golang.org/p/djThEqGXtvR
 		if fd.Kind == base.FieldKind_INT {
 			merge[mfield] = int64(mval.(float64))
 		}
@@ -422,14 +377,14 @@ func (c *Collection) applyMerge(ctx context.Context, txn *Txn, doc map[string]in
 		return err
 	}
 
-	// if this a a Batch masked as a Transaction
+	// If this a a Batch masked as a Transaction
 	// commit our writes so we can see them.
 	// Batches don't maintain serializability, or
 	// linearization, or any other transaction
 	// semantics, which the user already knows
 	// otherwise they wouldn't use a datastore
 	// that doesn't support proper transactions.
-	// So lets just commit, and keep going.
+	// So let's just commit, and keep going.
 	// @todo: Change this on the Txn.BatchShim
 	// structure
 	if txn.IsBatch() {
@@ -490,7 +445,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		}
 		ok = true
 		cval = boolArray
-	case base.FieldKind_FLOAT, base.FieldKind_DECIMNAL:
+	case base.FieldKind_FLOAT, base.FieldKind_DECIMAL:
 		cval, ok = val.(float64)
 	case base.FieldKind_FLOAT_ARRAY:
 		if val == nil {
@@ -553,7 +508,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 }
 
 func (c *Collection) applyMergePatchOp( //nolint:unused
-	txn *Txn,
+	txn core.Txn,
 	docKey string,
 	field string,
 	currentVal interface{},
@@ -567,7 +522,7 @@ func (c *Collection) applyMergePatchOp( //nolint:unused
 // Additionally it only queries for the root scalar fields of the object
 func (c *Collection) makeSelectionQuery(
 	ctx context.Context,
-	txn *Txn,
+	txn core.Txn,
 	filter interface{},
 	opts ...client.UpdateOpt) (planner.Query, error) {
 	var f *parser.Filter
@@ -616,19 +571,19 @@ func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 
 // getTypeAndCollectionForPatch parses the Patch op path values
 // and compares it against the collection schema.
-// If its within the schema, then patchIsSubType is false
+// If it's within the schema, then patchIsSubType is false
 // subTypeName is empty.
 // If the target type is an array, isArray is true.
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *Collection) getCollectionForPatchOpPath(txn *Txn, path string) (col *Collection, isArray bool, err error) {
+func (c *Collection) getCollectionForPatchOpPath(txn core.Txn, path string) (col *Collection, isArray bool, err error) {
 	return nil, false, nil
 }
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *Collection) getTargetKeyForPatchPath(txn *Txn, doc map[string]interface{}, path string) (string, error) {
+func (c *Collection) getTargetKeyForPatchPath(txn core.Txn, doc map[string]interface{}, path string) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")
