@@ -186,10 +186,6 @@ func (db *DB) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *DB) printDebugDB(ctx context.Context) {
-	printStore(ctx, db.Rootstore())
-}
-
 func (db *DB) PrintDump(ctx context.Context) {
 	printStore(ctx, db.Rootstore())
 }

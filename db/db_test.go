@@ -418,7 +418,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	assert.Equal(t, "John", name)
 	assert.Equal(t, int64(21), age)
 
-	db.printDebugDB(ctx)
+	db.PrintDump(ctx)
 }
 
 func TestDBUpdateDocWithFilter(t *testing.T) {
