@@ -229,11 +229,11 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 }
 
 // AddReplicator adds a target peer node as a replication destination for documents in our DB
-func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Multiaddr) (peer.ID, error) {
+func (p *Peer) AddReplicator(ctx context.Context, collectionName string, paddr ma.Multiaddr) (peer.ID, error) {
 	var pid peer.ID
 
 	// verify collection
-	col, err := p.db.GetCollection(ctx, collection)
+	col, err := p.db.GetCollection(ctx, collectionName)
 	if err != nil {
 		return pid, fmt.Errorf("Failed to get collection for replicator: %w", err)
 	}
@@ -259,7 +259,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	defer p.mu.Unlock()
 	if reps, exists := p.replicators[col.SchemaID()]; exists {
 		if _, exists := reps[pid]; exists {
-			return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collection, pid)
+			return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collectionName, pid)
 		}
 	} else {
 		p.replicators[col.SchemaID()] = make(map[peer.ID]struct{})
@@ -290,7 +290,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	keysCh, err := col.GetAllDocKeys(ctx)
 	if err != nil {
 		txn.Discard(ctx)
-		return pid, fmt.Errorf("Failed to get dockey for replicator %s on %s: %w", pid, collection, err)
+		return pid, fmt.Errorf("Failed to get dockey for replicator %s on %s: %w", pid, collectionName, err)
 	}
 
 	// async
@@ -314,7 +314,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 					err,
 					logging.NewKV("DocKey", dockey),
 					logging.NewKV("Pid", pid),
-					logging.NewKV("Collection", collection))
+					logging.NewKV("Collection", collectionName))
 				continue
 			}
 			// loop over heads, get block, make the required logs, and send
@@ -324,7 +324,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 					log.ErrorE(p.ctx, "Failed to get block", err,
 						logging.NewKV("Cid", c),
 						logging.NewKV("Pid", pid),
-						logging.NewKV("Collection", collection))
+						logging.NewKV("Collection", collectionName))
 					continue
 				}
 
