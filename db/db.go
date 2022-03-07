@@ -128,27 +128,12 @@ func (db *DB) Root() ds.Batching {
 	return db.rootstore
 }
 
-// Rootstore gets the internal rootstore handle
-func (db *DB) Rootstore() core.DSReaderWriter {
-	return db.multistore.Rootstore()
-}
-
-// Headstore returns the internal index store for DAG Heads
-func (db *DB) Headstore() core.DSReaderWriter {
-	return db.multistore.Headstore()
-}
-
-// Datastore returns the internal index store for DAG Heads
-func (db *DB) Datastore() core.DSReaderWriter {
-	return db.multistore.Datastore()
-}
-
 // Blockstore returns the internal DAG store which contains IPLD blocks
 func (db *DB) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *DB) Systemstore() core.DSReaderWriter {
+func (db *DB) systemstore() client.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
@@ -159,7 +144,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	defer db.glock.Unlock()
 
 	log.Debug(ctx, "Checking if db has already been initialized...")
-	exists, err := db.Systemstore().Has(ctx, ds.NewKey("init"))
+	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -178,7 +163,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = db.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = db.systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -187,7 +172,7 @@ func (db *DB) initialize(ctx context.Context) error {
 }
 
 func (db *DB) PrintDump(ctx context.Context) {
-	printStore(ctx, db.Rootstore())
+	printStore(ctx, db.multistore.Rootstore())
 }
 
 func (db *DB) Executor() *planner.QueryExecutor {

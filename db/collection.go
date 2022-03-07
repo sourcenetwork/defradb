@@ -114,7 +114,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescription) (client.Collection, error) {
 	// check if collection by this name exists
 	cKey := core.NewCollectionKey(desc.Name)
-	exists, err := db.Systemstore().Has(ctx, cKey.ToDS())
+	exists, err := db.systemstore().Has(ctx, cKey.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	key := core.NewCollectionKey(col.desc.Name)
 
 	// write the collection metadata to the system store
-	err = db.Systemstore().Put(ctx, key.ToDS(), buf)
+	err = db.systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	col.schemaID = cid.String()
 
 	csKey := core.NewCollectionSchemaKey(cid.String())
-	err = db.Systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
 	log.Debug(ctx, "Created collection", logging.NewKV("Name", col.Name()), logging.NewKV("Id", col.SchemaID))
 	return col, err
 }
@@ -177,7 +177,7 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	key := core.NewCollectionKey(name)
-	buf, err := db.Systemstore().Get(ctx, key.ToDS())
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
-	buf, err := db.Systemstore().Get(ctx, key.ToDS())
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := core.NewCollectionKey("")
-	q, err := db.Systemstore().Query(ctx, query.Query{
+	q, err := db.systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
