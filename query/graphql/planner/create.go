@@ -96,7 +96,7 @@ func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Schema)
 	if err != nil {
 		return nil, err
 	}

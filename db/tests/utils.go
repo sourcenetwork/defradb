@@ -428,7 +428,7 @@ func setupDatabase(ctx context.Context, t *testing.T, dbi databaseInfo, schema s
 
 	collections := []client.Collection{}
 	for _, collectionName := range collectionNames {
-		col, err := db.GetCollection(ctx, collectionName)
+		col, err := db.GetCollectionByName(ctx, collectionName)
 		if assertError(t, test.Description, err, test.ExpectedError) {
 			return
 		}
@@ -498,7 +498,7 @@ func setupDatabaseUsingTargetBranch(ctx context.Context, t *testing.T, dbi datab
 		panic(err)
 	}
 
-	_, err = refreshedDb.db.GetCollection(ctx, collectionNames[0])
+	_, err = refreshedDb.db.GetCollectionByName(ctx, collectionNames[0])
 	if err != nil {
 		if err.Error() == "datastore: key not found" {
 			// If collection is not found - this must be a new test and doesn't exist in the target branch, so we pass it

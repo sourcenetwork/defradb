@@ -171,7 +171,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 }
 
 // GetCollection returns an existing collection within the database
-func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, errors.New("Collection name can't be empty")
 	}
@@ -227,7 +227,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 	}
 
 	name := string(buf)
-	return db.GetCollection(ctx, name)
+	return db.GetCollectionByName(ctx, name)
 }
 
 // GetAllCollections gets all the currently defined collections in the
@@ -255,7 +255,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		}
 
 		colName := ds.NewKey(res.Key).BaseNamespace()
-		col, err := db.GetCollection(ctx, colName)
+		col, err := db.GetCollectionByName(ctx, colName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
 		}

@@ -233,7 +233,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collectionName string, paddr m
 	var pid peer.ID
 
 	// verify collection
-	col, err := p.db.GetCollection(ctx, collectionName)
+	col, err := p.db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return pid, fmt.Errorf("Failed to get collection for replicator: %w", err)
 	}
