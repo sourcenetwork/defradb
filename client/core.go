@@ -24,20 +24,22 @@ import (
 )
 
 type DB interface {
-	// Collections
+	AddSchema(context.Context, string) error
+
 	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
-	ExecQuery(context.Context, string) *QueryResult
+	GetAllCollections(ctx context.Context) ([]Collection, error)
 	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
-	AddSchema(context.Context, string) error
-	PrintDump(ctx context.Context)
-	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
+
 	Root() ds.Batching
 	Blockstore() blockstore.Blockstore
+	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 
 	NewTxn(context.Context, bool) (Txn, error)
-	GetAllCollections(ctx context.Context) ([]Collection, error)
+	ExecQuery(context.Context, string) *QueryResult
+
+	PrintDump(ctx context.Context)
 }
 
 type Sequence interface{}
