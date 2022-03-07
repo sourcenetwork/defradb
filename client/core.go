@@ -21,6 +21,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
 
 type DB interface {
@@ -34,10 +35,7 @@ type DB interface {
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 	Root() ds.Batching
-	// Rootstore() core.DSReaderWriter
-	// Headstore() core.DSReaderWriter
-	// Datastore() core.DSReaderWriter
-	DAGstore() core.DAGStore
+	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (core.Txn, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)

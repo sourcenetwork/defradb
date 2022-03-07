@@ -27,6 +27,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -142,8 +143,8 @@ func (db *DB) Datastore() core.DSReaderWriter {
 	return db.multistore.Datastore()
 }
 
-// DAGstore returns the internal DAG store which contains IPLD blocks
-func (db *DB) DAGstore() core.DAGStore {
+// Blockstore returns the internal DAG store which contains IPLD blocks
+func (db *DB) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 

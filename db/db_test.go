@@ -343,7 +343,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, errGet := db.DAGstore().Get(ctx, c)
+		b, errGet := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, errGet)
 
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
@@ -373,7 +373,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, c := range cids {
-		b, err := db.DAGstore().Get(ctx, c)
+		b, err := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, err)
 
 		nd, err := dag.DecodeProtobuf(b.RawData())
