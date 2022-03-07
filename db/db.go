@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -194,6 +195,19 @@ func (db *DB) PrintDump(ctx context.Context) {
 
 func (db *DB) Executor() *planner.QueryExecutor {
 	return db.queryExecutor
+}
+
+func (db *DB) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
+	rm := db.schema.Relations
+	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
+	if rel == nil {
+		return "", fmt.Errorf("Relation does not exists")
+	}
+	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
+	if !ok {
+		return "", fmt.Errorf("Relation is missing referenced field")
+	}
+	return subtypefieldname, nil
 }
 
 // Close is called when we are shutting down the database.

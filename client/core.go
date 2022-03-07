@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
@@ -30,7 +29,7 @@ type DB interface {
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	ExecQuery(context.Context, string) *QueryResult
-	SchemaManager() *schema.SchemaManager
+	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
 	AddSchema(context.Context, string) error
 	PrintDump(ctx context.Context)
 	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)

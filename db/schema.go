@@ -15,7 +15,6 @@ import (
 
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -73,10 +72,4 @@ func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 		}
 	}
 	return nil
-}
-
-// func (db *DB) LoadSchemaIfNotExists(schema string) error { return nil }
-
-func (db *DB) SchemaManager() *schema.SchemaManager {
-	return db.schema
 }
