@@ -20,7 +20,6 @@ import (
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
-	"github.com/sourcenetwork/defradb/core"
 )
 
 // Key Versions
@@ -50,7 +49,6 @@ type DocKey struct {
 	version uint16
 	uuid    uuid.UUID
 	cid     cid.Cid
-	Key     core.DataStoreKey
 }
 
 // Undef can be defined to be a nil like DocKey
@@ -60,13 +58,11 @@ var Undef = DocKey{}
 // namespaced by the versionNS
 // TODO: Parameterize namespace Version
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
-	dc := DocKey{
+	return DocKey{
 		version: V0,
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
-	dc.Key = core.DataStoreKey{DocKey: dc.String()}
-	return dc
 }
 
 func NewFromString(key string) (DocKey, error) {
@@ -93,12 +89,10 @@ func NewFromString(key string) (DocKey, error) {
 		return DocKey{}, err
 	}
 
-	dc := DocKey{
+	return DocKey{
 		version: uint16(version),
 		uuid:    uuid,
-	}
-	dc.Key = core.DataStoreKey{DocKey: key}
-	return dc, nil
+	}, nil
 }
 
 // UUID returns the doc key in UUID form
