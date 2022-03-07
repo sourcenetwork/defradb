@@ -426,11 +426,3 @@ func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
 	// Todo: Dont abuse DataStoreKey for version cid!
 	return core.Spans{core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()})}
 }
-
-// func createMerkleCRDT(ctype core.CType, key ds.Key, store core.MultiStore) (crdt.MerkleCRDT, error) {
-// 	key := vf.col.GetPrimaryIndexDocKey(vf.key.Key).ChildString(core.COMPOSITE_ID)
-// 	compCRDT, err = crdt.DefaultFactory.InstanceWithStores(vf.store, core.COMPOSITE, key)
-// 	if err != nil {
-// 		return err
-// 	}
-// }
