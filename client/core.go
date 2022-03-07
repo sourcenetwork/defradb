@@ -13,7 +13,6 @@ package client
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -37,7 +36,7 @@ type DB interface {
 	Root() ds.Batching
 	Blockstore() blockstore.Blockstore
 
-	NewTxn(context.Context, bool) (core.Txn, error)
+	NewTxn(context.Context, bool) (Txn, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
 }
 
@@ -74,7 +73,7 @@ type Collection interface {
 
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
-	WithTxn(core.Txn) Collection
+	WithTxn(Txn) Collection
 
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 }

@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -79,12 +80,12 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher
 
-	txn core.Txn
+	txn client.Txn
 	ctx context.Context
 
 	// Transient version store
 	root  ds.Datastore
-	store core.Txn
+	store client.Txn
 
 	key     core.DataStoreKey
 	version cid.Cid
@@ -112,7 +113,7 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 }
 
 // Start serializes the correct state accoriding to the Key and CID
-func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, txn client.Txn, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}

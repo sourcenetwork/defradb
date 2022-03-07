@@ -16,6 +16,7 @@ import (
 	"errors"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -24,12 +25,12 @@ import (
 // duplication, and better manage the overhead
 // tasks that all the CRDTs need to implement anyway
 type baseCRDT struct {
-	store core.DSReaderWriter
+	store client.DSReaderWriter
 	key   core.DataStoreKey
 }
 
 // @TODO paramaterize ns/suffix
-func newBaseCRDT(store core.DSReaderWriter, key core.DataStoreKey) baseCRDT {
+func newBaseCRDT(store client.DSReaderWriter, key core.DataStoreKey) baseCRDT {
 	return baseCRDT{
 		store: store,
 		key:   key,

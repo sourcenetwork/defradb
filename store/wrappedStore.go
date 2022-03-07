@@ -12,23 +12,22 @@ package store
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/core"
-
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastores/iterable"
 )
 
 type wrappedStore struct {
 	transform ktds.KeyTransform
-	store     core.DSReaderWriter
+	store     client.DSReaderWriter
 }
 
-var _ core.DSReaderWriter = (*wrappedStore)(nil)
+var _ client.DSReaderWriter = (*wrappedStore)(nil)
 
-func prefix(root core.DSReaderWriter, prefix ds.Key) core.DSReaderWriter {
+func prefix(root client.DSReaderWriter, prefix ds.Key) client.DSReaderWriter {
 	return &wrappedStore{
 		transform: ktds.PrefixTransform{Prefix: prefix},
 		store:     root,

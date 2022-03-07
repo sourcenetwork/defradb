@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -44,7 +45,7 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(ctx context.Context, txn core.Txn, key core.DataStoreKey) (*document.Document, error) {
+func (c *Collection) get(ctx context.Context, txn client.Txn, key core.DataStoreKey) (*document.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc

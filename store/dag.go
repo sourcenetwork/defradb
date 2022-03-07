@@ -11,7 +11,7 @@
 package store
 
 import (
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
@@ -19,14 +19,14 @@ import (
 // DAGStore is the interface to the underlying BlockStore and BlockService
 type dagStore struct {
 	blockstore.Blockstore // become a Blockstore
-	store                 core.DSReaderWriter
+	store                 client.DSReaderWriter
 	// bstore          blockstore.Blockstore
 	// bserv           blockservice.BlockService
 }
 
 // NewDAGStore creates a new DAGStore with the supplied
 // Batching datastore
-func NewDAGStore(store core.DSReaderWriter) core.DAGStore {
+func NewDAGStore(store client.DSReaderWriter) client.DAGStore {
 	dstore := &dagStore{
 		Blockstore: NewBlockstore(store),
 		store:      store,

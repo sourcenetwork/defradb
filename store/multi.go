@@ -11,22 +11,22 @@
 package store
 
 import (
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
 type multistore struct {
-	root   core.DSReaderWriter
-	data   core.DSReaderWriter
-	head   core.DSReaderWriter
-	system core.DSReaderWriter
-	// block core.DSReaderWriter
-	dag core.DAGStore
+	root   client.DSReaderWriter
+	data   client.DSReaderWriter
+	head   client.DSReaderWriter
+	system client.DSReaderWriter
+	// block client.DSReaderWriter
+	dag client.DAGStore
 }
 
-var _ core.MultiStore = (*multistore)(nil)
+var _ client.MultiStore = (*multistore)(nil)
 
-func MultiStoreFrom(rootstore core.DSReaderWriter) core.MultiStore {
+func MultiStoreFrom(rootstore client.DSReaderWriter) client.MultiStore {
 	block := prefix(rootstore, base.BlockStoreKey)
 	ms := &multistore{
 		root:   rootstore,
@@ -39,26 +39,26 @@ func MultiStoreFrom(rootstore core.DSReaderWriter) core.MultiStore {
 	return ms
 }
 
-// Datastore implements core.MultiStore
-func (ms multistore) Datastore() core.DSReaderWriter {
+// Datastore implements client.MultiStore
+func (ms multistore) Datastore() client.DSReaderWriter {
 	return ms.data
 }
 
-// Headstore implements core.MultiStore
-func (ms multistore) Headstore() core.DSReaderWriter {
+// Headstore implements client.MultiStore
+func (ms multistore) Headstore() client.DSReaderWriter {
 	return ms.head
 }
 
-// DAGstore implements core.MultiStore
-func (ms multistore) DAGstore() core.DAGStore {
+// DAGstore implements client.MultiStore
+func (ms multistore) DAGstore() client.DAGStore {
 	return ms.dag
 }
 
-// Rootstore implements core.MultiStore
-func (ms multistore) Rootstore() core.DSReaderWriter {
+// Rootstore implements client.MultiStore
+func (ms multistore) Rootstore() client.DSReaderWriter {
 	return ms.root
 }
 
-func (ms multistore) Systemstore() core.DSReaderWriter {
+func (ms multistore) Systemstore() client.DSReaderWriter {
 	return ms.system
 }

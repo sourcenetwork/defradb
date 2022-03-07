@@ -93,7 +93,7 @@ type Statement struct {
 // Planner combines session state and database state to
 // produce a query plan, which is run by the execution context.
 type Planner struct {
-	txn core.Txn
+	txn client.Txn
 	db  client.DB
 
 	ctx     context.Context
@@ -103,7 +103,7 @@ type Planner struct {
 
 }
 
-func makePlanner(ctx context.Context, db client.DB, txn core.Txn) *Planner {
+func makePlanner(ctx context.Context, db client.DB, txn client.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,

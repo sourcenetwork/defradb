@@ -138,7 +138,7 @@ func (c *Collection) DeleteWithFilter(
 
 func (c *Collection) deleteWithKey(
 	ctx context.Context,
-	txn core.Txn,
+	txn client.Txn,
 	key core.DataStoreKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
@@ -168,7 +168,7 @@ func (c *Collection) deleteWithKey(
 
 func (c *Collection) deleteWithKeys(
 	ctx context.Context,
-	txn core.Txn,
+	txn client.Txn,
 	keys []key.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
@@ -207,7 +207,7 @@ func (c *Collection) deleteWithKeys(
 
 func (c *Collection) deleteWithFilter(
 	ctx context.Context,
-	txn core.Txn,
+	txn client.Txn,
 	filter interface{},
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
@@ -265,10 +265,10 @@ func (c *Collection) deleteWithFilter(
 }
 
 type dagDeleter struct {
-	bstore core.DAGStore
+	bstore client.DAGStore
 }
 
-func newDagDeleter(bstore core.DAGStore) dagDeleter {
+func newDagDeleter(bstore client.DAGStore) dagDeleter {
 	return dagDeleter{
 		bstore: bstore,
 	}
@@ -286,7 +286,7 @@ func newDagDeleter(bstore core.DAGStore) dagDeleter {
 //   3) Deleting headstore state.
 func (c *Collection) applyFullDelete(
 	ctx context.Context,
-	txn core.Txn, dockey core.DataStoreKey) error {
+	txn client.Txn, dockey core.DataStoreKey) error {
 
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).

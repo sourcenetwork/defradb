@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 
 	cid "github.com/ipfs/go-cid"
@@ -27,8 +28,8 @@ var (
 )
 
 type MerkleClock struct {
-	headstore core.DSReaderWriter
-	dagstore  core.DAGStore
+	headstore client.DSReaderWriter
+	dagstore  client.DAGStore
 	// dagSyncer
 	headset *heads
 	crdt    core.ReplicatedData
@@ -36,7 +37,7 @@ type MerkleClock struct {
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, namespace core.HeadStoreKey, crdt core.ReplicatedData) core.MerkleClock {
+func NewMerkleClock(headstore client.DSReaderWriter, dagstore client.DAGStore, namespace core.HeadStoreKey, crdt core.ReplicatedData) core.MerkleClock {
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,

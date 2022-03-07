@@ -17,6 +17,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/store"
 
@@ -27,7 +28,7 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-func newMockStore() core.DSReaderWriter {
+func newMockStore() client.DSReaderWriter {
 	return store.AsDSReaderWriter(ds.NewMapDatastore())
 }
 

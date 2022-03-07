@@ -87,7 +87,7 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
+func initCRDTForType(ctx context.Context, txn client.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
 	var ctype core.CType
 	if field == "" { // empty field name implies composite type

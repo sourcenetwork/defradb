@@ -27,7 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
@@ -279,7 +278,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		}
 
 		// Create the transactions before executing and queries
-		transactions := make([]core.Txn, 0, len(test.TransactionalQueries))
+		transactions := make([]client.Txn, 0, len(test.TransactionalQueries))
 		erroredQueries := make([]bool, len(test.TransactionalQueries))
 		for i, tq := range test.TransactionalQueries {
 			if len(transactions) < tq.TransactionId {

@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 
 	ipld "github.com/ipfs/go-ipld-format"
@@ -80,7 +81,7 @@ type CompositeDAG struct {
 	schemaID string
 }
 
-func NewCompositeDAG(store core.DSReaderWriter, schemaID string, namespace core.Key, key string) CompositeDAG {
+func NewCompositeDAG(store client.DSReaderWriter, schemaID string, namespace core.Key, key string) CompositeDAG {
 	return CompositeDAG{
 		key:      key,
 		schemaID: schemaID,

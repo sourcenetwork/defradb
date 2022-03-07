@@ -46,7 +46,7 @@ var _ client.Collection = (*Collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type Collection struct {
 	db  *DB
-	txn core.Txn
+	txn client.Txn
 
 	colID uint32
 
@@ -278,7 +278,7 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	return c.getAllDocKeysChan(ctx, txn)
 }
 
-func (c *Collection) getAllDocKeysChan(ctx context.Context, txn core.Txn) (<-chan client.DocKeysResult, error) {
+func (c *Collection) getAllDocKeysChan(ctx context.Context, txn client.Txn) (<-chan client.DocKeysResult, error) {
 	prefix := c.getPrimaryIndexDocKey(core.DataStoreKey{}) // empty path for all keys prefix
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -398,7 +398,7 @@ func (c *Collection) SchemaID() string {
 
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
-func (c *Collection) WithTxn(txn core.Txn) client.Collection {
+func (c *Collection) WithTxn(txn client.Txn) client.Collection {
 	return &Collection{
 		db:       c.db,
 		txn:      txn,
@@ -442,7 +442,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*document.Document) 
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) create(ctx context.Context, txn core.Txn, doc *document.Document) error {
+func (c *Collection) create(ctx context.Context, txn client.Txn, doc *document.Document) error {
 	// DocKey verification
 	buf, err := doc.Bytes()
 	if err != nil {
@@ -519,7 +519,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
-func (c *Collection) update(ctx context.Context, txn core.Txn, doc *document.Document) error {
+func (c *Collection) update(ctx context.Context, txn client.Txn, doc *document.Document) error {
 	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
@@ -554,7 +554,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn core.Txn, doc *document.Document) (cid.Cid, error) {
+func (c *Collection) save(ctx context.Context, txn client.Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -648,7 +648,7 @@ func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 
 // at the moment, delete only does data storage delete.
 // Dag, and head store will soon follow.
-func (c *Collection) delete(ctx context.Context, txn core.Txn, key core.DataStoreKey) (bool, error) {
+func (c *Collection) delete(ctx context.Context, txn client.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
 		Prefix:   c.getPrimaryIndexDocKey(key).ToString(),
 		KeysOnly: true,
@@ -686,11 +686,11 @@ func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 }
 
 // check if a document exists with the given key
-func (c *Collection) exists(ctx context.Context, txn core.Txn, key core.DataStoreKey) (bool, error) {
+func (c *Collection) exists(ctx context.Context, txn client.Txn, key core.DataStoreKey) (bool, error) {
 	return txn.Datastore().Has(ctx, c.getPrimaryIndexDocKey(key.WithValueFlag()).ToDS())
 }
 
-func (c *Collection) saveDocValue(ctx context.Context, txn core.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
+func (c *Collection) saveDocValue(ctx context.Context, txn client.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
@@ -715,7 +715,7 @@ func (c *Collection) saveDocValue(ctx context.Context, txn core.Txn, key core.Da
 
 func (c *Collection) saveValueToMerkleCRDT(
 	ctx context.Context,
-	txn core.Txn,
+	txn client.Txn,
 	key core.DataStoreKey,
 	ctype core.CType,
 	args ...interface{}) (cid.Cid, error) {
@@ -768,7 +768,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 // getTxn gets or creates a new transaction from the underlying db.
 // If the collection already has a txn, return the existing one.
 // Otherwise, create a new implicit transaction.
-func (c *Collection) getTxn(ctx context.Context, readonly bool) (core.Txn, error) {
+func (c *Collection) getTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	if c.txn != nil {
 		return c.txn, nil
 	}
@@ -779,13 +779,13 @@ func (c *Collection) getTxn(ctx context.Context, readonly bool) (core.Txn, error
 // function only if its an implicit transaction.
 // Implicit transactions are transactions that are created *during* an operation execution as a side effect.
 // Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
-func (c *Collection) discardImplicitTxn(ctx context.Context, txn core.Txn) {
+func (c *Collection) discardImplicitTxn(ctx context.Context, txn client.Txn) {
 	if c.txn == nil {
 		txn.Discard(ctx)
 	}
 }
 
-func (c *Collection) commitImplicitTxn(ctx context.Context, txn core.Txn) error {
+func (c *Collection) commitImplicitTxn(ctx context.Context, txn client.Txn) error {
 	if c.txn == nil {
 		return txn.Commit(ctx)
 	}

@@ -13,6 +13,7 @@ package crdt
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	corenet "github.com/sourcenetwork/defradb/core/net"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	lwwFactoryFn = MerkleCRDTFactory(func(mstore core.MultiStore, _ string, _ corenet.Broadcaster) MerkleCRDTInitFn {
+	lwwFactoryFn = MerkleCRDTFactory(func(mstore client.MultiStore, _ string, _ corenet.Broadcaster) MerkleCRDTInitFn {
 		return func(key core.DataStoreKey) MerkleCRDT {
 			return NewMerkleLWWRegister(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), core.DataStoreKey{}, key)
 		}
@@ -49,7 +50,7 @@ type MerkleLWWRegister struct {
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT
-func NewMerkleLWWRegister(datastore core.DSReaderWriter, headstore core.DSReaderWriter, dagstore core.DAGStore, ns, key core.DataStoreKey) *MerkleLWWRegister {
+func NewMerkleLWWRegister(datastore client.DSReaderWriter, headstore client.DSReaderWriter, dagstore client.DAGStore, ns, key core.DataStoreKey) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(datastore, key /* stuff like namespace and ID */)
 	clk := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), register)
 

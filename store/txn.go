@@ -15,22 +15,22 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastores/iterable"
 )
 
 type txn struct {
 	t ds.Txn
-	core.MultiStore
+	client.MultiStore
 	isBatch bool
 
 	successFns []func()
 	errorFns   []func()
 }
 
-var _ core.Txn = (*txn)(nil)
+var _ client.Txn = (*txn)(nil)
 
-func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (core.Txn, error) {
+func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (client.Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -121,28 +121,28 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 
 /*
 // Systemstore returns the txn wrapped as a systemstore under the /system namespace
-func (t *txn) Systemstore() core.DSReaderWriter {
+func (t *txn) Systemstore() client.DSReaderWriter {
 	return t.systemstore
 }
 
 // Datastore returns the txn wrapped as a datastore under the /data namespace
-func (t *txn) Datastore() core.DSReaderWriter {
+func (t *txn) Datastore() client.DSReaderWriter {
 	return t.datastore
 }
 
 // Headstore returns the txn wrapped as a headstore under the /heads namespace
-func (t *txn) Headstore() core.DSReaderWriter {
+func (t *txn) Headstore() client.DSReaderWriter {
 	return t.headstore
 }
 
 // DAGstore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
-func (t *txn) DAGstore() core.DAGStore {
+func (t *txn) DAGstore() client.DAGStore {
 	return t.dagstore
 }
 
 // Rootstore returns the underlying txn as a DSReaderWriter to implement
 // the MultiStore interface
-func (t *txn) Rootstore() core.DSReaderWriter {
+func (t *txn) Rootstore() client.DSReaderWriter {
 	return t.IterableTxn
 }*/
 

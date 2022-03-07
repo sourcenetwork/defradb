@@ -36,7 +36,7 @@ type MerkleCRDT interface {
 }
 
 // type MerkleCRDTInitFn func(core.Key) MerkleCRDT
-// type MerkleCRDTFactory func(store core.DSReaderWriter, namespace core.Key) MerkleCRDTInitFn
+// type MerkleCRDTFactory func(store client.DSReaderWriter, namespace core.Key) MerkleCRDTInitFn
 
 // Type indicates MerkleCRDT type
 // type Type byte

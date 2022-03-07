@@ -16,6 +16,7 @@ import (
 	"errors"
 
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastores/iterable"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -29,7 +30,7 @@ import (
 // encoding.
 type Fetcher interface {
 	Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error
-	Start(ctx context.Context, txn core.Txn, spans core.Spans) error
+	Start(ctx context.Context, txn client.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*document.EncodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*document.Document, error)
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
@@ -45,7 +46,7 @@ type DocumentFetcher struct {
 	index   *base.IndexDescription
 	reverse bool
 
-	txn          core.Txn
+	txn          client.Txn
 	spans        core.Spans
 	order        []dsq.Order
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
@@ -101,7 +102,7 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 }
 
 // Start implements DocumentFetcher
-func (df *DocumentFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
+func (df *DocumentFetcher) Start(ctx context.Context, txn client.Txn, spans core.Spans) error {
 	if df.col == nil {
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
