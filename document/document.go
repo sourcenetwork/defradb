@@ -22,7 +22,6 @@ import (
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
@@ -64,7 +63,6 @@ var (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	schema base.SchemaDescription
 	key    key.DocKey
 	fields map[string]Field
 	values map[Field]Value
@@ -88,15 +86,11 @@ func newEmptyDoc() *Document {
 	}
 }
 
-func NewFromMap(data map[string]interface{}, schema ...base.SchemaDescription) (*Document, error) {
+func NewFromMap(data map[string]interface{}) (*Document, error) {
 	var err error
 	doc := &Document{
 		fields: make(map[string]Field),
 		values: make(map[Field]Value),
-	}
-
-	if len(schema) > 0 {
-		doc.schema = schema[0]
 	}
 
 	// check if document contains special _key field
@@ -143,14 +137,14 @@ func NewFromMap(data map[string]interface{}, schema ...base.SchemaDescription) (
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array
-func NewFromJSON(obj []byte, schema ...base.SchemaDescription) (*Document, error) {
+func NewFromJSON(obj []byte) (*Document, error) {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(obj, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFromMap(data, schema...)
+	return NewFromMap(data)
 }
 
 func (doc *Document) Head() cid.Cid {

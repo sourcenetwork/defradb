@@ -79,7 +79,6 @@ func (df *DocumentFetcher) Init(col *base.CollectionDescription, index *base.Ind
 	df.initialized = true
 	df.isReadingDocument = false
 	df.doc = new(document.EncodedDocument)
-	df.doc.Schema = &col.Schema
 
 	if df.kvResultsIter != nil {
 		if err := df.kvResultsIter.Close(); err != nil {
