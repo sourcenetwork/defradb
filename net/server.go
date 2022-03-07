@@ -125,7 +125,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaID := string(req.Body.SchemaID)
-	docKey := core.DataStoreKey{DocKey: req.Body.DocKey.DocKey.String()}
+	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
 	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get collection from schemaID %s: %w", schemaID, err)

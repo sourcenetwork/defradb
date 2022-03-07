@@ -461,10 +461,10 @@ func (c *Collection) create(ctx context.Context, txn core.Txn, doc *document.Doc
 		return err
 	}
 
-	dockey := key.NewDocKeyV0(doccid).String()
-	key := core.DataStoreKey{DocKey: dockey}
-	if dockey != doc.Key().String() {
-		return fmt.Errorf("Expected %s, got %s : %w", doc.Key(), dockey, ErrDocVerification)
+	dockey := key.NewDocKeyV0(doccid)
+	key := core.DataStoreKeyFromDocKey(dockey)
+	if key.DocKey != doc.Key().String() {
+		return fmt.Errorf("Expected %s, got %s : %w", doc.Key(), key.DocKey, ErrDocVerification)
 	}
 
 	// check if doc already exists
@@ -497,7 +497,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dockey := core.DataStoreKey{DocKey: doc.Key().String()}
+	dockey := core.DataStoreKeyFromDocKey(doc.Key())
 	exists, err := c.exists(ctx, txn, dockey)
 	if err != nil {
 		return err
@@ -537,7 +537,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	// Check if document already exists with key
-	dockey := core.DataStoreKey{DocKey: doc.Key().String()}
+	dockey := core.DataStoreKeyFromDocKey(doc.Key())
 	exists, err := c.exists(ctx, txn, dockey)
 	if err != nil {
 		return err
@@ -560,7 +560,7 @@ func (c *Collection) save(ctx context.Context, txn core.Txn, doc *document.Docum
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	dockey := core.DataStoreKey{DocKey: doc.Key().String()}
+	dockey := core.DataStoreKeyFromDocKey(doc.Key())
 	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
@@ -629,7 +629,7 @@ func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := core.DataStoreKey{DocKey: key.String()}
+	dsKey := core.DataStoreKeyFromDocKey(key)
 	exists, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
 		return false, err
@@ -677,7 +677,7 @@ func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := core.DataStoreKey{DocKey: key.String()}
+	dsKey := core.DataStoreKeyFromDocKey(key)
 	exists, err := c.exists(ctx, txn, dsKey)
 	if err != nil && err != ds.ErrNotFound {
 		return false, err

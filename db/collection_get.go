@@ -27,7 +27,7 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	dsKey := core.DataStoreKey{DocKey: key.String()}
+	dsKey := core.DataStoreKeyFromDocKey(key)
 
 	found, err := c.exists(ctx, txn, dsKey)
 	if err != nil {

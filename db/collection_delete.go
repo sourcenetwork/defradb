@@ -84,7 +84,7 @@ func (c *Collection) DeleteWithKey(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := core.DataStoreKey{DocKey: key.String()}
+	dsKey := core.DataStoreKeyFromDocKey(key)
 	res, err := c.deleteWithKey(ctx, txn, dsKey, opts...)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (c *Collection) deleteWithKeys(
 	}
 
 	for _, key := range keys {
-		dsKey := core.DataStoreKey{DocKey: key.String()}
+		dsKey := core.DataStoreKeyFromDocKey(key)
 
 		// Check this docKey actually exists.
 		found, err := c.exists(ctx, txn, dsKey)

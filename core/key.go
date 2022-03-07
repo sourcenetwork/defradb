@@ -17,6 +17,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/document/key"
 )
 
 var (
@@ -136,6 +137,12 @@ func NewDataStoreKey(key string) DataStoreKey {
 	dataStoreKey.CollectionId = elements[indexOfDocKey-2]
 
 	return dataStoreKey
+}
+
+func DataStoreKeyFromDocKey(dockey key.DocKey) DataStoreKey {
+	return DataStoreKey{
+		DocKey: dockey.String(),
+	}
 }
 
 // Creates a new HeadStoreKey from a string as best as it can,
