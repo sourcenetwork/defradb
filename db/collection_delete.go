@@ -84,7 +84,8 @@ func (c *Collection) DeleteWithKey(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithKey(ctx, txn, key, opts...)
+	dsKey := core.DataStoreKeyFromDocKey(key)
+	res, err := c.deleteWithKey(ctx, txn, dsKey, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) deleteWithKey(
 	ctx context.Context,
 	txn core.Txn,
-	key key.DocKey,
+	key core.DataStoreKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
@@ -159,7 +160,7 @@ func (c *Collection) deleteWithKey(
 	// Upon successfull deletion, record a summary.
 	results := &client.DeleteResult{
 		Count:   1,
-		DocKeys: []string{key.String()},
+		DocKeys: []string{key.DocKey},
 	}
 
 	return results, nil
@@ -176,9 +177,10 @@ func (c *Collection) deleteWithKeys(
 	}
 
 	for _, key := range keys {
+		dsKey := core.DataStoreKeyFromDocKey(key)
 
 		// Check this docKey actually exists.
-		found, err := c.exists(ctx, txn, key)
+		found, err := c.exists(ctx, txn, dsKey)
 
 		if err != nil {
 			return nil, err
@@ -188,7 +190,7 @@ func (c *Collection) deleteWithKeys(
 		}
 
 		// Apply the function that will perform the full deletion of this document.
-		err = c.applyFullDelete(ctx, txn, key)
+		err = c.applyFullDelete(ctx, txn, dsKey)
 		if err != nil {
 			return nil, err
 		}
@@ -245,10 +247,7 @@ func (c *Collection) deleteWithFilter(
 		docKey := query.Values()[parser.DocKeyFieldName].(string)
 
 		// Convert from string to key.DocKey.
-		key, err := key.NewFromString(docKey)
-		if err != nil {
-			return nil, err
-		}
+		key := core.DataStoreKey{DocKey: docKey}
 
 		// Delete the document that is associated with this key we got from the filter.
 		err = c.applyFullDelete(ctx, txn, key)
@@ -287,7 +286,7 @@ func newDagDeleter(bstore core.DAGStore) dagDeleter {
 //   3) Deleting headstore state.
 func (c *Collection) applyFullDelete(
 	ctx context.Context,
-	txn core.Txn, dockey key.DocKey) error {
+	txn core.Txn, dockey core.DataStoreKey) error {
 
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
@@ -305,7 +304,7 @@ func (c *Collection) applyFullDelete(
 	// Covert dockey to compositeKey as follows:
 	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
 	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
-	compositeKey := dockey.Key.ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE)
+	compositeKey := dockey.ToHeadStoreKey().WithFieldId(core.COMPOSITE_NAMESPACE)
 	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
 
 	// Get all the heads (cids).
@@ -324,7 +323,7 @@ func (c *Collection) applyFullDelete(
 
 	// 2. =========================== Delete datastore state ============================
 	dataQuery := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).ToString(),
+		Prefix:   c.getPrimaryIndexDocKey(dockey).ToString(),
 		KeysOnly: true,
 	}
 	dataResult, err := txn.Datastore().Query(ctx, dataQuery)
@@ -340,7 +339,7 @@ func (c *Collection) applyFullDelete(
 		}
 	}
 	// Delete the parent marker key for this document.
-	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key.WithValueFlag()).ToDS())
+	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.WithValueFlag()).ToDS())
 	if err != nil {
 		return err
 	}
@@ -348,7 +347,7 @@ func (c *Collection) applyFullDelete(
 
 	// 3. =========================== Delete headstore state ===========================
 	headQuery := query.Query{
-		Prefix:   dockey.Key.ToString(),
+		Prefix:   dockey.ToString(),
 		KeysOnly: true,
 	}
 	headResult, err := txn.Headstore().Query(ctx, headQuery)

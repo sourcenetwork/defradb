@@ -27,8 +27,9 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
+	dsKey := core.DataStoreKeyFromDocKey(key)
 
-	found, err := c.exists(ctx, txn, key)
+	found, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -36,14 +37,14 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 		return nil, ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, key)
+	doc, err := c.get(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(ctx context.Context, txn core.Txn, key key.DocKey) (*document.Document, error) {
+func (c *Collection) get(ctx context.Context, txn core.Txn, key core.DataStoreKey) (*document.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
@@ -56,7 +57,7 @@ func (c *Collection) get(ctx context.Context, txn core.Txn, key key.DocKey) (*do
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(desc, index, key.Key.DocKey)
+	targetKey := base.MakeIndexKey(desc, index, key.DocKey)
 	// run the doc fetcher
 	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {

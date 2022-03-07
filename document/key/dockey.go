@@ -13,7 +13,6 @@ package key
 import (
 	// "github.com/google/uuid"
 	"bytes"
-	"context"
 	"encoding/binary"
 	"errors"
 	"strings"
@@ -21,7 +20,6 @@ import (
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
-	"github.com/sourcenetwork/defradb/core"
 )
 
 // Key Versions
@@ -51,8 +49,6 @@ type DocKey struct {
 	version uint16
 	uuid    uuid.UUID
 	cid     cid.Cid
-	peerID  string
-	Key     core.DataStoreKey
 }
 
 // Undef can be defined to be a nil like DocKey
@@ -62,13 +58,11 @@ var Undef = DocKey{}
 // namespaced by the versionNS
 // TODO: Parameterize namespace Version
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
-	dc := DocKey{
+	return DocKey{
 		version: V0,
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
-	dc.Key = core.DataStoreKey{DocKey: dc.String()}
-	return dc
 }
 
 func NewFromString(key string) (DocKey, error) {
@@ -95,12 +89,10 @@ func NewFromString(key string) (DocKey, error) {
 		return DocKey{}, err
 	}
 
-	dc := DocKey{
+	return DocKey{
 		version: uint16(version),
 		uuid:    uuid,
-	}
-	dc.Key = core.DataStoreKey{DocKey: key}
-	return dc, nil
+	}, nil
 }
 
 // UUID returns the doc key in UUID form
@@ -121,49 +113,4 @@ func (key DocKey) Bytes() []byte {
 	buf := make([]byte, binary.MaxVarintLen16)
 	binary.PutUvarint(buf, uint64(key.version))
 	return append(buf, key.uuid.Bytes()...)
-}
-
-// Verify ensures that the given DocKey is valid as per the DefraDB spec
-// to prevent against collions from both honest and dishonest validators
-// TODO: Check into better utilizing or dropping context, since we don't recurse
-// down
-func (key DocKey) Verify(ctx context.Context, data cid.Cid, peerID string) bool {
-	parent, ok := ctx.Value("parent").(uuid.UUID)
-	// if we have a parent then assume were operating  on a sub key
-	// otherwise were the root DocKey
-	var comparedUUID uuid.UUID
-	if ok {
-		comparedUUID = uuid.NewV5(parent, data.String())
-	} else {
-		comparedUUID = uuid.NewV5(NamespaceSDNDocKeyV0, data.String())
-	}
-
-	return comparedUUID.String() == key.uuid.String()
-}
-
-// Sub returns a sub DocKey, which is a UUIDv5 generated
-// using the parent UUID as the namespace, and the provided
-// name
-func (key DocKey) Sub(subname string) DocKey {
-	subParts := strings.Split(subname, "/")
-	return key.subrec(subParts)
-}
-
-// recursive Sub call
-// prerequisite, subparts needs to be at least 1 element long
-func (key DocKey) subrec(subparts []string) DocKey {
-	if len(subparts) > 1 {
-		subkey := DocKey{
-			uuid:   uuid.NewV5(key.uuid, subparts[0]),
-			cid:    key.cid,
-			peerID: key.peerID,
-		}
-		return subkey.subrec(subparts[1:])
-	}
-	// else
-	return DocKey{
-		uuid:   uuid.NewV5(key.uuid, subparts[0]),
-		cid:    key.cid,
-		peerID: key.peerID,
-	}
 }

@@ -208,7 +208,7 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn core.Txn, keys []ke
 			return nil, err
 		}
 
-		results.DocKeys[i] = key.Key.DocKey
+		results.DocKeys[i] = key.String()
 		results.Count++
 	}
 	return results, nil

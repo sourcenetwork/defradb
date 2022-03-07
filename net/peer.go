@@ -304,8 +304,8 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 				log.ErrorE(p.ctx, "Key channel error", key.Err)
 				continue
 			}
-			dockey := key.Key
-			headset := clock.NewHeadSet(txn.Headstore(), dockey.Key.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey())
+			dockey := core.DataStoreKeyFromDocKey(key.Key)
+			headset := clock.NewHeadSet(txn.Headstore(), dockey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey())
 			cids, priority, err := headset.List(ctx)
 			if err != nil {
 				log.ErrorE(
@@ -336,7 +336,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 				}
 
 				lg := core.Log{
-					DocKey:   dockey.String(),
+					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
 					Block:    nd,

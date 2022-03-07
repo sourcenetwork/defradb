@@ -26,6 +26,7 @@ import (
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -124,7 +125,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 
 	schemaID := string(req.Body.SchemaID)
-	docKey := req.Body.DocKey.DocKey.Key
+	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
 	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get collection from schemaID %s: %w", schemaID, err)
