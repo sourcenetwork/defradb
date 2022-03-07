@@ -42,8 +42,6 @@ type DB interface {
 	PrintDump(ctx context.Context)
 }
 
-type Sequence interface{}
-
 type Collection interface {
 	Description() base.CollectionDescription
 	Name() string
