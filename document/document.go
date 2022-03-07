@@ -502,7 +502,7 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 		}
 		docMap[k] = value.Value()
 	}
-	docMap["_key"] = doc.Key().Key.DocKey
+	docMap["_key"] = doc.Key().String()
 
 	return docMap, nil
 }
