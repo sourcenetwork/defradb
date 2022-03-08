@@ -38,16 +38,6 @@ comment:
   require_changes: true
 
 ignore:
-  - "docs"
-  - ".circleci"
-  - ".github"
-  - "build"
-  - "**/*.graphql"
-  - "**/*.md"
-  - "**/*.txt"
-  - "licenses"
-  - ".gitignore"
-  - ".golangci.sourceinc.yaml"
-  - "Makefile"
-  # - "**/*_test.go"
-  # - "db/tests"
+  - "bench"
+  - "db/tests"
+  - "**/*_test.go"
