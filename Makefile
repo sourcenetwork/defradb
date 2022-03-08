@@ -24,16 +24,16 @@ start: build
 dump: build
 	./build/defradb client dump
 
-.PHONY: deps\:golangci-lint
-deps\:golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.43.0
+.PHONY: deps\:lint
+deps\:lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.44.0
 
 .PHONY: deps\:go-acc
 deps\:go-acc:
 	go install github.com/ory/go-acc@latest
 
 .PHONY: deps
-deps: deps\:golangci-lint deps\:go-acc
+deps: deps\:lint deps\:go-acc
 	go mod download
 
 .PHONY: tidy
