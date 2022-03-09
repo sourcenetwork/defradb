@@ -101,7 +101,7 @@ jobs:
           github.event_name == 'pull_request' &&
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
-          github.base_ref = 'ci/test'
+          github.base_ref == 'ci/test'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
       - name: Set the output to be the benchmark type.
