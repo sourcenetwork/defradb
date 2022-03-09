@@ -13,6 +13,7 @@ package storage
 import (
 	"context"
 	"math/rand"
+	"sort"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -32,11 +33,13 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 	if err != nil {
 		return err
 	}
+	pointsPerInterval := len(keys) / opCount
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
-			key := ds.NewKey(keys[rand.Int31n(int32(len(keys)))])
+			positionInInterval := int32(j*pointsPerInterval) + rand.Int31n(int32(pointsPerInterval))
+			key := ds.NewKey(keys[positionInInterval])
 			_, err := db.Get(ctx, key)
 			if err != nil {
 				return err
@@ -155,5 +158,18 @@ func backfillBenchmarkStorageDB(ctx context.Context, db ds.Batching, objCount in
 		}
 	}
 
+	sort.Strings(keys)
 	return keys, batch.Commit(ctx)
+}
+
+func getSampledIndex(populationSize int, sampleSize int, i int) int {
+	if sampleSize >= populationSize {
+		if i == 0 {
+			return 0
+		}
+		return (populationSize - 1) / i
+	}
+
+	pointsPerInterval := populationSize / sampleSize
+	return (i * pointsPerInterval) + rand.Intn(pointsPerInterval)
 }
