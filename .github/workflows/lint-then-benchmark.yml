@@ -97,6 +97,12 @@ jobs:
         if: contains(github.event.pull_request.labels.*.name, 'action/no-benchmark')
         run: echo "DEFAULT_BENCHMARK_TYPE=NONE" >> ${GITHUB_ENV}
 
+      - name: Check if this is a merged PR (Only PRs can be pushed).
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
+
       - name: Set the output to be the benchmark type.
         id: set-benchmark-type
         run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
