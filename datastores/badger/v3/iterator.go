@@ -121,7 +121,7 @@ func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix d
 type itemKeyValidator = func(key string, startPrefix string, endPrefix string) bool
 
 func isValidAscending(key string, startPrefix string, endPrefix string) bool {
-	return key >= startPrefix && key < endPrefix
+	return key >= startPrefix && key <= endPrefix
 }
 
 func isValidDescending(key string, startPrefix string, endPrefix string) bool {
