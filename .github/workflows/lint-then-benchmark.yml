@@ -104,6 +104,14 @@ jobs:
           github.base_ref == 'ci/test'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
+      - name: TESTTTTT
+        run: | 
+          echo '${{ toJSON(github.event_name) }}'
+          echo '${{ toJSON(github.event.action) }}'
+          echo '${{ toJSON(github.event.pull_request.merged }}'
+          echo '${{ toJSON(github.base_ref) }}'
+          echo '${{ toJSON(github) }}'
+
       - name: Set the output to be the benchmark type.
         id: set-benchmark-type
         run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
