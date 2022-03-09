@@ -8,8 +8,7 @@ on:
     tags:
       - v*
     branches:
-      - master
-      - develop
+      - ci/test
 
 
 ## These are the permissions for the lint check job.
@@ -101,7 +100,8 @@ jobs:
         if: |
           github.event_name == 'pull_request' &&
           github.event.action == 'closed' &&
-          github.event.pull_request.merged == true
+          github.event.pull_request.merged == true &&
+          github.base_ref = 'ci/test'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
       - name: Set the output to be the benchmark type.
