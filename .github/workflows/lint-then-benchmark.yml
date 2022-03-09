@@ -98,18 +98,18 @@ jobs:
 
       - name: Check if this is a merged PR.
         if: |
-          github.event_name == 'pull_request' &&
-          github.event.action == 'closed' &&
-          github.event.pull_request.merged == true &&
-          github.base_ref == 'ci/test'
+          # github.event_name == 'pull_request' &&
+          # github.event.action == 'closed' &&
+          # github.event.pull_request.merged == true &&
+          # github.base_ref == 'ci/test'
+          github.event_name == 'push' &&
+          github.ref_name == 'ci/test'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
       - name: TESTTTTT
         run: | 
           echo '${{ toJSON(github.event_name) }}'
-          echo '${{ toJSON(github.event.action) }}'
-          echo '${{ toJSON(github.event.pull_request.merged) }}'
-          echo '${{ toJSON(github.base_ref) }}'
+          echo '${{ toJSON(github.ref_name) }}'
           echo '${{ toJSON(github) }}'
 
       - name: Set the output to be the benchmark type.
