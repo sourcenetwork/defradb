@@ -108,7 +108,7 @@ jobs:
         run: | 
           echo '${{ toJSON(github.event_name) }}'
           echo '${{ toJSON(github.event.action) }}'
-          echo '${{ toJSON(github.event.pull_request.merged }}'
+          echo '${{ toJSON(github.event.pull_request.merged) }}'
           echo '${{ toJSON(github.base_ref) }}'
           echo '${{ toJSON(github) }}'
 
