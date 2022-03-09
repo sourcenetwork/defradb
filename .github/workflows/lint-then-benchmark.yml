@@ -98,10 +98,6 @@ jobs:
 
       - name: Check if this is a merged PR.
         if: |
-          # github.event_name == 'pull_request' &&
-          # github.event.action == 'closed' &&
-          # github.event.pull_request.merged == true &&
-          # github.base_ref == 'ci/test'
           github.event_name == 'push' &&
           github.ref_name == 'ci/test'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
