@@ -792,10 +792,6 @@ func (c *Collection) commitImplicitTxn(ctx context.Context, txn core.Txn) error 
 	return nil
 }
 
-func (c *Collection) GetPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
-	return c.getPrimaryIndexDocKey(key)
-}
-
 func (c *Collection) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),

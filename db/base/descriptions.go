@@ -58,6 +58,10 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
+func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
+	return c.Indexes[0]
+}
+
 func (c CollectionDescription) getIndexDocKey(key core.DataStoreKey, indexID uint32) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: c.IDString(),
@@ -66,7 +70,7 @@ func (c CollectionDescription) getIndexDocKey(key core.DataStoreKey, indexID uin
 }
 
 func (c CollectionDescription) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
-	return c.getIndexDocKey(key, c.Indexes[0].ID)
+	return c.getIndexDocKey(key, c.GetPrimaryIndex().ID)
 }
 
 func (c CollectionDescription) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
@@ -85,6 +89,13 @@ func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, ke
 		return c.getPrimaryIndexDocKey(fieldKey), nil
 	}
 	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
+}
+
+func (c CollectionDescription) GetPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: fmt.Sprint(c.ID),
+		IndexId:      fmt.Sprint(c.GetPrimaryIndex().ID),
+	}.WithInstanceInfo(key)
 }
 
 // IndexDescription describes an Index on a Collection
