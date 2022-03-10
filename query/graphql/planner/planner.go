@@ -411,6 +411,9 @@ func (p *Planner) queryDocs(ctx context.Context, query *parser.Query) ([]map[str
 	}
 
 	if !next {
+		if err2 := (plan.Close()); err2 != nil {
+			log.ErrorE(ctx, "Error closing plan node", err2)
+		}
 		return []map[string]interface{}{}, nil
 	}
 
