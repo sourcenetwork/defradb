@@ -200,7 +200,7 @@ func (p *Peer) handleBroadcastLoop() {
 func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid, schemaID string) error {
 	log.Debug(p.ctx, "Registering a new document for our peer node", logging.NewKV("DocKey", dockey.String()))
 
-	block, err := p.db.GetBlock(ctx, c)
+	block, err := p.db.Blockstore().Get(ctx, c)
 	if err != nil {
 		log.ErrorE(p.ctx, "Failed to get document cid", err)
 		return err

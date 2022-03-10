@@ -17,8 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
 
-	blocks "github.com/ipfs/go-block-format"
-	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
@@ -34,7 +32,6 @@ type DB interface {
 
 	Root() ds.Batching
 	Blockstore() blockstore.Blockstore
-	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 
 	NewTxn(context.Context, bool) (Txn, error)
 	ExecQuery(context.Context, string) *QueryResult
