@@ -31,16 +31,26 @@ type txn struct {
 var _ core.Txn = (*txn)(nil)
 
 func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (core.Txn, error) {
-	var rootTxn ds.Txn
-	var err error
-	var isBatch bool
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
-		rootTxn, err = iterableTxnStore.NewIterableTransaction(ctx, readonly)
+		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
 		if err != nil {
 			return nil, err
 		}
-	} else if txnStore, ok := rootstore.(ds.TxnDatastore); ok {
+		multistore := MultiStoreFrom(rootTxn)
+		return &txn{
+			rootTxn,
+			multistore,
+			false,
+			[]func(){},
+			[]func(){},
+		}, nil
+	}
+
+	var rootTxn ds.Txn
+	var err error
+	var isBatch bool
+	if txnStore, ok := rootstore.(ds.TxnDatastore); ok {
 		rootTxn, err = txnStore.NewTransaction(ctx, readonly)
 		if err != nil {
 			return nil, err

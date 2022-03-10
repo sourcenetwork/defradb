@@ -83,8 +83,8 @@ func (iterator *BadgerIterator) next() {
 }
 
 func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
-	formattedStartPrefix := asFormattedString(startPrefix)
-	formattedEndPrefix := asFormattedString(endPrefix)
+	formattedStartPrefix := startPrefix.String()
+	formattedEndPrefix := endPrefix.String()
 
 	iterator.resultsBuilder = dsq.NewResultBuilder(iterator.query)
 
@@ -118,18 +118,10 @@ func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix d
 	return iterator.resultsBuilder.Results(), nil
 }
 
-func asFormattedString(prefix ds.Key) string {
-	prefixString := prefix.String()
-	if prefixString != "/" {
-		prefixString = prefixString + "/"
-	}
-	return prefixString
-}
-
 type itemKeyValidator = func(key string, startPrefix string, endPrefix string) bool
 
 func isValidAscending(key string, startPrefix string, endPrefix string) bool {
-	return key >= startPrefix && key < endPrefix
+	return key >= startPrefix && key <= endPrefix
 }
 
 func isValidDescending(key string, startPrefix string, endPrefix string) bool {
