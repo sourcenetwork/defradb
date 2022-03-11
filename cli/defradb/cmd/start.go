@@ -13,6 +13,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	gonet "net"
 	"os"
 	"os/signal"
@@ -31,6 +32,7 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
+	api "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/textileio/go-threads/broadcast"
@@ -155,7 +157,8 @@ var startCmd = &cobra.Command{
 
 		// run the server listener in a separate goroutine
 		go func() {
-			if err := db.Listen(ctx, config.Database.Address); err != nil {
+			s := api.NewServer(db)
+			if err := s.Listen(config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start API listener", err)
 				if n != nil {
 					n.Close() //nolint
@@ -163,6 +166,7 @@ var startCmd = &cobra.Command{
 				db.Close(ctx)
 				os.Exit(1)
 			}
+			log.Info(ctx, fmt.Sprintf("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", config.Database.Address, config.Database.Address))
 		}()
 
 		// wait for shutdown signal
