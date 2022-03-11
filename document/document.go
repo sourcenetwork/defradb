@@ -66,9 +66,8 @@ type Document struct {
 	key    key.DocKey
 	fields map[string]Field
 	values map[Field]Value
-	// @TODO: schemaInfo schema.Info
-	head cid.Cid
-	mu   sync.RWMutex
+	head   cid.Cid
+	mu     sync.RWMutex
 	// marks if document has unsaved changes
 	isDirty bool
 }
