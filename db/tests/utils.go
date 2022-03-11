@@ -91,7 +91,7 @@ type QueryTestCase struct {
 type databaseInfo struct {
 	name      string
 	path      string
-	db        *db.DB
+	db        client.DB
 	rootstore ds.Batching
 }
 
@@ -99,7 +99,7 @@ func (dbi databaseInfo) Rootstore() ds.Batching {
 	return dbi.rootstore
 }
 
-func (dbi databaseInfo) DB() *db.DB {
+func (dbi databaseInfo) DB() client.DB {
 	return dbi.db
 }
 

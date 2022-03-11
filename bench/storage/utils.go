@@ -20,7 +20,7 @@ import (
 	"github.com/ipfs/go-datastore/query"
 
 	benchutils "github.com/sourcenetwork/defradb/bench"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
@@ -254,7 +254,7 @@ func backfillBenchmarkStorageDB(ctx context.Context, db ds.Batching, objCount in
 	return keys, batch.Commit(ctx)
 }
 
-func backfillBenchmarkTxn(ctx context.Context, db *db.DB, objCount int, valueSize int) ([]string, error) {
+func backfillBenchmarkTxn(ctx context.Context, db client.DB, objCount int, valueSize int) ([]string, error) {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err

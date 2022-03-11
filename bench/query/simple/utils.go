@@ -19,7 +19,7 @@ import (
 
 	benchutils "github.com/sourcenetwork/defradb/bench"
 	"github.com/sourcenetwork/defradb/bench/fixtures"
-	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
@@ -45,7 +45,7 @@ func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Genera
 func runQueryBenchGetSync(
 	b *testing.B,
 	ctx context.Context,
-	db *db.DB,
+	db client.DB,
 	docCount int,
 	dockeys [][]key.DocKey,
 	query string,

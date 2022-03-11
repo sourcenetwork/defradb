@@ -20,12 +20,12 @@ import (
 )
 
 type sequence struct {
-	db  *DB
+	db  *db
 	key core.SequenceKey
 	val uint64
 }
 
-func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
+func (db *db) getSequence(ctx context.Context, key string) (*sequence, error) {
 	if key == "" {
 		return nil, errors.New("key cannot be empty")
 	}

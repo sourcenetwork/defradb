@@ -90,7 +90,7 @@ var (
 	}
 )
 
-func newMemoryDB(ctx context.Context) (*db.DB, error) {
+func newMemoryDB(ctx context.Context) (client.DB, error) {
 	rootstore := ds.NewMapDatastore()
 	return db.NewDB(ctx, rootstore)
 }
@@ -452,7 +452,7 @@ func createDocUpdates(col client.Collection) error {
 	return err
 }
 
-func newTestCollectionWithSchema(d *db.DB) (client.Collection, error) {
+func newTestCollectionWithSchema(d client.DB) (client.Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
