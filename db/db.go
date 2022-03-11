@@ -52,7 +52,7 @@ type DB struct {
 	glock sync.RWMutex
 
 	rootstore  ds.Batching
-	multistore client.MultiStore
+	multistore datastore.MultiStore
 
 	crdtFactory *crdt.Factory
 
@@ -120,7 +120,7 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 	return db, nil
 }
 
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
@@ -133,7 +133,7 @@ func (db *DB) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *DB) systemstore() client.DSReaderWriter {
+func (db *DB) systemstore() datastore.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
@@ -204,7 +204,7 @@ func (db *DB) Close(ctx context.Context) {
 	log.Info(ctx, "Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store client.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

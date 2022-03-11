@@ -16,18 +16,17 @@ import (
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 type wrappedStore struct {
 	transform ktds.KeyTransform
-	store     client.DSReaderWriter
+	store     DSReaderWriter
 }
 
-var _ client.DSReaderWriter = (*wrappedStore)(nil)
+var _ DSReaderWriter = (*wrappedStore)(nil)
 
-func prefix(root client.DSReaderWriter, prefix ds.Key) client.DSReaderWriter {
+func prefix(root DSReaderWriter, prefix ds.Key) DSReaderWriter {
 	return &wrappedStore{
 		transform: ktds.PrefixTransform{Prefix: prefix},
 		store:     root,

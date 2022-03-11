@@ -14,7 +14,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -30,7 +29,7 @@ func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestBaseMerkleCRDT() (*baseMerkleCRDT, client.DSReaderWriter) {
+func newTestBaseMerkleCRDT() (*baseMerkleCRDT, datastore.DSReaderWriter) {
 	s := newDS()
 	rw := datastore.AsDSReaderWriter(s)
 	multistore := datastore.MultiStoreFrom(rw)
@@ -61,7 +60,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	printStore(ctx, store)
 }
 
-func printStore(ctx context.Context, store client.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

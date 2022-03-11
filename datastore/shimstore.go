@@ -11,11 +11,10 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
-func AsDSReaderWriter(store ds.Datastore) client.DSReaderWriter {
+func AsDSReaderWriter(store ds.Datastore) DSReaderWriter {
 	switch typedStore := store.(type) {
 	case iterable.IterableDatastore:
 		return typedStore
@@ -32,4 +31,4 @@ type shim struct {
 	iterable.Iterable
 }
 
-var _ client.DSReaderWriter = (*shim)(nil)
+var _ DSReaderWriter = (*shim)(nil)

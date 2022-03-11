@@ -16,8 +16,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -33,7 +33,7 @@ type BlockFetcher struct {
 type HeadFetcher struct {
 
 	// Commented because this code is not used yet according to the linter.
-	// txn   client.Txn
+	// txn   datastore.Txn
 
 	// key core.Key
 	// curSpanIndex int
@@ -46,7 +46,7 @@ type HeadFetcher struct {
 	kvEnd  bool
 }
 
-func (hf *HeadFetcher) Start(ctx context.Context, txn client.Txn, spans core.Spans) error {
+func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	numspans := len(spans)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")

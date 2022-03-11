@@ -17,12 +17,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-func newStores() client.MultiStore {
+func newStores() datastore.MultiStore {
 	root := ds.NewMapDatastore()
 	rw := datastore.AsDSReaderWriter(root)
 	return datastore.MultiStoreFrom(rw)
@@ -56,7 +55,7 @@ func TestFactoryMultiStoreInterface(t *testing.T) {
 	}
 
 	// check interface implement
-	var _ client.MultiStore = f
+	var _ datastore.MultiStore = f
 	// ms = f
 
 	// check interface functions
@@ -184,7 +183,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 func TestLWWRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
-	f := NewFactory(m) // here factory is only needed to satisfy client.MultiStore interface
+	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
 	crdt := lwwFactoryFn(f, "", nil)(core.NewDataStoreKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
@@ -197,7 +196,7 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 func TestCompositeRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
-	f := NewFactory(m) // here factory is only needed to satisfy client.MultiStore interface
+	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
 	crdt := compFactoryFn(f, "", nil)(core.NewDataStoreKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
