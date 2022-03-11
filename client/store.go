@@ -13,7 +13,7 @@ package client
 import (
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
+	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for

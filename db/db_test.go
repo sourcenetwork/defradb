@@ -25,7 +25,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/stretchr/testify/assert"
 )
 

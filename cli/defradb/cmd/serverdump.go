@@ -16,7 +16,7 @@ import (
 	"os/signal"
 
 	ds "github.com/ipfs/go-datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 

@@ -20,7 +20,7 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
 	netpb "github.com/sourcenetwork/defradb/net/api/pb"

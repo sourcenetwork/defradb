@@ -12,7 +12,7 @@ package store
 import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
+	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 func AsDSReaderWriter(store ds.Datastore) client.DSReaderWriter {
