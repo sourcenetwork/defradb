@@ -30,9 +30,6 @@ import (
 	cbor "github.com/fxamacker/cbor/v2"
 )
 
-type UpdateOpt struct{}
-type CreateOpt struct{}
-
 var (
 	ErrInvalidUpdateTarget   = errors.New("The doc update targeter is an unknown type")
 	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
@@ -620,11 +617,6 @@ func getMapProp(doc map[string]interface{}, paths []string, length int) (string,
 		return getMapProp(doc, paths[1:], length-1)
 	}
 	return paths[0], val, true
-}
-
-type UpdateResult struct {
-	Count   int64
-	DocKeys []string
 }
 
 type patcher interface{}
