@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	gql "github.com/graphql-go/graphql"
 )
@@ -49,7 +49,7 @@ func (db *DB) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
-func (db *DB) ExecTransactionalQuery(ctx context.Context, query string, txn core.Txn) *client.QueryResult {
+func (db *DB) ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *client.QueryResult {
 	res := &client.QueryResult{}
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {

@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var (
@@ -26,14 +27,14 @@ type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 
 // MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
 // returns a MerkleCRDTInitFn with all the necessary stores set
-type MerkleCRDTFactory func(mstore core.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn
+type MerkleCRDTFactory func(mstore datastore.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
 	crdts      map[core.CType]*MerkleCRDTFactory
-	multistore core.MultiStore
+	multistore datastore.MultiStore
 }
 
 var (
@@ -45,7 +46,7 @@ var (
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil
-func NewFactory(multistore core.MultiStore) *Factory {
+func NewFactory(multistore datastore.MultiStore) *Factory {
 	return &Factory{
 		crdts:      make(map[core.CType]*MerkleCRDTFactory),
 		multistore: multistore,
@@ -60,7 +61,7 @@ func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
 }
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
-// supplied with all the current stores (passed in as a core.MultiStore object)
+// supplied with all the current stores (passed in as a datastore.MultiStore object)
 func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t core.CType, key core.DataStoreKey) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
@@ -72,8 +73,8 @@ func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t core.
 }
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
-// with the additional supplied core.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStores(store core.MultiStore, schemaID string, bs corenet.Broadcaster, t core.CType, key core.DataStoreKey) (MerkleCRDT, error) {
+// with the additional supplied datastore.MultiStore instead of the saved one on the main Factory.
+func (factory Factory) InstanceWithStores(store datastore.MultiStore, schemaID string, bs corenet.Broadcaster, t core.CType, key core.DataStoreKey) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
@@ -91,48 +92,48 @@ func (factory Factory) getRegisteredFactory(t core.CType) (*MerkleCRDTFactory, e
 }
 
 // SetStores sets all the current stores on the Factory in one call
-func (factory *Factory) SetStores(multistore core.MultiStore) error {
+func (factory *Factory) SetStores(multistore datastore.MultiStore) error {
 	factory.multistore = multistore
 	return nil
 }
 
 // WithStores returns a new instance of the Factory with all the stores set
-func (factory Factory) WithStores(multistore core.MultiStore) Factory {
+func (factory Factory) WithStores(multistore datastore.MultiStore) Factory {
 	factory.multistore = multistore
 	return factory
 }
 
 // Rootstore impements MultiStore
-func (factory Factory) Rootstore() core.DSReaderWriter {
+func (factory Factory) Rootstore() datastore.DSReaderWriter {
 	return nil
 }
 
-// Data implements core.MultiStore and returns the current Datastore
-func (factory Factory) Datastore() core.DSReaderWriter {
+// Data implements datastore.MultiStore and returns the current Datastore
+func (factory Factory) Datastore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
 	}
 	return factory.multistore.Datastore()
 }
 
-// Head implements core.MultiStore and returns the current Headstore
-func (factory Factory) Headstore() core.DSReaderWriter {
+// Head implements datastore.MultiStore and returns the current Headstore
+func (factory Factory) Headstore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
 	}
 	return factory.multistore.Headstore()
 }
 
-// Head implements core.MultiStore and returns the current Headstore
-func (factory Factory) Systemstore() core.DSReaderWriter {
+// Head implements datastore.MultiStore and returns the current Headstore
+func (factory Factory) Systemstore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
 	}
 	return factory.multistore.Systemstore()
 }
 
-// Dag implements core.MultiStore and returns the current Dagstore
-func (factory Factory) DAGstore() core.DAGStore {
+// Dag implements datastore.MultiStore and returns the current Dagstore
+func (factory Factory) DAGstore() datastore.DAGStore {
 	if factory.multistore == nil {
 		return nil
 	}

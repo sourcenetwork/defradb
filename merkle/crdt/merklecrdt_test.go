@@ -16,8 +16,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -29,10 +29,10 @@ func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
-func newTestBaseMerkleCRDT() (*baseMerkleCRDT, core.DSReaderWriter) {
+func newTestBaseMerkleCRDT() (*baseMerkleCRDT, datastore.DSReaderWriter) {
 	s := newDS()
-	rw := store.AsDSReaderWriter(s)
-	multistore := store.MultiStoreFrom(rw)
+	rw := datastore.AsDSReaderWriter(s)
+	multistore := datastore.MultiStoreFrom(rw)
 
 	reg := corecrdt.NewLWWRegister(multistore.Datastore(), core.DataStoreKey{})
 	clk := clock.NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg)
@@ -60,7 +60,7 @@ func TestMerkleCRDTPublish(t *testing.T) {
 	printStore(ctx, store)
 }
 
-func printStore(ctx context.Context, store core.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

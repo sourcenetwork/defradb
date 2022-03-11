@@ -109,7 +109,6 @@ func (e EncProperty) Decode() (core.CType, interface{}, error) {
 // @todo: Implement Encoded Document type
 type EncodedDocument struct {
 	Key        []byte
-	Schema     *base.SchemaDescription
 	Properties map[base.FieldDescription]*EncProperty
 }
 
@@ -126,9 +125,6 @@ func (encdoc *EncodedDocument) Decode() (*Document, error) {
 		return nil, err
 	}
 	doc := NewWithKey(key)
-	if encdoc.Schema != nil {
-		doc.schema = *encdoc.Schema
-	}
 	for fieldDesc, prop := range encdoc.Properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {

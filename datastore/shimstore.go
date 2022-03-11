@@ -7,15 +7,14 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
-package store
+package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
+	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
-func AsDSReaderWriter(store ds.Datastore) core.DSReaderWriter {
+func AsDSReaderWriter(store ds.Datastore) DSReaderWriter {
 	switch typedStore := store.(type) {
 	case iterable.IterableDatastore:
 		return typedStore
@@ -32,4 +31,4 @@ type shim struct {
 	iterable.Iterable
 }
 
-var _ core.DSReaderWriter = (*shim)(nil)
+var _ DSReaderWriter = (*shim)(nil)

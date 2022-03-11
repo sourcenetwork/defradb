@@ -108,7 +108,7 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		return nil, fin.Cleanup(err)
 	}
 
-	bstore := db.DAGstore()
+	bstore := db.Blockstore()
 	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
 	if err != nil {
 		return nil, fin.Cleanup(err)

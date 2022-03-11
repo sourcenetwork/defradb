@@ -8,25 +8,23 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package store
+package datastore
 
 import (
-	"github.com/sourcenetwork/defradb/core"
-
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
 
 // DAGStore is the interface to the underlying BlockStore and BlockService
 type dagStore struct {
 	blockstore.Blockstore // become a Blockstore
-	store                 core.DSReaderWriter
+	store                 DSReaderWriter
 	// bstore          blockstore.Blockstore
 	// bserv           blockservice.BlockService
 }
 
 // NewDAGStore creates a new DAGStore with the supplied
 // Batching datastore
-func NewDAGStore(store core.DSReaderWriter) core.DAGStore {
+func NewDAGStore(store DSReaderWriter) DAGStore {
 	dstore := &dagStore{
 		Blockstore: NewBlockstore(store),
 		store:      store,

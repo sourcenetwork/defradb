@@ -90,7 +90,7 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 
 	// loop to get collections
 	for i := 0; i < numTypes; i++ {
-		col, err := db.GetCollection(ctx, fixture.TypeName(i))
+		col, err := db.GetCollectionByName(ctx, fixture.TypeName(i))
 		if err != nil {
 			return nil, fmt.Errorf("Couldn't get the collection %v: %w", fixture.TypeName(i), err)
 		}

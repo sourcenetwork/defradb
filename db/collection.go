@@ -19,6 +19,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -46,7 +47,7 @@ var _ client.Collection = (*Collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type Collection struct {
 	db  *DB
-	txn core.Txn
+	txn datastore.Txn
 
 	colID uint32
 
@@ -114,7 +115,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescription) (client.Collection, error) {
 	// check if collection by this name exists
 	cKey := core.NewCollectionKey(desc.Name)
-	exists, err := db.Systemstore().Has(ctx, cKey.ToDS())
+	exists, err := db.systemstore().Has(ctx, cKey.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	key := core.NewCollectionKey(col.desc.Name)
 
 	// write the collection metadata to the system store
-	err = db.Systemstore().Put(ctx, key.ToDS(), buf)
+	err = db.systemstore().Put(ctx, key.ToDS(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -165,19 +166,19 @@ func (db *DB) CreateCollection(ctx context.Context, desc base.CollectionDescript
 	col.schemaID = cid.String()
 
 	csKey := core.NewCollectionSchemaKey(cid.String())
-	err = db.Systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
 	log.Debug(ctx, "Created collection", logging.NewKV("Name", col.Name()), logging.NewKV("Id", col.SchemaID))
 	return col, err
 }
 
 // GetCollection returns an existing collection within the database
-func (db *DB) GetCollection(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, errors.New("Collection name can't be empty")
 	}
 
 	key := core.NewCollectionKey(name)
-	buf, err := db.Systemstore().Get(ctx, key.ToDS())
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -221,13 +222,13 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
-	buf, err := db.Systemstore().Get(ctx, key.ToDS())
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
 	}
 
 	name := string(buf)
-	return db.GetCollection(ctx, name)
+	return db.GetCollectionByName(ctx, name)
 }
 
 // GetAllCollections gets all the currently defined collections in the
@@ -235,7 +236,7 @@ func (db *DB) GetCollectionBySchemaID(ctx context.Context, schemaID string) (cli
 func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := core.NewCollectionKey("")
-	q, err := db.Systemstore().Query(ctx, query.Query{
+	q, err := db.systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
@@ -255,7 +256,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		}
 
 		colName := ds.NewKey(res.Key).BaseNamespace()
-		col, err := db.GetCollection(ctx, colName)
+		col, err := db.GetCollectionByName(ctx, colName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
 		}
@@ -278,7 +279,7 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	return c.getAllDocKeysChan(ctx, txn)
 }
 
-func (c *Collection) getAllDocKeysChan(ctx context.Context, txn core.Txn) (<-chan client.DocKeysResult, error) {
+func (c *Collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (<-chan client.DocKeysResult, error) {
 	prefix := c.getPrimaryIndexDocKey(core.DataStoreKey{}) // empty path for all keys prefix
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -398,7 +399,7 @@ func (c *Collection) SchemaID() string {
 
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
-func (c *Collection) WithTxn(txn core.Txn) client.Collection {
+func (c *Collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &Collection{
 		db:       c.db,
 		txn:      txn,
@@ -442,7 +443,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*document.Document) 
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) create(ctx context.Context, txn core.Txn, doc *document.Document) error {
+func (c *Collection) create(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
 	// DocKey verification
 	buf, err := doc.Bytes()
 	if err != nil {
@@ -519,7 +520,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
-func (c *Collection) update(ctx context.Context, txn core.Txn, doc *document.Document) error {
+func (c *Collection) update(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
 	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
@@ -554,7 +555,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn core.Txn, doc *document.Document) (cid.Cid, error) {
+func (c *Collection) save(ctx context.Context, txn datastore.Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -648,7 +649,7 @@ func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 
 // at the moment, delete only does data storage delete.
 // Dag, and head store will soon follow.
-func (c *Collection) delete(ctx context.Context, txn core.Txn, key core.DataStoreKey) (bool, error) {
+func (c *Collection) delete(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
 		Prefix:   c.getPrimaryIndexDocKey(key).ToString(),
 		KeysOnly: true,
@@ -686,11 +687,11 @@ func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 }
 
 // check if a document exists with the given key
-func (c *Collection) exists(ctx context.Context, txn core.Txn, key core.DataStoreKey) (bool, error) {
+func (c *Collection) exists(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	return txn.Datastore().Has(ctx, c.getPrimaryIndexDocKey(key.WithValueFlag()).ToDS())
 }
 
-func (c *Collection) saveDocValue(ctx context.Context, txn core.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
+func (c *Collection) saveDocValue(ctx context.Context, txn datastore.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
@@ -715,7 +716,7 @@ func (c *Collection) saveDocValue(ctx context.Context, txn core.Txn, key core.Da
 
 func (c *Collection) saveValueToMerkleCRDT(
 	ctx context.Context,
-	txn core.Txn,
+	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype core.CType,
 	args ...interface{}) (cid.Cid, error) {
@@ -768,7 +769,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 // getTxn gets or creates a new transaction from the underlying db.
 // If the collection already has a txn, return the existing one.
 // Otherwise, create a new implicit transaction.
-func (c *Collection) getTxn(ctx context.Context, readonly bool) (core.Txn, error) {
+func (c *Collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	if c.txn != nil {
 		return c.txn, nil
 	}
@@ -779,13 +780,13 @@ func (c *Collection) getTxn(ctx context.Context, readonly bool) (core.Txn, error
 // function only if its an implicit transaction.
 // Implicit transactions are transactions that are created *during* an operation execution as a side effect.
 // Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
-func (c *Collection) discardImplicitTxn(ctx context.Context, txn core.Txn) {
+func (c *Collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
 	if c.txn == nil {
 		txn.Discard(ctx)
 	}
 }
 
-func (c *Collection) commitImplicitTxn(ctx context.Context, txn core.Txn) error {
+func (c *Collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
 	if c.txn == nil {
 		return txn.Commit(ctx)
 	}

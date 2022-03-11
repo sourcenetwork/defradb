@@ -7,28 +7,26 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
-package store
+package datastore
 
 import (
 	"context"
-
-	"github.com/sourcenetwork/defradb/core"
 
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
+	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
 type wrappedStore struct {
 	transform ktds.KeyTransform
-	store     core.DSReaderWriter
+	store     DSReaderWriter
 }
 
-var _ core.DSReaderWriter = (*wrappedStore)(nil)
+var _ DSReaderWriter = (*wrappedStore)(nil)
 
-func prefix(root core.DSReaderWriter, prefix ds.Key) core.DSReaderWriter {
+func prefix(root DSReaderWriter, prefix ds.Key) DSReaderWriter {
 	return &wrappedStore{
 		transform: ktds.PrefixTransform{Prefix: prefix},
 		store:     root,

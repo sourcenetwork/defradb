@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -93,7 +94,7 @@ type Statement struct {
 // Planner combines session state and database state to
 // produce a query plan, which is run by the execution context.
 type Planner struct {
-	txn core.Txn
+	txn datastore.Txn
 	db  client.DB
 
 	ctx     context.Context
@@ -103,7 +104,7 @@ type Planner struct {
 
 }
 
-func makePlanner(ctx context.Context, db client.DB, txn core.Txn) *Planner {
+func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,

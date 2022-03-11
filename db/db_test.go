@@ -25,7 +25,7 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -336,14 +336,14 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.Headstore(), nil, core.HeadStoreKey{}.WithDocKey("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d").WithFieldId("Name"), nil)
+	clk := clock.NewMerkleClock(db.multistore.Headstore(), nil, core.HeadStoreKey{}.WithDocKey("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d").WithFieldId("Name"), nil)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)
 
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, errGet := db.DAGstore().Get(ctx, c)
+		b, errGet := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, errGet)
 
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
@@ -373,7 +373,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, c := range cids {
-		b, err := db.DAGstore().Get(ctx, c)
+		b, err := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, err)
 
 		nd, err := dag.DecodeProtobuf(b.RawData())
@@ -418,7 +418,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	assert.Equal(t, "John", name)
 	assert.Equal(t, int64(21), age)
 
-	db.printDebugDB(ctx)
+	db.PrintDump(ctx)
 }
 
 func TestDBUpdateDocWithFilter(t *testing.T) {
