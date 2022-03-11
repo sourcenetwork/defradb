@@ -41,7 +41,7 @@ var (
 //  a single docKey, a single document, an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
 // Eg: DeleteWithFilter or DeleteWithKey
-func (c *Collection) DeleteWith(
+func (c *collection) DeleteWith(
 	ctx context.Context,
 	target interface{},
 	opts ...client.DeleteOpt) error {
@@ -73,7 +73,7 @@ func (c *Collection) DeleteWith(
 }
 
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
-func (c *Collection) DeleteWithKey(
+func (c *collection) DeleteWithKey(
 	ctx context.Context,
 	key key.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
@@ -95,7 +95,7 @@ func (c *Collection) DeleteWithKey(
 }
 
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
-func (c *Collection) DeleteWithKeys(
+func (c *collection) DeleteWithKeys(
 	ctx context.Context,
 	keys []key.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
@@ -116,7 +116,7 @@ func (c *Collection) DeleteWithKeys(
 }
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
-func (c *Collection) DeleteWithFilter(
+func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter interface{},
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
@@ -137,7 +137,7 @@ func (c *Collection) DeleteWithFilter(
 
 }
 
-func (c *Collection) deleteWithKey(
+func (c *collection) deleteWithKey(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.DataStoreKey,
@@ -167,7 +167,7 @@ func (c *Collection) deleteWithKey(
 	return results, nil
 }
 
-func (c *Collection) deleteWithKeys(
+func (c *collection) deleteWithKeys(
 	ctx context.Context,
 	txn datastore.Txn,
 	keys []key.DocKey,
@@ -206,7 +206,7 @@ func (c *Collection) deleteWithKeys(
 	return results, nil
 }
 
-func (c *Collection) deleteWithFilter(
+func (c *collection) deleteWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
@@ -285,7 +285,7 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 //   1) Deleting the actual blocks (blockstore).
 //   2) Deleting datastore state.
 //   3) Deleting headstore state.
-func (c *Collection) applyFullDelete(
+func (c *collection) applyFullDelete(
 	ctx context.Context,
 	txn datastore.Txn, dockey core.DataStoreKey) error {
 
@@ -426,14 +426,14 @@ func (d dagDeleter) delete(
 // =================================== UNIMPLEMENTED ===================================
 
 // DeleteWithDoc deletes targeting the supplied document.
-func (c *Collection) DeleteWithDoc(
+func (c *collection) DeleteWithDoc(
 	doc *document.SimpleDocument,
 	opts ...client.DeleteOpt) error {
 	return nil
 }
 
 // DeleteWithDocs deletes all the supplied documents in the slice.
-func (c *Collection) DeleteWithDocs(
+func (c *collection) DeleteWithDocs(
 	docs []*document.SimpleDocument,
 	opts ...client.DeleteOpt) error {
 	return nil

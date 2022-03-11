@@ -46,7 +46,7 @@ var (
 // an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Update.
 // Eg: UpdateWithFilter or UpdateWithKey
-func (c *Collection) UpdateWith(ctx context.Context, target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *collection) UpdateWith(ctx context.Context, target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
 		_, err := c.UpdateWithFilter(ctx, t, updater, opts...)
@@ -69,7 +69,7 @@ func (c *Collection) UpdateWith(ctx context.Context, target interface{}, updater
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (c *Collection) UpdateWithFilter(ctx context.Context, filter interface{}, u
 // UpdateWithKey updates using a DocKey to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (c *Collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater 
 // UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -119,18 +119,18 @@ func (c *Collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, upda
 // UpdateWithDoc updates targeting the supplied document.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithDoc(doc *document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *collection) UpdateWithDoc(doc *document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
 	return nil
 }
 
 // UpdateWithDocs updates all the supplied documents in the slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *Collection) UpdateWithDocs(docs []*document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *collection) UpdateWithDocs(docs []*document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
 	return nil
 }
 
-func (c *Collection) updateWithKey(ctx context.Context, txn datastore.Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (c *Collection) updateWithKey(ctx context.Context, txn datastore.Txn, key k
 	return results, nil
 }
 
-func (c *Collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (c *Collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys
 	return results, nil
 }
 
-func (c *Collection) updateWithFilter(
+func (c *collection) updateWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
@@ -288,7 +288,7 @@ func (c *Collection) updateWithFilter(
 	return results, nil
 }
 
-func (c *Collection) applyPatch(txn datastore.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
+func (c *collection) applyPatch(txn datastore.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
 	for _, op := range patch {
 		path, ok := op["path"].(string)
 		if !ok {
@@ -314,11 +314,11 @@ func (c *Collection) applyPatch(txn datastore.Txn, doc map[string]interface{}, p
 	return nil
 }
 
-func (c *Collection) applyPatchOp(txn datastore.Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
+func (c *collection) applyPatchOp(txn datastore.Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
 	return nil
 }
 
-func (c *Collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[string]interface{}, merge map[string]interface{}) error {
+func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[string]interface{}, merge map[string]interface{}) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
 		return errors.New("Document is missing key")
@@ -507,7 +507,7 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 	return cval, err
 }
 
-func (c *Collection) applyMergePatchOp( //nolint:unused
+func (c *collection) applyMergePatchOp( //nolint:unused
 	txn datastore.Txn,
 	docKey string,
 	field string,
@@ -520,7 +520,7 @@ func (c *Collection) applyMergePatchOp( //nolint:unused
 // currently it doesn't support any other query operation other than filters.
 // (IE: No limit, order, etc)
 // Additionally it only queries for the root scalar fields of the object
-func (c *Collection) makeSelectionQuery(
+func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
@@ -552,7 +552,7 @@ func (c *Collection) makeSelectionQuery(
 	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
 }
 
-func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
+func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
 	slct := &parser.Select{
 		Name:   c.Name(),
 		Filter: filter,
@@ -577,13 +577,13 @@ func (c *Collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *Collection) getCollectionForPatchOpPath(txn datastore.Txn, path string) (col *Collection, isArray bool, err error) {
+func (c *collection) getCollectionForPatchOpPath(txn datastore.Txn, path string) (col *collection, isArray bool, err error) {
 	return nil, false, nil
 }
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *Collection) getTargetKeyForPatchPath(txn datastore.Txn, doc map[string]interface{}, path string) (string, error) {
+func (c *collection) getTargetKeyForPatchPath(txn datastore.Txn, doc map[string]interface{}, path string) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")

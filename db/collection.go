@@ -41,11 +41,11 @@ var (
 	ErrUnknownCRDT           = errors.New("")
 )
 
-var _ client.Collection = (*Collection)(nil)
+var _ client.Collection = (*collection)(nil)
 
-// Collection stores data records at Documents, which are gathered
+// collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
-type Collection struct {
+type collection struct {
 	db  *DB
 	txn datastore.Txn
 
@@ -63,7 +63,7 @@ type Collection struct {
 // CollectionOptions object.
 
 // NewCollection returns a pointer to a newly instanciated DB Collection
-func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error) {
+func (db *DB) newCollection(desc base.CollectionDescription) (*collection, error) {
 	if desc.Name == "" {
 		return nil, errors.New("Collection requires name to not be empty")
 	}
@@ -103,7 +103,7 @@ func (db *DB) newCollection(desc base.CollectionDescription) (*Collection, error
 		},
 	}
 
-	return &Collection{
+	return &collection{
 		db:    db,
 		desc:  desc,
 		colID: desc.ID,
@@ -206,7 +206,7 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	sid := cid.String()
 	log.Debug(ctx, "Retrieved collection", logging.NewKV("Name", desc.Name), logging.NewKV("Id", sid))
 
-	return &Collection{
+	return &collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
@@ -269,7 +269,7 @@ func (db *DB) GetAllCollections(ctx context.Context) ([]client.Collection, error
 // GetAllDocKeys returns all the document keys that exist in the collection
 // @todo: We probably need a lock on the collection for this kind of op since
 // it hits every key and will cause Tx conflicts for concurrent Txs
-func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
+func (c *collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -279,7 +279,7 @@ func (c *Collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	return c.getAllDocKeysChan(ctx, txn)
 }
 
-func (c *Collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (<-chan client.DocKeysResult, error) {
+func (c *collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (<-chan client.DocKeysResult, error) {
 	prefix := c.getPrimaryIndexDocKey(core.DataStoreKey{}) // empty path for all keys prefix
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
@@ -345,38 +345,38 @@ func (c *Collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (
 }
 
 // Description returns the base.CollectionDescription
-func (c *Collection) Description() base.CollectionDescription {
+func (c *collection) Description() base.CollectionDescription {
 	return c.desc
 }
 
 // Name returns the collection name
-func (c *Collection) Name() string {
+func (c *collection) Name() string {
 	return c.desc.Name
 }
 
 // Schema returns the Schema of the collection
-func (c *Collection) Schema() base.SchemaDescription {
+func (c *collection) Schema() base.SchemaDescription {
 	return c.desc.Schema
 }
 
 // ID returns the ID of the collection
-func (c *Collection) ID() uint32 {
+func (c *collection) ID() uint32 {
 	return c.colID
 }
 
 // Indexes returns the defined indexes on the Collection
 // @todo: Properly handle index creation/management
-func (c *Collection) Indexes() []base.IndexDescription {
+func (c *collection) Indexes() []base.IndexDescription {
 	return c.desc.Indexes
 }
 
 // PrimaryIndex returns the primary index for the given collection
-func (c *Collection) PrimaryIndex() base.IndexDescription {
+func (c *collection) PrimaryIndex() base.IndexDescription {
 	return c.desc.Indexes[0]
 }
 
 // Index returns the index with the given index ID
-func (c *Collection) Index(id uint32) (base.IndexDescription, error) {
+func (c *collection) Index(id uint32) (base.IndexDescription, error) {
 	for _, index := range c.desc.Indexes {
 		if index.ID == id {
 			return index, nil
@@ -389,18 +389,18 @@ func (c *Collection) Index(id uint32) (base.IndexDescription, error) {
 // CreateIndex creates a new index on the collection. Custom indexes
 // are always "Secondary indexes". Primary indexes are automatically created
 // on Collection creation, and cannot be changed.
-func (c *Collection) CreateIndex(idesc base.IndexDescription) error {
+func (c *collection) CreateIndex(idesc base.IndexDescription) error {
 	panic("not implemented")
 }
 
-func (c *Collection) SchemaID() string {
+func (c *collection) SchemaID() string {
 	return c.schemaID
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
 // handle instead of a raw DB handle
-func (c *Collection) WithTxn(txn datastore.Txn) client.Collection {
-	return &Collection{
+func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
+	return &collection{
 		db:       c.db,
 		txn:      txn,
 		desc:     c.desc,
@@ -411,7 +411,7 @@ func (c *Collection) WithTxn(txn datastore.Txn) client.Collection {
 
 // Create a new document
 // Will verify the DocKey/CID to ensure that the new document is correctly formatted.
-func (c *Collection) Create(ctx context.Context, doc *document.Document) error {
+func (c *collection) Create(ctx context.Context, doc *document.Document) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -427,7 +427,7 @@ func (c *Collection) Create(ctx context.Context, doc *document.Document) error {
 
 // CreateMany creates a collection of documents at once.
 // Will verify the DocKey/CID to ensure that the new documents are correctly formatted.
-func (c *Collection) CreateMany(ctx context.Context, docs []*document.Document) error {
+func (c *collection) CreateMany(ctx context.Context, docs []*document.Document) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -443,7 +443,7 @@ func (c *Collection) CreateMany(ctx context.Context, docs []*document.Document) 
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) create(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
+func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
 	// DocKey verification
 	buf, err := doc.Bytes()
 	if err != nil {
@@ -491,7 +491,7 @@ func (c *Collection) create(ctx context.Context, txn datastore.Txn, doc *documen
 // Any field that needs to be removed or cleared
 // should call doc.Clear(field) before. Any field that
 // is nil/empty that hasn't called Clear will be ignored
-func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
+func (c *collection) Update(ctx context.Context, doc *document.Document) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -520,7 +520,7 @@ func (c *Collection) Update(ctx context.Context, doc *document.Document) error {
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
-func (c *Collection) update(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
+func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *document.Document) error {
 	_, err := c.save(ctx, txn, doc)
 	if err != nil {
 		return err
@@ -530,7 +530,7 @@ func (c *Collection) update(ctx context.Context, txn datastore.Txn, doc *documen
 
 // Save a document into the db
 // Either by creating a new document or by updating an existing one
-func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
+func (c *collection) Save(ctx context.Context, doc *document.Document) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return err
@@ -555,7 +555,7 @@ func (c *Collection) Save(ctx context.Context, doc *document.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) save(ctx context.Context, txn datastore.Txn, doc *document.Document) (cid.Cid, error) {
+func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *document.Document) (cid.Cid, error) {
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
@@ -623,7 +623,7 @@ func (c *Collection) save(ctx context.Context, txn datastore.Txn, doc *document.
 // false, and a ErrDocumentNotFound error.
 // This operation will all state relating to the given
 // DocKey. This includes data, block, and head storage.
-func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
+func (c *collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -649,7 +649,7 @@ func (c *Collection) Delete(ctx context.Context, key key.DocKey) (bool, error) {
 
 // at the moment, delete only does data storage delete.
 // Dag, and head store will soon follow.
-func (c *Collection) delete(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
+func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
 		Prefix:   c.getPrimaryIndexDocKey(key).ToString(),
 		KeysOnly: true,
@@ -671,7 +671,7 @@ func (c *Collection) delete(ctx context.Context, txn datastore.Txn, key core.Dat
 }
 
 // Exists checks if a given document exists with supplied DocKey
-func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
+func (c *collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return false, err
@@ -687,11 +687,11 @@ func (c *Collection) Exists(ctx context.Context, key key.DocKey) (bool, error) {
 }
 
 // check if a document exists with the given key
-func (c *Collection) exists(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
+func (c *collection) exists(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	return txn.Datastore().Has(ctx, c.getPrimaryIndexDocKey(key.WithValueFlag()).ToDS())
 }
 
-func (c *Collection) saveDocValue(ctx context.Context, txn datastore.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
+func (c *collection) saveDocValue(ctx context.Context, txn datastore.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
 	switch val.Type() {
 	case core.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
@@ -714,7 +714,7 @@ func (c *Collection) saveDocValue(ctx context.Context, txn datastore.Txn, key co
 	}
 }
 
-func (c *Collection) saveValueToMerkleCRDT(
+func (c *collection) saveValueToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.DataStoreKey,
@@ -769,7 +769,7 @@ func (c *Collection) saveValueToMerkleCRDT(
 // getTxn gets or creates a new transaction from the underlying db.
 // If the collection already has a txn, return the existing one.
 // Otherwise, create a new implicit transaction.
-func (c *Collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (c *collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	if c.txn != nil {
 		return c.txn, nil
 	}
@@ -780,34 +780,34 @@ func (c *Collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, 
 // function only if its an implicit transaction.
 // Implicit transactions are transactions that are created *during* an operation execution as a side effect.
 // Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
-func (c *Collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
+func (c *collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
 	if c.txn == nil {
 		txn.Discard(ctx)
 	}
 }
 
-func (c *Collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
+func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
 	if c.txn == nil {
 		return txn.Commit(ctx)
 	}
 	return nil
 }
 
-func (c *Collection) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
+func (c *collection) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
 		IndexId:      fmt.Sprint(c.PrimaryIndex().ID),
 	}.WithInstanceInfo(key)
 }
 
-func (c *Collection) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
+func (c *collection) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
 	return key.WithFieldId(fmt.Sprint(c.getSchemaFieldID(fieldName)))
 }
 
 // getSchemaFieldID returns the FieldID of the given fieldName.
 // It assumes a schema exists for the collection, and that the
 // field exists in the schema.
-func (c *Collection) getSchemaFieldID(fieldName string) uint32 {
+func (c *collection) getSchemaFieldID(fieldName string) uint32 {
 	for _, field := range c.desc.Schema.Fields {
 		if field.Name == fieldName {
 			return uint32(field.ID)

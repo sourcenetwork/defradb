@@ -43,7 +43,7 @@ var (
 // make sure we match our client interface
 var (
 	_ client.DB         = (*DB)(nil)
-	_ client.Collection = (*Collection)(nil)
+	_ client.Collection = (*collection)(nil)
 )
 
 // DB is the main interface for interacting with the

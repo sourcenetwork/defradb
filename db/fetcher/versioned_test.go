@@ -16,6 +16,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -365,7 +366,7 @@ func compareVersionedDocs(t *testing.T, doc, expected map[string]interface{}) {
 	}
 }
 
-func createDocUpdates(col *db.Collection) error {
+func createDocUpdates(col client.Collection) error {
 	// col, err := newTestCollectionWithSchema(db)
 	// if err != ni
 
@@ -451,7 +452,7 @@ func createDocUpdates(col *db.Collection) error {
 	return err
 }
 
-func newTestCollectionWithSchema(d *db.DB) (*db.Collection, error) {
+func newTestCollectionWithSchema(d *db.DB) (client.Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
@@ -486,5 +487,5 @@ func newTestCollectionWithSchema(d *db.DB) (*db.Collection, error) {
 
 	ctx := context.Background()
 	col, err := d.CreateCollection(ctx, desc)
-	return col.(*db.Collection), err
+	return col, err
 }
