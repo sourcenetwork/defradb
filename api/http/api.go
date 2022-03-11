@@ -179,7 +179,7 @@ func (s *Server) getBlock(w http.ResponseWriter, r *http.Request) {
 		c = cid.NewCidV1(cid.Raw, hash)
 	}
 
-	block, err := s.db.GetBlock(ctx, c)
+	block, err := s.db.Blockstore().Get(ctx, c)
 	if err != nil {
 		result.Errors = []interface{}{err.Error()}
 

@@ -334,17 +334,6 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
 
-	// get relation
-	rm := p.db.SchemaManager().Relations
-	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
-	if rel == nil {
-		return nil, fmt.Errorf("Relation does not exists")
-	}
-	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
-	if !ok {
-		return nil, fmt.Errorf("Relation is missing referenced field")
-	}
-
 	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
@@ -354,7 +343,10 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 	typeJoin.subType = selectPlan
 
 	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.subTypeFieldName = subtypefieldname
+	typeJoin.subTypeFieldName, err = p.db.GetRelationshipIdField(subType.Name, subTypeFieldDesc.Schema, desc.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
@@ -513,24 +505,16 @@ func (p *Planner) makeTypeJoinMany(parent *selectNode, source planNode, subType 
 	}
 	subType.CollectionName = subTypeFieldDesc.Schema
 
-	// get relation
-	rm := p.db.SchemaManager().Relations
-	rel := rm.GetRelationByDescription(subType.Name, subTypeFieldDesc.Schema, desc.Name)
-	if rel == nil {
-		return nil, fmt.Errorf("Relation does not exists")
-	}
-	subTypeLookupFieldName, _, ok := rel.GetFieldFromSchemaType(subTypeFieldDesc.Schema)
-	if !ok {
-		return nil, fmt.Errorf("Relation is missing referenced field")
-	}
-
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
 		return nil, err
 	}
 	typeJoin.subType = selectPlan
 	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.rootName = subTypeLookupFieldName
+	typeJoin.rootName, err = p.db.GetRelationshipIdField(subType.Name, subTypeFieldDesc.Schema, desc.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	// split filter
 	if scan, ok := source.(*scanNode); ok {

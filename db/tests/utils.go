@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/logging"
@@ -279,7 +279,7 @@ func ExecuteQueryTestCase(t *testing.T, schema string, collectionNames []string,
 		}
 
 		// Create the transactions before executing and queries
-		transactions := make([]core.Txn, 0, len(test.TransactionalQueries))
+		transactions := make([]datastore.Txn, 0, len(test.TransactionalQueries))
 		erroredQueries := make([]bool, len(test.TransactionalQueries))
 		for i, tq := range test.TransactionalQueries {
 			if len(transactions) < tq.TransactionId {
@@ -428,7 +428,7 @@ func setupDatabase(ctx context.Context, t *testing.T, dbi databaseInfo, schema s
 
 	collections := []client.Collection{}
 	for _, collectionName := range collectionNames {
-		col, err := db.GetCollection(ctx, collectionName)
+		col, err := db.GetCollectionByName(ctx, collectionName)
 		if assertError(t, test.Description, err, test.ExpectedError) {
 			return
 		}
@@ -498,7 +498,7 @@ func setupDatabaseUsingTargetBranch(ctx context.Context, t *testing.T, dbi datab
 		panic(err)
 	}
 
-	_, err = refreshedDb.db.GetCollection(ctx, collectionNames[0])
+	_, err = refreshedDb.db.GetCollectionByName(ctx, collectionNames[0])
 	if err != nil {
 		if err.Error() == "datastore: key not found" {
 			// If collection is not found - this must be a new test and doesn't exist in the target branch, so we pass it

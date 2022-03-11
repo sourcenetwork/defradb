@@ -16,9 +16,9 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -79,12 +79,12 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher
 
-	txn core.Txn
+	txn datastore.Txn
 	ctx context.Context
 
 	// Transient version store
 	root  ds.Datastore
-	store core.Txn
+	store datastore.Txn
 
 	key     core.DataStoreKey
 	version cid.Cid
@@ -112,7 +112,7 @@ func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.In
 }
 
 // Start serializes the correct state accoriding to the Key and CID
-func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
@@ -147,7 +147,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.
 	// create store
 	root := ds.NewMapDatastore()
 	vf.root = root
-	vf.store, err = store.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
+	vf.store, err = datastore.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
 	if err != nil {
 		return err
 	}

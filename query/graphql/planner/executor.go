@@ -15,7 +15,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
@@ -59,7 +59,7 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 
 // }
 
-func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn core.Txn, selectStmt *parser.Select) (Query, error) {
+func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn datastore.Txn, selectStmt *parser.Select) (Query, error) {
 	if selectStmt == nil {
 		return nil, fmt.Errorf("Cannot create query without a selection")
 	}
@@ -67,7 +67,7 @@ func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn c
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn core.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn datastore.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
 	q, err := e.ParseQueryString(query)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn core.Tx
 	return planner.queryDocs(ctx, q)
 }
 
-func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn core.Txn, query *parser.Query) (planNode, error) {
+func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn datastore.Txn, query *parser.Query) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(query)
 }

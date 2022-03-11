@@ -13,38 +13,32 @@ package client
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
-	blocks "github.com/ipfs/go-block-format"
-	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
 
 type DB interface {
-	// Collections
-	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
-	GetCollection(context.Context, string) (Collection, error)
-	GetCollectionBySchemaID(context.Context, string) (Collection, error)
-	ExecQuery(context.Context, string) *QueryResult
-	SchemaManager() *schema.SchemaManager
 	AddSchema(context.Context, string) error
-	PrintDump(ctx context.Context)
-	GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
-	Root() ds.Batching
-	// Rootstore() core.DSReaderWriter
-	// Headstore() core.DSReaderWriter
-	// Datastore() core.DSReaderWriter
-	DAGstore() core.DAGStore
 
-	NewTxn(context.Context, bool) (core.Txn, error)
+	CreateCollection(context.Context, base.CollectionDescription) (Collection, error)
+	GetCollectionByName(context.Context, string) (Collection, error)
+	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
-}
+	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
 
-type Sequence interface{}
+	Root() ds.Batching
+	Blockstore() blockstore.Blockstore
+
+	NewTxn(context.Context, bool) (datastore.Txn, error)
+	ExecQuery(context.Context, string) *QueryResult
+
+	PrintDump(ctx context.Context)
+}
 
 type Collection interface {
 	Description() base.CollectionDescription
@@ -77,7 +71,7 @@ type Collection interface {
 
 	Get(context.Context, key.DocKey) (*document.Document, error)
 
-	WithTxn(core.Txn) Collection
+	WithTxn(datastore.Txn) Collection
 
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 }

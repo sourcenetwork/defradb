@@ -18,7 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/ugorji/go/codec"
 
@@ -27,8 +27,8 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-func newMockStore() core.DSReaderWriter {
-	return store.AsDSReaderWriter(ds.NewMapDatastore())
+func newMockStore() datastore.DSReaderWriter {
+	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
 }
 
 func setupLWWRegister() LWWRegister {

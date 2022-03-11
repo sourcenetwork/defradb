@@ -13,19 +13,21 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
-	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -50,7 +52,7 @@ type DB struct {
 	glock sync.RWMutex
 
 	rootstore  ds.Batching
-	multistore core.MultiStore
+	multistore datastore.MultiStore
 
 	crdtFactory *crdt.Factory
 
@@ -75,8 +77,8 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 // NewDB creates a new instance of the DB using the given options
 func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug(ctx, "loading: internal datastores")
-	root := store.AsDSReaderWriter(rootstore)
-	multistore := store.MultiStoreFrom(root)
+	root := datastore.AsDSReaderWriter(rootstore)
+	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	log.Debug(ctx, "loading: schema manager")
@@ -118,35 +120,20 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 	return db, nil
 }
 
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (core.Txn, error) {
-	return store.NewTxnFrom(ctx, db.rootstore, readonly)
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
 func (db *DB) Root() ds.Batching {
 	return db.rootstore
 }
 
-// Rootstore gets the internal rootstore handle
-func (db *DB) Rootstore() core.DSReaderWriter {
-	return db.multistore.Rootstore()
-}
-
-// Headstore returns the internal index store for DAG Heads
-func (db *DB) Headstore() core.DSReaderWriter {
-	return db.multistore.Headstore()
-}
-
-// Datastore returns the internal index store for DAG Heads
-func (db *DB) Datastore() core.DSReaderWriter {
-	return db.multistore.Datastore()
-}
-
-// DAGstore returns the internal DAG store which contains IPLD blocks
-func (db *DB) DAGstore() core.DAGStore {
+// Blockstore returns the internal DAG store which contains IPLD blocks
+func (db *DB) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *DB) Systemstore() core.DSReaderWriter {
+func (db *DB) systemstore() datastore.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
@@ -157,7 +144,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	defer db.glock.Unlock()
 
 	log.Debug(ctx, "Checking if db has already been initialized...")
-	exists, err := db.Systemstore().Has(ctx, ds.NewKey("init"))
+	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
 	}
@@ -176,7 +163,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = db.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = db.systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -184,16 +171,25 @@ func (db *DB) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *DB) printDebugDB(ctx context.Context) {
-	printStore(ctx, db.Rootstore())
-}
-
 func (db *DB) PrintDump(ctx context.Context) {
-	printStore(ctx, db.Rootstore())
+	printStore(ctx, db.multistore.Rootstore())
 }
 
 func (db *DB) Executor() *planner.QueryExecutor {
 	return db.queryExecutor
+}
+
+func (db *DB) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
+	rm := db.schema.Relations
+	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
+	if rel == nil {
+		return "", fmt.Errorf("Relation does not exists")
+	}
+	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
+	if !ok {
+		return "", fmt.Errorf("Relation is missing referenced field")
+	}
+	return subtypefieldname, nil
 }
 
 // Close is called when we are shutting down the database.
@@ -208,7 +204,7 @@ func (db *DB) Close(ctx context.Context) {
 	log.Info(ctx, "Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store core.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,

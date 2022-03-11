@@ -8,25 +8,24 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package store
+package datastore
 
 import (
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
 type multistore struct {
-	root   core.DSReaderWriter
-	data   core.DSReaderWriter
-	head   core.DSReaderWriter
-	system core.DSReaderWriter
-	// block core.DSReaderWriter
-	dag core.DAGStore
+	root   DSReaderWriter
+	data   DSReaderWriter
+	head   DSReaderWriter
+	system DSReaderWriter
+	// block DSReaderWriter
+	dag DAGStore
 }
 
-var _ core.MultiStore = (*multistore)(nil)
+var _ MultiStore = (*multistore)(nil)
 
-func MultiStoreFrom(rootstore core.DSReaderWriter) core.MultiStore {
+func MultiStoreFrom(rootstore DSReaderWriter) MultiStore {
 	block := prefix(rootstore, base.BlockStoreKey)
 	ms := &multistore{
 		root:   rootstore,
@@ -39,26 +38,26 @@ func MultiStoreFrom(rootstore core.DSReaderWriter) core.MultiStore {
 	return ms
 }
 
-// Datastore implements core.MultiStore
-func (ms multistore) Datastore() core.DSReaderWriter {
+// Datastore implements MultiStore
+func (ms multistore) Datastore() DSReaderWriter {
 	return ms.data
 }
 
-// Headstore implements core.MultiStore
-func (ms multistore) Headstore() core.DSReaderWriter {
+// Headstore implements MultiStore
+func (ms multistore) Headstore() DSReaderWriter {
 	return ms.head
 }
 
-// DAGstore implements core.MultiStore
-func (ms multistore) DAGstore() core.DAGStore {
+// DAGstore implements MultiStore
+func (ms multistore) DAGstore() DAGStore {
 	return ms.dag
 }
 
-// Rootstore implements core.MultiStore
-func (ms multistore) Rootstore() core.DSReaderWriter {
+// Rootstore implements MultiStore
+func (ms multistore) Rootstore() DSReaderWriter {
 	return ms.root
 }
 
-func (ms multistore) Systemstore() core.DSReaderWriter {
+func (ms multistore) Systemstore() DSReaderWriter {
 	return ms.system
 }

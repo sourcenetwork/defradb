@@ -15,7 +15,6 @@ import (
 
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -46,7 +45,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 	q := dsq.Query{
 		Prefix: "/schema",
 	}
-	res, err := db.Systemstore().Query(ctx, q)
+	res, err := db.systemstore().Query(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -67,16 +66,10 @@ func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 		case *ast.ObjectDefinition:
 			body := defType.Loc.Source.Body[defType.Loc.Start:defType.Loc.End]
 			key := core.NewSchemaKey(defType.Name.Value)
-			if err := db.Systemstore().Put(ctx, key.ToDS(), body); err != nil {
+			if err := db.systemstore().Put(ctx, key.ToDS(), body); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
-}
-
-// func (db *DB) LoadSchemaIfNotExists(schema string) error { return nil }
-
-func (db *DB) SchemaManager() *schema.SchemaManager {
-	return db.schema
 }

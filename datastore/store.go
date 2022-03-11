@@ -8,12 +8,17 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/sourcenetwork/defradb/datastores/iterable"
+	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/logging"
+)
+
+var (
+	log = logging.MustNewLogger("defradb.store")
 )
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
@@ -40,10 +45,10 @@ type MultiStore interface {
 }
 
 // DSReaderWriter simplifies the interface that is exposed by a
-// core.DSReaderWriter into its subcomponents Reader and Writer.
-// Using this simplified interface means that both core.DSReaderWriter
+// DSReaderWriter into its subcomponents Reader and Writer.
+// Using this simplified interface means that both DSReaderWriter
 // and ds.Txn satisfy the interface. Due to go-datastore#113 and
-// go-datastore#114 ds.Txn no longer implements core.DSReaderWriter
+// go-datastore#114 ds.Txn no longer implements DSReaderWriter
 // Which means we can't swap between the two for Datastores that
 // support TxnDatastore.
 type DSReaderWriter interface {

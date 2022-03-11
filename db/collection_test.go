@@ -261,7 +261,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	assert.EqualError(t, err, "Collection schema field missing CRDT type")
 }
 
-func TestGetCollection(t *testing.T) {
+func TestGetCollectionByName(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -269,7 +269,7 @@ func TestGetCollection(t *testing.T) {
 	_, err = newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	col, err := db.GetCollection(ctx, "users")
+	col, err := db.GetCollectionByName(ctx, "users")
 	assert.NoError(t, err)
 
 	schema := col.Schema()
@@ -289,20 +289,20 @@ func TestGetCollection(t *testing.T) {
 	}
 }
 
-func TestGetCollectionReturnsErrorGivenNonExistantCollection(t *testing.T) {
+func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	_, err = db.GetCollection(ctx, "doesNotExist")
+	_, err = db.GetCollectionByName(ctx, "doesNotExist")
 	assert.EqualError(t, err, "datastore: key not found")
 }
 
-func TestGetCollectionReturnsErrorGivenEmptyString(t *testing.T) {
+func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	_, err = db.GetCollection(ctx, "")
+	_, err = db.GetCollectionByName(ctx, "")
 	assert.EqualError(t, err, "Collection name can't be empty")
 }

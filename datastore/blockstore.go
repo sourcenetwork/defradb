@@ -8,13 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package store
+package datastore
 
 import (
 	"context"
 	"errors"
-
-	"github.com/sourcenetwork/defradb/core"
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -27,7 +25,7 @@ import (
 // Blockstore implementation taken from https://github.com/ipfs/go-ipfs-blockstore/blob/master/blockstore.go
 // Needed a custom implementation that didn't rely on the ds.Batching interface.
 //
-// All datastore operations in DefraDB are interfaced by core.DSReaderWriter. This simplifies the interface to just
+// All datastore operations in DefraDB are interfaced by DSReaderWriter. This simplifies the interface to just
 // that of read/write operations, leaving the management of the datastore to the parent objects. This also allows
 // us to swap between a regular ds.Datastore, and a ds.Txn which as of https://github.com/ipfs/go-datastore/issues/114
 // no longer implements ds.Datastore.
@@ -35,7 +33,7 @@ import (
 // The original blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
 // to optimize the PutMany function. However, in DefraDB, since we rely on a single rootstore for all our various
 // substores (data, heads, blocks), which includes a Txn/Batch system already, our respective substores don't need
-// to optimize or worry about Batching/Txn. Hence the simplified core.DSReaderWriter.
+// to optimize or worry about Batching/Txn. Hence the simplified DSReaderWriter.
 
 // ErrHashMismatch is an error returned when the hash of a block
 // is different than expected.
@@ -48,14 +46,14 @@ var ErrNotFound = errors.New("blockstore: block not found")
 
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
-func NewBlockstore(store core.DSReaderWriter) blockstore.Blockstore {
+func NewBlockstore(store DSReaderWriter) blockstore.Blockstore {
 	return &bstore{
 		store: store,
 	}
 }
 
 type bstore struct {
-	store core.DSReaderWriter
+	store DSReaderWriter
 
 	rehash bool
 }
