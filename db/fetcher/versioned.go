@@ -17,9 +17,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -148,7 +148,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn client.Txn, spans cor
 	// create store
 	root := ds.NewMapDatastore()
 	vf.root = root
-	vf.store, err = store.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
+	vf.store, err = datastore.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
 	if err != nil {
 		return err
 	}

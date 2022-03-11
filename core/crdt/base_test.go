@@ -17,11 +17,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newDS() client.DSReaderWriter {
-	return store.AsDSReaderWriter(ds.NewMapDatastore())
+	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
 }
 
 func newSeededDS() client.DSReaderWriter {

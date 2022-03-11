@@ -19,13 +19,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newStores() client.MultiStore {
 	root := ds.NewMapDatastore()
-	rw := store.AsDSReaderWriter(root)
-	return store.MultiStoreFrom(rw)
+	rw := datastore.AsDSReaderWriter(root)
+	return datastore.MultiStoreFrom(rw)
 }
 
 func TestNewBlankFactory(t *testing.T) {

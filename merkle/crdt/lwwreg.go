@@ -19,7 +19,7 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
-	// "github.com/sourcenetwork/defradb/store"
+	// "github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/ipfs/go-cid"
 )

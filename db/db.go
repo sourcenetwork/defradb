@@ -19,10 +19,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
-	"github.com/sourcenetwork/defradb/store"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
@@ -77,8 +77,8 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 // NewDB creates a new instance of the DB using the given options
 func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
 	log.Debug(ctx, "loading: internal datastores")
-	root := store.AsDSReaderWriter(rootstore)
-	multistore := store.MultiStoreFrom(root)
+	root := datastore.AsDSReaderWriter(rootstore)
+	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
 	log.Debug(ctx, "loading: schema manager")
@@ -121,7 +121,7 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 }
 
 func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
-	return store.NewTxnFrom(ctx, db.rootstore, readonly)
+	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
 func (db *DB) Root() ds.Batching {
