@@ -31,7 +31,7 @@ import (
 type Fetcher interface {
 	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
-	FetchNext(ctx context.Context) (*client.EncodedDocument, error)
+	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 	Close() error
@@ -55,7 +55,7 @@ type DocumentFetcher struct {
 	schemaFields map[uint32]client.FieldDescription
 	fields       []*client.FieldDescription
 
-	doc         *client.EncodedDocument
+	doc         *encodedDocument
 	decodedDoc  *client.Document
 	initialized bool
 
@@ -78,7 +78,7 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 	df.reverse = reverse
 	df.initialized = true
 	df.isReadingDocument = false
-	df.doc = new(client.EncodedDocument)
+	df.doc = new(encodedDocument)
 
 	if df.kvResultsIter != nil {
 		if err := df.kvResultsIter.Close(); err != nil {
@@ -291,7 +291,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.Properties[fieldDesc] = &client.EncProperty{
+	df.doc.Properties[fieldDesc] = &encProperty{
 		Desc: fieldDesc,
 		Raw:  kv.Value,
 	}
@@ -301,7 +301,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
-func (df *DocumentFetcher) FetchNext(ctx context.Context) (*client.EncodedDocument, error) {
+func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, error) {
 	if df.kvEnd {
 		return nil, nil
 	}
