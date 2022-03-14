@@ -131,16 +131,18 @@ const (
 	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17 // Array of embedded objects, accessed via foreign keys
 )
 
+type RelationType uint8
+
 // Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	Meta_Relation_ONE         uint8 = 1   // 0b0000 0001
-	Meta_Relation_MANY        uint8 = 2   // 0b0000 0010
-	Meta_Relation_ONEONE      uint8 = 4   // 0b0000 0100
-	Meta_Relation_ONEMANY     uint8 = 8   // 0b0000 1000
-	Meta_Relation_MANYMANY    uint8 = 16  // 0b0001 0000
-	_                         uint8 = 32  // 0b0010 0000
-	Meta_Relation_INTERNAL_ID uint8 = 64  // 0b0100 0000
-	Meta_Relation_Primary     uint8 = 128 // 0b1000 0000 Primary reference entity on relation
+	Meta_Relation_ONE         RelationType = 1   // 0b0000 0001
+	Meta_Relation_MANY        RelationType = 2   // 0b0000 0010
+	Meta_Relation_ONEONE      RelationType = 4   // 0b0000 0100
+	Meta_Relation_ONEMANY     RelationType = 8   // 0b0000 1000
+	Meta_Relation_MANYMANY    RelationType = 16  // 0b0001 0000
+	_                         RelationType = 32  // 0b0010 0000
+	Meta_Relation_INTERNAL_ID RelationType = 64  // 0b0100 0000
+	Meta_Relation_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
@@ -156,7 +158,7 @@ type FieldDescription struct {
 	Schema       string // If the field is an OBJECT type, then it has a target schema
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          CType
-	Meta         uint8
+	Meta         RelationType
 	// @todo: Add relation name for specifying target relation index
 	// @body: If a type has two User sub objects, you need to specify the relation
 	// name used. By default the relation name is "rootType_subType". However,
@@ -173,6 +175,6 @@ func (f FieldDescription) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
-func IsSet(val, target uint8) bool {
-	return val&target > 0
+func (m RelationType) IsSet(target RelationType) bool {
+	return m&target > 0
 }
