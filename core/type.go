@@ -11,7 +11,6 @@
 package core
 
 // CType indicates CRDT type
-// @todo: Migrate core/crdt.Type and merkle/crdt.Type to unified /core.CRDTType
 type CType byte
 
 const (
