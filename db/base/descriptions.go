@@ -20,18 +20,6 @@ const (
 	ObjectMarker = byte(0xff) // @todo: Investigate object marker values
 )
 
-// Reserved system index identifiers. Any index that defra requires
-// to enable any internal feature, requires a reserved index ID.
-// Changing an existing system index ID is A BREAKING CHANGE.
-// Adding new IDs incrementally is not breaking.
-const (
-	PrimaryIndex int32 = 0
-
-	// VersionIndex is a Reserved secondary index that represents a
-	// versioned instance of the PrimaryIndex
-	VersionIndex int32 = -1 * iota
-)
-
 // CollectionDescription describes a Collection and
 // all its associated metadata
 type CollectionDescription struct {
