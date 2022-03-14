@@ -27,7 +27,7 @@ var (
 )
 
 // planNode is an interface all nodes in the plan tree need to implement
-type planNode interface {
+type planNode2 interface {
 	// Initializes or Re-Initializes an existing planNode
 	// Often called internally by Start()
 	Init() error
