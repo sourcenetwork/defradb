@@ -11,7 +11,6 @@
 package base
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -60,31 +59,6 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 
 func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return c.Indexes[0]
-}
-
-func (c CollectionDescription) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
-	if !c.Schema.IsEmpty() {
-		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
-	}
-	return key.WithFieldId(fieldName)
-}
-
-func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
-	switch ctype {
-	case core.COMPOSITE:
-		return c.GetPrimaryIndexDocKey(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
-	case core.LWW_REGISTER:
-		fieldKey := c.getFieldKey(key, fieldName)
-		return c.GetPrimaryIndexDocKey(fieldKey), nil
-	}
-	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
-}
-
-func (c CollectionDescription) GetPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
-	return core.DataStoreKey{
-		CollectionId: fmt.Sprint(c.ID),
-		IndexId:      fmt.Sprint(c.GetPrimaryIndex().ID),
-	}.WithInstanceInfo(key)
 }
 
 // IndexDescription describes an Index on a Collection

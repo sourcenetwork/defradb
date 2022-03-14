@@ -11,6 +11,9 @@
 package base
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -29,4 +32,29 @@ func MakeIndexKey(col *CollectionDescription, index *IndexDescription, docKey st
 		IndexId:      index.IDString(),
 		DocKey:       docKey,
 	}
+}
+
+func MakePrimaryIndexKeyForCRDT(c *CollectionDescription, ctype core.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
+	switch ctype {
+	case core.COMPOSITE:
+		return MakePrimaryIndexKey(c, key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+	case core.LWW_REGISTER:
+		fieldKey := getFieldKey(c, key, fieldName)
+		return MakePrimaryIndexKey(c, fieldKey), nil
+	}
+	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
+}
+
+func MakePrimaryIndexKey(c *CollectionDescription, key core.DataStoreKey) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: fmt.Sprint(c.ID),
+		IndexId:      fmt.Sprint(c.GetPrimaryIndex().ID),
+	}.WithInstanceInfo(key)
+}
+
+func getFieldKey(c *CollectionDescription, key core.DataStoreKey, fieldName string) core.DataStoreKey {
+	if !c.Schema.IsEmpty() {
+		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
+	}
+	return key.WithFieldId(fieldName)
 }
