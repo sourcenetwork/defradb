@@ -19,9 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/document"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -422,12 +420,12 @@ func createDocUpdates(col client.Collection) error {
 	// doc.Set("points", 129.99)
 	// err = col.Update(doc)
 
-	var doc *document.Document
+	var doc *client.Document
 	var err error
 	ctx := context.Background()
 	for i, update := range testStates {
 		if i == 0 { // create
-			doc, err = document.NewFromJSON(update.payload)
+			doc, err = client.NewDocFromJSON(update.payload)
 			if err != nil {
 				return err
 			}
@@ -453,32 +451,32 @@ func createDocUpdates(col client.Collection) error {
 }
 
 func newTestCollectionWithSchema(d client.DB) (client.Collection, error) {
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "name",
-					Kind: base.FieldKind_STRING,
+					Kind: client.FieldKind_STRING,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "age",
-					Kind: base.FieldKind_INT,
+					Kind: client.FieldKind_INT,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "verified",
-					Kind: base.FieldKind_BOOL,
+					Kind: client.FieldKind_BOOL,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "points",
-					Kind: base.FieldKind_FLOAT,
+					Kind: client.FieldKind_FLOAT,
 					Typ:  client.LWW_REGISTER,
 				},
 			},

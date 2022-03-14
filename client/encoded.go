@@ -8,14 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package document
+package client
 
 import (
 	"fmt"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/document/key"
 
 	"github.com/fxamacker/cbor/v2"
 )
@@ -24,7 +20,7 @@ type EPTuple []EncProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type EncProperty struct {
-	Desc base.FieldDescription
+	Desc FieldDescription
 	Raw  []byte
 
 	// // encoding meta data
@@ -32,8 +28,8 @@ type EncProperty struct {
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e EncProperty) Decode() (client.CType, interface{}, error) {
-	ctype := client.CType(e.Raw[0])
+func (e EncProperty) Decode() (CType, interface{}, error) {
+	ctype := CType(e.Raw[0])
 	buf := e.Raw[1:]
 	var val interface{}
 	err := cbor.Unmarshal(buf, &val)
@@ -44,7 +40,7 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 	if array, isArray := val.([]interface{}); isArray {
 		var ok bool
 		switch e.Desc.Kind {
-		case base.FieldKind_BOOL_ARRAY:
+		case FieldKind_BOOL_ARRAY:
 			boolArray := make([]bool, len(array))
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
@@ -53,7 +49,7 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = boolArray
-		case base.FieldKind_INT_ARRAY:
+		case FieldKind_INT_ARRAY:
 			intArray := make([]int64, len(array))
 			for i, untypedValue := range array {
 				switch value := untypedValue.(type) {
@@ -68,7 +64,7 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = intArray
-		case base.FieldKind_FLOAT_ARRAY:
+		case FieldKind_FLOAT_ARRAY:
 			floatArray := make([]float64, len(array))
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
@@ -77,7 +73,7 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = floatArray
-		case base.FieldKind_STRING_ARRAY:
+		case FieldKind_STRING_ARRAY:
 			stringArray := make([]string, len(array))
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
@@ -89,7 +85,7 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch e.Desc.Kind {
-		case base.FieldKind_FLOAT:
+		case FieldKind_FLOAT:
 			switch v := val.(type) {
 			case int64:
 				return ctype, float64(v), nil
@@ -109,22 +105,22 @@ func (e EncProperty) Decode() (client.CType, interface{}, error) {
 // @todo: Implement Encoded Document type
 type EncodedDocument struct {
 	Key        []byte
-	Properties map[base.FieldDescription]*EncProperty
+	Properties map[FieldDescription]*EncProperty
 }
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *EncodedDocument) Reset() {
-	encdoc.Properties = make(map[base.FieldDescription]*EncProperty)
+	encdoc.Properties = make(map[FieldDescription]*EncProperty)
 	encdoc.Key = nil
 }
 
 // Decode returns a properly decoded document object
 func (encdoc *EncodedDocument) Decode() (*Document, error) {
-	key, err := key.NewFromString(string(encdoc.Key))
+	key, err := NewDocKeyFromString(string(encdoc.Key))
 	if err != nil {
 		return nil, err
 	}
-	doc := NewWithKey(key)
+	doc := NewDocWithKey(key)
 	for fieldDesc, prop := range encdoc.Properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {

@@ -17,7 +17,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 var (
@@ -139,7 +139,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 	return dataStoreKey
 }
 
-func DataStoreKeyFromDocKey(dockey key.DocKey) DataStoreKey {
+func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 	return DataStoreKey{
 		DocKey: dockey.String(),
 	}

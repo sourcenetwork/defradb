@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // type uint8 uint8
@@ -101,14 +101,14 @@ func (rm *RelationManager) RegisterSingle(name, schemaType, schemaField string, 
 	}
 
 	// make sure the relation type is ONLY One or Many, not both
-	if base.IsSet(relType, base.Meta_Relation_ONE) == base.IsSet(relType, base.Meta_Relation_MANY) {
+	if client.IsSet(relType, client.Meta_Relation_ONE) == client.IsSet(relType, client.Meta_Relation_MANY) {
 		return false, errors.New("Relation type can only be either One or Many, not both")
 	}
 
 	// make a copy of rel type, one goes to the relation.relType, and the other goes into the []types.
 	// We need to clear the Primary bit on the relation.relType so we make a copy
 	rt := relType
-	rt &^= base.Meta_Relation_Primary // clear the primary bit
+	rt &^= client.Meta_Relation_Primary // clear the primary bit
 
 	rel, ok := rm.relations[name]
 	if !ok {
@@ -126,17 +126,17 @@ func (rm *RelationManager) RegisterSingle(name, schemaType, schemaField string, 
 
 		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many
 		// one
-		if base.IsSet(rel.relType, base.Meta_Relation_ONE) {
-			if base.IsSet(relType, base.Meta_Relation_ONE) { // One-to-One
-				rel.relType = base.Meta_Relation_ONEONE
-			} else if base.IsSet(relType, base.Meta_Relation_MANY) {
-				rel.relType = base.Meta_Relation_ONEMANY
+		if client.IsSet(rel.relType, client.Meta_Relation_ONE) {
+			if client.IsSet(relType, client.Meta_Relation_ONE) { // One-to-One
+				rel.relType = client.Meta_Relation_ONEONE
+			} else if client.IsSet(relType, client.Meta_Relation_MANY) {
+				rel.relType = client.Meta_Relation_ONEMANY
 			}
 		} else { // many
-			if base.IsSet(relType, base.Meta_Relation_ONE) {
-				rel.relType = base.Meta_Relation_ONEMANY
-			} else if base.IsSet(relType, base.Meta_Relation_MANY) {
-				rel.relType = base.Meta_Relation_MANYMANY
+			if client.IsSet(relType, client.Meta_Relation_ONE) {
+				rel.relType = client.Meta_Relation_ONEMANY
+			} else if client.IsSet(relType, client.Meta_Relation_MANY) {
+				rel.relType = client.Meta_Relation_MANYMANY
 			}
 		}
 
@@ -190,9 +190,9 @@ func (r *Relation) finalize() error {
 	}
 
 	// make sure its one of One-to-One, One-to-Many, Many-to-Many
-	if !base.IsSet(r.relType, base.Meta_Relation_ONEONE) &&
-		!base.IsSet(r.relType, base.Meta_Relation_ONEMANY) &&
-		!base.IsSet(r.relType, base.Meta_Relation_MANYMANY) {
+	if !client.IsSet(r.relType, client.Meta_Relation_ONEONE) &&
+		!client.IsSet(r.relType, client.Meta_Relation_ONEMANY) &&
+		!client.IsSet(r.relType, client.Meta_Relation_MANYMANY) {
 		return errors.New("Relation has an invalid type to be finalize")
 	}
 
@@ -203,24 +203,24 @@ func (r *Relation) finalize() error {
 		xBit := t1 ^ t2
 
 		// both types have primary set
-		if base.IsSet(aBit, base.Meta_Relation_Primary) {
+		if client.IsSet(aBit, client.Meta_Relation_Primary) {
 			return errors.New("relation can only have a single field set as primary")
-		} else if !base.IsSet(xBit, base.Meta_Relation_Primary) {
+		} else if !client.IsSet(xBit, client.Meta_Relation_Primary) {
 			// neither type has primary set, auto add to
 			// lexicographically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
-				r.types[1] = r.types[1] | base.Meta_Relation_Primary
+				r.types[1] = r.types[1] | client.Meta_Relation_Primary
 			} else {
-				r.types[0] = r.types[0] | base.Meta_Relation_Primary
+				r.types[0] = r.types[0] | client.Meta_Relation_Primary
 			}
 		}
 	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
 		if IsOne(r.types[0]) {
-			r.types[0] |= base.Meta_Relation_Primary  // set primary on one
-			r.types[1] &^= base.Meta_Relation_Primary // clear primary on many
+			r.types[0] |= client.Meta_Relation_Primary  // set primary on one
+			r.types[1] &^= client.Meta_Relation_Primary // clear primary on many
 		} else {
-			r.types[1] |= base.Meta_Relation_Primary  // set primary on one
-			r.types[0] &^= base.Meta_Relation_Primary // clear primary on many
+			r.types[1] |= client.Meta_Relation_Primary  // set primary on one
+			r.types[0] &^= client.Meta_Relation_Primary // clear primary on many
 		}
 	}
 
@@ -250,7 +250,7 @@ func (r Relation) SchemaTypeIsPrimary(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_Primary)
+	return client.IsSet(relType, client.Meta_Relation_Primary)
 }
 
 // SchemaTypeIsOne returns true if the provided type of the relation
@@ -262,7 +262,7 @@ func (r Relation) SchemaTypeIsOne(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_ONE)
+	return client.IsSet(relType, client.Meta_Relation_ONE)
 }
 
 // SchemaTypeIsMany returns true if the provided type of the relation
@@ -274,7 +274,7 @@ func (r Relation) SchemaTypeIsMany(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_MANY)
+	return client.IsSet(relType, client.Meta_Relation_MANY)
 }
 
 func (r Relation) schemaTypeExists(t string) (int, bool) {
@@ -320,32 +320,32 @@ func genRelationName(t1, t2 string) (string, error) {
 
 // IsPrimary returns true if the Relation_Primary bit is set
 func IsPrimary(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_Primary)
+	return client.IsSet(fieldmeta, client.Meta_Relation_Primary)
 }
 
 // IsOne returns true if the Relation_ONE bit is set
 func IsOne(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONE)
+	return client.IsSet(fieldmeta, client.Meta_Relation_ONE)
 }
 
 // IsOneToOne returns true if the Relation_ONEONE bit is set
 func IsOneToOne(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONEONE)
+	return client.IsSet(fieldmeta, client.Meta_Relation_ONEONE)
 }
 
 // IsMany returns true if the Relation_MANY bit is set
 func IsMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_MANY)
+	return client.IsSet(fieldmeta, client.Meta_Relation_MANY)
 }
 
 // IsOneToMany returns true if the Relation_ONEMANY is set
 func IsOneToMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONEMANY)
+	return client.IsSet(fieldmeta, client.Meta_Relation_ONEMANY)
 }
 
 // IsManyToMany returns true if the Relation_MANYMANY bit is set
 func IsManyToMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_MANYMANY)
+	return client.IsSet(fieldmeta, client.Meta_Relation_MANYMANY)
 }
 
 /* Example usage

@@ -92,8 +92,8 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col *base.CollectionDescription
-	// @todo index  *base.IndexDescription
+	col *client.CollectionDescription
+	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
@@ -101,7 +101,7 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)

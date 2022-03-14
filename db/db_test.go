@@ -14,12 +14,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -62,7 +60,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = db.CreateCollection(ctx, base.CollectionDescription{
+	_, err = db.CreateCollection(ctx, client.CollectionDescription{
 		Name: "test",
 	})
 
@@ -82,7 +80,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -124,7 +122,7 @@ func TestDBUpdateDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -174,7 +172,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -197,7 +195,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
@@ -209,7 +207,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 		"Age": 31
 	}`)
 
-	doc, err = document.NewFromJSON(testJSONObj)
+	doc, err = client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Update(ctx, doc)
@@ -240,13 +238,13 @@ func TestDBGetDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	doc, err = col.Get(ctx, key)
 	assert.NoError(t, err)
@@ -271,7 +269,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	_, err = col.Get(ctx, key)
 	assert.EqualError(t, err, ErrDocumentNotFound.Error())
@@ -290,13 +288,13 @@ func TestDBDeleteDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	deleted, err := col.Delete(ctx, key)
 	assert.NoError(t, err)
@@ -310,7 +308,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	deleted, err := col.Delete(ctx, key)
 	assert.EqualError(t, err, ErrDocumentNotFound.Error())
@@ -330,7 +328,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
@@ -362,7 +360,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		"Age": 31
 	}`)
 
-	doc, err = document.NewFromJSON(testJSONObj)
+	doc, err = client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Update(ctx, doc)
@@ -400,7 +398,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 		"Age": 21
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -433,7 +431,7 @@ func TestDBUpdateDocWithFilter(t *testing.T) {
 		"Age": 21
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return

@@ -19,7 +19,7 @@ import (
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
-func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) core.DataStoreKey {
+func MakeIndexPrefixKey(col *client.CollectionDescription, index *client.IndexDescription) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: col.IDString(),
 		IndexId:      index.IDString(),
@@ -27,7 +27,7 @@ func MakeIndexPrefixKey(col *CollectionDescription, index *IndexDescription) cor
 }
 
 // MakeIndexKey generates a key for the target dockey, using the collection/index description
-func MakeIndexKey(col *CollectionDescription, index *IndexDescription, docKey string) core.DataStoreKey {
+func MakeIndexKey(col *client.CollectionDescription, index *client.IndexDescription, docKey string) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: col.IDString(),
 		IndexId:      index.IDString(),
@@ -35,7 +35,7 @@ func MakeIndexKey(col *CollectionDescription, index *IndexDescription, docKey st
 	}
 }
 
-func MakePrimaryIndexKeyForCRDT(c *CollectionDescription, ctype client.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
+func MakePrimaryIndexKeyForCRDT(c *client.CollectionDescription, ctype client.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
 		return MakePrimaryIndexKey(c, key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
@@ -46,14 +46,14 @@ func MakePrimaryIndexKeyForCRDT(c *CollectionDescription, ctype client.CType, ke
 	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
 }
 
-func MakePrimaryIndexKey(c *CollectionDescription, key core.DataStoreKey) core.DataStoreKey {
+func MakePrimaryIndexKey(c *client.CollectionDescription, key core.DataStoreKey) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.ID),
 		IndexId:      fmt.Sprint(c.GetPrimaryIndex().ID),
 	}.WithInstanceInfo(key)
 }
 
-func getFieldKey(c *CollectionDescription, key core.DataStoreKey, fieldName string) core.DataStoreKey {
+func getFieldKey(c *client.CollectionDescription, key core.DataStoreKey, fieldName string) core.DataStoreKey {
 	if !c.Schema.IsEmpty() {
 		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
 	}

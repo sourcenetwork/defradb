@@ -18,38 +18,37 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/document"
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionDescription() base.CollectionDescription {
-	return base.CollectionDescription{
+func newTestCollectionDescription() client.CollectionDescription {
+	return client.CollectionDescription{
 		Name: "users",
 		ID:   uint32(1),
-		Schema: base.SchemaDescription{
+		Schema: client.SchemaDescription{
 			ID:       uint32(1),
 			FieldIDs: []uint32{1, 2, 3},
-			Fields: []base.FieldDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					ID:   base.FieldID(1),
-					Kind: base.FieldKind_DocKey,
+					ID:   client.FieldID(1),
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "Name",
-					ID:   base.FieldID(2),
-					Kind: base.FieldKind_STRING,
+					ID:   client.FieldID(2),
+					Kind: client.FieldKind_STRING,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Age",
-					ID:   base.FieldID(3),
-					Kind: base.FieldKind_INT,
+					ID:   client.FieldID(3),
+					Kind: client.FieldKind_INT,
 					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
-		Indexes: []base.IndexDescription{
+		Indexes: []client.IndexDescription{
 			{
 				Name:    "primary",
 				ID:      uint32(0),
@@ -126,7 +125,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -163,7 +162,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -171,7 +170,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	doc, err = document.NewFromJSON([]byte(`{
+	doc, err = client.NewDocFromJSON([]byte(`{
 		"Name": "Alice",
 		"Age": 27
 	}`))
@@ -211,7 +210,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -255,7 +254,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -263,7 +262,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	doc, err = document.NewFromJSON([]byte(`{
+	doc, err = client.NewDocFromJSON([]byte(`{
 		"Name": "Alice",
 		"Age": 27
 	}`))
@@ -320,7 +319,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))

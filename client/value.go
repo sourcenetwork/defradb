@@ -8,13 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package document
+package client
 
 import (
 	"encoding/binary"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/sourcenetwork/defradb/client"
 )
 
 // Value is an interface that points to a concrete Value implementation
@@ -22,7 +21,7 @@ import (
 type Value interface {
 	Value() interface{}
 	IsDocument() bool
-	Type() client.CType
+	Type() CType
 	IsDirty() bool
 	Clean()
 	IsDelete() bool //todo: Update IsDelete naming
@@ -47,13 +46,13 @@ type ReadableValue interface {
 }
 
 type simpleValue struct {
-	t       client.CType
+	t       CType
 	value   interface{}
 	isDirty bool
 	delete  bool
 }
 
-func newValue(t client.CType, val interface{}) simpleValue {
+func newValue(t CType, val interface{}) simpleValue {
 	return simpleValue{
 		t:       t,
 		value:   val,
@@ -67,7 +66,7 @@ func (val simpleValue) Value() interface{} {
 	return val.value
 }
 
-func (val simpleValue) Type() client.CType {
+func (val simpleValue) Type() CType {
 	return val.t
 }
 
@@ -106,7 +105,7 @@ type StringValue struct {
 }
 
 // NewStringValue creates a new typed String Value
-func NewStringValue(t client.CType, val string) WriteableValue {
+func NewStringValue(t CType, val string) WriteableValue {
 	v := newValue(t, val)
 	return StringValue{&v}
 }
@@ -126,7 +125,7 @@ type Int64Value struct {
 }
 
 // NewInt64Value creates a new typed int64 value
-func NewInt64Value(t client.CType, val int64) WriteableValue {
+func NewInt64Value(t CType, val int64) WriteableValue {
 	v := newValue(t, val)
 	return Int64Value{&v}
 }
@@ -147,11 +146,11 @@ type cborValue struct {
 	*simpleValue
 }
 
-func NewCBORValue(t client.CType, val interface{}) WriteableValue {
+func NewCBORValue(t CType, val interface{}) WriteableValue {
 	return newCBORValue(t, val)
 }
 
-func newCBORValue(t client.CType, val interface{}) WriteableValue {
+func newCBORValue(t CType, val interface{}) WriteableValue {
 	v := newValue(t, val)
 	return cborValue{&v}
 }
