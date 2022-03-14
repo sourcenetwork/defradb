@@ -62,17 +62,6 @@ func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return c.Indexes[0]
 }
 
-func (c CollectionDescription) getIndexDocKey(key core.DataStoreKey, indexID uint32) core.DataStoreKey {
-	return core.DataStoreKey{
-		CollectionId: c.IDString(),
-		IndexId:      key.IndexId,
-	}.WithInstanceInfo(key)
-}
-
-func (c CollectionDescription) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
-	return c.getIndexDocKey(key, c.GetPrimaryIndex().ID)
-}
-
 func (c CollectionDescription) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
 	if !c.Schema.IsEmpty() {
 		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
@@ -83,10 +72,10 @@ func (c CollectionDescription) getFieldKey(key core.DataStoreKey, fieldName stri
 func (c CollectionDescription) GetPrimaryIndexDocKeyForCRDT(ctype core.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
 	switch ctype {
 	case core.COMPOSITE:
-		return c.getPrimaryIndexDocKey(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+		return c.GetPrimaryIndexDocKey(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case core.LWW_REGISTER:
 		fieldKey := c.getFieldKey(key, fieldName)
-		return c.getPrimaryIndexDocKey(fieldKey), nil
+		return c.GetPrimaryIndexDocKey(fieldKey), nil
 	}
 	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
 }
