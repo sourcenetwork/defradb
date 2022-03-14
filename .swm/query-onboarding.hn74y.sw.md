@@ -4,7 +4,7 @@ name: query onboarding
 file_version: 1.0.2
 app_version: 0.7.6-0
 file_blobs:
-  query/graphql/planner/planner.go: 1315a4aef1126dac0fc513542f308ea316cfde9a
+  query/graphql/planner/planner.go: 3699b49f772c3586f39d15279dc552d69ecd3c83
 ---
 
 `planNode`[<sup id="1pGEcQ">↓</sup>](#f-1pGEcQ) is the top-level interface for the `📄 query`package and is influenced by the [Volcano paper](https://paperhub.s3.amazonaws.com/dace52a42c07f7f8348b08dc2b186061.pdf).
@@ -15,7 +15,7 @@ file_blobs:
 ⬜ 27     )
 ⬜ 28     
 🟩 29     // planNode is an interface all nodes in the plan tree need to implement
-🟩 30     type planNode interface {
+🟩 30     type planNode2 interface {
 🟩 31     	// Initializes or Re-Initializes an existing planNode
 🟩 32     	// Often called internally by Start()
 🟩 33     	Init() error
