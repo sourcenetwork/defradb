@@ -11,8 +11,6 @@
 package client
 
 import (
-	"encoding/binary"
-
 	"github.com/fxamacker/cbor/v2"
 )
 
@@ -92,54 +90,6 @@ func (val *simpleValue) Delete() {
 
 func (val simpleValue) IsDelete() bool {
 	return val.delete
-}
-
-// // MakeDirty sets the value as
-// func (val *simpleValue) MakeDirty() {
-// 	val.isDirty = true
-// }
-
-// StringValue is a String wrapper for a simple Value
-type StringValue struct {
-	*simpleValue
-}
-
-// NewStringValue creates a new typed String Value
-func NewStringValue(t CType, val string) WriteableValue {
-	v := newValue(t, val)
-	return StringValue{&v}
-}
-
-// Bytes implements WriteableValue and encodes a string into a byte array
-func (s StringValue) Bytes() ([]byte, error) {
-	str, ok := s.value.(string)
-	if !ok {
-		return []byte(nil), ErrValueTypeMismatch
-	}
-	return []byte(str), nil
-}
-
-// Int64Value is a String wrapper for a simple Value
-type Int64Value struct {
-	*simpleValue
-}
-
-// NewInt64Value creates a new typed int64 value
-func NewInt64Value(t CType, val int64) WriteableValue {
-	v := newValue(t, val)
-	return Int64Value{&v}
-}
-
-// Bytes implements WriteableValue and encodes an int64 into a byte array
-func (s Int64Value) Bytes() ([]byte, error) {
-	i, ok := s.value.(int64)
-	if !ok {
-		return []byte(nil), ErrValueTypeMismatch
-	}
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutVarint(buf, i)
-	b := buf[:n]
-	return b, nil
 }
 
 type cborValue struct {
