@@ -13,7 +13,7 @@ package base
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 const (
@@ -161,7 +161,7 @@ type FieldDescription struct {
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
-	Typ          core.CType
+	Typ          client.CType
 	Meta         uint8
 	// @todo: Add relation name for specifying target relation index
 	// @body: If a type has two User sub objects, you need to specify the relation

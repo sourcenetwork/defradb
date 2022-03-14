@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
@@ -45,19 +45,19 @@ var (
 	}
 
 	// This map is fine to use
-	defaultCRDTForFieldKind = map[base.FieldKind]core.CType{
-		base.FieldKind_DocKey:               core.LWW_REGISTER,
-		base.FieldKind_BOOL:                 core.LWW_REGISTER,
-		base.FieldKind_BOOL_ARRAY:           core.LWW_REGISTER,
-		base.FieldKind_INT:                  core.LWW_REGISTER,
-		base.FieldKind_INT_ARRAY:            core.LWW_REGISTER,
-		base.FieldKind_FLOAT:                core.LWW_REGISTER,
-		base.FieldKind_FLOAT_ARRAY:          core.LWW_REGISTER,
-		base.FieldKind_DATE:                 core.LWW_REGISTER,
-		base.FieldKind_STRING:               core.LWW_REGISTER,
-		base.FieldKind_STRING_ARRAY:         core.LWW_REGISTER,
-		base.FieldKind_FOREIGN_OBJECT:       core.NONE_CRDT,
-		base.FieldKind_FOREIGN_OBJECT_ARRAY: core.NONE_CRDT,
+	defaultCRDTForFieldKind = map[base.FieldKind]client.CType{
+		base.FieldKind_DocKey:               client.LWW_REGISTER,
+		base.FieldKind_BOOL:                 client.LWW_REGISTER,
+		base.FieldKind_BOOL_ARRAY:           client.LWW_REGISTER,
+		base.FieldKind_INT:                  client.LWW_REGISTER,
+		base.FieldKind_INT_ARRAY:            client.LWW_REGISTER,
+		base.FieldKind_FLOAT:                client.LWW_REGISTER,
+		base.FieldKind_FLOAT_ARRAY:          client.LWW_REGISTER,
+		base.FieldKind_DATE:                 client.LWW_REGISTER,
+		base.FieldKind_STRING:               client.LWW_REGISTER,
+		base.FieldKind_STRING_ARRAY:         client.LWW_REGISTER,
+		base.FieldKind_FOREIGN_OBJECT:       client.NONE_CRDT,
+		base.FieldKind_FOREIGN_OBJECT_ARRAY: client.NONE_CRDT,
 	}
 )
 
@@ -120,7 +120,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 				{
 					Name: "_key",
 					Kind: base.FieldKind_DocKey,
-					Typ:  core.NONE_CRDT,
+					Typ:  client.NONE_CRDT,
 				},
 			},
 		}
@@ -259,27 +259,27 @@ return base.CollectionDescription{
 					Name: "name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name: "rating",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_FLOAT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name:   "author",
 					ID:     base.FieldID(5),
 					Kind:   base.FieldKind_FOREIGN_OBJECT,
 					Schema: "author",
-					Typ:    core.NONE_CRDT,
+					Typ:    client.NONE_CRDT,
 					Meta:   base.Meta_Relation_ONE | base.Meta_Relation_Primary,
 				},
 				base.FieldDescription{
 					Name: "author_id",
 					ID:   base.FieldID(6),
 					Kind: base.FieldKind_DocKey,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -310,26 +310,26 @@ return base.CollectionDescription{
 					Name: "name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name: "age",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name: "verified",
 					ID:   base.FieldID(4),
 					Kind: base.FieldKind_BOOL,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				base.FieldDescription{
 					Name:   "published",
 					ID:     base.FieldID(5),
 					Kind:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
 					Schema: "book",
-					Typ:    core.NONE_CRDT,
+					Typ:    client.NONE_CRDT,
 					Meta:   base.Meta_Relation_ONEMANY,
 				},
 			},

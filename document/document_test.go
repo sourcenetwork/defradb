@@ -66,11 +66,11 @@ func TestNewFromJSON(t *testing.T) {
 	// check field/value
 	// fields
 	assert.Equal(t, doc.fields["Name"].Name(), "Name")
-	assert.Equal(t, doc.fields["Name"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Name"].Type(), client.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Age"].Name(), "Age")
-	assert.Equal(t, doc.fields["Age"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Age"].Type(), client.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Address"].Name(), "Address")
-	assert.Equal(t, doc.fields["Address"].Type(), core.OBJECT)
+	assert.Equal(t, doc.fields["Address"].Type(), client.OBJECT)
 
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "John")
@@ -82,9 +82,9 @@ func TestNewFromJSON(t *testing.T) {
 	//subdoc fields
 	subDoc := doc.values[doc.fields["Address"]].Value().(*Document)
 	assert.Equal(t, subDoc.fields["Street"].Name(), "Street")
-	assert.Equal(t, subDoc.fields["Street"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, subDoc.fields["Street"].Type(), client.LWW_REGISTER)
 	assert.Equal(t, subDoc.fields["City"].Name(), "City")
-	assert.Equal(t, subDoc.fields["City"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, subDoc.fields["City"].Type(), client.LWW_REGISTER)
 
 	//subdoc values
 	assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")
@@ -129,11 +129,11 @@ func TestSetWithJSON(t *testing.T) {
 	// check field/value
 	// fields
 	assert.Equal(t, doc.fields["Name"].Name(), "Name")
-	assert.Equal(t, doc.fields["Name"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Name"].Type(), client.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Age"].Name(), "Age")
-	assert.Equal(t, doc.fields["Age"].Type(), core.LWW_REGISTER)
+	assert.Equal(t, doc.fields["Age"].Type(), client.LWW_REGISTER)
 	assert.Equal(t, doc.fields["Address"].Name(), "Address")
-	assert.Equal(t, doc.fields["Address"].Type(), core.OBJECT)
+	assert.Equal(t, doc.fields["Address"].Type(), client.OBJECT)
 
 	//values
 	assert.Equal(t, doc.values[doc.fields["Name"]].Value(), "Alice")
@@ -145,9 +145,9 @@ func TestSetWithJSON(t *testing.T) {
 	//subdoc fields
 	// subDoc := doc.values[doc.fields["Address"]].Value().(*Document)
 	// assert.Equal(t, subDoc.fields["Street"].Name(), "Street")
-	// assert.Equal(t, subDoc.fields["Street"].Type(), core.LWW_REGISTER)
+	// assert.Equal(t, subDoc.fields["Street"].Type(), client.LWW_REGISTER)
 	// assert.Equal(t, subDoc.fields["City"].Name(), "City")
-	// assert.Equal(t, subDoc.fields["City"].Type(), core.LWW_REGISTER)
+	// assert.Equal(t, subDoc.fields["City"].Type(), client.LWW_REGISTER)
 
 	// //subdoc values
 	// assert.Equal(t, subDoc.values[subDoc.fields["Street"]].Value(), "Main")

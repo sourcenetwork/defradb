@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -34,11 +35,11 @@ func MakeIndexKey(col *CollectionDescription, index *IndexDescription, docKey st
 	}
 }
 
-func MakePrimaryIndexKeyForCRDT(c *CollectionDescription, ctype core.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
+func MakePrimaryIndexKeyForCRDT(c *CollectionDescription, ctype client.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
 	switch ctype {
-	case core.COMPOSITE:
+	case client.COMPOSITE:
 		return MakePrimaryIndexKey(c, key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
-	case core.LWW_REGISTER:
+	case client.LWW_REGISTER:
 		fieldKey := getFieldKey(c, key, fieldName)
 		return MakePrimaryIndexKey(c, fieldKey), nil
 	}

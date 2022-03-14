@@ -85,7 +85,7 @@ func (db *db) newCollection(desc base.CollectionDescription) (*collection, error
 		if field.Kind == base.FieldKind_None {
 			return nil, errors.New("Collection schema field missing FieldKind")
 		}
-		if (field.Kind != base.FieldKind_DocKey && !field.IsObject()) && field.Typ == core.NONE_CRDT {
+		if (field.Kind != base.FieldKind_DocKey && !field.IsObject()) && field.Typ == client.NONE_CRDT {
 			return nil, errors.New("Collection schema field missing CRDT type")
 		}
 		desc.Schema.FieldIDs[i] = uint32(i)
@@ -604,7 +604,7 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *document.
 		return cid.Undef, nil
 	}
 
-	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), core.COMPOSITE, buf, links)
+	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), client.COMPOSITE, buf, links)
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -693,7 +693,7 @@ func (c *collection) exists(ctx context.Context, txn datastore.Txn, key core.Dat
 
 func (c *collection) saveDocValue(ctx context.Context, txn datastore.Txn, key core.DataStoreKey, val document.Value) (cid.Cid, error) {
 	switch val.Type() {
-	case core.LWW_REGISTER:
+	case client.LWW_REGISTER:
 		wval, ok := val.(document.WriteableValue)
 		if !ok {
 			return cid.Cid{}, document.ErrValueTypeMismatch
@@ -708,7 +708,7 @@ func (c *collection) saveDocValue(ctx context.Context, txn datastore.Txn, key co
 				return cid.Cid{}, err
 			}
 		}
-		return c.saveValueToMerkleCRDT(ctx, txn, key, core.LWW_REGISTER, bytes)
+		return c.saveValueToMerkleCRDT(ctx, txn, key, client.LWW_REGISTER, bytes)
 	default:
 		return cid.Cid{}, ErrUnknownCRDT
 	}
@@ -718,10 +718,10 @@ func (c *collection) saveValueToMerkleCRDT(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.DataStoreKey,
-	ctype core.CType,
+	ctype client.CType,
 	args ...interface{}) (cid.Cid, error) {
 	switch ctype {
-	case core.LWW_REGISTER:
+	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.schemaID, c.db.broadcaster, ctype, key)
 		if err != nil {
 			return cid.Cid{}, err
@@ -739,7 +739,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
-	case core.COMPOSITE:
+	case client.COMPOSITE:
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(txn, c.SchemaID(), c.db.broadcaster, ctype, key)
 		if err != nil {

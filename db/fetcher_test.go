@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -38,13 +39,13 @@ func newTestCollectionDescription() base.CollectionDescription {
 					Name: "Name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Age",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},

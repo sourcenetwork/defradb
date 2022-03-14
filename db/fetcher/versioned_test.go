@@ -464,22 +464,22 @@ func newTestCollectionWithSchema(d client.DB) (client.Collection, error) {
 				{
 					Name: "name",
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "age",
 					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "verified",
 					Kind: base.FieldKind_BOOL,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "points",
 					Kind: base.FieldKind_FLOAT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},

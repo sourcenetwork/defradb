@@ -8,9 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package client
+
+// CType indicates CRDT type
+type CType byte
 
 const (
-	COMPOSITE_NAMESPACE = "C"
-	HEAD                = "_head"
+	//no lint
+	NONE_CRDT = CType(iota) // reserved none type
+	LWW_REGISTER
+	OBJECT
+	COMPOSITE
 )

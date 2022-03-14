@@ -13,7 +13,7 @@ package document
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/document/key"
 
@@ -32,8 +32,8 @@ type EncProperty struct {
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e EncProperty) Decode() (core.CType, interface{}, error) {
-	ctype := core.CType(e.Raw[0])
+func (e EncProperty) Decode() (client.CType, interface{}, error) {
+	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
 	var val interface{}
 	err := cbor.Unmarshal(buf, &val)

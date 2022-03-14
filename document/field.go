@@ -10,24 +10,22 @@
 
 package document
 
-import (
-	"github.com/sourcenetwork/defradb/core"
-)
+import "github.com/sourcenetwork/defradb/client"
 
 // Field is an interface to interact with Fields inside a document
 type Field interface {
 	Name() string
-	Type() core.CType //TODO Abstract into a Field Type interface
+	Type() client.CType //TODO Abstract into a Field Type interface
 	SchemaType() string
 }
 
 type simpleField struct {
 	name       string
-	crdtType   core.CType
+	crdtType   client.CType
 	schemaType string
 }
 
-func (doc *Document) newField(t core.CType, name string, schemaType ...string) Field {
+func (doc *Document) newField(t client.CType, name string, schemaType ...string) Field {
 	f := simpleField{
 		name:     name,
 		crdtType: t,
@@ -42,7 +40,7 @@ func (field simpleField) Name() string {
 	return field.name
 }
 
-func (field simpleField) Type() core.CType {
+func (field simpleField) Type() client.CType {
 	return field.crdtType
 }
 

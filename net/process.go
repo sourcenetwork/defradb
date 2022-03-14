@@ -91,10 +91,10 @@ func (p *Peer) processLog(
 
 func initCRDTForType(ctx context.Context, txn datastore.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
-	var ctype core.CType
+	var ctype client.CType
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
-		ctype = core.COMPOSITE
+		ctype = client.COMPOSITE
 		key = base.MakePrimaryIndexKey(&description, docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
 	} else {
 		fd, ok := description.GetField(field)

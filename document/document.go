@@ -21,7 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 
-	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
@@ -244,7 +244,7 @@ func (doc *Document) Set(field string, value interface{}) error {
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
-func (doc *Document) SetAs(field string, value interface{}, t core.CType) error {
+func (doc *Document) SetAs(field string, value interface{}, t client.CType) error {
 	return doc.setCBOR(t, field, value)
 }
 
@@ -263,11 +263,11 @@ func (doc *Document) Delete(fields ...string) error {
 }
 
 // SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t core.CType, field string, value interface{}) error {
+// func (doc *Document) SetAsType(t client.CType, field string, value interface{}) error {
 // 	return doc.set(t, field, value)
 // }
 
-func (doc *Document) set(t core.CType, field string, value Value) error {
+func (doc *Document) set(t client.CType, field string, value Value) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
@@ -282,22 +282,22 @@ func (doc *Document) set(t core.CType, field string, value Value) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error {
+func (doc *Document) setCBOR(t client.CType, field string, val interface{}) error {
 	value := newCBORValue(t, val)
 	return doc.set(t, field, value)
 }
 
-// func (doc *Document) setString(t core.CType, field string, val string) error {
+// func (doc *Document) setString(t client.CType, field string, val string) error {
 // 	value := NewStringValue(t, val)
 // 	return doc.set(t, field, value)
 // }
 //
-// func (doc *Document) setInt64(t core.CType, field string, val int64) error {
+// func (doc *Document) setInt64(t client.CType, field string, val int64) error {
 // 	value := NewInt64Value(t, val)
 // 	return doc.set(t, field, value)
 // }
 
-func (doc *Document) setObject(t core.CType, field string, val *Document) error {
+func (doc *Document) setObject(t client.CType, field string, val *Document) error {
 	value := newValue(t, val)
 	return doc.set(t, field, &value)
 }
@@ -312,7 +312,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	// int (any number)
 	case int:
-		err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+		err := doc.setCBOR(client.LWW_REGISTER, field, int64(val))
 		if err != nil {
 			return err
 		}
@@ -321,13 +321,13 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 		// Check if its actually a float or just an int
 		if float64(int64(val)) == val { //int
-			err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			err := doc.setCBOR(client.LWW_REGISTER, field, int64(val))
 			if err != nil {
 				return err
 			}
 
 		} else { //float
-			err := doc.setCBOR(core.LWW_REGISTER, field, val)
+			err := doc.setCBOR(client.LWW_REGISTER, field, val)
 			if err != nil {
 				return err
 			}
@@ -335,7 +335,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	// string, bool, and more
 	case string, bool, []interface{}:
-		err := doc.setCBOR(core.LWW_REGISTER, field, val)
+		err := doc.setCBOR(client.LWW_REGISTER, field, val)
 		if err != nil {
 			return err
 		}
@@ -356,7 +356,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 			return err
 		}
 
-		err = doc.setObject(core.OBJECT, field, subDoc)
+		err = doc.setObject(client.OBJECT, field, subDoc)
 		if err != nil {
 			return err
 		}

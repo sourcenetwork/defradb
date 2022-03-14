@@ -370,7 +370,7 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
+	if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), client.COMPOSITE, buf, links); err != nil {
 		return err
 	}
 

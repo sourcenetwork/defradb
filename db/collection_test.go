@@ -16,7 +16,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,17 +32,17 @@ func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Coll
 				{
 					Name: "Name",
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Age",
 					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Weight",
 					Kind: base.FieldKind_FLOAT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -149,7 +148,7 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 				{
 					Name: "Name",
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -171,7 +170,7 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 				{
 					Name: "Name",
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "_key",
@@ -201,7 +200,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 				{
 					Name: "",
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -226,7 +225,7 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 				},
 				{
 					Name: "Name",
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
