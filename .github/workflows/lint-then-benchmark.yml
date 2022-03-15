@@ -10,6 +10,7 @@ on:
     branches:
       - master
       - develop
+      - test-lone/ci/use-artifacts-to-upload-benchmark
 
 
 ## These are the permissions for the lint check job.
@@ -183,7 +184,7 @@ jobs:
       - name: Upload artifact for push event on develop
         if: |
           github.event_name == 'push' &&
-          github.ref_name == 'develop'
+          github.ref_name == 'test-lone/ci/use-artifacts-to-upload-benchmark'
 
         run: cp bench.txt bench-artifact.txt
 
@@ -196,7 +197,7 @@ jobs:
       # - name: Download benchmark artifact to compare.
       #   if: |
       #     github.event_name != 'push' ||
-      #     github.ref_name != 'develop'
+      #     github.ref_name != 'test-lone/ci/use-artifacts-to-upload-benchmark'
       #
       #    uses: actions/download-artifact@v3
       #    with:
