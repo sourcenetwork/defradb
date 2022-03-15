@@ -34,23 +34,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run Before Uploading
-        run: |
-          echo "Hello World!" > bench.txt
-          cp bench.txt bench-artifact.txt
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: bench-artifact
-          path: bench-artifact.txt
-          retention-days: 90
-
-      # - name: Download artifact
-         # uses: actions/download-artifact@v3
-         # with:
-           # name: bench-artifact
+      # - name: Run Before Uploading
+        # run: |
+          # echo "Hello World!" > bench.txt
+          # cp bench.txt bench-artifact.txt
 #
-      # - name: Run After Downloading
-        # run: cat bench-artifact.txt
-#
+      # - name: Upload artifact
+        # uses: actions/upload-artifact@v3
+        # with:
+          # name: bench-artifact
+          # path: bench-artifact.txt
+          # retention-days: 90
+
+      - name: Download artifact
+         uses: actions/download-artifact@v3
+         with:
+           name: bench-artifact
+
+      - name: Run After Downloading
+        run: cat bench-artifact.txt
