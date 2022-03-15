@@ -40,7 +40,6 @@ jobs:
           cp bench.txt bench-artifact.txt
 
       - name: Upload artifact
-        run: cp bench.txt bench-artifact.txt
         uses: actions/upload-artifact@v3
         with:
           name: bench-artifact
