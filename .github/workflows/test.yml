@@ -1,0 +1,57 @@
+name: TEST
+
+
+on:
+  push:
+
+
+## These are the permissions for the lint check job.
+permissions:
+  # Allow read access to pull request (Required for the `only-new-issues` option.)
+  pull-requests: read
+  contents: read
+
+
+env:
+  # This is the default benchmark type which if no labels are specified will be used.
+  DEFAULT_BENCHMARK_TYPE: SHORT
+
+
+jobs:
+
+
+  test:
+    name: Run the benchmarks on the started EC2 runner
+
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+
+    env:
+      # This is also the same directory as `$GITHUB_WORKSPACE/..`
+      HOME: /actions-runner/_work
+      GOPATH: /actions-runner/_work/go
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Before Uploading
+        run: |
+          echo "Hello World!" > bench.txt
+          cp bench.txt bench-artifact.txt
+
+      - name: Upload artifact
+        run: cp bench.txt bench-artifact.txt
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench-artifact
+          path: bench-artifact.txt
+          retention-days: 90
+
+      # - name: Download artifact
+         # uses: actions/download-artifact@v3
+         # with:
+           # name: bench-artifact
+#
+      # - name: Run After Downloading
+        # run: cat bench-artifact.txt
+#
