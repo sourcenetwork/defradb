@@ -23,7 +23,7 @@ jobs:
   test:
     name: Run the benchmarks on the started EC2 runner
 
-    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    runs-on: ubuntu-latest
 
     env:
       # This is also the same directory as `$GITHUB_WORKSPACE/..`
