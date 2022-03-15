@@ -47,9 +47,9 @@ jobs:
           # retention-days: 90
 
       - name: Download artifact
-         uses: actions/download-artifact@v3
-         with:
-           name: bench-artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: bench-artifact
 
       - name: Run After Downloading
         run: cat bench-artifact.txt
