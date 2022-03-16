@@ -105,4 +105,4 @@ jobs:
             #        run: cat bench-artifact.txt
 
       - name: PRINT TEST
-        run: echo "${{github}}"
+        run: echo "$GITHUB_CONTEXT"
