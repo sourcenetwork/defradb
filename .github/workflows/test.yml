@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Before Uploading
         run: |
-          echo "Hello World!" > bench.txt
+          echo "Hello World HEAD!" > bench.txt
           cp bench.txt bench-artifact.txt
 
       - name: Upload artifact
