@@ -4,6 +4,9 @@ name: TEST
 on:
   pull_request:
   push:
+    branches:
+      - test-lone/ci-develop
+
 
 
 ## These are the permissions for the lint check job.
