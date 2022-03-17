@@ -21,9 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 
@@ -48,16 +45,12 @@ func (c *collection) UpdateWith(ctx context.Context, target interface{}, updater
 	case string, map[string]interface{}, *parser.Filter:
 		_, err := c.UpdateWithFilter(ctx, t, updater, opts...)
 		return err
-	case key.DocKey:
+	case client.DocKey:
 		_, err := c.UpdateWithKey(ctx, t, updater, opts...)
 		return err
-	case []key.DocKey:
+	case []client.DocKey:
 		_, err := c.UpdateWithKeys(ctx, t, updater, opts...)
 		return err
-	case *document.SimpleDocument:
-		return c.UpdateWithDoc(t, updater, opts...)
-	case []*document.SimpleDocument:
-		return c.UpdateWithDocs(t, updater, opts...)
 	default:
 		return ErrInvalidUpdateTarget
 	}
@@ -82,7 +75,7 @@ func (c *collection) UpdateWithFilter(ctx context.Context, filter interface{}, u
 // UpdateWithKey updates using a DocKey to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKey(ctx context.Context, key client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -99,7 +92,7 @@ func (c *collection) UpdateWithKey(ctx context.Context, key key.DocKey, updater 
 // UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKeys(ctx context.Context, keys []client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -113,21 +106,7 @@ func (c *collection) UpdateWithKeys(ctx context.Context, keys []key.DocKey, upda
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-// UpdateWithDoc updates targeting the supplied document.
-// An updater value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithDoc(doc *document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
-	return nil
-}
-
-// UpdateWithDocs updates all the supplied documents in the slice.
-// An updater value is provided, which could be a string Patch, string Merge Patch
-// or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithDocs(docs []*document.SimpleDocument, updater interface{}, opts ...client.UpdateOpt) error {
-	return nil
-}
-
-func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -168,7 +147,7 @@ func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key k
 	return results, nil
 }
 
-func (c *collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys []key.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys []client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -344,11 +323,11 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 		// when we serialize that in CBOR. To generate the delta
 		// payload.
 		// So let's just make sure ints are ints ref: https://play.golang.org/p/djThEqGXtvR
-		if fd.Kind == base.FieldKind_INT {
+		if fd.Kind == client.FieldKind_INT {
 			merge[mfield] = int64(mval.(float64))
 		}
 
-		val := document.NewCBORValue(fd.Typ, cval)
+		val := client.NewCBORValue(fd.Typ, cval)
 		fieldKey := c.getFieldKey(key, mfield)
 		c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
 		if err != nil {
@@ -370,7 +349,7 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), core.COMPOSITE, buf, links); err != nil {
+	if _, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(key), client.COMPOSITE, buf, links); err != nil {
 		return err
 	}
 
@@ -397,14 +376,14 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val interface{}, field base.FieldDescription) (interface{}, error) {
+func validateFieldSchema(val interface{}, field client.FieldDescription) (interface{}, error) {
 	var cval interface{}
 	var err error
 	var ok bool
 	switch field.Kind {
-	case base.FieldKind_DocKey, base.FieldKind_STRING:
+	case client.FieldKind_DocKey, client.FieldKind_STRING:
 		cval, ok = val.(string)
-	case base.FieldKind_STRING_ARRAY:
+	case client.FieldKind_STRING_ARRAY:
 		if val == nil {
 			ok = true
 			cval = nil
@@ -424,9 +403,9 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		}
 		ok = true
 		cval = stringArray
-	case base.FieldKind_BOOL:
+	case client.FieldKind_BOOL:
 		cval, ok = val.(bool)
-	case base.FieldKind_BOOL_ARRAY:
+	case client.FieldKind_BOOL_ARRAY:
 		if val == nil {
 			ok = true
 			cval = nil
@@ -442,9 +421,9 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		}
 		ok = true
 		cval = boolArray
-	case base.FieldKind_FLOAT, base.FieldKind_DECIMAL:
+	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
 		cval, ok = val.(float64)
-	case base.FieldKind_FLOAT_ARRAY:
+	case client.FieldKind_FLOAT_ARRAY:
 		if val == nil {
 			ok = true
 			cval = nil
@@ -461,18 +440,18 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		ok = true
 		cval = floatArray
 
-	case base.FieldKind_DATE:
+	case client.FieldKind_DATE:
 		var sval string
 		sval, ok = val.(string)
 		cval, err = time.Parse(time.RFC3339, sval)
-	case base.FieldKind_INT:
+	case client.FieldKind_INT:
 		var fval float64
 		fval, ok = val.(float64)
 		if !ok {
 			return nil, ErrInvalidMergeValueType
 		}
 		cval = int64(fval)
-	case base.FieldKind_INT_ARRAY:
+	case client.FieldKind_INT_ARRAY:
 		if val == nil {
 			ok = true
 			cval = nil
@@ -489,8 +468,8 @@ func validateFieldSchema(val interface{}, field base.FieldDescription) (interfac
 		}
 		ok = true
 		cval = intArray
-	case base.FieldKind_OBJECT, base.FieldKind_OBJECT_ARRAY,
-		base.FieldKind_FOREIGN_OBJECT, base.FieldKind_FOREIGN_OBJECT_ARRAY:
+	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
+		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
 		err = errors.New("Merge doesn't support sub types yet")
 	}
 

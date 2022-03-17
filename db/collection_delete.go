@@ -25,8 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -52,20 +50,13 @@ func (c *collection) DeleteWith(
 		_, err := c.DeleteWithFilter(ctx, t, opts...)
 		return err
 
-	case key.DocKey:
+	case client.DocKey:
 		_, err := c.DeleteWithKey(ctx, t, opts...)
 		return err
 
-	case []key.DocKey:
+	case []client.DocKey:
 		_, err := c.DeleteWithKeys(ctx, t, opts...)
 		return err
-
-	case *document.SimpleDocument:
-		return c.DeleteWithDoc(t, opts...)
-
-	case []*document.SimpleDocument:
-		return c.DeleteWithDocs(t, opts...)
-
 	default:
 		return ErrInvalidDeleteTarget
 
@@ -75,7 +66,7 @@ func (c *collection) DeleteWith(
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
 func (c *collection) DeleteWithKey(
 	ctx context.Context,
-	key key.DocKey,
+	key client.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
 	txn, err := c.getTxn(ctx, false)
@@ -97,7 +88,7 @@ func (c *collection) DeleteWithKey(
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
 func (c *collection) DeleteWithKeys(
 	ctx context.Context,
-	keys []key.DocKey,
+	keys []client.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
 	txn, err := c.getTxn(ctx, false)
@@ -170,7 +161,7 @@ func (c *collection) deleteWithKey(
 func (c *collection) deleteWithKeys(
 	ctx context.Context,
 	txn datastore.Txn,
-	keys []key.DocKey,
+	keys []client.DocKey,
 	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
 
 	results := &client.DeleteResult{
@@ -247,7 +238,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the dockey in the string format from the document value.
 		docKey := query.Values()[parser.DocKeyFieldName].(string)
 
-		// Convert from string to key.DocKey.
+		// Convert from string to client.DocKey.
 		key := core.DataStoreKey{DocKey: docKey}
 
 		// Delete the document that is associated with this key we got from the filter.
@@ -420,21 +411,5 @@ func (d dagDeleter) delete(
 		}
 	}
 
-	return nil
-}
-
-// =================================== UNIMPLEMENTED ===================================
-
-// DeleteWithDoc deletes targeting the supplied document.
-func (c *collection) DeleteWithDoc(
-	doc *document.SimpleDocument,
-	opts ...client.DeleteOpt) error {
-	return nil
-}
-
-// DeleteWithDocs deletes all the supplied documents in the slice.
-func (c *collection) DeleteWithDocs(
-	docs []*document.SimpleDocument,
-	opts ...client.DeleteOpt) error {
 	return nil
 }

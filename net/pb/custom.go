@@ -21,7 +21,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-varint"
 
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // customGogoType aggregates the interfaces that custom Gogo types need to implement.
@@ -157,7 +157,7 @@ func (c ProtoCid) Size() int {
 
 // ProtoCid is a custom type used by gogo to serde raw CIDs into the cid.CID type, and back.
 type ProtoDocKey struct {
-	key.DocKey
+	client.DocKey
 }
 
 var _ customGogoType = (*ProtoDocKey)(nil)
@@ -176,7 +176,7 @@ func (c ProtoDocKey) MarshalJSON() ([]byte, error) {
 }
 
 func (c *ProtoDocKey) Unmarshal(data []byte) (err error) {
-	c.DocKey, err = key.NewFromString(string(data))
+	c.DocKey, err = client.NewDocKeyFromString(string(data))
 	return err
 }
 

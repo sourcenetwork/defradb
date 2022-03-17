@@ -17,6 +17,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 )
@@ -96,47 +97,47 @@ func TestFactoryWithStores(t *testing.T) {
 func TestFullFactoryRegister(t *testing.T) {
 	m := newStores()
 	f := NewFactory(m)
-	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	err := f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
-	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f.crdts[client.LWW_REGISTER])
 }
 
 func TestBlankFactoryRegister(t *testing.T) {
 	f := NewFactory(nil)
-	err := f.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	err := f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 	assert.Nil(t, err)
-	assert.Equal(t, &lwwFactoryFn, f.crdts[core.LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f.crdts[client.LWW_REGISTER])
 }
 
 func TestWithStoresFactoryRegister(t *testing.T) {
 	f := NewFactory(nil)
-	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 	m := newStores()
 	f2 := f.WithStores(m)
 
-	assert.Equal(t, &lwwFactoryFn, f2.crdts[core.LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, f2.crdts[client.LWW_REGISTER])
 }
 
 func TestDefaultFactory(t *testing.T) {
 	assert.NotNil(t, DefaultFactory)
-	assert.Equal(t, &lwwFactoryFn, DefaultFactory.crdts[core.LWW_REGISTER])
+	assert.Equal(t, &lwwFactoryFn, DefaultFactory.crdts[client.LWW_REGISTER])
 }
 
 func TestFactoryInstanceMissing(t *testing.T) {
 	m := newStores()
 	f := NewFactory(m)
 
-	_, err := f.Instance("", nil, core.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
+	_, err := f.Instance("", nil, client.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
 func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	m := newStores()
 	f1 := NewFactory(nil)
-	f1.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	f1.Register(client.LWW_REGISTER, &lwwFactoryFn)
 	f := f1.WithStores(m)
 
-	crdt, err := f.Instance("", nil, core.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, client.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -146,10 +147,10 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 	m := newStores()
 	f1 := NewFactory(nil)
-	f1.Register(core.COMPOSITE, &compFactoryFn)
+	f1.Register(client.COMPOSITE, &compFactoryFn)
 	f := f1.WithStores(m)
 
-	crdt, err := f.Instance("", nil, core.COMPOSITE, core.NewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, client.COMPOSITE, core.NewDataStoreKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -159,9 +160,9 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	m := newStores()
 	f := NewFactory(m)
-	f.Register(core.LWW_REGISTER, &lwwFactoryFn)
+	f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 
-	crdt, err := f.Instance("", nil, core.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, client.LWW_REGISTER, core.NewDataStoreKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -171,9 +172,9 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 	m := newStores()
 	f := NewFactory(m)
-	f.Register(core.COMPOSITE, &compFactoryFn)
+	f.Register(client.COMPOSITE, &compFactoryFn)
 
-	crdt, err := f.Instance("", nil, core.COMPOSITE, core.NewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance("", nil, client.COMPOSITE, core.NewDataStoreKey("/1/0/MyKey"))
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)

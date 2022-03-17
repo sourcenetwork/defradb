@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -52,15 +51,15 @@ func (n *deleteNode) Next() (bool, error) {
 		} else if numids == 0 {
 			return false, errors.New("Error: no id(s) provided while delete mutation.")
 		} else if numids == 1 {
-			key, err2 := key.NewFromString(n.ids[0])
+			key, err2 := client.NewDocKeyFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
 			results, err = n.collection.DeleteWithKey(n.p.ctx, key)
 		} else if numids > 1 {
-			keys := make([]key.DocKey, len(n.ids))
+			keys := make([]client.DocKey, len(n.ids))
 			for i, v := range n.ids {
-				keys[i], err = key.NewFromString(v)
+				keys[i], err = client.NewDocKeyFromString(v)
 				if err != nil {
 					return false, err
 				}

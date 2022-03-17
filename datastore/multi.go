@@ -11,7 +11,16 @@
 package datastore
 
 import (
-	"github.com/sourcenetwork/defradb/db/base"
+	ds "github.com/ipfs/go-datastore"
+)
+
+var (
+	// Individual Store Keys
+	rootStoreKey   = ds.NewKey("/db")
+	systemStoreKey = rootStoreKey.ChildString("/system")
+	dataStoreKey   = rootStoreKey.ChildString("/data")
+	headStoreKey   = rootStoreKey.ChildString("/heads")
+	blockStoreKey  = rootStoreKey.ChildString("/blocks")
 )
 
 type multistore struct {
@@ -26,12 +35,12 @@ type multistore struct {
 var _ MultiStore = (*multistore)(nil)
 
 func MultiStoreFrom(rootstore DSReaderWriter) MultiStore {
-	block := prefix(rootstore, base.BlockStoreKey)
+	block := prefix(rootstore, blockStoreKey)
 	ms := &multistore{
 		root:   rootstore,
-		data:   prefix(rootstore, base.DataStoreKey),
-		head:   prefix(rootstore, base.HeadStoreKey),
-		system: prefix(rootstore, base.SystemStoreKey),
+		data:   prefix(rootstore, dataStoreKey),
+		head:   prefix(rootstore, headStoreKey),
+		system: prefix(rootstore, systemStoreKey),
 		dag:    NewDAGStore(block),
 	}
 

@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -199,7 +200,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make(core.Spans, len(parsed.DocKeys))
 			for i, docKey := range parsed.DocKeys {
-				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
+				dockeyIndexKey := base.MakeIndexKey(sourcePlan.info.collectionDescription,
 					&sourcePlan.info.collectionDescription.Indexes[0], docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
@@ -324,7 +325,7 @@ func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Fi
 			}
 		} else if parsed.Root != parser.CommitSelection {
 			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(fieldName)
-			if fieldDescription.Kind == base.FieldKind_FOREIGN_OBJECT_ARRAY {
+			if fieldDescription.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 				subtype := &parser.Select{
 					Name: fieldName,
 				}
@@ -353,7 +354,7 @@ func (n *selectNode) Source() planNode { return n.source }
 
 // func appendSource() {}
 
-// func (n *selectNode) initRender(fields []*base.FieldDescription, aliases []string) error {
+// func (n *selectNode) initRender(fields []*client.FieldDescription, aliases []string) error {
 // 	return n.p.render(fields, aliases)
 // }
 

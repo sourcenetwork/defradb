@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -91,8 +92,8 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	col *base.CollectionDescription
-	// @todo index  *base.IndexDescription
+	col *client.CollectionDescription
+	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
@@ -100,7 +101,7 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
@@ -345,7 +346,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	if err := vf.processNode(0, nd, core.COMPOSITE, ""); err != nil {
+	if err := vf.processNode(0, nd, client.COMPOSITE, ""); err != nil {
 		return err
 	}
 
@@ -367,7 +368,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and get CType from descriptions
-		if err := vf.processNode(fieldID, subNd, core.LWW_REGISTER, l.Name); err != nil {
+		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}
@@ -375,11 +376,11 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype core.CType, fieldName string) (err error) {
+func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype client.CType, fieldName string) (err error) {
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}

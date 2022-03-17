@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package document
+package client
 
 import (
 	"encoding/json"
@@ -20,9 +20,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
-
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -63,7 +60,7 @@ var (
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	key    key.DocKey
+	key    DocKey
 	fields map[string]Field
 	values map[Field]Value
 	head   cid.Cid
@@ -72,7 +69,7 @@ type Document struct {
 	isDirty bool
 }
 
-func NewWithKey(key key.DocKey) *Document {
+func NewDocWithKey(key DocKey) *Document {
 	doc := newEmptyDoc()
 	doc.key = key
 	return doc
@@ -85,7 +82,7 @@ func newEmptyDoc() *Document {
 	}
 }
 
-func NewFromMap(data map[string]interface{}) (*Document, error) {
+func NewDocFromMap(data map[string]interface{}) (*Document, error) {
 	var err error
 	doc := &Document{
 		fields: make(map[string]Field),
@@ -100,7 +97,7 @@ func NewFromMap(data map[string]interface{}) (*Document, error) {
 		if !ok {
 			return nil, errors.New("Provided _key in document must be a string type")
 		}
-		if doc.key, err = key.NewFromString(kstr); err != nil {
+		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err
 		}
 	}
@@ -129,21 +126,21 @@ func NewFromMap(data map[string]interface{}) (*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		doc.key = key.NewDocKeyV0(c)
+		doc.key = NewDocKeyV0(c)
 	}
 
 	return doc, nil
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array
-func NewFromJSON(obj []byte) (*Document, error) {
+func NewDocFromJSON(obj []byte) (*Document, error) {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(obj, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFromMap(data)
+	return NewDocFromMap(data)
 }
 
 func (doc *Document) Head() cid.Cid {
@@ -159,7 +156,7 @@ func (doc *Document) SetHead(head cid.Cid) {
 }
 
 // Key returns the generated DocKey for this document
-func (doc *Document) Key() key.DocKey {
+func (doc *Document) Key() DocKey {
 	// Reading without a read-lock as we assume the DocKey is immutable
 	return doc.key
 }
@@ -244,7 +241,7 @@ func (doc *Document) Set(field string, value interface{}) error {
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
-func (doc *Document) SetAs(field string, value interface{}, t core.CType) error {
+func (doc *Document) SetAs(field string, value interface{}, t CType) error {
 	return doc.setCBOR(t, field, value)
 }
 
@@ -263,11 +260,11 @@ func (doc *Document) Delete(fields ...string) error {
 }
 
 // SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t core.CType, field string, value interface{}) error {
+// func (doc *Document) SetAsType(t client.CType, field string, value interface{}) error {
 // 	return doc.set(t, field, value)
 // }
 
-func (doc *Document) set(t core.CType, field string, value Value) error {
+func (doc *Document) set(t CType, field string, value Value) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
@@ -282,22 +279,12 @@ func (doc *Document) set(t core.CType, field string, value Value) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t core.CType, field string, val interface{}) error {
+func (doc *Document) setCBOR(t CType, field string, val interface{}) error {
 	value := newCBORValue(t, val)
 	return doc.set(t, field, value)
 }
 
-// func (doc *Document) setString(t core.CType, field string, val string) error {
-// 	value := NewStringValue(t, val)
-// 	return doc.set(t, field, value)
-// }
-//
-// func (doc *Document) setInt64(t core.CType, field string, val int64) error {
-// 	value := NewInt64Value(t, val)
-// 	return doc.set(t, field, value)
-// }
-
-func (doc *Document) setObject(t core.CType, field string, val *Document) error {
+func (doc *Document) setObject(t CType, field string, val *Document) error {
 	value := newValue(t, val)
 	return doc.set(t, field, &value)
 }
@@ -312,7 +299,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	// int (any number)
 	case int:
-		err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+		err := doc.setCBOR(LWW_REGISTER, field, int64(val))
 		if err != nil {
 			return err
 		}
@@ -321,13 +308,13 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 		// Check if its actually a float or just an int
 		if float64(int64(val)) == val { //int
-			err := doc.setCBOR(core.LWW_REGISTER, field, int64(val))
+			err := doc.setCBOR(LWW_REGISTER, field, int64(val))
 			if err != nil {
 				return err
 			}
 
 		} else { //float
-			err := doc.setCBOR(core.LWW_REGISTER, field, val)
+			err := doc.setCBOR(LWW_REGISTER, field, val)
 			if err != nil {
 				return err
 			}
@@ -335,7 +322,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	// string, bool, and more
 	case string, bool, []interface{}:
-		err := doc.setCBOR(core.LWW_REGISTER, field, val)
+		err := doc.setCBOR(LWW_REGISTER, field, val)
 		if err != nil {
 			return err
 		}
@@ -356,7 +343,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 			return err
 		}
 
-		err = doc.setObject(core.OBJECT, field, subDoc)
+		err = doc.setObject(OBJECT, field, subDoc)
 		if err != nil {
 			return err
 		}

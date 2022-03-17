@@ -13,6 +13,7 @@ package crdt
 import (
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -33,7 +34,7 @@ type MerkleCRDTFactory func(mstore datastore.MultiStore, schemaID string, bs cor
 // It removes some of the overhead of having to coordinate all the various
 // store parameters on every single new MerkleCRDT creation
 type Factory struct {
-	crdts      map[core.CType]*MerkleCRDTFactory
+	crdts      map[client.CType]*MerkleCRDTFactory
 	multistore datastore.MultiStore
 }
 
@@ -48,21 +49,21 @@ var (
 // It may be called with all stores set to nil
 func NewFactory(multistore datastore.MultiStore) *Factory {
 	return &Factory{
-		crdts:      make(map[core.CType]*MerkleCRDTFactory),
+		crdts:      make(map[client.CType]*MerkleCRDTFactory),
 		multistore: multistore,
 	}
 }
 
 // Register creates a new entry in the CRDTs map to register a factory function
 // to a MerkleCRDT Type.
-func (factory *Factory) Register(t core.CType, fn *MerkleCRDTFactory) error {
+func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 	factory.crdts[t] = fn
 	return nil
 }
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a datastore.MultiStore object)
-func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t core.CType, key core.DataStoreKey) (MerkleCRDT, error) {
+func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t client.CType, key core.DataStoreKey) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
 	fn, err := factory.getRegisteredFactory(t)
@@ -74,7 +75,7 @@ func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t core.
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied datastore.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStores(store datastore.MultiStore, schemaID string, bs corenet.Broadcaster, t core.CType, key core.DataStoreKey) (MerkleCRDT, error) {
+func (factory Factory) InstanceWithStores(store datastore.MultiStore, schemaID string, bs corenet.Broadcaster, t client.CType, key core.DataStoreKey) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func (factory Factory) InstanceWithStores(store datastore.MultiStore, schemaID s
 	return (*fn)(store, schemaID, bs)(key), nil
 }
 
-func (factory Factory) getRegisteredFactory(t core.CType) (*MerkleCRDTFactory, error) {
+func (factory Factory) getRegisteredFactory(t client.CType) (*MerkleCRDTFactory, error) {
 	fn, exists := factory.crdts[t]
 	if !exists {
 		return nil, ErrFactoryTypeNoExist

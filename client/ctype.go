@@ -8,17 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package base
+package client
 
-import (
-	ds "github.com/ipfs/go-datastore"
-)
+// CType indicates CRDT type
+type CType byte
 
-var (
-	// Individual Store Keys
-	RootStoreKey   = ds.NewKey("/db")
-	SystemStoreKey = RootStoreKey.ChildString("/system")
-	DataStoreKey   = RootStoreKey.ChildString("/data")
-	HeadStoreKey   = RootStoreKey.ChildString("/heads")
-	BlockStoreKey  = RootStoreKey.ChildString("/blocks")
+const (
+	//no lint
+	NONE_CRDT = CType(iota) // reserved none type
+	LWW_REGISTER
+	OBJECT
+	COMPOSITE
 )

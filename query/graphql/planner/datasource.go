@@ -14,13 +14,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 )
 
 // sourceInfo stores info about the data source
 type sourceInfo struct {
-	collectionDescription base.CollectionDescription
+	collectionDescription client.CollectionDescription
 	// and more
 }
 
@@ -60,9 +60,9 @@ func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (plan
 	}, nil
 }
 
-func (p *Planner) getCollectionDesc(name string) (base.CollectionDescription, error) {
+func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, error) {
 	key := core.NewCollectionKey(name)
-	var desc base.CollectionDescription
+	var desc client.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
 		return desc, fmt.Errorf("Failed to get collection description: %w", err)

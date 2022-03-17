@@ -13,8 +13,8 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -48,13 +48,13 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 			return nil, fmt.Errorf("Unable to find field description for field: %s", sourceCollection)
 		}
 
-		isFloat = fieldDescription.Kind == base.FieldKind_FLOAT_ARRAY
+		isFloat = fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY
 	} else if len(source) == 2 {
 		// If path length is two, we are summing a group or a child relationship
 		sourceCollection = source[0]
 		sourceProperty = source[1]
 
-		var childFieldDescription base.FieldDescription
+		var childFieldDescription client.FieldDescription
 		if sourceCollection == parser.GroupFieldName {
 			// If the source collection is a group, then the description of the collection to sum is this object
 			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
@@ -78,7 +78,7 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 			childFieldDescription = fieldDescription
 		}
 
-		isFloat = childFieldDescription.Kind == base.FieldKind_FLOAT
+		isFloat = childFieldDescription.Kind == client.FieldKind_FLOAT
 	} else {
 		return nil, fmt.Errorf("Sum must be provided with a property to sum.")
 	}

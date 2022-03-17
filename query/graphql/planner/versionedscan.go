@@ -13,8 +13,8 @@ package planner
 import (
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
@@ -33,9 +33,9 @@ type versionedScanNode struct {
 	key     core.DataStoreKey
 	version cid.Cid
 
-	desc base.CollectionDescription
+	desc client.CollectionDescription
 
-	fields []*base.FieldDescription
+	fields []*client.FieldDescription
 	doc    map[string]interface{}
 	docKey []byte
 

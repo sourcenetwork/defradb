@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -35,7 +34,7 @@ type createNode struct {
 
 	// newDoc is the JSON string of the new document, unparsed
 	newDocStr string
-	doc       *document.Document
+	doc       *client.Document
 
 	err error
 
@@ -50,7 +49,7 @@ func (n *createNode) Start() error {
 		return fmt.Errorf("Invalid document to create")
 	}
 
-	doc, err := document.NewFromJSON([]byte(n.newDocStr))
+	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
 	if err != nil {
 		n.err = err
 		return err
