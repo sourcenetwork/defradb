@@ -423,7 +423,7 @@ func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, 
 	for _, directive := range field.Directives {
 		if directive.Name.Value == directive_relation {
 			for _, argument := range directive.Arguments {
-				if argument.Name.Value == "name" {
+				if argument.Name.Value == directive_relation_name {
 					name, isString := argument.Value.GetValue().(string)
 					if !isString {
 						return "", fmt.Errorf("Relationship name must be of type string, but was: %v", argument.Value.GetKind())

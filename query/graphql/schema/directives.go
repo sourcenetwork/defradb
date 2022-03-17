@@ -13,3 +13,7 @@ package schema
 const (
 	directive_relation = "relation"
 )
+
+const (
+	directive_relation_name = "name"
+)
