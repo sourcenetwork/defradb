@@ -180,30 +180,22 @@ jobs:
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'SHORT'
         run: make test:bench-short -s | tee bench.txt
 
+      - name: Prepare artifact for Uploading for a push on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        run: cp bench.txt bench-artifact-${{github.sha}}.txt
+
       - name: Upload artifact for push event on develop
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
 
-        run: cp bench.txt bench-artifact.txt
-
         uses: actions/upload-artifact@v3
         with:
-          name: bench-artifact
-          path: bench-artifact.txt
+          name: bench-artifact-${{github.sha}}
+          path: bench-artifact-${{github.sha}}.txt
           retention-days: 90
-
-      # - name: Download benchmark artifact to compare.
-      #   if: |
-      #     github.event_name != 'push' ||
-      #     github.ref_name != 'develop'
-      #
-      #    uses: actions/download-artifact@v3
-      #    with:
-      #      name: bench-artifact
-      #
-      # - name: Run Bench Stat Comparisons
-      # # Other PR
 
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
