@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -66,7 +65,7 @@ func TestNewCollection_ReturnsError_GivenNoSchema(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestNewCollectionWithSchema(t *testing.T) {
+func TestNewCollectionWithDescription(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
@@ -74,20 +73,15 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	schema := col.Schema()
 	desc := col.Description()
 
-	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
-	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
-	assert.Equal(t, 4, len(schema.Fields))
-	assert.Equal(t, 4, len(schema.FieldIDs))
+	assert.Equal(t, 4, len(desc.Schema.Fields))
 
 	for i := 0; i < 4; i++ {
-		assert.Equal(t, uint32(i), schema.FieldIDs[i])
-		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
+		assert.Equal(t, client.FieldID(i), desc.Schema.Fields[i].ID)
 	}
 }
 
@@ -110,9 +104,6 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 
 	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{},
-		},
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
@@ -126,9 +117,6 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 
 	desc := client.CollectionDescription{
 		Name: "",
-		Schema: client.SchemaDescription{
-			Fields: []client.FieldDescription{},
-		},
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
@@ -270,20 +258,15 @@ func TestGetCollectionByName(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "users")
 	assert.NoError(t, err)
 
-	schema := col.Schema()
 	desc := col.Description()
 
-	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
-	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
-	assert.Equal(t, 4, len(schema.Fields))
-	assert.Equal(t, 4, len(schema.FieldIDs))
+	assert.Equal(t, 4, len(desc.Schema.Fields))
 
 	for i := 0; i < 4; i++ {
-		assert.Equal(t, uint32(i), schema.FieldIDs[i])
-		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
+		assert.Equal(t, client.FieldID(i), desc.Schema.Fields[i].ID)
 	}
 }
 

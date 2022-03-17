@@ -68,7 +68,7 @@ type DocumentFetcher struct {
 
 // Init implements DocumentFetcher
 func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
-	if col.Schema.IsEmpty() {
+	if col.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 

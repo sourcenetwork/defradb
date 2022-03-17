@@ -535,7 +535,7 @@ func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 		Fields: make([]parser.Selection, len(c.desc.Schema.Fields)),
 	}
 
-	for i, fd := range c.Schema().Fields {
+	for i, fd := range c.desc.Schema.Fields {
 		if fd.IsObject() {
 			continue
 		}

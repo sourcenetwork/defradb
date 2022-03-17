@@ -363,7 +363,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return err
 		}
 
-		fieldID := vf.col.Schema.GetFieldKey(l.Name)
+		fieldID := vf.col.GetFieldKey(l.Name)
 		if fieldID == uint32(0) {
 			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
 		}
