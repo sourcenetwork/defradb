@@ -57,7 +57,7 @@ func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.DataSt
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(desc, index, key.DocKey)
+	targetKey := base.MakeIndexKey(*desc, index, key.DocKey)
 	// run the doc fetcher
 	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {

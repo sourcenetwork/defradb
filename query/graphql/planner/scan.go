@@ -68,7 +68,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.spans) == 0 {
-		start := base.MakeIndexPrefixKey(&n.desc, n.index)
+		start := base.MakeIndexPrefixKey(n.desc, n.index)
 		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
 	}
 

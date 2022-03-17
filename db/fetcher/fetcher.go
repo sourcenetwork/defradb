@@ -116,7 +116,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	numspans := len(spans)
 	var uniqueSpans core.Spans
 	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
-		start := base.MakeIndexPrefixKey(df.col, df.index)
+		start := base.MakeIndexPrefixKey(*df.col, df.index)
 		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
 	} else {
 		uniqueSpans = spans.MergeAscending()

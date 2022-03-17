@@ -113,7 +113,7 @@ func TestFetcherStartWithoutInit(t *testing.T) {
 
 func TestMakeIndexPrefixKey(t *testing.T) {
 	desc := newTestCollectionDescription()
-	key := base.MakeIndexPrefixKey(&desc, &desc.Indexes[0])
+	key := base.MakeIndexPrefixKey(desc, &desc.Indexes[0])
 	assert.Equal(t, "/1/0", key.ToString())
 }
 
@@ -333,7 +333,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
+	docKey := base.MakeIndexPrefixKey(desc, &desc.Indexes[0]).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}

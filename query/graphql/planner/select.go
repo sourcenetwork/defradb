@@ -200,7 +200,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			spans := make(core.Spans, len(parsed.DocKeys))
 			for i, docKey := range parsed.DocKeys {
-				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
+				dockeyIndexKey := base.MakeIndexKey(sourcePlan.info.collectionDescription,
 					&sourcePlan.info.collectionDescription.Indexes[0], docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
