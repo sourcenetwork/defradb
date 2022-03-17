@@ -75,7 +75,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 		return nil, errors.New("Collection schema first field must be a DocKey")
 	}
 
-	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
 	for i, field := range desc.Schema.Fields {
 		if field.Name == "" {
 			return nil, errors.New("Collection schema field missing Name")
@@ -86,7 +85,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 		if (field.Kind != client.FieldKind_DocKey && !field.IsObject()) && field.Typ == client.NONE_CRDT {
 			return nil, errors.New("Collection schema field missing CRDT type")
 		}
-		desc.Schema.FieldIDs[i] = uint32(i)
 		desc.Schema.Fields[i].ID = client.FieldID(i)
 	}
 
@@ -94,10 +92,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	// property with the correct default one.
 	desc.Indexes = []client.IndexDescription{
 		{
-			Name:    "primary",
-			ID:      uint32(0),
-			Primary: true,
-			Unique:  true,
+			ID: uint32(0),
 		},
 	}
 
@@ -352,14 +347,13 @@ func (c *collection) Name() string {
 	return c.desc.Name
 }
 
-// Schema returns the Schema of the collection
-func (c *collection) Schema() client.SchemaDescription {
-	return c.desc.Schema
-}
-
 // ID returns the ID of the collection
 func (c *collection) ID() uint32 {
 	return c.colID
+}
+
+func (c *collection) Schema() client.SchemaDescription {
+	return c.desc.Schema
 }
 
 // Indexes returns the defined indexes on the Collection

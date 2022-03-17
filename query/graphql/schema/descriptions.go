@@ -113,14 +113,11 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 		}
 
 		// add schema
-		desc.Schema = client.SchemaDescription{
-			Name: t.Name(),
-			Fields: []client.FieldDescription{
-				{
-					Name: "_key",
-					Kind: client.FieldKind_DocKey,
-					Typ:  client.NONE_CRDT,
-				},
+		desc.Schema.Fields = []client.FieldDescription{
+			{
+				Name: "_key",
+				Kind: client.FieldKind_DocKey,
+				Typ:  client.NONE_CRDT,
 			},
 		}
 		// and schema fields
@@ -216,10 +213,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 		// add default index
 		desc.Indexes = []client.IndexDescription{
 			{
-				Name:    "primary",
-				ID:      uint32(0),
-				Primary: true,
-				Unique:  true,
+				ID: uint32(0),
 			},
 		}
 

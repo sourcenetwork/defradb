@@ -42,7 +42,6 @@ type DB interface {
 type Collection interface {
 	Description() CollectionDescription
 	Name() string
-	Schema() SchemaDescription
 	ID() uint32
 	SchemaID() string
 

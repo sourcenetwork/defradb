@@ -54,8 +54,8 @@ func MakePrimaryIndexKey(c client.CollectionDescription, key core.DataStoreKey) 
 }
 
 func getFieldKey(c client.CollectionDescription, key core.DataStoreKey, fieldName string) core.DataStoreKey {
-	if !c.Schema.IsEmpty() {
-		return key.WithFieldId(fmt.Sprint(c.Schema.GetFieldKey(fieldName)))
+	if !c.IsEmpty() {
+		return key.WithFieldId(fmt.Sprint(c.GetFieldKey(fieldName)))
 	}
 	return key.WithFieldId(fieldName)
 }

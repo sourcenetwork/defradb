@@ -21,10 +21,7 @@ import (
 
 var testDefaultIndex = []client.IndexDescription{
 	{
-		Name:    "primary",
-		ID:      uint32(0),
-		Primary: true,
-		Unique:  true,
+		ID: uint32(0),
 	},
 }
 
@@ -43,7 +40,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "user",
 					Schema: client.SchemaDescription{
-						Name: "user",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -90,7 +86,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "user",
 					Schema: client.SchemaDescription{
-						Name: "user",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -119,7 +114,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "author",
 					Schema: client.SchemaDescription{
-						Name: "author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -166,7 +160,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "book",
 					Schema: client.SchemaDescription{
-						Name: "book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -204,7 +197,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "author",
 					Schema: client.SchemaDescription{
-						Name: "author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -260,7 +252,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "book",
 					Schema: client.SchemaDescription{
-						Name: "book",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
@@ -298,7 +289,6 @@ func TestSingleSimpleType(t *testing.T) {
 				{
 					Name: "author",
 					Schema: client.SchemaDescription{
-						Name: "author",
 						Fields: []client.FieldDescription{
 							{
 								Name: "_key",

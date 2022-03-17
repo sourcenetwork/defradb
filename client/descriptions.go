@@ -29,7 +29,7 @@ func (col CollectionDescription) IDString() string {
 }
 
 func (col CollectionDescription) GetField(name string) (FieldDescription, bool) {
-	if !col.Schema.IsEmpty() {
+	if !col.IsEmpty() {
 		for _, field := range col.Schema.Fields {
 			if field.Name == name {
 				return field, true
@@ -43,41 +43,20 @@ func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return c.Indexes[0]
 }
 
+//IsEmpty returns true if the CollectionDescription is empty and uninitialized
+func (c CollectionDescription) IsEmpty() bool {
+	return c.Schema.IsEmpty()
+}
+
+func (c CollectionDescription) GetFieldKey(fieldName string) uint32 {
+	return c.Schema.GetFieldKey(fieldName)
+}
+
 // IndexDescription describes an Index on a Collection
 // and its associated metadata.
 type IndexDescription struct {
-	Name     string
 	ID       uint32
-	Primary  bool
-	Unique   bool
 	FieldIDs []uint32
-
-	// Junction is a special field, it indicates if this Index is
-	// being used as a junction table for a Many-to-Many relation.
-	// A Junction index needs to index the DocKey from two different
-	// collections, so the usual method of storing the indexed fields
-	// in the FieldIDs property won't work, since thats scoped to the
-	// local schema.
-	//
-	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Moreover, since
-	// we use a Composite Key Index system, the ordering of the keys
-	// affects how we can use in the index. The initial Junction
-	// Index for a type, needs to be assigned to the  "Primary"
-	// type in the Many-to-Many relation. This is usually the type
-	// that expects more reads from.
-	//
-	// Eg:
-	// A Book type can have many Categories,
-	// and Categories can belong to many Books.
-	//
-	// If we query more for Books, then Categories directly, then
-	// we can set the Book type as the Primary type.
-	Junction bool
-	// RelationType is only used in the Index is a Junction Index.
-	// It specifies what the other type is in the Many-to-Many
-	// relationship.
-	RelationType string
 }
 
 func (index IndexDescription) IDString() string {
@@ -85,12 +64,7 @@ func (index IndexDescription) IDString() string {
 }
 
 type SchemaDescription struct {
-	ID   uint32
-	Name string
-	Key  []byte // DocKey for versioned source schema
-	// Schema schema.Schema
-	FieldIDs []uint32
-	Fields   []FieldDescription
+	Fields []FieldDescription
 }
 
 //IsEmpty returns true if the SchemaDescription is empty and uninitialized
@@ -159,11 +133,6 @@ type FieldDescription struct {
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          CType
 	RelationType RelationType
-	// @todo: Add relation name for specifying target relation index
-	// @body: If a type has two User sub objects, you need to specify the relation
-	// name used. By default the relation name is "rootType_subType". However,
-	// if you have two of the same sub types, then you need to specify to
-	// avoid collision.
 }
 
 func (f FieldDescription) IsObject() bool {
