@@ -32,8 +32,12 @@ deps\:lint:
 deps\:go-acc:
 	go install github.com/ory/go-acc@latest
 
+.PHONY: deps\:bench
+deps\:bench:
+	go install golang.org/x/perf/cmd/benchstat@latest
+
 .PHONY: deps
-deps: deps\:lint deps\:go-acc
+deps: deps\:lint deps\:go-acc deps\:bench
 	go mod download
 
 .PHONY: tidy
