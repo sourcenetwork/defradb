@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/document/key"
 )
 
-func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Document, error) {
+func (c *collection) Get(ctx context.Context, key key.DocKey) (*document.Document, error) {
 	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
@@ -45,7 +45,7 @@ func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Documen
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (*document.Document, error) {
+func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (*document.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc

@@ -21,7 +21,7 @@ import (
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, query types, etc.
-func (db *DB) AddSchema(ctx context.Context, schema string) error {
+func (db *db) AddSchema(ctx context.Context, schema string) error {
 	// @todo: create collection after generating query types
 	types, astdoc, err := db.schema.Generator.FromSDL(ctx, schema)
 	if err != nil {
@@ -40,7 +40,7 @@ func (db *DB) AddSchema(ctx context.Context, schema string) error {
 	return db.saveSchema(ctx, astdoc)
 }
 
-func (db *DB) loadSchema(ctx context.Context) error {
+func (db *db) loadSchema(ctx context.Context) error {
 	var sdl string
 	q := dsq.Query{
 		Prefix: "/schema",
@@ -59,7 +59,7 @@ func (db *DB) loadSchema(ctx context.Context) error {
 	return err
 }
 
-func (db *DB) saveSchema(ctx context.Context, astdoc *ast.Document) error {
+func (db *db) saveSchema(ctx context.Context, astdoc *ast.Document) error {
 	// save each type individually
 	for _, def := range astdoc.Definitions {
 		switch defType := def.(type) {

@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionWithSchema(ctx context.Context, db *DB) (client.Collection, error) {
+func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Collection, error) {
 	desc := base.CollectionDescription{
 		Name: "users",
 		Schema: base.SchemaDescription{
@@ -53,7 +53,7 @@ func newTestCollectionWithSchema(ctx context.Context, db *DB) (client.Collection
 	return col, err
 }
 
-func createNewTestCollection(ctx context.Context, db *DB) (client.Collection, error) {
+func createNewTestCollection(ctx context.Context, db client.DB) (client.Collection, error) {
 	return db.CreateCollection(ctx, base.CollectionDescription{
 		Name: "test",
 	})

@@ -42,13 +42,13 @@ var (
 
 // make sure we match our client interface
 var (
-	_ client.DB         = (*DB)(nil)
-	_ client.Collection = (*Collection)(nil)
+	_ client.DB         = (*db)(nil)
+	_ client.Collection = (*collection)(nil)
 )
 
 // DB is the main interface for interacting with the
 // DefraDB storage system.
-type DB struct {
+type db struct {
 	glock sync.RWMutex
 
 	rootstore  ds.Batching
@@ -66,16 +66,20 @@ type DB struct {
 }
 
 // functional option type
-type Option func(*DB)
+type Option func(*db)
 
 func WithBroadcaster(bs corenet.Broadcaster) Option {
-	return func(db *DB) {
+	return func(db *db) {
 		db.broadcaster = bs
 	}
 }
 
 // NewDB creates a new instance of the DB using the given options
-func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, error) {
+func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (client.DB, error) {
+	return newDB(ctx, rootstore, options...)
+}
+
+func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, error) {
 	log.Debug(ctx, "loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
@@ -93,7 +97,7 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 		return nil, err
 	}
 
-	db := &DB{
+	db := &db{
 		rootstore:  rootstore,
 		multistore: multistore,
 
@@ -120,26 +124,26 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*DB, 
 	return db, nil
 }
 
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
-func (db *DB) Root() ds.Batching {
+func (db *db) Root() ds.Batching {
 	return db.rootstore
 }
 
 // Blockstore returns the internal DAG store which contains IPLD blocks
-func (db *DB) Blockstore() blockstore.Blockstore {
+func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *DB) systemstore() datastore.DSReaderWriter {
+func (db *db) systemstore() datastore.DSReaderWriter {
 	return db.multistore.Systemstore()
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters
-func (db *DB) initialize(ctx context.Context) error {
+func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
@@ -171,15 +175,15 @@ func (db *DB) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *DB) PrintDump(ctx context.Context) {
+func (db *db) PrintDump(ctx context.Context) {
 	printStore(ctx, db.multistore.Rootstore())
 }
 
-func (db *DB) Executor() *planner.QueryExecutor {
+func (db *db) Executor() *planner.QueryExecutor {
 	return db.queryExecutor
 }
 
-func (db *DB) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
+func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
 	rm := db.schema.Relations
 	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
 	if rel == nil {
@@ -195,7 +199,7 @@ func (db *DB) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releaseing
 // of resources (IE: Badger instance)
-func (db *DB) Close(ctx context.Context) {
+func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Closing DefraDB process...")
 	err := db.rootstore.Close()
 	if err != nil {
