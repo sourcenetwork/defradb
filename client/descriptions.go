@@ -135,14 +135,14 @@ type RelationType uint8
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	Meta_Relation_ONE         RelationType = 1   // 0b0000 0001
-	Meta_Relation_MANY        RelationType = 2   // 0b0000 0010
-	Meta_Relation_ONEONE      RelationType = 4   // 0b0000 0100
-	Meta_Relation_ONEMANY     RelationType = 8   // 0b0000 1000
-	Meta_Relation_MANYMANY    RelationType = 16  // 0b0001 0000
+	Relation_Type_ONE         RelationType = 1   // 0b0000 0001
+	Relation_Type_MANY        RelationType = 2   // 0b0000 0010
+	Relation_Type_ONEONE      RelationType = 4   // 0b0000 0100
+	Relation_Type_ONEMANY     RelationType = 8   // 0b0000 1000
+	Relation_Type_MANYMANY    RelationType = 16  // 0b0001 0000
 	_                         RelationType = 32  // 0b0010 0000
-	Meta_Relation_INTERNAL_ID RelationType = 64  // 0b0100 0000
-	Meta_Relation_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
+	Relation_Type_INTERNAL_ID RelationType = 64  // 0b0100 0000
+	Relation_Type_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
 type FieldID uint32
@@ -158,7 +158,7 @@ type FieldDescription struct {
 	Schema       string // If the field is an OBJECT type, then it has a target schema
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
 	Typ          CType
-	Meta         RelationType
+	RelationType RelationType
 	// @todo: Add relation name for specifying target relation index
 	// @body: If a type has two User sub objects, you need to specify the relation
 	// name used. By default the relation name is "rootType_subType". However,

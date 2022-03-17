@@ -171,7 +171,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 					return nil, errors.New("Relation is missing field")
 				}
 
-				fd.Meta = rel.Kind() | fieldRelationType
+				fd.RelationType = rel.Kind() | fieldRelationType
 
 				// handle object id field, defined as {{object_name}}_id
 				// with type gql.ID
@@ -190,9 +190,9 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 
 					// create field
 					fdRelated := client.FieldDescription{
-						Name: fmt.Sprintf("%s_id", fname),
-						Kind: gqlTypeToFieldKind(gql.ID),
-						Meta: client.Meta_Relation_INTERNAL_ID,
+						Name:         fmt.Sprintf("%s_id", fname),
+						Kind:         gqlTypeToFieldKind(gql.ID),
+						RelationType: client.Relation_Type_INTERNAL_ID,
 					}
 					fdRelated.Typ = defaultCRDTForFieldKind[fdRelated.Kind]
 					desc.Schema.Fields = append(desc.Schema.Fields, fdRelated)
@@ -272,7 +272,7 @@ return client.CollectionDescription{
 					Kind:   base.FieldKind_FOREIGN_OBJECT,
 					Schema: "author",
 					Typ:    client.NONE_CRDT,
-					Meta:   base.Meta_Relation_ONE | base.Meta_Relation_Primary,
+					Meta:   base.Relation_Type_ONE | base.Relation_Type_Primary,
 				},
 				client.FieldDescription{
 					Name: "author_id",
@@ -329,7 +329,7 @@ return client.CollectionDescription{
 					Kind:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
 					Schema: "book",
 					Typ:    client.NONE_CRDT,
-					Meta:   base.Meta_Relation_ONEMANY,
+					Meta:   base.Relation_Type_ONEMANY,
 				},
 			},
 		},

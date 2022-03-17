@@ -36,19 +36,19 @@ func TestSimpleOneToOneFromSingle(t *testing.T) {
 	*/
 	relName1, err := genRelationName("Book", "Author")
 	assert.NoError(t, err)
-	rm.RegisterSingle(relName1, "Author", "author", client.Meta_Relation_ONE)
+	rm.RegisterSingle(relName1, "Author", "author", client.Relation_Type_ONE)
 
 	relName2, err := genRelationName("Author", "Book")
 	assert.NoError(t, err)
 	assert.Equal(t, relName1, relName2)
-	rm.RegisterSingle(relName2, "Book", "published", client.Meta_Relation_ONE)
+	rm.RegisterSingle(relName2, "Book", "published", client.Relation_Type_ONE)
 
 	_, valid := rm.validate()
 	assert.True(t, valid)
 
 	rel, err := rm.GetRelation(relName1)
 	assert.NoError(t, err)
-	assert.Equal(t, rel.relType, client.Meta_Relation_ONEONE)
+	assert.Equal(t, rel.relType, client.Relation_Type_ONEONE)
 	assert.False(t, rel.SchemaTypeIsPrimary("Author"))
 	assert.True(t, rel.SchemaTypeIsPrimary("Book")) // @todo: Check primary auto-set ordering
 }
@@ -72,19 +72,19 @@ func TestSimpleOneToOnePrimaryFromSingle(t *testing.T) {
 	*/
 	relName1, err := genRelationName("Book", "Author")
 	assert.NoError(t, err)
-	rm.RegisterSingle(relName1, "Author", "author", client.Meta_Relation_ONE)
+	rm.RegisterSingle(relName1, "Author", "author", client.Relation_Type_ONE)
 
 	relName2, err := genRelationName("Author", "Book")
 	assert.NoError(t, err)
 	assert.Equal(t, relName1, relName2)
-	rm.RegisterSingle(relName2, "Book", "published", client.Meta_Relation_ONE|client.Meta_Relation_Primary)
+	rm.RegisterSingle(relName2, "Book", "published", client.Relation_Type_ONE|client.Relation_Type_Primary)
 
 	_, valid := rm.validate()
 	assert.True(t, valid)
 
 	rel, err := rm.GetRelation(relName1)
 	assert.NoError(t, err)
-	assert.Equal(t, rel.relType, client.Meta_Relation_ONEONE)
+	assert.Equal(t, rel.relType, client.Relation_Type_ONEONE)
 	assert.True(t, rel.SchemaTypeIsPrimary("Book"))
 	assert.False(t, rel.SchemaTypeIsPrimary("Author"))
 }
