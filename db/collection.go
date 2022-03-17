@@ -88,12 +88,13 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 		desc.Schema.Fields[i].ID = client.FieldID(i)
 	}
 
-	// for now, ignore any defined indexes, and overwrite the entire IndexDescription
-	// property with the correct default one.
-	desc.Indexes = []client.IndexDescription{
-		{
-			ID: uint32(0),
-		},
+	if len(desc.Indexes) == 0 {
+		// a collection always requires a primary index - add one if one not provided
+		desc.Indexes = []client.IndexDescription{
+			{
+				ID: uint32(0),
+			},
+		}
 	}
 
 	return &collection{
