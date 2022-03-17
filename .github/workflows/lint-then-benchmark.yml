@@ -174,11 +174,28 @@ jobs:
 
       - name: Run the full bechmarking suite
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'FULL'
-        run: make test:bench
+        run: make test:bench -s | tee bench.txt
 
       - name: Run only the shorter benchmarks
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'SHORT'
-        run: make test:bench-short
+        run: make test:bench-short -s | tee bench.txt
+
+      - name: Prepare artifact for Uploading for a push on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        run: cp bench.txt bench-artifact-${{github.sha}}.txt
+
+      - name: Upload artifact for push event on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench-artifact-${{github.sha}}
+          path: bench-artifact-${{github.sha}}.txt
+          retention-days: 90
 
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
