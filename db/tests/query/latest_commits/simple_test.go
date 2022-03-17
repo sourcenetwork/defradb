@@ -37,7 +37,7 @@ func TestQueryLatestCommits(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid": "bafybeiavutl5tkoifvr4zfqb4vda24kdjwi65buqojo2tlxhw5xqkazega",
+				"cid": "bafybeigf73kai2exwib5wdewjvefmne2sefzdv4hghfudvhgi7hlwzetoi",
 				"links": []map[string]interface{}{
 					{
 						"cid":  "bafybeiftyjqxyzqtfpi65kde4hla4xm3v4dvtr7fr2p2p5ng5lfg7rrcve",

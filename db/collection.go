@@ -92,8 +92,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	// property with the correct default one.
 	desc.Indexes = []client.IndexDescription{
 		{
-			Name: "primary",
-			ID:   uint32(0),
+			ID: uint32(0),
 		},
 	}
 

@@ -213,8 +213,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 		// add default index
 		desc.Indexes = []client.IndexDescription{
 			{
-				Name: "primary",
-				ID:   uint32(0),
+				ID: uint32(0),
 			},
 		}
 

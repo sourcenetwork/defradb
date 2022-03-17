@@ -37,7 +37,7 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid": "bafybeiavutl5tkoifvr4zfqb4vda24kdjwi65buqojo2tlxhw5xqkazega",
+				"cid": "bafybeigf73kai2exwib5wdewjvefmne2sefzdv4hghfudvhgi7hlwzetoi",
 				"links": []map[string]interface{}{
 					{
 						"cid":  "bafybeiftyjqxyzqtfpi65kde4hla4xm3v4dvtr7fr2p2p5ng5lfg7rrcve",
@@ -79,11 +79,11 @@ func TestQueryAllCommitsMultipleDAG(t *testing.T) {
 		},
 		Results: []map[string]interface{}{
 			{
-				"cid":    "bafybeidnuvfvo3h5wx4vwdmltldtrr7s2eivin23b36fleuzfynqi3ioci",
+				"cid":    "bafybeibkk6jyulccv5kcjsuuqe6lltl4r2imaxqk6zoaymgohof33jo72y",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeiavutl5tkoifvr4zfqb4vda24kdjwi65buqojo2tlxhw5xqkazega",
+				"cid":    "bafybeigf73kai2exwib5wdewjvefmne2sefzdv4hghfudvhgi7hlwzetoi",
 				"height": int64(1),
 			},
 		},

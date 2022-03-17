@@ -56,7 +56,6 @@ func (c CollectionDescription) GetFieldKey(fieldName string) uint32 {
 // IndexDescription describes an Index on a Collection
 // and its associated metadata.
 type IndexDescription struct {
-	Name     string
 	ID       uint32
 	FieldIDs []uint32
 }
