@@ -20,7 +20,7 @@ type CollectionDescription struct {
 	Name    string
 	ID      uint32
 	Schema  SchemaDescription
-	Indexes []IndexDescription // @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
+	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string
