@@ -36,6 +36,8 @@ type DB interface {
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 	ExecQuery(context.Context, string) *QueryResult
+	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
+	Close(context.Context)
 
 	PrintDump(ctx context.Context)
 }

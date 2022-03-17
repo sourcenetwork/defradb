@@ -195,3 +195,7 @@ func newHostKey() (crypto.PrivKey, []byte, error) {
 	}
 	return priv, key, nil
 }
+
+func (n Node) Close() error {
+	return n.Peer.Close()
+}

@@ -17,18 +17,19 @@ import (
 
 	benchutils "github.com/sourcenetwork/defradb/bench"
 	"github.com/sourcenetwork/defradb/bench/fixtures"
+	"github.com/sourcenetwork/defradb/query/graphql/planner"
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
 func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
-	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
+	exec, err := buildExecutor(ctx, fixture)
 	if err != nil {
 		return err
 	}
-	defer db.Close(ctx)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := db.Executor().ParseQueryString(query)
+		_, err := exec.ParseQueryString(query)
 		if err != nil {
 			return fmt.Errorf("Failed to parse query string: %w", err)
 		}
@@ -45,9 +46,9 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	}
 	defer db.Close(ctx)
 
-	exec := db.Executor()
-	if exec == nil {
-		return fmt.Errorf("Executor can't be nil")
+	exec, err := buildExecutor(ctx, fixture)
+	if err != nil {
+		return err
 	}
 
 	q, err := exec.ParseQueryString(query)
@@ -68,4 +69,25 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	}
 	b.StopTimer()
 	return nil
+}
+
+func buildExecutor(ctx context.Context, fixture fixtures.Generator) (*planner.QueryExecutor, error) {
+	sm, err := schema.NewSchemaManager()
+	if err != nil {
+		return nil, err
+	}
+	schema, err := benchutils.ConstructSchema(fixture)
+	if err != nil {
+		return nil, err
+	}
+	types, _, err := sm.Generator.FromSDL(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+	_, err = sm.Generator.CreateDescriptions(types)
+	if err != nil {
+		return nil, err
+	}
+
+	return planner.NewQueryExecutor(sm)
 }

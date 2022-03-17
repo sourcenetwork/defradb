@@ -25,8 +25,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/db"
-	defradb "github.com/sourcenetwork/defradb/db"
 	testutils "github.com/sourcenetwork/defradb/db/tests"
 	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/document/key"
@@ -66,20 +64,12 @@ func hashToInt64(s string) int64 {
 	return int64(h.Sum64())
 }
 
-func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture fixtures.Generator) ([]client.Collection, error) {
+func SetupCollections(b *testing.B, ctx context.Context, db client.DB, fixture fixtures.Generator) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
-	var schema string
-
-	// loop to get the schemas
-	for i := 0; i < numTypes; i++ {
-		gql, err := fixtures.ExtractGQLFromType(fixture.Types()[i])
-		if err != nil {
-			return nil, fmt.Errorf("failed generating GQL: %w", err)
-		}
-
-		schema += gql
-		schema += "\n\n"
+	schema, err := ConstructSchema(fixture)
+	if err != nil {
+		return nil, err
 	}
 
 	// b.Logf("Loading schema: \n%s", schema)
@@ -101,7 +91,25 @@ func SetupCollections(b *testing.B, ctx context.Context, db *defradb.DB, fixture
 	return collections, nil
 }
 
-func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (*defradb.DB, []client.Collection, error) {
+func ConstructSchema(fixture fixtures.Generator) (string, error) {
+	numTypes := len(fixture.Types())
+	var schema string
+
+	// loop to get the schemas
+	for i := 0; i < numTypes; i++ {
+		gql, err := fixtures.ExtractGQLFromType(fixture.Types()[i])
+		if err != nil {
+			return "", fmt.Errorf("failed generating GQL: %w", err)
+		}
+
+		schema += gql
+		schema += "\n\n"
+	}
+
+	return schema, nil
+}
+
+func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (client.DB, []client.Collection, error) {
 	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
@@ -202,10 +210,10 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 
 type dbInfo interface {
 	Rootstore() ds.Batching
-	DB() *db.DB
+	DB() client.DB
 }
 
-func NewTestDB(ctx context.Context, t testing.TB) (*db.DB, error) {
+func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	//nolint
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.DB(), err

@@ -29,13 +29,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newMemoryDB(ctx context.Context) (*DB, error) {
+func newMemoryDB(ctx context.Context) (*db, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(ctx, rootstore)
+	return newDB(ctx, rootstore)
 }
 
 func TestNewDB(t *testing.T) {
