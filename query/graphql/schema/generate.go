@@ -421,7 +421,7 @@ func (g *Generator) buildTypesFromAST(ctx context.Context, document *ast.Documen
 func getRelationshipName(field *ast.FieldDefinition, hostName gql.ObjectConfig, targetName gql.Type) (string, error) {
 	// search for a user-defined name, and return it if found
 	for _, directive := range field.Directives {
-		if directive.Name.Value == "relation" {
+		if directive.Name.Value == directive_relation {
 			for _, argument := range directive.Arguments {
 				if argument.Name.Value == "name" {
 					name, isString := argument.Value.GetValue().(string)
