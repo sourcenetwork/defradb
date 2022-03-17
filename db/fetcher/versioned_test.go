@@ -42,7 +42,7 @@ var (
 				"verified": true
 			}`),
 			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
-			cid: "bafybeig4fwvzsiwb3jk3okr4goibmgjt2m2to3duyfy5ejldpxtgq5hdo4",
+			cid: "bafybeiatx2n4cswlg35oju2i7ghft2yew4b3q2bm2lingouosoxvh4hej4",
 		},
 		{
 			payload: []byte(`{
@@ -56,7 +56,7 @@ var (
 				"points": 99.9,
 			},
 			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeienkr6hj73uwd5vhxehavbu26mkk4tv4yd4xefjsa2xy5wlafpls4",
+			cid: "bafybeibdmpnxzau7rqpvgoim7saesuvwlqyyjwl2us2zftybsz5u5vd2t4",
 		},
 		{
 			payload: []byte(`{
@@ -70,7 +70,7 @@ var (
 				"age":      22,
 			},
 			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeif24w2yjzkb45kywubghcj2pacrfwjjolqq3k3qyiciclvoxcycxe",
+			cid: "bafybeiccqlxez5pn62nnoqccl62p2a4lpafzlqgp4mwmg24iroppo5d6mq",
 		},
 		{
 			payload: []byte(`{
@@ -83,7 +83,7 @@ var (
 				"points": 129.99,
 			},
 			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeiasb5jvqygubz54bp2c7wryj643osthoqgzismc6p53wriq3bpubq",
+			cid: "bafybeieiucuh63h4445ydiz4ugos7x5ri6f25hrflrnrs5uyq3ncme3frm",
 		},
 	}
 )
