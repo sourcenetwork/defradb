@@ -171,7 +171,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 					return nil, errors.New("Relation is missing field")
 				}
 
-				fd.Meta = rel.Kind() | fieldRelationType
+				fd.RelationType = rel.Kind() | fieldRelationType
 
 				// handle object id field, defined as {{object_name}}_id
 				// with type gql.ID
@@ -190,9 +190,9 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 
 					// create field
 					fdRelated := client.FieldDescription{
-						Name: fmt.Sprintf("%s_id", fname),
-						Kind: gqlTypeToFieldKind(gql.ID),
-						Meta: client.Meta_Relation_INTERNAL_ID,
+						Name:         fmt.Sprintf("%s_id", fname),
+						Kind:         gqlTypeToFieldKind(gql.ID),
+						RelationType: client.Meta_Relation_INTERNAL_ID,
 					}
 					fdRelated.Typ = defaultCRDTForFieldKind[fdRelated.Kind]
 					desc.Schema.Fields = append(desc.Schema.Fields, fdRelated)

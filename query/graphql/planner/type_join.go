@@ -235,7 +235,7 @@ func (p *Planner) makeTypeIndexJoin(parent *selectNode, source planNode, subType
 		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
 	}
 
-	meta := typeFieldDesc.Meta
+	meta := typeFieldDesc.RelationType
 	if schema.IsOne(meta) { // One-to-One, or One side of One-to-Many
 		joinPlan, err = p.makeTypeJoinOne(parent, source, subType)
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
@@ -357,7 +357,7 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	if subTypeFieldDesc.Meta&client.Meta_Relation_Primary > 0 {
+	if subTypeFieldDesc.RelationType&client.Meta_Relation_Primary > 0 {
 		typeJoin.primary = true
 	} else {
 		typeJoin.primary = false
