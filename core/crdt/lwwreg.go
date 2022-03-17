@@ -19,6 +19,7 @@ import (
 
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 
@@ -159,7 +160,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	}
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
-	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
+	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
 	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
 		return fmt.Errorf("Failed to store new value : %w", err)

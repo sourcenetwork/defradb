@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -90,18 +91,19 @@ func (p *Peer) processLog(
 
 func initCRDTForType(ctx context.Context, txn datastore.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
-	var ctype core.CType
+	var ctype client.CType
+	description := col.Description()
 	if field == "" { // empty field name implies composite type
-		ctype = core.COMPOSITE
-		key = col.Description().GetPrimaryIndexDocKey(docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
+		ctype = client.COMPOSITE
+		key = base.MakePrimaryIndexKey(description, docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
 	} else {
-		fd, ok := col.Description().GetField(field)
+		fd, ok := description.GetField(field)
 		if !ok {
 			return nil, fmt.Errorf("Couldn't find field %s for doc %s", field, docKey)
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = col.Description().GetPrimaryIndexDocKey(docKey).WithFieldId(fieldID)
+		key = base.MakePrimaryIndexKey(description, docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)

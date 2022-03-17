@@ -30,7 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
-	"github.com/sourcenetwork/defradb/document"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -438,7 +437,7 @@ func setupDatabase(ctx context.Context, t *testing.T, dbi databaseInfo, schema s
 	// insert docs
 	for cid, docs := range test.Docs {
 		for i, docStr := range docs {
-			doc, err := document.NewFromJSON([]byte(docStr))
+			doc, err := client.NewDocFromJSON([]byte(docStr))
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}

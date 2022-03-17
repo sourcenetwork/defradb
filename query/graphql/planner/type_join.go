@@ -13,6 +13,7 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -356,7 +357,7 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	if subTypeFieldDesc.Meta&base.Meta_Relation_Primary > 0 {
+	if subTypeFieldDesc.Meta&client.Meta_Relation_Primary > 0 {
 		typeJoin.primary = true
 	} else {
 		typeJoin.primary = false
@@ -433,7 +434,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// create the index key for the sub doc
 	slct := n.subType.(*selectTopNode).source.(*selectNode)
 	desc := slct.sourceInfo.collectionDescription
-	subKeyIndexKey := base.MakeIndexKey(&desc, &desc.Indexes[0], subDocKeyStr)
+	subKeyIndexKey := base.MakeIndexKey(desc, &desc.Indexes[0], subDocKeyStr)
 
 	n.spans = core.Spans{} // reset span
 	n.spans = append(n.spans, core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd()))

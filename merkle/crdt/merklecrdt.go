@@ -35,19 +35,6 @@ type MerkleCRDT interface {
 	Clock() core.MerkleClock
 }
 
-// type MerkleCRDTInitFn func(core.Key) MerkleCRDT
-// type MerkleCRDTFactory func(store datastore.DSReaderWriter, namespace core.Key) MerkleCRDTInitFn
-
-// Type indicates MerkleCRDT type
-// type Type byte
-
-// const (
-// 	//no lint
-// 	none = Type(iota) // reserved none type
-// 	LWW_REGISTER
-// 	OBJECT
-// )
-
 var (
 	// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
 	_ core.ReplicatedData = (*baseMerkleCRDT)(nil)

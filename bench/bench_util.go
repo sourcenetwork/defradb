@@ -26,8 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
 	testutils "github.com/sourcenetwork/defradb/db/tests"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -128,7 +126,7 @@ func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.G
 // Loads the given test database using the provided fixture context.
 // It loads docCount number of documents asynchronously in batches of *up to*
 // writeBatchGroup.
-func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]key.DocKey, error) {
+func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]client.DocKey, error) {
 	numTypes := len(fixture.Types())
 
 	// load fixtures
@@ -136,7 +134,7 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 	wg.Add(docCount)
 	errCh := make(chan error)
 	waitCh := make(chan struct{})
-	dockeys := make([][]key.DocKey, docCount)
+	dockeys := make([][]client.DocKey, docCount)
 
 	go func() {
 		// Cut up the job from into writeBatchGroup size grouped jobs.
@@ -159,10 +157,10 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 					}
 
 					// create the documents
-					keys := make([]key.DocKey, numTypes)
+					keys := make([]client.DocKey, numTypes)
 					for j := 0; j < numTypes; j++ {
 
-						doc, err := document.NewFromJSON([]byte(docs[j]))
+						doc, err := client.NewDocFromJSON([]byte(docs[j]))
 						if err != nil {
 							errCh <- fmt.Errorf("Failed to create document from fixture: %w", err)
 							return

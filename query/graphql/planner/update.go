@@ -14,7 +14,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -53,16 +52,16 @@ func (n *updateNode) Next() (bool, error) {
 		var err error
 		numids := len(n.ids)
 		if numids == 1 {
-			key, err2 := key.NewFromString(n.ids[0])
+			key, err2 := client.NewDocKeyFromString(n.ids[0])
 			if err2 != nil {
 				return false, err2
 			}
 			results, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
 		} else if numids > 1 {
 			// todo
-			keys := make([]key.DocKey, len(n.ids))
+			keys := make([]client.DocKey, len(n.ids))
 			for i, v := range n.ids {
-				keys[i], err = key.NewFromString(v)
+				keys[i], err = client.NewDocKeyFromString(v)
 				if err != nil {
 					return false, err
 				}
@@ -101,7 +100,7 @@ func (n *updateNode) Values() map[string]interface{} {
 	// create a new span with the updateDoc._key
 	docKeyStr := updatedDoc["_key"].(string)
 	desc := n.collection.Description()
-	updatedDocKeyIndex := base.MakeIndexKey(&desc, &desc.Indexes[0], docKeyStr)
+	updatedDocKeyIndex := base.MakeIndexKey(desc, &desc.Indexes[0], docKeyStr)
 	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
 
 	n.results.Spans(spans)

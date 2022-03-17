@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -20,10 +21,10 @@ import (
 // scans an index for records
 type scanNode struct {
 	p     *Planner
-	desc  base.CollectionDescription
-	index *base.IndexDescription
+	desc  client.CollectionDescription
+	index *client.IndexDescription
 
-	fields []*base.FieldDescription
+	fields []*client.FieldDescription
 	doc    map[string]interface{}
 	docKey []byte
 
@@ -53,7 +54,7 @@ func (n *scanNode) Init() error {
 	return n.initScan()
 }
 
-func (n *scanNode) initCollection(desc base.CollectionDescription) error {
+func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
 	n.index = &desc.Indexes[0]
 	return nil
@@ -67,7 +68,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.spans) == 0 {
-		start := base.MakeIndexPrefixKey(&n.desc, n.index)
+		start := base.MakeIndexPrefixKey(n.desc, n.index)
 		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
 	}
 

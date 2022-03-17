@@ -20,7 +20,6 @@ import (
 	benchutils "github.com/sourcenetwork/defradb/bench"
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/document/key"
 )
 
 var (
@@ -47,7 +46,7 @@ func runQueryBenchGetSync(
 	ctx context.Context,
 	db client.DB,
 	docCount int,
-	dockeys [][]key.DocKey,
+	dockeys [][]client.DocKey,
 	query string,
 ) error {
 	// run any preprocessing on the query before execution (mostly just dockey insertion if needed)
@@ -72,7 +71,7 @@ func runQueryBenchGetSync(
 	return nil
 }
 
-func formatQuery(b *testing.B, query string, dockeys [][]key.DocKey) string {
+func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
 	numPlaceholders := strings.Count(query, "{{dockey}}")
 	if numPlaceholders == 0 {
 		return query

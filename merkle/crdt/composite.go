@@ -13,6 +13,7 @@ package crdt
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	corenet "github.com/sourcenetwork/defradb/core/net"
@@ -31,7 +32,7 @@ var (
 )
 
 func init() {
-	err := DefaultFactory.Register(core.COMPOSITE, &compFactoryFn)
+	err := DefaultFactory.Register(client.COMPOSITE, &compFactoryFn)
 	if err != nil {
 		panic(err)
 	}

@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -197,7 +196,7 @@ func (p *Peer) handleBroadcastLoop() {
 	}
 }
 
-func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid, schemaID string) error {
+func (p *Peer) RegisterNewDocument(ctx context.Context, dockey client.DocKey, c cid.Cid, schemaID string) error {
 	log.Debug(p.ctx, "Registering a new document for our peer node", logging.NewKV("DocKey", dockey.String()))
 
 	block, err := p.db.Blockstore().Get(ctx, c)
@@ -353,7 +352,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collectionName string, paddr m
 }
 
 func (p *Peer) handleDocCreateLog(lg core.Log) error {
-	dockey, err := key.NewFromString(lg.DocKey)
+	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
@@ -365,7 +364,7 @@ func (p *Peer) handleDocCreateLog(lg core.Log) error {
 }
 
 func (p *Peer) handleDocUpdateLog(lg core.Log) error {
-	dockey, err := key.NewFromString(lg.DocKey)
+	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}

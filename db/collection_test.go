@@ -16,34 +16,32 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/stretchr/testify/assert"
 )
 
 func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Collection, error) {
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "Name",
-					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Age",
-					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_INT,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Weight",
-					Kind: base.FieldKind_FLOAT,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_FLOAT,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -54,7 +52,7 @@ func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Coll
 }
 
 func createNewTestCollection(ctx context.Context, db client.DB) (client.Collection, error) {
-	return db.CreateCollection(ctx, base.CollectionDescription{
+	return db.CreateCollection(ctx, client.CollectionDescription{
 		Name: "test",
 	})
 }
@@ -82,14 +80,14 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
-	assert.False(t, reflect.DeepEqual(schema, base.SchemaDescription{}))
+	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
 	assert.Equal(t, 4, len(schema.FieldIDs))
 
 	for i := 0; i < 4; i++ {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
-		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
+		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
 	}
 }
 
@@ -110,10 +108,10 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{},
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{},
 		},
 	}
 
@@ -126,10 +124,10 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{},
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{},
 		},
 	}
 
@@ -142,14 +140,14 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "Name",
-					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -164,18 +162,18 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "Name",
-					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 			},
 		},
@@ -190,18 +188,18 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "",
-					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -216,17 +214,17 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "Name",
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
@@ -241,17 +239,17 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	desc := base.CollectionDescription{
+	desc := client.CollectionDescription{
 		Name: "users",
-		Schema: base.SchemaDescription{
-			Fields: []base.FieldDescription{
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					Kind: base.FieldKind_DocKey,
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "Name",
-					Kind: base.FieldKind_STRING,
+					Kind: client.FieldKind_STRING,
 				},
 			},
 		},
@@ -278,14 +276,14 @@ func TestGetCollectionByName(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(schema, desc.Schema))
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
-	assert.False(t, reflect.DeepEqual(schema, base.SchemaDescription{}))
+	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
 	assert.Equal(t, 4, len(schema.FieldIDs))
 
 	for i := 0; i < 4; i++ {
 		assert.Equal(t, uint32(i), schema.FieldIDs[i])
-		assert.Equal(t, base.FieldID(i), schema.Fields[i].ID)
+		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
 	}
 }
 

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package key
+package client
 
 import (
 	// "github.com/google/uuid"
@@ -65,7 +65,7 @@ func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	}
 }
 
-func NewFromString(key string) (DocKey, error) {
+func NewDocKeyFromString(key string) (DocKey, error) {
 	parts := strings.SplitN(key, "-", 2)
 	if len(parts) != 2 {
 		return DocKey{}, errors.New("Malformed DocKey, missing either version or cid")
