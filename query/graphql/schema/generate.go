@@ -359,7 +359,7 @@ func (g *Generator) buildTypesFromAST(ctx context.Context, document *ast.Documen
 							return nil, err
 						}
 
-						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, client.Meta_Relation_ONE)
+						_, err = g.manager.Relations.RegisterSingle(relName, ttype.Name(), fType.Name, client.Relation_Type_ONE)
 						if err != nil {
 							log.ErrorE(ctx, "Error while registering single relation", err)
 						}
@@ -372,7 +372,7 @@ func (g *Generator) buildTypesFromAST(ctx context.Context, document *ast.Documen
 							return nil, err
 						}
 
-						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, client.Meta_Relation_MANY)
+						_, err = g.manager.Relations.RegisterSingle(relName, ltype.Name(), fType.Name, client.Relation_Type_MANY)
 						if err != nil {
 							log.ErrorE(ctx, "Error while registering single relation", err)
 						}

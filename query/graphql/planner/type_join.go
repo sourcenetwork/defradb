@@ -357,7 +357,7 @@ func (p *Planner) makeTypeJoinOne(parent *selectNode, source planNode, subType *
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	if subTypeFieldDesc.RelationType&client.Meta_Relation_Primary > 0 {
+	if subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0 {
 		typeJoin.primary = true
 	} else {
 		typeJoin.primary = false
