@@ -8,7 +8,6 @@ on:
       - test-lone/ci-develop
 
 
-
 ## These are the permissions for the lint check job.
 permissions:
   # Allow read access to pull request (Required for the `only-new-issues` option.)
@@ -38,17 +37,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-            #      - name: Run Before Uploading
-            #        run: |
-            #          echo "Hello World HEAD!" > bench.txt
-            #          cp bench.txt bench-artifact.txt
-            #
-            #      - name: Upload artifact
-            #        uses: actions/upload-artifact@v3
-            #        with:
-            #          name: bench-artifact-${{github.sha}}
-            #          path: bench-artifact.txt
-            #          retention-days: 90
+      - name: Run Before Uploading
+        run: |
+          echo "Hello World HEAD = [${{github.sha}}] !" > bench.txt
+          cp bench.txt bench-artifact.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench-artifact-${{github.sha}}
+          path: bench-artifact.txt
+          retention-days: 90
 
 
 
@@ -61,52 +60,52 @@ jobs:
 
 
 
-      - name: Download artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          # Optional, GitHub token, a Personal Access Token with `public_repo` scope if needed
-          # Required, if artifact is from a different repo
-          # Required, if repo is private a Personal Access Token with `repo` scope is needed
-          github_token: ${{secrets.REPO_SCOPE_PAT}}
-          # Required, workflow file name or ID
-          workflow: test.yml
-          # Optional, the status or conclusion of a completed workflow to search for
-          # Can be one of a workflow conclusion:
-          #   "failure", "success", "neutral", "cancelled", "skipped", "timed_out", "action_required"
-          # Or a workflow status:
-          #   "completed", "in_progress", "queued"
-          # workflow_conclusion: success
-          # Optional, will get head commit SHA
-          # pr: ${{github.event.pull_request.number}}
-          # Optional, no need to specify if PR is
-          # commit: ${{github.event.pull_request.head.sha}}
-          # Optional, will use the branch
-          branch: test-lone/ci/use-artifacts-to-upload-benchmark
-          # Optional, defaults to all types
-          # event: push
-          # Optional, will use specified workflow run
-          # run_id: 1122334455
-          # Optional, run number from the workflow
-          # run_number: 34
-          # Optional, uploaded artifact name,
-          # will download all artifacts if not specified
-          # and extract them in respective subdirectories
-          # https://github.com/actions/download-artifact#download-all-artifacts
-          name: bench-artifact
-          # Optional, directory where to extract artifact(s), defaults to current directory
-          # path: extract_here
-          # Optional, defaults to current repo
-          repo: ${{github.repository}}
-          # Optional, check the workflow run whether it has an artifact
-          # then will get the last available artifact from previous workflow
-          # default false, just try to download from the last one
-          check_artifacts:  false
-          # Optional, search for the last workflow run whose stored an artifact named as in `name` input
-          # default false
-          search_artifacts: false
-
-      - name: Run After Downloading
-        run: cat bench-artifact.txt
+          #      - name: Download artifact
+          #        uses: dawidd6/action-download-artifact@v2
+          #        with:
+          #          # Optional, GitHub token, a Personal Access Token with `public_repo` scope if needed
+          #          # Required, if artifact is from a different repo
+          #          # Required, if repo is private a Personal Access Token with `repo` scope is needed
+          #          github_token: ${{secrets.REPO_SCOPE_PAT}}
+          #          # Required, workflow file name or ID
+          #          workflow: test.yml
+          #          # Optional, the status or conclusion of a completed workflow to search for
+          #          # Can be one of a workflow conclusion:
+          #          #   "failure", "success", "neutral", "cancelled", "skipped", "timed_out", "action_required"
+          #          # Or a workflow status:
+          #          #   "completed", "in_progress", "queued"
+          #          # workflow_conclusion: success
+          #          # Optional, will get head commit SHA
+          #          # pr: ${{github.event.pull_request.number}}
+          #          # Optional, no need to specify if PR is
+          #          # commit: ${{github.event.pull_request.head.sha}}
+          #          # Optional, will use the branch
+          #          branch: test-lone/ci/use-artifacts-to-upload-benchmark
+          #          # Optional, defaults to all types
+          #          # event: push
+          #          # Optional, will use specified workflow run
+          #          # run_id: 1122334455
+          #          # Optional, run number from the workflow
+          #          # run_number: 34
+          #          # Optional, uploaded artifact name,
+          #          # will download all artifacts if not specified
+          #          # and extract them in respective subdirectories
+          #          # https://github.com/actions/download-artifact#download-all-artifacts
+          #          name: bench-artifact
+          #          # Optional, directory where to extract artifact(s), defaults to current directory
+          #          # path: extract_here
+          #          # Optional, defaults to current repo
+          #          repo: ${{github.repository}}
+          #          # Optional, check the workflow run whether it has an artifact
+          #          # then will get the last available artifact from previous workflow
+          #          # default false, just try to download from the last one
+          #          check_artifacts:  false
+          #          # Optional, search for the last workflow run whose stored an artifact named as in `name` input
+          #          # default false
+          #          search_artifacts: false
+          #
+          #      - name: Run After Downloading
+          #        run: cat bench-artifact.txt
 
       - name: PRINT TEST
         run: echo "${{ toJSON(github) }}"
