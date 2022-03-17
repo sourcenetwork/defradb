@@ -28,7 +28,7 @@ var bookAuthorPublisherGQLSchema = (`
 		name: String
 		age: Int
 		verified: Boolean
-		wrote: book @primary
+		wrote: book
 	}
 
 	type publisher {
