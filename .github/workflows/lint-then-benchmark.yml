@@ -74,7 +74,7 @@ jobs:
   # =================== Step-2: Decide what type of benchmarks to run based on label(s).
   # This job acts like a switch to simplify our ci control flow later on.
   decide-benchmark-type:
-    name: Deciding which benchmarks to run based on flags.
+    name: Deciding which benchmarks to run based on flags
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -89,21 +89,24 @@ jobs:
       - golangci # only run if the linter check passed.
 
     steps:
-      - name: Check for full benchmark label.
+      - name: Check for full benchmark label
         if: contains(github.event.pull_request.labels.*.name, 'action/full-benchmark')
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
-      - name: Check for label that skips the benchmark.
-        if: contains(github.event.pull_request.labels.*.name, 'action/no-benchmark')
+      - name: Check for label that skips the benchmark or non-develop branch
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref != 'develop' ||
+          contains(github.event.pull_request.labels.*.name, 'action/no-benchmark')
         run: echo "DEFAULT_BENCHMARK_TYPE=NONE" >> ${GITHUB_ENV}
 
-      - name: Check if this is a merged PR (Only PRs can be pushed).
+      - name: Run full benchmarks if merged PR (push event) on develop
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
         run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
 
-      - name: Set the output to be the benchmark type.
+      - name: Set the output to be the benchmark type
         id: set-benchmark-type
         run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
 
@@ -180,22 +183,72 @@ jobs:
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'SHORT'
         run: make test:bench-short -s | tee bench.txt
 
-      - name: Prepare artifact for Uploading for a push on develop
+      # ------------- Upload Report - If pushed on develop branch
+
+      - name: Prepare artifact for uploading for a push on develop
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
-        run: cp bench.txt bench-artifact-${{github.sha}}.txt
+        run: cp bench.txt bench-artifact-${{ github.sha }}.txt
 
       - name: Upload artifact for push event on develop
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
-
         uses: actions/upload-artifact@v3
         with:
-          name: bench-artifact-${{github.sha}}
-          path: bench-artifact-${{github.sha}}.txt
+          name: bench-artifact-${{ github.sha }}
+          path: bench-artifact-${{ github.sha }}.txt
           retention-days: 90
+
+      # ------------- Download & Compare - If PR going into develop
+
+      # To find the latest commit on remote develop branch we essentially 
+      #  just need to do the following:
+      # >> git fetch origin develop > /dev/null 2>&1 \
+      #    && git rev-parse origin/develop
+      # However I wanted to ensure that we get the latest commit on develop
+      #  that has a passing `lint-then-benchmark.yml` workflow as well. To
+      #  ensure that the artifact was successfully uploaded of the latest
+      #  commit that is available on develop. Hence the use of this action.
+      - name: Find the last successfull commit's sha on remote of develop
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: nrwl/last-successful-commit-action@v1
+        id: last_successful_upload_on_develop
+        with:
+          branch: develop
+          workflow_id: lint-then-benchmark.yml
+          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+
+      - name: Download the latest benchmark artifact on develop
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+          workflow: lint-then-benchmark.yml
+          branch: develop
+          name: bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}
+          repo: ${{ github.repository }}
+          check_artifacts:  false
+          search_artifacts: false
+
+      - name: Run the benchmark comparisons
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        run: >
+          make deps:bench &&
+          benchstat
+            bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt
+            bench.txt
+      # --- At this point the comparison result is dumped in the console.
+      # ---  @TODO: Dump the result as a comment on the PR:
+      #               - If no comment before then create a new one.
+      #               - IF a comment there before then update it.
 
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
