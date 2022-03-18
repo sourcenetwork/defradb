@@ -242,7 +242,7 @@ jobs:
           github.base_ref == 'develop'
         run: >
           make deps:bench &&
-          $GOPATH/bin/benchstat bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt bench.txt
+          $GOPATH/bin/benchstat -alpha 1.1 bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt bench.txt
       # --- At this point the comparison result is dumped in the console.
       # ---  @TODO: Dump the result as a comment on the PR:
       #               - If no comment before then create a new one.
