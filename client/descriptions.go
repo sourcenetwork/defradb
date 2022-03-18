@@ -14,8 +14,9 @@ import (
 	"fmt"
 )
 
-// CollectionDescription describes a Collection and
-// all its associated metadata
+// CollectionDescription describes a Collection and all its associated metadata.
+// It a single instance of its schema, containing localized additions tailored to
+// this instance's needs.
 type CollectionDescription struct {
 	Name    string
 	ID      uint32
