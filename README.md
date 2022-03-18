@@ -388,6 +388,9 @@ When contributing to a DefraDB feature, you can find the relevant license in the
 
 ## Contributors
 - John-Alan Simmons ([@jsimnz](https://github.com/jsimnz))
+- Andrew Sisley ([@AndrewSisley](https://github.com/AndrewSisley))
+- Shahzad Lone ([@shahzadlone](https://github.com/shahzadlone))
+- Orpheus Lummis ([@orpheuslummis](https://github.com/orpheuslummis))
 
 <br>
 
