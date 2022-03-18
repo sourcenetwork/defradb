@@ -64,6 +64,8 @@ func (index IndexDescription) IDString() string {
 	return fmt.Sprint(index.ID)
 }
 
+// SchemaDescription describes the core data structure of a given type
+// that can be shared between multiple collections, potentially on multiple machines.
 type SchemaDescription struct {
 	Fields []FieldDescription
 }
