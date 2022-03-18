@@ -143,22 +143,12 @@ func (db *db) CreateCollection(ctx context.Context, desc client.CollectionDescri
 		return nil, err
 	}
 
-	buf, err = json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{col.desc.Name, col.desc.Schema})
+	sid, err := getCollectionDescriptionKey(desc)
 	if err != nil {
 		return nil, err
 	}
 
-	// add a reference to this DB by desc hash
-	cid, err := utils.NewCidV1(buf)
-	if err != nil {
-		return nil, err
-	}
-	col.schemaID = cid.String()
-
-	csKey := core.NewCollectionSchemaKey(cid.String())
+	csKey := core.NewCollectionSchemaKey(sid)
 	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
 	log.Debug(ctx, "Created collection", logging.NewKV("Name", col.Name()), logging.NewKV("Id", col.SchemaID))
 	return col, err
@@ -182,21 +172,10 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, err
 	}
 
-	buf, err = json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{desc.Name, desc.Schema})
+	sid, err := getCollectionDescriptionKey(desc)
 	if err != nil {
 		return nil, err
 	}
-
-	// add a reference to this DB by desc hash
-	cid, err := utils.NewCidV1(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	sid := cid.String()
 	log.Debug(ctx, "Retrieved collection", logging.NewKV("Name", desc.Name), logging.NewKV("Id", sid))
 
 	return &collection{
@@ -205,6 +184,25 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 		colID:    desc.ID,
 		schemaID: sid,
 	}, nil
+}
+
+func getCollectionDescriptionKey(c client.CollectionDescription) (string, error) {
+	// We only use the Schema to generate the key, as a stop gap solution for some of the P2P data stuff.
+	buf, err := json.Marshal(struct {
+		Name   string
+		Schema client.SchemaDescription
+	}{c.Name, c.Schema})
+	if err != nil {
+		return "", err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := utils.NewCidV1(buf)
+	if err != nil {
+		return "", err
+	}
+
+	return cid.String(), nil
 }
 
 // GetCollectionBySchemaID returns an existing collection within the database using the
