@@ -60,7 +60,7 @@ type DocumentFetcher struct {
 	kv                *core.KeyValue
 	kvIter            iterable.Iterator
 	kvResultsIter     dsq.Results
-	kvEnd             bool
+	readComplete      bool
 	isReadingDocument bool
 }
 
@@ -176,23 +176,24 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
 func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error) {
-	// get the next kv from nextKV()
 	for {
-		docDone, df.kv, err = df.nextKV()
-		// handle any internal errors
-		if err != nil {
-			return false, err
+		res, available := df.kvResultsIter.NextSync()
+		if res.Error != nil {
+			return true, res.Error
 		}
-		df.kvEnd = docDone
-		if df.kvEnd {
-			hasNextSpan, err := df.startNextSpan(ctx)
+
+		df.readComplete = !available
+		if !available {
+			_, err := df.startNextSpan(ctx)
 			if err != nil {
 				return false, err
 			}
-			if hasNextSpan {
-				return true, nil
-			}
 			return true, nil
+		}
+
+		df.kv = &core.KeyValue{
+			Key:   core.NewDataStoreKey(res.Key),
+			Value: res.Value,
 		}
 
 		// skip if we are iterating through a non value kv pair
@@ -212,27 +213,6 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		}
 		return false, nil
 	}
-}
-
-// nextKV is a lower-level utility compared to nextKey. The differences are as follows:
-// - It directly interacts with the KVIterator.
-// - Returns true if the entire iterator/span is exhausted
-// - Returns a kv pair instead of internally updating
-func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
-	res, available := df.kvResultsIter.NextSync()
-	if !available {
-		return true, nil, nil
-	}
-	err = res.Error
-	if err != nil {
-		return true, nil, err
-	}
-
-	kv = &core.KeyValue{
-		Key:   core.NewDataStoreKey(res.Key),
-		Value: res.Value,
-	}
-	return false, kv, nil
 }
 
 // processKV continuously processes the key value pairs we've received
@@ -280,7 +260,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 // FetchNext returns a raw binary encoded document. It iterates over all the relevant
 // keypairs from the underlying store and constructs the document.
 func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, error) {
-	if df.kvEnd {
+	if df.readComplete {
 		return nil, nil
 	}
 
