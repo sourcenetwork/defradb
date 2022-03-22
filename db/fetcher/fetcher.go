@@ -31,7 +31,6 @@ import (
 type Fetcher interface {
 	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
-	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 	Close() error
