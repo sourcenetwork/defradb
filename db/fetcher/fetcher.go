@@ -51,9 +51,8 @@ type DocumentFetcher struct {
 
 	schemaFields map[uint32]client.FieldDescription
 
-	doc         *encodedDocument
-	decodedDoc  *client.Document
-	initialized bool
+	doc        *encodedDocument
+	decodedDoc *client.Document
 
 	kv                *core.KeyValue
 	kvIter            iterable.Iterator
@@ -71,7 +70,6 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 	df.col = col
 	df.index = index
 	df.reverse = reverse
-	df.initialized = true
 	df.isReadingDocument = false
 	df.doc = new(encodedDocument)
 
