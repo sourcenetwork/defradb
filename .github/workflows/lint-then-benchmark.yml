@@ -177,11 +177,11 @@ jobs:
 
       - name: Run the full bechmarking suite
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'FULL'
-        run: make test:bench -s | tee bench.txt
+        run: make test:bench -s | tee current.txt
 
       - name: Run only the shorter benchmarks
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'SHORT'
-        run: make test:bench-short -s | tee bench.txt
+        run: make test:bench-short -s | tee current.txt
 
       # ------------- Upload Report - If pushed on develop branch
 
@@ -189,7 +189,7 @@ jobs:
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
-        run: cp bench.txt bench-artifact-${{ github.sha }}.txt
+        run: cp current.txt bench-artifact-${{ github.sha }}.txt
 
       - name: Upload artifact for push event on develop
         if: |
@@ -236,17 +236,30 @@ jobs:
           check_artifacts:  false
           search_artifacts: false
 
+      - name: Prepare artifact for comparison
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        run: |
+          cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt
+
       - name: Run the benchmark comparisons
         if: |
           github.event_name == 'pull_request' &&
           github.base_ref == 'develop'
         run: >
           make deps:bench &&
-          $GOPATH/bin/benchstat -alpha 1.1 bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt bench.txt
-      # --- At this point the comparison result is dumped in the console.
-      # ---  @TODO: Dump the result as a comment on the PR:
-      #               - If no comment before then create a new one.
-      #               - IF a comment there before then update it.
+          ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html
+
+      - name: Comment Benchmark Results on PR
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: machine-learning-apps/pr-comment@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_SCOPE_PAT }}
+        with:
+          path: comparison.html
 
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
