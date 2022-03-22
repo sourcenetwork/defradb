@@ -135,14 +135,13 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 		df.order = []dsq.Order{dsq.OrderByKey{}}
 	}
 
-	_, err := df.startNextSpan(ctx)
-	return err
+	return df.startNextSpan(ctx)
 }
 
-func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
+func (df *DocumentFetcher) startNextSpan(ctx context.Context) error {
 	nextSpanIndex := df.curSpanIndex + 1
 	if nextSpanIndex >= len(df.spans) {
-		return false, nil
+		return nil
 	}
 
 	var err error
@@ -152,25 +151,25 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		})
 	}
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if df.kvResultsIter != nil {
 		err = df.kvResultsIter.Close()
 		if err != nil {
-			return false, err
+			return err
 		}
 	}
 
 	span := df.spans[nextSpanIndex]
 	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
 	if err != nil {
-		return false, err
+		return err
 	}
 	df.curSpanIndex = nextSpanIndex
 
 	_, err = df.nextKey(ctx)
-	return err == nil, err
+	return err
 }
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
@@ -184,7 +183,7 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 
 		df.readComplete = !available
 		if !available {
-			_, err := df.startNextSpan(ctx)
+			err := df.startNextSpan(ctx)
 			if err != nil {
 				return false, err
 			}
