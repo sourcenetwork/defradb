@@ -236,19 +236,14 @@ jobs:
           check_artifacts:  false
           search_artifacts: false
 
-      - name: Prepare artifact for comparison
-        if: |
-          github.event_name == 'pull_request' &&
-          github.base_ref == 'develop'
-        run: |
-          cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt
-
       - name: Run the benchmark comparisons
         if: |
           github.event_name == 'pull_request' &&
           github.base_ref == 'develop'
         run: >
+          cat current.txt &&
           make deps:bench &&
+          cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
           ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html
 
       - name: Comment Benchmark Results on PR
