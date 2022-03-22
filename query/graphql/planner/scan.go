@@ -32,8 +32,7 @@ type scanNode struct {
 	// fieldIdxMap map[base.FieldID]int
 	// isSecondaryIndex bool
 
-	spans   core.Spans
-	reverse bool
+	spans core.Spans
 
 	// rowIndex int64
 
@@ -47,7 +46,7 @@ type scanNode struct {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.index, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.index); err != nil {
 		return err
 	}
 	return n.initScan()

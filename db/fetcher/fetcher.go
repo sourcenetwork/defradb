@@ -29,7 +29,7 @@ import (
 // the key/value scanning, aggregation, and document
 // encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, index *client.IndexDescription, reverse bool) error
+	Init(col *client.CollectionDescription, index *client.IndexDescription) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 	Close() error
@@ -40,13 +40,11 @@ var (
 )
 
 type DocumentFetcher struct {
-	col     *client.CollectionDescription
-	index   *client.IndexDescription
-	reverse bool
+	col   *client.CollectionDescription
+	index *client.IndexDescription
 
 	txn          datastore.Txn
 	spans        core.Spans
-	order        []dsq.Order
 	curSpanIndex int
 
 	schemaFields map[uint32]client.FieldDescription
@@ -62,14 +60,13 @@ type DocumentFetcher struct {
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription) error {
 	if col.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 
 	df.col = col
 	df.index = index
-	df.reverse = reverse
 	df.isReadingDocument = false
 	df.doc = new(encodedDocument)
 
@@ -113,22 +110,11 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
 	} else {
 		uniqueSpans = spans.MergeAscending()
-		if df.reverse {
-			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
-				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
-			}
-		}
 	}
 
 	df.spans = uniqueSpans
 	df.curSpanIndex = -1
 	df.txn = txn
-
-	if df.reverse {
-		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
-	} else {
-		df.order = []dsq.Order{dsq.OrderByKey{}}
-	}
 
 	return df.startNextSpan(ctx)
 }
@@ -142,7 +128,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) error {
 	var err error
 	if df.kvIter == nil {
 		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
-			Orders: df.order,
+			Orders: []dsq.Order{dsq.OrderByKey{}},
 		})
 	}
 	if err != nil {

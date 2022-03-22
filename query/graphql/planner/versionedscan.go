@@ -38,8 +38,6 @@ type versionedScanNode struct {
 	doc    map[string]interface{}
 	docKey []byte
 
-	reverse bool
-
 	// filter data
 	filter *parser.Filter
 
@@ -50,7 +48,7 @@ type versionedScanNode struct {
 
 func (n *versionedScanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, nil, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, nil); err != nil {
 		return err
 	}
 	return n.initScan()

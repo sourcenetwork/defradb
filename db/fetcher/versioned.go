@@ -101,14 +101,14 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, &col.Indexes[0], reverse)
+	return vf.DocumentFetcher.Init(col, &col.Indexes[0])
 
 }
 

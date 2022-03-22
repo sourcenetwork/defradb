@@ -50,7 +50,7 @@ func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.DataSt
 	desc := &c.desc
 	index := &c.desc.Indexes[0]
 	// initialize it with the primary index
-	err := df.Init(&c.desc, &c.desc.Indexes[0], false)
+	err := df.Init(&c.desc, &c.desc.Indexes[0])
 	if err != nil {
 		_ = df.Close()
 		return nil, err

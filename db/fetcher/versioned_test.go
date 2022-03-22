@@ -103,7 +103,7 @@ func TestVersionedFetcherInit(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 }
 
@@ -120,7 +120,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -148,7 +148,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -187,7 +187,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -226,7 +226,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -263,7 +263,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -300,7 +300,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, false)
+	err = vf.Init(&desc, nil)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
