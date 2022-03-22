@@ -24,7 +24,6 @@ type scanNode struct {
 	desc  client.CollectionDescription
 	index *client.IndexDescription
 
-	fields []*client.FieldDescription
 	doc    map[string]interface{}
 	docKey []byte
 
@@ -48,7 +47,7 @@ type scanNode struct {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.index, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()

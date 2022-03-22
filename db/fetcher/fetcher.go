@@ -29,7 +29,7 @@ import (
 // the key/value scanning, aggregation, and document
 // encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, index *client.IndexDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 	Close() error
@@ -50,7 +50,6 @@ type DocumentFetcher struct {
 	curSpanIndex int
 
 	schemaFields map[uint32]client.FieldDescription
-	fields       []*client.FieldDescription
 
 	doc         *encodedDocument
 	decodedDoc  *client.Document
@@ -64,14 +63,13 @@ type DocumentFetcher struct {
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, reverse bool) error {
 	if col.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 
 	df.col = col
 	df.index = index
-	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
 	df.isReadingDocument = false
