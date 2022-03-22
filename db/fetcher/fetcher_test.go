@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package fetcher_test
 
 import (
 	"context"
@@ -33,13 +33,13 @@ func newTestCollectionDescription() client.CollectionDescription {
 					Kind: client.FieldKind_DocKey,
 				},
 				{
-					Name: "Name",
+					Name: "name",
 					ID:   client.FieldID(2),
 					Kind: client.FieldKind_STRING,
 					Typ:  client.LWW_REGISTER,
 				},
 				{
-					Name: "Age",
+					Name: "age",
 					ID:   client.FieldID(3),
 					Kind: client.FieldKind_INT,
 					Typ:  client.LWW_REGISTER,
@@ -117,12 +117,12 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
@@ -154,20 +154,20 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	doc, err = client.NewDocFromJSON([]byte(`{
-		"Name": "Alice",
-		"Age": 27
+		"name": "Alice",
+		"age": 27
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
@@ -202,12 +202,12 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
@@ -232,9 +232,9 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	assert.NotNil(t, ddoc)
 
 	// value check
-	name, err := ddoc.Get("Name")
+	name, err := ddoc.Get("name")
 	assert.NoError(t, err)
-	age, err := ddoc.Get("Age")
+	age, err := ddoc.Get("age")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "John", name)
@@ -246,20 +246,20 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
 	doc, err = client.NewDocFromJSON([]byte(`{
-		"Name": "Alice",
-		"Age": 27
+		"name": "Alice",
+		"age": 27
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
@@ -284,26 +284,26 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	assert.NotNil(t, ddoc)
 
 	// value check
-	name, err := ddoc.Get("Name")
+	name, err := ddoc.Get("name")
 	assert.NoError(t, err)
-	age, err := ddoc.Get("Age")
+	age, err := ddoc.Get("age")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "John", name)
-	assert.Equal(t, uint64(21), age)
+	assert.Equal(t, "Alice", name)
+	assert.Equal(t, uint64(27), age)
 
 	ddoc, err = df.FetchNextDecoded(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, ddoc)
 
 	// value check
-	name, err = ddoc.Get("Name")
+	name, err = ddoc.Get("name")
 	assert.NoError(t, err)
-	age, err = ddoc.Get("Age")
+	age, err = ddoc.Get("age")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "Alice", name)
-	assert.Equal(t, uint64(27), age)
+	assert.Equal(t, "John", name)
+	assert.Equal(t, uint64(21), age)
 }
 
 func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
@@ -311,12 +311,12 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	db, err := newMemoryDB(ctx)
 	assert.NoError(t, err)
 
-	col, err := newTestCollectionWithSchema(ctx, db)
+	col, err := newTestCollectionWithSchema(db)
 	assert.NoError(t, err)
 
 	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
+		"name": "John",
+		"age": 21
 	}`))
 	assert.NoError(t, err)
 	err = col.Save(ctx, doc)
@@ -328,7 +328,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := base.MakeIndexPrefixKey(desc, &desc.Indexes[0]).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
+	docKey := base.MakeIndexPrefixKey(desc, &desc.Indexes[0]).WithDocKey("bae-f54b9689-e06e-5e3a-89b3-f3aee8e64ca7")
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}
@@ -347,9 +347,9 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	assert.NotNil(t, ddoc)
 
 	// value check
-	name, err := ddoc.Get("Name")
+	name, err := ddoc.Get("name")
 	assert.NoError(t, err)
-	age, err := ddoc.Get("Age")
+	age, err := ddoc.Get("age")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "John", name)
