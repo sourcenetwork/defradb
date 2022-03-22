@@ -31,7 +31,6 @@ import (
 type Fetcher interface {
 	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
-	FetchNextDecoded(ctx context.Context) (*client.Document, error)
 	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
 	Close() error
 }
@@ -172,26 +171,6 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 
 	_, err = df.nextKey(ctx)
 	return err == nil, err
-}
-
-func (df *DocumentFetcher) KVEnd() bool {
-	return df.kvEnd
-}
-
-func (df *DocumentFetcher) KV() *core.KeyValue {
-	return df.kv
-}
-
-func (df *DocumentFetcher) NextKey(ctx context.Context) (docDone bool, err error) {
-	return df.nextKey(ctx)
-}
-
-func (df *DocumentFetcher) NextKV() (iterDone bool, kv *core.KeyValue, err error) {
-	return df.nextKV()
-}
-
-func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
-	return df.processKV(kv)
 }
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
