@@ -4,5 +4,6 @@ build/defradb*
 cover.out
 coverage-full.txt
 coverage-quick.txt
-bench/*.log
-bench/*.svg
+bench/**/*.log
+bench/**/*.svg
+bench/**/*.txt
