@@ -1,4 +1,5 @@
 suite := all
+count := 1
 
 .PHONY: bench
 bench:
@@ -10,7 +11,7 @@ else ifneq ($(wildcard $(suite)/.),) # Check to make sure the requested suite ex
 	$(eval override suite = $(suite)/...)
 endif
 
-	go test -bench=. ./$(suite)
+	go test -bench=. -count $(count) ./$(suite)
 
 .PHONY: bench\:short
 bench\:short:
@@ -21,4 +22,4 @@ ifneq (,$(findstring all,$(suite))) # Check if default ALL value is set
 else ifneq ($(wildcard $(suite)/.),) # Check to make sure the requested suite exists
 	$(eval override suite = $(suite)/...)
 endif
-	go test -bench='_1?0{1,4}$$' ./$(suite)
+	go test -bench='_1?0{1,4}$$' -count $(count) ./$(suite)
