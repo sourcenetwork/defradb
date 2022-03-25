@@ -653,7 +653,7 @@ func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.Pri
 			return false, err
 		}
 
-		err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(core.NewDataStoreKey(e.Key)).ToDS())
+		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
 		if err != nil {
 			return false, err
 		}
