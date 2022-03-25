@@ -261,9 +261,11 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 		return true, nil, err
 	}
 
+	// fmt.Println("VALUE:", res.Value)
+
 	kv = &core.KeyValue{
-		Key:   core.NewDataStoreKey(res.Key),
-		Value: res.Value,
+		Key: core.NewDataStoreKey(res.Key),
+		// Value: res.Value,
 	}
 	return false, kv, nil
 }

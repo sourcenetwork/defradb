@@ -62,6 +62,7 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 		iterator:      badgerIterator,
 		txn:           *t,
 		reversedOrder: reversedOrder,
+		query:         q,
 	}
 
 	return &iterator, nil
