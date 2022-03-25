@@ -299,7 +299,7 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 	if !ok {
 		return errors.New("Document is missing key")
 	}
-	key := core.DataStoreKey{DocKey: keyStr}
+	key := c.getPrimaryIndexDocKey(core.DataStoreKey{DocKey: keyStr})
 	links := make([]core.DAGLink, 0)
 	for mfield, mval := range merge {
 		if _, ok := mval.(map[string]interface{}); ok {
@@ -329,7 +329,7 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 
 		val := client.NewCBORValue(fd.Typ, cval)
 		fieldKey := c.getFieldKey(key, mfield)
-		c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
+		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 		if err != nil {
 			return err
 		}
