@@ -120,7 +120,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 	} else {
 		indexOfDocKey = numberOfElements - 1
 	}
-	dataStoreKey.DocKey = elements[indexOfDocKey]
+	dataStoreKey.DocKey = strings.Split(elements[indexOfDocKey], ":")[0]
 
 	if numberOfElements == 1 {
 		return dataStoreKey

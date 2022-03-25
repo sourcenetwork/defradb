@@ -150,7 +150,8 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	var err error
 	if df.kvIter == nil {
 		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
-			Orders: df.order,
+			KeysOnly: true,
+			Orders:   df.order,
 		})
 	}
 	if err != nil {
@@ -165,6 +166,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	}
 
 	span := df.spans[nextSpanIndex]
+	// fmt.Println("SPAN:", span.Start().ToDS())
 	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
 	if err != nil {
 		return false, err
@@ -221,6 +223,15 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		if df.kv.Key.InstanceType != "v" {
 			continue
 		}
+
+		// spew.Dump("COREKEY:", df.kv.Key)
+		// fmt.Println("DATASTORE KEY:", df.kv.Key.ToDS())
+		res, err := df.txn.Datastore().Get(ctx, df.kv.Key.ToDS())
+		if err != nil {
+			// panic(err)
+			return false, err
+		}
+		df.kv.Value = res
 
 		// skip object markers
 		if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
