@@ -29,7 +29,7 @@ import (
 // the key/value scanning, aggregation, and document
 // encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -43,7 +43,6 @@ var (
 
 type DocumentFetcher struct {
 	col     *client.CollectionDescription
-	index   *client.IndexDescription
 	reverse bool
 
 	txn          datastore.Txn
@@ -67,13 +66,12 @@ type DocumentFetcher struct {
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error {
 	if col.Schema.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 
 	df.col = col
-	df.index = index
 	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
@@ -108,15 +106,12 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	if df.doc == nil {
 		return errors.New("DocumentFetcher cannot be started without an initialized document object")
 	}
-	if df.index == nil {
-		return errors.New("DocumentFetcher cannot be started without a IndexDescription")
-	}
 	//@todo: Handle fields Description
 	// check spans
 	numspans := len(spans)
 	var uniqueSpans core.Spans
-	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
-		start := base.MakeIndexPrefixKey(*df.col, df.index)
+	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection
+		start := base.MakeCollectionKey(*df.col)
 		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
 	} else {
 		uniqueSpans = spans.MergeAscending()

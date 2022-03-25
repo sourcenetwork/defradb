@@ -20,9 +20,8 @@ import (
 
 // scans an index for records
 type scanNode struct {
-	p     *Planner
-	desc  client.CollectionDescription
-	index *client.IndexDescription
+	p    *Planner
+	desc client.CollectionDescription
 
 	fields []*client.FieldDescription
 	doc    map[string]interface{}
@@ -48,7 +47,7 @@ type scanNode struct {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -56,7 +55,6 @@ func (n *scanNode) Init() error {
 
 func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
-	n.index = &desc.Indexes[0]
 	return nil
 }
 
@@ -68,7 +66,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.spans) == 0 {
-		start := base.MakeIndexPrefixKey(n.desc, n.index)
+		start := base.MakeCollectionKey(n.desc)
 		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
 	}
 

@@ -50,7 +50,6 @@ type Key interface {
 
 type DataStoreKey struct {
 	CollectionId string
-	IndexId      string
 	DocKey       string
 	FieldId      string
 	InstanceType InstanceType
@@ -149,12 +148,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 	if indexOfDocKey-1 < 0 {
 		return dataStoreKey
 	}
-	dataStoreKey.IndexId = elements[indexOfDocKey-1]
-
-	if indexOfDocKey-2 < 0 {
-		return dataStoreKey
-	}
-	dataStoreKey.CollectionId = elements[indexOfDocKey-2]
+	dataStoreKey.CollectionId = elements[indexOfDocKey-1]
 
 	return dataStoreKey
 }
@@ -274,9 +268,6 @@ func (k DataStoreKey) ToString() string {
 	if k.CollectionId != "" {
 		result = result + "/" + k.CollectionId
 	}
-	if k.IndexId != "" {
-		result = result + "/" + k.IndexId
-	}
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
@@ -300,10 +291,16 @@ func (k DataStoreKey) ToDS() ds.Key {
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
 	return k.CollectionId == other.CollectionId &&
-		k.IndexId == other.IndexId &&
 		k.DocKey == other.DocKey &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
+}
+
+func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
+	return DataStoreKey{
+		CollectionId: k.CollectionId,
+		DocKey:       k.DocKey,
+	}
 }
 
 func (k PrimaryDataStoreKey) Bytes() []byte {
@@ -441,10 +438,6 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	}
 	if k.DocKey != "" {
 		newKey.DocKey = string(bytesPrefixEnd([]byte(k.DocKey)))
-		return newKey
-	}
-	if k.IndexId != "" {
-		newKey.IndexId = string(bytesPrefixEnd([]byte(k.IndexId)))
 		return newKey
 	}
 	if k.CollectionId != "" {

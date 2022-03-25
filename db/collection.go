@@ -548,7 +548,7 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *client.Do
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	primaryKey := c.getDataStoreKeyFrom(c.getPrimaryKeyFromDocKey(doc.Key()))
+	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key()).ToDataStoreKey()
 	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
@@ -643,7 +643,7 @@ func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.Pri
 	}
 
 	q := query.Query{
-		Prefix:   c.getDataStoreKeyFrom(key).ToString(),
+		Prefix:   key.ToDataStoreKey().ToString(),
 		KeysOnly: true,
 	}
 	res, err := txn.Datastore().Query(ctx, q)
@@ -785,25 +785,17 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 	return nil
 }
 
-func (c *collection) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
+func (c *collection) getDataStoreKey(docKey string) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
-		IndexId:      fmt.Sprint(c.PrimaryIndex().ID),
-	}.WithInstanceInfo(key)
+		DocKey:       docKey,
+	}
 }
 
 func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {
 	return core.PrimaryDataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),
-	}
-}
-
-func (c *collection) getDataStoreKeyFrom(key core.PrimaryDataStoreKey) core.DataStoreKey {
-	return core.DataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
-		IndexId:      fmt.Sprint(c.PrimaryIndex().ID),
-		DocKey:       key.DocKey,
 	}
 }
 

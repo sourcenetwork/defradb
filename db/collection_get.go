@@ -48,16 +48,15 @@ func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.Primar
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
-	index := &c.desc.Indexes[0]
 	// initialize it with the primary index
-	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
+	err := df.Init(&c.desc, nil, false)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(*desc, index, key.DocKey)
+	targetKey := base.MakeDocKey(*desc, key.DocKey)
 	// run the doc fetcher
 	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
 	if err != nil {

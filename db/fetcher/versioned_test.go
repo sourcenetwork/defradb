@@ -42,7 +42,7 @@ var (
 				"verified": true
 			}`),
 			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
-			cid: "bafybeiatx2n4cswlg35oju2i7ghft2yew4b3q2bm2lingouosoxvh4hej4",
+			cid: "bafybeigxazren4cw3fla22hvs3773udxynn53mk4hwezobv3fbirusgxnq",
 		},
 		{
 			payload: []byte(`{
@@ -56,7 +56,7 @@ var (
 				"points": 99.9,
 			},
 			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeibdmpnxzau7rqpvgoim7saesuvwlqyyjwl2us2zftybsz5u5vd2t4",
+			cid: "bafybeies2gdj2xzswz4jdxev3bouuefo6q5f377ur7a3ly2jursh5kgkyu",
 		},
 		{
 			payload: []byte(`{
@@ -70,7 +70,7 @@ var (
 				"age":      22,
 			},
 			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeiccqlxez5pn62nnoqccl62p2a4lpafzlqgp4mwmg24iroppo5d6mq",
+			cid: "bafybeia2gx47ypcpwd3bt4xl26det6mw7pxevcw7sh4njnjcfh4z7wh5fa",
 		},
 		{
 			payload: []byte(`{
@@ -83,7 +83,7 @@ var (
 				"points": 129.99,
 			},
 			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeieiucuh63h4445ydiz4ugos7x5ri6f25hrflrnrs5uyq3ncme3frm",
+			cid: "bafybeif45vokvqg47ahuvgfbhuayw54pmjidwjefonzrlakesbi2v4aeki",
 		},
 	}
 )
@@ -103,7 +103,7 @@ func TestVersionedFetcherInit(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 }
 
@@ -120,7 +120,7 @@ func TestVersionedFetcherStart(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -148,7 +148,7 @@ func TestVersionedFetcherNextMap(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -187,7 +187,7 @@ func TestVersionedFetcherNextMapV1(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -226,7 +226,7 @@ func TestVersionedFetcherNextMapV2(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -263,7 +263,7 @@ func TestVersionedFetcherNextMapV3(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
@@ -300,7 +300,7 @@ func TestVersionedFetcherIncrementalSeekTo(t *testing.T) {
 
 	vf := &fetcher.VersionedFetcher{}
 	desc := col.Description()
-	err = vf.Init(&desc, nil, nil, false)
+	err = vf.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, false)
