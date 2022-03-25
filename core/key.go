@@ -55,27 +55,39 @@ type DataStoreKey struct {
 	InstanceType InstanceType
 }
 
+var _ Key = (*DataStoreKey)(nil)
+
 type HeadStoreKey struct {
 	DocKey  string
 	FieldId string //can be 'C'
 	Cid     cid.Cid
 }
 
+var _ Key = (*HeadStoreKey)(nil)
+
 type CollectionKey struct {
 	CollectionName string
 }
+
+var _ Key = (*CollectionKey)(nil)
 
 type CollectionSchemaKey struct {
 	SchemaId string
 }
 
+var _ Key = (*CollectionSchemaKey)(nil)
+
 type SchemaKey struct {
 	SchemaName string
 }
 
+var _ Key = (*SchemaKey)(nil)
+
 type SequenceKey struct {
 	SequenceName string
 }
+
+var _ Key = (*SequenceKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' and ':' as field deliminaters.  It assumes
