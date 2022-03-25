@@ -25,72 +25,12 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.Equal(t, "", resultString)
 }
 
-func TestNewDataStoreKey_ReturnsDocKey_GivenSingleItem(t *testing.T) {
-	docKey := "docKey"
-	inputString := docKey
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(t, DataStoreKey{DocKey: docKey}, result)
-	assert.Equal(t, "/"+docKey, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsDocKey_GivenSingleItemWithLeadingDeliminator(t *testing.T) {
-	docKey := "docKey"
-	inputString := "/" + docKey
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(t, DataStoreKey{DocKey: docKey}, result)
-	assert.Equal(t, "/"+docKey, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsDocKeyAndInstanceType_GivenSingleItemWithType(t *testing.T) {
-	instanceType := "anyType"
-	docKey := "docKey"
-	inputString := docKey + ":" + instanceType
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(t, DataStoreKey{DocKey: docKey, InstanceType: InstanceType(instanceType)}, result)
-	assert.Equal(t, "/"+docKey+":"+instanceType, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsDocKeyAndFieldIdAndInstanceType_GivenTwoItemsWithType(t *testing.T) {
-	instanceType := "anyType"
-	fieldId := "f1"
-	docKey := "docKey"
-	inputString := docKey + "/" + fieldId + ":" + instanceType
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(t, DataStoreKey{DocKey: docKey, FieldId: fieldId, InstanceType: InstanceType(instanceType)}, result)
-	assert.Equal(t, "/"+docKey+"/"+fieldId+":"+instanceType, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenThreeItemsWithType(t *testing.T) {
-	instanceType := "anyType"
-	fieldId := "f1"
-	docKey := "docKey"
-	inputString := docKey + "/" + fieldId + ":" + instanceType
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(t, DataStoreKey{DocKey: docKey, FieldId: fieldId, InstanceType: InstanceType(instanceType)}, result)
-	assert.Equal(t, "/"+docKey+"/"+fieldId+":"+instanceType, resultString)
-}
-
 func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithType(t *testing.T) {
 	instanceType := "anyType"
 	fieldId := "f1"
 	docKey := "docKey"
 	collectionId := "1"
-	inputString := collectionId + "/" + docKey + "/" + fieldId + ":" + instanceType
+	inputString := collectionId + "/" + instanceType + "/" + docKey + "/" + fieldId
 
 	result := NewDataStoreKey(inputString)
 	resultString := result.ToString()
@@ -103,47 +43,5 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 			FieldId:      fieldId,
 			InstanceType: InstanceType(instanceType)},
 		result)
-	assert.Equal(t, "/"+collectionId+"/"+docKey+"/"+fieldId+":"+instanceType, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithTypeWithLeadingDeliminator(t *testing.T) {
-	instanceType := "anyType"
-	fieldId := "f1"
-	docKey := "docKey"
-	collectionId := "1"
-	inputString := "/" + collectionId + "/" + docKey + "/" + fieldId + ":" + instanceType
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(
-		t,
-		DataStoreKey{
-			CollectionId: collectionId,
-			DocKey:       docKey,
-			FieldId:      fieldId,
-			InstanceType: InstanceType(instanceType)},
-		result)
-	assert.Equal(t, "/"+collectionId+"/"+docKey+"/"+fieldId+":"+instanceType, resultString)
-}
-
-func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithTypeWithLeadingStuff(t *testing.T) {
-	instanceType := "anyType"
-	fieldId := "f1"
-	docKey := "docKey"
-	collectionId := "1"
-	inputString := "discarded/" + collectionId + "/" + docKey + "/" + fieldId + ":" + instanceType
-
-	result := NewDataStoreKey(inputString)
-	resultString := result.ToString()
-
-	assert.Equal(
-		t,
-		DataStoreKey{
-			CollectionId: collectionId,
-			DocKey:       docKey,
-			FieldId:      fieldId,
-			InstanceType: InstanceType(instanceType)},
-		result)
-	assert.Equal(t, "/"+collectionId+"/"+docKey+"/"+fieldId+":"+instanceType, resultString)
+	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey+"/"+fieldId, resultString)
 }
