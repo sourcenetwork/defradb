@@ -27,7 +27,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Docume
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	dsKey := core.DataStoreKeyFromDocKey(key)
+	dsKey := c.getPrimaryKeyFromDocKey(key)
 
 	found, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
@@ -44,7 +44,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Docume
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (*client.Document, error) {
+func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.PrimaryDataStoreKey) (*client.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
