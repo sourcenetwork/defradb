@@ -95,7 +95,7 @@ func initCRDTForType(ctx context.Context, txn datastore.MultiStore, col client.C
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
 		ctype = client.COMPOSITE
-		key = base.MakePrimaryIndexKey(description, docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
+		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
 	} else {
 		fd, ok := description.GetField(field)
 		if !ok {
@@ -103,7 +103,7 @@ func initCRDTForType(ctx context.Context, txn datastore.MultiStore, col client.C
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = base.MakePrimaryIndexKey(description, docKey).WithFieldId(fieldID)
+		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)

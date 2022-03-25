@@ -45,14 +45,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]interface{}{
 					{
-						"cid": "bafybeiewn6dvdwu436khe7okcsihjcxuijvskae7zh52cyyrytuhwr34oq",
+						"cid": "bafybeihtn2xjbjjqxeqp2uhwhvk3tmjfkaf2qtfqh5w5q3ews7ax2dc75a",
 						"links": []map[string]interface{}{
 							{
-								"cid":  "bafybeiftyjqxyzqtfpi65kde4hla4xm3v4dvtr7fr2p2p5ng5lfg7rrcve",
+								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeif67ysvfnusidyuoxwztrwhunuihtbrunet42422wgp22sf6ninki",
+								"cid":  "bafybeidkse2jiqekdebh6zdq4zvyx4gzyrupujbtb6gd7qqdb4hj3pyaeq",
 								"name": "Name",
 							},
 						},

@@ -51,7 +51,7 @@ type versionedScanNode struct {
 
 func (n *versionedScanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, nil, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()
