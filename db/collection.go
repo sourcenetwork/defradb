@@ -548,14 +548,14 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *client.Do
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	dockey := core.DataStoreKeyFromDocKey(doc.Key())
+	primaryKey := c.getDataStoreKeyFrom(c.getPrimaryKeyFromDocKey(doc.Key()))
 	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			fieldKey := c.getFieldKey(dockey, k)
-			c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
+			fieldKey := c.getFieldKey(primaryKey, k)
+			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -591,7 +591,7 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *client.Do
 		return cid.Undef, nil
 	}
 
-	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), client.COMPOSITE, buf, links)
+	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, primaryKey, client.COMPOSITE, buf, links)
 	if err != nil {
 		return cid.Undef, err
 	}
