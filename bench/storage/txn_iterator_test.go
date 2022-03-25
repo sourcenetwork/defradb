@@ -63,3 +63,135 @@ func Benchmark_Storage_Simple_Txn_Iterator_Sync_100_1_100(b *testing.B) {
 		})
 	}
 }
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_Sync_100(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 100, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_Sync_1000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 1000, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_Sync_100(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 100, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_Sync_1000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 100, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_SkipValueRead_Sync_100_20(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRawSkip(b, ctx, vsz, 100, 0.2)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_SkipValueRead_Sync_1000_25(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRawSkip(b, ctx, vsz, 1000, 0.25)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_SkipValueRead_Sync_1000_50(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRawSkip(b, ctx, vsz, 1000, 0.50)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_SkipValueRead_Sync_1000_75(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRawSkip(b, ctx, vsz, 1000, 0.75)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_Sync_100000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 100000, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Raw_KeyOnly_Sync_100000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIteratorRaw(b, ctx, vsz, 100000, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Txn_Iterator_Sync_100000_1_100000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchTxnIterator(b, ctx, vsz, 100000, 1, 100000, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}

@@ -12,12 +12,14 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"sort"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 
 	benchutils "github.com/sourcenetwork/defradb/bench"
 	"github.com/sourcenetwork/defradb/client"
@@ -95,7 +97,7 @@ func runStorageBenchTxnIterator(b *testing.B, ctx context.Context, valueSize, ob
 	}
 	defer db.Root().Close() //nolint
 
-	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
+	keys, err := backfillBenchmarkStorageDB(ctx, db.Root(), objCount, valueSize)
 	if err != nil {
 		return err
 	}
@@ -107,12 +109,16 @@ func runStorageBenchTxnIterator(b *testing.B, ctx context.Context, valueSize, ob
 	defer txn.Discard(ctx)
 
 	b.ResetTimer()
+	b.StopTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
 			iterator, err := txn.Rootstore().GetIterator(query.Query{})
 			if err != nil {
 				return err
 			}
+			totalCount := 0
+			b.StartTimer()
+
 			for k := 0; k < pointCount; k++ {
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
@@ -121,25 +127,157 @@ func runStorageBenchTxnIterator(b *testing.B, ctx context.Context, valueSize, ob
 				if err != nil {
 					return err
 				}
+				resCount := 0
 				for {
 					_, hasNextItem := result.NextSync()
 					if !hasNextItem {
 						break
 					}
+					totalCount++
+					resCount++
 				}
-				err = result.Close()
-				if err != nil {
-					return err
-				}
+				// err = result.Close()
+				// if err != nil {
+				// 	return err
+				// }
 			}
+			b.StopTimer()
 			err = iterator.Close()
 			if err != nil {
 				return err
 			}
+
+			// fmt.Println("COUNT:", totalCount, pointCount)
 		}
 	}
 	b.StopTimer()
 	txn.Discard(ctx)
+	return nil
+}
+
+func runStorageBenchTxnIteratorRaw(b *testing.B, ctx context.Context, valueSize, objCount int, keyonly bool) error {
+	db, err := benchutils.NewTestStorage(ctx, b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// backfill
+	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	dbtxn, ok := db.(ds.TxnDatastore)
+	if !ok {
+		return errors.New("failed to get Txn Datastore from Test Storage backend")
+	}
+
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		txn, err := dbtxn.NewTransaction(ctx, true)
+		if err != nil {
+			return err
+		}
+		b.StartTimer()
+
+		// iterate over all keys
+		res, err := txn.Query(ctx, dsq.Query{
+			// Prefix: "/data",
+			KeysOnly: keyonly,
+		})
+		if err != nil {
+			return err
+		}
+
+		resCount := 0
+		for {
+			_, hasNext := res.NextSync()
+			if !hasNext {
+				break
+			}
+			// panic("hi andy")
+			// fmt.Println("===", resCount, e.Key, "||||", string(e.Value), "...")
+			resCount++
+		}
+
+		// if resCount != objCount+2 {
+		// 	return fmt.Errorf("incorrect query iterator doc count, expected %v got %v", objCount, resCount)
+		// }
+
+		b.StopTimer()
+		txn.Discard(ctx)
+	}
+
+	return nil
+}
+
+func runStorageBenchTxnIteratorRawSkip(b *testing.B, ctx context.Context, valueSize, objCount int, skip float32) error {
+	db, err := benchutils.NewTestStorage(ctx, b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// backfill
+	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	dbtxn, ok := db.(ds.TxnDatastore)
+	if !ok {
+		return errors.New("failed to get Txn Datastore from Test Storage backend")
+	}
+
+	threshold := int32(100 - (100 * skip))
+
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		txn, err := dbtxn.NewTransaction(ctx, true)
+		if err != nil {
+			return err
+		}
+		b.StartTimer()
+
+		// iterate over all keys
+		res, err := txn.Query(ctx, dsq.Query{
+			// Prefix: "/data",
+			KeysOnly: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		resCount := 0
+		for {
+			e, hasNext := res.NextSync()
+			if !hasNext {
+				break
+			}
+
+			// dont skip?
+			if rand.Int31n(100) < threshold {
+				_, err = txn.Get(ctx, ds.NewKey(e.Key))
+				if err != nil {
+					return err
+				}
+			}
+			// fmt.Println("===", resCount, e.Key, "||||", string(e.Value), "...")
+
+			resCount++
+		}
+
+		// if resCount != objCount {
+		// 	return fmt.Errorf("incorrect query iterator doc count, expected %v got %v", objCount, resCount)
+		// }
+
+		b.StopTimer()
+		txn.Discard(ctx)
+	}
+
 	return nil
 }
 
@@ -234,15 +372,17 @@ func backfillBenchmarkStorageDB(ctx context.Context, db ds.Batching, objCount in
 	}
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
-		keyBuf := make([]byte, 32)
-		value := make([]byte, valueSize)
-		if _, err := rand.Read(value); err != nil {
-			return nil, err
-		}
-		if _, err := rand.Read(keyBuf); err != nil {
-			return nil, err
-		}
-		key := ds.NewKey(string(keyBuf))
+		// keyBuf := make([]byte, 32)
+		// value := make([]byte, valueSize)
+		// if _, err := rand.Read(value); err != nil {
+		// 	return nil, err
+		// }
+		// if _, err := rand.Read(keyBuf); err != nil {
+		// 	return nil, err
+		// }
+		keyBuf := randSeq(32)
+		value := []byte(randSeq(valueSize))
+		key := ds.NewKey("/data" + string(keyBuf))
 		keys[i] = key.String()
 
 		if err := batch.Put(ctx, key, value); err != nil {
@@ -263,16 +403,18 @@ func backfillBenchmarkTxn(ctx context.Context, db client.DB, objCount int, value
 
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
-		keyBuf := make([]byte, 32)
-		value := make([]byte, valueSize)
-		if _, err := rand.Read(value); err != nil {
-			return nil, err
-		}
-		if _, err := rand.Read(keyBuf); err != nil {
-			return nil, err
-		}
-		key := ds.NewKey(string(keyBuf))
-		keys[i] = string(keyBuf)
+		// keyBuf := make([]byte, 32)
+		// value := make([]byte, valueSize)
+		// if _, err := rand.Read(value); err != nil {
+		// 	return nil, err
+		// }
+		// if _, err := rand.Read(keyBuf); err != nil {
+		// 	return nil, err
+		// }
+		keyBuf := randSeq(32)
+		value := []byte(randSeq(valueSize))
+		key := ds.NewKey("/data" + string(keyBuf))
+		keys[i] = key.String()
 
 		if err := txn.Rootstore().Put(ctx, key, value); err != nil {
 			return nil, err
@@ -293,4 +435,14 @@ func getSampledIndex(populationSize int, sampleSize int, i int) int {
 
 	pointsPerInterval := populationSize / sampleSize
 	return (i * pointsPerInterval) + rand.Intn(pointsPerInterval)
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

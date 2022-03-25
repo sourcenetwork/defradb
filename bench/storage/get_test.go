@@ -18,7 +18,7 @@ import (
 
 var (
 	valueSize = []int{
-		64, 128, 256, 512, 1024,
+		64, //128, 256, 512, 1024,
 	}
 )
 
@@ -87,6 +87,65 @@ func Benchmark_Storage_Simple_Read_Sync_100_100(b *testing.B) {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
 			err := runStorageBenchGet(b, ctx, vsz, 100, 100, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Read_Sync_1000_1000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchGet(b, ctx, vsz, 1000, 750, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+func Benchmark_Storage_Simple_Read_Sync_1000_750(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchGet(b, ctx, vsz, 1000, 750, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Read_Sync_1000_500(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchGet(b, ctx, vsz, 1000, 500, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Read_Sync_1000_250(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchGet(b, ctx, vsz, 1000, 250, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Storage_Simple_Read_Sync_100000_100000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runStorageBenchGet(b, ctx, vsz, 100000, 100000, true)
 			if err != nil {
 				b.Fatal(err)
 			}
