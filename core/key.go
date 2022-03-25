@@ -39,6 +39,7 @@ const (
 	COLLECTION_SCHEMA = "/collection/schema"
 	SCHEMA            = "schema"
 	SEQ               = "seq"
+	PRIMARY_KEY       = "pk"
 )
 
 type Key interface {
@@ -56,6 +57,13 @@ type DataStoreKey struct {
 }
 
 var _ Key = (*DataStoreKey)(nil)
+
+type PrimaryDataStoreKey struct {
+	CollectionId string
+	DocKey       string
+}
+
+var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocKey  string
@@ -296,6 +304,28 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 		k.DocKey == other.DocKey &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
+}
+
+func (k PrimaryDataStoreKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k PrimaryDataStoreKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k PrimaryDataStoreKey) ToString() string {
+	result := ""
+
+	if k.CollectionId != "" {
+		result = result + "/" + k.CollectionId
+	}
+	result = result + "/" + PRIMARY_KEY
+	if k.DocKey != "" {
+		result = result + "/" + k.DocKey
+	}
+
+	return result
 }
 
 func (k CollectionKey) ToString() string {
