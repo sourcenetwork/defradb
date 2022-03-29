@@ -243,7 +243,8 @@ jobs:
         run: >
           make deps:bench &&
           cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
-          ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html
+          ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
+          ./tools/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
 
       - name: Comment Benchmark Results on PR
         if: |
@@ -253,7 +254,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_SCOPE_PAT }}
         with:
-          path: comparison.html
+          path: pretty-comparison.md
 
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
