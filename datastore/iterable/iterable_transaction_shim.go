@@ -12,7 +12,6 @@ package iterable
 
 import (
 	"context"
-	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -63,10 +62,36 @@ func (shim *iteratorShim) IteratePrefix(ctx context.Context, startPrefix ds.Key,
 		}
 		shim.results = results
 	} else {
-		//todo!!!!! - find and use parent prefix and then add filter(s) to the query object
-		return nil, errors.New("Range spans are not currently supported on non-iterable transaction stores")
+		startBytes := startPrefix.Bytes()
+		endBytes := endPrefix.Bytes()
+		lastSharedIndex := 0
+		for i := 0; i < len(startBytes) && i < len(endBytes); i++ {
+			if startBytes[i] != endBytes[i] {
+				break
+			}
+			lastSharedIndex += 1
+		}
+		query.Prefix = string(startBytes[:lastSharedIndex])
+		query.Filters = append(query.Filters, betweenFilter{
+			start: startPrefix.String(),
+			end:   endPrefix.String(),
+		})
+		results, err := shim.readable.Query(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		shim.results = results
 	}
 	return shim.results, nil
+}
+
+type betweenFilter struct {
+	start string
+	end   string
+}
+
+func (f betweenFilter) Filter(e dsq.Entry) bool {
+	return e.Key >= f.start && e.Key <= f.end
 }
 
 func (shim *iteratorShim) Close() error {
