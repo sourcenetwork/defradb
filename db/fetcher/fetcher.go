@@ -11,14 +11,14 @@
 package fetcher
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"fmt"
 
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -29,7 +29,7 @@ import (
 // the key/value scanning, aggregation, and document
 // encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, index *client.IndexDescription, filter *parser.Filter, filterFields []client.FieldDescription, reqfields []client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -52,40 +52,55 @@ type DocumentFetcher struct {
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
 	curSpanIndex int
 
+	filter        *parser.Filter
+	filterFetcher *DocumentFetcher
+
 	schemaFields map[uint32]client.FieldDescription
-	fields       []*client.FieldDescription
+	reqFields    map[string]struct{}
+	numReqFields int
 
 	doc         *encodedDocument
 	decodedDoc  *client.Document
 	initialized bool
 
-	kv                *core.KeyValue
-	kvIter            iterable.Iterator
-	kvResultsIter     dsq.Results
+	kv     *core.KeyValue
+	kvIter dsq.Results // kv val iter that follows the keyIter
+
 	kvEnd             bool
 	isReadingDocument bool
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, filter *parser.Filter, reqFields []client.FieldDescription, reverse bool) error {
 	if col.Schema.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 
 	df.col = col
 	df.index = index
-	df.fields = fields
 	df.reverse = reverse
+	df.reqFields = make(map[string]struct{})
+	df.doc = new(encodedDocument)
+	for _, f := range reqFields {
+		// @todo: Sanity check, make sure fid is in schema
+		df.reqFields[f.ID.String()] = struct{}{}
+	}
+	df.numReqFields = len(df.reqFields)
+
+	// make a filter fetcher
+	if filter != nil {
+		df.filterFetcher = df.setupFilterFetcher(filter)
+	}
 	df.initialized = true
 	df.isReadingDocument = false
-	df.doc = new(encodedDocument)
 
-	if df.kvResultsIter != nil {
-		if err := df.kvResultsIter.Close(); err != nil {
-			return err
-		}
-	}
-	df.kvResultsIter = nil
+	// if df.kvIter != nil {
+	// 	if err := df.kvResultsIter.Close(); err != nil {
+	// 		return err
+	// 	}
+	// }
+	// df.kvResultsIter = nil
+
 	if df.kvIter != nil {
 		if err := df.kvIter.Close(); err != nil {
 			return err
@@ -98,6 +113,26 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 		df.schemaFields[uint32(field.ID)] = field
 	}
 	return nil
+}
+
+// newFilterFetcher instantiates a new DocumentFetcher that will retrieve only the fields
+// needed for filtering
+func (df *DocumentFetcher) newFilterFetcher(filter *parser.Filter) (*DocumentFetcher, error) {
+	df.filter = filter
+	filterFetcher := new(DocumentFetcher)
+	filterfields := make([]client.FieldDescription, 0, len(filter.Conditions))
+
+	for k, _ := range df.filter.Conditions {
+		field, ok := df.col.GetField(k)
+		if !ok {
+			// we have an error, filter field not part of description
+			return nil, fmt.Errorf("invalid filter field in conditions map: %v", k)
+		}
+		filterfields = append(filterfields, field)
+	}
+	filterFetcher.Init(df.col, df.index, nil, filterfields, df.reverse)
+	// df.filterFetcher.doc = df.doc // re-use the same doc for both fetchers
+	return filterFetcher, nil
 }
 
 // Start implements DocumentFetcher
@@ -137,6 +172,13 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 		df.order = []dsq.Order{dsq.OrderByKey{}}
 	}
 
+	// handle sub fetcher
+	if df.filterFetcher != nil {
+		if err := df.filterFetcher.Start(ctx, txn, spans); err != nil {
+			return err
+		}
+	}
+
 	_, err := df.startNextSpan(ctx)
 	return err
 }
@@ -148,30 +190,50 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	}
 
 	var err error
-	if df.kvIter == nil {
-		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
-			KeysOnly: true,
-			Orders:   df.order,
-		})
-	}
-	if err != nil {
-		return false, err
-	}
+	// if df.kvIter == nil {
+	// 	df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
+	// 		KeysOnly: true,
+	// 		Orders:   df.order,
+	// 	})
+	// }
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	if df.kvResultsIter != nil {
-		err = df.kvResultsIter.Close()
+	// if df.keyIter != nil {
+	// 	err = df.keyIter.Close()
+	// 	if err != nil {
+	// 		return false, err
+	// 	}
+	// }
+
+	if df.kvIter != nil {
+		err = df.kvIter.Close()
 		if err != nil {
 			return false, err
 		}
 	}
 
 	span := df.spans[nextSpanIndex]
-	// fmt.Println("SPAN:", span.Start().ToDS())
-	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+
+	// df.kvIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
+
+	df.kvIter, err = df.txn.Datastore().Query(dsq.Query{
+		KeysOnly: true,
+		Orders:   df.order,
+		Prefix:   span.Start().ToDS().String(),
+	})
 	if err != nil {
 		return false, err
 	}
+
 	df.curSpanIndex = nextSpanIndex
+
+	if df.filterFetcher != nil {
+		if ok, err := df.filterFetcher.startNextSpan(ctx); err != nil {
+			return ok, err
+		}
+	}
 
 	_, err = df.nextKey(ctx)
 	return err == nil, err
@@ -199,6 +261,14 @@ func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
+//
+// Basically,
+// Initial call starts with keyOnly iterator
+// gets first key
+// skip value instance types
+// if we need to filter
+//		and we havent got all the filter fields
+//			iterate until we do
 func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error) {
 	// get the next kv from nextKV()
 	for {
@@ -226,17 +296,41 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 
 		// spew.Dump("COREKEY:", df.kv.Key)
 		// fmt.Println("DATASTORE KEY:", df.kv.Key.ToDS())
-		res, err := df.txn.Datastore().Get(ctx, df.kv.Key.ToDS())
-		if err != nil {
-			// panic(err)
-			return false, err
+		// res, err := df.txn.Datastore().Get(ctx, df.kv.Key.ToDS())
+		// if err != nil {
+		// 	// panic(err)
+		// 	return false, err
+		// }
+
+		// check if we've crossed document boundries
+		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+			df.isReadingDocument = false
+			return true, nil
 		}
-		df.kv.Value = res
+
+		if df.filter != nil {
+			// FetchDoc
+		}
+
+		// check if we need to filter & our key is in the filter set
+		// BRANCHY AF - need refactor, POC
+		if df.numFilterFields > 0 {
+			if len(df.doc.Properties) < df.numFilterFields {
+				fid := df.kv.Key.FieldId
+				if _, ok := df.filterFields[fid]; ok {
+					df.kv.Value = df.kv.Res.ValueCopy(nil) // lazy load value
+				} else {
+					continue
+				}
+			} else {
+
+			}
+		}
 
 		// skip object markers
-		if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
-			continue
-		}
+		// if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
+		// 	continue
+		// }
 
 		// check if we've crossed document boundries
 		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
@@ -247,12 +341,14 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 	}
 }
 
+func (df *DocumentFetcher) resolveFilterFields(ctx context.Context)
+
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
 // - It directly interacts with the KVIterator.
 // - Returns true if the entire iterator/span is exhausted
 // - Returns a kv pair instead of internally updating
 func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
-	res, available := df.kvResultsIter.NextSync()
+	res, available := df.kvIter.NextSync()
 	if !available {
 		return true, nil, nil
 	}
@@ -264,6 +360,7 @@ func (df *DocumentFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error
 	// fmt.Println("VALUE:", res.Value)
 
 	kv = &core.KeyValue{
+		Res: res,
 		Key: core.NewDataStoreKey(res.Key),
 		// Value: res.Value,
 	}

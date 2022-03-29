@@ -10,7 +10,11 @@
 
 package core
 
-import "strings"
+import (
+	"strings"
+
+	dsq "github.com/ipfs/go-datastore/query"
+)
 
 // Span is a range of keys from [Start, End)
 type Span interface {
@@ -156,6 +160,7 @@ type Spans []Span
 
 // KeyValue is a KV store response containing the resulting core.Key and byte array value
 type KeyValue struct {
+	Res   dsq.Result
 	Key   DataStoreKey
 	Value []byte
 }

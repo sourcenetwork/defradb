@@ -733,7 +733,10 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 	}
 
 	it := t.txn.NewIterator(opt)
-	qrb := dsq.NewResultBuilder(q)
+	seekFn := func(key string) {
+		it.Seek([]byte(key))
+	}
+	qrb := dsq.NewResultBuilder(q, seekFn)
 	qrb.Process.Go(func(worker goprocess.Process) {
 		t.ds.closeLk.RLock()
 		closedEarly := false
@@ -836,6 +839,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				}
 			} else {
 				e.Size = int(item.ValueSize())
+				e.ValueCopy = item.ValueCopy
 				result = dsq.Result{Entry: e}
 			}
 

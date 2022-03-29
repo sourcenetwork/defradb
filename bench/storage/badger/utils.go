@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	storage = "badger"
+	storage = "memory"
 )
 
 func runBadgerBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
