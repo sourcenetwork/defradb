@@ -29,7 +29,7 @@ import (
 // the key/value scanning, aggregation, and document
 // encoding.
 type Fetcher interface {
-	Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error
+	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
@@ -43,7 +43,6 @@ var (
 
 type DocumentFetcher struct {
 	col     *client.CollectionDescription
-	index   *client.IndexDescription
 	reverse bool
 
 	txn          datastore.Txn
@@ -67,13 +66,12 @@ type DocumentFetcher struct {
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, fields []*client.FieldDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error {
 	if col.Schema.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
 
 	df.col = col
-	df.index = index
 	df.fields = fields
 	df.reverse = reverse
 	df.initialized = true
@@ -108,18 +106,21 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	if df.doc == nil {
 		return errors.New("DocumentFetcher cannot be started without an initialized document object")
 	}
-	if df.index == nil {
-		return errors.New("DocumentFetcher cannot be started without a IndexDescription")
-	}
 	//@todo: Handle fields Description
 	// check spans
 	numspans := len(spans)
 	var uniqueSpans core.Spans
-	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection/index
-		start := base.MakeIndexPrefixKey(*df.col, df.index)
+	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection
+		start := base.MakeCollectionKey(*df.col).WithValueFlag()
 		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
 	} else {
-		uniqueSpans = spans.MergeAscending()
+		valueSpans := make(core.Spans, len(spans))
+		for i, span := range spans {
+			// We can only handle value keys, so here we ensure we only read value keys
+			valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
+		}
+
+		uniqueSpans = valueSpans.MergeAscending()
 		if df.reverse {
 			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
 				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
@@ -205,6 +206,13 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		if err != nil {
 			return false, err
 		}
+
+		if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
+			// We can only ready value values, if we escape the collection's value keys
+			// then we must be done and can stop reading
+			docDone = true
+		}
+
 		df.kvEnd = docDone
 		if df.kvEnd {
 			hasNextSpan, err := df.startNextSpan(ctx)
@@ -215,11 +223,6 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 				return true, nil
 			}
 			return true, nil
-		}
-
-		// skip if we are iterating through a non value kv pair
-		if df.kv.Key.InstanceType != "v" {
-			continue
 		}
 
 		// skip object markers

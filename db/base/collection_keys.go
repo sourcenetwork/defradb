@@ -19,18 +19,16 @@ import (
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
-func MakeIndexPrefixKey(col client.CollectionDescription, index *client.IndexDescription) core.DataStoreKey {
+func MakeCollectionKey(col client.CollectionDescription) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: col.IDString(),
-		IndexId:      index.IDString(),
 	}
 }
 
 // MakeIndexKey generates a key for the target dockey, using the collection/index description
-func MakeIndexKey(col client.CollectionDescription, index *client.IndexDescription, docKey string) core.DataStoreKey {
+func MakeDocKey(col client.CollectionDescription, docKey string) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: col.IDString(),
-		IndexId:      index.IDString(),
 		DocKey:       docKey,
 	}
 }
@@ -38,19 +36,12 @@ func MakeIndexKey(col client.CollectionDescription, index *client.IndexDescripti
 func MakePrimaryIndexKeyForCRDT(c client.CollectionDescription, ctype client.CType, key core.DataStoreKey, fieldName string) (core.DataStoreKey, error) {
 	switch ctype {
 	case client.COMPOSITE:
-		return MakePrimaryIndexKey(c, key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
+		return MakeCollectionKey(c).WithInstanceInfo(key).WithFieldId(core.COMPOSITE_NAMESPACE), nil
 	case client.LWW_REGISTER:
 		fieldKey := getFieldKey(c, key, fieldName)
-		return MakePrimaryIndexKey(c, fieldKey), nil
+		return MakeCollectionKey(c).WithInstanceInfo(fieldKey), nil
 	}
 	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
-}
-
-func MakePrimaryIndexKey(c client.CollectionDescription, key core.DataStoreKey) core.DataStoreKey {
-	return core.DataStoreKey{
-		CollectionId: fmt.Sprint(c.ID),
-		IndexId:      fmt.Sprint(c.GetPrimaryIndex().ID),
-	}.WithInstanceInfo(key)
 }
 
 func getFieldKey(c client.CollectionDescription, key core.DataStoreKey, fieldName string) core.DataStoreKey {

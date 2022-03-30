@@ -63,7 +63,7 @@ func newTestCollectionDescription() client.CollectionDescription {
 func newTestFetcher() (*fetcher.DocumentFetcher, error) {
 	df := new(fetcher.DocumentFetcher)
 	desc := newTestCollectionDescription()
-	err := df.Init(&desc, &desc.Indexes[0], nil, false)
+	err := df.Init(&desc, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +113,8 @@ func TestFetcherStartWithoutInit(t *testing.T) {
 
 func TestMakeIndexPrefixKey(t *testing.T) {
 	desc := newTestCollectionDescription()
-	key := base.MakeIndexPrefixKey(desc, &desc.Indexes[0])
-	assert.Equal(t, "/1/0", key.ToString())
+	key := base.MakeCollectionKey(desc)
+	assert.Equal(t, "/1", key.ToString())
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
@@ -143,7 +143,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -188,7 +188,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -220,7 +220,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -272,7 +272,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -329,11 +329,11 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := base.MakeIndexPrefixKey(desc, &desc.Indexes[0]).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
+	docKey := base.MakeCollectionKey(desc).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
 	spans := core.Spans{
 		core.NewSpan(docKey, docKey.PrefixEnd()),
 	}

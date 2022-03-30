@@ -39,6 +39,7 @@ const (
 	COLLECTION_SCHEMA = "/collection/schema"
 	SCHEMA            = "schema"
 	SEQ               = "seq"
+	PRIMARY_KEY       = "pk"
 )
 
 type Key interface {
@@ -49,11 +50,19 @@ type Key interface {
 
 type DataStoreKey struct {
 	CollectionId string
-	IndexId      string
+	InstanceType InstanceType
 	DocKey       string
 	FieldId      string
-	InstanceType InstanceType
 }
+
+var _ Key = (*DataStoreKey)(nil)
+
+type PrimaryDataStoreKey struct {
+	CollectionId string
+	DocKey       string
+}
+
+var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocKey  string
@@ -61,33 +70,37 @@ type HeadStoreKey struct {
 	Cid     cid.Cid
 }
 
+var _ Key = (*HeadStoreKey)(nil)
+
 type CollectionKey struct {
 	CollectionName string
 }
+
+var _ Key = (*CollectionKey)(nil)
 
 type CollectionSchemaKey struct {
 	SchemaId string
 }
 
+var _ Key = (*CollectionSchemaKey)(nil)
+
 type SchemaKey struct {
 	SchemaName string
 }
+
+var _ Key = (*SchemaKey)(nil)
 
 type SequenceKey struct {
 	SequenceName string
 }
 
+var _ Key = (*SequenceKey)(nil)
+
 // Creates a new DataStoreKey from a string as best as it can,
-// splitting the input using '/' and ':' as field deliminaters.  It assumes
-// that the input string is in one of the following formats:
+// splitting the input using '/' as a field deliminater.  It assumes
+// that the input string is in the following format:
 //
-// [DocKey]
-// [DocKey]:[InstanceType]
-// [DocKey]/[FieldId]
-// [DocKey]/[FieldId]:[InstanceType]
-// Any of the above prefixed but with one of the below:
-// [PrimaryIndexId]/
-// [CollectionId]/[PrimaryIndexId]/
+// /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
 func NewDataStoreKey(key string) DataStoreKey {
@@ -98,45 +111,13 @@ func NewDataStoreKey(key string) DataStoreKey {
 
 	elements := strings.Split(key, "/")
 	numberOfElements := len(elements)
-	itemComponents := strings.Split(elements[len(elements)-1], ":")
-	indexOfDocKey := 0
-	var lastItem string
 
-	if len(itemComponents) == 2 {
-		dataStoreKey.InstanceType = InstanceType(itemComponents[1])
-		if numberOfElements == 1 {
-			dataStoreKey.DocKey = itemComponents[0]
-			return dataStoreKey
-		}
-		lastItem = itemComponents[0]
-	} else {
-		lastItem = elements[numberOfElements-1]
+	return DataStoreKey{
+		CollectionId: elements[numberOfElements-4],
+		InstanceType: InstanceType(elements[numberOfElements-3]),
+		DocKey:       elements[numberOfElements-2],
+		FieldId:      elements[numberOfElements-1],
 	}
-
-	// if the 2nd-to-last is longer than the last, then the last must be the field id
-	if numberOfElements > 1 && len(lastItem) < len(elements[numberOfElements-2]) {
-		dataStoreKey.FieldId = lastItem
-		indexOfDocKey = numberOfElements - 2
-	} else {
-		indexOfDocKey = numberOfElements - 1
-	}
-	dataStoreKey.DocKey = elements[indexOfDocKey]
-
-	if numberOfElements == 1 {
-		return dataStoreKey
-	}
-
-	if indexOfDocKey-1 < 0 {
-		return dataStoreKey
-	}
-	dataStoreKey.IndexId = elements[indexOfDocKey-1]
-
-	if indexOfDocKey-2 < 0 {
-		return dataStoreKey
-	}
-	dataStoreKey.CollectionId = elements[indexOfDocKey-2]
-
-	return dataStoreKey
 }
 
 func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
@@ -254,17 +235,14 @@ func (k DataStoreKey) ToString() string {
 	if k.CollectionId != "" {
 		result = result + "/" + k.CollectionId
 	}
-	if k.IndexId != "" {
-		result = result + "/" + k.IndexId
+	if k.InstanceType != "" {
+		result = result + "/" + string(k.InstanceType)
 	}
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
 	if k.FieldId != "" {
 		result = result + "/" + k.FieldId
-	}
-	if k.InstanceType != "" {
-		result = result + ":" + string(k.InstanceType)
 	}
 
 	return result
@@ -280,10 +258,38 @@ func (k DataStoreKey) ToDS() ds.Key {
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
 	return k.CollectionId == other.CollectionId &&
-		k.IndexId == other.IndexId &&
 		k.DocKey == other.DocKey &&
 		k.FieldId == other.FieldId &&
 		k.InstanceType == other.InstanceType
+}
+
+func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
+	return DataStoreKey{
+		CollectionId: k.CollectionId,
+		DocKey:       k.DocKey,
+	}
+}
+
+func (k PrimaryDataStoreKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k PrimaryDataStoreKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k PrimaryDataStoreKey) ToString() string {
+	result := ""
+
+	if k.CollectionId != "" {
+		result = result + "/" + k.CollectionId
+	}
+	result = result + "/" + PRIMARY_KEY
+	if k.DocKey != "" {
+		result = result + "/" + k.DocKey
+	}
+
+	return result
 }
 
 func (k CollectionKey) ToString() string {
@@ -389,10 +395,6 @@ func (k HeadStoreKey) ToDS() ds.Key {
 func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	newKey := k
 
-	if k.InstanceType != "" {
-		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
-		return newKey
-	}
 	if k.FieldId != "" {
 		newKey.FieldId = string(bytesPrefixEnd([]byte(k.FieldId)))
 		return newKey
@@ -401,8 +403,8 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 		newKey.DocKey = string(bytesPrefixEnd([]byte(k.DocKey)))
 		return newKey
 	}
-	if k.IndexId != "" {
-		newKey.IndexId = string(bytesPrefixEnd([]byte(k.IndexId)))
+	if k.InstanceType != "" {
+		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
 		return newKey
 	}
 	if k.CollectionId != "" {

@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
@@ -278,7 +277,9 @@ func (c *collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 }
 
 func (c *collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (<-chan client.DocKeysResult, error) {
-	prefix := c.getPrimaryIndexDocKey(core.DataStoreKey{}) // empty path for all keys prefix
+	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
+		CollectionId: fmt.Sprint(c.colID),
+	}
 	q, err := txn.Datastore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -310,18 +311,6 @@ func (c *collection) getAllDocKeysChan(ctx context.Context, txn datastore.Txn) (
 					Err: res.Error,
 				}
 				return
-			}
-
-			// looking for /<colID>/1/<Dockey>:v
-
-			// not it - prob a child key
-			if strings.Count(res.Key, "/") != 3 {
-				continue
-			}
-
-			// not it - missing value suffix
-			if !strings.HasSuffix(res.Key, ":v") {
-				continue
 			}
 
 			// now we have a doc key
@@ -461,7 +450,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	dockey := client.NewDocKeyV0(doccid)
-	key := core.DataStoreKeyFromDocKey(dockey)
+	key := c.getPrimaryKeyFromDocKey(dockey)
 	if key.DocKey != doc.Key().String() {
 		return fmt.Errorf("Expected %s, got %s : %w", doc.Key(), key.DocKey, ErrDocVerification)
 	}
@@ -476,7 +465,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// write object marker
-	err = writeObjectMarker(ctx, txn.Datastore(), c.getPrimaryIndexDocKey(key))
+	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{base.ObjectMarker})
 	if err != nil {
 		return err
 	}
@@ -496,7 +485,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dockey := core.DataStoreKeyFromDocKey(doc.Key())
+	dockey := c.getPrimaryKeyFromDocKey(doc.Key())
 	exists, err := c.exists(ctx, txn, dockey)
 	if err != nil {
 		return err
@@ -536,7 +525,7 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	// Check if document already exists with key
-	dockey := core.DataStoreKeyFromDocKey(doc.Key())
+	dockey := c.getPrimaryKeyFromDocKey(doc.Key())
 	exists, err := c.exists(ctx, txn, dockey)
 	if err != nil {
 		return err
@@ -559,14 +548,14 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *client.Do
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	dockey := core.DataStoreKeyFromDocKey(doc.Key())
+	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
 	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)
 		if val.IsDirty() {
-			fieldKey := c.getFieldKey(dockey, k)
-			c, err := c.saveDocValue(ctx, txn, c.getPrimaryIndexDocKey(fieldKey), val)
+			fieldKey := c.getFieldKey(primaryKey, k)
+			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -602,7 +591,7 @@ func (c *collection) save(ctx context.Context, txn datastore.Txn, doc *client.Do
 		return cid.Undef, nil
 	}
 
-	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, c.getPrimaryIndexDocKey(dockey), client.COMPOSITE, buf, links)
+	headCID, err := c.saveValueToMerkleCRDT(ctx, txn, primaryKey.ToDataStoreKey(), client.COMPOSITE, buf, links)
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -628,7 +617,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := core.DataStoreKeyFromDocKey(key)
+	dsKey := c.getPrimaryKeyFromDocKey(key)
 	exists, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
 		return false, err
@@ -647,9 +636,14 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 
 // at the moment, delete only does data storage delete.
 // Dag, and head store will soon follow.
-func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
+func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.PrimaryDataStoreKey) (bool, error) {
+	err := txn.Datastore().Delete(ctx, key.ToDS())
+	if err != nil {
+		return false, err
+	}
+
 	q := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(key).ToString(),
+		Prefix:   key.ToDataStoreKey().ToString(),
 		KeysOnly: true,
 	}
 	res, err := txn.Datastore().Query(ctx, q)
@@ -659,7 +653,7 @@ func (c *collection) delete(ctx context.Context, txn datastore.Txn, key core.Dat
 			return false, err
 		}
 
-		err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(core.NewDataStoreKey(e.Key)).ToDS())
+		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
 		if err != nil {
 			return false, err
 		}
@@ -676,7 +670,7 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := core.DataStoreKeyFromDocKey(key)
+	dsKey := c.getPrimaryKeyFromDocKey(key)
 	exists, err := c.exists(ctx, txn, dsKey)
 	if err != nil && err != ds.ErrNotFound {
 		return false, err
@@ -685,8 +679,8 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 }
 
 // check if a document exists with the given key
-func (c *collection) exists(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
-	return txn.Datastore().Has(ctx, c.getPrimaryIndexDocKey(key.WithValueFlag()).ToDS())
+func (c *collection) exists(ctx context.Context, txn datastore.Txn, key core.PrimaryDataStoreKey) (bool, error) {
+	return txn.Datastore().Has(ctx, key.ToDS())
 }
 
 func (c *collection) saveDocValue(ctx context.Context, txn datastore.Txn, key core.DataStoreKey, val client.Value) (cid.Cid, error) {
@@ -791,15 +785,26 @@ func (c *collection) commitImplicitTxn(ctx context.Context, txn datastore.Txn) e
 	return nil
 }
 
-func (c *collection) getPrimaryIndexDocKey(key core.DataStoreKey) core.DataStoreKey {
-	return core.DataStoreKey{
+func (c *collection) getPrimaryKey(docKey string) core.PrimaryDataStoreKey {
+	return core.PrimaryDataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
-		IndexId:      fmt.Sprint(c.PrimaryIndex().ID),
-	}.WithInstanceInfo(key)
+		DocKey:       docKey,
+	}
 }
 
-func (c *collection) getFieldKey(key core.DataStoreKey, fieldName string) core.DataStoreKey {
-	return key.WithFieldId(fmt.Sprint(c.getSchemaFieldID(fieldName)))
+func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryDataStoreKey {
+	return core.PrimaryDataStoreKey{
+		CollectionId: fmt.Sprint(c.colID),
+		DocKey:       docKey.String(),
+	}
+}
+
+func (c *collection) getFieldKey(key core.PrimaryDataStoreKey, fieldName string) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: key.CollectionId,
+		DocKey:       key.DocKey,
+		FieldId:      fmt.Sprint(c.getSchemaFieldID(fieldName)),
+	}
 }
 
 // getSchemaFieldID returns the FieldID of the given fieldName.
@@ -812,10 +817,6 @@ func (c *collection) getSchemaFieldID(fieldName string) uint32 {
 		}
 	}
 	return uint32(0)
-}
-
-func writeObjectMarker(ctx context.Context, store ds.Write, key core.DataStoreKey) error {
-	return store.Put(ctx, key.WithValueFlag().ToDS(), []byte{base.ObjectMarker})
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.

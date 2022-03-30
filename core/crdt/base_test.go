@@ -41,16 +41,16 @@ func TestBaseCRDTNew(t *testing.T) {
 func TestBaseCRDTvalueKey(t *testing.T) {
 	base := exampleBaseCRDT()
 	vk := base.key.WithDocKey("mykey").WithValueFlag()
-	if vk.ToString() != "/mykey:v" {
-		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/mykey:v")
+	if vk.ToString() != "/v/mykey" {
+		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/v/mykey")
 	}
 }
 
 func TestBaseCRDTprioryKey(t *testing.T) {
 	base := exampleBaseCRDT()
 	pk := base.key.WithDocKey("mykey").WithPriorityFlag()
-	if pk.ToString() != "/mykey:p" {
-		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/mykey:p")
+	if pk.ToString() != "/p/mykey" {
+		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/p/mykey")
 	}
 }
 
