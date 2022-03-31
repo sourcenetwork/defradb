@@ -106,12 +106,12 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
 	Key        []byte
-	Properties map[client.FieldDescription]*encProperty
+	Properties map[client.FieldID]*encProperty
 }
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.Properties = make(map[client.FieldDescription]*encProperty)
+	encdoc.Properties = make(map[client.FieldID]*encProperty)
 	encdoc.Key = nil
 }
 
@@ -122,12 +122,12 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 		return nil, err
 	}
 	doc := client.NewDocWithKey(key)
-	for fieldDesc, prop := range encdoc.Properties {
+	for _, prop := range encdoc.Properties {
 		ctype, val, err := prop.Decode()
 		if err != nil {
 			return nil, err
 		}
-		err = doc.SetAs(fieldDesc.Name, val, ctype)
+		err = doc.SetAs(prop.Desc.Name, val, ctype)
 		if err != nil {
 			return nil, err
 		}
@@ -141,12 +141,12 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
 	doc := make(map[string]interface{})
 	doc["_key"] = string(encdoc.Key)
-	for fieldDesc, prop := range encdoc.Properties {
+	for _, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()
 		if err != nil {
 			return nil, err
 		}
-		doc[fieldDesc.Name] = val
+		doc[prop.Desc.Name] = val
 	}
 	return doc, nil
 }

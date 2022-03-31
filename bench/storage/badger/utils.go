@@ -153,6 +153,56 @@ func runBadgerIteratorWithValues(b *testing.B, ctx context.Context, valueSize in
 	return nil
 }
 
+func runBadgerIteratorSeek(b *testing.B, ctx context.Context, valueSize int, docCount, forwardIter, backwardSeek int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close() //nolint
+
+	if backwardSeek > forwardIter {
+		return fmt.Errorf("Cant seek backwards more than weve iterated forwads")
+	}
+
+	// backfill
+	keys, err := backfillBenchmarkBadgerDB(ctx, db, docCount, 64)
+	if err != nil {
+		return err
+	}
+
+	txn := db.NewTransaction(false)
+	// iterate over all keys
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = prefetch
+	it := txn.NewIterator(opts)
+
+	// iterate forwards 500
+	// Seek to beginning
+	it.Rewind()
+	seekpos := 0
+	for ; seekpos < forwardIter && it.Valid(); it.Next() {
+		// skip forward 500
+		seekpos++
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// seek backwards
+		it.Seek([]byte(keys[seekpos-backwardSeek]))
+
+		// reset iter
+		b.StopTimer()
+		seekpos = 0
+		for ; seekpos < forwardIter && it.Valid(); it.Next() {
+			// skip forward
+			seekpos++
+		}
+		b.StartTimer()
+	}
+
+	return nil
+}
+
 func backfillBenchmarkBadgerDB(ctx context.Context, db *badger.DB, objCount int, valueSize int) ([]string, error) {
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
@@ -233,7 +283,7 @@ func randSeq(n int) string {
 	return string(b)
 }
 
-func newBadgerDB(b *testing.B, s ...string) (*badger.DB, error) {
+func newBadgerDB(b testing.TB, s ...string) (*badger.DB, error) {
 	var store string
 	if len(s) > 0 {
 		store = s[0]
@@ -258,7 +308,7 @@ func newMemoryDB() (*badger.DB, error) {
 	return badger.Open(opts)
 }
 
-func newFileDB(b *testing.B) (*badger.DB, error) {
+func newFileDB(b testing.TB) (*badger.DB, error) {
 	path := b.TempDir() + "1"
 	// fmt.Println("PATH:", path)
 	opts := badger.DefaultOptions(path)

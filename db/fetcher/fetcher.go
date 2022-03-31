@@ -24,6 +24,14 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
+type fetcherState int
+
+const (
+	fetcherFilterGather = iota
+	fetcherValueGather
+	fetcherSeeking
+)
+
 // Fetcher is the interface for collecting documents
 // from the underlying data store. It handles all
 // the key/value scanning, aggregation, and document
@@ -52,12 +60,13 @@ type DocumentFetcher struct {
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
 	curSpanIndex int
 
-	filter        *parser.Filter
-	filterFetcher *DocumentFetcher
+	filter *parser.Filter
 
-	schemaFields map[uint32]client.FieldDescription
-	reqFields    map[string]struct{}
-	numReqFields int
+	schemaFields    map[uint32]client.FieldDescription
+	reqFields       map[string]struct{}
+	filterFields    map[string]struct{}
+	numReqFields    int
+	numFilterFields int
 
 	doc         *encodedDocument
 	decodedDoc  *client.Document
@@ -66,8 +75,10 @@ type DocumentFetcher struct {
 	kv     *core.KeyValue
 	kvIter dsq.Results // kv val iter that follows the keyIter
 
-	kvEnd             bool
+	kvEnd bool
+
 	isReadingDocument bool
+	state             fetcherState
 }
 
 // Init implements DocumentFetcher
@@ -87,10 +98,23 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 	}
 	df.numReqFields = len(df.reqFields)
 
-	// make a filter fetcher
+	// parse filter fields
 	if filter != nil {
-		df.filterFetcher = df.setupFilterFetcher(filter)
+		df.filter = filter
+		df.filterFields = make(map[string]struct{})
+		for k, _ := range df.filter.Conditions {
+			field, ok := df.col.GetField(k)
+			if !ok {
+				// we have an error, filter field not part of description
+				return fmt.Errorf("invalid filter field in conditions map: %v", k)
+			}
+			if field.IsObject() { // skip objects they are handled higherup as a typeJoin
+				continue
+			}
+			df.filterFields[field.ID.String()] = struct{}{}
+		}
 	}
+
 	df.initialized = true
 	df.isReadingDocument = false
 
@@ -117,23 +141,23 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 
 // newFilterFetcher instantiates a new DocumentFetcher that will retrieve only the fields
 // needed for filtering
-func (df *DocumentFetcher) newFilterFetcher(filter *parser.Filter) (*DocumentFetcher, error) {
-	df.filter = filter
-	filterFetcher := new(DocumentFetcher)
-	filterfields := make([]client.FieldDescription, 0, len(filter.Conditions))
+// func (df *DocumentFetcher) newFilterFetcher(filter *parser.Filter) (*DocumentFetcher, error) {
+// 	df.filter = filter
+// 	filterFetcher := new(DocumentFetcher)
+// 	filterfields := make([]client.FieldDescription, 0, len(filter.Conditions))
 
-	for k, _ := range df.filter.Conditions {
-		field, ok := df.col.GetField(k)
-		if !ok {
-			// we have an error, filter field not part of description
-			return nil, fmt.Errorf("invalid filter field in conditions map: %v", k)
-		}
-		filterfields = append(filterfields, field)
-	}
-	filterFetcher.Init(df.col, df.index, nil, filterfields, df.reverse)
-	// df.filterFetcher.doc = df.doc // re-use the same doc for both fetchers
-	return filterFetcher, nil
-}
+// 	for k, _ := range df.filter.Conditions {
+// 		field, ok := df.col.GetField(k)
+// 		if !ok {
+// 			// we have an error, filter field not part of description
+// 			return nil, fmt.Errorf("invalid filter field in conditions map: %v", k)
+// 		}
+// 		filterfields = append(filterfields, field)
+// 	}
+// 	filterFetcher.Init(df.col, df.index, nil, filterfields, df.reverse)
+// 	// df.filterFetcher.doc = df.doc // re-use the same doc for both fetchers
+// 	return filterFetcher, nil
+// }
 
 // Start implements DocumentFetcher
 func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
@@ -172,11 +196,10 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 		df.order = []dsq.Order{dsq.OrderByKey{}}
 	}
 
-	// handle sub fetcher
-	if df.filterFetcher != nil {
-		if err := df.filterFetcher.Start(ctx, txn, spans); err != nil {
-			return err
-		}
+	if df.filter != nil {
+		df.state = fetcherFilterGather // initial state for a fetcher with a filter is FilterGather
+	} else {
+		df.state = fetcherValueGather
 	}
 
 	_, err := df.startNextSpan(ctx)
@@ -229,12 +252,6 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 
 	df.curSpanIndex = nextSpanIndex
 
-	if df.filterFetcher != nil {
-		if ok, err := df.filterFetcher.startNextSpan(ctx); err != nil {
-			return ok, err
-		}
-	}
-
 	_, err = df.nextKey(ctx)
 	return err == nil, err
 }
@@ -279,12 +296,9 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		}
 		df.kvEnd = docDone
 		if df.kvEnd {
-			hasNextSpan, err := df.startNextSpan(ctx)
+			_, err := df.startNextSpan(ctx)
 			if err != nil {
 				return false, err
-			}
-			if hasNextSpan {
-				return true, nil
 			}
 			return true, nil
 		}
@@ -292,6 +306,26 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		// skip if we are iterating through a non value kv pair
 		if df.kv.Key.InstanceType != "v" {
 			continue
+		}
+
+		// check if we've crossed document boundries
+		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+			df.isReadingDocument = false
+			return true, nil
+		}
+
+		// we are either gathering filter fields, requested fields
+		// or continue iterating
+		switch df.state {
+		case fetcherFilterGather:
+			if df.IsFilterFieldKey(df.kv.Key) && !df.hasFetchedField(df.kv.Key) {
+				df.kv.Value = df.kv.Res.ValueCopy(nil)
+			}
+
+		case fetcherValueGather:
+			if df.IsReqFieldKey(df.kv.Key) && !df.hasFetchedField(df.kv.Key) {
+				df.kv.Value = df.kv.Res.ValueCopy(nil)
+			}
 		}
 
 		// spew.Dump("COREKEY:", df.kv.Key)
@@ -302,43 +336,55 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		// 	return false, err
 		// }
 
-		// check if we've crossed document boundries
-		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
-			df.isReadingDocument = false
-			return true, nil
-		}
-
-		if df.filter != nil {
-			// FetchDoc
-		}
+		// if df.filter != nil {
+		// 	// FetchDoc
+		// }
 
 		// check if we need to filter & our key is in the filter set
 		// BRANCHY AF - need refactor, POC
-		if df.numFilterFields > 0 {
-			if len(df.doc.Properties) < df.numFilterFields {
-				fid := df.kv.Key.FieldId
-				if _, ok := df.filterFields[fid]; ok {
-					df.kv.Value = df.kv.Res.ValueCopy(nil) // lazy load value
-				} else {
-					continue
-				}
-			} else {
+		// if df.numFilterFields > 0 {
+		// 	if len(df.doc.Properties) < df.numFilterFields {
+		// 		fid := df.kv.Key.FieldId
+		// 		if _, ok := df.filterFields[fid]; ok {
+		// 			df.kv.Value = df.kv.Res.ValueCopy(nil) // lazy load value
+		// 		} else {
+		// 			continue
+		// 		}
+		// 	} else {
 
-			}
-		}
+		// 	}
+		// }
 
 		// skip object markers
 		// if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
 		// 	continue
 		// }
 
-		// check if we've crossed document boundries
-		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
-			df.isReadingDocument = false
-			return true, nil
-		}
 		return false, nil
 	}
+}
+
+// func (df *DocumentFetcher) hasFetchedField(key core.DataStoreKey) bool {
+// 	f, exists := df.schemaFields[key.Fie]
+// }
+
+func (df *DocumentFetcher) hasFetchedField(key core.DataStoreKey) bool {
+	fid, err := key.FieldID()
+	if err != nil {
+		panic(err)
+	}
+	_, exists := df.doc.Properties[client.FieldID(fid)]
+	return exists
+}
+
+func (df *DocumentFetcher) IsReqFieldKey(key core.DataStoreKey) bool {
+	_, exists := df.reqFields[key.FieldId]
+	return exists
+}
+
+func (df *DocumentFetcher) IsFilterFieldKey(key core.DataStoreKey) bool {
+	_, exists := df.filterFields[key.FieldId]
+	return exists
 }
 
 func (df *DocumentFetcher) resolveFilterFields(ctx context.Context)
@@ -380,6 +426,11 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		return errors.New("Failed to process KV, uninitialized document object")
 	}
 
+	// skip if theres no value
+	if kv.Value == nil {
+		return nil
+	}
+
 	if !df.isReadingDocument {
 		df.isReadingDocument = true
 		df.doc.Reset()
@@ -401,7 +452,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// to better handle dynamic use cases beyond primary indexes. If a
 	// secondary index is provided, we need to extract the indexed/implicit fields
 	// from the KV pair.
-	df.doc.Properties[fieldDesc] = &encProperty{
+	df.doc.Properties[fieldDesc.ID] = &encProperty{
 		Desc: fieldDesc,
 		Raw:  kv.Value,
 	}
@@ -427,24 +478,61 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
 	for {
-		err := df.processKV(df.kv)
-		if err != nil {
-			return nil, err
+		if df.state != fetcherSeeking {
+			err := df.processKV(df.kv)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		end, err := df.nextKey(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if end {
-			return df.doc, nil
+
+		if df.filter != nil && df.state == fetcherFilterGather {
+			// have we got all the filter fields
+			if df.numFilterFields != len(df.doc.Properties) && !end {
+				continue
+			}
+
+			// if so, get doc as map, run filter
+			doc, err := df.doc.DecodeToMap()
+			if err != nil {
+				return nil, err
+			}
+
+			passed, err := parser.RunFilter(doc, df.filter, parser.EvalContext{})
+			if err != nil {
+				return nil, err
+			}
+
+			if !passed {
+				df.state = fetcherSeeking
+				break
+			} else {
+				// seek backwards to start of doc this doc
+				targetKey := core.DataStoreKey{
+					CollectionId: df.kv.Key.CollectionId,
+					IndexId:      df.kv.Key.IndexId,
+					DocKey:       df.kv.Key.DocKey,
+				}
+				df.kvIter.Seek(targetKey.ToString())
+				df.state = fetcherValueGather
+			}
+
+			// if it passes:
+			// - if so, seek back to start of doc boundry
+			// - set state to ValueGather
+			// else seek till next doc boundry
+
 		}
 
-		// // crossed document kv boundary?
-		// // if so, return document
-		// newkeyparts := df.kv.Key.List()
-		// newKey := newkeyparts[len(newkeyparts)-2]
-		// if newKey != key {
+		if end && df.state == fetcherSeeking {
+			df.state = fetcherFilterGather
+		}
+
+		// if end {
 		// 	return df.doc, nil
 		// }
 	}
