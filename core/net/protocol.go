@@ -18,8 +18,12 @@ import (
 const (
 	// Name is the protocol slug.
 	Name = "defra"
+
+	// @TODO: Register code with Multicodec https://github.com/multiformats/multicodec.
+	// 961 is arbitrary at the moment
 	// Code is the protocol code.
-	Code = 961 // @TODO: Register code with Multicodec https://github.com/multiformats/multicodec. 961 is arbitrary at the moment
+	Code = 961
+
 	// Version is the current protocol version.
 	Version = "0.0.1"
 	// Protocol is the threads protocol tag.

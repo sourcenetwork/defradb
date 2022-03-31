@@ -165,7 +165,10 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 	if parsed.CollectionName == "" {
 		parsed.CollectionName = parsed.Name
 	}
-	sourcePlan, err := n.p.getSource(parsed.CollectionName, parsed.QueryType == parser.VersionedScanQuery)
+	sourcePlan, err := n.p.getSource(
+		parsed.CollectionName,
+		parsed.QueryType == parser.VersionedScanQuery,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -188,11 +191,18 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 		if parsed.QueryType == parser.VersionedScanQuery {
 			c, err := cid.Decode(parsed.CID)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to propagate VersionFetcher span, invalid CID: %w", err)
+				return nil, fmt.Errorf(
+					"Failed to propagate VersionFetcher span, invalid CID: %w",
+					err,
+				)
 			}
-			spans := fetcher.NewVersionedSpan(core.DataStoreKey{DocKey: parsed.DocKeys[0]}, c) // @todo check len
+			spans := fetcher.NewVersionedSpan(
+				core.DataStoreKey{DocKey: parsed.DocKeys[0]},
+				c,
+			) // @todo check len
 			origScan.Spans(spans)
-		} else if parsed.DocKeys != nil { // If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
+		} else if parsed.DocKeys != nil {
+			// If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
@@ -295,8 +305,12 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	return aggregates, nil
 }
 
-// Join any child collections required by the given transformation if the child collections have not been requested for render by the consumer
-func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Field) error {
+// Join any child collections required by the given transformation if the child
+//  collections have not been requested for render by the consumer
+func (n *selectNode) joinAggregatedChild(
+	parsed *parser.Select,
+	field *parser.Field,
+) error {
 	source, err := field.GetAggregateSource()
 	if err != nil {
 		return err
@@ -315,10 +329,12 @@ func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Fi
 		}
 	}
 
-	// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
+	// If the child item is not requested, then we have add in the necessary components
+	//  to force the child records to be scanned through (they wont be rendered)
 	if !hasChildProperty {
 		if fieldName == parser.GroupFieldName {
-			// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
+			// It doesn't really matter at the moment if multiple counts are requested
+			//  and we overwrite the n.groupSelect property
 			n.groupSelect = &parser.Select{
 				Name: parser.GroupFieldName,
 			}
@@ -353,7 +369,10 @@ func (n *selectNode) Source() planNode { return n.source }
 
 // func appendSource() {}
 
-// func (n *selectNode) initRender(fields []*client.FieldDescription, aliases []string) error {
+// func (n *selectNode) initRender(
+//     fields []*client.FieldDescription,
+//     aliases []string,
+//) error {
 // 	return n.p.render(fields, aliases)
 // }
 
@@ -374,7 +393,12 @@ func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	return top, nil
 }
 
-func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromCollection bool, providedSourceInfo *sourceInfo) (planNode, error) {
+func (p *Planner) SelectFromSource(
+	parsed *parser.Select,
+	source planNode,
+	fromCollection bool,
+	providedSourceInfo *sourceInfo,
+) (planNode, error) {
 	s := &selectNode{
 		p:          p,
 		source:     source,

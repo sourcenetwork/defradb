@@ -26,14 +26,29 @@ var (
 //log = logging.MustNewLogger("defra.bench")
 )
 
-func runQueryBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount int, query string, doSync bool) error {
+func runQueryBenchGet(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	docCount int,
+	query string,
+	doSync bool,
+) error {
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
 	}
 	defer db.Close(ctx)
 
-	dockeys, err := benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, 0, doSync)
+	dockeys, err := benchutils.BackfillBenchmarkDB(
+		b,
+		ctx,
+		collections,
+		fixture,
+		docCount,
+		0,
+		doSync,
+	)
 	if err != nil {
 		return err
 	}
@@ -62,7 +77,9 @@ func runQueryBenchGetSync(
 		// leave comments for debug!!
 		// l := len(res.Data.([]map[string]interface{}))
 		// if l != opCount {
-		// 	return fmt.Errorf("Invalid response, returned data doesn't match length, expected %v actual %v", docCount, l)
+		// 	return fmt.Errorf(
+		// "Invalid response, returned data doesn't match length, expected %v actual %v",
+		// docCount, l)
 		// }
 		// log.Info(ctx, "", logging.NewKV("Response", res))
 	}
@@ -83,7 +100,11 @@ func formatQuery(b *testing.B, query string, dockeys [][]client.DocKey) string {
 	// b.Logf("Query before: %s", query)
 
 	if len(dockeysCopy) < numPlaceholders {
-		b.Fatalf("Invalid number of query placeholders, max is %v requested is %v", len(dockeys), numPlaceholders)
+		b.Fatalf(
+			"Invalid number of query placeholders, max is %v requested is %v",
+			len(dockeys),
+			numPlaceholders,
+		)
 	}
 
 	for i := 0; i < numPlaceholders; i++ {

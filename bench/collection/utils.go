@@ -26,14 +26,28 @@ const (
 	writeBatchGroup = 100
 )
 
-func runCollectionBenchGet(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchGet(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	docCount, opCount int,
+	doSync bool,
+) error {
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
 	}
 	defer db.Close(ctx)
 
-	dockeys, err := benchutils.BackfillBenchmarkDB(b, ctx, collections, fixture, docCount, opCount, doSync)
+	dockeys, err := benchutils.BackfillBenchmarkDB(
+		b,
+		ctx,
+		collections,
+		fixture,
+		docCount,
+		opCount,
+		doSync,
+	)
 	if err != nil {
 		return err
 	}
@@ -96,7 +110,13 @@ func runCollectionBenchGetAsync(b *testing.B,
 	return nil
 }
 
-func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchCreate(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	docCount, opCount int,
+	doSync bool,
+) error {
 	b.StopTimer()
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
@@ -117,7 +137,13 @@ func runCollectionBenchCreate(b *testing.B, ctx context.Context, fixture fixture
 	return runCollectionBenchCreateAsync(b, ctx, collections, fixture, docCount, opCount)
 }
 
-func runCollectionBenchCreateMany(b *testing.B, ctx context.Context, fixture fixtures.Generator, docCount, opCount int, doSync bool) error {
+func runCollectionBenchCreateMany(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	docCount, opCount int,
+	doSync bool,
+) error {
 	db, collections, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -194,7 +220,9 @@ func runCollectionBenchCreateAsync(b *testing.B,
 		wg.Add(opCount)
 
 		for bid := 0; float64(bid) < math.Ceil(float64(opCount)/writeBatchGroup); bid++ {
-			currentBatchSize := int(math.Min(float64((opCount - (bid * writeBatchGroup))), writeBatchGroup))
+			currentBatchSize := int(
+				math.Min(float64((opCount - (bid * writeBatchGroup))), writeBatchGroup),
+			)
 			var batchWg sync.WaitGroup
 			batchWg.Add(currentBatchSize)
 

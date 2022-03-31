@@ -44,7 +44,11 @@ func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Docume
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.PrimaryDataStoreKey) (*client.Document, error) {
+func (c *collection) get(
+	ctx context.Context,
+	txn datastore.Txn,
+	key core.PrimaryDataStoreKey,
+) (*client.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc

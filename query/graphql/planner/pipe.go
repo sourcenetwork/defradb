@@ -55,8 +55,9 @@ func (n *pipeNode) Values() map[string]interface{} {
 }
 
 func (n *pipeNode) Next() (bool, error) {
-	// we need to load all docs up until the requested point - this allows us to handle situations where
-	// a child record might be requested before handled in the parent - e.g. with a child sort
+	// we need to load all docs up until the requested point - this allows us to
+	// handle situations where a child record might be requested before handled
+	// in the parent - e.g. with a child sort
 	for n.docIndex >= n.docs.Len()-1 {
 		hasNext, err := n.source.Next()
 		if err != nil {

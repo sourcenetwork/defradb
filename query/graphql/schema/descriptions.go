@@ -98,7 +98,9 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 	return client.FieldKind_None
 }
 
-func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.CollectionDescription, error) {
+func (g *Generator) CreateDescriptions(
+	types []*gql.Object,
+) ([]client.CollectionDescription, error) {
 	// create a indexable cached map
 	typeMap := make(map[string]*gql.Object)
 	for _, t := range types {
@@ -162,7 +164,8 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
 						fname,
 						field.Type.Name(),
-						t.Name())
+						t.Name(),
+					)
 				}
 				fd.RelationName = rel.name
 
@@ -183,7 +186,9 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]client.Collection
 					for i, sf := range desc.Schema.Fields {
 						if sf.Name == fmt.Sprintf("%s_id", fname) {
 							// delete element matching
-							desc.Schema.Fields = append(desc.Schema.Fields[:i], desc.Schema.Fields[i+1:]...)
+							desc.Schema.Fields = append(
+								desc.Schema.Fields[:i],
+								desc.Schema.Fields[i+1:]...)
 							break
 						}
 					}

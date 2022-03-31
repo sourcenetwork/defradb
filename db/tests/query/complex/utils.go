@@ -39,5 +39,10 @@ var bookAuthorPublisherGQLSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, bookAuthorPublisherGQLSchema, []string{"book", "author", "publisher"}, test)
+	testUtils.ExecuteQueryTestCase(
+		t,
+		bookAuthorPublisherGQLSchema,
+		[]string{"book", "author", "publisher"},
+		test,
+	)
 }

@@ -33,8 +33,9 @@ type groupNode struct {
 	currentValue map[string]interface{}
 }
 
-// Creates a new group node.  The function is recursive and will construct the node-chain for any child (`_group`) collections.
-// `groupSelect` is optional and will typically be nil if the child `_group` is not requested.
+// Creates a new group node.  The function is recursive and will construct the node-chain for any
+//  child (`_group`) collections. `groupSelect` is optional and will typically be nil if the
+//  child `_group` is not requested.
 func (p *Planner) GroupBy(n *parser.GroupBy, childSelect *parser.Select) (*groupNode, error) {
 	if n == nil {
 		return nil, nil

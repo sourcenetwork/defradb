@@ -44,7 +44,11 @@ func (shim iterableShim) GetIterator(q dsq.Query) (Iterator, error) {
 	}, nil
 }
 
-func (shim *iteratorShim) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
+func (shim *iteratorShim) IteratePrefix(
+	ctx context.Context,
+	startPrefix ds.Key,
+	endPrefix ds.Key,
+) (dsq.Results, error) {
 	if shim.results != nil {
 		err := shim.results.Close()
 		if err != nil {
@@ -53,7 +57,8 @@ func (shim *iteratorShim) IteratePrefix(ctx context.Context, startPrefix ds.Key,
 	}
 
 	query := shim.q
-	// If the prefix range only covers one prefix then we don't have to do the horrible work-around in the else clause
+	// If the prefix range only covers one prefix then we don't have to do the
+	// horrible work-around in the else clause
 	if prefixEnd(startPrefix) == endPrefix {
 		query.Prefix = startPrefix.String()
 		results, err := shim.readable.Query(ctx, query)

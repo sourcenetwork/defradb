@@ -82,7 +82,12 @@ func (p *Peer) sendJobWorker() {
 // initialization in New().
 func (p *Peer) dagWorker() {
 	for job := range p.jobQueue {
-		log.Debug(p.ctx, "Starting new job from dag queue", logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+		log.Debug(
+			p.ctx,
+			"Starting new job from dag queue",
+			logging.NewKV("DocKey", job.dockey),
+			logging.NewKV("Cid", job.node.Cid()),
+		)
 
 		select {
 		case <-p.ctx.Done():
@@ -103,12 +108,26 @@ func (p *Peer) dagWorker() {
 		)
 
 		if err != nil {
-			log.ErrorE(p.ctx, "Error processing log", err, logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+			log.ErrorE(
+				p.ctx,
+				"Error processing log",
+				err,
+				logging.NewKV("DocKey", job.dockey),
+				logging.NewKV("Cid", job.node.Cid()),
+			)
 			job.session.Done()
 			continue
 		}
 		go func(j *dagJob) {
-			p.handleChildBlocks(j.session, j.collection, j.dockey, j.fieldName, j.node, children, j.nodeGetter)
+			p.handleChildBlocks(
+				j.session,
+				j.collection,
+				j.dockey,
+				j.fieldName,
+				j.node,
+				children,
+				j.nodeGetter,
+			)
 			j.session.Done()
 		}(job)
 	}

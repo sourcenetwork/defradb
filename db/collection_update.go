@@ -32,7 +32,9 @@ var (
 	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
 	ErrInvalidUpdater        = errors.New("The doc updater is an unknown type")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
-	ErrInvalidMergeValueType = errors.New("The type of value in the merge patch doesn't match the schema")
+	ErrInvalidMergeValueType = errors.New(
+		"The type of value in the merge patch doesn't match the schema",
+	)
 )
 
 // UpdateWith updates a target document using the given updater type. Target
@@ -40,7 +42,12 @@ var (
 // an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Update.
 // Eg: UpdateWithFilter or UpdateWithKey
-func (c *collection) UpdateWith(ctx context.Context, target interface{}, updater interface{}, opts ...client.UpdateOpt) error {
+func (c *collection) UpdateWith(
+	ctx context.Context,
+	target interface{},
+	updater interface{},
+	opts ...client.UpdateOpt,
+) error {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
 		_, err := c.UpdateWithFilter(ctx, t, updater, opts...)
@@ -59,7 +66,12 @@ func (c *collection) UpdateWith(ctx context.Context, target interface{}, updater
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithFilter(ctx context.Context, filter interface{}, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithFilter(
+	ctx context.Context,
+	filter interface{},
+	updater interface{},
+	opts ...client.UpdateOpt,
+) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -75,7 +87,12 @@ func (c *collection) UpdateWithFilter(ctx context.Context, filter interface{}, u
 // UpdateWithKey updates using a DocKey to target a single document for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKey(ctx context.Context, key client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKey(
+	ctx context.Context,
+	key client.DocKey,
+	updater interface{},
+	opts ...client.UpdateOpt,
+) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -92,7 +109,12 @@ func (c *collection) UpdateWithKey(ctx context.Context, key client.DocKey, updat
 // UpdateWithKeys is the same as UpdateWithKey but accepts multiple keys as a slice.
 // An updater value is provided, which could be a string Patch, string Merge Patch
 // or a parsed Patch, or parsed Merge Patch.
-func (c *collection) UpdateWithKeys(ctx context.Context, keys []client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) UpdateWithKeys(
+	ctx context.Context,
+	keys []client.DocKey,
+	updater interface{},
+	opts ...client.UpdateOpt,
+) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -106,7 +128,13 @@ func (c *collection) UpdateWithKeys(ctx context.Context, keys []client.DocKey, u
 	return res, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKey(
+	ctx context.Context,
+	txn datastore.Txn,
+	key client.DocKey,
+	updater interface{},
+	opts ...client.UpdateOpt,
+) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -147,7 +175,13 @@ func (c *collection) updateWithKey(ctx context.Context, txn datastore.Txn, key c
 	return results, nil
 }
 
-func (c *collection) updateWithKeys(ctx context.Context, txn datastore.Txn, keys []client.DocKey, updater interface{}, opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+func (c *collection) updateWithKeys(
+	ctx context.Context,
+	txn datastore.Txn,
+	keys []client.DocKey,
+	updater interface{},
+	opts ...client.UpdateOpt,
+) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -264,7 +298,11 @@ func (c *collection) updateWithFilter(
 	return results, nil
 }
 
-func (c *collection) applyPatch(txn datastore.Txn, doc map[string]interface{}, patch []map[string]interface{}) error {
+func (c *collection) applyPatch(
+	txn datastore.Txn,
+	doc map[string]interface{},
+	patch []map[string]interface{},
+) error {
 	for _, op := range patch {
 		path, ok := op["path"].(string)
 		if !ok {
@@ -290,11 +328,22 @@ func (c *collection) applyPatch(txn datastore.Txn, doc map[string]interface{}, p
 	return nil
 }
 
-func (c *collection) applyPatchOp(txn datastore.Txn, dockey string, field string, currentVal interface{}, patchOp map[string]interface{}) error {
+func (c *collection) applyPatchOp(
+	txn datastore.Txn,
+	dockey string,
+	field string,
+	currentVal interface{},
+	patchOp map[string]interface{},
+) error {
 	return nil
 }
 
-func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[string]interface{}, merge map[string]interface{}) error {
+func (c *collection) applyMerge(
+	ctx context.Context,
+	txn datastore.Txn,
+	doc map[string]interface{},
+	merge map[string]interface{},
+) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
 		return errors.New("Document is missing key")
@@ -349,7 +398,14 @@ func (c *collection) applyMerge(ctx context.Context, txn datastore.Txn, doc map[
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(ctx, txn, key.ToDataStoreKey(), client.COMPOSITE, buf, links); err != nil {
+	if _, err := c.saveValueToMerkleCRDT(
+		ctx,
+		txn,
+		key.ToDataStoreKey(),
+		client.COMPOSITE,
+		buf,
+		links,
+	); err != nil {
 		return err
 	}
 
@@ -398,7 +454,11 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 			}
 			stringArray[i], ok = value.(string)
 			if !ok {
-				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to string", value, value)
+				return nil, fmt.Errorf(
+					"Failed to cast value: %v of type: %T to string",
+					value,
+					value,
+				)
 			}
 		}
 		ok = true
@@ -434,7 +494,11 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		for i, value := range untypedCollection {
 			floatArray[i], ok = value.(float64)
 			if !ok {
-				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+				return nil, fmt.Errorf(
+					"Failed to cast value: %v of type: %T to float64",
+					value,
+					value,
+				)
 			}
 		}
 		ok = true
@@ -462,7 +526,11 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		for i, value := range untypedCollection {
 			valueAsFloat, castOk := value.(float64)
 			if !castOk {
-				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to float64", value, value)
+				return nil, fmt.Errorf(
+					"Failed to cast value: %v of type: %T to float64",
+					value,
+					value,
+				)
 			}
 			intArray[i] = int64(valueAsFloat)
 		}
@@ -553,13 +621,20 @@ func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *collection) getCollectionForPatchOpPath(txn datastore.Txn, path string) (col *collection, isArray bool, err error) {
+func (c *collection) getCollectionForPatchOpPath(
+	txn datastore.Txn,
+	path string,
+) (col *collection, isArray bool, err error) {
 	return nil, false, nil
 }
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *collection) getTargetKeyForPatchPath(txn datastore.Txn, doc map[string]interface{}, path string) (string, error) {
+func (c *collection) getTargetKeyForPatchPath(
+	txn datastore.Txn,
+	doc map[string]interface{},
+	path string,
+) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")
@@ -575,7 +650,10 @@ func splitPatchPath(path string) ([]string, int) {
 	return pathParts, len(pathParts)
 }
 
-func getValFromDocForPatchPath(doc map[string]interface{}, path string) (string, interface{}, bool) {
+func getValFromDocForPatchPath(
+	doc map[string]interface{},
+	path string,
+) (string, interface{}, bool) {
 	pathParts, length := splitPatchPath(path)
 	if length == 0 {
 		return "", nil, false
@@ -583,7 +661,11 @@ func getValFromDocForPatchPath(doc map[string]interface{}, path string) (string,
 	return getMapProp(doc, pathParts, length)
 }
 
-func getMapProp(doc map[string]interface{}, paths []string, length int) (string, interface{}, bool) {
+func getMapProp(
+	doc map[string]interface{},
+	paths []string,
+	length int,
+) (string, interface{}, bool) {
 	val, ok := doc[paths[0]]
 	if !ok {
 		return "", nil, false

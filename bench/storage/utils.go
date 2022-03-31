@@ -23,7 +23,12 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
+func runStorageBenchGet(
+	b *testing.B,
+	ctx context.Context,
+	valueSize, objCount, opCount int,
+	doSync bool,
+) error {
 	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
@@ -52,7 +57,12 @@ func runStorageBenchGet(b *testing.B, ctx context.Context, valueSize, objCount, 
 	return nil
 }
 
-func runStorageBenchTxnGet(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
+func runStorageBenchTxnGet(
+	b *testing.B,
+	ctx context.Context,
+	valueSize, objCount, opCount int,
+	doSync bool,
+) error {
 	db, err := benchutils.NewTestDB(ctx, b)
 
 	if err != nil {
@@ -87,7 +97,12 @@ func runStorageBenchTxnGet(b *testing.B, ctx context.Context, valueSize, objCoun
 	return nil
 }
 
-func runStorageBenchTxnIterator(b *testing.B, ctx context.Context, valueSize, objCount, opCount, pointCount int, doSync bool) error {
+func runStorageBenchTxnIterator(
+	b *testing.B,
+	ctx context.Context,
+	valueSize, objCount, opCount, pointCount int,
+	doSync bool,
+) error {
 	db, err := benchutils.NewTestDB(ctx, b)
 
 	if err != nil {
@@ -143,7 +158,12 @@ func runStorageBenchTxnIterator(b *testing.B, ctx context.Context, valueSize, ob
 	return nil
 }
 
-func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
+func runStorageBenchPut(
+	b *testing.B,
+	ctx context.Context,
+	valueSize, objCount, opCount int,
+	doSync bool,
+) error {
 	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
@@ -179,7 +199,12 @@ func runStorageBenchPut(b *testing.B, ctx context.Context, valueSize, objCount, 
 	return nil
 }
 
-func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCount, opCount int, doSync bool) error {
+func runStorageBenchPutMany(
+	b *testing.B,
+	ctx context.Context,
+	valueSize, objCount, opCount int,
+	doSync bool,
+) error {
 	db, err := benchutils.NewTestStorage(ctx, b)
 	if err != nil {
 		return err
@@ -227,7 +252,12 @@ func runStorageBenchPutMany(b *testing.B, ctx context.Context, valueSize, objCou
 	return nil
 }
 
-func backfillBenchmarkStorageDB(ctx context.Context, db ds.Batching, objCount int, valueSize int) ([]string, error) {
+func backfillBenchmarkStorageDB(
+	ctx context.Context,
+	db ds.Batching,
+	objCount int,
+	valueSize int,
+) ([]string, error) {
 	batch, err := db.Batch(ctx)
 	if err != nil {
 		return nil, err
@@ -254,7 +284,12 @@ func backfillBenchmarkStorageDB(ctx context.Context, db ds.Batching, objCount in
 	return keys, batch.Commit(ctx)
 }
 
-func backfillBenchmarkTxn(ctx context.Context, db client.DB, objCount int, valueSize int) ([]string, error) {
+func backfillBenchmarkTxn(
+	ctx context.Context,
+	db client.DB,
+	objCount int,
+	valueSize int,
+) ([]string, error) {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err

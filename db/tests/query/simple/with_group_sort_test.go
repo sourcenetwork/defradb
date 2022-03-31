@@ -307,7 +307,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerSortDescendin
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerSortDescending(t *testing.T) {
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerSortDescending(
+	t *testing.T,
+) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child sort desc",
 		Query: `query {
