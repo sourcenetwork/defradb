@@ -823,11 +823,19 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 		}
 
 		for sent := 0; (q.Limit <= 0 || sent < q.Limit) && it.Valid(); it.Next() {
+			fmt.Println("getting item", sent, q.Limit)
 			item := it.Item()
 			e := dsq.Entry{Key: string(item.Key())}
 
 			// Maybe get the value
 			var result dsq.Result
+			fmt.Println("Saving value copy for key:", e.Key, item.ValueCopy)
+			// e.ValueCopy = func(fn func(dst []byte) ([]byte, error)) func(dst []byte) ([]byte, error) {
+			// 	// fmt.Println("yo:", e.Key)
+
+			// 	return fn
+			// }(item.ValueCopy)
+			e.ValueCopy = item.ValueCopy
 			if !q.KeysOnly {
 				b, err := item.ValueCopy(nil)
 				if err != nil {
@@ -839,7 +847,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				}
 			} else {
 				e.Size = int(item.ValueSize())
-				e.ValueCopy = item.ValueCopy
 				result = dsq.Result{Entry: e}
 			}
 
@@ -849,12 +856,15 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 
 			// Finally, filter it (unless we're dealing with an error).
 			if result.Error == nil && filter(q.Filters, e) {
+				fmt.Println("skiping via filter")
 				continue
 			}
 
 			select {
 			case qrb.Output <- result:
+				fmt.Println("sent++:", qrb.Output)
 				sent++
+				// wait for ack?
 			case <-t.ds.closing: // datastore closing.
 				closedEarly = true
 				return

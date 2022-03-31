@@ -87,7 +87,11 @@ func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix d
 	formattedStartPrefix := startPrefix.String()
 	formattedEndPrefix := endPrefix.String()
 
-	iterator.resultsBuilder = dsq.NewResultBuilder(iterator.query)
+	seekFn := func(key string) {
+		iterator.iterator.Seek([]byte(key))
+	}
+
+	iterator.resultsBuilder = dsq.NewResultBuilder(iterator.query, seekFn)
 
 	iterator.resultsBuilder.Process.Go(func(worker goprocess.Process) {
 		iterator.txn.ds.closeLk.RLock()

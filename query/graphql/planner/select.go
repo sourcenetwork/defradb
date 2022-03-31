@@ -220,6 +220,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 		return !(strings.Compare(parsed.Fields[i].GetName(), parsed.Fields[j].GetName()) < 0)
 	})
 
+	fieldDescs := make([]client.FieldDescription, 0)
+
 	aggregates := []aggregateNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
@@ -277,6 +279,10 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			case parser.SumFieldName:
 				plan, aggregateError = n.p.Sum(&n.sourceInfo, f)
 			default:
+				fd, ok := n.sourceInfo.collectionDescription.GetField(f.GetName())
+				if ok { // @todo: Handle false case
+					fieldDescs = append(fieldDescs, fd)
+				}
 				continue
 			}
 
@@ -292,6 +298,12 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			}
 		}
 	}
+
+	scan, ok := n.p.walkAndFindPlanType(n.source, &scanNode{}).(*scanNode)
+	if !ok {
+		panic("Couldnt find scanNode in select plan")
+	}
+	scan.fields = fieldDescs
 
 	return aggregates, nil
 }

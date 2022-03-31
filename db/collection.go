@@ -476,10 +476,10 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 
 	// write object marker
-	err = writeObjectMarker(ctx, txn.Datastore(), c.getPrimaryIndexDocKey(key))
-	if err != nil {
-		return err
-	}
+	// err = writeObjectMarker(ctx, txn.Datastore(), c.getPrimaryIndexDocKey(key))
+	// if err != nil {
+	// 	return err
+	// }
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
 	return err

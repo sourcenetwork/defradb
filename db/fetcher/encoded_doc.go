@@ -32,6 +32,7 @@ type encProperty struct {
 func (e encProperty) Decode() (client.CType, interface{}, error) {
 	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
+	fmt.Println("decode...", e.Desc.Name, buf)
 	var val interface{}
 	err := cbor.Unmarshal(buf, &val)
 	if err != nil {
@@ -144,6 +145,7 @@ func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
 	for _, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()
 		if err != nil {
+			fmt.Println("err5")
 			return nil, err
 		}
 		doc[prop.Desc.Name] = val

@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -24,7 +26,7 @@ type scanNode struct {
 	desc  client.CollectionDescription
 	index *client.IndexDescription
 
-	fields []*client.FieldDescription
+	fields []client.FieldDescription
 	doc    map[string]interface{}
 	docKey []byte
 
@@ -48,7 +50,7 @@ type scanNode struct {
 
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.index, n.filter, n.fields, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -87,22 +89,25 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
+		fmt.Println("fetching next map on scanNode...")
 		var err error
 		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
 		if err != nil {
+			fmt.Println("err1", err)
 			return false, err
 		}
 		if n.doc == nil {
+			fmt.Println("err2")
 			return false, nil
 		}
-
-		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
-		if err != nil {
-			return false, err
-		}
-		if passed {
-			return true, nil
-		}
+		return true, nil
+		// passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		// if err != nil {
+		// 	return false, err
+		// }
+		// if passed {
+		// 	return true, nil
+		// }
 	}
 }
 

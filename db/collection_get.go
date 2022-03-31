@@ -49,8 +49,8 @@ func (c *collection) get(ctx context.Context, txn datastore.Txn, key core.DataSt
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
 	index := &c.desc.Indexes[0]
-	// initialize it with the primary index
-	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
+	// initialize it with the primary index, no filter, and requesting all fields
+	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, desc.Schema.Fields, false)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
