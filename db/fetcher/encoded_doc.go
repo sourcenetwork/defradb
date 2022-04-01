@@ -46,7 +46,11 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, fmt.Errorf("Could not convert type: %T, value: %v to bool.", untypedValue, untypedValue)
+					return ctype, nil, fmt.Errorf(
+						"Could not convert type: %T, value: %v to bool.",
+						untypedValue,
+						untypedValue,
+					)
 				}
 			}
 			val = boolArray
@@ -61,7 +65,11 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 				case float64:
 					intArray[i] = int64(value)
 				default:
-					return ctype, nil, fmt.Errorf("Could not convert type: %T, value: %v to int64.", untypedValue, untypedValue)
+					return ctype, nil, fmt.Errorf(
+						"Could not convert type: %T, value: %v to int64.",
+						untypedValue,
+						untypedValue,
+					)
 				}
 			}
 			val = intArray
@@ -70,7 +78,11 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, fmt.Errorf("Could not convert type: %T, value: %v to float64.", untypedValue, untypedValue)
+					return ctype, nil, fmt.Errorf(
+						"Could not convert type: %T, value: %v to float64.",
+						untypedValue,
+						untypedValue,
+					)
 				}
 			}
 			val = floatArray
@@ -79,7 +91,11 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, fmt.Errorf("Could not convert type: %T, value: %v to string.", untypedValue, untypedValue)
+					return ctype, nil, fmt.Errorf(
+						"Could not convert type: %T, value: %v to string.",
+						untypedValue,
+						untypedValue,
+					)
 				}
 			}
 			val = stringArray

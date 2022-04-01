@@ -24,11 +24,25 @@ import (
 )
 
 var (
-	compFactoryFn = MerkleCRDTFactory(func(mstore datastore.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn {
-		return func(key core.DataStoreKey) MerkleCRDT {
-			return NewMerkleCompositeDAG(mstore.Datastore(), mstore.Headstore(), mstore.DAGstore(), schemaID, bs, core.DataStoreKey{}, key)
-		}
-	})
+	compFactoryFn = MerkleCRDTFactory(
+		func(
+			mstore datastore.MultiStore,
+			schemaID string,
+			bs corenet.Broadcaster,
+		) MerkleCRDTInitFn {
+			return func(key core.DataStoreKey) MerkleCRDT {
+				return NewMerkleCompositeDAG(
+					mstore.Datastore(),
+					mstore.Headstore(),
+					mstore.DAGstore(),
+					schemaID,
+					bs,
+					core.DataStoreKey{},
+					key,
+				)
+			}
+		},
+	)
 )
 
 func init() {
@@ -48,8 +62,21 @@ type MerkleCompositeDAG struct {
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT
-func NewMerkleCompositeDAG(datastore datastore.DSReaderWriter, headstore datastore.DSReaderWriter, dagstore datastore.DAGStore, schemaID string, bs corenet.Broadcaster, ns, key core.DataStoreKey) *MerkleCompositeDAG {
-	compositeDag := corecrdt.NewCompositeDAG(datastore, schemaID, ns, key.ToString() /* stuff like namespace and ID */)
+func NewMerkleCompositeDAG(
+	datastore datastore.DSReaderWriter,
+	headstore datastore.DSReaderWriter,
+	dagstore datastore.DAGStore,
+	schemaID string,
+	bs corenet.Broadcaster,
+	ns,
+	key core.DataStoreKey,
+) *MerkleCompositeDAG {
+	compositeDag := corecrdt.NewCompositeDAG(
+		datastore,
+		schemaID,
+		ns,
+		key.ToString(), /* stuff like namespace and ID */
+	)
 
 	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)
 	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, broadcaster: bs}
@@ -63,7 +90,11 @@ func NewMerkleCompositeDAG(datastore datastore.DSReaderWriter, headstore datasto
 // Set sets the values of CompositeDAG.
 // The value is always the object from the
 // mutation operations.
-func (m *MerkleCompositeDAG) Set(ctx context.Context, patch []byte, links []core.DAGLink) (cid.Cid, error) {
+func (m *MerkleCompositeDAG) Set(
+	ctx context.Context,
+	patch []byte,
+	links []core.DAGLink,
+) (cid.Cid, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")

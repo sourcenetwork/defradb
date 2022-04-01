@@ -124,7 +124,11 @@ func TestLWWRegisterDeltaGetPriority(t *testing.T) {
 	}
 
 	if delta.GetPriority() != uint64(10) {
-		t.Errorf("LWWRegDelta: GetPriority returned incorrect value, want %v, have %v", uint64(10), delta.GetPriority())
+		t.Errorf(
+			"LWWRegDelta: GetPriority returned incorrect value, want %v, have %v",
+			uint64(10),
+			delta.GetPriority(),
+		)
 	}
 }
 
@@ -136,7 +140,11 @@ func TestLWWRegisterDeltaSetPriority(t *testing.T) {
 	delta.SetPriority(10)
 
 	if delta.GetPriority() != uint64(10) {
-		t.Errorf("LWWRegDelta: SetPriority incorrect value, want %v, have %v", uint64(10), delta.GetPriority())
+		t.Errorf(
+			"LWWRegDelta: SetPriority incorrect value, want %v, have %v",
+			uint64(10),
+			delta.GetPriority(),
+		)
 	}
 }
 
@@ -165,12 +173,20 @@ func TestLWWRegisterDeltaMarshal(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(delta.Data, unmarshaledDelta.Data) {
-		t.Errorf("Unmarshalled data value doesn't match expected. Want %v, have %v", []byte("test"), unmarshaledDelta.Data)
+		t.Errorf(
+			"Unmarshalled data value doesn't match expected. Want %v, have %v",
+			[]byte("test"),
+			unmarshaledDelta.Data,
+		)
 		return
 	}
 
 	if delta.Priority != unmarshaledDelta.Priority {
-		t.Errorf("Unmarshalled priority value doesn't match. Want %v, have %v", uint64(10), unmarshaledDelta.Priority)
+		t.Errorf(
+			"Unmarshalled priority value doesn't match. Want %v, have %v",
+			uint64(10),
+			unmarshaledDelta.Priority,
+		)
 	}
 }
 
@@ -229,7 +245,11 @@ func TestLWWRegisterDeltaDecode(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(typedExtractedDelta, delta) {
-		t.Errorf("Extracted delta is not the same value as the original. Expected %v, have %v", delta, typedExtractedDelta)
+		t.Errorf(
+			"Extracted delta is not the same value as the original. Expected %v, have %v",
+			delta,
+			typedExtractedDelta,
+		)
 		return
 	}
 }

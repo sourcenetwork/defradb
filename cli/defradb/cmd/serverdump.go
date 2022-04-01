@@ -39,8 +39,15 @@ var srvDumpCmd = &cobra.Command{
 		var rootstore ds.Batching
 		var err error
 		if config.Database.Store == "badger" {
-			log.Info(ctx, "opening badger store", logging.NewKV("Path", config.Database.Badger.Path))
-			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
+			log.Info(
+				ctx,
+				"opening badger store",
+				logging.NewKV("Path", config.Database.Badger.Path),
+			)
+			rootstore, err = badgerds.NewDatastore(
+				config.Database.Badger.Path,
+				config.Database.Badger.Options,
+			)
 		} else {
 			log.Fatal(ctx, "Server side dump is only supported for the Badger datastore")
 		}
@@ -60,5 +67,9 @@ var srvDumpCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(srvDumpCmd)
-	srvDumpCmd.Flags().String("store", "badger", "Specify the data store to use (supported: badger, memory)")
+	srvDumpCmd.Flags().String(
+		"store",
+		"badger",
+		"Specify the data store to use (supported: badger, memory)",
+	)
 }

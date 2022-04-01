@@ -148,7 +148,9 @@ func (this span) Compare(other Span) SpanComparisonResult {
 }
 
 func isAdjacent(this DataStoreKey, other DataStoreKey) bool {
-	return len(this.ToString()) == len(other.ToString()) && (this.PrefixEnd().ToString() == other.ToString() || this.ToString() == other.PrefixEnd().ToString())
+	return len(this.ToString()) == len(other.ToString()) &&
+		(this.PrefixEnd().ToString() == other.ToString() ||
+			this.ToString() == other.PrefixEnd().ToString())
 }
 
 // Spans is a collection of individual spans

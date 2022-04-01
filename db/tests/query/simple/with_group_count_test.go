@@ -179,7 +179,9 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChildCounts(t *testing.T) {
+func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChildCounts(
+	t *testing.T,
+) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by number, no children, duplicated aliased count on non-rendered group",
 		Query: `query {

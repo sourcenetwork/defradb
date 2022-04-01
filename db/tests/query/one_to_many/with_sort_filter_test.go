@@ -16,7 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/db/tests"
 )
 
-func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingOnChild(t *testing.T) {
+func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingOnChild(
+	t *testing.T,
+) {
 	test := testUtils.QueryTestCase{
 		Description: "One-to-many relation query from the many side, order on sub",
 		Query: `query {

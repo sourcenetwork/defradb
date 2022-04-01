@@ -142,7 +142,13 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	}
 
 	if delta.GetPriority() != 1 && delta2.GetPriority() != 2 {
-		t.Errorf("AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)", 1, 2, delta.GetPriority(), delta2.GetPriority())
+		t.Errorf(
+			"AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)",
+			1,
+			2,
+			delta.GetPriority(),
+			delta2.GetPriority(),
+		)
 	}
 
 	// check if lww state is correct (val is test2)

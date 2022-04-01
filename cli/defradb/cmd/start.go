@@ -65,8 +65,15 @@ var startCmd = &cobra.Command{
 
 		var err error
 		if config.Database.Store == "badger" {
-			log.Info(ctx, "opening badger store", logging.NewKV("Path", config.Database.Badger.Path))
-			rootstore, err = badgerds.NewDatastore(config.Database.Badger.Path, config.Database.Badger.Options)
+			log.Info(
+				ctx,
+				"opening badger store",
+				logging.NewKV("Path", config.Database.Badger.Path),
+			)
+			rootstore, err = badgerds.NewDatastore(
+				config.Database.Badger.Path,
+				config.Database.Badger.Options,
+			)
 		} else if config.Database.Store == "memory" {
 			log.Info(ctx, "building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
@@ -141,7 +148,12 @@ var startCmd = &cobra.Command{
 			}))
 			tcplistener, err := gonet.Listen("tcp", addr)
 			if err != nil {
-				log.FatalE(ctx, "Failed to listen to TCP address", err, logging.NewKV("Address", addr))
+				log.FatalE(
+					ctx,
+					"Failed to listen to TCP address",
+					err,
+					logging.NewKV("Address", addr),
+				)
 			}
 
 			netService := netapi.NewService(n.Peer)
@@ -149,7 +161,8 @@ var startCmd = &cobra.Command{
 			go func() {
 				log.Info(ctx, "Started gRPC server", logging.NewKV("Address", addr))
 				netpb.RegisterServiceServer(server, netService)
-				if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+				if err := server.Serve(tcplistener); err != nil &&
+					!errors.Is(err, grpc.ErrServerStopped) {
 					log.FatalE(ctx, "serve error", err)
 				}
 			}()
@@ -166,7 +179,14 @@ var startCmd = &cobra.Command{
 				db.Close(ctx)
 				os.Exit(1)
 			}
-			log.Info(ctx, fmt.Sprintf("Running HTTP API at http://%s. Try it out at > curl http://%s/graphql", config.Database.Address, config.Database.Address))
+			log.Info(
+				ctx,
+				fmt.Sprintf(
+					"Running HTTP API at http://%s. Try it out at > curl http://%s/graphql",
+					config.Database.Address,
+					config.Database.Address,
+				),
+			)
 		}()
 
 		// wait for shutdown signal
@@ -191,10 +211,33 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	startCmd.Flags().String("store", "badger", "Specify the data store to use (supported: badger, memory)")
+	startCmd.Flags().String(
+		"store",
+		"badger",
+		"Specify the data store to use (supported: badger, memory)",
+	)
 	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
-	startCmd.Flags().StringVar(&p2pAddr, "p2paddr", "/ip4/0.0.0.0/tcp/9171", "listener address for the p2p network (formatted as a libp2p MultiAddr)")
-	startCmd.Flags().StringVar(&tcpAddr, "tcpaddr", "/ip4/0.0.0.0/tcp/9161", "listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)")
-	startCmd.Flags().StringVar(&dataPath, "data", "$HOME/.defradb/data", "Data path to save DB data and other related meta-data")
-	startCmd.Flags().Bool("no-p2p", false, "Turn off the peer-to-peer network synchronization system")
+	startCmd.Flags().StringVar(
+		&p2pAddr,
+		"p2paddr",
+		"/ip4/0.0.0.0/tcp/9171",
+		"listener address for the p2p network (formatted as a libp2p MultiAddr)",
+	)
+	startCmd.Flags().StringVar(
+		&tcpAddr,
+		"tcpaddr",
+		"/ip4/0.0.0.0/tcp/9161",
+		"listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
+	)
+	startCmd.Flags().StringVar(
+		&dataPath,
+		"data",
+		"$HOME/.defradb/data",
+		"Data path to save DB data and other related meta-data",
+	)
+	startCmd.Flags().Bool(
+		"no-p2p",
+		false,
+		"Turn off the peer-to-peer network synchronization system",
+	)
 }

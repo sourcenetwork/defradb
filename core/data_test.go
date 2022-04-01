@@ -451,7 +451,9 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *tes
 	assert.Equal(t, end2, result[0].End().ToString())
 }
 
-func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCoveringMiddleSpans(t *testing.T) {
+func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCoveringMiddleSpans(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -482,7 +484,9 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCove
 	assert.Equal(t, end4, result[2].End().ToString())
 }
 
-func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCoveringMiddleSpans(t *testing.T) {
+func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCoveringMiddleSpans(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -512,7 +516,9 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCov
 	assert.Equal(t, end4, result[2].End().ToString())
 }
 
-func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpanCoveringMiddleSpans(t *testing.T) {
+func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpanCoveringMiddleSpans(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -542,7 +548,9 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpa
 	assert.Equal(t, end4, result[2].End().ToString())
 }
 
-func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndEndAfterSpanCoveringMiddleSpans(t *testing.T) {
+func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndEndAfterSpanCoveringMiddleSpans(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -572,7 +580,9 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndE
 	assert.Equal(t, end4, result[2].End().ToString())
 }
 
-func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEndAfterSpanCoveringMiddleSpans(t *testing.T) {
+func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEndAfterSpanCoveringMiddleSpans(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	start2 := "/p/0/0/k4"
@@ -638,7 +648,9 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *
 	assert.Equal(t, end2, result[0].End().ToString())
 }
 
-func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentAndAfter(t *testing.T) {
+func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentAndAfter(
+	t *testing.T,
+) {
 	start1 := "/p/0/0/k3"
 	end1 := "/p/0/0/k6"
 	start2 := "/p/0/0/k5"

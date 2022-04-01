@@ -28,7 +28,11 @@ type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 
 // MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
 // returns a MerkleCRDTInitFn with all the necessary stores set
-type MerkleCRDTFactory func(mstore datastore.MultiStore, schemaID string, bs corenet.Broadcaster) MerkleCRDTInitFn
+type MerkleCRDTFactory func(
+	mstore datastore.MultiStore,
+	schemaID string,
+	bs corenet.Broadcaster,
+) MerkleCRDTInitFn
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
@@ -63,7 +67,12 @@ func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a datastore.MultiStore object)
-func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t client.CType, key core.DataStoreKey) (MerkleCRDT, error) {
+func (factory Factory) Instance(
+	schemaID string,
+	bs corenet.Broadcaster,
+	t client.CType,
+	key core.DataStoreKey,
+) (MerkleCRDT, error) {
 	// get the factory function for the given MerkleCRDT type
 	// and pass in the current factory state as a MultiStore parameter
 	fn, err := factory.getRegisteredFactory(t)
@@ -75,7 +84,13 @@ func (factory Factory) Instance(schemaID string, bs corenet.Broadcaster, t clien
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied datastore.MultiStore instead of the saved one on the main Factory.
-func (factory Factory) InstanceWithStores(store datastore.MultiStore, schemaID string, bs corenet.Broadcaster, t client.CType, key core.DataStoreKey) (MerkleCRDT, error) {
+func (factory Factory) InstanceWithStores(
+	store datastore.MultiStore,
+	schemaID string,
+	bs corenet.Broadcaster,
+	t client.CType,
+	key core.DataStoreKey,
+) (MerkleCRDT, error) {
 	fn, err := factory.getRegisteredFactory(t)
 	if err != nil {
 		return nil, err

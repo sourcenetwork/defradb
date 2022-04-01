@@ -61,14 +61,34 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&logLvl, "log", "", "Log level to use, options are info, debug, error")
-	rootCmd.PersistentFlags().BoolVar(&stackTraceEnabled, "stacktrace", false, "Include stacktrace in Error and Fatal logs")
+	rootCmd.PersistentFlags().StringVar(
+		&logLvl,
+		"log",
+		"",
+		"Log level to use, options are info, debug, error",
+	)
+	rootCmd.PersistentFlags().BoolVar(
+		&stackTraceEnabled,
+		"stacktrace",
+		false,
+		"Include stacktrace in Error and Fatal logs",
+	)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.defradb/config.yaml)")
-	rootCmd.PersistentFlags().StringVar(&dbURL, "url", "http://localhost:9181", "URL of the target database")
+	rootCmd.PersistentFlags().StringVar(
+		&cfgFile,
+		"config",
+		"",
+		"config file (default is $HOME/.defradb/config.yaml)",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&dbURL,
+		"url",
+		"http://localhost:9181",
+		"URL of the target database",
+	)
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
@@ -110,7 +130,12 @@ func initConfig() {
 			}
 		}
 
-		defaultConfig.Database.Badger.Path = strings.Replace(defaultConfig.Database.Badger.Path, "$HOME", home, -1)
+		defaultConfig.Database.Badger.Path = strings.Replace(
+			defaultConfig.Database.Badger.Path,
+			"$HOME",
+			home,
+			-1,
+		)
 		bs, err := yaml.Marshal(defaultConfig)
 		cobra.CheckErr(err)
 

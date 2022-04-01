@@ -37,7 +37,11 @@ func newBaseCRDT(store datastore.DSReaderWriter, key core.DataStoreKey) baseCRDT
 	}
 }
 
-func (base baseCRDT) setPriority(ctx context.Context, key core.DataStoreKey, priority uint64) error {
+func (base baseCRDT) setPriority(
+	ctx context.Context,
+	key core.DataStoreKey,
+	priority uint64,
+) error {
 	prioK := key.WithPriorityFlag()
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, priority+1)

@@ -72,7 +72,10 @@ func (base *baseMerkleCRDT) ID() string {
 }
 
 // Publishes the delta to state
-func (base *baseMerkleCRDT) Publish(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
+func (base *baseMerkleCRDT) Publish(
+	ctx context.Context,
+	delta core.Delta,
+) (cid.Cid, ipld.Node, error) {
 	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
 	c, nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
@@ -98,7 +101,12 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 		return fmt.Errorf("Can't broadcast a delta payload that doesn't implement core.NetDelta")
 	}
 
-	log.Debug(ctx, "Broadcasting new DAG node", logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
+	log.Debug(
+		ctx,
+		"Broadcasting new DAG node",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("Cid", c),
+	)
 	// we dont want to wait around for the broadcast
 	go func() {
 		lg := core.Log{
@@ -109,7 +117,13 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 			Priority: netdelta.GetPriority(),
 		}
 		if err := base.broadcaster.Send(lg); err != nil {
-			log.ErrorE(ctx, "Failed to broadcast MerkleCRDT update", err, logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
+			log.ErrorE(
+				ctx,
+				"Failed to broadcast MerkleCRDT update",
+				err,
+				logging.NewKV("DocKey", dockey),
+				logging.NewKV("Cid", c),
+			)
 		}
 	}()
 

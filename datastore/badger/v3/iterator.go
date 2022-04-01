@@ -10,7 +10,9 @@
 
 package badger
 
-// this is quite similar in principle to https://github.com/MikkelHJuul/bIter/blob/main/iterator.go that John linked - maybe just use/wrap that
+// This is quite similar in principle to:
+//  `https://github.com/MikkelHJuul/bIter/blob/main/iterator.go`
+//  that John linked - maybe just use/wrap that
 import (
 	"context"
 	"fmt"
@@ -68,7 +70,8 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 }
 
 func (iterator *BadgerIterator) Close() error {
-	// There is a race condition between `iterator.iterator.Next()` and `iterator.iterator.Close()` which we have to protect against here
+	// There is a race condition between `iterator.iterator.Next()`
+	//  and `iterator.iterator.Close()` which we have to protect against here
 	iterator.iteratorLock.Lock()
 	iterator.iterator.Close()
 	iterator.iteratorLock.Unlock()
@@ -76,13 +79,18 @@ func (iterator *BadgerIterator) Close() error {
 }
 
 func (iterator *BadgerIterator) next() {
-	// There is a race condition between `iterator.iterator.Next()` and `iterator.iterator.Close()` which we have to protect against here
+	// There is a race condition between `iterator.iterator.Next()`
+	//  and `iterator.iterator.Close()` which we have to protect against here
 	iterator.iteratorLock.RLock()
 	iterator.iterator.Next()
 	iterator.iteratorLock.RUnlock()
 }
 
-func (iterator *BadgerIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
+func (iterator *BadgerIterator) IteratePrefix(
+	ctx context.Context,
+	startPrefix ds.Key,
+	endPrefix ds.Key,
+) (dsq.Results, error) {
 	formattedStartPrefix := startPrefix.String()
 	formattedEndPrefix := endPrefix.String()
 
@@ -135,11 +143,16 @@ func (iterator *BadgerIterator) getItemKeyValidator() itemKeyValidator {
 	return isValidAscending
 }
 
-func (iterator *BadgerIterator) scanThroughToOffset(startPrefix string, endPrefix string, worker goprocess.Process) { //  we might also not need/use this at all
+func (iterator *BadgerIterator) scanThroughToOffset(
+	startPrefix string,
+	endPrefix string,
+	worker goprocess.Process,
+) { //  we might also not need/use this at all
 	itemKeyValidator := iterator.getItemKeyValidator()
 
 	// skip to the offset
-	for _ = 0; iterator.skipped < iterator.query.Offset && iterator.iterator.Valid(); iterator.next() {
+	for _ = 0; iterator.skipped < iterator.query.Offset &&
+		iterator.iterator.Valid(); iterator.next() {
 		item := iterator.iterator.Item()
 		key := string(item.Key())
 		if !itemKeyValidator(key, startPrefix, endPrefix) {
@@ -194,7 +207,11 @@ func (iterator *BadgerIterator) scanThroughToOffset(startPrefix string, endPrefi
 	}
 }
 
-func (iterator *BadgerIterator) yieldResults(startPrefix string, endPrefix string, worker goprocess.Process) {
+func (iterator *BadgerIterator) yieldResults(
+	startPrefix string,
+	endPrefix string,
+	worker goprocess.Process,
+) {
 	itemKeyValidator := iterator.getItemKeyValidator()
 
 	for _ = 0; iterator.query.Limit <= 0 || iterator.sent < iterator.query.Limit; iterator.next() {

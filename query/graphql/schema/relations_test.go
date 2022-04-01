@@ -77,7 +77,12 @@ func TestSimpleOneToOnePrimaryFromSingle(t *testing.T) {
 	relName2, err := genRelationName("Author", "Book")
 	assert.NoError(t, err)
 	assert.Equal(t, relName1, relName2)
-	rm.RegisterSingle(relName2, "Book", "published", client.Relation_Type_ONE|client.Relation_Type_Primary)
+	rm.RegisterSingle(
+		relName2,
+		"Book",
+		"published",
+		client.Relation_Type_ONE|client.Relation_Type_Primary,
+	)
 
 	_, valid := rm.validate()
 	assert.True(t, valid)

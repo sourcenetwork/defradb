@@ -55,11 +55,18 @@ func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 	}, nil
 }
 
-// func (e *QueryExecutor) ExecQuery(query string, args ...interface{}) ([]map[string]interface{}, error) {
+//func (e *QueryExecutor) ExecQuery(
+//	query string,
+//	args ...interface{},
+//) ([]map[string]interface{}, error) {
+//}
 
-// }
-
-func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn datastore.Txn, selectStmt *parser.Select) (Query, error) {
+func (e *QueryExecutor) MakeSelectQuery(
+	ctx context.Context,
+	db client.DB,
+	txn datastore.Txn,
+	selectStmt *parser.Select,
+) (Query, error) {
 	if selectStmt == nil {
 		return nil, fmt.Errorf("Cannot create query without a selection")
 	}
@@ -67,7 +74,13 @@ func (e *QueryExecutor) MakeSelectQuery(ctx context.Context, db client.DB, txn d
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn datastore.Txn, query string, args ...interface{}) ([]map[string]interface{}, error) {
+func (e *QueryExecutor) ExecQuery(
+	ctx context.Context,
+	db client.DB,
+	txn datastore.Txn,
+	query string,
+	args ...interface{},
+) ([]map[string]interface{}, error) {
 	q, err := e.ParseQueryString(query)
 	if err != nil {
 		return nil, err
@@ -77,7 +90,12 @@ func (e *QueryExecutor) ExecQuery(ctx context.Context, db client.DB, txn datasto
 	return planner.queryDocs(ctx, q)
 }
 
-func (e *QueryExecutor) MakePlanFromParser(ctx context.Context, db client.DB, txn datastore.Txn, query *parser.Query) (planNode, error) {
+func (e *QueryExecutor) MakePlanFromParser(
+	ctx context.Context,
+	db client.DB,
+	txn datastore.Txn,
+	query *parser.Query,
+) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(query)
 }

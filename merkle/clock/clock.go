@@ -37,7 +37,12 @@ type MerkleClock struct {
 
 // NewMerkleClock returns a new merkle clock to read/write events (deltas) to
 // the clock
-func NewMerkleClock(headstore datastore.DSReaderWriter, dagstore datastore.DAGStore, namespace core.HeadStoreKey, crdt core.ReplicatedData) core.MerkleClock {
+func NewMerkleClock(
+	headstore datastore.DSReaderWriter,
+	dagstore datastore.DAGStore,
+	namespace core.HeadStoreKey,
+	crdt core.ReplicatedData,
+) core.MerkleClock {
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
@@ -46,7 +51,12 @@ func NewMerkleClock(headstore datastore.DSReaderWriter, dagstore datastore.DAGSt
 	}
 }
 
-func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
+func (mc *MerkleClock) putBlock(
+	ctx context.Context,
+	heads []cid.Cid,
+	height uint64,
+	delta core.Delta,
+) (ipld.Node, error) {
 	if delta != nil {
 		delta.SetPriority(height)
 	}
@@ -79,7 +89,10 @@ func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uin
 // AddDAGNode adds a new delta to the existing DAG for this MerkleClock
 // It checks the current heads, sets the delta priority in the merkle dag
 // adds it to the blockstore the runs ProcessNode
-func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
+func (mc *MerkleClock) AddDAGNode(
+	ctx context.Context,
+	delta core.Delta,
+) (cid.Cid, ipld.Node, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
 		return cid.Undef, nil, fmt.Errorf("error getting heads : %w", err)
@@ -113,7 +126,14 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 
 // ProcessNode processes an already merged delta into a crdt
 // by
-func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
+func (mc *MerkleClock) ProcessNode(
+	ctx context.Context,
+	ng core.NodeGetter,
+	root cid.Cid,
+	rootPrio uint64,
+	delta core.Delta,
+	node ipld.Node,
+) ([]cid.Cid, error) {
 	current := node.Cid()
 	log.Debug(ctx, "Running ProcessNode", logging.NewKV("Cid", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
@@ -172,7 +192,12 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 			log.Debug(ctx, "Adding head")
 			err := mc.headset.Add(ctx, root, rootPrio)
 			if err != nil {
-				log.ErrorE(ctx, "error adding head (when root is new head)", err, logging.NewKV("Root", root))
+				log.ErrorE(
+					ctx,
+					"error adding head (when root is new head)",
+					err,
+					logging.NewKV("Root", root),
+				)
 				// OR should this also return like below comment??
 				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
 			}

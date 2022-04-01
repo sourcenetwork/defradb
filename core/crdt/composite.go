@@ -81,7 +81,12 @@ type CompositeDAG struct {
 	schemaID string
 }
 
-func NewCompositeDAG(store datastore.DSReaderWriter, schemaID string, namespace core.Key, key string) CompositeDAG {
+func NewCompositeDAG(
+	store datastore.DSReaderWriter,
+	schemaID string,
+	namespace core.Key,
+	key string,
+) CompositeDAG {
 	return CompositeDAG{
 		key:      key,
 		schemaID: schemaID,
