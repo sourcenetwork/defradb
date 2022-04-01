@@ -83,6 +83,7 @@ type DocumentFetcher struct {
 
 // Init implements DocumentFetcher
 func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client.IndexDescription, filter *parser.Filter, reqFields []client.FieldDescription, reverse bool) error {
+	fmt.Println("fetcher init")
 	if col.Schema.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
@@ -112,12 +113,18 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 				// we have an error, filter field not part of description
 				return fmt.Errorf("invalid filter field in conditions map: %v", k)
 			}
+
+			if field.ID == 0 {
+				continue // skip _key
+			}
+
 			if field.IsObject() { // skip objects they are handled higherup as a typeJoin
 				continue
 			}
 			df.filterFields[field.ID.String()] = struct{}{}
 		}
 	}
+	df.numFilterFields = len(df.filterFields)
 
 	df.initialized = true
 	df.isReadingDocument = false
@@ -449,15 +456,15 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		return errors.New("Failed to process KV, uninitialized document object")
 	}
 
-	// skip if theres no value
-	if kv.Value == nil {
-		return nil
-	}
-
 	if !df.isReadingDocument {
 		df.isReadingDocument = true
 		df.doc.Reset()
 		df.doc.Key = []byte(kv.Key.DocKey)
+	}
+
+	// skip if theres no value
+	if kv.Value == nil {
+		return nil
 	}
 
 	// extract the FieldID and update the encoded doc properties map
@@ -500,22 +507,29 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 	// iterate until we have collected all the necessary kv pairs for the doc
 	// we'll know when were done when either
 	// A) Reach the end of the iterator
+	var end bool
+	var err error
 	for {
+		if end && df.state == fetcherValueGather {
+			return df.doc, nil
+		}
+
 		if df.state != fetcherSeeking {
-			err := df.processKV(df.kv)
+			err = df.processKV(df.kv)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		end, err := df.nextKey(ctx)
-		if err != nil {
-			return nil, err
-		}
-
 		if df.filter != nil && df.state == fetcherFilterGather {
+			fmt.Println("CHECKING FILTER FIELD STATE")
 			// have we got all the filter fields
+			fmt.Printf("numFilterFields: %v, num retrieved properties: %v\n", df.numFilterFields, len(df.doc.Properties))
 			if df.numFilterFields != len(df.doc.Properties) && !end {
+				end, err = df.nextKey(ctx)
+				if err != nil {
+					return nil, err
+				}
 				continue
 			}
 
@@ -535,11 +549,14 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 				break
 			} else {
 				// seek backwards to start of doc this doc
+				fmt.Println(df.kv)
 				targetKey := core.DataStoreKey{
 					CollectionId: df.kv.Key.CollectionId,
 					IndexId:      df.kv.Key.IndexId,
 					DocKey:       df.kv.Key.DocKey,
+					// FieldId:      "3",
 				}
+				fmt.Println("Seeking to:", targetKey.ToString())
 				df.kvIter.Seek(targetKey.ToString())
 				df.state = fetcherValueGather
 			}
@@ -555,6 +572,11 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 			df.state = fetcherFilterGather
 		} else if end {
 			return df.doc, nil
+		}
+
+		end, err = df.nextKey(ctx)
+		if err != nil {
+			return nil, err
 		}
 	}
 

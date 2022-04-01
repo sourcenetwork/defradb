@@ -734,6 +734,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 
 	it := t.txn.NewIterator(opt)
 	seekFn := func(key string) {
+		fmt.Println("Internal seek call!", key)
 		it.Seek([]byte(key))
 	}
 	qrb := dsq.NewResultBuilder(q, seekFn)
@@ -822,9 +823,10 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 			}
 		}
 
+		<-qrb.Ack // wait until first ack
 		for sent := 0; (q.Limit <= 0 || sent < q.Limit) && it.Valid(); it.Next() {
-			fmt.Println("getting item", sent, q.Limit)
 			item := it.Item()
+			fmt.Println("next iterator item:", string(item.Key()))
 			e := dsq.Entry{Key: string(item.Key())}
 
 			// Maybe get the value
@@ -864,7 +866,15 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 			case qrb.Output <- result:
 				fmt.Println("sent++:", qrb.Output)
 				sent++
-				// wait for ack?
+				// wait for ack
+				select {
+				case <-qrb.Ack:
+				case <-t.ds.closing: // datastore closing.
+					closedEarly = true
+					return
+				case <-worker.Closing(): // client told us to close early
+					return
+				}
 			case <-t.ds.closing: // datastore closing.
 				closedEarly = true
 				return
@@ -877,6 +887,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 	// nolint:errcheck
 	go qrb.Process.CloseAfterChildren()
 
+	fmt.Println("About to produce results obj")
 	return qrb.Results(), nil
 }
 
