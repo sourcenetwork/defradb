@@ -62,7 +62,12 @@ func hashToInt64(s string) int64 {
 	return int64(h.Sum64())
 }
 
-func SetupCollections(b *testing.B, ctx context.Context, db client.DB, fixture fixtures.Generator) ([]client.Collection, error) {
+func SetupCollections(
+	b *testing.B,
+	ctx context.Context,
+	db client.DB,
+	fixture fixtures.Generator,
+) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
 	collections := make([]client.Collection, numTypes)
 	schema, err := ConstructSchema(fixture)
@@ -107,7 +112,11 @@ func ConstructSchema(fixture fixtures.Generator) (string, error) {
 	return schema, nil
 }
 
-func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.Generator) (client.DB, []client.Collection, error) {
+func SetupDBAndCollections(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+) (client.DB, []client.Collection, error) {
 	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
@@ -126,7 +135,14 @@ func SetupDBAndCollections(b *testing.B, ctx context.Context, fixture fixtures.G
 // Loads the given test database using the provided fixture context.
 // It loads docCount number of documents asynchronously in batches of *up to*
 // writeBatchGroup.
-func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collection, fixture fixtures.Generator, docCount, opCount int, doSync bool) ([][]client.DocKey, error) {
+func BackfillBenchmarkDB(
+	b *testing.B,
+	ctx context.Context,
+	cols []client.Collection,
+	fixture fixtures.Generator,
+	docCount, opCount int,
+	doSync bool,
+) ([][]client.DocKey, error) {
 	numTypes := len(fixture.Types())
 
 	// load fixtures
@@ -141,7 +157,9 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 		// Note weird math because the last batch will likely be smaller then
 		// writeBatchGroup ~cus math~.
 		for bid := 0; float64(bid) < math.Ceil(float64(docCount)/writeBatchGroup); bid++ {
-			currentBatchSize := int(math.Min(float64((docCount - (bid * writeBatchGroup))), writeBatchGroup))
+			currentBatchSize := int(
+				math.Min(float64((docCount - (bid * writeBatchGroup))), writeBatchGroup),
+			)
 			var batchWg sync.WaitGroup
 			batchWg.Add(currentBatchSize)
 
@@ -171,8 +189,13 @@ func BackfillBenchmarkDB(b *testing.B, ctx context.Context, cols []client.Collec
 						// in place. The error check could prob use a wrap system
 						// but its fine :).
 						for {
-							if err := cols[j].Create(ctx, doc); err != nil && err.Error() == badger.ErrConflict.Error() {
-								log.Info(ctx, "Failed to commit TX for doc %s, retrying...\n", logging.NewKV("DocKey", doc.Key()))
+							if err := cols[j].Create(ctx, doc); err != nil &&
+								err.Error() == badger.ErrConflict.Error() {
+								log.Info(
+									ctx,
+									"Failed to commit TX for doc %s, retrying...\n",
+									logging.NewKV("DocKey", doc.Key()),
+								)
 								continue
 							} else if err != nil {
 								errCh <- fmt.Errorf("Failed to create document: %w", err)

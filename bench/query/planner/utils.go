@@ -21,7 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
-func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
+func runQueryParserBench(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	query string,
+) error {
 	exec, err := buildExecutor(ctx, fixture)
 	if err != nil {
 		return err
@@ -39,7 +44,12 @@ func runQueryParserBench(b *testing.B, ctx context.Context, fixture fixtures.Gen
 	return nil
 }
 
-func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Generator, query string) error {
+func runMakePlanBench(
+	b *testing.B,
+	ctx context.Context,
+	fixture fixtures.Generator,
+	query string,
+) error {
 	db, _, err := benchutils.SetupDBAndCollections(b, ctx, fixture)
 	if err != nil {
 		return err
@@ -71,7 +81,10 @@ func runMakePlanBench(b *testing.B, ctx context.Context, fixture fixtures.Genera
 	return nil
 }
 
-func buildExecutor(ctx context.Context, fixture fixtures.Generator) (*planner.QueryExecutor, error) {
+func buildExecutor(
+	ctx context.Context,
+	fixture fixtures.Generator,
+) (*planner.QueryExecutor, error) {
 	sm, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err

@@ -155,7 +155,10 @@ func NewDatastore(path string, options *Options) (*Datastore, error) {
 	kv, err := badger.Open(opt)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "manifest has unsupported version:") {
-			err = fmt.Errorf("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %s", err.Error())
+			err = fmt.Errorf(
+				"unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %s",
+				err.Error(),
+			)
 		}
 		return nil, err
 	}
@@ -225,7 +228,10 @@ func (d *Datastore) newImplicitTransaction(readOnly bool) *txn {
 	return &txn{d, d.DB.NewTransaction(!readOnly), true}
 }
 
-func (d *Datastore) NewIterableTransaction(ctx context.Context, readOnly bool) (iterable.IterableTxn, error) {
+func (d *Datastore) NewIterableTransaction(
+	ctx context.Context,
+	readOnly bool,
+) (iterable.IterableTxn, error) {
 	d.closeLk.RLock()
 	defer d.closeLk.RUnlock()
 	if d.closed {
@@ -266,7 +272,12 @@ func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 	return d.DB.Sync()
 }
 
-func (d *Datastore) PutWithTTL(ctx context.Context, key ds.Key, value []byte, ttl time.Duration) error {
+func (d *Datastore) PutWithTTL(
+	ctx context.Context,
+	key ds.Key,
+	value []byte,
+	ttl time.Duration,
+) error {
 	d.closeLk.RLock()
 	defer d.closeLk.RUnlock()
 	if d.closed {

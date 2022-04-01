@@ -22,18 +22,23 @@ import (
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
-// Blockstore implementation taken from https://github.com/ipfs/go-ipfs-blockstore/blob/master/blockstore.go
+// Blockstore implementation taken from:
+//  `https://github.com/ipfs/go-ipfs-blockstore/blob/master/blockstore.go`
 // Needed a custom implementation that didn't rely on the ds.Batching interface.
 //
-// All datastore operations in DefraDB are interfaced by DSReaderWriter. This simplifies the interface to just
-// that of read/write operations, leaving the management of the datastore to the parent objects. This also allows
-// us to swap between a regular ds.Datastore, and a ds.Txn which as of https://github.com/ipfs/go-datastore/issues/114
-// no longer implements ds.Datastore.
+// All datastore operations in DefraDB are interfaced by DSReaderWriter. This
+// simplifies the interface to just that of read/write operations, leaving the
+// management of the datastore to the parent objects. This also allows us to swap
+// between a regular ds.Datastore, and a ds.Txn which as of:
+//  `https://github.com/ipfs/go-datastore/issues/114` no longer implements ds.Datastore.
 //
-// The original blockstore.Blockstore implementation relied on ds.Batching, so it could internally use store.Batch()
-// to optimize the PutMany function. However, in DefraDB, since we rely on a single rootstore for all our various
-// substores (data, heads, blocks), which includes a Txn/Batch system already, our respective substores don't need
-// to optimize or worry about Batching/Txn. Hence the simplified DSReaderWriter.
+// The original blockstore.Blockstore implementation relied on ds.Batching, so it
+// could internally use store.Batch() to optimize the PutMany function.
+
+// However, in DefraDB, since we rely on a single rootstore for all our various
+// substores (data, heads, blocks), which includes a Txn/Batch system already, our
+// respective substores don't need to optimize or worry about Batching/Txn.
+// Hence the simplified DSReaderWriter.
 
 // ErrHashMismatch is an error returned when the hash of a block
 // is different than expected.

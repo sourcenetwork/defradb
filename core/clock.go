@@ -21,6 +21,9 @@ import (
 // writing to and from the MerkleDAG structure, ensuring a casual
 // ordering of
 type MerkleClock interface {
-	AddDAGNode(ctx context.Context, delta Delta) (cid.Cid, ipld.Node, error) // possibly change to AddDeltaNode?
+	AddDAGNode(
+		ctx context.Context,
+		delta Delta,
+	) (cid.Cid, ipld.Node, error) // possibly change to AddDeltaNode?
 	ProcessNode(context.Context, NodeGetter, cid.Cid, uint64, Delta, ipld.Node) ([]cid.Cid, error)
 }

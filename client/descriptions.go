@@ -17,10 +17,11 @@ import (
 // CollectionDescription describes a Collection and
 // all its associated metadata
 type CollectionDescription struct {
-	Name    string
-	ID      uint32
-	Schema  SchemaDescription
-	Indexes []IndexDescription // @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
+	Name   string
+	ID     uint32
+	Schema SchemaDescription
+	// @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
+	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string
@@ -111,24 +112,32 @@ type FieldKind uint8
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values
 const (
-	FieldKind_None                 FieldKind = 0
-	FieldKind_DocKey               FieldKind = 1
-	FieldKind_BOOL                 FieldKind = 2
-	FieldKind_BOOL_ARRAY           FieldKind = 3
-	FieldKind_INT                  FieldKind = 4
-	FieldKind_INT_ARRAY            FieldKind = 5
-	FieldKind_FLOAT                FieldKind = 6
-	FieldKind_FLOAT_ARRAY          FieldKind = 7
-	FieldKind_DECIMAL              FieldKind = 8
-	FieldKind_DATE                 FieldKind = 9
-	FieldKind_TIMESTAMP            FieldKind = 10
-	FieldKind_STRING               FieldKind = 11
-	FieldKind_STRING_ARRAY         FieldKind = 12
-	FieldKind_BYTES                FieldKind = 13
-	FieldKind_OBJECT               FieldKind = 14 // Embedded object within the type
-	FieldKind_OBJECT_ARRAY         FieldKind = 15 // Array of embedded objects
-	FieldKind_FOREIGN_OBJECT       FieldKind = 16 // Embedded object, but accessed via foreign keys
-	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17 // Array of embedded objects, accessed via foreign keys
+	FieldKind_None         FieldKind = 0
+	FieldKind_DocKey       FieldKind = 1
+	FieldKind_BOOL         FieldKind = 2
+	FieldKind_BOOL_ARRAY   FieldKind = 3
+	FieldKind_INT          FieldKind = 4
+	FieldKind_INT_ARRAY    FieldKind = 5
+	FieldKind_FLOAT        FieldKind = 6
+	FieldKind_FLOAT_ARRAY  FieldKind = 7
+	FieldKind_DECIMAL      FieldKind = 8
+	FieldKind_DATE         FieldKind = 9
+	FieldKind_TIMESTAMP    FieldKind = 10
+	FieldKind_STRING       FieldKind = 11
+	FieldKind_STRING_ARRAY FieldKind = 12
+	FieldKind_BYTES        FieldKind = 13
+
+	// Embedded object within the type
+	FieldKind_OBJECT FieldKind = 14
+
+	// Array of embedded objects
+	FieldKind_OBJECT_ARRAY FieldKind = 15
+
+	// Embedded object, but accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT FieldKind = 16
+
+	// Array of embedded objects, accessed via foreign keys
+	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17
 )
 
 type RelationType uint8

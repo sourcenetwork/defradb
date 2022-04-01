@@ -37,7 +37,10 @@ func NewService(peer *net.Peer) *Service {
 	return &Service{peer: peer}
 }
 
-func (s *Service) AddReplicator(ctx context.Context, req *pb.AddReplicatorRequest) (*pb.AddReplicatorReply, error) {
+func (s *Service) AddReplicator(
+	ctx context.Context,
+	req *pb.AddReplicatorRequest,
+) (*pb.AddReplicatorReply, error) {
 	log.Debug("Received AddReplicator requeust")
 
 	collection := string(req.Collection)

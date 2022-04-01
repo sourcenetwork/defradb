@@ -80,7 +80,11 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 					log.ErrorE(p.ctx, "Failed to get a key to register pubsub topic", key.Err)
 					continue
 				}
-				log.Debug(p.ctx, "Registering existing DocKey pubsub topic", logging.NewKV("DocKey", key.Key.String()))
+				log.Debug(
+					p.ctx,
+					"Registering existing DocKey pubsub topic",
+					logging.NewKV("DocKey", key.Key.String()),
+				)
 				if err := s.addPubSubTopic(key.Key.String()); err != nil {
 					return nil, err
 				}
@@ -94,12 +98,18 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 }
 
 // GetDocGraph receives a get graph request
-func (s *server) GetDocGraph(ctx context.Context, req *pb.GetDocGraphRequest) (*pb.GetDocGraphReply, error) {
+func (s *server) GetDocGraph(
+	ctx context.Context,
+	req *pb.GetDocGraphRequest,
+) (*pb.GetDocGraphReply, error) {
 	return nil, nil
 }
 
 // PushDocGraph receives a push graph request
-func (s *server) PushDocGraph(ctx context.Context, req *pb.PushDocGraphRequest) (*pb.PushDocGraphReply, error) {
+func (s *server) PushDocGraph(
+	ctx context.Context,
+	req *pb.PushDocGraphRequest,
+) (*pb.PushDocGraphReply, error) {
 	return nil, nil
 }
 
@@ -144,12 +154,23 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	}
 	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {
-		log.ErrorE(ctx, "Failed to process push log node", err, logging.NewKV("DocKey", docKey), logging.NewKV("Cid", cid))
+		log.ErrorE(
+			ctx,
+			"Failed to process push log node",
+			err,
+			logging.NewKV("DocKey", docKey),
+			logging.NewKV("Cid", cid),
+		)
 	}
 
 	// handleChildren
 	if len(cids) > 0 { // we have child nodes to get
-		log.Debug(ctx, "Handling children for log", logging.NewKV("NChildren", len(cids)), logging.NewKV("Cid", cid))
+		log.Debug(
+			ctx,
+			"Handling children for log",
+			logging.NewKV("NChildren", len(cids)),
+			logging.NewKV("Cid", cid),
+		)
 		var session sync.WaitGroup
 		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
 		session.Wait()
@@ -161,7 +182,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 }
 
 // GetHeadLog receives a get head log request
-func (s *server) GetHeadLog(ctx context.Context, req *pb.GetHeadLogRequest) (*pb.GetHeadLogReply, error) {
+func (s *server) GetHeadLog(
+	ctx context.Context,
+	req *pb.GetHeadLogRequest,
+) (*pb.GetHeadLogReply, error) {
 	return nil, nil
 }
 
@@ -240,13 +264,23 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
 		return fmt.Errorf("failed publishing to thread %s: %w", dockey, err)
 	}
-	log.Debug(ctx, "Published log", logging.NewKV("Cid", req.Body.Cid.Cid), logging.NewKV("DocKey", dockey))
+	log.Debug(
+		ctx,
+		"Published log",
+		logging.NewKV("Cid", req.Body.Cid.Cid),
+		logging.NewKV("DocKey", dockey),
+	)
 	return nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	log.Debug(s.peer.ctx, "Handling new pubsub message", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
+	log.Debug(
+		s.peer.ctx,
+		"Handling new pubsub message",
+		logging.NewKV("SenderId", from),
+		logging.NewKV("Topic", topic),
+	)
 	req := new(pb.PushLogRequest)
 	if err := proto.Unmarshal(msg, req); err != nil {
 		log.ErrorE(s.peer.ctx, "Failed to unmarshal pubsub message %s", err)
@@ -265,7 +299,12 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 
 // pubSubEventHandler logs events from the subscribed dockey topics.
 func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
-	log.Info(s.peer.ctx, "Received new pubsub event", logging.NewKV("SenderId", from), logging.NewKV("Topic", topic))
+	log.Info(
+		s.peer.ctx,
+		"Received new pubsub event",
+		logging.NewKV("SenderId", from),
+		logging.NewKV("Topic", topic),
+	)
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {

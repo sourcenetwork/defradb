@@ -59,13 +59,21 @@ func NewObjectPayload(payload string) (ObjectPayload, error) {
 	}
 
 	switch v := d.(type) {
-	case []interface{}: // array usually means its a JSON PATCH object, unless its a create, then its just multiple documents
+
+	// array usually means its a JSON PATCH object, unless its a create, then its
+	//  just multiple documents
+	case []interface{}:
 		obj.Array = v
+
 	case map[string]interface{}:
 		obj.Object = v
+
 	default:
-		return obj, errors.New("Object payload value has unknown structure, must be a JSON object or array")
+		return obj, errors.New(
+			"Object payload value has unknown structure, must be a JSON object or array",
+		)
 	}
+
 	return obj, nil
 }
 

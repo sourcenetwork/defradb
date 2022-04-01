@@ -503,8 +503,15 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 			},
 			Results: []map[string]interface{}{
 				{
-					"Name":             "John",
-					"PreferredStrings": []string{"", "the previous", "the first", "empty string", "blank string", "hitchi"},
+					"Name": "John",
+					"PreferredStrings": []string{
+						"",
+						"the previous",
+						"the first",
+						"empty string",
+						"blank string",
+						"hitchi",
+					},
 				},
 			},
 		},

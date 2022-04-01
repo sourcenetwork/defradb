@@ -46,7 +46,9 @@ func NewServer(db client.DB) *Server {
 	// todo - we should log via our own log, not middleware.logger
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"))
+		_, err := w.Write(
+			[]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"),
+		)
 		if err != nil {
 			log.ErrorE(context.Background(), "DefraDB HTTP API Welcome message writing failed", err)
 		}

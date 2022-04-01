@@ -38,14 +38,17 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 		return nil, err
 	}
 
-	if len(source) == 1 {
+	if colDesc := sourceInfo.collectionDescription; len(source) == 1 {
 		// If path length is one - we are summing an inline array
 		sourceCollection = source[0]
 		sourceProperty = ""
 
-		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+		fieldDescription, fieldDescriptionFound := colDesc.GetField(sourceCollection)
 		if !fieldDescriptionFound {
-			return nil, fmt.Errorf("Unable to find field description for field: %s", sourceCollection)
+			return nil, fmt.Errorf(
+				"Unable to find field description for field: %s",
+				sourceCollection,
+			)
 		}
 
 		isFloat = fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY
@@ -56,16 +59,20 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 
 		var childFieldDescription client.FieldDescription
 		if sourceCollection == parser.GroupFieldName {
-			// If the source collection is a group, then the description of the collection to sum is this object
-			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
+			// If the source collection is a group, then the description of the collection
+			//  to sum is this object.
+			fieldDescription, fieldDescriptionFound := colDesc.GetField(sourceProperty)
 			if !fieldDescriptionFound {
 				return nil, fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
 			}
 			childFieldDescription = fieldDescription
 		} else {
-			parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+			parentFieldDescription, parentFieldDescriptionFound := colDesc.GetField(sourceCollection)
 			if !parentFieldDescriptionFound {
-				return nil, fmt.Errorf("Unable to find parent field description for field: %s", sourceCollection)
+				return nil, fmt.Errorf(
+					"Unable to find parent field description for field: %s",
+					sourceCollection,
+				)
 			}
 			collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
 			if err != nil {

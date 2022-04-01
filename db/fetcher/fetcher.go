@@ -66,7 +66,11 @@ type DocumentFetcher struct {
 }
 
 // Init implements DocumentFetcher
-func (df *DocumentFetcher) Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error {
+func (df *DocumentFetcher) Init(
+	col *client.CollectionDescription,
+	fields []*client.FieldDescription,
+	reverse bool,
+) error {
 	if col.Schema.IsEmpty() {
 		return errors.New("DocumentFetcher must be given a schema")
 	}
@@ -104,7 +108,9 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
 	}
 	if df.doc == nil {
-		return errors.New("DocumentFetcher cannot be started without an initialized document object")
+		return errors.New(
+			"DocumentFetcher cannot be started without an initialized document object",
+		)
 	}
 	//@todo: Handle fields Description
 	// check spans
@@ -363,7 +369,9 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 
 // FetchNextMap returns the next document as a map[string]interface{}
 // The first return value is the parsed document key
-func (df *DocumentFetcher) FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error) {
+func (df *DocumentFetcher) FetchNextMap(
+	ctx context.Context,
+) ([]byte, map[string]interface{}, error) {
 	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, nil, err

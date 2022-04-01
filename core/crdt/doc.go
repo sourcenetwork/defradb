@@ -22,10 +22,10 @@ package crdt
 // The CRDTs shall satisfy the ReplicatedData interface which is a single merge function
 // which given two states of the same data type will merge into a single state.
 
-// Unless the explicitly enabling the entire state to be fully loaded into memory as an object, all data will reside
-// inside the BadgerDB datastore.
+// Unless the explicitly enabling the entire state to be fully loaded into memory as an object,
+// all data will reside inside the BadgerDB datastore.
 
-// In general, each CRDT type will be implemented independent, and oblivious to its underlying datastore, and
-// to how it will be structured as Merkle-CRDT. Instead they will focus on their core semantics
-// and implementation and will be wrapped in handlers to ensure state persistence to DBs,
-// DAG creation, and replication to peers.
+// In general, each CRDT type will be implemented independent, and oblivious to its underlying
+// datastore, and to how it will be structured as Merkle-CRDT. Instead they will focus on their
+// core semantics and implementation and will be wrapped in handlers to ensure state persistence
+// to DBs, DAG creation, and replication to peers.

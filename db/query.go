@@ -49,7 +49,11 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
-func (db *db) ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *client.QueryResult {
+func (db *db) ExecTransactionalQuery(
+	ctx context.Context,
+	query string,
+	txn datastore.Txn,
+) *client.QueryResult {
 	res := &client.QueryResult{}
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {

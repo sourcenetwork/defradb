@@ -70,7 +70,12 @@ func (p *Peer) processLog(
 		return nil, fmt.Errorf("Failed to decode delta object: %w", err)
 	}
 
-	log.Debug(ctx, "Processing push log request", logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
+	log.Debug(
+		ctx,
+		"Processing push log request",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("Cid", c),
+	)
 	height := delta.GetPriority()
 
 	if err := txn.DAGstore().Put(ctx, nd); err != nil {
@@ -89,13 +94,25 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(ctx context.Context, txn datastore.MultiStore, col client.Collection, docKey core.DataStoreKey, field string) (crdt.MerkleCRDT, error) {
+func initCRDTForType(
+	ctx context.Context,
+	txn datastore.MultiStore,
+	col client.Collection,
+	docKey core.DataStoreKey,
+	field string,
+) (crdt.MerkleCRDT, error) {
 	var key core.DataStoreKey
 	var ctype client.CType
 	description := col.Description()
 	if field == "" { // empty field name implies composite type
 		ctype = client.COMPOSITE
-		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(core.COMPOSITE_NAMESPACE)
+		key = base.MakeCollectionKey(
+			description,
+		).WithInstanceInfo(
+			docKey,
+		).WithFieldId(
+			core.COMPOSITE_NAMESPACE,
+		)
 	} else {
 		fd, ok := description.GetField(field)
 		if !ok {
@@ -117,7 +134,10 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	return format.Decode(blk)
 }
 
-func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) *clock.CrdtNodeGetter {
+func (p *Peer) createNodeGetter(
+	crdt crdt.MerkleCRDT,
+	getter format.NodeGetter,
+) *clock.CrdtNodeGetter {
 	return &clock.CrdtNodeGetter{
 		NodeGetter:     getter,
 		DeltaExtractor: crdt.DeltaDecode,

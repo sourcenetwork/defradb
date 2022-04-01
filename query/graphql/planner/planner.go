@@ -282,7 +282,12 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	}
 
 	if plan.group.childSelect != nil {
-		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
+		childSelectNode, err := p.SelectFromSource(
+			plan.group.childSelect,
+			pipe,
+			false,
+			&plan.source.(*selectNode).sourceInfo,
+		)
 		if err != nil {
 			return err
 		}
@@ -390,7 +395,10 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 	return src
 }
 
-func (p *Planner) queryDocs(ctx context.Context, query *parser.Query) ([]map[string]interface{}, error) {
+func (p *Planner) queryDocs(
+	ctx context.Context,
+	query *parser.Query,
+) ([]map[string]interface{}, error) {
 	plan, err := p.makePlan(query)
 	if err != nil {
 		return nil, err

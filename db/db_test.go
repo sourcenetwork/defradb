@@ -258,7 +258,11 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "John", name)
-	assert.Equal(t, uint64(21), age) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
+	assert.Equal(
+		t,
+		uint64(21),
+		age,
+	) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
 	assert.Equal(t, 154.1, weight)
 }
 
@@ -334,7 +338,16 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.multistore.Headstore(), nil, core.HeadStoreKey{}.WithDocKey("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d").WithFieldId("Name"), nil)
+	clk := clock.NewMerkleClock(
+		db.multistore.Headstore(),
+		nil,
+		core.HeadStoreKey{}.WithDocKey(
+			"bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d",
+		).WithFieldId(
+			"Name",
+		),
+		nil,
+	)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)

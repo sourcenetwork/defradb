@@ -80,6 +80,40 @@ output:
   sort-results: true
 
 
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - errcheck
+    - forbidigo
+    - lll
+    # - wrapcheck
+    # - errorlint
+    # - gci
+    # - exportloopref
+    # - megacheck
+    # - govet
+    # - wsl
+    # - nilerr
+    # - nilnil
+  enable-all: false
+  disable:
+    # - maligned
+    # - prealloc
+  presets:
+    # - unused
+    # - bugs
+  fast: false
+
+
 # all available settings of specific linters
 linters-settings:
   bidichk:
@@ -523,9 +557,9 @@ linters-settings:
     - github.com\/user\/package\/v4\.Type
 
   lll:
-    # max line length, lines longer will be reported. Default is 120.
+    # max line length, lines longer will be reported.
     # '\t' is counted as 1 character by default, and can be changed with the tab-width option
-    line-length: 120
+    line-length: 100
     # tab width in spaces. Default to 1.
     tab-width: 1
 
@@ -776,38 +810,6 @@ linters-settings:
       # Intended to point to the repo location of the linter. Optional, just for documentation purposes.
       # original-url: github.com/golangci/example-linter
 
-linters:
-  disable-all: true
-  enable:
-    - deadcode
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - structcheck
-    - typecheck
-    - unused
-    - varcheck
-    - errcheck
-    - forbidigo
-    # - wrapcheck
-    # - errorlint
-    # - gci
-    # - exportloopref
-    # - megacheck
-    # - govet
-    # - wsl
-    # - nilerr
-    # - nilnil
-  enable-all: false
-  disable:
-    # - maligned
-    # - prealloc
-  presets:
-    # - unused
-    # - bugs
-  fast: false
-
 
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
@@ -826,6 +828,7 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - lll
 
     # Exclude known linters from partially hard-vendored code,
     # which is impossible to exclude via "nolint" comments.

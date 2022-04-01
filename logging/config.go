@@ -142,7 +142,8 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 	}
 
 	for k, o := range newConfigOptions.OverridesByLoggerName {
-		// We fully overwrite overrides to allow for ease of reset/removal (can provide empty to return to default)
+		// We fully overwrite overrides to allow for ease of
+		// reset/removal (can provide empty to return to default)
 		newConfig.OverridesByLoggerName[k] = OverrideConfig{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,

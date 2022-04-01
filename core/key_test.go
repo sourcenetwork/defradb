@@ -25,7 +25,9 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.Equal(t, "", resultString)
 }
 
-func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithType(t *testing.T) {
+func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInstanceType_GivenFourItemsWithType(
+	t *testing.T,
+) {
 	instanceType := "anyType"
 	fieldId := "f1"
 	docKey := "docKey"

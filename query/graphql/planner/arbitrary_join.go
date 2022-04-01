@@ -110,7 +110,10 @@ func (n *dataSource) Source() planNode {
 	return n.parentSource
 }
 
-func (source *dataSource) mergeParent(keyFields []string, destination *orderedMap) (map[string]interface{}, bool, error) {
+func (source *dataSource) mergeParent(
+	keyFields []string,
+	destination *orderedMap,
+) (map[string]interface{}, bool, error) {
 	// This needs to be set manually for each item, in case other nodes
 	// aggregate items from the pipe progressing the docIndex beyond the first item
 	// for example, if the child is sorted.
@@ -135,7 +138,10 @@ func (source *dataSource) mergeParent(keyFields []string, destination *orderedMa
 	return value, true, nil
 }
 
-func (source *dataSource) appendChild(keyFields []string, valuesByKey *orderedMap) (map[string]interface{}, bool, error) {
+func (source *dataSource) appendChild(
+	keyFields []string,
+	valuesByKey *orderedMap,
+) (map[string]interface{}, bool, error) {
 	// Most of the time this will be the same document as the parent (with different rendering),
 	// however if the child group is sorted it will be different, the child may also be missing
 	// if it is filtered out by a child filter.  The parent will always exist, but may be
@@ -223,7 +229,8 @@ func (m *orderedMap) mergeParent(key string, childAddress string, value map[stri
 		return
 	}
 
-	// If the value is new, we can safely set the child group to an empty collection (required if children are filtered out)
+	// If the value is new, we can safely set the child group to an empty
+	// collection (required if children are filtered out)
 	value[childAddress] = []map[string]interface{}{}
 
 	index = len(m.values)

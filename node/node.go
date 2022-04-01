@@ -60,7 +60,12 @@ type Node struct {
 }
 
 // NewNode creates a new network node instance of DefraDB, wired into Libp2p
-func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts ...NodeOpt) (*Node, error) {
+func NewNode(
+	ctx context.Context,
+	db client.DB,
+	bs *broadcast.Broadcaster,
+	opts ...NodeOpt,
+) (*Node, error) {
 	// merge all the options args together
 	var options Options
 	for _, opt := range append(opts, DefaultOpts()) {
@@ -103,7 +108,12 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		rootstore,
 		libp2pOpts...,
 	)
-	log.Info(ctx, "Created LibP2P host", logging.NewKV("PeerId", h.ID()), logging.NewKV("Address", options.ListenAddrs))
+	log.Info(
+		ctx,
+		"Created LibP2P host",
+		logging.NewKV("PeerId", h.ID()),
+		logging.NewKV("Address", options.ListenAddrs),
+	)
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}

@@ -42,5 +42,10 @@ func init() {
 	// is called directly, e.g.:
 	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rpcCmd.PersistentFlags().StringVar(&rpcAddr, "addr", "0.0.0.0:9161", "Specify the gRPC endpoint address")
+	rpcCmd.PersistentFlags().StringVar(
+		&rpcAddr,
+		"addr",
+		"0.0.0.0:9161",
+		"Specify the gRPC endpoint address",
+	)
 }

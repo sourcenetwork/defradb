@@ -101,7 +101,11 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(
+	col *client.CollectionDescription,
+	fields []*client.FieldDescription,
+	reverse bool,
+) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
@@ -137,7 +141,10 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 
 	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey))
+		return errors.Wrap(
+			err,
+			fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey),
+		)
 	}
 
 	vf.txn = txn
@@ -148,7 +155,11 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	// create store
 	root := ds.NewMapDatastore()
 	vf.root = root
-	vf.store, err = datastore.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
+	vf.store, err = datastore.NewTxnFrom(
+		ctx,
+		root,
+		false,
+	) // were going to discard and nuke this later
 	if err != nil {
 		return err
 	}
@@ -367,7 +378,8 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if fieldID == uint32(0) {
 			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
 		}
-		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and get CType from descriptions
+		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
+		//        get CType from descriptions
 		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
@@ -376,7 +388,12 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype client.CType, fieldName string) (err error) {
+func (vf *VersionedFetcher) processNode(
+	crdtIndex uint32,
+	nd format.Node,
+	ctype client.CType,
+	fieldName string,
+) (err error) {
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {

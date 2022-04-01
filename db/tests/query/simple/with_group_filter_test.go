@@ -126,7 +126,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterThatExcludesAll(t *testing.T) {
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterThatExcludesAll(
+	t *testing.T,
+) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child number filter that excludes all records",
 		Query: `query {

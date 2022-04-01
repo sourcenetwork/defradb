@@ -54,7 +54,9 @@ func (w *wrappedStore) Delete(ctx context.Context, key ds.Key) error {
 }
 
 func (w *wrappedStore) GetIterator(q query.Query) (iterable.Iterator, error) {
-	iterator, err := w.store.GetIterator(withPrefix(q, w.transform.ConvertKey(ds.NewKey(q.Prefix)).String()))
+	iterator, err := w.store.GetIterator(
+		withPrefix(q, w.transform.ConvertKey(ds.NewKey(q.Prefix)).String()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +76,8 @@ func withPrefix(q query.Query, prefix string) query.Query {
 	}
 }
 
-// NOTE!!! The following lines are copied from the ktds package, they should be unessecary after the key refactoring (as the keys will then not contain the prefixes)
+// NOTE!!! The following lines are copied from the ktds package, they should be unessecary after
+// the key refactoring (as the keys will then not contain the prefixes)
 
 // Query implements Query, inverting keys on the way back out.
 func (w *wrappedStore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
@@ -208,8 +211,16 @@ type wrappedIterator struct {
 
 var _ iterable.Iterator = (*wrappedIterator)(nil)
 
-func (w *wrappedIterator) IteratePrefix(ctx context.Context, startPrefix ds.Key, endPrefix ds.Key) (dsq.Results, error) {
-	return w.iterator.IteratePrefix(ctx, w.transform.ConvertKey(startPrefix), w.transform.ConvertKey(endPrefix))
+func (w *wrappedIterator) IteratePrefix(
+	ctx context.Context,
+	startPrefix ds.Key,
+	endPrefix ds.Key,
+) (dsq.Results, error) {
+	return w.iterator.IteratePrefix(
+		ctx,
+		w.transform.ConvertKey(startPrefix),
+		w.transform.ConvertKey(endPrefix),
+	)
 }
 
 func (w *wrappedIterator) Close() error {

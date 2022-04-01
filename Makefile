@@ -32,6 +32,10 @@ deps\:lint:
 deps\:go-acc:
 	go install github.com/ory/go-acc@latest
 
+.PHONY: deps\:go-lines
+deps\:go-lines:
+	go install github.com/segmentio/golines@latest
+
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
