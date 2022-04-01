@@ -1,5 +1,7 @@
 ## Verbose Structure of Type Joins
 
+```
+
 type User {
 	name: String
 	age: Int
@@ -156,3 +158,5 @@ query {
 		}
 	}
 }
+
+```
