@@ -734,7 +734,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 
 	it := t.txn.NewIterator(opt)
 	seekFn := func(key string) {
-		fmt.Println("Internal seek call!", key)
+		// fmt.Println("Internal seek call!", key)
 		it.Seek([]byte(key))
 	}
 	qrb := dsq.NewResultBuilder(q, seekFn)
@@ -826,12 +826,12 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 		<-qrb.Ack // wait until first ack
 		for sent := 0; (q.Limit <= 0 || sent < q.Limit) && it.Valid(); it.Next() {
 			item := it.Item()
-			fmt.Println("next iterator item:", string(item.Key()))
+			// fmt.Println("next iterator item:", string(item.Key()))
 			e := dsq.Entry{Key: string(item.Key())}
 
 			// Maybe get the value
 			var result dsq.Result
-			fmt.Println("Saving value copy for key:", e.Key, item.ValueCopy)
+			// fmt.Println("Saving value copy for key:", e.Key, item.ValueCopy)
 			// e.ValueCopy = func(fn func(dst []byte) ([]byte, error)) func(dst []byte) ([]byte, error) {
 			// 	// fmt.Println("yo:", e.Key)
 
@@ -858,21 +858,26 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 
 			// Finally, filter it (unless we're dealing with an error).
 			if result.Error == nil && filter(q.Filters, e) {
-				fmt.Println("skiping via filter")
+				// fmt.Println("skiping via filter")
 				continue
 			}
 
+			// fmt.Println("handing output")
 			select {
 			case qrb.Output <- result:
-				fmt.Println("sent++:", qrb.Output)
+				// fmt.Println("sent++:", qrb.Output)
 				sent++
 				// wait for ack
+				// fmt.Println("check next state/ack")
 				select {
 				case <-qrb.Ack:
+					// fmt.Println("acked")
 				case <-t.ds.closing: // datastore closing.
 					closedEarly = true
+					// fmt.Println("closed early")
 					return
 				case <-worker.Closing(): // client told us to close early
+					// fmt.Println("closing")
 					return
 				}
 			case <-t.ds.closing: // datastore closing.
@@ -882,12 +887,13 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				return
 			}
 		}
+		// fmt.Println("end of iterator")
 	})
 
 	// nolint:errcheck
 	go qrb.Process.CloseAfterChildren()
 
-	fmt.Println("About to produce results obj")
+	// fmt.Println("About to produce results obj")
 	return qrb.Results(), nil
 }
 

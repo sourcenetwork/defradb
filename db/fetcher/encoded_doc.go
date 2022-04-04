@@ -32,7 +32,7 @@ type encProperty struct {
 func (e encProperty) Decode() (client.CType, interface{}, error) {
 	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
-	fmt.Println("decode...", e.Desc.Name, buf)
+	// fmt.Println("decode...", e.Desc.Name, buf)
 	var val interface{}
 	err := cbor.Unmarshal(buf, &val)
 	if err != nil {
@@ -101,6 +101,7 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 		}
 	}
 
+	// fmt.Println("decoded:", val)
 	return ctype, val, nil
 }
 

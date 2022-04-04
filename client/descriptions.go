@@ -107,6 +107,15 @@ func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	return uint32(0)
 }
 
+func (sd SchemaDescription) GetField(fieldName string) (FieldDescription, bool) {
+	for _, field := range sd.Fields {
+		if field.Name == fieldName {
+			return field, true
+		}
+	}
+	return FieldDescription{}, false
+}
+
 type FieldKind uint8
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values

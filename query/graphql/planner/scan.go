@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -89,15 +87,15 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
-		fmt.Println("fetching next map on scanNode...")
+		// fmt.Println("fetching next map on scanNode...")
 		var err error
 		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
 		if err != nil {
-			fmt.Println("err1", err)
+			// fmt.Println("err1", err)
 			return false, err
 		}
 		if n.doc == nil {
-			fmt.Println("err2")
+			// fmt.Println("err2")
 			return false, nil
 		}
 		return true, nil

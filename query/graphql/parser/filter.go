@@ -21,6 +21,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type EvalContext struct {
@@ -230,6 +231,49 @@ func RunFilter(doc map[string]interface{}, filter *Filter, ctx EvalContext) (boo
 	}
 
 	return connor.Match(filter.Conditions, doc)
+}
+
+// ParseFilterFieldsForDescription parses the fields that are defined in the SchemaDescription
+// from the filter conditions``
+func ParseFilterFieldsForDescription(conditions map[string]interface{}, schema client.SchemaDescription) []client.FieldDescription {
+	return parseFilterFieldsForDescriptionMap(conditions, schema)
+}
+
+func parseFilterFieldsForDescriptionMap(conditions map[string]interface{}, schema client.SchemaDescription) []client.FieldDescription {
+	fields := make([]client.FieldDescription, 0)
+	for k, v := range conditions {
+		switch k {
+		case "$or", "$and":
+			conds := v.([]interface{})
+			parsedFileds := parseFilterFieldsForDescriptionSlice(conds, schema)
+			fields = append(fields, parsedFileds...)
+		case "$not":
+			conds := v.(map[string]interface{})
+			parsedFileds := parseFilterFieldsForDescriptionMap(conds, schema)
+			fields = append(fields, parsedFileds...)
+		default:
+			f, found := schema.GetField(k)
+			if !found || f.IsObject() {
+				continue
+			}
+			fields = append(fields, f)
+		}
+	}
+	return fields
+}
+
+func parseFilterFieldsForDescriptionSlice(conditions []interface{}, schema client.SchemaDescription) []client.FieldDescription {
+	fields := make([]client.FieldDescription, 0)
+	for _, v := range conditions {
+		switch cond := v.(type) {
+		case map[string]interface{}:
+			parsedFields := parseFilterFieldsForDescriptionMap(cond, schema)
+			fields = append(fields, parsedFields...)
+		default:
+			// error
+		}
+	}
+	return fields
 }
 
 /*
