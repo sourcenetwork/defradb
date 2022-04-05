@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package delete
+package relation_delete
 
 import (
 	"testing"
@@ -17,170 +17,149 @@ import (
 	relationTests "github.com/sourcenetwork/defradb/db/tests/mutation/relation"
 )
 
-func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
+func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 
 		{
-			Description: "Simple delete mutation where one element exists.",
+			Description: "Relational delete mutation where one element exists.",
 			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							_key
 						}
 					}`,
 			Docs: map[int][]string{
+				// Books
 				0: {
+					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
 					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
+					"name": "100 Go Mistakes to Avoid.",
+					"rating": 4.8,
+					"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
+				}`)},
+				// Authors
+				1: {
+					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
+					(`{
+					"name": "Teiva Harsanyi",
+					"age": 48,
+					"verified": true,
+					"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
+				}`)},
+				// Publishers
+				2: {
+					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
+					(`{
+					"name": "Manning Early Access Program (MEAP)",
+					"address": "Online"
+				}`)},
 			},
 			Results: []map[string]interface{}{
 				{
-					"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"_key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},
 			},
 			ExpectedError: "",
 		},
 
 		{
-			Description: "Simple delete mutation with an aliased _key name.",
+			Description: "Relational delete mutation with an aliased _key name.",
 			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							FancyKey: _key
+						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							AliasOfKey: _key
 						}
 					}`,
 			Docs: map[int][]string{
+				// Books
 				0: {
+					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
 					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
+					"name": "100 Go Mistakes to Avoid.",
+					"rating": 4.8,
+					"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
+				}`)},
+				// Authors
+				1: {
+					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
+					(`{
+					"name": "Teiva Harsanyi",
+					"age": 48,
+					"verified": true,
+					"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
+				}`)},
+				// Publishers
+				2: {
+					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
+					(`{
+					"name": "Manning Early Access Program (MEAP)",
+					"address": "Online"
+				}`)},
 			},
 			Results: []map[string]interface{}{
 				{
-					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"AliasOfKey": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},
 			},
 			ExpectedError: "",
 		},
+
 		{
-			Description: "Delete an updated document and return an aliased _key name.",
+			Description: "Relational Delete of an updated document and an aliased _key name.",
 			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							MyTestKey: _key
-						}
-					}`,
+						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							Key: _key
+					}
+				}`,
+
 			Docs: map[int][]string{
+				// Books
 				0: {
+					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
 					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
+						"name": "100 Go Mistakes to Avoid.",
+						"rating": 4.8,
+						"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
+					}`),
+				},
+
+				// Authors
+				1: {
+					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
+					(`{
+					"name": "Teiva Harsanyi",
+					"age": 48,
+					"verified": true,
+					"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
+					}`),
+				},
+
+				// Publishers
+				2: {
+					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
+					(`{
+						"name": "Manning Early Access Program (MEAP)",
+						"address": "Online"
+					}`),
+
+					// bae-5c599633-d6d2-56ae-b3f0-1b65b4cee9fe
+					(`{
+						"name": "Manning Publications",
+						"address": "Website"
 					}`),
 				},
 			},
 			Updates: map[int][]string{
 				0: {
 					(`{
-						"age":  27,
-						"points": 48.2,
-						"verified": false
-					}`),
-				},
+						"name": "Rust in Action.",
+						"publisher_id": "bae-5c599633-d6d2-56ae-b3f0-1b65b4cee9fe"
+					}`)},
 			},
 			Results: []map[string]interface{}{
 				{
-					"MyTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					"Key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},
 			},
 			ExpectedError: "",
-		},
-	}
-
-	for _, test := range tests {
-		relationTests.ExecuteTestCase(t, test)
-	}
-}
-
-func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
-		{
-			Description: "Simple delete mutation while no document exists.",
-			Query: `mutation {
-						delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
-							_key
-						}
-					}`,
-			Docs:          map[int][]string{},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Deletion of a document that doesn't exist in non-empty collection.",
-			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Deletion of a document without sub selection, should give error.",
-			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810")
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
-		},
-
-		{
-			Description: "Deletion of a document without _key sub-selection.",
-			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
 
