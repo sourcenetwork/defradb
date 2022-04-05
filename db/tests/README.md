@@ -1,6 +1,6 @@
 ## Testing Guide
 
-- We want to keep the mutation and query tests seperate, here is what the folder
+- We want to keep the mutation and query tests separate, here is what the folder
 structure looks like currently:
 ```
     db/tests
@@ -12,7 +12,7 @@ structure looks like currently:
     a single schema. For example:
 `db/tests/query/simple` and `db/tests/query/complex` have different schemas.
 
-- We can group different types of tests using the same schema into furthur sub-folders.
+- We can group different types of tests using the same schema into further sub-folders.
     For example:
     - `db/tests/mutation/simple/create`: contains tests that 
         use the `simple` schema to test only the create mutation.
