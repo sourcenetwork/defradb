@@ -13,6 +13,7 @@ package fetcher
 import (
 	"context"
 	"errors"
+	"math"
 
 	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
@@ -74,6 +75,8 @@ type DocumentFetcher struct {
 	filterFields    map[string]struct{}
 	numReqFields    int
 	numFilterFields int
+	seekPointID     client.FieldID
+	needSeek        bool // shortcut if we don't need to seek
 
 	doc         *encodedDocument
 	decodedDoc  *client.Document
@@ -99,11 +102,18 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 	df.index = index
 	df.reverse = reverse
 	df.reqFields = make(map[string]struct{})
+	df.needSeek = false
 	df.doc = new(encodedDocument)
+	minReqFieldID := client.FieldID(math.MaxUint32)
 	for _, f := range reqFields {
+
 		// @todo: Sanity check, make sure fid is in schema
 		if f.ID == 0 {
 			continue // skip _key
+		}
+		// track min req field ID for seek point calc
+		if f.ID < minReqFieldID {
+			minReqFieldID = f.ID
 		}
 		df.reqFields[f.ID.String()] = struct{}{}
 		// fmt.Printf("adding %s %v to requested fields...\n", f.Name, f.ID)
@@ -117,11 +127,23 @@ func (df *DocumentFetcher) Init(col *client.CollectionDescription, index *client
 		filterFields := parser.ParseFilterFieldsForDescription(filter.Conditions, col.Schema)
 		// fmt.Println("Filter Fields:", filterFields)
 		df.filterFields = make(map[string]struct{})
+		maxFilterFieldID := client.FieldID(0)
 		for _, f := range filterFields {
 			if f.ID == 0 {
 				continue // skip _key
 			}
+			// track max filter field id for seek point calc
+			if f.ID > maxFilterFieldID {
+				maxFilterFieldID = f.ID
+			}
 			df.filterFields[f.ID.String()] = struct{}{}
+		}
+
+		// calculate if we need to seek when iterating to get req field
+		// on the second pass
+		if maxFilterFieldID > minReqFieldID {
+			df.seekPointID = minReqFieldID
+			df.needSeek = true
 		}
 	}
 	df.numFilterFields = len(df.filterFields)
@@ -602,12 +624,21 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 			} else {
 				// fmt.Println("passed!")
 				// fmt.Printf("%+v\n", df.kv)
-				targetKey := core.DataStoreKey{
-					CollectionId: df.kv.Key.CollectionId,
-					IndexId:      df.kv.Key.IndexId,
-					DocKey:       df.kv.Key.DocKey,
+				// @todo: Check if we *need* to seek
+				// If all filter fields are contained within req fields
+				// AND largest filter field id <= smallest req field id
+				if df.needSeek {
+					// fmt.Println("seeking")
+					targetKey := core.DataStoreKey{
+						CollectionId: df.kv.Key.CollectionId,
+						IndexId:      df.kv.Key.IndexId,
+						DocKey:       df.kv.Key.DocKey,
+						FieldId:      df.seekPointID.String(),
+					}
+					df.kvIter.Seek(targetKey.ToString())
+				} else {
+					// fmt.Println("no seek")
 				}
-				df.kvIter.Seek(targetKey.ToString())
 				df.state = fetcherValueGather
 				// fmt.Printf("state transition: %v => %v\n", fetcherStateToString[fetcherFilterGather],
 				// fetcherStateToString[df.state])
