@@ -26,7 +26,7 @@ dump: build
 
 .PHONY: deps\:lint
 deps\:lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.44.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin latest
 
 .PHONY: deps\:go-acc
 deps\:go-acc:
