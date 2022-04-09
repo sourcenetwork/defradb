@@ -249,7 +249,7 @@ jobs:
           github.base_ref == 'develop'
         run: >
           cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
-          ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
+          benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
           ./tools/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
 
       - name: Comment Benchmark Results on PR
