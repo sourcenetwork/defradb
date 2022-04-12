@@ -10,8 +10,6 @@
 
 package simple
 
-// TODO!!!!! once scalar are merged, this should be capable of summing int/float arrays - likely needs some tweaks in generator.go and query.go
-
 import (
 	"testing"
 
