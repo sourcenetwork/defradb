@@ -30,7 +30,6 @@ type sumNode struct {
 
 func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, error) {
 	var sourceProperty string
-	var sourceCollection string
 	var isFloat bool
 
 	source, err := field.GetAggregateSource()
@@ -38,9 +37,10 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 		return nil, err
 	}
 
+	sourceCollection := source[0]
+
 	if colDesc := sourceInfo.collectionDescription; len(source) == 1 {
 		// If path length is one - we are summing an inline array
-		sourceCollection = source[0]
 		sourceProperty = ""
 
 		fieldDescription, fieldDescriptionFound := colDesc.GetField(sourceCollection)
@@ -54,7 +54,6 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 		isFloat = fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY
 	} else if len(source) == 2 {
 		// If path length is two, we are summing a group or a child relationship
-		sourceCollection = source[0]
 		sourceProperty = source[1]
 
 		var childFieldDescription client.FieldDescription
