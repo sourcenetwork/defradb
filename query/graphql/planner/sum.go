@@ -39,9 +39,9 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 	sourceCollection := source[0]
 	sourceProperty := getSourceProperty(source)
 
-	if colDesc := sourceInfo.collectionDescription; len(source) == 1 {
+	if len(source) == 1 {
 		// If path length is one - we are summing an inline array
-		fieldDescription, fieldDescriptionFound := colDesc.GetField(sourceCollection)
+		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
 		if !fieldDescriptionFound {
 			return nil, fmt.Errorf(
 				"Unable to find field description for field: %s",
@@ -56,13 +56,13 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 		if sourceCollection == parser.GroupFieldName {
 			// If the source collection is a group, then the description of the collection
 			//  to sum is this object.
-			fieldDescription, fieldDescriptionFound := colDesc.GetField(sourceProperty)
+			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
 			if !fieldDescriptionFound {
 				return nil, fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
 			}
 			childFieldDescription = fieldDescription
 		} else {
-			parentFieldDescription, parentFieldDescriptionFound := colDesc.GetField(sourceCollection)
+			parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
 			if !parentFieldDescriptionFound {
 				return nil, fmt.Errorf(
 					"Unable to find parent field description for field: %s",
