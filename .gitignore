@@ -6,3 +6,4 @@ coverage-full.txt
 coverage-quick.txt
 bench/*.log
 bench/*.svg
+.vscode
