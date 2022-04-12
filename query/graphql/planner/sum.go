@@ -29,8 +29,6 @@ type sumNode struct {
 }
 
 func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, error) {
-	var isFloat bool
-
 	source, err := field.GetAggregateSource()
 	if err != nil {
 		return nil, err
@@ -38,51 +36,9 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 
 	sourceCollection := source[0]
 	sourceProperty := getSourceProperty(source)
-
-	if len(source) == 1 {
-		// If path length is one - we are summing an inline array
-		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
-		if !fieldDescriptionFound {
-			return nil, fmt.Errorf(
-				"Unable to find field description for field: %s",
-				sourceCollection,
-			)
-		}
-
-		isFloat = fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY
-	} else if len(source) == 2 {
-		// If path length is two, we are summing a group or a child relationship
-		var childFieldDescription client.FieldDescription
-		if sourceCollection == parser.GroupFieldName {
-			// If the source collection is a group, then the description of the collection
-			//  to sum is this object.
-			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
-			if !fieldDescriptionFound {
-				return nil, fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
-			}
-			childFieldDescription = fieldDescription
-		} else {
-			parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
-			if !parentFieldDescriptionFound {
-				return nil, fmt.Errorf(
-					"Unable to find parent field description for field: %s",
-					sourceCollection,
-				)
-			}
-			collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
-			if err != nil {
-				return nil, err
-			}
-			fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
-			if !fieldDescriptionFound {
-				return nil, fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
-			}
-			childFieldDescription = fieldDescription
-		}
-
-		isFloat = childFieldDescription.Kind == client.FieldKind_FLOAT
-	} else {
-		return nil, fmt.Errorf("Sum must be provided with a property to sum.")
+	isFloat, err := p.getIsFloat(sourceInfo, source, sourceCollection, sourceProperty)
+	if err != nil {
+		return nil, err
 	}
 
 	return &sumNode{
@@ -92,6 +48,59 @@ func (p *Planner) Sum(sourceInfo *sourceInfo, field *parser.Field) (*sumNode, er
 		sourceProperty:   sourceProperty,
 		virtualFieldId:   field.Name,
 	}, nil
+}
+
+func (p *Planner) getIsFloat(sourceInfo *sourceInfo, source []string, sourceCollection string, sourceProperty string) (bool, error) {
+	sourceFieldDescription, err := p.getSourceField(sourceInfo, source, sourceCollection, sourceProperty)
+	if err != nil {
+		return false, err
+	}
+
+	return sourceFieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
+		sourceFieldDescription.Kind == client.FieldKind_FLOAT, nil
+}
+
+func (p *Planner) getSourceField(sourceInfo *sourceInfo, source []string, sourceCollection string, sourceProperty string) (client.FieldDescription, error) {
+	if len(source) == 1 {
+		// If path length is one - we are summing an inline array
+		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+		if !fieldDescriptionFound {
+			return client.FieldDescription{}, fmt.Errorf(
+				"Unable to find field description for field: %s",
+				sourceCollection,
+			)
+		}
+		return fieldDescription, nil
+	} else if len(source) == 2 {
+		// If path length is two, we are summing a group or a child relationship
+		if sourceCollection == parser.GroupFieldName {
+			// If the source collection is a group, then the description of the collection
+			//  to sum is this object.
+			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
+			if !fieldDescriptionFound {
+				return client.FieldDescription{}, fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
+			}
+			return fieldDescription, nil
+		} else {
+			parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+			if !parentFieldDescriptionFound {
+				return client.FieldDescription{}, fmt.Errorf(
+					"Unable to find parent field description for field: %s",
+					sourceCollection,
+				)
+			}
+			collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
+			if err != nil {
+				return client.FieldDescription{}, err
+			}
+			fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
+			if !fieldDescriptionFound {
+				return client.FieldDescription{}, fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
+			}
+			return fieldDescription, nil
+		}
+	}
+	return client.FieldDescription{}, fmt.Errorf("Unable to determine sum type.")
 }
 
 func getSourceProperty(source []string) string {
