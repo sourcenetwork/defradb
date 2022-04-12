@@ -61,17 +61,17 @@ var versionCmd = &cobra.Command{
 		switch strings.ToLower(format) {
 
 		case "short":
-			fmt.Println(DefraVersion.Tag)
+			fmt.Println(DefraVersion.Tag) // nolint:forbidigo
 
 		case "json":
 			jVersion, err := DefraVersion.JsonVersion()
 			if err != nil {
 				return err
 			}
-			fmt.Println(jVersion)
+			fmt.Println(jVersion) // nolint:forbidigo
 
 		default:
-			fmt.Println(DefraVersion.FullVersion())
+			fmt.Println(DefraVersion.FullVersion()) // nolint:forbidigo
 
 		}
 		return nil
