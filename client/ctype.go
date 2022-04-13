@@ -14,7 +14,6 @@ package client
 type CType byte
 
 const (
-	//no lint
 	NONE_CRDT = CType(iota) // reserved none type
 	LWW_REGISTER
 	OBJECT
