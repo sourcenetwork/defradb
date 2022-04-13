@@ -390,7 +390,7 @@ func (c *collection) Index(id uint32) (client.IndexDescription, error) {
 		}
 	}
 
-	return client.IndexDescription{}, errors.New("No index found for given ID")
+	return client.IndexDescription{}, client.ErrIndexNotFound
 }
 
 // CreateIndex creates a new index on the collection. Custom indexes
