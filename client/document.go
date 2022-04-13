@@ -36,13 +36,6 @@ import (
 // of complex interactions with the underlying KV Datastore, as well as the
 // Merkle CRDT semantics.
 
-// errors
-var (
-	ErrFieldNotExist     = errors.New("The given field does not exist")
-	ErrFieldNotObject    = errors.New("Trying to access field on a non object type")
-	ErrValueTypeMismatch = errors.New("Value does not match indicated type")
-)
-
 // Document is a generalized struct referring to a stored document in the database.
 //
 // It *can* have a reference to a enforced schema, which is enforced at the time
