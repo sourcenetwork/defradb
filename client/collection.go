@@ -143,8 +143,11 @@ type Collection interface {
 	GetAllDocKeys(ctx context.Context) (<-chan DocKeysResult, error)
 }
 
+// DocKeysResult wraps the result of an attempt at a DocKey retrieval operation.
 type DocKeysResult struct {
+	// If a DocKey was successfully retrieved, this will be that key.
 	Key DocKey
+	// If an error was generated whilst attempting to retrieve the DocKey, this will be the error.
 	Err error
 }
 
