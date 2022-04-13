@@ -24,11 +24,11 @@ import (
 
 // Key Versions
 const (
-	V0 = 0x01
+	v0 = 0x01
 )
 
 var validVersions = map[uint16]bool{
-	V0: true,
+	v0: true,
 }
 
 var (
@@ -41,7 +41,7 @@ var (
 
 // VersionToNamespace is a convenience for mapping between Version number and its UUID Namespace
 var VersionToNamespace = map[uint16]uuid.UUID{
-	V0: NamespaceSDNDocKeyV0,
+	v0: NamespaceSDNDocKeyV0,
 }
 
 // DocKey is the root key identifier for documents in DefraDB
@@ -59,7 +59,7 @@ var Undef = DocKey{}
 // TODO: Parameterize namespace Version
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
-		version: V0,
+		version: v0,
 		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
