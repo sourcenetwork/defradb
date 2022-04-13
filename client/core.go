@@ -81,7 +81,6 @@ type DocKeysResult struct {
 }
 
 type UpdateOpt struct{}
-type CreateOpt struct{}
 type DeleteOpt struct{}
 
 type UpdateResult struct {
