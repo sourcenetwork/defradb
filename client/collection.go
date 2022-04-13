@@ -39,7 +39,7 @@ type Collection interface {
 	UpdateWithKey(context.Context, DocKey, interface{}) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []DocKey, interface{}) (*UpdateResult, error)
 
-	DeleteWith(context.Context, interface{}) error
+	DeleteWith(context.Context, interface{}) (*DeleteResult, error)
 	DeleteWithFilter(context.Context, interface{}) (*DeleteResult, error)
 	DeleteWithKey(context.Context, DocKey) (*DeleteResult, error)
 	DeleteWithKeys(context.Context, []DocKey) (*DeleteResult, error)

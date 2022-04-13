@@ -41,23 +41,16 @@ var (
 func (c *collection) DeleteWith(
 	ctx context.Context,
 	target interface{},
-) error {
-
+) (*client.DeleteResult, error) {
 	switch t := target.(type) {
-
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.DeleteWithFilter(ctx, t)
-		return err
-
+		return c.DeleteWithFilter(ctx, t)
 	case client.DocKey:
-		_, err := c.DeleteWithKey(ctx, t)
-		return err
-
+		return c.DeleteWithKey(ctx, t)
 	case []client.DocKey:
-		_, err := c.DeleteWithKeys(ctx, t)
-		return err
+		return c.DeleteWithKeys(ctx, t)
 	default:
-		return client.ErrInvalidDeleteTarget
+		return nil, client.ErrInvalidDeleteTarget
 	}
 }
 
