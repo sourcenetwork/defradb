@@ -41,20 +41,20 @@ var (
 func (c *collection) DeleteWith(
 	ctx context.Context,
 	target interface{},
-	opts ...client.DeleteOpt) error {
+) error {
 
 	switch t := target.(type) {
 
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.DeleteWithFilter(ctx, t, opts...)
+		_, err := c.DeleteWithFilter(ctx, t)
 		return err
 
 	case client.DocKey:
-		_, err := c.DeleteWithKey(ctx, t, opts...)
+		_, err := c.DeleteWithKey(ctx, t)
 		return err
 
 	case []client.DocKey:
-		_, err := c.DeleteWithKeys(ctx, t, opts...)
+		_, err := c.DeleteWithKeys(ctx, t)
 		return err
 	default:
 		return client.ErrInvalidDeleteTarget
@@ -65,7 +65,7 @@ func (c *collection) DeleteWith(
 func (c *collection) DeleteWithKey(
 	ctx context.Context,
 	key client.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -75,7 +75,7 @@ func (c *collection) DeleteWithKey(
 	defer c.discardImplicitTxn(ctx, txn)
 
 	dsKey := c.getPrimaryKeyFromDocKey(key)
-	res, err := c.deleteWithKey(ctx, txn, dsKey, opts...)
+	res, err := c.deleteWithKey(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (c *collection) DeleteWithKey(
 func (c *collection) DeleteWithKeys(
 	ctx context.Context,
 	keys []client.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -96,7 +96,7 @@ func (c *collection) DeleteWithKeys(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithKeys(ctx, txn, keys, opts...)
+	res, err := c.deleteWithKeys(ctx, txn, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *collection) DeleteWithKeys(
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter interface{},
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -117,7 +117,7 @@ func (c *collection) DeleteWithFilter(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithFilter(ctx, txn, filter, opts...)
+	res, err := c.deleteWithFilter(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (c *collection) deleteWithKey(
 	ctx context.Context,
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, key)
@@ -160,7 +160,7 @@ func (c *collection) deleteWithKeys(
 	ctx context.Context,
 	txn datastore.Txn,
 	keys []client.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 
 	results := &client.DeleteResult{
 		DocKeys: make([]string, 0),
@@ -199,7 +199,7 @@ func (c *collection) deleteWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+) (*client.DeleteResult, error) {
 
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)

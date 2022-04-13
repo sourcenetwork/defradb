@@ -63,10 +63,10 @@ type Collection interface {
 	UpdateWithKey(context.Context, DocKey, interface{}) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []DocKey, interface{}) (*UpdateResult, error)
 
-	DeleteWith(context.Context, interface{}, ...DeleteOpt) error
-	DeleteWithFilter(context.Context, interface{}, ...DeleteOpt) (*DeleteResult, error)
-	DeleteWithKey(context.Context, DocKey, ...DeleteOpt) (*DeleteResult, error)
-	DeleteWithKeys(context.Context, []DocKey, ...DeleteOpt) (*DeleteResult, error)
+	DeleteWith(context.Context, interface{}) error
+	DeleteWithFilter(context.Context, interface{}) (*DeleteResult, error)
+	DeleteWithKey(context.Context, DocKey) (*DeleteResult, error)
+	DeleteWithKeys(context.Context, []DocKey) (*DeleteResult, error)
 
 	Get(context.Context, DocKey) (*Document, error)
 
@@ -79,8 +79,6 @@ type DocKeysResult struct {
 	Key DocKey
 	Err error
 }
-
-type DeleteOpt struct{}
 
 type UpdateResult struct {
 	Count   int64
