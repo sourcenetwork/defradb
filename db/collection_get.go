@@ -34,7 +34,7 @@ func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Docume
 		return nil, err
 	}
 	if !found {
-		return nil, ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFound
 	}
 
 	doc, err := c.get(ctx, txn, dsKey)

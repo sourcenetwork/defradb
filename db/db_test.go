@@ -276,7 +276,7 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	_, err = col.Get(ctx, key)
-	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 }
 
 func TestDBDeleteDocument(t *testing.T) {
@@ -315,7 +315,7 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	deleted, err := col.Delete(ctx, key)
-	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 	assert.False(t, deleted)
 }
 

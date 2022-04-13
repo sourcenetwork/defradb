@@ -18,4 +18,5 @@ var (
 	ErrFieldNotObject    = errors.New("Trying to access field on a non object type")
 	ErrValueTypeMismatch = errors.New("Value does not match indicated type")
 	ErrIndexNotFound     = errors.New("No index found for given ID")
+	ErrDocumentNotFound  = errors.New("No document for the given key exists")
 )

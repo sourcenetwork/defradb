@@ -140,7 +140,7 @@ func (c *collection) deleteWithKey(
 		return nil, err
 	}
 	if !found {
-		return nil, ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFound
 	}
 
 	// Apply the function that will perform the full deletion of the document.
@@ -178,7 +178,7 @@ func (c *collection) deleteWithKeys(
 			return nil, err
 		}
 		if !found {
-			return nil, ErrDocumentNotFound
+			return nil, client.ErrDocumentNotFound
 		}
 
 		// Apply the function that will perform the full deletion of this document.
@@ -290,7 +290,7 @@ func (c *collection) applyFullDelete(
 		return err
 	}
 	if !found {
-		return ErrDocumentNotFound
+		return client.ErrDocumentNotFound
 	}
 
 	// 1. =========================== Delete blockstore state ===========================

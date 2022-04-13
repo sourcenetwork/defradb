@@ -511,7 +511,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 		return err
 	}
 	if !exists {
-		return ErrDocumentNotFound
+		return client.ErrDocumentNotFound
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -654,7 +654,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 		return false, err
 	}
 	if !exists {
-		return false, ErrDocumentNotFound
+		return false, client.ErrDocumentNotFound
 	}
 
 	// run delete, commit if successful
