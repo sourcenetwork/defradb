@@ -34,7 +34,7 @@ type Collection interface {
 	Delete(context.Context, DocKey) (bool, error)
 	Exists(context.Context, DocKey) (bool, error)
 
-	UpdateWith(context.Context, interface{}, interface{}) error
+	UpdateWith(ctx context.Context, target interface{}, updater interface{}) (*UpdateResult, error)
 	UpdateWithFilter(context.Context, interface{}, interface{}) (*UpdateResult, error)
 	UpdateWithKey(context.Context, DocKey, interface{}) (*UpdateResult, error)
 	UpdateWithKeys(context.Context, []DocKey, interface{}) (*UpdateResult, error)

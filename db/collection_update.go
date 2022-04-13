@@ -44,19 +44,16 @@ func (c *collection) UpdateWith(
 	ctx context.Context,
 	target interface{},
 	updater interface{},
-) error {
+) (*client.UpdateResult, error) {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.UpdateWithFilter(ctx, t, updater)
-		return err
+		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocKey:
-		_, err := c.UpdateWithKey(ctx, t, updater)
-		return err
+		return c.UpdateWithKey(ctx, t, updater)
 	case []client.DocKey:
-		_, err := c.UpdateWithKeys(ctx, t, updater)
-		return err
+		return c.UpdateWithKeys(ctx, t, updater)
 	default:
-		return client.ErrInvalidUpdateTarget
+		return nil, client.ErrInvalidUpdateTarget
 	}
 }
 
