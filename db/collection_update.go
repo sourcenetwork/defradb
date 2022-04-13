@@ -28,7 +28,6 @@ import (
 )
 
 var (
-	ErrInvalidUpdateTarget   = errors.New("The doc update targeter is an unknown type")
 	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
 	ErrInvalidUpdater        = errors.New("The doc updater is an unknown type")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
@@ -59,7 +58,7 @@ func (c *collection) UpdateWith(
 		_, err := c.UpdateWithKeys(ctx, t, updater, opts...)
 		return err
 	default:
-		return ErrInvalidUpdateTarget
+		return client.ErrInvalidUpdateTarget
 	}
 }
 

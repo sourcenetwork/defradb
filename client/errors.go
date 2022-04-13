@@ -14,9 +14,10 @@ import "errors"
 
 // errors
 var (
-	ErrFieldNotExist     = errors.New("The given field does not exist")
-	ErrFieldNotObject    = errors.New("Trying to access field on a non object type")
-	ErrValueTypeMismatch = errors.New("Value does not match indicated type")
-	ErrIndexNotFound     = errors.New("No index found for given ID")
-	ErrDocumentNotFound  = errors.New("No document for the given key exists")
+	ErrFieldNotExist       = errors.New("The given field does not exist")
+	ErrFieldNotObject      = errors.New("Trying to access field on a non object type")
+	ErrValueTypeMismatch   = errors.New("Value does not match indicated type")
+	ErrIndexNotFound       = errors.New("No index found for given ID")
+	ErrDocumentNotFound    = errors.New("No document for the given key exists")
+	ErrInvalidUpdateTarget = errors.New("The document update target is an unknown type")
 )
