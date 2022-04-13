@@ -26,7 +26,6 @@ type Collection interface {
 	Indexes() []IndexDescription
 	PrimaryIndex() IndexDescription
 	Index(uint32) (IndexDescription, error)
-	CreateIndex(IndexDescription) error
 
 	Create(context.Context, *Document) error
 	CreateMany(context.Context, []*Document) error

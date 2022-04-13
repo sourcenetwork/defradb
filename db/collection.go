@@ -393,13 +393,6 @@ func (c *collection) Index(id uint32) (client.IndexDescription, error) {
 	return client.IndexDescription{}, client.ErrIndexNotFound
 }
 
-// CreateIndex creates a new index on the collection. Custom indexes
-// are always "Secondary indexes". Primary indexes are automatically created
-// on Collection creation, and cannot be changed.
-func (c *collection) CreateIndex(idesc client.IndexDescription) error {
-	panic("not implemented")
-}
-
 func (c *collection) SchemaID() string {
 	return c.schemaID
 }
