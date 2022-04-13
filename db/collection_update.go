@@ -29,7 +29,6 @@ import (
 
 var (
 	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
-	ErrInvalidUpdater        = errors.New("The doc updater is an unknown type")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
 	ErrInvalidMergeValueType = errors.New(
 		"The type of value in the merge patch doesn't match the schema",
@@ -146,7 +145,7 @@ func (c *collection) updateWithKey(
 	case map[string]interface{}:
 		isPatch = false
 	default:
-		return nil, ErrInvalidUpdater
+		return nil, client.ErrInvalidUpdater
 	}
 
 	doc, err := c.Get(ctx, key)
@@ -193,7 +192,7 @@ func (c *collection) updateWithKeys(
 	case map[string]interface{}:
 		isPatch = false
 	default:
-		return nil, ErrInvalidUpdater
+		return nil, client.ErrInvalidUpdater
 	}
 
 	results := &client.UpdateResult{
@@ -244,7 +243,7 @@ func (c *collection) updateWithFilter(
 	case map[string]interface{}:
 		isMerge = true
 	default:
-		return nil, ErrInvalidUpdater
+		return nil, client.ErrInvalidUpdater
 	}
 
 	// scan through docs with filter
@@ -692,7 +691,7 @@ func parseUpdater(updater interface{}) (patcher, error) {
 	case nil:
 		return nil, ErrUpdateEmpty
 	default:
-		return nil, ErrInvalidUpdater
+		return nil, client.ErrInvalidUpdater
 	}
 }
 
@@ -718,7 +717,7 @@ func parseUpdaterSlice(v []interface{}) (patcher, error) {
 	for i, patch := range v {
 		p, ok := patch.(map[string]interface{})
 		if !ok {
-			return nil, ErrInvalidUpdater
+			return nil, client.ErrInvalidUpdater
 		}
 		patches[i] = p
 	}

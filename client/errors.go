@@ -20,4 +20,5 @@ var (
 	ErrIndexNotFound       = errors.New("No index found for given ID")
 	ErrDocumentNotFound    = errors.New("No document for the given key exists")
 	ErrInvalidUpdateTarget = errors.New("The document update target is an unknown type")
+	ErrInvalidUpdater      = errors.New("The doc updater is an unknown type")
 )
