@@ -36,12 +36,12 @@ var (
 	// Design a more appropriate system for future proofing doc key versions, ensuring
 	// backwards compatability. RE: CID
 	// *At the moment this is an random uuidV4
-	NamespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
+	namespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 )
 
 // VersionToNamespace is a convenience for mapping between Version number and its UUID Namespace
 var VersionToNamespace = map[uint16]uuid.UUID{
-	v0: NamespaceSDNDocKeyV0,
+	v0: namespaceSDNDocKeyV0,
 }
 
 // DocKey is the root key identifier for documents in DefraDB
@@ -60,7 +60,7 @@ var Undef = DocKey{}
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
 		version: v0,
-		uuid:    uuid.NewV5(NamespaceSDNDocKeyV0, dataCID.String()),
+		uuid:    uuid.NewV5(namespaceSDNDocKeyV0, dataCID.String()),
 		cid:     dataCID,
 	}
 }
