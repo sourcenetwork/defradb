@@ -58,10 +58,10 @@ type Collection interface {
 	Delete(context.Context, DocKey) (bool, error)
 	Exists(context.Context, DocKey) (bool, error)
 
-	UpdateWith(context.Context, interface{}, interface{}, ...UpdateOpt) error
-	UpdateWithFilter(context.Context, interface{}, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKey(context.Context, DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
-	UpdateWithKeys(context.Context, []DocKey, interface{}, ...UpdateOpt) (*UpdateResult, error)
+	UpdateWith(context.Context, interface{}, interface{}) error
+	UpdateWithFilter(context.Context, interface{}, interface{}) (*UpdateResult, error)
+	UpdateWithKey(context.Context, DocKey, interface{}) (*UpdateResult, error)
+	UpdateWithKeys(context.Context, []DocKey, interface{}) (*UpdateResult, error)
 
 	DeleteWith(context.Context, interface{}, ...DeleteOpt) error
 	DeleteWithFilter(context.Context, interface{}, ...DeleteOpt) (*DeleteResult, error)
@@ -80,7 +80,6 @@ type DocKeysResult struct {
 	Err error
 }
 
-type UpdateOpt struct{}
 type DeleteOpt struct{}
 
 type UpdateResult struct {

@@ -44,17 +44,16 @@ func (c *collection) UpdateWith(
 	ctx context.Context,
 	target interface{},
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) error {
 	switch t := target.(type) {
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.UpdateWithFilter(ctx, t, updater, opts...)
+		_, err := c.UpdateWithFilter(ctx, t, updater)
 		return err
 	case client.DocKey:
-		_, err := c.UpdateWithKey(ctx, t, updater, opts...)
+		_, err := c.UpdateWithKey(ctx, t, updater)
 		return err
 	case []client.DocKey:
-		_, err := c.UpdateWithKeys(ctx, t, updater, opts...)
+		_, err := c.UpdateWithKeys(ctx, t, updater)
 		return err
 	default:
 		return client.ErrInvalidUpdateTarget
@@ -68,14 +67,13 @@ func (c *collection) UpdateWithFilter(
 	ctx context.Context,
 	filter interface{},
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithFilter(ctx, txn, filter, updater, opts...)
+	res, err := c.updateWithFilter(ctx, txn, filter, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -89,14 +87,13 @@ func (c *collection) UpdateWithKey(
 	ctx context.Context,
 	key client.DocKey,
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithKey(ctx, txn, key, updater, opts...)
+	res, err := c.updateWithKey(ctx, txn, key, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -111,14 +108,13 @@ func (c *collection) UpdateWithKeys(
 	ctx context.Context,
 	keys []client.DocKey,
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
-	res, err := c.updateWithKeys(ctx, txn, keys, updater, opts...)
+	res, err := c.updateWithKeys(ctx, txn, keys, updater)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +127,6 @@ func (c *collection) updateWithKey(
 	txn datastore.Txn,
 	key client.DocKey,
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
@@ -178,7 +173,6 @@ func (c *collection) updateWithKeys(
 	txn datastore.Txn,
 	keys []client.DocKey,
 	updater interface{},
-	opts ...client.UpdateOpt,
 ) (*client.UpdateResult, error) {
 	patch, err := parseUpdater(updater)
 	if err != nil {
@@ -228,7 +222,7 @@ func (c *collection) updateWithFilter(
 	txn datastore.Txn,
 	filter interface{},
 	updater interface{},
-	opts ...client.UpdateOpt) (*client.UpdateResult, error) {
+) (*client.UpdateResult, error) {
 
 	patch, err := parseUpdater(updater)
 	if err != nil {
@@ -566,7 +560,7 @@ func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
-	opts ...client.UpdateOpt) (planner.Query, error) {
+) (planner.Query, error) {
 	var f *parser.Filter
 	var err error
 	switch fval := filter.(type) {
