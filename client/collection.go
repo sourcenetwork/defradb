@@ -159,7 +159,10 @@ type UpdateResult struct {
 	DocKeys []string
 }
 
+// DeleteResult wraps the result of an delete call.
 type DeleteResult struct {
-	Count   int64
+	// Count contains the number of documents deleted by the delete call.
+	Count int64
+	// DocKeys contains the DocKeys of all the documents deleted by the delete call.
 	DocKeys []string
 }
