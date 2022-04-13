@@ -52,9 +52,6 @@ type DocKey struct {
 	cid     cid.Cid
 }
 
-// Undef can be defined to be a nil like DocKey
-var Undef = DocKey{}
-
 // NewDocKeyV0 creates a new doc key identified by the root data CID, peer ID, and
 // namespaced by the versionNS
 // TODO: Parameterize namespace Version
