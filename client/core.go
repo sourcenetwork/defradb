@@ -14,30 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/datastore"
-
-	ds "github.com/ipfs/go-datastore"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
-
-type DB interface {
-	AddSchema(context.Context, string) error
-
-	CreateCollection(context.Context, CollectionDescription) (Collection, error)
-	GetCollectionByName(context.Context, string) (Collection, error)
-	GetCollectionBySchemaID(context.Context, string) (Collection, error)
-	GetAllCollections(ctx context.Context) ([]Collection, error)
-	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
-
-	Root() ds.Batching
-	Blockstore() blockstore.Blockstore
-
-	NewTxn(context.Context, bool) (datastore.Txn, error)
-	ExecQuery(context.Context, string) *QueryResult
-	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
-	Close(context.Context)
-
-	PrintDump(ctx context.Context)
-}
 
 type Collection interface {
 	Description() CollectionDescription
@@ -88,9 +65,4 @@ type UpdateResult struct {
 type DeleteResult struct {
 	Count   int64
 	DocKeys []string
-}
-
-type QueryResult struct {
-	Errors []interface{} `json:"errors,omitempty"`
-	Data   interface{}   `json:"data"`
 }
