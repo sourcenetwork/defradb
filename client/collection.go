@@ -151,8 +151,11 @@ type DocKeysResult struct {
 	Err error
 }
 
+// UpdateResult wraps the result of an update call.
 type UpdateResult struct {
-	Count   int64
+	// Count contains the number of documents updated by the update call.
+	Count int64
+	// DocKeys contains the DocKeys of all the documents updated by the update call.
 	DocKeys []string
 }
 
