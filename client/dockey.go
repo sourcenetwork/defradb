@@ -39,8 +39,9 @@ var (
 	namespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 )
 
-// VersionToNamespace is a convenience for mapping between Version number and its UUID Namespace
-var VersionToNamespace = map[uint16]uuid.UUID{
+// versionToNamespace is a convenience for mapping between Version number and its UUID Namespace
+// nolint
+var versionToNamespace = map[uint16]uuid.UUID{
 	v0: namespaceSDNDocKeyV0,
 }
 
