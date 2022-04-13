@@ -12,7 +12,10 @@ package client
 
 import "errors"
 
-// errors
+// Errors returnable from this package.
+//
+// This list is incomplete and undefined errors may also be returned.
+// Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrFieldNotExist       = errors.New("The given field does not exist")
 	ErrFieldNotObject      = errors.New("Trying to access field on a non object type")
