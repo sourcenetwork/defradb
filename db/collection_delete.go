@@ -30,9 +30,8 @@ import (
 )
 
 var (
-	ErrInvalidDeleteTarget = errors.New("The doc delete targeter is an unknown type")
-	ErrDeleteTargetEmpty   = errors.New("The doc delete targeter cannot be empty")
-	ErrDeleteEmpty         = errors.New("The doc delete cannot be empty")
+	ErrDeleteTargetEmpty = errors.New("The doc delete targeter cannot be empty")
+	ErrDeleteEmpty       = errors.New("The doc delete cannot be empty")
 )
 
 // DeleteWith deletes a target document. Target can be a Filter statement,
@@ -58,8 +57,7 @@ func (c *collection) DeleteWith(
 		_, err := c.DeleteWithKeys(ctx, t, opts...)
 		return err
 	default:
-		return ErrInvalidDeleteTarget
-
+		return client.ErrInvalidDeleteTarget
 	}
 }
 

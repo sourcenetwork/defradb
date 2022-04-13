@@ -21,4 +21,5 @@ var (
 	ErrDocumentNotFound    = errors.New("No document for the given key exists")
 	ErrInvalidUpdateTarget = errors.New("The document update target is an unknown type")
 	ErrInvalidUpdater      = errors.New("The doc updater is an unknown type")
+	ErrInvalidDeleteTarget = errors.New("The doc delete targeter is an unknown type")
 )
