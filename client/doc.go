@@ -8,11 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+/*
+The client package provides public members for interacting with a Defra DB instance.
 
-import "errors"
-
-// errors
-var (
-	ErrDocumentNotFound = errors.New("No document for the given key exists")
-)
+Only calls made via the `DB` and `Collection` interfaces interact with the underlying datastores.
+Currently the only provided implementation of `DB` is found in the `defra/db` package and can be
+instantiated via the `NewDB` function.
+*/
+package client

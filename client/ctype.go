@@ -13,8 +13,11 @@ package client
 // CType indicates CRDT type
 type CType byte
 
+// Available CRDT types.
+//
+// If a CRDT type is not declared here, we do not support it!  CRDT types here
+// may not be valid in all contexts.
 const (
-	//no lint
 	NONE_CRDT = CType(iota) // reserved none type
 	LWW_REGISTER
 	OBJECT

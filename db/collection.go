@@ -390,14 +390,7 @@ func (c *collection) Index(id uint32) (client.IndexDescription, error) {
 		}
 	}
 
-	return client.IndexDescription{}, errors.New("No index found for given ID")
-}
-
-// CreateIndex creates a new index on the collection. Custom indexes
-// are always "Secondary indexes". Primary indexes are automatically created
-// on Collection creation, and cannot be changed.
-func (c *collection) CreateIndex(idesc client.IndexDescription) error {
-	panic("not implemented")
+	return client.IndexDescription{}, client.ErrIndexNotFound
 }
 
 func (c *collection) SchemaID() string {
@@ -511,7 +504,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 		return err
 	}
 	if !exists {
-		return ErrDocumentNotFound
+		return client.ErrDocumentNotFound
 	}
 
 	err = c.update(ctx, txn, doc)
@@ -654,7 +647,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 		return false, err
 	}
 	if !exists {
-		return false, ErrDocumentNotFound
+		return false, client.ErrDocumentNotFound
 	}
 
 	// run delete, commit if successful
