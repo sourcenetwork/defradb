@@ -170,23 +170,23 @@ var startCmd = &cobra.Command{
 
 		// run the server listener in a separate goroutine
 		go func() {
+			log.Info(
+				ctx,
+				fmt.Sprintf(
+					"Providing HTTP API at http://%s. Use the GraphQL query endpoint at http://%s/graphql ",
+					config.Database.Address,
+					config.Database.Address,
+				),
+			)
 			s := api.NewServer(db)
 			if err := s.Listen(config.Database.Address); err != nil {
-				log.ErrorE(ctx, "Failed to start API listener", err)
+				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {
 					n.Close() //nolint
 				}
 				db.Close(ctx)
 				os.Exit(1)
 			}
-			log.Info(
-				ctx,
-				fmt.Sprintf(
-					"Running HTTP API at http://%s. Try it out at > curl http://%s/graphql",
-					config.Database.Address,
-					config.Database.Address,
-				),
-			)
 		}()
 
 		// wait for shutdown signal
