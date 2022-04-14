@@ -21,4 +21,4 @@ ifneq (,$(findstring all,$(suite))) # Check if default ALL value is set
 else ifneq ($(wildcard $(suite)/.),) # Check to make sure the requested suite exists
 	$(eval override suite = $(suite)/...)
 endif
-	go test -bench='_1?0{1,4}$$' ./$(suite) -benchtime=200ms -count=5 -timeout=20m
+	go test -bench='_1?0{1,4}$$' ./$(suite) -benchtime=100ms -count=10 -timeout=20m
