@@ -66,7 +66,7 @@ jobs:
           #  exist or not doesn't matter). But the good think is that the annotations
           #  will still show up. I think this can be useful if we don't want the pipeline
           #  to stop just because we had some linter errors. 
-          args: --issues-exit-code=1 --config .golangci.sourceinc.yaml
+          args: --issues-exit-code=1 --config tools/configs/golangci.yaml
 
           # Optional: we can set the below to `true` if we only want to see newly
           #  introduced linter errors, however I found that in practive that option is a
@@ -251,7 +251,7 @@ jobs:
           make deps:bench &&
           cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
           ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
-          ./tools/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
+          ./tools/scripts/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
 
       - name: Comment Benchmark Results on PR
         if: |

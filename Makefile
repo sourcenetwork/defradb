@@ -28,21 +28,28 @@ dump: build
 deps\:lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin latest
 
-.PHONY: deps\:go-acc
-deps\:go-acc:
+.PHONY: deps\:coverage
+deps\:coverage:
 	go install github.com/ory/go-acc@latest
-
-.PHONY: deps\:go-lines
-deps\:go-lines:
-	go install github.com/segmentio/golines@latest
 
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
 
-.PHONY: deps
-deps: deps\:lint deps\:go-acc deps\:bench
+.PHONY: deps\:golines
+deps\:golines:
+	go install github.com/segmentio/golines@latest
+
+.PHONY: deps\:chglog
+deps\:chglog:
+	go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
+
+.PHONY: deps\:modules
+deps\:modules:
 	go mod download
+
+.PHONY: deps
+deps: deps\:lint deps\:coverage deps\:bench deps\:golines deps\:chglog deps\:modules
 
 .PHONY: tidy
 tidy:
@@ -74,7 +81,7 @@ test\:bench-short:
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
-test\:coverage-full: deps\:go-acc
+test\:coverage-full: deps\:coverage
 	go-acc ./... --output=coverage-full.txt --covermode=atomic
 	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
 
@@ -90,11 +97,11 @@ test\:changes:
 
 .PHONY: validate\:codecov
 validate\:codecov:
-	curl --data-binary @codecov.yml https://codecov.io/validate
+	curl --data-binary @.github/codecov.yml https://codecov.io/validate
 
 .PHONY: lint
 lint:
-	golangci-lint run --config .golangci.sourceinc.yaml
+	golangci-lint run --config tools/configs/golangci.yaml
 
 .PHONY: lint\:todo
 lint\:todo:
@@ -102,4 +109,8 @@ lint\:todo:
 
 .PHONY: lint\:list
 lint\:list:
-	golangci-lint linters --config .golangci.sourceinc.yaml
+	golangci-lint linters --config tools/configs/golangci.yaml
+
+.PHONY: chglog
+chglog:
+	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md

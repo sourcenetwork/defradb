@@ -5,22 +5,22 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
+
+  # Job builds and runs all the test.
   build:
     working_directory: ~/repo
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: circleci/golang:1.17.5
+      # https://circleci.com/developer/images/image/cimg/go
+      - image: cimg/go:1.17
     # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
-          name: Install Dependencies
-          command: make deps
+          name: Install go modules into the module cache.
+          command: make deps:modules
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -36,22 +36,22 @@ jobs:
             DEFRA_MAP: true
       - store_test_results:
           path: /tmp/test-reports
+
+  # Job detects if we have a change.
   change_detection:
     working_directory: ~/repo
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: circleci/golang:1.17.5
+      # https://circleci.com/developer/images/image/cimg/go
+      - image: cimg/go:1.17
     # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
-          name: Install Dependencies
-          command: make deps
+          name: Install go modules into the module cache.
+          command: make deps:modules
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -67,7 +67,6 @@ jobs:
           path: /tmp/test-reports
 
 # Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build-test: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
