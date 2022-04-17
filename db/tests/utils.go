@@ -552,11 +552,20 @@ func setupDatabaseUsingTargetBranch(
 	out, err := goTestCmd.Output()
 
 	if err != nil {
-		// Only log the output if there is an error, logging child test runs confuses
-		// the go test runner making it think there are no tests in the parent
-		// run (it will still run everything though)!
-		log.ErrorE(ctx, string(out), err)
-		panic(err)
+		// If file is not found - this must be a new test and
+		// doesn't exist in the target branch, so we pass it
+		// because the child process tries to run the test, but
+		// if it doesnt find it, the parent test should pass (not panic).
+		if strings.Contains(err.Error(), ": no such file or directory") {
+			t.SkipNow()
+		} else {
+			// Only log the output if there is an error different from above,
+			// logging child test runs confuses the go test runner making it
+			// think there are no tests in the parent run (it will still
+			// run everything though)!
+			log.ErrorE(ctx, string(out), err)
+			panic(err)
+		}
 	}
 
 	refreshedDb, err := newBadgerFileDB(ctx, t, dbi.path)
