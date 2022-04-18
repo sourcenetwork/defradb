@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package complex
+package mix
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/db/tests/mutation/simple"
 )
 
-func TestMutationComplexWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
+func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Create followed by delete in same transaction",
 		TransactionalQueries: []testUtils.TransactionQuery{
@@ -55,7 +55,7 @@ func TestMutationComplexWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationComplexWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
+func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Create followed by delete on 2nd transaction",
 		TransactionalQueries: []testUtils.TransactionQuery{
@@ -117,7 +117,7 @@ func TestMutationComplexWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *t
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationComplexWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
+func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Update followed by read in same transaction",
 		Docs: map[int][]string{
@@ -166,7 +166,7 @@ func TestMutationComplexWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T)
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationComplexWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
+func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Update followed by read in different transaction",
 		Docs: map[int][]string{
@@ -219,7 +219,7 @@ func TestMutationComplexWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *te
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationComplexWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
+func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Update by two different transactions",
 		Docs: map[int][]string{
