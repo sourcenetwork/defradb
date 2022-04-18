@@ -27,9 +27,9 @@ type versionInfo struct {
 
 func (v versionInfo) FullVersion() string {
 	return fmt.Sprintf(`DefraDB's Version Information:
-  *  🏷️  version tag  = %s
-  *   # build commit = %s
-  *  📅 release date = %s`,
+  *  version tag  : %s
+  *  build commit : %s
+  *  release date : %s`,
 		color.BlueString(DefraVersion.Tag),
 		color.GreenString(DefraVersion.Commit),
 		color.YellowString(DefraVersion.Date),
