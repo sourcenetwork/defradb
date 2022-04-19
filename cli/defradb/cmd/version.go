@@ -81,7 +81,7 @@ var versionCmd = &cobra.Command{
 func initVersionFormatFlag(cmd *cobra.Command) {
 	fs := cmd.Flags()
 	fs.SortFlags = false
-	fs.StringVar(&format, "f", "", "The version's format can be one of: 'short', 'json'")
+	fs.StringVarP(&format, "format", "f", "", "The version's format can be one of: 'short', 'json'")
 }
 
 func init() {
