@@ -95,6 +95,7 @@ linters:
     - errcheck
     - forbidigo
     - lll
+    - revive
     # - wrapcheck
     # - errorlint
     # - gci
