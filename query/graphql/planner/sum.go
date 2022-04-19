@@ -148,25 +148,27 @@ func (p *Planner) getSourceField(
 					fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
 			}
 			return fieldDescription, nil
-		} else {
-			parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
-			if !parentFieldDescriptionFound {
-				return client.FieldDescription{}, fmt.Errorf(
-					"Unable to find parent field description for field: %s",
-					sourceCollection,
-				)
-			}
-			collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
-			if err != nil {
-				return client.FieldDescription{}, err
-			}
-			fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
-			if !fieldDescriptionFound {
-				return client.FieldDescription{},
-					fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
-			}
-			return fieldDescription, nil
 		}
+
+		parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+		if !parentFieldDescriptionFound {
+			return client.FieldDescription{}, fmt.Errorf(
+				"Unable to find parent field description for field: %s",
+				sourceCollection,
+			)
+		}
+
+		collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
+		if err != nil {
+			return client.FieldDescription{}, err
+		}
+
+		fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
+		if !fieldDescriptionFound {
+			return client.FieldDescription{},
+				fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
+		}
+		return fieldDescription, nil
 	}
 	return client.FieldDescription{}, fmt.Errorf("Unable to determine sum type.")
 }
