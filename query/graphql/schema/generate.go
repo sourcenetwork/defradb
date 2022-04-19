@@ -220,9 +220,9 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 		case *gql.Object:
 			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
-			} else {
-				g.expandedFields[fieldKey] = true
 			}
+			g.expandedFields[fieldKey] = true
+
 			// make sure all the sub fields are expanded first
 			if err := g.expandInputArgument(t); err != nil {
 				return err
@@ -242,9 +242,8 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			listType := t.OfType
 			if _, complete := g.expandedFields[fieldKey]; complete {
 				continue
-			} else {
-				g.expandedFields[fieldKey] = true
 			}
+			g.expandedFields[fieldKey] = true
 
 			if listObjType, ok := listType.(*gql.Object); ok {
 				if err := g.expandInputArgument(listObjType); err != nil {
