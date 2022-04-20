@@ -14,7 +14,6 @@ package client
 type Field interface {
 	Name() string
 	Type() CType //TODO Abstract into a Field Type interface
-	SchemaType() string
 }
 
 type simpleField struct {
@@ -40,8 +39,4 @@ func (field simpleField) Name() string {
 
 func (field simpleField) Type() CType {
 	return field.crdtType
-}
-
-func (field simpleField) SchemaType() string {
-	return field.schemaType
 }

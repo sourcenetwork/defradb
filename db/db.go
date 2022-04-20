@@ -36,8 +36,6 @@ var (
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key
 	ErrDocVerification = errors.New("The document verification failed")
-
-	ErrOptionsEmpty = errors.New("Empty options configuration provided")
 )
 
 // make sure we match our client interface
@@ -177,10 +175,6 @@ func (db *db) initialize(ctx context.Context) error {
 
 func (db *db) PrintDump(ctx context.Context) {
 	printStore(ctx, db.multistore.Rootstore())
-}
-
-func (db *db) Executor() *planner.QueryExecutor {
-	return db.queryExecutor
 }
 
 func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {

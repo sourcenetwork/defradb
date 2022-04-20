@@ -28,34 +28,11 @@ import (
 )
 
 var (
-	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
 	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
 	ErrInvalidMergeValueType = errors.New(
 		"The type of value in the merge patch doesn't match the schema",
 	)
 )
-
-// UpdateWith updates a target document using the given updater type. Target
-// can be a Filter statement, a single docKey, a single document,
-// an array of docKeys, or an array of documents.
-// If you want more type safety, use the respective typed versions of Update.
-// Eg: UpdateWithFilter or UpdateWithKey
-func (c *collection) UpdateWith(
-	ctx context.Context,
-	target interface{},
-	updater interface{},
-) (*client.UpdateResult, error) {
-	switch t := target.(type) {
-	case string, map[string]interface{}, *parser.Filter:
-		return c.UpdateWithFilter(ctx, t, updater)
-	case client.DocKey:
-		return c.UpdateWithKey(ctx, t, updater)
-	case []client.DocKey:
-		return c.UpdateWithKeys(ctx, t, updater)
-	default:
-		return nil, client.ErrInvalidUpdateTarget
-	}
-}
 
 // UpdateWithFilter updates using a filter to target documents for update.
 // An updater value is provided, which could be a string Patch, string Merge Patch

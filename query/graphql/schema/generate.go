@@ -26,16 +26,6 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-// Given a basic developer defined schema in GraphQL Schema Definition Language
-// create a fully DefraDB complaint GraphQL schema using a "code-first" dynamic
-// approach
-
-// Type represents a developer defined type, and its associated graphQL generated types
-type Type struct {
-	gql.ObjectConfig
-	Object *gql.Object
-}
-
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
@@ -990,13 +980,6 @@ func (g *Generator) genTypeQueryableFieldList(
 	}
 
 	return field
-}
-
-// Reset the stateful data within a Generator.
-// Usually called after a round of type generation
-func (g *Generator) Reset() {
-	g.typeDefs = make([]*gql.Object, 0)
-	g.expandedFields = make(map[string]bool)
 }
 
 func newArgConfig(t gql.Input) *gql.ArgumentConfig {

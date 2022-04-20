@@ -21,8 +21,7 @@ import (
 type SelectionType int
 
 const (
-	NoneSelection = iota
-	ObjectSelection
+	ObjectSelection = iota
 	CommitSelection
 
 	VersionFieldName = "_version"
@@ -67,19 +66,11 @@ type Query struct {
 	Statement *ast.Document
 }
 
-func (q Query) GetStatement() ast.Node {
-	return q.Statement
-}
-
 type OperationDefinition struct {
 	Name       string
 	Selections []Selection
 
 	Statement *ast.OperationDefinition
-}
-
-func (q OperationDefinition) GetStatement() ast.Node {
-	return q.Statement
 }
 
 // type SelectionSet struct {
@@ -91,7 +82,6 @@ type Selection interface {
 	GetName() string
 	GetAlias() string
 	GetSelections() []Selection
-	GetRoot() SelectionType
 }
 
 // Select is a complex Field with strong typing
@@ -124,14 +114,6 @@ type Select struct {
 	Statement *ast.Field
 }
 
-func (s Select) GetRoot() SelectionType {
-	return s.Root
-}
-
-func (s Select) GetStatement() ast.Node {
-	return s.Statement
-}
-
 func (s Select) GetSelections() []Selection {
 	return s.Fields
 }
@@ -155,10 +137,6 @@ type Field struct {
 	Statement *ast.Field
 }
 
-func (c Field) GetRoot() SelectionType {
-	return c.Root
-}
-
 // GetSelectionSet implements Selection
 func (f Field) GetSelections() []Selection {
 	return []Selection{}
@@ -170,10 +148,6 @@ func (f Field) GetName() string {
 
 func (f Field) GetAlias() string {
 	return f.Alias
-}
-
-func (f Field) GetStatement() ast.Node {
-	return f.Statement
 }
 
 type GroupBy struct {

@@ -14,7 +14,6 @@ import (
 	"context"
 	"errors"
 
-	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
@@ -32,14 +31,3 @@ type ReplicatedData interface {
 	DeltaDecode(node ipld.Node) (Delta, error) // possibly rename to just Decode
 	Value(ctx context.Context) ([]byte, error)
 }
-
-// PersistedReplicatedData persists a ReplicatedData to an underlying datastore
-type PersistedReplicatedData interface {
-	ReplicatedData
-	Publish(Delta) (cid.Cid, error)
-}
-
-// type EmbedableReplicatedData interface {
-// 	ReplicatedData
-// 	Apply(Operation) error
-// }

@@ -40,56 +40,20 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
-func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
-	return c.Indexes[0]
-}
-
 // IndexDescription describes an Index on a Collection
 // and its associated metadata.
 type IndexDescription struct {
-	Name     string
-	ID       uint32
-	Primary  bool
-	Unique   bool
-	FieldIDs []uint32
-
-	// Junction is a special field, it indicates if this Index is
-	// being used as a junction table for a Many-to-Many relation.
-	// A Junction index needs to index the DocKey from two different
-	// collections, so the usual method of storing the indexed fields
-	// in the FieldIDs property won't work, since thats scoped to the
-	// local schema.
-	//
-	// The Junction stores the DocKey of the type its assigned to,
-	// and the DocKey of the target relation type. Moreover, since
-	// we use a Composite Key Index system, the ordering of the keys
-	// affects how we can use in the index. The initial Junction
-	// Index for a type, needs to be assigned to the  "Primary"
-	// type in the Many-to-Many relation. This is usually the type
-	// that expects more reads from.
-	//
-	// Eg:
-	// A Book type can have many Categories,
-	// and Categories can belong to many Books.
-	//
-	// If we query more for Books, then Categories directly, then
-	// we can set the Book type as the Primary type.
-	Junction bool
-	// RelationType is only used in the Index is a Junction Index.
-	// It specifies what the other type is in the Many-to-Many
-	// relationship.
-	RelationType string
-}
-
-func (index IndexDescription) IDString() string {
-	return fmt.Sprint(index.ID)
+	Name    string
+	ID      uint32
+	Primary bool
+	Unique  bool
 }
 
 type SchemaDescription struct {
 	ID   uint32
 	Name string
-	Key  []byte // DocKey for versioned source schema
-	// Schema schema.Schema
+	// DocKey for versioned source schema
+	Key      []byte // is said to be unused  (but is serialized so not removing right now)
 	FieldIDs []uint32
 	Fields   []FieldDescription
 }
@@ -122,10 +86,10 @@ const (
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	FieldKind_DECIMAL      FieldKind = 8
 	FieldKind_DATE         FieldKind = 9
-	FieldKind_TIMESTAMP    FieldKind = 10
+	FieldKind_TIMESTAMP    FieldKind = 10 // unused but marking for now to discuss in PR for completeness
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	FieldKind_BYTES        FieldKind = 13
+	FieldKind_BYTES        FieldKind = 13 // unused but marking for now to discuss in PR for completeness
 
 	// Embedded object within the type
 	FieldKind_OBJECT FieldKind = 14

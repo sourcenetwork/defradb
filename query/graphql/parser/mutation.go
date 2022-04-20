@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -21,8 +20,7 @@ import (
 type MutationType int
 
 const (
-	NoneMutationType = MutationType(iota)
-	CreateObjects
+	CreateObjects = MutationType(iota)
 	UpdateObjects
 	DeleteObjects
 )
@@ -38,44 +36,6 @@ var (
 var (
 	ErrEmptyDataPayload = errors.New("given data payload is empty")
 )
-
-type ObjectPayload struct {
-	Object map[string]interface{}
-	Array  []interface{}
-}
-
-// NewObjectPayload parses a given payload string as JSON
-// and returns a ObjectPayload struct decoded with either
-// a JSON object, or JSON array.
-func NewObjectPayload(payload string) (ObjectPayload, error) {
-	obj := ObjectPayload{}
-	if payload == "" {
-		return obj, errors.New("Object payload value cannot be empty")
-	}
-	var d interface{}
-	err := json.Unmarshal([]byte(payload), &d)
-	if err != nil {
-		return obj, err
-	}
-
-	switch v := d.(type) {
-
-	// array usually means its a JSON PATCH object, unless its a create, then its
-	//  just multiple documents
-	case []interface{}:
-		obj.Array = v
-
-	case map[string]interface{}:
-		obj.Object = v
-
-	default:
-		return obj, errors.New(
-			"Object payload value has unknown structure, must be a JSON object or array",
-		)
-	}
-
-	return obj, nil
-}
 
 // Mutation is a field on the MutationType
 // of a graphql query. It includes all the possible
@@ -103,10 +63,6 @@ type Mutation struct {
 
 func (m Mutation) GetRoot() SelectionType {
 	return ObjectSelection
-}
-
-func (m Mutation) GetStatement() ast.Node {
-	return m.Statement
 }
 
 func (m Mutation) GetSelections() []Selection {

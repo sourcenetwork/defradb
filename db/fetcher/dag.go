@@ -23,10 +23,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 )
 
-// @todo: Generalize all Fetchers into an shared Fetcher utility
-
-type BlockFetcher struct {
-}
+// @todo: Generalize all Fetchers into an shared Fetcher utility: `type BlockFetcher struct {}`
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field

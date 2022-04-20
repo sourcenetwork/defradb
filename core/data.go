@@ -14,14 +14,13 @@ import "strings"
 
 // Span is a range of keys from [Start, End)
 type Span interface {
+
 	// Start returns the starting key of the Span
 	Start() DataStoreKey
+
 	// End returns the ending key of the Span
 	End() DataStoreKey
-	// Contains returns true of the Span contains the provided Span's range
-	Contains(Span) bool
-	// Equal returns true if the provided Span is equal to the current
-	Equal(Span) bool
+
 	// Compare returns -1 if the provided span is less, 0 if it is equal, and 1 if its greater
 	Compare(Span) SpanComparisonResult
 }
@@ -47,16 +46,6 @@ func (s span) Start() DataStoreKey {
 // End returns the ending key of the Span
 func (s span) End() DataStoreKey {
 	return s.end
-}
-
-// Contains returns true of the Span contains the provided Span's range
-func (s span) Contains(s2 Span) bool {
-	panic("not implemented") // TODO: Implement
-}
-
-// Equal returns true if the provided Span is equal to the current
-func (s span) Equal(s2 Span) bool {
-	panic("not implemented") // TODO: Implement
 }
 
 type SpanComparisonResult uint

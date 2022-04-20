@@ -24,7 +24,6 @@ type Config struct {
 type Options struct {
 	Address string
 	Store   string
-	Memory  MemoryOptions
 	Badger  BadgerOptions
 }
 
@@ -32,11 +31,6 @@ type Options struct {
 type BadgerOptions struct {
 	Path string
 	*badgerds.Options
-}
-
-// MemoryOptions for the memory instance of the backing datastore
-type MemoryOptions struct {
-	Size uint64
 }
 
 type NetOptions struct {
@@ -54,11 +48,8 @@ type BaseLoggerOptions struct {
 }
 
 type NamedLoggerOptions struct {
-	Name             string
-	Level            *string
-	EnableStackTrace *bool
-	EncoderFormat    *string
-	OutputPaths      *[]string
+	Name  string
+	Level *string
 }
 
 func (o BaseLoggerOptions) toLogConfig() logging.Config {

@@ -17,8 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-type EPTuple []encProperty
-
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
 	Desc client.FieldDescription

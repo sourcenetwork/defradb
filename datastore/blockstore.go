@@ -44,11 +44,6 @@ import (
 // is different than expected.
 var ErrHashMismatch = errors.New("block in storage has different hash than requested")
 
-// defradb/store.ErrNotFound => error
-// ipfs-blockstore.ErrNotFound => error
-// ErrNotFound is an error returned when a block is not found.
-var ErrNotFound = errors.New("blockstore: block not found")
-
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
 func NewBlockstore(store DSReaderWriter) blockstore.Blockstore {

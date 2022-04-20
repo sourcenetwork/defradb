@@ -33,7 +33,6 @@ type MultiNode interface {
 	planNode
 	Children() []planNode
 	AddChild(string, planNode) error
-	ReplaceChildAt(int, string, planNode) error
 }
 
 // mergeNode is a special interface for the MultiNode
@@ -285,16 +284,6 @@ func (p *parallelNode) Children() []planNode {
 func (p *parallelNode) AddChild(field string, node planNode) error {
 	p.children = append(p.children, node)
 	p.childFields = append(p.childFields, field)
-	return nil
-}
-
-func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
-	if i >= len(p.children) {
-		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
-	}
-
-	p.children[i] = node
-	p.childFields[i] = field
 	return nil
 }
 

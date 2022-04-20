@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -45,9 +44,6 @@ func (p *Planner) newContainerValuesNode(ordering []parser.SortCondition) *value
 	}
 }
 
-func (n *valuesNode) Init() error            { return nil }
-func (n *valuesNode) Start() error           { return nil }
-func (n *valuesNode) Spans(spans core.Spans) {}
 func (n *valuesNode) Close() {
 	if n.docs != nil {
 		n.docs.Close()
@@ -66,21 +62,9 @@ func (n *valuesNode) Values() map[string]interface{} {
 	return n.docs.At(n.docIndex)
 }
 
-func (n *valuesNode) Source() planNode { return nil }
-
 // SortAll actually sorts all the data within the docContainer object
 func (n *valuesNode) SortAll() {
 	sort.Sort(n)
-}
-
-// Less implements the golang sort.Sort interface.
-// It compares the values the ith and jth index
-// within the docContainer.
-// returns true if i < j.
-// returns false if i > j.
-func (n *valuesNode) Less(i, j int) bool {
-	da, db := n.docs.At(i), n.docs.At(j)
-	return n.docValueLess(da, db)
 }
 
 // docValueLess extracts and compare field values of a document
@@ -103,6 +87,16 @@ func (n *valuesNode) docValueLess(da, db map[string]interface{}) bool {
 	}
 
 	return true
+}
+
+// Less implements the golang sort.Sort interface.
+// It compares the values the ith and jth index
+// within the docContainer.
+// returns true if i < j.
+// returns false if i > j.
+func (n *valuesNode) Less(i, j int) bool {
+	da, db := n.docs.At(i), n.docs.At(j)
+	return n.docValueLess(da, db)
 }
 
 // Swap implements the golang sort.Sort interface.

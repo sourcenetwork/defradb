@@ -37,12 +37,6 @@ type WriteableValue interface {
 	Bytes() ([]byte, error)
 }
 
-type ReadableValue interface {
-	Value
-
-	Read() (interface{}, error)
-}
-
 type simpleValue struct {
 	t       CType
 	value   interface{}

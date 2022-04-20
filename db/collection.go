@@ -377,22 +377,6 @@ func (c *collection) Indexes() []client.IndexDescription {
 	return c.desc.Indexes
 }
 
-// PrimaryIndex returns the primary index for the given collection
-func (c *collection) PrimaryIndex() client.IndexDescription {
-	return c.desc.Indexes[0]
-}
-
-// Index returns the index with the given index ID
-func (c *collection) Index(id uint32) (client.IndexDescription, error) {
-	for _, index := range c.desc.Indexes {
-		if index.ID == id {
-			return index, nil
-		}
-	}
-
-	return client.IndexDescription{}, client.ErrIndexNotFound
-}
-
 func (c *collection) SchemaID() string {
 	return c.schemaID
 }
@@ -688,22 +672,6 @@ func (c *collection) delete(
 	}
 
 	return true, nil
-}
-
-// Exists checks if a given document exists with supplied DocKey
-func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error) {
-	txn, err := c.getTxn(ctx, false)
-	if err != nil {
-		return false, err
-	}
-	defer c.discardImplicitTxn(ctx, txn)
-
-	dsKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, dsKey)
-	if err != nil && err != ds.ErrNotFound {
-		return false, err
-	}
-	return exists, c.commitImplicitTxn(ctx, txn)
 }
 
 // check if a document exists with the given key

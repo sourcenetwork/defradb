@@ -171,10 +171,6 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
 }
 
-func (vf *VersionedFetcher) Rootstore() ds.Datastore {
-	return vf.root
-}
-
 // Start a fetcher with the needed info (cid embedded in a span)
 
 /*

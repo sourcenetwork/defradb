@@ -20,13 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-var (
-	// KeyMin is a minimum key value which sorts before all other keys.
-	KeyMin = []byte{}
-	// KeyMax is a maximum key value which sorts after all other keys.
-	KeyMax = []byte{0xff, 0xff}
-)
-
 type InstanceType string
 
 const (
@@ -62,39 +55,27 @@ type PrimaryDataStoreKey struct {
 	DocKey       string
 }
 
-var _ Key = (*PrimaryDataStoreKey)(nil)
-
 type HeadStoreKey struct {
 	DocKey  string
 	FieldId string //can be 'C'
 	Cid     cid.Cid
 }
 
-var _ Key = (*HeadStoreKey)(nil)
-
 type CollectionKey struct {
 	CollectionName string
 }
-
-var _ Key = (*CollectionKey)(nil)
 
 type CollectionSchemaKey struct {
 	SchemaId string
 }
 
-var _ Key = (*CollectionSchemaKey)(nil)
-
 type SchemaKey struct {
 	SchemaName string
 }
 
-var _ Key = (*SchemaKey)(nil)
-
 type SequenceKey struct {
 	SequenceName string
 }
-
-var _ Key = (*SequenceKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminater.  It assumes
@@ -256,22 +237,11 @@ func (k DataStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-func (k DataStoreKey) Equal(other DataStoreKey) bool {
-	return k.CollectionId == other.CollectionId &&
-		k.DocKey == other.DocKey &&
-		k.FieldId == other.FieldId &&
-		k.InstanceType == other.InstanceType
-}
-
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionId: k.CollectionId,
 		DocKey:       k.DocKey,
 	}
-}
-
-func (k PrimaryDataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
 }
 
 func (k PrimaryDataStoreKey) ToDS() ds.Key {
@@ -302,10 +272,6 @@ func (k CollectionKey) ToString() string {
 	return result
 }
 
-func (k CollectionKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
 func (k CollectionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
@@ -318,10 +284,6 @@ func (k CollectionSchemaKey) ToString() string {
 	}
 
 	return result
-}
-
-func (k CollectionSchemaKey) Bytes() []byte {
-	return []byte(k.ToString())
 }
 
 func (k CollectionSchemaKey) ToDS() ds.Key {
@@ -338,10 +300,6 @@ func (k SchemaKey) ToString() string {
 	return result
 }
 
-func (k SchemaKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
 func (k SchemaKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
@@ -354,10 +312,6 @@ func (k SequenceKey) ToString() string {
 	}
 
 	return result
-}
-
-func (k SequenceKey) Bytes() []byte {
-	return []byte(k.ToString())
 }
 
 func (k SequenceKey) ToDS() ds.Key {
@@ -378,10 +332,6 @@ func (k HeadStoreKey) ToString() string {
 	}
 
 	return result
-}
-
-func (k HeadStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
 }
 
 func (k HeadStoreKey) ToDS() ds.Key {

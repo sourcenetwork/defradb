@@ -136,12 +136,6 @@ func NewDocFromJSON(obj []byte) (*Document, error) {
 	return NewDocFromMap(data)
 }
 
-func (doc *Document) Head() cid.Cid {
-	doc.mu.RLock()
-	defer doc.mu.RUnlock()
-	return doc.head
-}
-
 func (doc *Document) SetHead(head cid.Cid) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -365,13 +359,6 @@ func (doc *Document) Fields() map[string]Field {
 	return doc.fields
 }
 
-// Values gets the document values as a map
-func (doc *Document) Values() map[Field]Value {
-	doc.mu.RLock()
-	defer doc.mu.RUnlock()
-	return doc.values
-}
-
 // Bytes returns the document as a serialzed byte array
 // using CBOR encoding
 func (doc *Document) Bytes() ([]byte, error) {
@@ -387,24 +374,6 @@ func (doc *Document) Bytes() ([]byte, error) {
 		return nil, err
 	}
 	return em.Marshal(docMap)
-}
-
-// String returns the document as a stringified JSON Object.
-// Note: This representation should not be used for any
-// cryptographic operations, such as signatures, or hashes
-// as it does not guarantee canonical representation or
-// ordering.
-func (doc *Document) String() string {
-	docMap, err := doc.toMap()
-	if err != nil {
-		panic(err) //should we return (string, error)?
-	}
-
-	j, err := json.MarshalIndent(docMap, "", "\t")
-	if err != nil {
-		panic(err) // same as above
-	}
-	return string(j)
 }
 
 // ToMap returns the document as a map[string]interface{}

@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	block "github.com/ipfs/go-block-format"
@@ -28,31 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
-
-var (
-	ErrDeleteTargetEmpty = errors.New("The doc delete targeter cannot be empty")
-	ErrDeleteEmpty       = errors.New("The doc delete cannot be empty")
-)
-
-// DeleteWith deletes a target document. Target can be a Filter statement,
-//  a single docKey, a single document, an array of docKeys, or an array of documents.
-// If you want more type safety, use the respective typed versions of Delete.
-// Eg: DeleteWithFilter or DeleteWithKey
-func (c *collection) DeleteWith(
-	ctx context.Context,
-	target interface{},
-) (*client.DeleteResult, error) {
-	switch t := target.(type) {
-	case string, map[string]interface{}, *parser.Filter:
-		return c.DeleteWithFilter(ctx, t)
-	case client.DocKey:
-		return c.DeleteWithKey(ctx, t)
-	case []client.DocKey:
-		return c.DeleteWithKeys(ctx, t)
-	default:
-		return nil, client.ErrInvalidDeleteTarget
-	}
-}
 
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
 func (c *collection) DeleteWithKey(

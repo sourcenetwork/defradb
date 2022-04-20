@@ -35,7 +35,6 @@ type Txn interface {
 	Discard(ctx context.Context)
 
 	OnSuccess(fn func())
-	OnError(fn func())
 }
 
 type txn struct {
@@ -117,13 +116,6 @@ func (txn *txn) OnSuccess(fn func()) {
 		return
 	}
 	txn.successFns = append(txn.successFns, fn)
-}
-
-func (txn *txn) OnError(fn func()) {
-	if fn == nil {
-		return
-	}
-	txn.errorFns = append(txn.errorFns, fn)
 }
 
 func (txn *txn) runErrorFns(ctx context.Context) {

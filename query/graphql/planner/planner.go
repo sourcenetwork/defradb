@@ -62,35 +62,6 @@ type planNode interface {
 	Close() error
 }
 
-// basic plan Node that implements the planNode interface
-// can be added to any struct to turn it into a planNode
-type baseNode struct { //nolint:unused
-	plan planNode
-}
-
-func (n *baseNode) Init() error                    { return n.plan.Init() }   //nolint:unused
-func (n *baseNode) Start() error                   { return n.plan.Start() }  //nolint:unused
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }   //nolint:unused
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }    //nolint:unused
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() } //nolint:unused
-func (n *baseNode) Close() error                   { return n.plan.Close() }  //nolint:unused
-func (n *baseNode) Source() planNode               { return n.plan }          //nolint:unused
-
-type ExecutionContext struct {
-	context.Context
-}
-
-type PlanContext struct {
-	context.Context
-}
-
-type Statement struct {
-	// Commenting out because unused code (structcheck) according to linter.
-	// requestString   string
-	// requestDocument *ast.Document parser.Statement -> parser.Query - >
-	// requestQuery    parser.Query
-}
-
 // Planner combines session state and database state to
 // produce a query plan, which is run by the execution context.
 type Planner struct {
@@ -99,9 +70,6 @@ type Planner struct {
 
 	ctx     context.Context
 	evalCtx parser.EvalContext
-
-	// isFinalized bool
-
 }
 
 func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
@@ -448,10 +416,6 @@ func (p *Planner) queryDocs(
 
 	err = plan.Close()
 	return docs, err
-}
-
-func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
-	return p.makePlan(query)
 }
 
 func copyMap(m map[string]interface{}) map[string]interface{} {

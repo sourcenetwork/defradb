@@ -85,10 +85,6 @@ type LWWRegister struct {
 func NewLWWRegister(store datastore.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, key),
-		// id:    id,
-		// data:  data,
-		// ts:    ts,
-		// clock: clock,
 	}
 }
 

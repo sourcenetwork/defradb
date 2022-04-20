@@ -93,22 +93,10 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 	}, nil
 }
 
-// UUID returns the doc key in UUID form
-func (key DocKey) UUID() uuid.UUID {
-	return key.uuid
-}
-
 // UUID returns the doc key in string form
 func (key DocKey) String() string {
 	buf := make([]byte, 1)
 	binary.PutUvarint(buf, uint64(key.version))
 	versionStr, _ := mbase.Encode(mbase.Base32, buf)
 	return versionStr + "-" + key.uuid.String()
-}
-
-// Bytes returns the DocKey in Byte format
-func (key DocKey) Bytes() []byte {
-	buf := make([]byte, binary.MaxVarintLen16)
-	binary.PutUvarint(buf, uint64(key.version))
-	return append(buf, key.uuid.Bytes()...)
 }

@@ -19,8 +19,7 @@ import (
 type CommitType int
 
 const (
-	NoneCommitType = CommitType(iota)
-	LatestCommits
+	LatestCommits = CommitType(iota)
 	AllCommits
 	OneCommit
 )
@@ -54,10 +53,6 @@ type CommitSelect struct {
 
 func (c CommitSelect) GetRoot() SelectionType {
 	return CommitSelection
-}
-
-func (c CommitSelect) GetStatement() ast.Node {
-	return c.Statement
 }
 
 func (c CommitSelect) GetName() string {

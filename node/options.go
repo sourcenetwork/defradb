@@ -59,26 +59,6 @@ func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	}
 }
 
-// ListenP2PAddrStrings sets the address to listen on given as strings
-func ListenTCPAddrStrings(addr string) NodeOpt {
-	return func(opt *Options) error {
-		a, err := ma.NewMultiaddr(addr)
-		if err != nil {
-			return err
-		}
-		opt.ListenAddrs = append(opt.ListenAddrs, a)
-		return nil
-	}
-}
-
-// ListenAddrs sets the address to listen on given as MultiAddr(s)
-func ListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
-	return func(opt *Options) error {
-		opt.ListenAddrs = addrs
-		return nil
-	}
-}
-
 // DefaultOpts returns a set of sane defaults for a Node
 func DefaultOpts() NodeOpt {
 	return func(opt *Options) error {
