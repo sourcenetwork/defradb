@@ -139,11 +139,10 @@ func (g *Generator) CreateDescriptions(
 			if _, exists := desc.GetField(fname); exists {
 				// lets make sure its an _id field, otherwise
 				// we might have an error here
-				if strings.HasSuffix(fname, "_id") {
-					continue
-				} else {
+				if !strings.HasSuffix(fname, "_id") {
 					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())
 				}
+				continue
 			}
 
 			fd := client.FieldDescription{
