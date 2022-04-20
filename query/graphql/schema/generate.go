@@ -607,6 +607,7 @@ func (g *Generator) genSumBaseArgInput(obj *gql.Object) (*gql.Enum, bool) {
 			inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 		}
 	}
+	inputCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
 
 	if !hasSumableFields {
 		return nil, false
