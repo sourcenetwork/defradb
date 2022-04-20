@@ -56,7 +56,7 @@ var ReservedFields = map[string]bool{
 	DocKeyFieldName:  true,
 }
 
-var aggregates = map[string]struct{}{
+var Aggregates = map[string]struct{}{
 	CountFieldName: {},
 	SumFieldName:   {},
 }
@@ -437,7 +437,7 @@ func parseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
 	var name string
 	var alias string
 
-	if _, isAggregate := aggregates[field.Name.Value]; isAggregate {
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
 		name = fmt.Sprintf("_agg%v", i)
 		if field.Alias == nil {
 			alias = field.Name.Value

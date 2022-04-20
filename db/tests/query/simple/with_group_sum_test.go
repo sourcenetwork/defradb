@@ -10,8 +10,6 @@
 
 package simple
 
-// TODO!!!!! once scalar are merged, this should be capable of summing int/float arrays - likely needs some tweaks in generator.go and query.go
-
 import (
 	"testing"
 
@@ -119,6 +117,88 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, with child group by boolean, and sum of sum on int",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_sum(field: {_group: _sum})
+						_group (groupBy: [Verified]){
+							Verified
+							_sum(field: {_group: Age})
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 25,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 32,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 34,
+				"Verified": false
+			}`),
+				(`{
+				"Name": "Carlo",
+				"Age": 55,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19,
+				"Verified": false
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+				"_sum": int64(91),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": true,
+						"_sum":     int64(57),
+					},
+					{
+						"Verified": false,
+						"_sum":     int64(34),
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_sum": int64(19),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": false,
+						"_sum":     int64(19),
+					},
+				},
+			},
+			{
+				"Name": "Carlo",
+				"_sum": int64(55),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": true,
+						"_sum":     int64(55),
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group float (default) value",
@@ -189,6 +269,207 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 			{
 				"Name": "Alice",
 				"_sum": float64(2.04),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, with child group by boolean, and sum of sum on float",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_sum(field: {_group: _sum})
+						_group (groupBy: [Verified]){
+							Verified
+							_sum(field: {_group: HeightM})
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"HeightM": 1.82,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"HeightM": 1.61,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"HeightM": 2.22,
+				"Verified": false
+			}`),
+				(`{
+				"Name": "Carlo",
+				"HeightM": 1.74,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "Alice",
+				"HeightM": 2.04,
+				"Verified": false
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+				"_sum": float64(5.65),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": false,
+						"_sum":     float64(2.22),
+					},
+					{
+						"Verified": true,
+						"_sum":     float64(3.43),
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_sum": float64(2.04),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": false,
+						"_sum":     float64(2.04),
+					},
+				},
+			},
+			{
+				"Name": "Carlo",
+				"_sum": float64(1.74),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": true,
+						"_sum":     float64(1.74),
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloat(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, with child group by boolean, and sum of sum of sum of float",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_sum(field: {_group: _sum})
+						_group (groupBy: [Verified]){
+							Verified
+							_sum(field: {_group: HeightM})
+							_group (groupBy: [Age]){
+								Age
+								_sum(field: {_group: HeightM})
+							}
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"HeightM": 1.82,
+				"Age": 25,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"HeightM": 1.61,
+				"Age": 32,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "John",
+				"HeightM": 2.22,
+				"Age": 34,
+				"Verified": false
+			}`),
+				(`{
+				"Name": "Carlo",
+				"HeightM": 1.74,
+				"Age": 55,
+				"Verified": true
+			}`),
+				(`{
+				"Name": "Alice",
+				"HeightM": 2.04,
+				"Age": 19,
+				"Verified": false
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+				"_sum": float64(5.65),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": false,
+						"_sum":     float64(2.22),
+						"_group": []map[string]interface{}{
+							{
+								"Age":  uint64(34),
+								"_sum": float64(2.22),
+							},
+						},
+					},
+					{
+						"Verified": true,
+						"_sum":     float64(3.43),
+						"_group": []map[string]interface{}{
+							{
+								"Age":  uint64(32),
+								"_sum": float64(1.61),
+							},
+							{
+								"Age":  uint64(25),
+								"_sum": float64(1.82),
+							},
+						},
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_sum": float64(2.04),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": false,
+						"_sum":     float64(2.04),
+						"_group": []map[string]interface{}{
+							{
+								"Age":  uint64(19),
+								"_sum": float64(2.04),
+							},
+						},
+					},
+				},
+			},
+			{
+				"Name": "Carlo",
+				"_sum": float64(1.74),
+				"_group": []map[string]interface{}{
+					{
+						"Verified": true,
+						"_sum":     float64(1.74),
+						"_group": []map[string]interface{}{
+							{
+								"Age":  uint64(55),
+								"_sum": float64(1.74),
+							},
+						},
+					},
+				},
 			},
 		},
 	}
