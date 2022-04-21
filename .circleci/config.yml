@@ -2,74 +2,101 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
+#========================================================================================================[ COMMANDS ]
+commands:
+
+  # A reusable command with a boolean parameter to specify if we want to run change detection or not.
+  build_and_test:
+
+    parameters:
+      no_change_detection:
+        description: "If true then just builds and runs tests, otherwise detects for database changes."
+        type: boolean
+        default: false
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - go-mod-v5-cimg-go-1.17-{{ checksum "go.sum" }}
+
+      - run:
+          name: Install go modules into the module cache.
+          command: make deps:modules
+
+      - save_cache:
+          key: go-mod-v5-cimg-go-1.17-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+
+      - when:
+          condition: << parameters.no_change_detection >>
+          steps:
+            - run:
+                name: Run tests
+                command: |
+                  mkdir -p /tmp/test-reports
+                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race
+                environment:
+                  DEFRA_BADGER_MEMORY: true
+                  DEFRA_BADGER_FILE: true
+                  DEFRA_MAP: true
+
+      - when:
+          condition:
+            not: << parameters.no_change_detection >>
+          steps:
+            - run:
+                name: Run tests and detect
+                command: |
+                  mkdir -p /tmp/test-reports
+                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -p 1
+                environment:
+                  DEFRA_DETECT_DATABASE_CHANGES: true
+
+      - store_test_results:
+          path: /tmp/test-reports
+
+
+#============================================================================================================[ JOBS ]
+# Define jobs to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
 
   # Job builds and runs all the test.
   build:
+
     working_directory: ~/repo
+
     docker:
       # https://circleci.com/developer/images/image/cimg/go
       - image: cimg/go:1.17
-    # Add steps to the job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
-      - run:
-          name: Install go modules into the module cache.
-          command: make deps:modules
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-      - run:
-          name: Run tests
-          command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race
-          environment:
-            DEFRA_BADGER_MEMORY: true
-            DEFRA_BADGER_FILE: true
-            DEFRA_MAP: true
-      - store_test_results:
-          path: /tmp/test-reports
 
-  # Job detects if we have a change.
+    steps:
+      - build_and_test:
+          no_change_detection: true
+
+  # Job detects if we have a database change.
   change_detection:
+
     working_directory: ~/repo
+
     docker:
       # https://circleci.com/developer/images/image/cimg/go
       - image: cimg/go:1.17
-    # Add steps to the job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
-      - run:
-          name: Install go modules into the module cache.
-          command: make deps:modules
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-      - run:
-          name: Run tests
-          command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -p 1
-          environment:
-            DEFRA_DETECT_DATABASE_CHANGES: true
-      - store_test_results:
-          path: /tmp/test-reports
 
+    steps:
+      - build_and_test:
+          no_change_detection: false
+
+
+#=======================================================================================================[ WORKFLOWS ]
 # Invoke jobs via workflows
 workflows:
-  build-test: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+
+  build-test:
+
     jobs:
       - build
       - change_detection

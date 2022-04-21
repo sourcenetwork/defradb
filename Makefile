@@ -48,8 +48,12 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
+.PHONY: deps\:ci
+deps\:ci:
+	curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=${HOME}/bin bash
+
 .PHONY: deps
-deps: deps\:lint deps\:coverage deps\:bench deps\:golines deps\:chglog deps\:modules
+deps: deps\:lint deps\:coverage deps\:bench deps\:golines deps\:chglog deps\:modules deps\:ci
 
 .PHONY: tidy
 tidy:
@@ -98,6 +102,10 @@ test\:changes:
 .PHONY: validate\:codecov
 validate\:codecov:
 	curl --data-binary @.github/codecov.yml https://codecov.io/validate
+
+.PHONY: validate\:circleci
+validate\:circleci:
+	circleci config validate
 
 .PHONY: lint
 lint:
