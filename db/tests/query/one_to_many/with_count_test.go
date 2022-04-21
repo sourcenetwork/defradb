@@ -23,7 +23,7 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 			Query: `query {
 				author {
 					name
-					_count(field: published)
+					_count(published: {})
 				}
 			}`,
 			Docs: map[int][]string{
@@ -48,7 +48,7 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 			Query: `query {
 				author {
 					name
-					_count(field: published)
+					_count(published: {})
 				}
 			}`,
 			Docs: map[int][]string{

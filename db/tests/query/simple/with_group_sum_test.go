@@ -44,7 +44,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: Age})
+						_sum(_group: {field: Age})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -84,7 +84,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: Age})
+						_sum(_group: {field: Age})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -123,10 +123,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: _sum})
+						_sum(_group: {field: _sum})
 						_group (groupBy: [Verified]){
 							Verified
-							_sum(field: {_group: Age})
+							_sum(_group: {field: Age})
 						}
 					}
 				}`,
@@ -205,7 +205,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: HeightM})
+						_sum(_group: {field: HeightM})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -243,7 +243,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: HeightM})
+						_sum(_group: {field: HeightM})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -282,10 +282,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: _sum})
+						_sum(_group: {field: _sum})
 						_group (groupBy: [Verified]){
 							Verified
-							_sum(field: {_group: HeightM})
+							_sum(_group: {field: HeightM})
 						}
 					}
 				}`,
@@ -364,13 +364,13 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: _sum})
+						_sum(_group: {field: _sum})
 						_group (groupBy: [Verified]){
 							Verified
-							_sum(field: {_group: HeightM})
+							_sum(_group: {field: HeightM})
 							_group (groupBy: [Age]){
 								Age
-								_sum(field: {_group: HeightM})
+								_sum(_group: {field: HeightM})
 							}
 						}
 					}
