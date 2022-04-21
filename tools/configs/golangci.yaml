@@ -96,7 +96,8 @@ linters:
     - forbidigo
     - lll
     - revive
-    # - wrapcheck
+    - goheader
+   # - wrapcheck
     # - errorlint
     # - gci
     # - exportloopref
@@ -113,6 +114,85 @@ linters:
     # - unused
     # - bugs
   fast: false
+
+
+issues:
+  # List of regexps of issue texts to exclude, empty list by default.
+  # But independently from this option we use default exclude patterns,
+  # it can be disabled by `exclude-use-default: false`. To list all
+  # excluded by default patterns execute `golangci-lint run --help`
+  exclude:
+    # - abcdef
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: '_test.go$'
+      linters:
+        - errcheck
+        - lll
+
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA9003:"
+
+    # Exclude running header check in these paths
+    # - path: '(net|datastore)'
+    - path: '(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)'
+      linters:
+        - goheader
+
+
+    # Exclude lll issues for long lines with go:generate
+    #- linters:
+    #    - lll
+    #  source: "^//go:generate "
+
+    # Exclude known linters from partially hard-vendored code,
+    # which is impossible to exclude via "nolint" comments.
+    #- path: internal/hmac/
+    #  text: "weak cryptographic primitive"
+    #  linters:
+    #    - gosec
+
+
+  # Independently from option `exclude` we use default exclude patterns,
+  # it can be disabled by this option. To list all
+  # excluded by default patterns execute `golangci-lint run --help`.
+  # Default value for this option is true.
+  exclude-use-default: false
+
+  # The default value is false. If set to true exclude and exclude-rules
+  # regular expressions become case sensitive.
+  exclude-case-sensitive: false
+
+  # The list of ids of default excludes to include or disable. By default it's empty.
+  include:
+    - EXC0002 # disable excluding of issues about comments from golint
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
+
+  # Show only new issues: if there are unstaged changes or untracked files,
+  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
+  # It's a super-useful option for integration of golangci-lint into existing
+  # large codebase. It's not practical to fix all existing issues at the moment
+  # of integration: much better don't allow issues in new code.
+  # Default is false.
+  new: false
+
+  # Show only new issues created after git revision `REV`
+  # new-from-rev: REV
+
+  # Show only new issues created in git patch with set file path.
+  # new-from-patch: path/to/patch/file
+
+  # Fix found issues (if it's supported by the linter)
+  fix: true
 
 
 # all available settings of specific linters
@@ -357,8 +437,8 @@ linters-settings:
     simplify: true
 
   gofumpt:
-    # Select the Go version to target. The default is `1.15`.
-    lang-version: "1.15"
+    # Select the Go version to target.
+    lang-version: '1.17'
 
     # Choose whether or not to use the extra rules that are disabled
     # by default
@@ -368,28 +448,24 @@ linters-settings:
     values:
       const:
         # define here const type values in format k:v, for example:
-        # COMPANY: MY COMPANY
+        BSL: 'Business Source License'
+        APL: 'Apache License, Version 2.0'
+
       regexp:
         # define here regexp type values, for example
         # AUTHOR: .*@mycompany\.com
-    template: # |-
-      # put here copyright header template for source code files, for example:
-      # Note: {{ YEAR }} is a builtin value that returns the year relative to the current machine time.
-      #
-      # {{ AUTHOR }} {{ COMPANY }} {{ YEAR }}
-      # SPDX-License-Identifier: Apache-2.0
 
-      # Licensed under the Apache License, Version 2.0 (the "License");
-      # you may not use this file except in compliance with the License.
-      # You may obtain a copy of the License at:
+    template: |-
+      Copyright {{ YEAR }} Democratized Data Foundation
 
-      #   http://www.apache.org/licenses/LICENSE-2.0
+      Use of this software is governed by the {{ BSL }}
+      included in the file licenses/BSL.txt.
 
-      # Unless required by applicable law or agreed to in writing, software
-      # distributed under the License is distributed on an "AS IS" BASIS,
-      # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-      # See the License for the specific language governing permissions and
-      # limitations under the License.
+      As of the Change Date specified in that file, in accordance with
+      the {{ BSL }}, use of this software will be governed
+      by the {{ APL }}, included in the file
+      licenses/APL.txt.
+
     template-path:
       # also as alternative of directive 'template' you may put the path to file with the template source
 
@@ -471,8 +547,8 @@ linters-settings:
         truncate: "32"
 
   gosimple:
-    # Select the Go version to target. The default is '1.13'.
-    go: "1.15"
+    # Select the Go version to target.
+    go: '1.17'
     # https://staticcheck.io/docs/options#checks
     checks: [ "all", "-S1038" ]
     # Turn on all except (these are disabled):
@@ -658,14 +734,14 @@ linters-settings:
         severity: error
 
   staticcheck:
-    # Select the Go version to target. The default is '1.13'.
-    go: "1.15"
+    # Select the Go version to target.
+    go: '1.17'
     # https://staticcheck.io/docs/options#checks
     checks: [ "all" ]
 
   stylecheck:
-    # Select the Go version to target. The default is '1.13'.
-    go: "1.15"
+    # Select the Go version to target.
+    go: '1.17'
     # https://staticcheck.io/docs/options#checks
     checks: [ "all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022" ]
     # https://staticcheck.io/docs/options#dot_import_whitelist
@@ -725,7 +801,7 @@ linters-settings:
 
   unused:
     # Select the Go version to target. The default is '1.13'.
-    go: "1.15"
+    go: '1.17'
 
   varnamelen:
     # The longest distance, in source lines, that is being considered a "small scope." (defaults to 5)
@@ -804,79 +880,6 @@ linters-settings:
       # Intended to point to the repo location of the linter. Optional, just for documentation purposes.
       # original-url: github.com/golangci/example-linter
 
-
-issues:
-  # List of regexps of issue texts to exclude, empty list by default.
-  # But independently from this option we use default exclude patterns,
-  # it can be disabled by `exclude-use-default: false`. To list all
-  # excluded by default patterns execute `golangci-lint run --help`
-  exclude:
-    # - abcdef
-
-  # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - lll
-
-    # Exclude known linters from partially hard-vendored code,
-    # which is impossible to exclude via "nolint" comments.
-    - path: internal/hmac/
-      text: "weak cryptographic primitive"
-      linters:
-        - gosec
-
-    # Exclude some staticcheck messages
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-
-    # Exclude lll issues for long lines with go:generate
-    - linters:
-        - lll
-      source: "^//go:generate "
-
-  # Independently from option `exclude` we use default exclude patterns,
-  # it can be disabled by this option. To list all
-  # excluded by default patterns execute `golangci-lint run --help`.
-  # Default value for this option is true.
-  exclude-use-default: false
-
-  # The default value is false. If set to true exclude and exclude-rules
-  # regular expressions become case sensitive.
-  exclude-case-sensitive: false
-
-  # The list of ids of default excludes to include or disable. By default it's empty.
-  include:
-    - EXC0002 # disable excluding of issues about comments from golint
-
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
-  max-same-issues: 0
-
-  # Show only new issues: if there are unstaged changes or untracked files,
-  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
-  # It's a super-useful option for integration of golangci-lint into existing
-  # large codebase. It's not practical to fix all existing issues at the moment
-  # of integration: much better don't allow issues in new code.
-  # Default is false.
-  new: false
-
-  # Show only new issues created after git revision `REV`
-  # new-from-rev: REV
-
-  # Show only new issues created in git patch with set file path.
-  # new-from-patch: path/to/patch/file
-
-  # Fix found issues (if it's supported by the linter)
-  fix: true
 
 severity:
   # Default value is empty string.
