@@ -38,9 +38,8 @@ func (p *Planner) Sum(
 		return nil, err
 	}
 
-	sourceCollection := source[0]
 	sourceProperty := p.getSourceProperty(source, parent)
-	isFloat, err := p.isValueFloat(sourceInfo, parent, source, sourceCollection, sourceProperty)
+	isFloat, err := p.isValueFloat(sourceInfo, parent, source, sourceProperty)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func (p *Planner) Sum(
 	return &sumNode{
 		p:                p,
 		isFloat:          isFloat,
-		sourceCollection: sourceCollection,
+		sourceCollection: source.HostProperty,
 		sourceProperty:   sourceProperty,
 		virtualFieldId:   field.Name,
 	}, nil
@@ -58,15 +57,13 @@ func (p *Planner) Sum(
 func (p *Planner) isValueFloat(
 	sourceInfo *sourceInfo,
 	parent parser.Selection,
-	source []string,
-	sourceCollection string,
+	source parser.AggregateTarget,
 	sourceProperty string,
 ) (bool, error) {
 	sourceFieldDescription, err := p.getSourceField(
 		sourceInfo,
 		parent,
 		source,
-		sourceCollection,
 		sourceProperty,
 	)
 	if err != nil {
@@ -82,109 +79,104 @@ func (p *Planner) isValueFloat(
 func (p *Planner) getSourceField(
 	sourceInfo *sourceInfo,
 	parent parser.Selection,
-	source []string,
-	sourceCollection string,
+	source parser.AggregateTarget,
 	sourceProperty string,
 ) (client.FieldDescription, error) {
-	if len(source) == 1 {
+	if source.ChildProperty == "" {
 		// If path length is one - we are summing an inline array
-		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
+		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(source.HostProperty)
 		if !fieldDescriptionFound {
 			return client.FieldDescription{}, fmt.Errorf(
 				"Unable to find field description for field: %s",
-				sourceCollection,
+				source.HostProperty,
 			)
 		}
 		return fieldDescription, nil
-	} else if len(source) == 2 {
-		// If path length is two, we are summing a group or a child relationship
-		if source[1] == parser.CountFieldName {
-			// If we are summing a count, we know it is an int and can return early
-			return client.FieldDescription{
-				Kind: client.FieldKind_INT,
-			}, nil
+	}
+
+	// If path length is two, we are summing a group or a child relationship
+	if source.ChildProperty == parser.CountFieldName {
+		// If we are summing a count, we know it is an int and can return early
+		return client.FieldDescription{
+			Kind: client.FieldKind_INT,
+		}, nil
+	}
+
+	if _, isAggregate := parser.Aggregates[source.ChildProperty]; isAggregate {
+		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
+		// the root field in order to determine the value type.  This is recursive to allow handling
+		// of N-depth aggregations (e.g. sum of sum of sum of...)
+		var sourceField *parser.Field
+		var sourceParent parser.Selection
+		for _, field := range parent.GetSelections() {
+			if field.GetName() == source.HostProperty {
+				sourceParent = field
+			}
 		}
 
-		if _, isAggregate := parser.Aggregates[source[1]]; isAggregate {
-			// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
-			// the root field in order to determine the value type.  This is recursive to allow handling
-			// of N-depth aggregations (e.g. sum of sum of sum of...)
-			var sourceField *parser.Field
-			var sourceParent parser.Selection
-			for _, field := range parent.GetSelections() {
-				if field.GetName() == source[0] {
-					sourceParent = field
-				}
+		for _, field := range sourceParent.GetSelections() {
+			if field.GetAlias() == source.ChildProperty {
+				sourceField = field.(*parser.Field)
+				break
 			}
-
-			for _, field := range sourceParent.GetSelections() {
-				if field.GetAlias() == source[1] {
-					sourceField = field.(*parser.Field)
-					break
-				}
-			}
-			sourceSource, err := sourceField.GetAggregateSource()
-			if err != nil {
-				return client.FieldDescription{}, err
-			}
-
-			sourceSourceCollection := sourceSource[0]
-			sourceSourceProperty := p.getSourceProperty(sourceSource, sourceParent)
-			return p.getSourceField(
-				sourceInfo,
-				sourceParent,
-				sourceSource,
-				sourceSourceCollection,
-				sourceSourceProperty,
-			)
 		}
-
-		if sourceCollection == parser.GroupFieldName {
-			// If the source collection is a group, then the description of the collection
-			// to sum is this object.
-			fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
-			if !fieldDescriptionFound {
-				return client.FieldDescription{},
-					fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
-			}
-			return fieldDescription, nil
-		}
-
-		parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceCollection)
-		if !parentFieldDescriptionFound {
-			return client.FieldDescription{}, fmt.Errorf(
-				"Unable to find parent field description for field: %s",
-				sourceCollection,
-			)
-		}
-
-		collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
+		sourceSource, err := sourceField.GetAggregateSource()
 		if err != nil {
 			return client.FieldDescription{}, err
 		}
 
-		fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
+		sourceSourceProperty := p.getSourceProperty(sourceSource, sourceParent)
+		return p.getSourceField(
+			sourceInfo,
+			sourceParent,
+			sourceSource,
+			sourceSourceProperty,
+		)
+	}
+
+	if source.HostProperty == parser.GroupFieldName {
+		// If the source collection is a group, then the description of the collection
+		// to sum is this object.
+		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
 		if !fieldDescriptionFound {
 			return client.FieldDescription{},
-				fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
+				fmt.Errorf("Unable to find field description for field: %s", sourceProperty)
 		}
 		return fieldDescription, nil
 	}
-	return client.FieldDescription{}, fmt.Errorf("Unable to determine sum type.")
+
+	parentFieldDescription, parentFieldDescriptionFound := sourceInfo.collectionDescription.GetField(source.HostProperty)
+	if !parentFieldDescriptionFound {
+		return client.FieldDescription{}, fmt.Errorf(
+			"Unable to find parent field description for field: %s",
+			source.HostProperty,
+		)
+	}
+
+	collectionDescription, err := p.getCollectionDesc(parentFieldDescription.Schema)
+	if err != nil {
+		return client.FieldDescription{}, err
+	}
+
+	fieldDescription, fieldDescriptionFound := collectionDescription.GetField(sourceProperty)
+	if !fieldDescriptionFound {
+		return client.FieldDescription{},
+			fmt.Errorf("Unable to find child field description for field: %s", sourceProperty)
+	}
+	return fieldDescription, nil
 }
 
 // Gets the name of the immediate value-property to be aggregated.
-func (p *Planner) getSourceProperty(source []string, parent parser.Selection) string {
-	if len(source) == 1 {
+func (p *Planner) getSourceProperty(source parser.AggregateTarget, parent parser.Selection) string {
+	if source.ChildProperty == "" {
 		return ""
 	}
 
-	sourceProperty := source[1]
-	if _, isAggregate := parser.Aggregates[sourceProperty]; isAggregate {
+	if _, isAggregate := parser.Aggregates[source.ChildProperty]; isAggregate {
 		for _, field := range parent.GetSelections() {
-			if field.GetName() == source[0] {
+			if field.GetName() == source.HostProperty {
 				for _, childField := range field.(*parser.Select).Fields {
-					if childField.GetAlias() == sourceProperty {
+					if childField.GetAlias() == source.ChildProperty {
 						return childField.(*parser.Field).GetName()
 					}
 				}
@@ -192,7 +184,7 @@ func (p *Planner) getSourceProperty(source []string, parent parser.Selection) st
 		}
 	}
 
-	return sourceProperty
+	return source.ChildProperty
 }
 
 func (n *sumNode) Init() error {

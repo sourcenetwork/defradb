@@ -469,32 +469,42 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	}
 }
 
-// Returns the source of the aggregate as requested by the consumer
-func (field Field) GetAggregateSource() ([]string, error) {
+// The relative target/path from the object hosting an aggregate, to the property to
+// be aggregated.
+type AggregateTarget struct {
+	// The property on the object hosting the aggregate.  This should never be empty
+	HostProperty string
+	// The property on the `HostProperty` that this aggregate targets.
+	//
+	// This may be empty if the aggregate targets a whole collection (e.g. Count),
+	// or if `HostProperty` is an inline array.
+	ChildProperty string
+}
 
+// Returns the source of the aggregate as requested by the consumer
+func (field Field) GetAggregateSource() (AggregateTarget, error) {
 	if len(field.Statement.Arguments) == 0 {
-		return []string{}, fmt.Errorf(
+		return AggregateTarget{}, fmt.Errorf(
 			"Aggregate must be provided with a property to aggregate.",
 		)
 	}
 
-	var path []string
+	var hostProperty string
+	var childProperty string
 	switch argumentValue := field.Statement.Arguments[0].Value.GetValue().(type) {
 	case string:
-		path = []string{argumentValue}
+		hostProperty = argumentValue
 	case []*ast.ObjectField:
-		if len(argumentValue) == 0 {
-			return []string{field.Statement.Arguments[0].Name.Value}, nil
-		}
-		innerPath := argumentValue[0].Value.GetValue()
-		if innerPathStringValue, isString := innerPath.(string); isString {
-			path = []string{field.Statement.Arguments[0].Name.Value, innerPathStringValue}
-		} else {
-			// If the inner path is not a string, this must mean the field is an inline array
-			//  in which case we only want the base path
-			path = []string{field.Statement.Arguments[0].Name.Value}
+		hostProperty = field.Statement.Arguments[0].Name.Value
+		if len(argumentValue) > 0 {
+			if innerPathStringValue, isString := argumentValue[0].Value.GetValue().(string); isString {
+				childProperty = innerPathStringValue
+			}
 		}
 	}
 
-	return path, nil
+	return AggregateTarget{
+		HostProperty:  hostProperty,
+		ChildProperty: childProperty,
+	}, nil
 }
