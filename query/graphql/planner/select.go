@@ -79,6 +79,8 @@ func (n *selectTopNode) Close() error {
 }
 
 type selectNode struct {
+	documentIterator
+
 	p *Planner
 
 	// main data source for the select node.
@@ -94,11 +96,6 @@ type selectNode struct {
 
 	// data related to rendering
 	renderInfo *renderInfo
-
-	// internal doc pointer
-	// produced when Values()
-	// is called.
-	doc map[string]interface{}
 
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
@@ -131,8 +128,8 @@ func (n *selectNode) Next() (bool, error) {
 			return false, err
 		}
 
-		n.doc = n.source.Value()
-		passes, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		n.currentValue = n.source.Value()
+		passes, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
@@ -146,10 +143,6 @@ func (n *selectNode) Next() (bool, error) {
 
 func (n *selectNode) Spans(spans core.Spans) {
 	n.source.Spans(spans)
-}
-
-func (n *selectNode) Value() map[string]interface{} {
-	return n.doc
 }
 
 func (n *selectNode) Close() error {
