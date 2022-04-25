@@ -49,8 +49,7 @@ type planNode interface {
 	// previous call returns false.
 	Next() (bool, error)
 
-	// returns the value of the current doc
-	// processed by the executor
+	// Values returns the value of the current doc
 	Values() map[string]interface{}
 
 	// Source returns the child planNode that
