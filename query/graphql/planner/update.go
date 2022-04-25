@@ -88,10 +88,6 @@ func (n *updateNode) Next() (bool, error) {
 		results.DocKeys = nil
 	}
 
-	// next, err := n.updateIter.Next()
-	// if !next {
-	// 	return false, err
-	// }
 	return n.updateIter.Next()
 }
 
