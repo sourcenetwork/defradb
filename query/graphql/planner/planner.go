@@ -36,18 +36,18 @@ type planNode interface {
 	// required by the plan node.
 	Start() error
 
-	// Next processes the next result doc from
-	// the query. Can only be called *after*
-	// Start(). Can't be called again if any
-	// previous call returns false.
-	Next() (bool, error)
-
 	// Spans sets the planNodes target
 	// spans. This is primarily only used
 	// for a scanNode, but based on the tree
 	// structure, may need to be propagated
 	// Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
+
+	// Next processes the next result doc from
+	// the query. Can only be called *after*
+	// Start(). Can't be called again if any
+	// previous call returns false.
+	Next() (bool, error)
 
 	// returns the value of the current doc
 	// processed by the executor
