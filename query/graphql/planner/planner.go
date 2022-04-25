@@ -50,7 +50,7 @@ type planNode interface {
 	Next() (bool, error)
 
 	// Values returns the value of the current doc
-	Values() map[string]interface{}
+	Value() map[string]interface{}
 
 	// Source returns the child planNode that
 	// generates the source values for this plan.
@@ -67,13 +67,13 @@ type baseNode struct { //nolint:unused
 	plan planNode
 }
 
-func (n *baseNode) Init() error                    { return n.plan.Init() }   //nolint:unused
-func (n *baseNode) Start() error                   { return n.plan.Start() }  //nolint:unused
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }   //nolint:unused
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }    //nolint:unused
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() } //nolint:unused
-func (n *baseNode) Close() error                   { return n.plan.Close() }  //nolint:unused
-func (n *baseNode) Source() planNode               { return n.plan }          //nolint:unused
+func (n *baseNode) Init() error                   { return n.plan.Init() }  //nolint:unused
+func (n *baseNode) Start() error                  { return n.plan.Start() } //nolint:unused
+func (n *baseNode) Next() (bool, error)           { return n.plan.Next() }  //nolint:unused
+func (n *baseNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }   //nolint:unused
+func (n *baseNode) Value() map[string]interface{} { return n.plan.Value() } //nolint:unused
+func (n *baseNode) Close() error                  { return n.plan.Close() } //nolint:unused
+func (n *baseNode) Source() planNode              { return n.plan }         //nolint:unused
 
 type ExecutionContext struct {
 	context.Context
@@ -427,7 +427,7 @@ func (p *Planner) queryDocs(
 
 	var docs []map[string]interface{}
 	for {
-		if values := plan.Values(); values != nil {
+		if values := plan.Value(); values != nil {
 			copy := copyMap(values)
 			docs = append(docs, copy)
 		}

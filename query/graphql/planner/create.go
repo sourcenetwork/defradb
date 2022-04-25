@@ -78,7 +78,7 @@ func (n *createNode) Next() (bool, error) {
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
 
-func (n *createNode) Values() map[string]interface{} {
+func (n *createNode) Value() map[string]interface{} {
 	val, _ := n.doc.ToMap()
 	return val
 }

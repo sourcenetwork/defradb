@@ -90,8 +90,8 @@ func (n *deleteNode) Next() (bool, error) {
 	return n.deleteIter.Next()
 }
 
-func (n *deleteNode) Values() map[string]interface{} {
-	return n.deleteIter.Values()
+func (n *deleteNode) Value() map[string]interface{} {
+	return n.deleteIter.Value()
 }
 
 func (n *deleteNode) Spans(spans core.Spans) {

@@ -95,8 +95,8 @@ func (n *updateNode) Next() (bool, error) {
 	return n.updateIter.Next()
 }
 
-func (n *updateNode) Values() map[string]interface{} {
-	updatedDoc := n.updateIter.Values()
+func (n *updateNode) Value() map[string]interface{} {
+	updatedDoc := n.updateIter.Value()
 	// create a new span with the updateDoc._key
 	docKeyStr := updatedDoc["_key"].(string)
 	desc := n.collection.Description()
@@ -117,7 +117,7 @@ func (n *updateNode) Values() map[string]interface{} {
 	}
 
 	// we're only expecting a single value from our pointlookup
-	return n.results.Values()
+	return n.results.Value()
 }
 
 func (n *updateNode) Spans(spans core.Spans) { /* no-op */ }

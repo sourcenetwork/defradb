@@ -120,7 +120,7 @@ func (n *versionedScanNode) Spans(spans core.Spans) {
 }
 
 // Values returns the most recent result from Next()
-func (n *versionedScanNode) Values() map[string]interface{} {
+func (n *versionedScanNode) Value() map[string]interface{} {
 	return n.doc
 }
 

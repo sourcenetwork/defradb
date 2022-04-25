@@ -70,7 +70,7 @@ func (n *groupNode) Spans(spans core.Spans) { n.dataSource.Spans(spans) }
 func (n *groupNode) Close() error           { return n.dataSource.Close() }
 func (n *groupNode) Source() planNode       { return n.dataSource.Source() }
 
-func (n *groupNode) Values() map[string]interface{} {
+func (n *groupNode) Value() map[string]interface{} {
 	return n.currentValue
 }
 

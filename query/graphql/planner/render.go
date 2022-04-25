@@ -87,7 +87,7 @@ func (n *renderNode) Next() (bool, error) {
 		return hasNext, err
 	}
 
-	doc := n.plan.Values()
+	doc := n.plan.Value()
 	if doc == nil {
 		return n.Next()
 	}
@@ -103,8 +103,8 @@ func (n *renderNode) Source() planNode       { return n.plan }
 
 // we only need to implement the Values() func of the planNode
 // interface since the embedded baseNode implements the rest
-func (r *renderNode) Values() map[string]interface{} {
-	doc := r.plan.Values()
+func (r *renderNode) Value() map[string]interface{} {
+	doc := r.plan.Value()
 	if doc == nil {
 		return doc
 	}

@@ -20,7 +20,7 @@ import (
 // in value generation and retrieval.
 type valueIterator interface {
 	Next() (bool, error)
-	Values() map[string]interface{}
+	Value() map[string]interface{}
 	Close()
 }
 
@@ -82,8 +82,8 @@ func (n *sortNode) Init() error {
 func (n *sortNode) Start() error           { return n.plan.Start() }
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
-func (n *sortNode) Values() map[string]interface{} {
-	return n.valueIter.Values()
+func (n *sortNode) Value() map[string]interface{} {
+	return n.valueIter.Value()
 }
 
 func (n *sortNode) Next() (bool, error) {
@@ -107,7 +107,7 @@ func (n *sortNode) Next() (bool, error) {
 		}
 
 		// consuming data, sort
-		if err := n.sortStrategy.Add(n.plan.Values()); err != nil {
+		if err := n.sortStrategy.Add(n.plan.Value()); err != nil {
 			return false, err
 		}
 
@@ -170,8 +170,8 @@ func (s *allSortStrategy) Next() (bool, error) {
 }
 
 // Values returns the values of the next doc from the underliny valueNode
-func (s *allSortStrategy) Values() map[string]interface{} {
-	return s.valueNode.Values()
+func (s *allSortStrategy) Value() map[string]interface{} {
+	return s.valueNode.Value()
 }
 
 // Close closes the underling valueNode

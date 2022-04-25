@@ -51,8 +51,8 @@ func (n *countNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *countNode) Close() error           { return n.plan.Close() }
 func (n *countNode) Source() planNode       { return n.plan }
 
-func (n *countNode) Values() map[string]interface{} {
-	value := n.plan.Values()
+func (n *countNode) Value() map[string]interface{} {
+	value := n.plan.Value()
 
 	// Can just scan for now, can be replaced later by something fancier if needed
 	var count int

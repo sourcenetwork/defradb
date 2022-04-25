@@ -196,8 +196,8 @@ func (n *sumNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *sumNode) Close() error           { return n.plan.Close() }
 func (n *sumNode) Source() planNode       { return n.plan }
 
-func (n *sumNode) Values() map[string]interface{} {
-	value := n.plan.Values()
+func (n *sumNode) Value() map[string]interface{} {
+	value := n.plan.Value()
 
 	sum := float64(0)
 

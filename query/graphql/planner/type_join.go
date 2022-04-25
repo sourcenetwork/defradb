@@ -113,8 +113,8 @@ func (n *typeIndexJoin) Next() (bool, error) {
 	return n.joinPlan.Next()
 }
 
-func (n *typeIndexJoin) Values() map[string]interface{} {
-	return n.joinPlan.Values()
+func (n *typeIndexJoin) Value() map[string]interface{} {
+	return n.joinPlan.Value()
 }
 
 func (n *typeIndexJoin) Close() error {
@@ -242,8 +242,8 @@ func (n *typeJoinOne) Next() (bool, error) {
 	return n.root.Next()
 }
 
-func (n *typeJoinOne) Values() map[string]interface{} {
-	doc := n.root.Values()
+func (n *typeJoinOne) Value() map[string]interface{} {
+	doc := n.root.Value()
 	if n.primary {
 		return n.valuesPrimary(doc)
 	}
@@ -267,7 +267,7 @@ func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]int
 		return doc
 	}
 
-	subdoc := n.subType.Values()
+	subdoc := n.subType.Value()
 	doc[n.subTypeName] = subdoc
 	return doc
 }
@@ -318,7 +318,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	subDoc := n.subType.Values()
+	subDoc := n.subType.Value()
 	doc[subDocField] = subDoc
 
 	return doc
@@ -409,8 +409,8 @@ func (n *typeJoinMany) Next() (bool, error) {
 	return n.root.Next()
 }
 
-func (n *typeJoinMany) Values() map[string]interface{} {
-	doc := n.root.Values()
+func (n *typeJoinMany) Value() map[string]interface{} {
+	doc := n.root.Value()
 
 	// check if theres an index
 	// if there is, scan and aggregate resuts
@@ -440,7 +440,7 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 				break
 			}
 
-			subdoc := n.subType.Values()
+			subdoc := n.subType.Value()
 			subdocs = append(subdocs, subdoc)
 		}
 	}

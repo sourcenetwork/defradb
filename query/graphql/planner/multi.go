@@ -151,7 +151,7 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 		return false, err
 	}
 
-	doc := plan.Values()
+	doc := plan.Value()
 	for k, v := range doc {
 		p.doc[k] = v
 	}
@@ -227,7 +227,7 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 			break
 		}
 
-		results = append(results, plan.Values())
+		results = append(results, plan.Value())
 	}
 	p.doc[p.childFields[index]] = results
 	return true, nil
@@ -272,7 +272,7 @@ _version: commitSelectTopNode(append)
 
 */
 
-func (p *parallelNode) Values() map[string]interface{} {
+func (p *parallelNode) Value() map[string]interface{} {
 	return p.doc
 }
 

@@ -102,7 +102,7 @@ func (h *headsetScanNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (h *headsetScanNode) Values() map[string]interface{} {
+func (h *headsetScanNode) Value() map[string]interface{} {
 	return map[string]interface{}{
 		"cid": *h.cid,
 	}
@@ -216,7 +216,7 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, err
 		}
 
-		val := n.headset.Values()
+		val := n.headset.Value()
 		cid, ok := val["cid"].(cid.Cid)
 		if !ok {
 			return false, fmt.Errorf("Headset scan node returned an invalid cid")
@@ -298,7 +298,7 @@ func (n *dagScanNode) Next() (bool, error) {
 
 // }
 
-func (n *dagScanNode) Values() map[string]interface{} {
+func (n *dagScanNode) Value() map[string]interface{} {
 	return n.doc
 }
 

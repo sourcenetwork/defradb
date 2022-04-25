@@ -48,7 +48,7 @@ func (n *pipeNode) Spans(spans core.Spans) { n.source.Spans(spans) }
 func (n *pipeNode) Close() error           { return n.source.Close() }
 func (n *pipeNode) Source() planNode       { return n.source }
 
-func (n *pipeNode) Values() map[string]interface{} {
+func (n *pipeNode) Value() map[string]interface{} {
 	// Values must be copied out of the node, in case consumers mutate the item
 	// for example: when rendering
 	return copyMap(n.docs.At(n.docIndex))
@@ -67,7 +67,7 @@ func (n *pipeNode) Next() (bool, error) {
 			return false, nil
 		}
 
-		doc := n.source.Values()
+		doc := n.source.Value()
 		err = n.docs.AddDoc(doc)
 		if err != nil {
 			return false, err
