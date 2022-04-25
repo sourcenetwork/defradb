@@ -30,7 +30,6 @@ type deleteNode struct {
 	deleteIter *valuesNode
 }
 
-// Next only returns once.
 func (n *deleteNode) Next() (bool, error) {
 	if n.isDeleting {
 		// create our result values node
