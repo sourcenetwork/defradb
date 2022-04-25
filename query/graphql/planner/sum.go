@@ -19,6 +19,8 @@ import (
 )
 
 type sumNode struct {
+	documentIterator
+
 	p    *Planner
 	plan planNode
 
@@ -196,12 +198,17 @@ func (n *sumNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *sumNode) Close() error           { return n.plan.Close() }
 func (n *sumNode) Source() planNode       { return n.plan }
 
-func (n *sumNode) Value() map[string]interface{} {
-	value := n.plan.Value()
+func (n *sumNode) Next() (bool, error) {
+	hasNext, err := n.plan.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
+
+	n.currentValue = n.plan.Value()
 
 	sum := float64(0)
 
-	if child, hasProperty := value[n.sourceCollection]; hasProperty {
+	if child, hasProperty := n.currentValue[n.sourceCollection]; hasProperty {
 		switch childCollection := child.(type) {
 		case []map[string]interface{}:
 			for _, childItem := range childCollection {
@@ -237,13 +244,9 @@ func (n *sumNode) Value() map[string]interface{} {
 	} else {
 		typedSum = int64(sum)
 	}
-	value[n.virtualFieldId] = typedSum
+	n.currentValue[n.virtualFieldId] = typedSum
 
-	return value
-}
-
-func (n *sumNode) Next() (bool, error) {
-	return n.plan.Next()
+	return true, nil
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
