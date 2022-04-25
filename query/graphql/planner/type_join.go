@@ -156,6 +156,8 @@ func splitFilterByType(filter *parser.Filter, subType string) (*parser.Filter, *
 // where the root type is the primary in a one-to-one relation
 // query.
 type typeJoinOne struct {
+	documentIterator
+
 	p *Planner
 
 	root    planNode
@@ -239,15 +241,18 @@ func (n *typeJoinOne) Start() error {
 func (n *typeJoinOne) Spans(spans core.Spans) { /* todo */ }
 
 func (n *typeJoinOne) Next() (bool, error) {
-	return n.root.Next()
-}
+	hasNext, err := n.root.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
 
-func (n *typeJoinOne) Value() map[string]interface{} {
 	doc := n.root.Value()
 	if n.primary {
-		return n.valuesPrimary(doc)
+		n.currentValue = n.valuesPrimary(doc)
+	} else {
+		n.currentValue = n.valuesSecondary(doc)
 	}
-	return n.valuesSecondary(doc)
+	return true, nil
 }
 
 func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]interface{} {
