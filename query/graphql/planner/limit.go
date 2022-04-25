@@ -78,6 +78,8 @@ func (n *hardLimitNode) Source() planNode { return n.plan }
 // with a 'hidden' flag blocking rendering.  Used if consumers of the results require
 // the full dataset.
 type renderLimitNode struct {
+	documentIterator
+
 	p    *Planner
 	plan planNode
 
@@ -108,22 +110,18 @@ func (n *renderLimitNode) Init() error {
 func (n *renderLimitNode) Start() error           { return n.plan.Start() }
 func (n *renderLimitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *renderLimitNode) Close() error           { return n.plan.Close() }
-func (n *renderLimitNode) Value() map[string]interface{} {
-	value := n.plan.Value()
-
-	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
-		value[parser.HiddenFieldName] = struct{}{}
-	}
-
-	return value
-}
 
 func (n *renderLimitNode) Next() (bool, error) {
 	if next, err := n.plan.Next(); !next {
 		return false, err
 	}
 
+	n.currentValue = n.plan.Value()
+
 	n.rowIndex++
+	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
+		n.currentValue[parser.HiddenFieldName] = struct{}{}
+	}
 	return true, nil
 }
 
