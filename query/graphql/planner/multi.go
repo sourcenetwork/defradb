@@ -75,14 +75,14 @@ type appendNode interface {
 // be executed in parallel.
 //
 type parallelNode struct { // serialNode?
+	documentIterator
+
 	p *Planner
 
 	children    []planNode
 	childFields []string
 
 	multiscan *multiScanNode
-
-	doc map[string]interface{}
 }
 
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
@@ -123,7 +123,7 @@ func (p *parallelNode) Close() error {
 // It only needs a single child plan to return true for it
 // to return true. Same with errors.
 func (p *parallelNode) Next() (bool, error) {
-	p.doc = make(map[string]interface{})
+	p.currentValue = make(map[string]interface{})
 	var orNext bool
 	for i, plan := range p.children {
 		var next bool
@@ -153,7 +153,7 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 
 	doc := plan.Value()
 	for k, v := range doc {
-		p.doc[k] = v
+		p.currentValue[k] = v
 	}
 	return true, nil
 }
@@ -204,7 +204,7 @@ output
 */
 
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
-	if key, ok := p.doc["_key"].(string); ok {
+	if key, ok := p.currentValue["_key"].(string); ok {
 		// pass the doc key as a reference through the spans interface
 		spans := core.Spans{core.NewSpan(core.DataStoreKey{DocKey: key}, core.DataStoreKey{})}
 		plan.Spans(spans)
@@ -229,7 +229,7 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 
 		results = append(results, plan.Value())
 	}
-	p.doc[p.childFields[index]] = results
+	p.currentValue[p.childFields[index]] = results
 	return true, nil
 }
 
@@ -271,10 +271,6 @@ _version: commitSelectTopNode(append)
 
 
 */
-
-func (p *parallelNode) Value() map[string]interface{} {
-	return p.doc
-}
 
 func (p *parallelNode) Source() planNode { return p.multiscan }
 
@@ -399,7 +395,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		case mergeNode:
 			s.source = plan
 		case appendNode:
-			m := &parallelNode{p: s.p, doc: make(map[string]interface{})}
+			m := &parallelNode{p: s.p}
 			if err := m.AddChild("", src); err != nil {
 				return err
 			}
@@ -423,7 +419,6 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		multinode := &parallelNode{
 			p:         s.p,
 			multiscan: multiscan,
-			doc:       make(map[string]interface{}),
 		}
 		// replace our current source internal scanNode with our new multiscanner
 		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
