@@ -75,6 +75,14 @@ func (n *baseNode) Value() map[string]interface{} { return n.plan.Value() } //no
 func (n *baseNode) Close() error                  { return n.plan.Close() } //nolint:unused
 func (n *baseNode) Source() planNode              { return n.plan }         //nolint:unused
 
+type documentIterator struct {
+	currentValue map[string]interface{}
+}
+
+func (n *documentIterator) Value() map[string]interface{} {
+	return n.currentValue
+}
+
 type ExecutionContext struct {
 	context.Context
 }
