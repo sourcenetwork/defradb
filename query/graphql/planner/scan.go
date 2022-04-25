@@ -20,11 +20,12 @@ import (
 
 // scans an index for records
 type scanNode struct {
+	documentIterator
+
 	p    *Planner
 	desc client.CollectionDescription
 
 	fields []*client.FieldDescription
-	doc    map[string]interface{}
 	docKey []byte
 
 	// Commenting out because unused code (structcheck) according to linter.
@@ -86,15 +87,15 @@ func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextMap(n.p.ctx)
 		if err != nil {
 			return false, err
 		}
-		if n.doc == nil {
+		if n.currentValue == nil {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		passed, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
@@ -106,11 +107,6 @@ func (n *scanNode) Next() (bool, error) {
 
 func (n *scanNode) Spans(spans core.Spans) {
 	n.spans = spans
-}
-
-// Values returns the most recent result from Next()
-func (n *scanNode) Value() map[string]interface{} {
-	return n.doc
 }
 
 func (n *scanNode) Close() error {
