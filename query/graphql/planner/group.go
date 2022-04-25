@@ -17,6 +17,8 @@ import (
 
 // A node responsible for the grouping of documents by a given selection of fields.
 type groupNode struct {
+	documentIterator
+
 	p *Planner
 
 	// The child select information.  Will be nil if there is no child `_group` item requested.
@@ -30,7 +32,6 @@ type groupNode struct {
 
 	values       []map[string]interface{}
 	currentIndex int
-	currentValue map[string]interface{}
 }
 
 // Creates a new group node.  The function is recursive and will construct the node-chain for any
@@ -69,10 +70,6 @@ func (n *groupNode) Start() error           { return n.dataSource.Start() }
 func (n *groupNode) Spans(spans core.Spans) { n.dataSource.Spans(spans) }
 func (n *groupNode) Close() error           { return n.dataSource.Close() }
 func (n *groupNode) Source() planNode       { return n.dataSource.Source() }
-
-func (n *groupNode) Value() map[string]interface{} {
-	return n.currentValue
-}
 
 func (n *groupNode) Next() (bool, error) {
 	if n.values == nil {
