@@ -340,6 +340,8 @@ func (n *typeJoinOne) Close() error {
 func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
+	documentIterator
+
 	p *Planner
 
 	// the main type that is a the parent level of the query.
@@ -411,11 +413,12 @@ func (n *typeJoinMany) Start() error {
 func (n *typeJoinMany) Spans(spans core.Spans) { /* todo */ }
 
 func (n *typeJoinMany) Next() (bool, error) {
-	return n.root.Next()
-}
+	hasNext, err := n.root.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
 
-func (n *typeJoinMany) Value() map[string]interface{} {
-	doc := n.root.Value()
+	n.currentValue = n.root.Value()
 
 	// check if theres an index
 	// if there is, scan and aggregate resuts
@@ -424,24 +427,27 @@ func (n *typeJoinMany) Value() map[string]interface{} {
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		docKey := doc["_key"].(string)
+		docKey := n.currentValue["_key"].(string)
 		filter := map[string]interface{}{
 			n.rootName + "_id": docKey, // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
 		if err != nil {
-			return nil
+			return false, err
 		}
 
 		// reset scan node
 		if err := n.subType.Init(); err != nil {
-			log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
+			return false, err
 		}
 
 		for {
 			next, err := n.subType.Next()
-			if !next || err != nil {
+			if err != nil {
+				return false, err
+			}
+			if !next {
 				break
 			}
 
@@ -450,8 +456,8 @@ func (n *typeJoinMany) Value() map[string]interface{} {
 		}
 	}
 
-	doc[n.subTypeName] = subdocs
-	return doc
+	n.currentValue[n.subTypeName] = subdocs
+	return true, nil
 }
 
 func (n *typeJoinMany) Close() error {
