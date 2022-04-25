@@ -26,6 +26,7 @@ import (
 // document, until we've exhausted the payload. No filtering
 // or Select plans
 type createNode struct {
+	documentIterator
 	p *Planner
 
 	// cache information about the original data source
@@ -72,16 +73,17 @@ func (n *createNode) Next() (bool, error) {
 		return false, err
 	}
 
+	currentValue, err := n.doc.ToMap()
+	if err != nil {
+		return false, err
+	}
+
 	n.returned = true
+	n.currentValue = currentValue
 	return true, nil
 }
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
-
-func (n *createNode) Value() map[string]interface{} {
-	val, _ := n.doc.ToMap()
-	return val
-}
 
 func (n *createNode) Close() error { return nil }
 
