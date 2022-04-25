@@ -22,6 +22,8 @@ import (
 )
 
 type countNode struct {
+	documentIterator
+
 	p    *Planner
 	plan planNode
 
@@ -51,12 +53,17 @@ func (n *countNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *countNode) Close() error           { return n.plan.Close() }
 func (n *countNode) Source() planNode       { return n.plan }
 
-func (n *countNode) Value() map[string]interface{} {
-	value := n.plan.Value()
+func (n *countNode) Next() (bool, error) {
+	hasValue, err := n.plan.Next()
+	if err != nil || !hasValue {
+		return hasValue, err
+	}
+
+	n.currentValue = n.plan.Value()
 
 	// Can just scan for now, can be replaced later by something fancier if needed
 	var count int
-	if property, hasProperty := value[n.sourceProperty]; hasProperty {
+	if property, hasProperty := n.currentValue[n.sourceProperty]; hasProperty {
 		v := reflect.ValueOf(property)
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
@@ -65,13 +72,8 @@ func (n *countNode) Value() map[string]interface{} {
 		}
 	}
 
-	value[n.virtualFieldId] = count
-
-	return value
-}
-
-func (n *countNode) Next() (bool, error) {
-	return n.plan.Next()
+	n.currentValue[n.virtualFieldId] = count
+	return true, nil
 }
 
 func (n *countNode) SetPlan(p planNode) { n.plan = p }
