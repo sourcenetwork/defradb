@@ -17,6 +17,8 @@ import (
 
 // the final field select and render
 type renderNode struct {
+	documentIterator
+
 	p    *Planner
 	plan planNode
 
@@ -95,26 +97,17 @@ func (n *renderNode) Next() (bool, error) {
 	if _, isHidden := doc[parser.HiddenFieldName]; isHidden {
 		return n.Next()
 	}
-	return hasNext, err
+
+	n.currentValue = map[string]interface{}{}
+	for _, renderInfo := range n.renderInfo.children {
+		renderInfo.render(doc, n.currentValue)
+	}
+
+	return true, nil
 }
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *renderNode) Close() error           { return n.plan.Close() }
 func (n *renderNode) Source() planNode       { return n.plan }
-
-// we only need to implement the Values() func of the planNode
-// interface since the embedded baseNode implements the rest
-func (r *renderNode) Value() map[string]interface{} {
-	doc := r.plan.Value()
-	if doc == nil {
-		return doc
-	}
-
-	result := map[string]interface{}{}
-	for _, renderInfo := range r.renderInfo.children {
-		renderInfo.render(doc, result)
-	}
-	return result
-}
 
 // Renders the source document into the destination document using the given renderInfo.
 // Function recursively handles any nested children defined in the render info.
