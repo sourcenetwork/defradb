@@ -20,13 +20,13 @@ import (
 )
 
 type commitSelectNode struct {
+	documentIterator
+
 	p *Planner
 
 	source *dagScanNode
 
 	subRenderInfo map[string]renderInfo
-
-	doc map[string]interface{}
 }
 
 func (n *commitSelectNode) Init() error {
@@ -42,12 +42,8 @@ func (n *commitSelectNode) Next() (bool, error) {
 		return false, err
 	}
 
-	n.doc = n.source.Value()
+	n.currentValue = n.source.Value()
 	return true, nil
-}
-
-func (n *commitSelectNode) Value() map[string]interface{} {
-	return n.doc
 }
 
 func (n *commitSelectNode) Spans(spans core.Spans) {
