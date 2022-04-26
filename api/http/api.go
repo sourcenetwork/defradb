@@ -13,7 +13,7 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/multiformats/go-multihash"
@@ -105,7 +105,7 @@ func (s *Server) execGQL(w http.ResponseWriter, r *http.Request) {
 func (s *Server) loadSchema(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var result client.QueryResult
-	sdl, err := ioutil.ReadAll(r.Body)
+	sdl, err := io.ReadAll(r.Body)
 
 	defer func() {
 		err = r.Body.Close()

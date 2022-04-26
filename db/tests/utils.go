@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -690,7 +689,7 @@ func checkIfDatabaseFormatChangesAreDocumented() bool {
 	return false
 }
 
-func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.FileInfo, bool) {
+func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.DirEntry, bool) {
 	startInfo, err := os.Stat(startPath)
 	if err != nil {
 		panic(err)
@@ -704,7 +703,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.F
 	}
 
 	for {
-		directoryContents, err := ioutil.ReadDir(currentDirectory)
+		directoryContents, err := os.ReadDir(currentDirectory)
 		if err != nil {
 			panic(err)
 		}
@@ -712,7 +711,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.F
 		for _, directoryItem := range directoryContents {
 			directoryItemPath := path.Join(currentDirectory, directoryItem.Name())
 			if directoryItem.Name() == documentationDirectoryName {
-				probableFormatChangeDirectoryContents, err := ioutil.ReadDir(directoryItemPath)
+				probableFormatChangeDirectoryContents, err := os.ReadDir(directoryItemPath)
 				if err != nil {
 					panic(err)
 				}
@@ -741,7 +740,7 @@ func getDatabaseFormatDocumentation(startPath string, allowDescend bool) ([]fs.F
 				panic("Database documentation directory not found")
 			}
 		} else {
-			return []fs.FileInfo{}, false
+			return []fs.DirEntry{}, false
 		}
 	}
 }
