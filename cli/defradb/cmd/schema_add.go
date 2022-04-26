@@ -14,9 +14,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/logging"
@@ -42,7 +43,7 @@ var addCmd = &cobra.Command{
 		if len(args) > 0 {
 			schema = []byte(strings.Join(args, "\n"))
 		} else if schemaFile != "" {
-			buf, err := ioutil.ReadFile(schemaFile)
+			buf, err := os.ReadFile(schemaFile)
 			cobra.CheckErr(err)
 			schema = buf
 		} else {
@@ -70,7 +71,7 @@ var addCmd = &cobra.Command{
 			}
 		}()
 
-		result, err := ioutil.ReadAll(res.Body)
+		result, err := io.ReadAll(res.Body)
 		cobra.CheckErr(err)
 		log.Info(ctx, "", logging.NewKV("Result", string(result)))
 	},

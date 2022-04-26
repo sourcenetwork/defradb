@@ -12,7 +12,6 @@ package node
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -179,14 +178,14 @@ func getHostKey(keypath string) (crypto.PrivKey, error) {
 		if err := os.MkdirAll(keypath, os.ModePerm); err != nil {
 			return nil, err
 		}
-		if err = ioutil.WriteFile(pth, bytes, 0400); err != nil {
+		if err = os.WriteFile(pth, bytes, 0400); err != nil {
 			return nil, err
 		}
 		return key, nil
 	} else if err != nil {
 		return nil, err
 	} else {
-		bytes, err := ioutil.ReadFile(pth)
+		bytes, err := os.ReadFile(pth)
 		if err != nil {
 			return nil, err
 		}
