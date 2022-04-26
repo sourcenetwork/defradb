@@ -22,7 +22,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 		Query: `query {
 				author {
 					name
-					_count(field: published)
+					_count(published: {})
 					published(limit: 2, offset: 1) {
 						name
 					}

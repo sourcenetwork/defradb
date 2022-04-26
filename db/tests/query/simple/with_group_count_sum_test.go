@@ -22,10 +22,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
-						_sum(field: {_group: _count})
+						_sum(_group: {field: _count})
 						_group (groupBy: [Verified]){
 							Verified
-							_count(field: _group)
+							_count(_group: {})
 						}
 					}
 				}`,

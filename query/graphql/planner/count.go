@@ -15,7 +15,6 @@ package planner
 // aggregates in.
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -36,16 +35,9 @@ func (p *Planner) Count(field *parser.Field) (*countNode, error) {
 		return nil, err
 	}
 
-	var sourceProperty string
-	if len(source) == 1 {
-		sourceProperty = source[0]
-	} else {
-		return nil, fmt.Errorf("Count must be provided with a property to count.")
-	}
-
 	return &countNode{
 		p:              p,
-		sourceProperty: sourceProperty,
+		sourceProperty: source.HostProperty,
 		virtualFieldId: field.Name,
 	}, nil
 }

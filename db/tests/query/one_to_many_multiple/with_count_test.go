@@ -22,8 +22,8 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 		Query: `query {
 				author {
 					name
-					numberOfBooks: _count(field: books)
-					numberOfArticles: _count(field: articles)
+					numberOfBooks: _count(books: {})
+					numberOfArticles: _count(articles: {})
 				}
 			}`,
 		Docs: map[int][]string{

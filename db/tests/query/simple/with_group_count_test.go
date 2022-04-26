@@ -22,7 +22,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						_count(field: _group)
+						_count(_group: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -61,7 +61,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						_count(field: _group)
+						_count(_group: {})
 						_group {
 							Name
 						}
@@ -146,7 +146,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						Count: _count(field: _group)
+						Count: _count(_group: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -187,8 +187,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						Count1: _count(field: _group)
-						Count2: _count(field: _group)
+						Count1: _count(_group: {})
+						Count2: _count(_group: {})
 					}
 				}`,
 		Docs: map[int][]string{

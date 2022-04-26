@@ -22,7 +22,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndNullArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteIntegers: {}})
+						_sum(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -49,7 +49,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndEmptyArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteIntegers: {}})
+						_sum(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -76,7 +76,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndPopulatedArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteIntegers: {}})
+						_sum(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -103,7 +103,7 @@ func TestQueryInlineFloatArrayWithsWithSumAndNullArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteFloats: {}})
+						_sum(FavouriteFloats: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -130,7 +130,7 @@ func TestQueryInlineFloatArrayWithsWithSumAndEmptyArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteFloats: {}})
+						_sum(FavouriteFloats: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -157,7 +157,7 @@ func TestQueryInlineFloatArrayWithsWithSumAndPopulatedArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_sum(field: {FavouriteFloats: {}})
+						_sum(FavouriteFloats: {})
 					}
 				}`,
 		Docs: map[int][]string{

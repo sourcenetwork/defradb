@@ -22,7 +22,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_count(field: FavouriteIntegers)
+						_count(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -49,7 +49,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_count(field: FavouriteIntegers)
+						_count(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -76,7 +76,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndPopulatedArray(t *testing.T) {
 		Query: `query {
 					users {
 						Name
-						_count(field: FavouriteIntegers)
+						_count(FavouriteIntegers: {})
 					}
 				}`,
 		Docs: map[int][]string{

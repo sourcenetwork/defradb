@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
@@ -479,6 +480,17 @@ func getRelationshipName(
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
+	sumBaseArgs := make(map[string]*gql.InputObject)
+	for _, t := range g.typeDefs {
+		sumArg := g.genSumBaseArgInputs(t)
+		sumBaseArgs[sumArg.Name()] = sumArg
+		// All base types need to be appended to the schema before calling genSumFieldConfig
+		err := g.manager.schema.AppendType(sumArg)
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, t := range g.typeDefs {
 		countField, err := g.genCountFieldConfig(t)
 		if err != nil {
@@ -486,7 +498,10 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		}
 		t.AddFieldConfig(countField.Name, &countField)
 
-		sumField := g.genSumFieldConfig(ctx, t)
+		sumField, err := g.genSumFieldConfig(t, sumBaseArgs)
+		if err != nil {
+			return err
+		}
 		t.AddFieldConfig(sumField.Name, &sumField)
 	}
 
@@ -494,126 +509,152 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 }
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
-	inputCfg := gql.EnumConfig{
-		Name:   genTypeName(obj, "CountArg"),
-		Values: gql.EnumValueConfigMap{},
-	}
+	childTypesByFieldName := map[string]*gql.InputObject{}
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
 		if _, isList := field.Type.(*gql.List); !isList {
 			continue
 		}
-		inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
-	}
-	countType := gql.NewEnum(inputCfg)
-	err := g.manager.schema.AppendType(countType)
-	if err != nil {
-		return gql.Field{}, err
+
+		countableObject := gql.NewInputObject(gql.InputObjectConfig{
+			Name: fmt.Sprintf("%s%s%s", obj.Name(), strings.Title(field.Name), "CountInputObj"),
+			Fields: gql.InputObjectConfigFieldMap{
+				"_": &gql.InputObjectFieldConfig{
+					Type:        gql.Int,
+					Description: "Placeholder - empty object not permitted, but will have fields shortly",
+				},
+			},
+		})
+
+		childTypesByFieldName[field.Name] = countableObject
+		err := g.manager.schema.AppendType(countableObject)
+		if err != nil {
+			return gql.Field{}, err
+		}
 	}
 
 	field := gql.Field{
 		Name: parser.CountFieldName,
 		Type: gql.Int,
-		Args: gql.FieldConfigArgument{
-			"field": newArgConfig(countType),
-		},
+		Args: gql.FieldConfigArgument{},
+	}
+
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = newArgConfig(inputObject)
 	}
 
 	return field, nil
 }
 
-func (g *Generator) genSumFieldConfig(ctx context.Context, obj *gql.Object) gql.Field {
-	var sumType *gql.InputObject
+func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
+	childTypesByFieldName := map[string]*gql.InputObject{}
 
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "SumArg"),
-	}
+	for _, field := range obj.Fields() {
+		// we can only sum list items
+		listType, isList := field.Type.(*gql.List)
+		if !isList {
+			continue
+		}
 
-	inputCfg.Fields = (gql.InputObjectConfigFieldMapThunk)(
-		func() (gql.InputObjectConfigFieldMap, error) {
-			fields := gql.InputObjectConfigFieldMap{}
+		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+			// If it is an inline scalar array then we require an empty
+			//  object as an argument due to the lack of union input types
+			sumableObject := gql.NewInputObject(gql.InputObjectConfig{
+				Name: fmt.Sprintf("%s%s%s", obj.Name(), strings.Title(field.Name), "SumInputObj"),
+				Fields: gql.InputObjectConfigFieldMap{
+					"_": &gql.InputObjectFieldConfig{
+						Type:        gql.Int,
+						Description: "Placeholder - empty object not permitted, but will have fields shortly",
+					},
+				},
+			})
 
-			sumBaseArgType, isSumable := g.genSumBaseArgInput(obj)
-			if isSumable {
-				err := g.manager.schema.AppendType(sumBaseArgType)
-				if err != nil {
-					return gql.InputObjectConfigFieldMap{}, err
-				}
+			childTypesByFieldName[field.Name] = sumableObject
+			err := g.manager.schema.AppendType(sumableObject)
+			if err != nil {
+				return gql.Field{}, err
 			}
+			continue
+		}
 
-			for _, field := range obj.Fields() {
-				// we can only sum list items
-				listType, isList := field.Type.(*gql.List)
-				if !isList {
-					continue
-				}
-
-				if listType.OfType == gql.Float || listType.OfType == gql.Int {
-					// If it is an inline scalar array then we require an empty
-					//  object as an argument due to the lack of union input types
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: &gql.Object{},
-					}
-				} else {
-					subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[genTypeName(
-						field.Type,
-						"SumBaseArg",
-					)]
-					// If the item is not in the type map, it must contain no summable
-					//  fields (e.g. no Int/Floats)
-					if !isSubTypeSumable {
-						continue
-					}
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: subSumType,
-					}
-				}
-
-			}
-
-			return fields, nil
-		},
-	)
-	sumType = gql.NewInputObject(inputCfg)
-
-	//this might resolve the thunk?  Race issue?
-	err := g.manager.schema.AppendType(sumType)
-	if err != nil {
-		log.ErrorE(ctx, "Failed to append sumType", err)
+		subSumType, isSubTypeSumable := sumBaseArgs[genTypeName(
+			field.Type,
+			"SumBaseArg",
+		)]
+		// If the item is not in the type map, it must contain no summable
+		//  fields (e.g. no Int/Floats)
+		if !isSubTypeSumable {
+			continue
+		}
+		childTypesByFieldName[field.Name] = subSumType
 	}
 
 	field := gql.Field{
 		Name: parser.SumFieldName,
 		Type: gql.Float,
-		Args: gql.FieldConfigArgument{
-			"field": newArgConfig(sumType),
-		},
+		Args: gql.FieldConfigArgument{},
 	}
-	return field
+
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = newArgConfig(inputObject)
+	}
+
+	return field, nil
 }
 
-func (g *Generator) genSumBaseArgInput(obj *gql.Object) (*gql.Enum, bool) {
-	inputCfg := gql.EnumConfig{
-		Name:   genTypeName(obj, "SumBaseArg"),
-		Values: gql.EnumValueConfigMap{},
-	}
-
-	hasSumableFields := false
-	// generate basic filter operator blocks for all the sumable types
-	for _, field := range obj.Fields() {
-		if field.Type == gql.Float || field.Type == gql.Int {
-			hasSumableFields = true
-			inputCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
+	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
+		fieldsEnumCfg := gql.EnumConfig{
+			Name:   genTypeName(obj, "SumFieldsArg"),
+			Values: gql.EnumValueConfigMap{},
 		}
-	}
-	inputCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
 
-	if !hasSumableFields {
-		return nil, false
+		hasSumableFields := false
+		// generate basic filter operator blocks for all the sumable types
+		for _, field := range obj.Fields() {
+			if field.Type == gql.Float || field.Type == gql.Int {
+				hasSumableFields = true
+				fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+				continue
+			}
+
+			if list, isList := field.Type.(*gql.List); isList {
+				hasSumableFields = true
+				if list.OfType == gql.Float || list.OfType == gql.Int {
+					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+				} else {
+					// If it is a related list, we need to add count in here so that we can sum it
+					fieldsEnumCfg.Values[parser.CountFieldName] = &gql.EnumValueConfig{Value: parser.CountFieldName}
+				}
+			}
+		}
+		fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
+
+		if !hasSumableFields {
+			return nil, nil
+		}
+
+		fieldsEnum := gql.NewEnum(fieldsEnumCfg)
+		err := g.manager.schema.AppendType(fieldsEnum)
+		if err != nil {
+			return nil, err
+		}
+
+		return gql.InputObjectConfigFieldMap{
+			"field": &gql.InputObjectFieldConfig{
+				Type: fieldsEnum,
+			},
+		}, nil
 	}
 
-	return gql.NewEnum(inputCfg), true
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name: genTypeName(
+			obj,
+			"SumBaseArg",
+		),
+		Fields: fieldThunk,
+	})
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
