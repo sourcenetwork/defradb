@@ -480,12 +480,12 @@ func getRelationshipName(
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
-	sumBaseArgs := make(map[string]*gql.InputObject)
+	numBaseArgs := make(map[string]*gql.InputObject)
 	for _, t := range g.typeDefs {
-		sumArg := g.genSumBaseArgInputs(t)
-		sumBaseArgs[sumArg.Name()] = sumArg
+		numArg := g.genNumericAggregateBaseArgInputs(t)
+		numBaseArgs[numArg.Name()] = numArg
 		// All base types need to be appended to the schema before calling genSumFieldConfig
-		err := g.manager.schema.AppendType(sumArg)
+		err := g.manager.schema.AppendType(numArg)
 		if err != nil {
 			return err
 		}
@@ -498,7 +498,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		}
 		t.AddFieldConfig(countField.Name, &countField)
 
-		sumField, err := g.genSumFieldConfig(t, sumBaseArgs)
+		sumField, err := g.genSumFieldConfig(t, numBaseArgs)
 		if err != nil {
 			return err
 		}
@@ -580,7 +580,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*g
 
 		subSumType, isSubTypeSumable := sumBaseArgs[genTypeName(
 			field.Type,
-			"SumBaseArg",
+			"NumericAggregateBaseArg",
 		)]
 		// If the item is not in the type map, it must contain no summable
 		//  fields (e.g. no Int/Floats)
@@ -603,10 +603,12 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*g
 	return field, nil
 }
 
-func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
+// Generates the base (numeric-only) aggregate input object-type for the give gql object,
+// declaring which fields are available for aggregation.
+func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
 		fieldsEnumCfg := gql.EnumConfig{
-			Name:   genTypeName(obj, "SumFieldsArg"),
+			Name:   genTypeName(obj, "NumericFieldsArg"),
 			Values: gql.EnumValueConfigMap{},
 		}
 
@@ -629,6 +631,7 @@ func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
 				}
 			}
 		}
+		// A child sum will always be aggregatable, as it can be present via an inner grouping
 		fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
 
 		if !hasSumableFields {
@@ -651,7 +654,7 @@ func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name: genTypeName(
 			obj,
-			"SumBaseArg",
+			"NumericAggregateBaseArg",
 		),
 		Fields: fieldThunk,
 	})
