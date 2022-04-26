@@ -13,7 +13,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -52,7 +52,7 @@ var pingCmd = &cobra.Command{
 			}
 		}()
 
-		buf, err := ioutil.ReadAll(res.Body)
+		buf, err := io.ReadAll(res.Body)
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return
