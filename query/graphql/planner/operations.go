@@ -25,6 +25,7 @@ var (
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*typeJoinMany)(nil)
 	_ planNode = (*countNode)(nil)
+	_ planNode = (*averageNode)(nil)
 )
 
 // type joinNode struct {

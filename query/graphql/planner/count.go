@@ -29,6 +29,8 @@ type countNode struct {
 
 	sourceProperty string
 	virtualFieldId string
+
+	filter *parser.Filter
 }
 
 func (p *Planner) Count(field *parser.Field) (*countNode, error) {
@@ -69,6 +71,24 @@ func (n *countNode) Next() (bool, error) {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 			count = v.Len()
+			// For now, we only support count filters internally to support averages
+			// so this is fine here now, but may need to be moved later once external
+			// count filter support is added.
+			if count > 0 && n.filter != nil {
+				docArray, isDocArray := property.([]map[string]interface{})
+				if isDocArray {
+					count = 0
+					for _, doc := range docArray {
+						passed, err := parser.RunFilter(doc, n.filter, n.p.evalCtx)
+						if err != nil {
+							return false, err
+						}
+						if passed {
+							count += 1
+						}
+					}
+				}
+			}
 		}
 	}
 

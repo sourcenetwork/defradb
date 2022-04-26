@@ -512,6 +512,12 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 			return err
 		}
 		t.AddFieldConfig(sumField.Name, &sumField)
+
+		averageField, err := g.genAverageFieldConfig(t, numBaseArgs)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(averageField.Name, &averageField)
 	}
 
 	return nil
@@ -694,8 +700,9 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 				}
 			}
 		}
-		// A child sum will always be aggregatable, as it can be present via an inner grouping
+		// A child aggregate will always be aggregatable, as it can be present via an inner grouping
 		fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
+		fieldsEnumCfg.Values[parser.AverageFieldName] = &gql.EnumValueConfig{Value: parser.AverageFieldName}
 
 		if !hasSumableFields {
 			return nil, nil
