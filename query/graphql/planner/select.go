@@ -316,14 +316,9 @@ func (n *selectNode) joinAggregatedChild(
 		return err
 	}
 
-	if len(source) == 0 {
-		return nil
-	}
-
-	fieldName := source[0]
 	hasChildProperty := false
 	for _, field := range parsed.Fields {
-		if fieldName == field.GetName() {
+		if source.HostProperty == field.GetName() {
 			hasChildProperty = true
 			break
 		}
@@ -332,17 +327,17 @@ func (n *selectNode) joinAggregatedChild(
 	// If the child item is not requested, then we have add in the necessary components
 	//  to force the child records to be scanned through (they wont be rendered)
 	if !hasChildProperty {
-		if fieldName == parser.GroupFieldName {
+		if source.HostProperty == parser.GroupFieldName {
 			// It doesn't really matter at the moment if multiple counts are requested
 			//  and we overwrite the n.groupSelect property
 			n.groupSelect = &parser.Select{
 				Name: parser.GroupFieldName,
 			}
 		} else if parsed.Root != parser.CommitSelection {
-			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(fieldName)
+			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(source.HostProperty)
 			if fieldDescription.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 				subtype := &parser.Select{
-					Name: fieldName,
+					Name: source.HostProperty,
 				}
 				return n.addTypeIndexJoin(subtype)
 			}
