@@ -12,7 +12,7 @@ package http
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -131,7 +131,7 @@ func execGQL(c *context) {
 
 func loadSchema(c *context) {
 	var result client.QueryResult
-	sdl, err := ioutil.ReadAll(c.req.Body)
+	sdl, err := io.ReadAll(c.req.Body)
 
 	defer func() {
 		err = c.req.Body.Close()
