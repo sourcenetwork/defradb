@@ -12,6 +12,8 @@ package http
 
 import (
 	"net/http"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // The Server struct holds the Handler for the HTTP API
@@ -19,9 +21,11 @@ type Server struct {
 	Handler http.Handler
 }
 
-// NewServer instantiated a new server.
-func NewServer() *Server {
-	return &Server{}
+// NewServer instantiated a new server with the given http.Handler.
+func NewServer(db client.DB, handlerOptions ...func(*Handler)) *Server {
+	return &Server{
+		Handler: newHandler(db, handlerOptions...),
+	}
 }
 
 // Listen calls ListenAndServe with our router.

@@ -28,12 +28,6 @@ func defaultLogger() *logger {
 	}
 }
 
-func withLogger(l logging.Logger) *logger {
-	return &logger{
-		Logger: l,
-	}
-}
-
 type loggingResponseWriter struct {
 	statusCode    int
 	contentLength int
@@ -63,7 +57,7 @@ func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
 	return lrw.ResponseWriter.Write(b)
 }
 
-func (l *logger) loggerMiddleware(next http.Handler) http.Handler {
+func (l *logger) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		lrw := newLoggingResponseWriter(w)

@@ -20,8 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandler(t *testing.T) {
-	h := NewHandler(nil, nil)
+func TestNewHandlerWithLogger(t *testing.T) {
+	h := newHandler(nil)
 
 	dir := t.TempDir()
 
@@ -37,7 +37,7 @@ func TestHandler(t *testing.T) {
 
 	rec2 := httptest.NewRecorder()
 
-	h.loggerMiddleware(h.handle(ping)).ServeHTTP(rec2, req)
+	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file
@@ -48,10 +48,8 @@ func TestHandler(t *testing.T) {
 
 }
 
-func TestHandlerWithConfig(t *testing.T) {
-	h := NewHandler(nil, &HandlerConfig{
-		Logger: withLogger(logging.MustNewLogger("defra.http.test")),
-	})
+func TestNewHandlerWithConfigAndLogger(t *testing.T) {
+	h := newHandler(nil, WithLogger(logging.MustNewLogger("defra.http.test")))
 
 	dir := t.TempDir()
 
@@ -67,7 +65,7 @@ func TestHandlerWithConfig(t *testing.T) {
 
 	rec2 := httptest.NewRecorder()
 
-	h.loggerMiddleware(h.handle(ping)).ServeHTTP(rec2, req)
+	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file

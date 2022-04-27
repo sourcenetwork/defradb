@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLogger(t *testing.T) {
+func TestNewLoggingResponseWriterLogger(t *testing.T) {
 	rec := httptest.NewRecorder()
 	lrw := newLoggingResponseWriter(rec)
 
@@ -44,21 +44,18 @@ func TestLoggerLogs(t *testing.T) {
 
 	// send logs to temp file so we can inspect it
 	logFile := path.Join(dir, "http_test.log")
-	l := withLogger(logging.MustNewLogger("defra.http.test"))
-	l.ApplyConfig(logging.Config{
-		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
-		OutputPaths:   []string{logFile},
-	})
 
 	req, err := http.NewRequest("GET", "/ping", nil)
 	assert.NoError(t, err)
 
 	rec2 := httptest.NewRecorder()
 
-	h := handler{
-		logger: l,
-	}
-	h.loggerMiddleware(h.handle(ping)).ServeHTTP(rec2, req)
+	h := newHandler(nil, WithLogger(logging.MustNewLogger("defra.http.test")))
+	h.logger.ApplyConfig(logging.Config{
+		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
+		OutputPaths:   []string{logFile},
+	})
+	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file

@@ -14,11 +14,11 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (h *handler) setRoutes() {
+func (h *Handler) setRoutes() {
 	h.Mux = chi.NewRouter()
 
 	// setup logger middleware
-	h.Use(h.loggerMiddleware)
+	h.Use(h.logger.middleware)
 
 	// define routes
 	h.Get("/", h.handle(root))

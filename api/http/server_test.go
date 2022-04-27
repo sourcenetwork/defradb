@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestServer(t *testing.T) {
+func TestNewServerAndListen(t *testing.T) {
 	// @TODO: maybe it would be worth doing something a bit more thorough
 
 	// test with no config
-	s := NewServer()
+	s := NewServer(nil)
 	if ok := assert.NotNil(t, s); ok {
 		assert.Error(t, s.Listen(":303000"))
 	}
