@@ -277,18 +277,6 @@ func getBlock(c *context) {
 		return
 	}
 
-	// var val interface{}
-	// err = cbor.Unmarshal(delta.Value().([]byte), &val)
-	// if err != nil {
-	//   result.Errors = []interface{}{err.Error()}
-	//   err = json.NewEncoder(c.res).Encode(result)
-	//   if err != nil {
-	//     http.Error(c.res, err.Error(), http.StatusInternalServerError)
-	//     return
-	//   }
-	//   c.c.res.WriteHeader(http.StatusBadRequest)
-	//   return
-	// }
 	result.Data = map[string]interface{}{
 		"block": string(buf),
 		"delta": string(data),
