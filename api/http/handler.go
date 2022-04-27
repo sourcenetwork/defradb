@@ -49,10 +49,9 @@ func NewHandler(db client.DB, c *HandlerConfig) *handler {
 			h.logger = withLogger(c.Logger)
 		}
 
-		return h
+	} else {
+		h.logger = defaultLogger()
 	}
-
-	h.logger = defaultLogger()
 
 	h.setRoutes()
 
