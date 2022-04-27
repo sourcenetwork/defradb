@@ -32,7 +32,7 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
-	api "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/api"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/textileio/go-threads/broadcast"
@@ -178,7 +178,7 @@ var startCmd = &cobra.Command{
 					config.Database.Address,
 				),
 			)
-			s := api.NewServer(db)
+			s := api.NewHTTPServer(db)
 			if err := s.Listen(config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {
