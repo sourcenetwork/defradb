@@ -26,5 +26,6 @@ func (h *handler) setRoutes() {
 	h.Get("/dump", h.handle(dump))
 	h.Get("/blocks/get/{cid}", h.handle(getBlock))
 	h.Get("/graphql", h.handle(execGQL))
+	h.Post("/graphql", h.handle(execGQL))
 	h.Post("/schema/load", h.handle(loadSchema))
 }

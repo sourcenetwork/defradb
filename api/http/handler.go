@@ -44,8 +44,6 @@ func NewHandler(db client.DB, c *HandlerConfig) *handler {
 		db: db,
 	}
 
-	h.setRoutes()
-
 	if c != nil {
 		if c.Logger != nil {
 			h.logger = withLogger(c.Logger)
@@ -55,6 +53,8 @@ func NewHandler(db client.DB, c *HandlerConfig) *handler {
 	}
 
 	h.logger = defaultLogger()
+
+	h.setRoutes()
 
 	return h
 }
@@ -103,12 +103,28 @@ func dump(c *context) {
 }
 
 func execGQL(c *context) {
-	query := c.req.URL.Query().Get("query")
+	var query string
+	if c.req.Method == "GET" {
+		query = c.req.URL.Query().Get("query")
+	} else {
+		body, err := io.ReadAll(c.req.Body)
+		if err != nil {
+			http.Error(c.res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		query = string(body)
+	}
+
+	if query == "" {
+		http.Error(c.res, "missing GraphQL query", http.StatusBadRequest)
+		return
+	}
+
 	result := c.db.ExecQuery(c.req.Context(), query)
 
 	err := json.NewEncoder(c.res).Encode(result)
 	if err != nil {
-		http.Error(c.res, err.Error(), 500)
+		http.Error(c.res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -129,7 +145,7 @@ func loadSchema(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -143,7 +159,7 @@ func loadSchema(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -157,7 +173,7 @@ func loadSchema(c *context) {
 
 	err = json.NewEncoder(c.res).Encode(result)
 	if err != nil {
-		http.Error(c.res, err.Error(), 500)
+		http.Error(c.res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -180,7 +196,7 @@ func getBlock(c *context) {
 
 			err = json.NewEncoder(c.res).Encode(result)
 			if err != nil {
-				http.Error(c.res, err.Error(), 500)
+				http.Error(c.res, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
@@ -196,7 +212,7 @@ func getBlock(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -211,7 +227,7 @@ func getBlock(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -224,7 +240,7 @@ func getBlock(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -239,7 +255,7 @@ func getBlock(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -253,7 +269,7 @@ func getBlock(c *context) {
 
 		err = json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -267,7 +283,7 @@ func getBlock(c *context) {
 	//   result.Errors = []interface{}{err.Error()}
 	//   err = json.NewEncoder(c.res).Encode(result)
 	//   if err != nil {
-	//     http.Error(c.res, err.Error(), 500)
+	//     http.Error(c.res, err.Error(), http.StatusInternalServerError)
 	//     return
 	//   }
 	//   c.c.res.WriteHeader(http.StatusBadRequest)
@@ -288,7 +304,7 @@ func getBlock(c *context) {
 
 		err := json.NewEncoder(c.res).Encode(result)
 		if err != nil {
-			http.Error(c.res, err.Error(), 500)
+			http.Error(c.res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
