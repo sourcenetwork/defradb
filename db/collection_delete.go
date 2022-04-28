@@ -227,7 +227,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Extract the dockey in the string format from the document value.
-		docKey := query.Values()[parser.DocKeyFieldName].(string)
+		docKey := query.Value()[parser.DocKeyFieldName].(string)
 
 		// Convert from string to client.DocKey.
 		key := core.PrimaryDataStoreKey{

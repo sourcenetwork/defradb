@@ -130,7 +130,7 @@ func (source *dataSource) mergeParent(
 		return nil, false, nil
 	}
 
-	value := source.parentSource.Values()
+	value := source.parentSource.Value()
 	key := generateKey(value, keyFields)
 
 	destination.mergeParent(key, source.childName, value)
@@ -162,7 +162,7 @@ func (source *dataSource) appendChild(
 	// Note that even if the source yields both parent and child items, they may not be yielded in
 	// the same order - we need to treat it as a new item, regenerating the key and potentially caching
 	// it without yet receiving the parent-level details
-	value := source.childSource.Values()
+	value := source.childSource.Value()
 	key := generateKey(value, keyFields)
 
 	valuesByKey.appendChild(key, source.childName, value)

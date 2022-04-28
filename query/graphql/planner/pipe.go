@@ -19,6 +19,8 @@ import (
 // The node will start empty, and then load items as they are requested.  Items that are
 // requested more than once will not be re-loaded from source.
 type pipeNode struct {
+	documentIterator
+
 	source planNode
 
 	docs *container.DocumentContainer
@@ -48,12 +50,6 @@ func (n *pipeNode) Spans(spans core.Spans) { n.source.Spans(spans) }
 func (n *pipeNode) Close() error           { return n.source.Close() }
 func (n *pipeNode) Source() planNode       { return n.source }
 
-func (n *pipeNode) Values() map[string]interface{} {
-	// Values must be copied out of the node, in case consumers mutate the item
-	// for example: when rendering
-	return copyMap(n.docs.At(n.docIndex))
-}
-
 func (n *pipeNode) Next() (bool, error) {
 	// we need to load all docs up until the requested point - this allows us to
 	// handle situations where a child record might be requested before handled
@@ -67,12 +63,16 @@ func (n *pipeNode) Next() (bool, error) {
 			return false, nil
 		}
 
-		doc := n.source.Values()
+		doc := n.source.Value()
 		err = n.docs.AddDoc(doc)
 		if err != nil {
 			return false, err
 		}
 	}
 	n.docIndex++
+
+	// Values must be copied out of the node, in case consumers mutate the item
+	// for example: when rendering
+	n.currentValue = copyMap(n.docs.At(n.docIndex))
 	return true, nil
 }

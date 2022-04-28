@@ -20,13 +20,13 @@ import (
 )
 
 type commitSelectNode struct {
+	documentIterator
+
 	p *Planner
 
 	source *dagScanNode
 
 	subRenderInfo map[string]renderInfo
-
-	doc map[string]interface{}
 }
 
 func (n *commitSelectNode) Init() error {
@@ -42,12 +42,8 @@ func (n *commitSelectNode) Next() (bool, error) {
 		return false, err
 	}
 
-	n.doc = n.source.Values()
+	n.currentValue = n.source.Value()
 	return true, nil
-}
-
-func (n *commitSelectNode) Values() map[string]interface{} {
-	return n.doc
 }
 
 func (n *commitSelectNode) Spans(spans core.Spans) {
@@ -171,12 +167,12 @@ type commitSelectTopNode struct {
 	plan planNode
 }
 
-func (n *commitSelectTopNode) Init() error                    { return n.plan.Init() }
-func (n *commitSelectTopNode) Start() error                   { return n.plan.Start() }
-func (n *commitSelectTopNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *commitSelectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *commitSelectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *commitSelectTopNode) Source() planNode               { return n.plan }
+func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
+func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
+func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
+func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
+func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
+func (n *commitSelectTopNode) Source() planNode              { return n.plan }
 func (n *commitSelectTopNode) Close() error {
 	if n.plan == nil {
 		return nil
