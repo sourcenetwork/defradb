@@ -8,7 +8,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fxamacker/cbor/v2 v2.2.0
-	github.com/go-chi/chi v1.5.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/graphql-go/graphql v0.7.9
@@ -50,6 +49,7 @@ require (
 
 require (
 	github.com/fatih/color v1.13.0
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/pkg/errors v0.9.1
 )
 

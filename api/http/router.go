@@ -15,7 +15,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 
 	HomePath       string = version + "/"
 	PingPath       string = version + "/ping"
-	DumpPath       string = version + "/dump"
+	DumpPath       string = version + "/debug/dump"
 	BlocksPath     string = version + "/blocks/get"
 	GraphQLPath    string = version + "/graphql"
 	SchemaLoadPath string = version + "/schema/load"
