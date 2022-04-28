@@ -11,8 +11,12 @@
 package http
 
 import (
+	"path"
+
 	"github.com/go-chi/chi"
 )
+
+const version = "/api/v1"
 
 func setRoutes(h *Handler) *Handler {
 	h.Mux = chi.NewRouter()
@@ -21,13 +25,17 @@ func setRoutes(h *Handler) *Handler {
 	h.Use(loggerMiddleware)
 
 	// define routes
-	h.Get("/", h.handle(root))
-	h.Get("/ping", h.handle(ping))
-	h.Get("/dump", h.handle(dump))
-	h.Get("/blocks/get/{cid}", h.handle(getBlock))
-	h.Get("/graphql", h.handle(execGQL))
-	h.Post("/graphql", h.handle(execGQL))
-	h.Post("/schema/load", h.handle(loadSchema))
+	h.Get(apiPath("/"), h.handle(root))
+	h.Get(apiPath("/ping"), h.handle(ping))
+	h.Get(apiPath("/dump"), h.handle(dump))
+	h.Get(apiPath("/blocks/get/{cid}"), h.handle(getBlock))
+	h.Get(apiPath("/graphql"), h.handle(execGQL))
+	h.Post(apiPath("/graphql"), h.handle(execGQL))
+	h.Post(apiPath("/schema/load"), h.handle(loadSchema))
 
 	return h
+}
+
+func apiPath(pattern string) string {
+	return path.Join(version, pattern)
 }
