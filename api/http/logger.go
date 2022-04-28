@@ -18,15 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-type logger struct {
-	logging.Logger
-}
-
-func defaultLogger() *logger {
-	return &logger{
-		Logger: logging.MustNewLogger("defra.http"),
-	}
-}
+var log = logging.MustNewLogger("defra.http")
 
 type loggingResponseWriter struct {
 	statusCode    int
@@ -57,22 +49,22 @@ func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
 	return lrw.ResponseWriter.Write(b)
 }
 
-func (l *logger) middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		start := time.Now()
-		lrw := newLoggingResponseWriter(w)
-		next.ServeHTTP(lrw, r)
+		lrw := newLoggingResponseWriter(rw)
+		next.ServeHTTP(lrw, req)
 		elapsed := time.Since(start)
-		l.Info(
-			r.Context(),
+		log.Info(
+			req.Context(),
 			"Request",
 			logging.NewKV(
 				"Method",
-				r.Method,
+				req.Method,
 			),
 			logging.NewKV(
 				"Path",
-				r.URL.Path,
+				req.URL.Path,
 			),
 			logging.NewKV(
 				"Status",

@@ -14,11 +14,11 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (h *Handler) setRoutes() {
+func setRoutes(h *Handler) *Handler {
 	h.Mux = chi.NewRouter()
 
 	// setup logger middleware
-	h.Use(h.logger.middleware)
+	h.Use(loggerMiddleware)
 
 	// define routes
 	h.Get("/", h.handle(root))
@@ -28,4 +28,6 @@ func (h *Handler) setRoutes() {
 	h.Get("/graphql", h.handle(execGQL))
 	h.Post("/graphql", h.handle(execGQL))
 	h.Post("/schema/load", h.handle(loadSchema))
+
+	return h
 }

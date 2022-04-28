@@ -11,62 +11,55 @@
 package http
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 type Handler struct {
 	db client.DB
-
 	*chi.Mux
-	*logger
 }
 
-// newHandler returns a handler with the router instantiated and configuration applied.
-func newHandler(db client.DB, options ...func(*Handler)) *Handler {
-	h := &Handler{
-		db: db,
-	}
+type ctxKey string
 
-	// apply options
-	for _, o := range options {
-		o(h)
-	}
-
-	// ensure we have a logger defined
-	if h.logger == nil {
-		h.logger = defaultLogger()
-	}
-
-	h.setRoutes()
-
-	return h
+// newHandler returns a handler with the router instantiated.
+func newHandler(db client.DB) *Handler {
+	return setRoutes(&Handler{db: db})
 }
 
-// WithLogger returns an option loading function for logger.
-func WithLogger(l logging.Logger) func(*Handler) {
-	return func(h *Handler) {
-		h.logger = &logger{l}
+func (h *Handler) handle(f http.HandlerFunc) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		ctx := context.WithValue(req.Context(), ctxKey("DB"), h.db)
+		f(rw, req.WithContext(ctx))
 	}
 }
 
-type requestContext struct {
-	res http.ResponseWriter
-	req *http.Request
-	db  client.DB
-	log *logger
+func getJSON(r *http.Request, v interface{}) error {
+	err := json.NewDecoder(r.Body).Decode(v)
+	if err != nil {
+		return errors.Wrap(err, "unmarshall error")
+	}
+	return nil
 }
 
-func (h *Handler) handle(f func(*requestContext)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		f(&requestContext{
-			res: w,
-			req: r,
-			db:  h.db,
-			log: h.logger,
-		})
+func sendJSON(rw http.ResponseWriter, v interface{}, code int) {
+	rw.Header().Set("Content-Type", "application/json")
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		log.Error(context.Background(), fmt.Sprintf("Error while encoding JSON: %v", err))
+		rw.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(rw, `{"error": "Internal server error"}`)
+		return
 	}
+
+	rw.WriteHeader(code)
+	rw.Write(b)
 }

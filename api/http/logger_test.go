@@ -50,12 +50,12 @@ func TestLoggerLogs(t *testing.T) {
 
 	rec2 := httptest.NewRecorder()
 
-	h := newHandler(nil, WithLogger(logging.MustNewLogger("defra.http.test")))
-	h.logger.ApplyConfig(logging.Config{
+	h := newHandler(nil)
+	log.ApplyConfig(logging.Config{
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
 		OutputPaths:   []string{logFile},
 	})
-	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
+	loggerMiddleware(h.handle(ping)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file
@@ -65,7 +65,7 @@ func TestLoggerLogs(t *testing.T) {
 	// check that everything is as expected
 	assert.Equal(t, "pong", rec2.Body.String())
 	assert.Equal(t, "INFO", kv["level"])
-	assert.Equal(t, "defra.http.test", kv["logger"])
+	assert.Equal(t, "defra.http", kv["logger"])
 	assert.Equal(t, "Request", kv["msg"])
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])

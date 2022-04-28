@@ -22,9 +22,9 @@ type Server struct {
 }
 
 // NewServer instantiated a new server with the given http.Handler.
-func NewServer(db client.DB, handlerOptions ...func(*Handler)) *Server {
+func NewServer(db client.DB) *Server {
 	return &Server{
-		Handler: newHandler(db, handlerOptions...),
+		Handler: newHandler(db),
 	}
 }
 

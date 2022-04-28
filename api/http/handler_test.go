@@ -27,7 +27,7 @@ func TestNewHandlerWithLogger(t *testing.T) {
 
 	// send logs to temp file so we can inspect it
 	logFile := path.Join(dir, "http_test.log")
-	h.ApplyConfig(logging.Config{
+	log.ApplyConfig(logging.Config{
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
 		OutputPaths:   []string{logFile},
 	})
@@ -35,43 +35,15 @@ func TestNewHandlerWithLogger(t *testing.T) {
 	req, err := http.NewRequest("GET", "/ping", nil)
 	assert.NoError(t, err)
 
-	rec2 := httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 
-	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
-	assert.Equal(t, 200, rec2.Result().StatusCode)
+	loggerMiddleware(h.handle(ping)).ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Result().StatusCode)
 
 	// inspect the log file
 	kv, err := readLog(logFile)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "defra.http", kv["logger"])
-
-}
-
-func TestNewHandlerWithConfigAndLogger(t *testing.T) {
-	h := newHandler(nil, WithLogger(logging.MustNewLogger("defra.http.test")))
-
-	dir := t.TempDir()
-
-	// send logs to temp file so we can inspect it
-	logFile := path.Join(dir, "http_test.log")
-	h.ApplyConfig(logging.Config{
-		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
-		OutputPaths:   []string{logFile},
-	})
-
-	req, err := http.NewRequest("GET", "/ping", nil)
-	assert.NoError(t, err)
-
-	rec2 := httptest.NewRecorder()
-
-	h.logger.middleware(h.handle(ping)).ServeHTTP(rec2, req)
-	assert.Equal(t, 200, rec2.Result().StatusCode)
-
-	// inspect the log file
-	kv, err := readLog(logFile)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "defra.http.test", kv["logger"])
 
 }
