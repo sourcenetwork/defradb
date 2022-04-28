@@ -113,8 +113,8 @@ func (n *typeIndexJoin) Next() (bool, error) {
 	return n.joinPlan.Next()
 }
 
-func (n *typeIndexJoin) Values() map[string]interface{} {
-	return n.joinPlan.Values()
+func (n *typeIndexJoin) Value() map[string]interface{} {
+	return n.joinPlan.Value()
 }
 
 func (n *typeIndexJoin) Close() error {
@@ -156,6 +156,8 @@ func splitFilterByType(filter *parser.Filter, subType string) (*parser.Filter, *
 // where the root type is the primary in a one-to-one relation
 // query.
 type typeJoinOne struct {
+	documentIterator
+
 	p *Planner
 
 	root    planNode
@@ -239,15 +241,18 @@ func (n *typeJoinOne) Start() error {
 func (n *typeJoinOne) Spans(spans core.Spans) { /* todo */ }
 
 func (n *typeJoinOne) Next() (bool, error) {
-	return n.root.Next()
-}
-
-func (n *typeJoinOne) Values() map[string]interface{} {
-	doc := n.root.Values()
-	if n.primary {
-		return n.valuesPrimary(doc)
+	hasNext, err := n.root.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
 	}
-	return n.valuesSecondary(doc)
+
+	doc := n.root.Value()
+	if n.primary {
+		n.currentValue = n.valuesPrimary(doc)
+	} else {
+		n.currentValue = n.valuesSecondary(doc)
+	}
+	return true, nil
 }
 
 func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]interface{} {
@@ -267,7 +272,7 @@ func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]int
 		return doc
 	}
 
-	subdoc := n.subType.Values()
+	subdoc := n.subType.Value()
 	doc[n.subTypeName] = subdoc
 	return doc
 }
@@ -318,7 +323,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 		return doc
 	}
 
-	subDoc := n.subType.Values()
+	subDoc := n.subType.Value()
 	doc[subDocField] = subDoc
 
 	return doc
@@ -335,6 +340,8 @@ func (n *typeJoinOne) Close() error {
 func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
+	documentIterator
+
 	p *Planner
 
 	// the main type that is a the parent level of the query.
@@ -406,11 +413,12 @@ func (n *typeJoinMany) Start() error {
 func (n *typeJoinMany) Spans(spans core.Spans) { /* todo */ }
 
 func (n *typeJoinMany) Next() (bool, error) {
-	return n.root.Next()
-}
+	hasNext, err := n.root.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
 
-func (n *typeJoinMany) Values() map[string]interface{} {
-	doc := n.root.Values()
+	n.currentValue = n.root.Value()
 
 	// check if theres an index
 	// if there is, scan and aggregate resuts
@@ -419,34 +427,37 @@ func (n *typeJoinMany) Values() map[string]interface{} {
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		docKey := doc["_key"].(string)
+		docKey := n.currentValue["_key"].(string)
 		filter := map[string]interface{}{
 			n.rootName + "_id": docKey, // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
 		if err != nil {
-			return nil
+			return false, err
 		}
 
 		// reset scan node
 		if err := n.subType.Init(); err != nil {
-			log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
+			return false, err
 		}
 
 		for {
 			next, err := n.subType.Next()
-			if !next || err != nil {
+			if err != nil {
+				return false, err
+			}
+			if !next {
 				break
 			}
 
-			subdoc := n.subType.Values()
+			subdoc := n.subType.Value()
 			subdocs = append(subdocs, subdoc)
 		}
 	}
 
-	doc[n.subTypeName] = subdocs
-	return doc
+	n.currentValue[n.subTypeName] = subdocs
+	return true, nil
 }
 
 func (n *typeJoinMany) Close() error {

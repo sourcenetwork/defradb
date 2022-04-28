@@ -30,7 +30,6 @@ type deleteNode struct {
 	deleteIter *valuesNode
 }
 
-// Next only returns once.
 func (n *deleteNode) Next() (bool, error) {
 	if n.isDeleting {
 		// create our result values node
@@ -90,8 +89,8 @@ func (n *deleteNode) Next() (bool, error) {
 	return n.deleteIter.Next()
 }
 
-func (n *deleteNode) Values() map[string]interface{} {
-	return n.deleteIter.Values()
+func (n *deleteNode) Value() map[string]interface{} {
+	return n.deleteIter.Value()
 }
 
 func (n *deleteNode) Spans(spans core.Spans) {

@@ -27,6 +27,8 @@ var (
 
 // scans an index for records
 type versionedScanNode struct {
+	documentIterator
+
 	p *Planner
 
 	// versioned data
@@ -36,7 +38,6 @@ type versionedScanNode struct {
 	desc client.CollectionDescription
 
 	fields []*client.FieldDescription
-	doc    map[string]interface{}
 	docKey []byte
 
 	reverse bool
@@ -93,15 +94,15 @@ func (n *versionedScanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextMap(n.p.ctx)
 		if err != nil {
 			return false, err
 		}
-		if n.doc == nil {
+		if n.currentValue == nil {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		passed, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
@@ -117,11 +118,6 @@ func (n *versionedScanNode) Spans(spans core.Spans) {
 	// if len(spans) != 1 {
 	// 	return
 	// }
-}
-
-// Values returns the most recent result from Next()
-func (n *versionedScanNode) Values() map[string]interface{} {
-	return n.doc
 }
 
 func (n *versionedScanNode) Close() error {

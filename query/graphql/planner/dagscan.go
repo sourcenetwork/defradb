@@ -47,6 +47,8 @@ import (
 )
 
 type headsetScanNode struct {
+	documentIterator
+
 	p   *Planner
 	key core.DataStoreKey
 
@@ -99,13 +101,11 @@ func (h *headsetScanNode) Next() (bool, error) {
 	if h.cid == nil {
 		return false, nil
 	}
-	return true, nil
-}
 
-func (h *headsetScanNode) Values() map[string]interface{} {
-	return map[string]interface{}{
+	h.currentValue = map[string]interface{}{
 		"cid": *h.cid,
 	}
+	return true, nil
 }
 
 func (h *headsetScanNode) Close() error {
@@ -119,6 +119,8 @@ func (p *Planner) HeadScan() *headsetScanNode {
 }
 
 type dagScanNode struct {
+	documentIterator
+
 	p     *Planner
 	cid   *cid.Cid
 	field string
@@ -140,7 +142,6 @@ type dagScanNode struct {
 	// linksScanNode    planNode
 
 	// block blocks.Block
-	doc map[string]interface{}
 }
 
 func (p *Planner) DAGScan() *dagScanNode {
@@ -216,7 +217,7 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, err
 		}
 
-		val := n.headset.Values()
+		val := n.headset.Value()
 		cid, ok := val["cid"].(cid.Cid)
 		if !ok {
 			return false, fmt.Errorf("Headset scan node returned an invalid cid")
@@ -248,7 +249,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 	var heads []*ipld.Link
-	n.doc, heads, err = dagBlockToNodeMap(block)
+	n.currentValue, heads, err = dagBlockToNodeMap(block)
 	if err != nil {
 		return false, err
 	}
@@ -297,10 +298,6 @@ func (n *dagScanNode) Next() (bool, error) {
 // func (n *dagScanNode) nextHead() (cid.Cid, error) {
 
 // }
-
-func (n *dagScanNode) Values() map[string]interface{} {
-	return n.doc
-}
 
 /*
 dagScanNode is the query plan graph node responsible for scanning through the dag

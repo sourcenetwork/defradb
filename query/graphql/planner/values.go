@@ -62,7 +62,7 @@ func (n *valuesNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *valuesNode) Values() map[string]interface{} {
+func (n *valuesNode) Value() map[string]interface{} {
 	return n.docs.At(n.docIndex)
 }
 

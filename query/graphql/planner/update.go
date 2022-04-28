@@ -18,6 +18,8 @@ import (
 )
 
 type updateNode struct {
+	documentIterator
+
 	p *Planner
 
 	collection client.Collection
@@ -88,15 +90,12 @@ func (n *updateNode) Next() (bool, error) {
 		results.DocKeys = nil
 	}
 
-	// next, err := n.updateIter.Next()
-	// if !next {
-	// 	return false, err
-	// }
-	return n.updateIter.Next()
-}
+	hasNext, err := n.updateIter.Next()
+	if err != nil || !hasNext {
+		return hasNext, err
+	}
 
-func (n *updateNode) Values() map[string]interface{} {
-	updatedDoc := n.updateIter.Values()
+	updatedDoc := n.updateIter.Value()
 	// create a new span with the updateDoc._key
 	docKeyStr := updatedDoc["_key"].(string)
 	desc := n.collection.Description()
@@ -105,19 +104,22 @@ func (n *updateNode) Values() map[string]interface{} {
 
 	n.results.Spans(spans)
 
-	err := n.results.Init()
+	err = n.results.Init()
 	if err != nil {
-		panic(err) //handle better?
+		return false, err
 	}
 
 	// get the next result based on our point lookup
 	next, err := n.results.Next()
-	if !next || err != nil {
-		panic(err) //handle better?
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
 	}
 
-	// we're only expecting a single value from our pointlookup
-	return n.results.Values()
+	n.currentValue = n.results.Value()
+	return true, nil
 }
 
 func (n *updateNode) Spans(spans core.Spans) { /* no-op */ }

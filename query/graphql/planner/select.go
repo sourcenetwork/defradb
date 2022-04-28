@@ -65,12 +65,12 @@ type selectTopNode struct {
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
-func (n *selectTopNode) Init() error                    { return n.plan.Init() }
-func (n *selectTopNode) Start() error                   { return n.plan.Start() }
-func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *selectTopNode) Source() planNode               { return n.source }
+func (n *selectTopNode) Init() error                   { return n.plan.Init() }
+func (n *selectTopNode) Start() error                  { return n.plan.Start() }
+func (n *selectTopNode) Next() (bool, error)           { return n.plan.Next() }
+func (n *selectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
+func (n *selectTopNode) Value() map[string]interface{} { return n.plan.Value() }
+func (n *selectTopNode) Source() planNode              { return n.source }
 func (n *selectTopNode) Close() error {
 	if n.plan == nil {
 		return nil
@@ -79,6 +79,8 @@ func (n *selectTopNode) Close() error {
 }
 
 type selectNode struct {
+	documentIterator
+
 	p *Planner
 
 	// main data source for the select node.
@@ -94,11 +96,6 @@ type selectNode struct {
 
 	// data related to rendering
 	renderInfo *renderInfo
-
-	// internal doc pointer
-	// produced when Values()
-	// is called.
-	doc map[string]interface{}
 
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
@@ -131,8 +128,8 @@ func (n *selectNode) Next() (bool, error) {
 			return false, err
 		}
 
-		n.doc = n.source.Values()
-		passes, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		n.currentValue = n.source.Value()
+		passes, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
 		if err != nil {
 			return false, err
 		}
@@ -146,10 +143,6 @@ func (n *selectNode) Next() (bool, error) {
 
 func (n *selectNode) Spans(spans core.Spans) {
 	n.source.Spans(spans)
-}
-
-func (n *selectNode) Values() map[string]interface{} {
-	return n.doc
 }
 
 func (n *selectNode) Close() error {

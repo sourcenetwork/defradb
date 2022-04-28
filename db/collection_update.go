@@ -269,7 +269,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// Get the document, and apply the patch
-		doc := query.Values()
+		doc := query.Value()
 		if isPatch {
 			err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
 		} else if isMerge { // else is fine here
