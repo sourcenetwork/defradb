@@ -49,6 +49,10 @@ func handleErr(rw http.ResponseWriter, err error, status int) {
 		message = errNotFound
 	}
 
+	if message == "" {
+		message = err.Error()
+	}
+
 	sendJSON(
 		rw,
 		errorResponse{

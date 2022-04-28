@@ -18,7 +18,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -41,14 +40,6 @@ func (h *Handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func getJSON(r *http.Request, v interface{}) error {
-	err := json.NewDecoder(r.Body).Decode(v)
-	if err != nil {
-		return errors.Wrap(err, "unmarshall error")
-	}
-	return nil
-}
-
 func sendJSON(rw http.ResponseWriter, v interface{}, code int) {
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -56,10 +47,14 @@ func sendJSON(rw http.ResponseWriter, v interface{}, code int) {
 	if err != nil {
 		log.Error(context.Background(), fmt.Sprintf("Error while encoding JSON: %v", err))
 		rw.WriteHeader(http.StatusInternalServerError)
-		io.WriteString(rw, `{"error": "Internal server error"}`)
+		if _, err := io.WriteString(rw, `{"error": "Internal server error"}`); err != nil {
+			log.Error(context.Background(), err.Error())
+		}
 		return
 	}
 
 	rw.WriteHeader(code)
-	rw.Write(b)
+	if _, err = rw.Write(b); err != nil {
+		log.Error(context.Background(), err.Error())
+	}
 }

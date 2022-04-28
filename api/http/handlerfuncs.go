@@ -26,6 +26,12 @@ import (
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 )
 
+const (
+	ContentTypeJSON           = "application/json"
+	ContentTypeGraphQL        = "application/graphql"
+	ContentTypeFormURLEncoded = "application/x-www-form-urlencoded"
+)
+
 func root(rw http.ResponseWriter, req *http.Request) {
 	_, err := rw.Write(
 		[]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"),
@@ -78,18 +84,40 @@ func dump(rw http.ResponseWriter, req *http.Request) {
 }
 
 func execGQL(rw http.ResponseWriter, req *http.Request) {
-	var query string
-	if req.Method == "GET" {
-		query = req.URL.Query().Get("query")
-	} else {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusBadRequest)
+	query := req.URL.Query().Get("query")
+
+	if query == "" {
+		switch req.Header.Get("Content-Type") {
+		case ContentTypeJSON:
+			handleErr(
+				rw,
+				errors.New("content type application/json not yet supported"),
+				http.StatusBadRequest,
+			)
 			return
+
+		case ContentTypeFormURLEncoded:
+			handleErr(
+				rw,
+				errors.New("content type application/x-www-form-urlencoded not yet supported"),
+				http.StatusBadRequest,
+			)
+			return
+
+		case ContentTypeGraphQL:
+			fallthrough
+
+		default:
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				handleErr(rw, errors.WithStack(err), http.StatusBadRequest)
+				return
+			}
+			query = string(body)
 		}
-		query = string(body)
 	}
 
+	// if at this point query is still empty, return an error
 	if query == "" {
 		handleErr(rw, errors.New("missing GraphQL query"), http.StatusBadRequest)
 		return
