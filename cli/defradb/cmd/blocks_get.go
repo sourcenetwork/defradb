@@ -12,11 +12,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,7 +43,7 @@ var getCmd = &cobra.Command{
 		}
 		cid := args[0]
 
-		res, err := http.Get(fmt.Sprintf("%s/blocks/get/%s", dbaddr, cid))
+		res, err := http.Get(httpapi.JoinPaths(dbaddr, httpapi.BlocksPath, cid))
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return
