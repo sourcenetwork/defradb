@@ -333,9 +333,11 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 	// parse arguments
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
+		astValue := argument.Value
+
 		// parse filter
 		if prop == "filter" {
-			obj := argument.Value.(*ast.ObjectValue)
+			obj := astValue.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
 				return slct, err
@@ -343,20 +345,20 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 
 			slct.Filter = filter
 		} else if prop == "dockey" { // parse single dockey query field
-			val := argument.Value.(*ast.StringValue)
+			val := astValue.(*ast.StringValue)
 			slct.DocKeys = []string{val.Value}
 		} else if prop == "dockeys" {
-			docKeyValues := argument.Value.(*ast.ListValue).Values
+			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
 			slct.DocKeys = docKeys
 		} else if prop == "cid" { // parse single CID query field
-			val := argument.Value.(*ast.StringValue)
+			val := astValue.(*ast.StringValue)
 			slct.CID = val.Value
 		} else if prop == "limit" { // parse limit/offset
-			val := argument.Value.(*ast.IntValue)
+			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
 				return slct, err
@@ -366,7 +368,7 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 			}
 			slct.Limit.Limit = i
 		} else if prop == "offset" { // parse limit/offset
-			val := argument.Value.(*ast.IntValue)
+			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
 				return slct, err
@@ -376,7 +378,7 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 			}
 			slct.Limit.Offset = i
 		} else if prop == "order" { // parse sort (order by)
-			obj := argument.Value.(*ast.ObjectValue)
+			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
@@ -386,7 +388,7 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 				Statement:  obj,
 			}
 		} else if prop == "groupBy" {
-			obj := argument.Value.(*ast.ListValue)
+			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
 				fields = append(fields, v.GetValue().(string))
