@@ -934,7 +934,6 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterBaseArg")],
 					}
 				}
-
 			}
 
 			return fields, nil
