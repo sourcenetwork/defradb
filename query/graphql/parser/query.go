@@ -13,6 +13,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -146,6 +147,19 @@ func (s Select) GetName() string {
 
 func (s Select) GetAlias() string {
 	return s.Alias
+}
+
+func (s Select) Equal(other Select) bool {
+	if s.Name != other.Name &&
+		s.ExternalName != other.ExternalName {
+		return false
+	}
+
+	if s.Filter == nil {
+		return other.Filter == nil
+	}
+
+	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
 }
 
 // Field implements Selection
@@ -342,6 +356,19 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 		prop := argument.Name.Value
 		astValue := argument.Value
 
+		if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
+			switch innerProps := argument.Value.(type) {
+			case *ast.ObjectValue:
+				for _, innerV := range innerProps.Fields {
+					if innerV.Name.Value == "filter" {
+						prop = "filter"
+						astValue = innerV.Value
+						break
+					}
+				}
+			}
+		}
+
 		// parse filter
 		if prop == "filter" {
 			obj := astValue.(*ast.ObjectValue)
@@ -533,7 +560,10 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 	hostProperty = externalHostName
 	for _, childField := range host.GetSelections() {
 		if childSelect, isSelect := childField.(*Select); isSelect {
-			if childSelect.ExternalName == externalHostName {
+			if childSelect.Equal(Select{
+				ExternalName: externalHostName,
+				Filter:       field.Filter,
+			}) {
 				hostProperty = childSelect.Name
 				break
 			}

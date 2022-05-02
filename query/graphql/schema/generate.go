@@ -210,9 +210,11 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
-		// ignore reserved fields, execpt the Group field (as that requires typing)
+		// ignore reserved fields, execpt the Group field (as that requires typing), and aggregates
 		if _, ok := parser.ReservedFields[f]; ok && f != parser.GroupFieldName {
-			continue
+			if _, isAggregate := parser.Aggregates[f]; !isAggregate {
+				continue
+			}
 		}
 		// Both the object name and the field name should be used as the key
 		// in case the child object type is referenced multiple times from the same parent type
@@ -257,6 +259,10 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
+		case *gql.Scalar:
+			if _, isAggregate := parser.Aggregates[f]; isAggregate {
+				g.createExpandedFieldAggregate(obj, def, t)
+			}
 			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
 			// get subtype
@@ -264,6 +270,27 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	}
 
 	return nil
+}
+
+func (g *Generator) createExpandedFieldAggregate(
+	obj *gql.Object,
+	f *gql.FieldDefinition,
+	t gql.Type,
+) {
+	for _, aggregateTarget := range f.Args {
+		target := aggregateTarget.Name()
+		var targetType string
+		if target == parser.GroupFieldName {
+			targetType = obj.Name()
+		} else {
+			targetType = obj.Fields()[target].Type.Name()
+		}
+
+		expandedField := &gql.InputObjectFieldConfig{
+			Type: g.manager.schema.TypeMap()[targetType+"FilterArg"],
+		}
+		aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
+	}
 }
 
 func (g *Generator) createExpandedFieldSingle(

@@ -43,6 +43,7 @@ func (p *Planner) Count(field *parser.Select, host *parser.Select) (*countNode, 
 		p:              p,
 		sourceProperty: source.HostProperty,
 		virtualFieldId: field.Name,
+		filter:         field.Filter,
 	}, nil
 }
 
