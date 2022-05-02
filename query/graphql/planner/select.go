@@ -110,7 +110,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *parser.Filter
 
-	groupSelect *parser.Select
+	groupSelects []*parser.Select
 }
 
 func (n *selectNode) Init() error {
@@ -237,7 +237,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			// - TypeJoin
 			// - commitScan
 			if f.Statement.Name.Value == parser.CountFieldName {
-				plan, aggregateError = n.p.Count(f)
+				plan, aggregateError = n.p.Count(f, parsed)
 			} else if f.Statement.Name.Value == parser.SumFieldName {
 				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
 			} else if f.Statement.Name.Value == parser.AverageFieldName {
@@ -266,12 +266,12 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 						return nil, aggregateError
 					}
 
-					countPlan, err := n.p.Count(countField)
+					countPlan, err := n.p.Count(countField, parsed)
 					if err != nil {
 						return nil, err
 					}
 					// We must not count nil values else they will corrupt the average
-					averageSource, err := f.GetAggregateSource()
+					averageSource, err := f.GetAggregateSource(parsed)
 					if err != nil {
 						return nil, err
 					}
@@ -338,8 +338,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					return nil, err
 				}
 			} else if f.Root == parser.ObjectSelection {
-				if f.Name == parser.GroupFieldName {
-					n.groupSelect = f
+				if f.Statement.Name.Value == parser.GroupFieldName {
+					n.groupSelects = append(n.groupSelects, f)
 				} else {
 					// nolint:errcheck
 					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
@@ -461,7 +461,7 @@ func (n *selectNode) joinAggregatedChild(
 	parsed *parser.Select,
 	field *parser.Select,
 ) error {
-	source, err := field.GetAggregateSource()
+	source, err := field.GetAggregateSource(parsed)
 	if err != nil {
 		return err
 	}
@@ -477,11 +477,18 @@ func (n *selectNode) joinAggregatedChild(
 	// If the child item is not requested, then we have add in the necessary components
 	//  to force the child records to be scanned through (they wont be rendered)
 	if !hasChildProperty {
-		if source.HostProperty == parser.GroupFieldName {
-			// It doesn't really matter at the moment if multiple counts are requested
-			//  and we overwrite the n.groupSelect property
-			n.groupSelect = &parser.Select{
-				Name: parser.GroupFieldName,
+		if source.ExternalHostName == parser.GroupFieldName {
+			hasGroupSelect := false
+			for _, childSelect := range n.groupSelects {
+				if source.HostProperty == childSelect.Name {
+					hasGroupSelect = true
+					break
+				}
+			}
+			if !hasGroupSelect {
+				n.groupSelects = append(n.groupSelects, &parser.Select{
+					Name: parser.GroupFieldName,
+				})
 			}
 		} else if parsed.Root != parser.CommitSelection {
 			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(source.HostProperty)
@@ -573,7 +580,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
@@ -607,13 +614,14 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	sort := parsed.OrderBy
 	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
+	s.groupSelects = []*parser.Select{}
 
 	aggregates, err := s.initSource(parsed)
 	if err != nil {
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}

@@ -104,6 +104,7 @@ type Selection interface {
 type Select struct {
 	Name           string
 	Alias          string
+	ExternalName   string
 	CollectionName string
 
 	// QueryType indicates what kind of query this is
@@ -309,7 +310,7 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 	var name string
 	var alias string
 
-	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate || field.Name.Value == GroupFieldName {
 		name = fmt.Sprintf("_agg%v", index)
 		if field.Alias == nil {
 			alias = field.Name.Value
@@ -324,10 +325,11 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 	}
 
 	slct := &Select{
-		Name:      name,
-		Alias:     alias,
-		Root:      rootType,
-		Statement: field,
+		Name:         name,
+		Alias:        alias,
+		ExternalName: field.Name.Value,
+		Root:         rootType,
+		Statement:    field,
 	}
 
 	// parse arguments
@@ -490,6 +492,9 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 type AggregateTarget struct {
 	// The property on the object hosting the aggregate.  This should never be empty
 	HostProperty string
+	// The static name of the target host property as it appears in the aggregate
+	// query.  For example `_group`.
+	ExternalHostName string
 	// The property on the `HostProperty` that this aggregate targets.
 	//
 	// This may be empty if the aggregate targets a whole collection (e.g. Count),
@@ -498,7 +503,7 @@ type AggregateTarget struct {
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func (field Select) GetAggregateSource() (AggregateTarget, error) {
+func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) {
 	if len(field.Statement.Arguments) == 0 {
 		return AggregateTarget{}, fmt.Errorf(
 			"Aggregate must be provided with a property to aggregate.",
@@ -506,12 +511,13 @@ func (field Select) GetAggregateSource() (AggregateTarget, error) {
 	}
 
 	var hostProperty string
+	var externalHostName string
 	var childProperty string
 	switch argumentValue := field.Statement.Arguments[0].Value.GetValue().(type) {
 	case string:
-		hostProperty = argumentValue
+		externalHostName = argumentValue
 	case []*ast.ObjectField:
-		hostProperty = field.Statement.Arguments[0].Name.Value
+		externalHostName = field.Statement.Arguments[0].Name.Value
 		if len(argumentValue) > 0 {
 			if innerPathStringValue, isString := argumentValue[0].Value.GetValue().(string); isString {
 				childProperty = innerPathStringValue
@@ -519,8 +525,19 @@ func (field Select) GetAggregateSource() (AggregateTarget, error) {
 		}
 	}
 
+	hostProperty = externalHostName
+	for _, childField := range host.GetSelections() {
+		if childSelect, isSelect := childField.(*Select); isSelect {
+			if childSelect.ExternalName == externalHostName {
+				hostProperty = childSelect.Name
+				break
+			}
+		}
+	}
+
 	return AggregateTarget{
-		HostProperty:  hostProperty,
-		ChildProperty: childProperty,
+		HostProperty:     hostProperty,
+		ExternalHostName: externalHostName,
+		ChildProperty:    childProperty,
 	}, nil
 }

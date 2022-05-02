@@ -30,8 +30,8 @@ type dataSource struct {
 	lastChildDocIndex  int
 }
 
-func newDataSource(childName string) dataSource {
-	return dataSource{
+func newDataSource(childName string) *dataSource {
+	return &dataSource{
 		childName:          childName,
 		lastParentDocIndex: -1,
 		lastChildDocIndex:  -1,
@@ -113,6 +113,7 @@ func (n *dataSource) Source() planNode {
 func (source *dataSource) mergeParent(
 	keyFields []string,
 	destination *orderedMap,
+	childNames []string,
 ) (map[string]interface{}, bool, error) {
 	// This needs to be set manually for each item, in case other nodes
 	// aggregate items from the pipe progressing the docIndex beyond the first item
@@ -133,7 +134,7 @@ func (source *dataSource) mergeParent(
 	value := source.parentSource.Value()
 	key := generateKey(value, keyFields)
 
-	destination.mergeParent(key, source.childName, value)
+	destination.mergeParent(key, childNames, value)
 
 	return value, true, nil
 }
@@ -170,19 +171,25 @@ func (source *dataSource) appendChild(
 	return value, true, nil
 }
 
-func join(sources []dataSource, keyFields []string) (*orderedMap, error) {
+func join(sources []*dataSource, keyFields []string) (*orderedMap, error) {
 	result := orderedMap{
 		values:       []map[string]interface{}{},
 		indexesByKey: map[string]int{},
+	}
+
+	childNames := make([]string, len(sources))
+	for i, source := range sources {
+		childNames[i] = source.childName
 	}
 
 	for _, source := range sources {
 		var err error
 		hasNextParent := source.parentSource != nil
 		hasNextChild := source.childSource != nil
+
 		for hasNextParent || hasNextChild {
 			if hasNextParent {
-				_, hasNextParent, err = source.mergeParent(keyFields, &result)
+				_, hasNextParent, err = source.mergeParent(keyFields, &result, childNames)
 				if err != nil {
 					return nil, err
 				}
@@ -216,14 +223,19 @@ type orderedMap struct {
 	indexesByKey map[string]int
 }
 
-func (m *orderedMap) mergeParent(key string, childAddress string, value map[string]interface{}) {
+func (m *orderedMap) mergeParent(key string, childAddresses []string, value map[string]interface{}) {
 	index, exists := m.indexesByKey[key]
 	if exists {
 		existingValue := m.values[index]
+
+	propertyLoop:
 		for property, cellValue := range value {
-			if property == childAddress {
-				continue
+			for _, childAddress := range childAddresses {
+				if property == childAddress {
+					continue propertyLoop
+				}
 			}
+
 			existingValue[property] = cellValue
 		}
 		return
@@ -231,7 +243,9 @@ func (m *orderedMap) mergeParent(key string, childAddress string, value map[stri
 
 	// If the value is new, we can safely set the child group to an empty
 	// collection (required if children are filtered out)
-	value[childAddress] = []map[string]interface{}{}
+	for _, childAddress := range childAddresses {
+		value[childAddress] = []map[string]interface{}{}
+	}
 
 	index = len(m.values)
 	m.values = append(m.values, value)

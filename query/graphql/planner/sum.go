@@ -35,7 +35,7 @@ func (p *Planner) Sum(
 	field *parser.Select,
 	parent *parser.Select,
 ) (*sumNode, error) {
-	source, err := field.GetAggregateSource()
+	source, err := field.GetAggregateSource(parent)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (p *Planner) Sum(
 // Returns true if the value to be summed is a float, otherwise false.
 func (p *Planner) isValueFloat(
 	sourceInfo *sourceInfo,
-	parent parser.Selection,
+	parent *parser.Select,
 	source parser.AggregateTarget,
 	sourceProperty string,
 ) (bool, error) {
@@ -128,7 +128,7 @@ func (p *Planner) getSourceField(
 				break
 			}
 		}
-		sourceSource, err := sourceField.GetAggregateSource()
+		sourceSource, err := sourceField.GetAggregateSource(parent)
 		if err != nil {
 			return client.FieldDescription{}, err
 		}
@@ -142,7 +142,7 @@ func (p *Planner) getSourceField(
 		)
 	}
 
-	if source.HostProperty == parser.GroupFieldName {
+	if source.ExternalHostName == parser.GroupFieldName {
 		// If the source collection is a group, then the description of the collection
 		// to sum is this object.
 		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
