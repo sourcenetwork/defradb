@@ -286,7 +286,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err = parseSelect(ObjectSelection, node)
+				parsed, err = ParseSelect(ObjectSelection, node, i)
 			}
 			if err != nil {
 				return nil, err
@@ -302,17 +302,32 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // for generated object queries, and general
 // API queries
 
-// parseSelect parses a typed selection field
+// ParseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
+func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, error) {
+	var name string
+	var alias string
+
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
+		name = fmt.Sprintf("_agg%v", index)
+		if field.Alias == nil {
+			alias = field.Name.Value
+		} else {
+			alias = field.Alias.Value
+		}
+	} else {
+		name = field.Name.Value
+		if field.Alias != nil {
+			alias = field.Alias.Value
+		}
+	}
+
 	slct := &Select{
+		Name:      name,
+		Alias:     alias,
 		Root:      rootType,
 		Statement: field,
-	}
-	slct.Name = field.Name.Value
-	if field.Alias != nil {
-		slct.Alias = field.Alias.Value
 	}
 
 	// parse arguments
@@ -410,8 +425,14 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			if node.SelectionSet == nil { // regular field
-				f, err := ParseField(i, root, node)
+			if _, isAggregate := Aggregates[node.Name.Value]; isAggregate {
+				s, err := ParseSelect(root, node, i)
+				if err != nil {
+					return nil, err
+				}
+				selections[i] = s
+			} else if node.SelectionSet == nil { // regular field
+				f, err := parseField(root, node)
 				if err != nil {
 					return nil, err
 				}
@@ -422,7 +443,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 				case "_version":
 					subroot = CommitSelection
 				}
-				s, err := parseSelect(subroot, node)
+				s, err := ParseSelect(subroot, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -434,24 +455,14 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	return selections, nil
 }
 
-// ParseField simply parses the Name/Alias
+// parseField simply parses the Name/Alias
 // into a Field type
-func ParseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
-	var name string
+func parseField(root SelectionType, field *ast.Field) (*Field, error) {
 	var alias string
 
-	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
-		name = fmt.Sprintf("_agg%v", i)
-		if field.Alias == nil {
-			alias = field.Name.Value
-		} else {
-			alias = field.Alias.Value
-		}
-	} else {
-		name = field.Name.Value
-		if field.Alias != nil {
-			alias = field.Alias.Value
-		}
+	name := field.Name.Value
+	if field.Alias != nil {
+		alias = field.Alias.Value
 	}
 
 	f := &Field{
@@ -485,7 +496,7 @@ type AggregateTarget struct {
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func (field Field) GetAggregateSource() (AggregateTarget, error) {
+func (field Select) GetAggregateSource() (AggregateTarget, error) {
 	if len(field.Statement.Arguments) == 0 {
 		return AggregateTarget{}, fmt.Errorf(
 			"Aggregate must be provided with a property to aggregate.",

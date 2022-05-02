@@ -231,10 +231,83 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
 		case *parser.Select:
+			var plan aggregateNode
+			var aggregateError error
 			// @todo: check select type:
 			// - TypeJoin
 			// - commitScan
-			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
+			if f.Statement.Name.Value == parser.CountFieldName {
+				plan, aggregateError = n.p.Count(f)
+			} else if f.Statement.Name.Value == parser.SumFieldName {
+				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
+			} else if f.Statement.Name.Value == parser.AverageFieldName {
+				// Average utilises count and sum in order to calculate it's return value,
+				// so we have to add those nodes here if they do not exist else the generated
+				// field names could collide.  Value is currently 3 as if each field was an
+				// _avg field - then the final number of fields would be 3N (count+sum+average)
+				const fieldLenMultiplier = 3
+				countField, countExists := tryGetAggregateField(
+					n.p.ctx,
+					parsed.Fields,
+					parser.CountFieldName,
+					f.Statement.Arguments,
+				)
+
+				if !countExists {
+					const countFieldIndexOffset = 1
+					astField := ast.Field{
+						Name:      &ast.Name{Value: parser.CountFieldName},
+						Arguments: f.Statement.Arguments,
+					}
+					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
+					countFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + countFieldIndexOffset
+					countField, aggregateError = parser.ParseSelect(f.Root, &astField, countFieldIndex)
+					if aggregateError != nil {
+						return nil, aggregateError
+					}
+
+					countPlan, err := n.p.Count(countField)
+					if err != nil {
+						return nil, err
+					}
+					// We must not count nil values else they will corrupt the average
+					averageSource, err := f.GetAggregateSource()
+					if err != nil {
+						return nil, err
+					}
+					childField := n.p.getSourceProperty(averageSource, parsed)
+					countPlan.filter = &parser.Filter{
+						Conditions: map[string]interface{}{
+							childField: map[string]interface{}{
+								"$ne": nil,
+							},
+						},
+					}
+					aggregates = append(aggregates, countPlan)
+				}
+
+				sumField, sumExists := tryGetAggregateField(n.p.ctx, parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
+				if !sumExists {
+					const sumFieldIndexOffset = 2
+					astField := ast.Field{
+						Name:      &ast.Name{Value: parser.SumFieldName},
+						Arguments: f.Statement.Arguments,
+					}
+					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
+					sumFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + sumFieldIndexOffset
+					sumField, aggregateError = parser.ParseSelect(f.Root, &astField, sumFieldIndex)
+					if aggregateError != nil {
+						return nil, aggregateError
+					}
+					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
+					if err != nil {
+						return nil, err
+					}
+					aggregates = append(aggregates, sumPlan)
+				}
+
+				plan, aggregateError = n.p.Average(sumField, countField, f)
+			} else if f.Name == parser.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
 					Name:  f.Name,
 					Alias: f.Alias,
@@ -272,95 +345,18 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 				}
 			}
-		case *parser.Field:
-			var plan aggregateNode
-			var aggregateError error
-
-			switch f.Statement.Name.Value {
-			case parser.CountFieldName:
-				plan, aggregateError = n.p.Count(f)
-			case parser.SumFieldName:
-				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
-			case parser.AverageFieldName:
-				// Average utilises count and sum in order to calculate it's return value,
-				// so we have to add those nodes here if they do not exist else the generated
-				// field names could collide.  Value is currently 3 as if each field was an
-				// _avg field - then the final number of fields would be 3N (count+sum+average)
-				const fieldLenMultiplier = 3
-				countField, countExists := tryGetAggregateField(
-					n.p.ctx,
-					parsed.Fields,
-					parser.CountFieldName,
-					f.Statement.Arguments,
-				)
-
-				if !countExists {
-					const countFieldIndexOffset = 1
-					astField := ast.Field{
-						Name:      &ast.Name{Value: parser.CountFieldName},
-						Arguments: f.Statement.Arguments,
-					}
-					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
-					countFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + countFieldIndexOffset
-					countField, aggregateError = parser.ParseField(countFieldIndex, f.Root, &astField)
-					if aggregateError != nil {
-						return nil, aggregateError
-					}
-
-					countPlan, err := n.p.Count(countField)
-					if err != nil {
-						return nil, err
-					}
-					// We must not count nil values else they will corrupt the average
-					averageSource, err := f.GetAggregateSource()
-					if err != nil {
-						return nil, err
-					}
-					childField := n.p.getSourceProperty(averageSource, parsed)
-					countPlan.filter = &parser.Filter{
-						Conditions: map[string]interface{}{
-							childField: map[string]interface{}{
-								"$ne": nil,
-							},
-						},
-					}
-					aggregates = append(aggregates, countPlan)
-				}
-
-				sumField, sumExists := tryGetAggregateField(n.p.ctx, parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
-				if !sumExists {
-					const sumFieldIndexOffset = 2
-					astField := ast.Field{
-						Name:      &ast.Name{Value: parser.SumFieldName},
-						Arguments: f.Statement.Arguments,
-					}
-					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
-					sumFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + sumFieldIndexOffset
-					sumField, aggregateError = parser.ParseField(sumFieldIndex, f.Root, &astField)
-					if aggregateError != nil {
-						return nil, aggregateError
-					}
-					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
-					if err != nil {
-						return nil, err
-					}
-					aggregates = append(aggregates, sumPlan)
-				}
-
-				plan, aggregateError = n.p.Average(sumField, countField, f)
-			default:
-				continue
-			}
 
 			if aggregateError != nil {
 				return nil, aggregateError
 			}
 
-			aggregates = append(aggregates, plan)
+			if plan != nil {
+				aggregates = append(aggregates, plan)
 
-			aggregateError = n.joinAggregatedChild(parsed, f)
-			if aggregateError != nil {
-				return nil, aggregateError
+				aggregateError = n.joinAggregatedChild(parsed, f)
+				if aggregateError != nil {
+					return nil, aggregateError
+				}
 			}
 		}
 	}
@@ -375,10 +371,10 @@ func tryGetAggregateField(
 	fields []parser.Selection,
 	name string,
 	arguements []*ast.Argument,
-) (*parser.Field, bool) {
+) (*parser.Select, bool) {
 	for _, field := range fields {
-		f, isField := field.(*parser.Field)
-		if !isField {
+		f, isSelect := field.(*parser.Select)
+		if !isSelect {
 			continue
 		}
 
@@ -463,7 +459,7 @@ func areASTValuesEqual(ctx context.Context, thisValue ast.Value, otherValue ast.
 //  collections have not been requested for render by the consumer
 func (n *selectNode) joinAggregatedChild(
 	parsed *parser.Select,
-	field *parser.Field,
+	field *parser.Select,
 ) error {
 	source, err := field.GetAggregateSource()
 	if err != nil {

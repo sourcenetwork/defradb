@@ -32,7 +32,7 @@ type sumNode struct {
 
 func (p *Planner) Sum(
 	sourceInfo *sourceInfo,
-	field *parser.Field,
+	field *parser.Select,
 	parent *parser.Select,
 ) (*sumNode, error) {
 	source, err := field.GetAggregateSource()
@@ -114,7 +114,7 @@ func (p *Planner) getSourceField(
 		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
 		// the root field in order to determine the value type.  This is recursive to allow handling
 		// of N-depth aggregations (e.g. sum of sum of sum of...)
-		var sourceField *parser.Field
+		var sourceField *parser.Select
 		var sourceParent parser.Selection
 		for _, field := range parent.GetSelections() {
 			if field.GetName() == source.HostProperty {
@@ -124,7 +124,7 @@ func (p *Planner) getSourceField(
 
 		for _, field := range sourceParent.GetSelections() {
 			if field.GetAlias() == source.ChildProperty {
-				sourceField = field.(*parser.Field)
+				sourceField = field.(*parser.Select)
 				break
 			}
 		}
@@ -185,7 +185,7 @@ func (p *Planner) getSourceProperty(source parser.AggregateTarget, parent parser
 			if field.GetName() == source.HostProperty {
 				for _, childField := range field.(*parser.Select).Fields {
 					if childField.GetAlias() == source.ChildProperty {
-						return childField.(*parser.Field).GetName()
+						return childField.(*parser.Select).GetName()
 					}
 				}
 			}

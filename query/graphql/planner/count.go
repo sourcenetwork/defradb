@@ -33,7 +33,7 @@ type countNode struct {
 	filter *parser.Filter
 }
 
-func (p *Planner) Count(field *parser.Field) (*countNode, error) {
+func (p *Planner) Count(field *parser.Select) (*countNode, error) {
 	source, err := field.GetAggregateSource()
 	if err != nil {
 		return nil, err
