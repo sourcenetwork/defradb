@@ -18,8 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var log = logging.MustNewLogger("defra.http")
-
 type loggingResponseWriter struct {
 	statusCode    int
 	contentLength int

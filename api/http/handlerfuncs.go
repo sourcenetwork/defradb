@@ -27,17 +27,18 @@ import (
 )
 
 const (
-	ContentTypeJSON           = "application/json"
-	ContentTypeGraphQL        = "application/graphql"
-	ContentTypeFormURLEncoded = "application/x-www-form-urlencoded"
+	contentTypeJSON           = "application/json"
+	contentTypeGraphQL        = "application/graphql"
+	contentTypeFormURLEncoded = "application/x-www-form-urlencoded"
 )
 
-func root(rw http.ResponseWriter, req *http.Request) {
+func rootHandler(rw http.ResponseWriter, req *http.Request) {
 	_, err := rw.Write(
 		[]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"),
 	)
 	if err != nil {
 		handleErr(
+			req.Context(),
 			rw,
 			errors.WithMessage(
 				err,
@@ -48,10 +49,11 @@ func root(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func ping(rw http.ResponseWriter, req *http.Request) {
+func pingHandler(rw http.ResponseWriter, req *http.Request) {
 	_, err := rw.Write([]byte("pong"))
 	if err != nil {
 		handleErr(
+			req.Context(),
 			rw,
 			errors.WithMessage(
 				err,
@@ -62,17 +64,18 @@ func ping(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func dump(rw http.ResponseWriter, req *http.Request) {
-	db, ok := req.Context().Value(ctxKey("DB")).(client.DB)
-	if !ok {
-		handleErr(rw, errors.New("no database available"), http.StatusInternalServerError)
+func dumpHandler(rw http.ResponseWriter, req *http.Request) {
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 	db.PrintDump(req.Context())
 
-	_, err := rw.Write([]byte("ok"))
+	_, err = rw.Write([]byte("ok"))
 	if err != nil {
 		handleErr(
+			req.Context(),
 			rw,
 			errors.WithMessage(
 				err,
@@ -83,34 +86,36 @@ func dump(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func execGQL(rw http.ResponseWriter, req *http.Request) {
+func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query().Get("query")
 
 	if query == "" {
 		switch req.Header.Get("Content-Type") {
-		case ContentTypeJSON:
+		case contentTypeJSON:
 			handleErr(
+				req.Context(),
 				rw,
 				errors.New("content type application/json not yet supported"),
 				http.StatusBadRequest,
 			)
 			return
 
-		case ContentTypeFormURLEncoded:
+		case contentTypeFormURLEncoded:
 			handleErr(
+				req.Context(),
 				rw,
 				errors.New("content type application/x-www-form-urlencoded not yet supported"),
 				http.StatusBadRequest,
 			)
 			return
 
-		case ContentTypeGraphQL:
+		case contentTypeGraphQL:
 			fallthrough
 
 		default:
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
-				handleErr(rw, errors.WithStack(err), http.StatusBadRequest)
+				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
 				return
 			}
 			query = string(body)
@@ -119,32 +124,32 @@ func execGQL(rw http.ResponseWriter, req *http.Request) {
 
 	// if at this point query is still empty, return an error
 	if query == "" {
-		handleErr(rw, errors.New("missing GraphQL query"), http.StatusBadRequest)
+		handleErr(req.Context(), rw, errors.New("missing GraphQL query"), http.StatusBadRequest)
 		return
 	}
 
-	db, ok := req.Context().Value(ctxKey("DB")).(client.DB)
-	if !ok {
-		handleErr(rw, errors.New("no database available"), http.StatusInternalServerError)
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	err := json.NewEncoder(rw).Encode(result)
+	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		handleErr(rw, errors.WithStack(err), http.StatusBadRequest)
+		handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
 		return
 	}
 }
 
-func loadSchema(rw http.ResponseWriter, req *http.Request) {
+func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	var result client.QueryResult
 	sdl, err := io.ReadAll(req.Body)
 
 	defer func() {
 		err = req.Body.Close()
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 		}
 	}()
 
@@ -153,7 +158,7 @@ func loadSchema(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -161,9 +166,9 @@ func loadSchema(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	db, ok := req.Context().Value(ctxKey("DB")).(client.DB)
-	if !ok {
-		handleErr(rw, errors.New("no database available"), http.StatusInternalServerError)
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 	err = db.AddSchema(req.Context(), string(sdl))
@@ -172,7 +177,7 @@ func loadSchema(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -186,12 +191,12 @@ func loadSchema(rw http.ResponseWriter, req *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+		handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 		return
 	}
 }
 
-func getBlock(rw http.ResponseWriter, req *http.Request) {
+func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	var result client.QueryResult
 	cidStr := chi.URLParam(req, "cid")
 
@@ -209,7 +214,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 			err = json.NewEncoder(rw).Encode(result)
 			if err != nil {
-				handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
 			}
 
@@ -219,9 +224,9 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 		cID = cid.NewCidV1(cid.Raw, hash)
 	}
 
-	db, ok := req.Context().Value(ctxKey("DB")).(client.DB)
-	if !ok {
-		handleErr(rw, errors.New("no database available"), http.StatusInternalServerError)
+	db, err := dbFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 	block, err := db.Blockstore().Get(req.Context(), cID)
@@ -230,7 +235,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -245,7 +250,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -258,7 +263,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -273,7 +278,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -287,7 +292,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err = json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 
@@ -310,7 +315,7 @@ func getBlock(rw http.ResponseWriter, req *http.Request) {
 
 		err := json.NewEncoder(rw).Encode(result)
 		if err != nil {
-			handleErr(rw, errors.WithStack(err), http.StatusInternalServerError)
+			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 			return
 		}
 

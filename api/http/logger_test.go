@@ -55,7 +55,7 @@ func TestLoggerLogs(t *testing.T) {
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
 		OutputPaths:   []string{logFile},
 	})
-	loggerMiddleware(h.handle(ping)).ServeHTTP(rec2, req)
+	loggerMiddleware(h.handle(pingHandler)).ServeHTTP(rec2, req)
 	assert.Equal(t, 200, rec2.Result().StatusCode)
 
 	// inspect the log file

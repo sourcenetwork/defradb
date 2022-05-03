@@ -32,10 +32,10 @@ func TestFormatError(t *testing.T) {
 	assert.Equal(t, "[DEV] test error", lines[0])
 }
 
-func TestHandleErr(t *testing.T) {
+func TestHandleErrOnBadRequest(t *testing.T) {
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
-		handleErr(rw, errors.New("test error"), http.StatusBadRequest)
+		handleErr(req.Context(), rw, errors.New("test error"), http.StatusBadRequest)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
 	assert.NoError(t, err)
@@ -51,8 +51,83 @@ func TestHandleErr(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, errResponse.Status)
-	assert.Equal(t, "Bad Request", errResponse.Message)
+	assert.Equal(t, errBadRequest, errResponse.Message)
 
 	lines := strings.Split(errResponse.Stack, "\n")
 	assert.Equal(t, "[DEV] test error", lines[0])
+}
+
+func TestHandleErrOnInternalServerError(t *testing.T) {
+	env = "dev"
+	f := func(rw http.ResponseWriter, req *http.Request) {
+		handleErr(req.Context(), rw, errors.New("test error"), http.StatusInternalServerError)
+	}
+	req, err := http.NewRequest("GET", "/test", nil)
+	assert.NoError(t, err)
+
+	rec := httptest.NewRecorder()
+
+	f(rec, req)
+
+	resp := rec.Result()
+
+	errResponse := errorResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&errResponse)
+	assert.NoError(t, err)
+
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Status)
+	assert.Equal(t, errInternalServerError, errResponse.Message)
+
+	lines := strings.Split(errResponse.Stack, "\n")
+	assert.Equal(t, "[DEV] test error", lines[0])
+}
+
+func TestHandleErrOnNotFound(t *testing.T) {
+	env = "dev"
+	f := func(rw http.ResponseWriter, req *http.Request) {
+		handleErr(req.Context(), rw, errors.New("test error"), http.StatusNotFound)
+	}
+	req, err := http.NewRequest("GET", "/test", nil)
+	assert.NoError(t, err)
+
+	rec := httptest.NewRecorder()
+
+	f(rec, req)
+
+	resp := rec.Result()
+
+	errResponse := errorResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&errResponse)
+	assert.NoError(t, err)
+
+	assert.Equal(t, http.StatusNotFound, errResponse.Status)
+	assert.Equal(t, errNotFound, errResponse.Message)
+
+	lines := strings.Split(errResponse.Stack, "\n")
+	assert.Equal(t, "[DEV] test error", lines[0])
+}
+
+func TestHandleErrOnDefault(t *testing.T) {
+	env = "dev"
+	f := func(rw http.ResponseWriter, req *http.Request) {
+		handleErr(req.Context(), rw, errors.New("Unauthorized"), http.StatusUnauthorized)
+	}
+	req, err := http.NewRequest("GET", "/test", nil)
+	assert.NoError(t, err)
+
+	rec := httptest.NewRecorder()
+
+	f(rec, req)
+
+	resp := rec.Result()
+
+	errResponse := errorResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&errResponse)
+	assert.NoError(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, errResponse.Status)
+	assert.Equal(t, "Unauthorized", errResponse.Message)
+
+	lines := strings.Split(errResponse.Stack, "\n")
+	assert.Equal(t, "[DEV] Unauthorized", lines[0])
 }

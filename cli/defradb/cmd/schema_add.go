@@ -15,7 +15,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -57,9 +56,11 @@ var addCmd = &cobra.Command{
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr
 		}
-		endpointStr := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
-		endpoint, err := url.Parse(endpointStr)
-		cobra.CheckErr(err)
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
 
 		res, err := http.Post(endpoint.String(), "text", bytes.NewBuffer(schema))
 		cobra.CheckErr(err)

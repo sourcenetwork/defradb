@@ -40,7 +40,14 @@ var pingCmd = &cobra.Command{
 		}
 
 		log.Info(ctx, "Sending ping...")
-		res, err := http.Get(httpapi.JoinPaths(dbaddr, httpapi.PingPath))
+
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.PingPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
+
+		res, err := http.Get(endpoint.String())
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return

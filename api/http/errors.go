@@ -24,7 +24,7 @@ const (
 	errNotFound            = "Not Found"
 )
 
-var env = os.Getenv("ENV")
+var env = os.Getenv("DEFRA_ENV")
 
 type errorResponse struct {
 	Status  int    `json:"status"`
@@ -32,7 +32,7 @@ type errorResponse struct {
 	Stack   string `json:"stack,omitempty"`
 }
 
-func handleErr(rw http.ResponseWriter, err error, status int) {
+func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
 	var message string
 
 	switch status {
@@ -47,13 +47,13 @@ func handleErr(rw http.ResponseWriter, err error, status int) {
 
 	case http.StatusNotFound:
 		message = errNotFound
-	}
 
-	if message == "" {
+	default:
 		message = err.Error()
 	}
 
 	sendJSON(
+		ctx,
 		rw,
 		errorResponse{
 			Status:  status,

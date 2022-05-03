@@ -60,10 +60,11 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 			log.Error(ctx, "missing query")
 			return
 		}
-		endpointStr := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
-		endpoint, err := url.Parse(endpointStr)
+
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
 		if err != nil {
-			log.FatalE(ctx, "", err)
+			log.ErrorE(ctx, "join paths failed", err)
+			return
 		}
 
 		p := url.Values{}

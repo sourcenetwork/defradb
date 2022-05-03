@@ -16,7 +16,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestJoinPaths(t *testing.T) {
-	path := JoinPaths("http://localhost:9181", BlocksPath, "cid_of_some_sort")
-	assert.Equal(t, "http://localhost:9181"+BlocksPath+"/cid_of_some_sort", path)
+func TestJoinPathsWithBase(t *testing.T) {
+	path, err := JoinPaths("http://localhost:9181", BlocksPath, "cid_of_some_sort")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "http://localhost:9181"+BlocksPath+"/cid_of_some_sort", path.String())
+}
+
+func TestJoinPathsWithNoBase(t *testing.T) {
+	_, err := JoinPaths("", BlocksPath, "cid_of_some_sort")
+	assert.ErrorIs(t, schemeError, err)
+}
+
+func TestJoinPathsWithBaseWithoutHttpPrefix(t *testing.T) {
+	_, err := JoinPaths("localhost:9181", BlocksPath, "cid_of_some_sort")
+	assert.ErrorIs(t, schemeError, err)
+
+}
+
+func TestJoinPathsWithNoPaths(t *testing.T) {
+	path, err := JoinPaths("http://localhost:9181")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "http://localhost:9181", path.String())
+}
+
+func TestJoinPathsWithInvalidCharacter(t *testing.T) {
+	_, err := JoinPaths("https://%gh&%ij")
+	assert.Error(t, err)
 }

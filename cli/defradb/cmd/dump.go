@@ -39,7 +39,13 @@ var dumpCmd = &cobra.Command{
 			dbaddr = "http://" + dbaddr
 		}
 
-		res, err := http.Get(httpapi.JoinPaths(dbaddr, httpapi.DumpPath))
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.DumpPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
+
+		res, err := http.Get(endpoint.String())
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return

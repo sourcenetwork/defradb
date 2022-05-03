@@ -11,17 +11,18 @@
 package http
 
 import (
-	"context"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/pkg/errors"
 )
 
 const (
 	version string = "/api/v1"
 
-	HomePath       string = version + "/"
+	RootPath       string = version + ""
 	PingPath       string = version + "/ping"
 	DumpPath       string = version + "/debug/dump"
 	BlocksPath     string = version + "/blocks/get"
@@ -29,37 +30,40 @@ const (
 	SchemaLoadPath string = version + "/schema/load"
 )
 
-func setRoutes(h *Handler) *Handler {
+var schemeError = errors.New("base must start with the http or https scheme")
+
+func setRoutes(h *handler) *handler {
 	h.Mux = chi.NewRouter()
 
 	// setup logger middleware
 	h.Use(loggerMiddleware)
 
 	// define routes
-	h.Get(HomePath, h.handle(root))
-	h.Get(PingPath, h.handle(ping))
-	h.Get(DumpPath, h.handle(dump))
-	h.Get(BlocksPath+"/{cid}", h.handle(getBlock))
-	h.Get(GraphQLPath, h.handle(execGQL))
-	h.Post(GraphQLPath, h.handle(execGQL))
-	h.Post(SchemaLoadPath, h.handle(loadSchema))
+	h.Get(RootPath, h.handle(rootHandler))
+	h.Get(PingPath, h.handle(pingHandler))
+	h.Get(DumpPath, h.handle(dumpHandler))
+	h.Get(BlocksPath+"/{cid}", h.handle(getBlockHandler))
+	h.Get(GraphQLPath, h.handle(execGQLHandler))
+	h.Post(GraphQLPath, h.handle(execGQLHandler))
+	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
 
 	return h
 }
 
 // JoinPaths takes a base path and any number of additionnal paths
-// and combines them safely to form a full URL path or a simple path if
-// the base parameter is not a valid URL starting with `http://` or `https://`.
-func JoinPaths(base string, paths ...string) string {
-	u, err := url.Parse(base)
-	if err != nil {
-		log.Error(context.Background(), err.Error())
-		paths = append(([]string{base}), paths...)
-		return path.Join(paths...)
+// and combines them safely to form a full URL path.
+// The base must start with a http or https.
+func JoinPaths(base string, paths ...string) (*url.URL, error) {
+	if !strings.HasPrefix(base, "http") {
+		return nil, schemeError
 	}
 
-	paths = append(([]string{u.Path}), paths...)
-	u.Path = path.Join(paths...)
+	u, err := url.Parse(base)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
-	return u.String()
+	u.Path = path.Join(u.Path, strings.Join(paths, "/"))
+
+	return u, nil
 }

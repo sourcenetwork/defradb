@@ -43,7 +43,13 @@ var getCmd = &cobra.Command{
 		}
 		cid := args[0]
 
-		res, err := http.Get(httpapi.JoinPaths(dbaddr, httpapi.BlocksPath, cid))
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.BlocksPath, cid)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
+
+		res, err := http.Get(endpoint.String())
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return

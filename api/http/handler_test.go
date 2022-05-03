@@ -37,7 +37,7 @@ func TestNewHandlerWithLogger(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 
-	loggerMiddleware(h.handle(ping)).ServeHTTP(rec, req)
+	loggerMiddleware(h.handle(pingHandler)).ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Result().StatusCode)
 
 	// inspect the log file

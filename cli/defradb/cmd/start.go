@@ -21,6 +21,7 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -173,9 +174,11 @@ var startCmd = &cobra.Command{
 			log.Info(
 				ctx,
 				fmt.Sprintf(
-					"Providing HTTP API at http://%s. Use the GraphQL query endpoint at http://%s/graphql ",
+					"Providing HTTP API at http://%s%s. Use the GraphQL query endpoint at http://%s%s/graphql ",
 					config.Database.Address,
+					httpapi.RootPath,
 					config.Database.Address,
+					httpapi.RootPath,
 				),
 			)
 			s := http.NewServer(db)
