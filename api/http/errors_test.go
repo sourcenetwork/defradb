@@ -51,7 +51,7 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, errResponse.Status)
-	assert.Equal(t, errBadRequest, errResponse.Message)
+	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Message)
 
 	lines := strings.Split(errResponse.Stack, "\n")
 	assert.Equal(t, "[DEV] test error", lines[0])
@@ -76,7 +76,7 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusInternalServerError, errResponse.Status)
-	assert.Equal(t, errInternalServerError, errResponse.Message)
+	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Message)
 
 	lines := strings.Split(errResponse.Stack, "\n")
 	assert.Equal(t, "[DEV] test error", lines[0])
@@ -101,7 +101,7 @@ func TestHandleErrOnNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusNotFound, errResponse.Status)
-	assert.Equal(t, errNotFound, errResponse.Message)
+	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Message)
 
 	lines := strings.Split(errResponse.Stack, "\n")
 	assert.Equal(t, "[DEV] test error", lines[0])

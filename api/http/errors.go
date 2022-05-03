@@ -18,12 +18,6 @@ import (
 	"strings"
 )
 
-const (
-	errBadRequest          = "Bad Request"
-	errInternalServerError = "Internal Server Error"
-	errNotFound            = "Not Found"
-)
-
 var env = os.Getenv("DEFRA_ENV")
 
 type errorResponse struct {
@@ -33,23 +27,8 @@ type errorResponse struct {
 }
 
 func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
-	var message string
-
-	switch status {
-	case http.StatusBadRequest:
-		message = errBadRequest
-
-	case http.StatusInternalServerError:
-		message = errInternalServerError
-		// @TODO: The internal server error log should be sent to a different location
-		// ideally not in the http logs.
-		log.ErrorE(context.Background(), errInternalServerError, err)
-
-	case http.StatusNotFound:
-		message = errNotFound
-
-	default:
-		message = err.Error()
+	if status == http.StatusInternalServerError {
+		log.ErrorE(context.Background(), http.StatusText(status), err)
 	}
 
 	sendJSON(
@@ -57,7 +36,7 @@ func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status in
 		rw,
 		errorResponse{
 			Status:  status,
-			Message: message,
+			Message: http.StatusText(status),
 			Stack:   formatError(err),
 		},
 		status,
