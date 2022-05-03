@@ -86,19 +86,28 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+type gqlRequest struct {
+	Query         string                 `json:"query"`
+	Variables     map[string]interface{} `json:"variables"`
+	OperationName string                 `json:"operationName"`
+}
+
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
+
 	query := req.URL.Query().Get("query")
 
 	if query == "" {
 		switch req.Header.Get("Content-Type") {
 		case contentTypeJSON:
-			handleErr(
-				req.Context(),
-				rw,
-				errors.New("content type application/json not yet supported"),
-				http.StatusBadRequest,
-			)
-			return
+			gqlReq := gqlRequest{}
+
+			err := getJSON(req, &gqlReq)
+			if err != nil {
+				handleErr(req.Context(), rw, err, http.StatusBadRequest)
+				return
+			}
+
+			query = gqlReq.Query
 
 		case contentTypeFormURLEncoded:
 			handleErr(

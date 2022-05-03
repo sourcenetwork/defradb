@@ -41,6 +41,14 @@ func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func getJSON(req *http.Request, v interface{}) error {
+	err := json.NewDecoder(req.Body).Decode(v)
+	if err != nil {
+		return errors.Wrap(err, "unmarshall error")
+	}
+	return nil
+}
+
 func sendJSON(ctx context.Context, rw http.ResponseWriter, v interface{}, code int) {
 	rw.Header().Set("Content-Type", "application/json")
 
