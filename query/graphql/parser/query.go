@@ -30,6 +30,7 @@ const (
 	DocKeyFieldName  = "_key"
 	CountFieldName   = "_count"
 	SumFieldName     = "_sum"
+	AverageFieldName = "_avg"
 	HiddenFieldName  = "_hidden"
 )
 
@@ -52,13 +53,15 @@ var ReservedFields = map[string]bool{
 	GroupFieldName:   true,
 	CountFieldName:   true,
 	SumFieldName:     true,
+	AverageFieldName: true,
 	HiddenFieldName:  true,
 	DocKeyFieldName:  true,
 }
 
 var Aggregates = map[string]struct{}{
-	CountFieldName: {},
-	SumFieldName:   {},
+	CountFieldName:   {},
+	SumFieldName:     {},
+	AverageFieldName: {},
 }
 
 type Query struct {
@@ -408,7 +411,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 		switch node := selection.(type) {
 		case *ast.Field:
 			if node.SelectionSet == nil { // regular field
-				f, err := parseField(i, root, node)
+				f, err := ParseField(i, root, node)
 				if err != nil {
 					return nil, err
 				}
@@ -431,9 +434,9 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	return selections, nil
 }
 
-// parseField simply parses the Name/Alias
+// ParseField simply parses the Name/Alias
 // into a Field type
-func parseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
+func ParseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
 	var name string
 	var alias string
 

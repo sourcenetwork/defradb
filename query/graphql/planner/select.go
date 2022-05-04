@@ -11,15 +11,18 @@
 package planner
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/graphql-go/graphql/language/ast"
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -278,6 +281,73 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				plan, aggregateError = n.p.Count(f)
 			case parser.SumFieldName:
 				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
+			case parser.AverageFieldName:
+				// Average utilises count and sum in order to calculate it's return value,
+				// so we have to add those nodes here if they do not exist else the generated
+				// field names could collide.  Value is currently 3 as if each field was an
+				// _avg field - then the final number of fields would be 3N (count+sum+average)
+				const fieldLenMultiplier = 3
+				countField, countExists := tryGetAggregateField(
+					n.p.ctx,
+					parsed.Fields,
+					parser.CountFieldName,
+					f.Statement.Arguments,
+				)
+
+				if !countExists {
+					const countFieldIndexOffset = 1
+					astField := ast.Field{
+						Name:      &ast.Name{Value: parser.CountFieldName},
+						Arguments: f.Statement.Arguments,
+					}
+					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
+					countFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + countFieldIndexOffset
+					countField, aggregateError = parser.ParseField(countFieldIndex, f.Root, &astField)
+					if aggregateError != nil {
+						return nil, aggregateError
+					}
+
+					countPlan, err := n.p.Count(countField)
+					if err != nil {
+						return nil, err
+					}
+					// We must not count nil values else they will corrupt the average
+					averageSource, err := f.GetAggregateSource()
+					if err != nil {
+						return nil, err
+					}
+					childField := n.p.getSourceProperty(averageSource, parsed)
+					countPlan.filter = &parser.Filter{
+						Conditions: map[string]interface{}{
+							childField: map[string]interface{}{
+								"$ne": nil,
+							},
+						},
+					}
+					aggregates = append(aggregates, countPlan)
+				}
+
+				sumField, sumExists := tryGetAggregateField(n.p.ctx, parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
+				if !sumExists {
+					const sumFieldIndexOffset = 2
+					astField := ast.Field{
+						Name:      &ast.Name{Value: parser.SumFieldName},
+						Arguments: f.Statement.Arguments,
+					}
+					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
+					sumFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + sumFieldIndexOffset
+					sumField, aggregateError = parser.ParseField(sumFieldIndex, f.Root, &astField)
+					if aggregateError != nil {
+						return nil, aggregateError
+					}
+					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
+					if err != nil {
+						return nil, err
+					}
+					aggregates = append(aggregates, sumPlan)
+				}
+
+				plan, aggregateError = n.p.Average(sumField, countField, f)
 			default:
 				continue
 			}
@@ -296,6 +366,97 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	}
 
 	return aggregates, nil
+}
+
+// tryGetAggregateField attempts to find an existing aggregate field that matches the given
+// name and arguements.  Will return the match field and true if one is found, false otherwise.
+func tryGetAggregateField(
+	ctx context.Context,
+	fields []parser.Selection,
+	name string,
+	arguements []*ast.Argument,
+) (*parser.Field, bool) {
+	for _, field := range fields {
+		f, isField := field.(*parser.Field)
+		if !isField {
+			continue
+		}
+
+		// compare the name on the statement vs the given name.
+		// the field name should not be compared here as it may be
+		// different.
+		if f.Statement.Name.Value == name {
+			allArguementsMatch := true
+
+			for _, possibleMatchingArguement := range f.Statement.Arguments {
+				for _, targetArguement := range arguements {
+					if possibleMatchingArguement.Name.Value != targetArguement.Name.Value {
+						allArguementsMatch = false
+						break
+					}
+
+					if !areASTValuesEqual(ctx, possibleMatchingArguement.Value, targetArguement.Value) {
+						allArguementsMatch = false
+						break
+					}
+				}
+				if !allArguementsMatch {
+					break
+				}
+			}
+
+			if allArguementsMatch {
+				return f, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func areASTValuesEqual(ctx context.Context, thisValue ast.Value, otherValue ast.Value) bool {
+	if thisValue.GetKind() != otherValue.GetKind() {
+		return false
+	}
+
+	switch thisTypedValue := thisValue.GetValue().(type) {
+	case *ast.Variable, *ast.IntValue, *ast.FloatValue, *ast.StringValue, *ast.EnumValue, *ast.BooleanValue:
+		// For these primative types we just have to compare the inner values
+		if thisTypedValue != otherValue.GetValue() {
+			return false
+		}
+	case *ast.ObjectValue:
+		return areASTValuesEqual(ctx, thisTypedValue, otherValue.GetValue().(*ast.ObjectValue))
+	case *ast.ListValue:
+		otherTypedValue := otherValue.GetValue().(*ast.ListValue)
+		if len(thisTypedValue.Values) != len(otherTypedValue.Values) {
+			return false
+		}
+		for i, innerValue := range thisTypedValue.Values {
+			if !areASTValuesEqual(ctx, innerValue, otherTypedValue.Values[i]) {
+				return false
+			}
+		}
+	case []*ast.ObjectField:
+		for i, field := range thisTypedValue {
+			otherTypedValue := otherValue.GetValue().([]*ast.ObjectField)
+			if len(thisTypedValue) != len(otherTypedValue) {
+				return false
+			}
+			if !areASTValuesEqual(ctx, field, otherTypedValue[i]) {
+				return false
+			}
+		}
+	default:
+		// If we do not recognise the type, we should state that they do not equal and continue
+		log.Error(
+			ctx,
+			"Could not evaluate arguement equality, unknown type.",
+			logging.NewKV("Type", fmt.Sprintf("%T", thisValue.GetValue())),
+		)
+		return false
+	}
+
+	return true
 }
 
 // Join any child collections required by the given transformation if the child

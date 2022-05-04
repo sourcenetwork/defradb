@@ -72,6 +72,10 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -133,6 +137,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.NewNonNull(gql.String),
@@ -175,6 +183,10 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -221,6 +233,10 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.NewList(gql.NewNonNull(gql.String)),
@@ -265,6 +281,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.NewNonNull(gql.NewList(gql.String)),
@@ -307,6 +327,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -356,6 +380,10 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -426,6 +454,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -455,6 +487,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -507,6 +543,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Name: "_sum",
 							Type: gql.Float,
 						},
+						"_avg": &gql.Field{
+							Name: "_avg",
+							Type: gql.Float,
+						},
 						"myField": &gql.Field{
 							Name: "myField",
 							Type: gql.String,
@@ -540,6 +580,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -581,6 +625,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 				},
 				"_sum": &gql.Field{
 					Name: "_sum",
+					Type: gql.Float,
+				},
+				"_avg": &gql.Field{
+					Name: "_avg",
 					Type: gql.Float,
 				},
 				"myField": &gql.Field{
@@ -625,6 +673,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -687,6 +739,10 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
