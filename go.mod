@@ -226,7 +226,7 @@ replace (
 	github.com/SierraSoftworks/connor => github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12
 
 	// SourceNetwork fork og graphql-go
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9
 
 	// dev branch for ipfslite until merged
 	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f

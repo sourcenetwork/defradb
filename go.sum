@@ -1446,8 +1446,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12 h1:MELz22GoPeecJnBS5RT4i52bNY/wlpvbGW3L4lLuBTU=
 github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12/go.mod h1:IimP/qkAJro1hXbVA8xOMDdkUeWkVw8rF40XrZq5YX0=
-github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc h1:Jl+vKL3i+wE+T95aHU0wGVUWf17NxeS+1ku+IQT6ZdU=
-github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9 h1:2nNvu308c+V9wj2jrWErrL5gSgwhhjdW6UX4/+JT6vY=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
 github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f h1:Q20ZRdOy/BfBs9ybPg9nbpmL3OvGLbmjNhiOd81J/QA=
 github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f/go.mod h1:KsCU8h2aBeSCNffdNIZ4mVkEWgPgW/9WYyty2wGxhv0=
 github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a/go.mod h1:7AyxJNCJ7SBZ1MfVQCWD6Uqo2oubI2Eq2y2eqf+A5r0=
