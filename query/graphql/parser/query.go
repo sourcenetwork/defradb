@@ -310,6 +310,11 @@ func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 	var name string
 	var alias string
 
+	// Fields that take arguments (e.g. filters) that can be aliased must be renamed internally
+	// to allow code to distinguish between multiple properties targeting the same underlying field
+	// that may or may not have different arguments.  It is hoped that this renaming can be removed
+	// once we migrate to an array-based document structure as per
+	// https://github.com/sourcenetwork/defradb/issues/395
 	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate || field.Name.Value == GroupFieldName {
 		name = fmt.Sprintf("_agg%v", index)
 		if field.Alias == nil {
