@@ -676,42 +676,46 @@ func genNumericInlineArraySelectorName(hostName string, fieldName string) string
 // declaring which fields are available for aggregation.
 func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
-		fieldsEnumCfg := gql.EnumConfig{
-			Name:   genTypeName(obj, "NumericFieldsArg"),
-			Values: gql.EnumValueConfigMap{},
-		}
-
-		hasSumableFields := false
-		// generate basic filter operator blocks for all the sumable types
-		for _, field := range obj.Fields() {
-			if field.Type == gql.Float || field.Type == gql.Int {
-				hasSumableFields = true
-				fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
-				continue
+		fieldsEnum, enumExists := g.manager.schema.TypeMap()[genTypeName(obj, "NumericFieldsArg")]
+		if !enumExists {
+			fieldsEnumCfg := gql.EnumConfig{
+				Name:   genTypeName(obj, "NumericFieldsArg"),
+				Values: gql.EnumValueConfigMap{},
 			}
 
-			if list, isList := field.Type.(*gql.List); isList {
-				hasSumableFields = true
-				if list.OfType == gql.Float || list.OfType == gql.Int {
+			hasSumableFields := false
+			// generate basic filter operator blocks for all the sumable types
+			for _, field := range obj.Fields() {
+				if field.Type == gql.Float || field.Type == gql.Int {
+					hasSumableFields = true
 					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
-				} else {
-					// If it is a related list, we need to add count in here so that we can sum it
-					fieldsEnumCfg.Values[parser.CountFieldName] = &gql.EnumValueConfig{Value: parser.CountFieldName}
+					continue
+				}
+
+				if list, isList := field.Type.(*gql.List); isList {
+					hasSumableFields = true
+					if list.OfType == gql.Float || list.OfType == gql.Int {
+						fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
+					} else {
+						// If it is a related list, we need to add count in here so that we can sum it
+						fieldsEnumCfg.Values[parser.CountFieldName] = &gql.EnumValueConfig{Value: parser.CountFieldName}
+					}
 				}
 			}
-		}
-		// A child aggregate will always be aggregatable, as it can be present via an inner grouping
-		fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
-		fieldsEnumCfg.Values[parser.AverageFieldName] = &gql.EnumValueConfig{Value: parser.AverageFieldName}
+			// A child aggregate will always be aggregatable, as it can be present via an inner grouping
+			fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
+			fieldsEnumCfg.Values[parser.AverageFieldName] = &gql.EnumValueConfig{Value: parser.AverageFieldName}
 
-		if !hasSumableFields {
-			return nil, nil
-		}
+			if !hasSumableFields {
+				return nil, nil
+			}
 
-		fieldsEnum := gql.NewEnum(fieldsEnumCfg)
-		err := g.manager.schema.AppendType(fieldsEnum)
-		if err != nil {
-			return nil, err
+			fieldsEnum = gql.NewEnum(fieldsEnumCfg)
+
+			err := g.manager.schema.AppendType(fieldsEnum)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		return gql.InputObjectConfigFieldMap{
