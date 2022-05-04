@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -286,7 +287,13 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				// field names could collide.  Value is currently 3 as if each field was an
 				// _avg field - then the final number of fields would be 3N (count+sum+average)
 				const fieldLenMultiplier = 3
-				countField, countExists := n.tryGetAggregateField(parsed.Fields, parser.CountFieldName, f.Statement.Arguments)
+				countField, countExists := tryGetAggregateField(
+					n.p.ctx,
+					parsed.Fields,
+					parser.CountFieldName,
+					f.Statement.Arguments,
+				)
+
 				if !countExists {
 					const countFieldIndexOffset = 1
 					astField := ast.Field{
@@ -320,7 +327,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					aggregates = append(aggregates, countPlan)
 				}
 
-				sumField, sumExists := n.tryGetAggregateField(parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
+				sumField, sumExists := tryGetAggregateField(n.p.ctx, parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
 				if !sumExists {
 					const sumFieldIndexOffset = 2
 					astField := ast.Field{
@@ -363,7 +370,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 
 // tryGetAggregateField attempts to find an existing aggregate field that matches the given
 // name and arguements.  Will return the match field and true if one is found, false otherwise.
-func (n *selectNode) tryGetAggregateField(
+func tryGetAggregateField(
+	ctx context.Context,
 	fields []parser.Selection,
 	name string,
 	arguements []*ast.Argument,
@@ -387,7 +395,7 @@ func (n *selectNode) tryGetAggregateField(
 						break
 					}
 
-					if !n.areASTValuesEqual(possibleMatchingArguement.Value, targetArguement.Value) {
+					if !areASTValuesEqual(ctx, possibleMatchingArguement.Value, targetArguement.Value) {
 						allArguementsMatch = false
 						break
 					}
@@ -405,7 +413,7 @@ func (n *selectNode) tryGetAggregateField(
 	return nil, false
 }
 
-func (n *selectNode) areASTValuesEqual(thisValue ast.Value, otherValue ast.Value) bool {
+func areASTValuesEqual(ctx context.Context, thisValue ast.Value, otherValue ast.Value) bool {
 	if thisValue.GetKind() != otherValue.GetKind() {
 		return false
 	}
@@ -417,14 +425,14 @@ func (n *selectNode) areASTValuesEqual(thisValue ast.Value, otherValue ast.Value
 			return false
 		}
 	case *ast.ObjectValue:
-		return n.areASTValuesEqual(thisTypedValue, otherValue.GetValue().(*ast.ObjectValue))
+		return areASTValuesEqual(ctx, thisTypedValue, otherValue.GetValue().(*ast.ObjectValue))
 	case *ast.ListValue:
 		otherTypedValue := otherValue.GetValue().(*ast.ListValue)
 		if len(thisTypedValue.Values) != len(otherTypedValue.Values) {
 			return false
 		}
 		for i, innerValue := range thisTypedValue.Values {
-			if !n.areASTValuesEqual(innerValue, otherTypedValue.Values[i]) {
+			if !areASTValuesEqual(ctx, innerValue, otherTypedValue.Values[i]) {
 				return false
 			}
 		}
@@ -434,14 +442,14 @@ func (n *selectNode) areASTValuesEqual(thisValue ast.Value, otherValue ast.Value
 			if len(thisTypedValue) != len(otherTypedValue) {
 				return false
 			}
-			if !n.areASTValuesEqual(field, otherTypedValue[i]) {
+			if !areASTValuesEqual(ctx, field, otherTypedValue[i]) {
 				return false
 			}
 		}
 	default:
 		// If we do not recognise the type, we should state that they do not equal and continue
 		log.Error(
-			n.p.ctx,
+			ctx,
 			"Could not evaluate arguement equality, unknown type.",
 			logging.NewKV("Type", fmt.Sprintf("%T", thisValue.GetValue())),
 		)
