@@ -62,6 +62,12 @@ func (p *Planner) isValueFloat(
 	source parser.AggregateTarget,
 	sourceProperty string,
 ) (bool, error) {
+	// It is important that averages are floats even if their underlying values are ints
+	// else sum will round them down to the nearest whole number
+	if source.ChildProperty == parser.AverageFieldName {
+		return true, nil
+	}
+
 	sourceFieldDescription, err := p.getSourceField(
 		sourceInfo,
 		parent,

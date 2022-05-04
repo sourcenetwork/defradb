@@ -480,14 +480,23 @@ func getRelationshipName(
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
-	sumBaseArgs := make(map[string]*gql.InputObject)
+	numBaseArgs := make(map[string]*gql.InputObject)
 	for _, t := range g.typeDefs {
-		sumArg := g.genSumBaseArgInputs(t)
-		sumBaseArgs[sumArg.Name()] = sumArg
+		numArg := g.genNumericAggregateBaseArgInputs(t)
+		numBaseArgs[numArg.Name()] = numArg
 		// All base types need to be appended to the schema before calling genSumFieldConfig
-		err := g.manager.schema.AppendType(sumArg)
+		err := g.manager.schema.AppendType(numArg)
 		if err != nil {
 			return err
+		}
+
+		objs := g.genNumericInlineArraySelectorObject(t)
+		for _, obj := range objs {
+			numBaseArgs[obj.Name()] = obj
+			err := g.manager.schema.AppendType(obj)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -498,11 +507,17 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		}
 		t.AddFieldConfig(countField.Name, &countField)
 
-		sumField, err := g.genSumFieldConfig(t, sumBaseArgs)
+		sumField, err := g.genSumFieldConfig(t, numBaseArgs)
 		if err != nil {
 			return err
 		}
 		t.AddFieldConfig(sumField.Name, &sumField)
+
+		averageField, err := g.genAverageFieldConfig(t, numBaseArgs)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(averageField.Name, &averageField)
 	}
 
 	return nil
@@ -547,7 +562,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	return field, nil
 }
 
-func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
+func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
 	childTypesByFieldName := map[string]*gql.InputObject{}
 
 	for _, field := range obj.Fields() {
@@ -557,31 +572,14 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*g
 			continue
 		}
 
+		var inputObjectName string
 		if listType.OfType == gql.Float || listType.OfType == gql.Int {
-			// If it is an inline scalar array then we require an empty
-			//  object as an argument due to the lack of union input types
-			sumableObject := gql.NewInputObject(gql.InputObjectConfig{
-				Name: fmt.Sprintf("%s%s%s", obj.Name(), strings.Title(field.Name), "SumInputObj"),
-				Fields: gql.InputObjectConfigFieldMap{
-					"_": &gql.InputObjectFieldConfig{
-						Type:        gql.Int,
-						Description: "Placeholder - empty object not permitted, but will have fields shortly",
-					},
-				},
-			})
-
-			childTypesByFieldName[field.Name] = sumableObject
-			err := g.manager.schema.AppendType(sumableObject)
-			if err != nil {
-				return gql.Field{}, err
-			}
-			continue
+			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
+		} else {
+			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
 		}
 
-		subSumType, isSubTypeSumable := sumBaseArgs[genTypeName(
-			field.Type,
-			"SumBaseArg",
-		)]
+		subSumType, isSubTypeSumable := numBaseArgs[inputObjectName]
 		// If the item is not in the type map, it must contain no summable
 		//  fields (e.g. no Int/Floats)
 		if !isSubTypeSumable {
@@ -603,10 +601,83 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, sumBaseArgs map[string]*g
 	return field, nil
 }
 
-func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
+func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
+	childTypesByFieldName := map[string]*gql.InputObject{}
+
+	for _, field := range obj.Fields() {
+		// we can only sum list items
+		listType, isList := field.Type.(*gql.List)
+		if !isList {
+			continue
+		}
+
+		var inputObjectName string
+		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
+		} else {
+			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
+		}
+
+		subAverageType, isSubTypeAveragable := numBaseArgs[inputObjectName]
+		// If the item is not in the type map, it must contain no averagable
+		//  fields (e.g. no Int/Floats)
+		if !isSubTypeAveragable {
+			continue
+		}
+		childTypesByFieldName[field.Name] = subAverageType
+	}
+
+	field := gql.Field{
+		Name: parser.AverageFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{},
+	}
+
+	for name, inputObject := range childTypesByFieldName {
+		field.Args[name] = newArgConfig(inputObject)
+	}
+
+	return field, nil
+}
+
+func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.InputObject {
+	objects := []*gql.InputObject{}
+	for _, field := range obj.Fields() {
+		// we can only act on list items
+		listType, isList := field.Type.(*gql.List)
+		if !isList {
+			continue
+		}
+
+		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+			// If it is an inline scalar array then we require an empty
+			//  object as an argument due to the lack of union input types
+			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
+				Name: genNumericInlineArraySelectorName(obj.Name(), strings.Title(field.Name)),
+				Fields: gql.InputObjectConfigFieldMap{
+					"_": &gql.InputObjectFieldConfig{
+						Type:        gql.Int,
+						Description: "Placeholder - empty object not permitted, but will have fields shortly",
+					},
+				},
+			})
+
+			objects = append(objects, selectorObject)
+		}
+	}
+	return objects
+}
+
+func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
+	return fmt.Sprintf("%s%s%s", hostName, strings.Title(fieldName), "NumericInlineArraySelector")
+}
+
+// Generates the base (numeric-only) aggregate input object-type for the give gql object,
+// declaring which fields are available for aggregation.
+func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
 		fieldsEnumCfg := gql.EnumConfig{
-			Name:   genTypeName(obj, "SumFieldsArg"),
+			Name:   genTypeName(obj, "NumericFieldsArg"),
 			Values: gql.EnumValueConfigMap{},
 		}
 
@@ -629,7 +700,9 @@ func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
 				}
 			}
 		}
+		// A child aggregate will always be aggregatable, as it can be present via an inner grouping
 		fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
+		fieldsEnumCfg.Values[parser.AverageFieldName] = &gql.EnumValueConfig{Value: parser.AverageFieldName}
 
 		if !hasSumableFields {
 			return nil, nil
@@ -651,7 +724,7 @@ func (g *Generator) genSumBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name: genTypeName(
 			obj,
-			"SumBaseArg",
+			"NumericAggregateBaseArg",
 		),
 		Fields: fieldThunk,
 	})
