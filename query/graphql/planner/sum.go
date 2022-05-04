@@ -28,6 +28,8 @@ type sumNode struct {
 	sourceCollection string
 	sourceProperty   string
 	virtualFieldId   string
+
+	filter *parser.Filter
 }
 
 func (p *Planner) Sum(
@@ -52,6 +54,7 @@ func (p *Planner) Sum(
 		sourceCollection: source.HostProperty,
 		sourceProperty:   sourceProperty,
 		virtualFieldId:   field.Name,
+		filter:           field.Filter,
 	}, nil
 }
 
@@ -218,6 +221,14 @@ func (n *sumNode) Next() (bool, error) {
 		switch childCollection := child.(type) {
 		case []map[string]interface{}:
 			for _, childItem := range childCollection {
+				passed, err := parser.RunFilter(childItem, n.filter, n.p.evalCtx)
+				if err != nil {
+					return false, err
+				}
+				if !passed {
+					continue
+				}
+
 				if childProperty, hasChildProperty := childItem[n.sourceProperty]; hasChildProperty {
 					switch v := childProperty.(type) {
 					case int:
