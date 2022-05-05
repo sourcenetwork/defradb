@@ -4,7 +4,7 @@
 run:
   concurrency: 8
 
-  # timeout for analysis.
+  # timeout for analysis, example 30s, 5m.
   timeout: 5m
 
   # exit code when at least one issue was found.
