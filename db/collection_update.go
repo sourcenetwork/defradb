@@ -627,9 +627,8 @@ func (c *collection) getTargetKeyForPatchPath(
 	_, length := splitPatchPath(path)
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")
-	} else if length > 0 {
-
 	}
+
 	return "", nil
 }
 

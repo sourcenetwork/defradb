@@ -162,11 +162,6 @@ issues:
         - errcheck
         - lll
 
-    # Exclude some staticcheck messages
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-
     # Exclude running header check in these paths
     - path: '(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)'
       linters:
