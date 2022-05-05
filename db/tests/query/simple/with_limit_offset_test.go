@@ -35,7 +35,8 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					(`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -69,7 +70,8 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					(`{
 					"Name": "Alice",
 					"Age": 19
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -108,7 +110,8 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					(`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -142,7 +145,8 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					(`{
 					"Name": "Alice",
 					"Age": 19
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{

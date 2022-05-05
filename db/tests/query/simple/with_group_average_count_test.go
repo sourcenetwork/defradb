@@ -44,7 +44,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				(`{
 				"Name": "Alice",
 				"Age": -19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

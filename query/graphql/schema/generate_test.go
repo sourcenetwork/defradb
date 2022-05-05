@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-
 	"strings"
 	"testing"
 
@@ -81,7 +80,8 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 							Type: gql.String,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -146,7 +146,8 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 							Type: gql.NewNonNull(gql.String),
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -194,7 +195,8 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 							Type: gql.NewList(gql.String),
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -242,7 +244,8 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 							Type: gql.NewList(gql.NewNonNull(gql.String)),
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -290,7 +293,8 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 							Type: gql.NewNonNull(gql.NewList(gql.String)),
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -338,7 +342,8 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 							Type: gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -411,7 +416,8 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 							Type: gql.ID,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -463,7 +469,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Type: gql.String,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
@@ -498,7 +505,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 							Type: gql.Boolean,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -556,7 +564,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Type: gql.Int,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 			gql.NewObject(gql.ObjectConfig{
 				Name: "OtherObject",
@@ -595,7 +604,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 							Type: gql.Float,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -636,7 +646,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 					Type: gql.String,
 				},
 			}, nil
-		})},
+		}),
+	},
 	)
 
 	runTestConfigForbuildTypesFromASTSuite(t, g,
@@ -688,7 +699,8 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 							Type: gql.ID,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "")
 }
@@ -754,7 +766,8 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 							Type: gql.ID,
 						},
 					}, nil
-				})},
+				}),
+			},
 			),
 		}, "No type found for given name: UndefinedObject")
 }
@@ -762,7 +775,6 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema string, typeDefs []*gql.Object, expectedError string) {
 	ctx := context.Background()
 	_, _, err := g.FromSDL(ctx, schema)
-
 	if err != nil {
 		assertError(t, err, expectedError)
 		return

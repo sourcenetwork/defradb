@@ -29,7 +29,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 				}
 			}`,
 		Docs: map[int][]string{
-			//books
+			// books
 			0: {
 				(`{
 					"name": "Painted House",
@@ -57,7 +57,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`),
 			},
-			//authors
+			// authors
 			1: {
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				(`{

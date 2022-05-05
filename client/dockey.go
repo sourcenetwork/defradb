@@ -31,13 +31,11 @@ var validVersions = map[uint16]bool{
 	v0: true,
 }
 
-var (
-	// NamespaceSDNDocKeyV0 reserved domain namespace for Source Data Network (SDN)
-	// Design a more appropriate system for future proofing doc key versions, ensuring
-	// backwards compatability. RE: CID
-	// *At the moment this is an random uuidV4
-	namespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
-)
+// NamespaceSDNDocKeyV0 reserved domain namespace for Source Data Network (SDN)
+// Design a more appropriate system for future proofing doc key versions, ensuring
+// backwards compatability. RE: CID
+// *At the moment this is an random uuidV4
+var namespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 
 // versionToNamespace is a convenience for mapping between Version number and its UUID Namespace
 // nolint

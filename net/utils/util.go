@@ -20,9 +20,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-var (
-	bootstrapPeers = []string{}
-)
+var bootstrapPeers = []string{}
 
 func DefaultBoostrapPeers() []peer.AddrInfo {
 	ipfspeers := ipfslite.DefaultBootstrapPeers()

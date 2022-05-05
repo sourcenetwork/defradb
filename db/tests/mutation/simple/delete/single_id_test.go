@@ -19,7 +19,6 @@ import (
 
 func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
-
 		{
 			Description: "Simple delete mutation where one element exists.",
 			Query: `mutation {

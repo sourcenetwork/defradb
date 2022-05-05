@@ -44,7 +44,8 @@ func TestNewDataStoreKey_ReturnsCollectionIdAndIndexIdAndDocKeyAndFieldIdAndInst
 			CollectionId: collectionId,
 			DocKey:       docKey,
 			FieldId:      fieldId,
-			InstanceType: InstanceType(instanceType)},
+			InstanceType: InstanceType(instanceType),
+		},
 		result)
 	assert.Equal(t, "/"+collectionId+"/"+instanceType+"/"+docKey+"/"+fieldId, resultString)
 }

@@ -13,7 +13,7 @@ package client
 // Field is an interface to interact with Fields inside a document
 type Field interface {
 	Name() string
-	Type() CType //TODO Abstract into a Field Type interface
+	Type() CType // TODO Abstract into a Field Type interface
 	SchemaType() string
 }
 

@@ -190,12 +190,10 @@ const (
 	DESC SortDirection = "DESC"
 )
 
-var (
-	NameToSortDirection = map[string]SortDirection{
-		"ASC":  ASC,
-		"DESC": DESC,
-	}
-)
+var NameToSortDirection = map[string]SortDirection{
+	"ASC":  ASC,
+	"DESC": DESC,
+}
 
 type SortCondition struct {
 	// field may be a compound field statement

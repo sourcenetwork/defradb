@@ -23,7 +23,7 @@ import (
 )
 
 var (
-//log = logging.MustNewLogger("defra.bench")
+// log = logging.MustNewLogger("defra.bench")
 )
 
 func runQueryBenchGet(

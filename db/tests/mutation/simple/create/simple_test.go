@@ -55,7 +55,8 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				(`{
 				"name": "John",
 				"age": 27
-			}`)},
+			}`),
+			},
 		},
 		ExpectedError: "A document with the given key already exists",
 	}

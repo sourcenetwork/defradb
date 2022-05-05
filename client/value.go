@@ -22,7 +22,7 @@ type Value interface {
 	Type() CType
 	IsDirty() bool
 	Clean()
-	IsDelete() bool //todo: Update IsDelete naming
+	IsDelete() bool // todo: Update IsDelete naming
 	Delete()
 }
 

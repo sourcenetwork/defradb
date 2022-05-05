@@ -40,7 +40,7 @@ func TestNewFilterFromString(t *testing.T) {
 }
 
 func TestParseConditions_Empty(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		users(filter: {})
 	}`)

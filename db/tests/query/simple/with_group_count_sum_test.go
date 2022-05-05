@@ -55,7 +55,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

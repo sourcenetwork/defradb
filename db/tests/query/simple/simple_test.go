@@ -31,7 +31,8 @@ func TestQuerySimple(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -59,7 +60,8 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -90,7 +92,8 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 				(`{
 				"Name": "Bob",
 				"Age": 27
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

@@ -34,7 +34,6 @@ func (v versionInfo) FullVersion() string {
 		color.GreenString(DefraVersion.Commit),
 		color.YellowString(DefraVersion.Date),
 	)
-
 }
 
 func (v versionInfo) JsonVersion() (string, error) {

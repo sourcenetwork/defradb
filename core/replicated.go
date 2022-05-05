@@ -18,10 +18,8 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-var (
-	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
-	ErrMismatchedMergeType = errors.New("Given type to merge does not match source")
-)
+// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
+var ErrMismatchedMergeType = errors.New("Given type to merge does not match source")
 
 // ReplicatedData is a data type that allows concurrent writers
 // to deterministically merge other replicated data so as to

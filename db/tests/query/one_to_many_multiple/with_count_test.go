@@ -27,7 +27,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 				}
 			}`,
 		Docs: map[int][]string{
-			//articles
+			// articles
 			0: {
 				(`{
 					"name": "After Guantánamo, Another Injustice",
@@ -42,7 +42,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`),
 			},
-			//books
+			// books
 			1: {
 				(`{
 					"name": "Painted House",
@@ -57,7 +57,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 				}`),
 			},
-			//authors
+			// authors
 			2: {
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				(`{

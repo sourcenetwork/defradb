@@ -44,7 +44,8 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -101,7 +102,8 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -168,7 +170,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

@@ -17,8 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-var (
-	userSimpleWithLimitOffsetQuery = `
+var userSimpleWithLimitOffsetQuery = `
 	query {
 		User(limit: 10, offset: 5) {
 			_key
@@ -29,7 +28,6 @@ var (
 		}
 	}
 	`
-)
 
 func Benchmark_Query_UserSimple_Query_WithLimitOffset_Sync_1(b *testing.B) {
 	ctx := context.Background()

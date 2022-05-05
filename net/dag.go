@@ -25,9 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var (
-	DAGSyncTimeout = time.Second * 60
-)
+var DAGSyncTimeout = time.Second * 60
 
 // A DAGSyncer is an abstraction to an IPLD-based p2p storage layer.  A
 // DAGSyncer is a DAGService with the ability to publish new ipld nodes to the
@@ -106,7 +104,6 @@ func (p *Peer) dagWorker() {
 			job.node,
 			job.nodeGetter,
 		)
-
 		if err != nil {
 			log.ErrorE(
 				p.ctx,

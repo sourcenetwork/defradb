@@ -23,26 +23,24 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
-var (
-	compFactoryFn = MerkleCRDTFactory(
-		func(
-			mstore datastore.MultiStore,
-			schemaID string,
-			bs corenet.Broadcaster,
-		) MerkleCRDTInitFn {
-			return func(key core.DataStoreKey) MerkleCRDT {
-				return NewMerkleCompositeDAG(
-					mstore.Datastore(),
-					mstore.Headstore(),
-					mstore.DAGstore(),
-					schemaID,
-					bs,
-					core.DataStoreKey{},
-					key,
-				)
-			}
-		},
-	)
+var compFactoryFn = MerkleCRDTFactory(
+	func(
+		mstore datastore.MultiStore,
+		schemaID string,
+		bs corenet.Broadcaster,
+	) MerkleCRDTInitFn {
+		return func(key core.DataStoreKey) MerkleCRDT {
+			return NewMerkleCompositeDAG(
+				mstore.Datastore(),
+				mstore.Headstore(),
+				mstore.DAGstore(),
+				schemaID,
+				bs,
+				core.DataStoreKey{},
+				key,
+			)
+		}
+	},
 )
 
 func init() {

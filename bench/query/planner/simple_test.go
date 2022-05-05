@@ -17,8 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-var (
-	userSimpleQuery = `
+var userSimpleQuery = `
 	query {
 		User {
 			_key
@@ -29,7 +28,6 @@ var (
 		}
 	}
 	`
-)
 
 func Benchmark_Planner_UserSimple_ParseQuery(b *testing.B) {
 	ctx := context.Background()

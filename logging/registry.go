@@ -14,11 +14,15 @@ import (
 	"sync"
 )
 
-var configMutex sync.RWMutex
-var cachedConfig Config
+var (
+	configMutex  sync.RWMutex
+	cachedConfig Config
+)
 
-var registryMutex sync.Mutex
-var registry map[string][]Logger = map[string][]Logger{}
+var (
+	registryMutex sync.Mutex
+	registry      map[string][]Logger = map[string][]Logger{}
+)
 
 func register(name string, logger Logger) {
 	registryMutex.Lock()

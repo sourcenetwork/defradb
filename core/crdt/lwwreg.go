@@ -15,9 +15,8 @@ import (
 
 	"bytes"
 	"context"
-	"fmt"
-
 	"errors"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"

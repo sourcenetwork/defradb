@@ -94,7 +94,7 @@ type SchemaDescription struct {
 	Fields   []FieldDescription
 }
 
-//IsEmpty returns true if the SchemaDescription is empty and uninitialized
+// IsEmpty returns true if the SchemaDescription is empty and uninitialized
 func (sd SchemaDescription) IsEmpty() bool {
 	return len(sd.Fields) == 0
 }

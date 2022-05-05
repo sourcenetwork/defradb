@@ -220,7 +220,6 @@ func (c *collection) updateWithFilter(
 	filter interface{},
 	updater interface{},
 ) (*client.UpdateResult, error) {
-
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err
@@ -545,7 +544,8 @@ func (c *collection) applyMergePatchOp( //nolint:unused
 	docKey string,
 	field string,
 	currentVal interface{},
-	targetVal interface{}) error {
+	targetVal interface{},
+) error {
 	return nil
 }
 
@@ -628,7 +628,6 @@ func (c *collection) getTargetKeyForPatchPath(
 	if length == 0 {
 		return "", errors.New("Invalid patch op path")
 	} else if length > 0 {
-
 	}
 	return "", nil
 }

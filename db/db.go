@@ -216,7 +216,6 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-
 	if err != nil {
 		panic(err)
 	}

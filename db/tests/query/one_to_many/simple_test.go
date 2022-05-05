@@ -31,14 +31,14 @@ func TestQueryOneToMany(t *testing.T) {
 						}
 					}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 				}`)},
-				//authors
+				// authors
 				1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
 					"name": "John Grisham",
@@ -70,7 +70,7 @@ func TestQueryOneToMany(t *testing.T) {
 				}
 			}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 						"name": "Painted House",
@@ -88,7 +88,7 @@ func TestQueryOneToMany(t *testing.T) {
 						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{

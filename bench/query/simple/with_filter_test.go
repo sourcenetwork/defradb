@@ -17,8 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-var (
-	userSimpleWithFilterQuery = `
+var userSimpleWithFilterQuery = `
 	query {
 		User(filter: {Age: {_gt: 10}}) {
 			_key
@@ -29,7 +28,6 @@ var (
 		}
 	}
 	`
-)
 
 func Benchmark_Query_UserSimple_Query_WithFilter_Sync_1(b *testing.B) {
 	ctx := context.Background()

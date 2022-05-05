@@ -19,9 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var (
-	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
-)
+var ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
 
 // MerkleCRDTInitFn instantiates a MerkleCRDT with a given key
 type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
@@ -42,12 +40,10 @@ type Factory struct {
 	multistore datastore.MultiStore
 }
 
-var (
-	// DefaultFactory is instantiated with no stores
-	// It is recommended to use this only after you call
-	// WithStores(...) so you get a new non-shared instance
-	DefaultFactory = NewFactory(nil)
-)
+// DefaultFactory is instantiated with no stores
+// It is recommended to use this only after you call
+// WithStores(...) so you get a new non-shared instance
+var DefaultFactory = NewFactory(nil)
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
 // It may be called with all stores set to nil

@@ -129,7 +129,6 @@ func SetupDBAndCollections(
 	}
 
 	return db, collections, nil
-
 }
 
 // Loads the given test database using the provided fixture context.
@@ -226,7 +225,6 @@ func BackfillBenchmarkDB(
 	case err := <-errCh:
 		return nil, err
 	}
-
 }
 
 type dbInfo interface {

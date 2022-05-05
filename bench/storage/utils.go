@@ -64,7 +64,6 @@ func runStorageBenchTxnGet(
 	doSync bool,
 ) error {
 	db, err := benchutils.NewTestDB(ctx, b)
-
 	if err != nil {
 		return err
 	}
@@ -104,7 +103,6 @@ func runStorageBenchTxnIterator(
 	doSync bool,
 ) error {
 	db, err := benchutils.NewTestDB(ctx, b)
-
 	if err != nil {
 		return err
 	}
@@ -217,7 +215,7 @@ func runStorageBenchPutMany(
 		return err
 	}
 
-	//shuffle keys
+	// shuffle keys
 	// rand.Shuffle(len(keys), func(i, j int) {
 	// 	keys[i], keys[j] = keys[j], keys[i]
 	// })

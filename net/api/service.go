@@ -25,9 +25,7 @@ import (
 	pb "github.com/sourcenetwork/defradb/net/api/pb"
 )
 
-var (
-	log = logging.Logger("netapi")
-)
+var log = logging.Logger("netapi")
 
 type Service struct {
 	peer *net.Peer

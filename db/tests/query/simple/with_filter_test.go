@@ -31,7 +31,8 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -53,7 +54,8 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -74,7 +76,8 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					(`{
 						"Name": "Bob",
 						"Age": 32
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -105,7 +108,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -127,7 +131,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -148,7 +153,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					(`{
 						"Name": "Bob",
 						"Age": 32
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -178,7 +184,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					(`{
 						"Name": "Jim",
 						"Age": 27
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -212,7 +219,8 @@ func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -239,7 +247,8 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -266,7 +275,8 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -286,7 +296,8 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -307,7 +318,8 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -332,7 +344,8 @@ func TestQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -360,7 +373,8 @@ func TestQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -386,7 +400,8 @@ func TestQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					(`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -407,7 +422,8 @@ func TestQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					(`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -453,7 +469,8 @@ func TestQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testing.T) {
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -496,7 +513,8 @@ func TestQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -539,7 +557,8 @@ func TestQuerySimpleWithNumberInFilter(t *testing.T) {
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

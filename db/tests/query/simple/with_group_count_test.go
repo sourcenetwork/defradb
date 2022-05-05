@@ -38,7 +38,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -80,7 +81,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -132,7 +134,8 @@ func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
@@ -162,7 +165,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -204,7 +208,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

@@ -158,6 +158,7 @@ func (n *dagScanNode) Init() error {
 	}
 	return nil
 }
+
 func (n *dagScanNode) Start() error {
 	if n.headset != nil {
 		return n.headset.Start()
@@ -270,7 +271,6 @@ func (n *dagScanNode) Next() (bool, error) {
 			// queue our found heads
 			n.queuedCids.PushFront(h.Cid)
 		}
-
 	}
 	n.cid = nil // clear cid for next round
 	return true, nil

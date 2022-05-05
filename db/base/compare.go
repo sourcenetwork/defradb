@@ -56,6 +56,7 @@ func compareBool(a, b bool) int {
 	}
 	return -1
 }
+
 func compareInt(a, b int64) int {
 	if a == b {
 		return 0
@@ -64,6 +65,7 @@ func compareInt(a, b int64) int {
 	}
 	return -1
 }
+
 func compareUint(a, b uint64) int {
 	if a == b {
 		return 0
@@ -72,6 +74,7 @@ func compareUint(a, b uint64) int {
 	}
 	return -1
 }
+
 func compareFloat(a, b float64) int {
 	if a == b {
 		return 0
@@ -80,6 +83,7 @@ func compareFloat(a, b float64) int {
 	}
 	return -1
 }
+
 func compareTime(a, b time.Time) int {
 	if a.Equal(b) {
 		return 0
@@ -88,9 +92,11 @@ func compareTime(a, b time.Time) int {
 	}
 	return -1
 }
+
 func compareString(a, b string) int {
 	return strings.Compare(a, b)
 }
+
 func compareBytes(a, b []byte) int {
 	return bytes.Compare(a, b)
 }

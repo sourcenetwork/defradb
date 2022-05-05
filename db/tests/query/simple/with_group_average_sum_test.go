@@ -55,7 +55,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -126,7 +127,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				(`{
 				"Name": "Alice",
 				"Age": -19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

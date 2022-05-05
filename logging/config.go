@@ -10,11 +10,13 @@
 
 package logging
 
-type EncoderFormat = int8
-type EncoderFormatOption struct {
-	EncoderFormat EncoderFormat
-	HasValue      bool
-}
+type (
+	EncoderFormat       = int8
+	EncoderFormatOption struct {
+		EncoderFormat EncoderFormat
+		HasValue      bool
+	}
+)
 
 func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 	return EncoderFormatOption{
@@ -28,11 +30,13 @@ const (
 	CSV
 )
 
-type LogLevel = int8
-type LogLevelOption struct {
-	LogLevel LogLevel
-	HasValue bool
-}
+type (
+	LogLevel       = int8
+	LogLevelOption struct {
+		LogLevel LogLevel
+		HasValue bool
+	}
+)
 
 func NewLogLevelOption(v LogLevel) LogLevelOption {
 	return LogLevelOption{

@@ -33,7 +33,8 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -69,7 +70,8 @@ func TestQueryAllCommitsMultipleDAG(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Updates: map[int][]string{
 			0: {

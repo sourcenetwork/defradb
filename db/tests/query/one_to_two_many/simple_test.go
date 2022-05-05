@@ -34,7 +34,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 						}
 					}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: {
 					(`{
 						"name": "Painted House",
@@ -55,7 +55,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
@@ -123,7 +123,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				}
 			}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
 					(`{
 						"name": "Painted House",
@@ -144,7 +144,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
@@ -229,7 +229,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						}
 					}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: {
 					(`{
 						"name": "Painted House",
@@ -253,7 +253,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{
@@ -348,7 +348,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				}
 			}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: {
 					(`{
 						"name": "Painted House",
@@ -372,7 +372,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{

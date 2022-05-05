@@ -112,18 +112,16 @@ func getLogLevelFromString(logLevel string) logging.LogLevelOption {
 	}
 }
 
-var (
-	defaultConfig = Config{
-		Database: Options{
-			Address: "localhost:9181",
-			Store:   "badger",
-			Badger: BadgerOptions{
-				Path: "$HOME/.defradb/data",
-			},
+var defaultConfig = Config{
+	Database: Options{
+		Address: "localhost:9181",
+		Store:   "badger",
+		Badger: BadgerOptions{
+			Path: "$HOME/.defradb/data",
 		},
-		Net: NetOptions{
-			P2PAddress: "/ip4/0.0.0.0/tcp/9171",
-			TCPAddress: "/ip4/0.0.0.0/tcp/9161",
-		},
-	}
-)
+	},
+	Net: NetOptions{
+		P2PAddress: "/ip4/0.0.0.0/tcp/9171",
+		TCPAddress: "/ip4/0.0.0.0/tcp/9161",
+	},
+}

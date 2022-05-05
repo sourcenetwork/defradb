@@ -31,7 +31,8 @@ func TestQueryOneCommit(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

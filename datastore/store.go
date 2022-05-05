@@ -17,9 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var (
-	log = logging.MustNewLogger("defradb.store")
-)
+var log = logging.MustNewLogger("defradb.store")
 
 // MultiStore is an interface wrapper around the 3 main types of stores needed for
 // MerkleCRDTs

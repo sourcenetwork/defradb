@@ -19,7 +19,6 @@ import (
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
-
 		{
 			Description: "Simple multi-key delete mutation with one key that exists.",
 			Query: `mutation {

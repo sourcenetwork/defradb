@@ -23,7 +23,7 @@ import (
 // }
 
 func TestQueryParse_Limit_Limit(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		users(limit: 10)
 	}`)
@@ -45,7 +45,7 @@ func TestQueryParse_Limit_Limit(t *testing.T) {
 }
 
 func TestQueryParse_FindByDockey(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		users(dockey: "test")
 	}`)
@@ -66,7 +66,7 @@ func TestQueryParse_FindByDockey(t *testing.T) {
 }
 
 func TestQueryParse_Offset(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		users(offset: 100)
 	}`)
@@ -88,7 +88,7 @@ func TestQueryParse_Offset(t *testing.T) {
 }
 
 func TestQueryParse_Limit_Offset(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		users(limit: 1, offset: 100)
 	}`)
@@ -110,7 +110,7 @@ func TestQueryParse_Limit_Offset(t *testing.T) {
 }
 
 func TestQueryParse_Commit_Latest(t *testing.T) {
-	var query = (`
+	query := (`
 	query {
 		latestCommits(dockey: "baf123") {
 			cid

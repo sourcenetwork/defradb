@@ -30,7 +30,8 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndNullArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": null
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -57,7 +58,8 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndEmptyArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": []
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -84,7 +86,8 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndZeroArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": [0, 0, 0]
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -111,7 +114,8 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndPopulatedArray(t *testing.T) 
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": [-1, 0, 9, 0]
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -138,7 +142,8 @@ func TestQueryInlineFloatArrayWithsWithAverageAndNullArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteFloats": null
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -165,7 +170,8 @@ func TestQueryInlineFloatArrayWithsWithAverageAndEmptyArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteFloats": []
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -192,7 +198,8 @@ func TestQueryInlineFloatArrayWithsWithAverageAndZeroArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteFloats": [0, 0, 0]
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -219,7 +226,8 @@ func TestQueryInlineFloatArrayWithsWithAverageAndPopulatedArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteFloats": [-0.1, 0, 0.9, 0]
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

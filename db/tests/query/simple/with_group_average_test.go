@@ -30,7 +30,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 				(`{
 				"Name": "John",
 				"Age": 32
-			}`)},
+			}`),
+			},
 		},
 		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
@@ -61,7 +62,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 				(`{
 				"Name": "Alice",
 				"Age": -19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -100,7 +102,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 				(`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -156,7 +159,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -220,7 +224,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 			}`),
 				(`{
 				"Name": "Alice"
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -259,7 +264,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 				(`{
 				"Name": "Alice",
 				"HeightM": 2.04
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -315,7 +321,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 				"Name": "Alice",
 				"HeightM": 2.04,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -406,7 +413,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 				"HeightM": 2.04,
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

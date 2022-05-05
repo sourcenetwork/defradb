@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
@@ -23,8 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/utils"
-
-	"errors"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -748,7 +747,8 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...interface{}) (cid.Cid, error) {
+	args ...interface{},
+) (cid.Cid, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(

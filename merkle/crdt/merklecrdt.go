@@ -23,9 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var (
-	log = logging.MustNewLogger("defra.merklecrdt")
-)
+var log = logging.MustNewLogger("defra.merklecrdt")
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
@@ -35,10 +33,8 @@ type MerkleCRDT interface {
 	Clock() core.MerkleClock
 }
 
-var (
-	// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
-	_ core.ReplicatedData = (*baseMerkleCRDT)(nil)
-)
+// defaultMerkleCRDTs                     = make(map[Type]MerkleCRDTFactory)
+var _ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 
 // The baseMerkleCRDT handles the merkle crdt overhead functions
 // that aren't CRDT specific like the mutations and state retrieval

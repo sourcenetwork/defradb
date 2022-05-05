@@ -41,9 +41,7 @@ Basically it combines db/DB, net/Peer, and net/Server into a single Node
 object.
 */
 
-var (
-	log = logging.MustNewLogger("defra.node")
-)
+var log = logging.MustNewLogger("defra.node")
 
 type Node struct {
 	// embed the DB interface into the node
@@ -178,7 +176,7 @@ func getHostKey(keypath string) (crypto.PrivKey, error) {
 		if err := os.MkdirAll(keypath, os.ModePerm); err != nil {
 			return nil, err
 		}
-		if err = os.WriteFile(pth, bytes, 0400); err != nil {
+		if err = os.WriteFile(pth, bytes, 0o400); err != nil {
 			return nil, err
 		}
 		return key, nil

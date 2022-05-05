@@ -37,9 +37,7 @@ type Fetcher interface {
 	Close() error
 }
 
-var (
-	_ Fetcher = (*DocumentFetcher)(nil)
-)
+var _ Fetcher = (*DocumentFetcher)(nil)
 
 type DocumentFetcher struct {
 	col     *client.CollectionDescription

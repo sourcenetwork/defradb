@@ -21,9 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
-var (
-	emptyCID = cid.Cid{}
-)
+var emptyCID = cid.Cid{}
 
 // scans an index for records
 type versionedScanNode struct {

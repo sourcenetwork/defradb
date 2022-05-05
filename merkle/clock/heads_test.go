@@ -276,5 +276,4 @@ func TestHeaddsList(t *testing.T) {
 		t.Errorf("Invalid max height from List, have %v, want %v", h, uint64(2))
 		return
 	}
-
 }

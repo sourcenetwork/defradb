@@ -33,7 +33,7 @@ func TestQueryOneToTwoManyWithSort(t *testing.T) {
 						}
 					}`,
 			Docs: map[int][]string{
-				//books
+				// books
 				0: {
 					(`{
 						"name": "Painted House",
@@ -54,7 +54,7 @@ func TestQueryOneToTwoManyWithSort(t *testing.T) {
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
 					}`),
 				},
-				//authors
+				// authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 					(`{

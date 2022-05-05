@@ -84,28 +84,29 @@ linters:
   disable-all: true
   enable:
     - deadcode
+    - errcheck
+    - forbidigo
+    - gofumpt
+    - goheader
     - gosimple
     - govet
     - ineffassign
+    - lll
+    - revive
     - staticcheck
     - structcheck
     - typecheck
     - unused
     - varcheck
-    - errcheck
-    - forbidigo
-    - lll
-    - revive
-    - goheader
-   # - wrapcheck
     # - errorlint
-    # - gci
     # - exportloopref
-    # - megacheck
+    # - gci
     # - govet
-    # - wsl
+    # - megacheck
     # - nilerr
     # - nilnil
+    # - wrapcheck
+    # - wsl
   enable-all: false
   disable:
     # - maligned

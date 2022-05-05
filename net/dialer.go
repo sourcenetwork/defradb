@@ -29,10 +29,8 @@ import (
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
-var (
-	// DialTimeout is the max time duration to wait when dialing a peer.
-	DialTimeout = time.Second * 10
-)
+// DialTimeout is the max time duration to wait when dialing a peer.
+var DialTimeout = time.Second * 10
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
 // nolint

@@ -19,7 +19,7 @@ import (
 )
 
 func TestMutationParse_Create_Simple(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		create_Book(data: "{\"a\": 1}") {
 			_key
@@ -50,7 +50,7 @@ func TestMutationParse_Create_Simple(t *testing.T) {
 }
 
 func TestMutationParse_Create_Error_Missing_Data(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		create_Book(data: "") {
 			_key
@@ -81,7 +81,7 @@ func TestMutationParse_Create_Error_Missing_Data(t *testing.T) {
 }
 
 func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		dostuff_Book(data: "") {
 			_key
@@ -112,7 +112,7 @@ func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
 }
 
 func TestMutationParse_Update_Simple_Object(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		update_Book(data: "{\"a\": 1}") {
 			_key
@@ -143,7 +143,7 @@ func TestMutationParse_Update_Simple_Object(t *testing.T) {
 }
 
 func TestMutationParse_Update_Simple_Array(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		update_Book(data: "[{\"a\": 1}]") {
 			_key
@@ -177,7 +177,7 @@ func TestMutationParse_Update_Simple_Array(t *testing.T) {
 }
 
 func TestMutationParse_Update_Filter(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		update_Book(filter: {rating: {_gt: 4.5}}, data: "{\"a\": 1}") {
 			_key
@@ -214,7 +214,7 @@ func TestMutationParse_Update_Filter(t *testing.T) {
 }
 
 func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		update_my_book(data: "{\"a\": 1}") {
 			_key
@@ -245,7 +245,7 @@ func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 }
 
 func TestMutationParse_Delete_Simple(t *testing.T) {
-	var query = (`
+	query := (`
 	mutation {
 		delete_Book(data: "{\"a\": 1}") {
 			_key

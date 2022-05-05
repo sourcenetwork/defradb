@@ -16,6 +16,4 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var (
-	log = logging.MustNewLogger("defra.net")
-)
+var log = logging.MustNewLogger("defra.net")

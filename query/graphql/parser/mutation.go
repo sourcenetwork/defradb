@@ -27,17 +27,13 @@ const (
 	DeleteObjects
 )
 
-var (
-	mutationNameToType = map[string]MutationType{
-		"create": CreateObjects,
-		"update": UpdateObjects,
-		"delete": DeleteObjects,
-	}
-)
+var mutationNameToType = map[string]MutationType{
+	"create": CreateObjects,
+	"update": UpdateObjects,
+	"delete": DeleteObjects,
+}
 
-var (
-	ErrEmptyDataPayload = errors.New("given data payload is empty")
-)
+var ErrEmptyDataPayload = errors.New("given data payload is empty")
 
 type ObjectPayload struct {
 	Object map[string]interface{}

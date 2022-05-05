@@ -22,9 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
-var (
-	log = logging.MustNewLogger("defra.query.planner")
-)
+var log = logging.MustNewLogger("defra.query.planner")
 
 // planNode is an interface all nodes in the plan tree need to implement
 type planNode interface {
@@ -108,7 +106,6 @@ type Planner struct {
 	evalCtx parser.EvalContext
 
 	// isFinalized bool
-
 }
 
 func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
@@ -155,7 +152,6 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 	default:
 		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
 	}
-
 }
 
 func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {

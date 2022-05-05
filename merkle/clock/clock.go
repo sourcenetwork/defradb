@@ -23,9 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
-var (
-	log = logging.MustNewLogger("defra.merkleclock")
-)
+var log = logging.MustNewLogger("defra.merkleclock")
 
 type MerkleClock struct {
 	headstore datastore.DSReaderWriter

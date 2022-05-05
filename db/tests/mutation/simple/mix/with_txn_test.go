@@ -125,7 +125,8 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				(`{
 				"name": "John",
 				"age": 27
-			}`)},
+			}`),
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{
@@ -174,7 +175,8 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				(`{
 				"name": "John",
 				"age": 27
-			}`)},
+			}`),
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{
@@ -227,7 +229,8 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				(`{
 				"name": "John",
 				"age": 27
-			}`)},
+			}`),
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{

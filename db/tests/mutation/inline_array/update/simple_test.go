@@ -32,7 +32,8 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 					(`{
 						"Name": "John",
 						"LikedIndexes": [true, true, false, true]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -54,7 +55,8 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 					(`{
 						"Name": "John",
 						"LikedIndexes": [true, true, false, true]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -76,7 +78,8 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 					(`{
 						"Name": "John",
 						"LikedIndexes": [true, true, false, true]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -98,7 +101,8 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 					(`{
 						"Name": "John",
 						"LikedIndexes": [true, true, false, true]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -120,7 +124,8 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 					(`{
 						"Name": "John",
 						"LikedIndexes": [true, true, false, true]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -151,7 +156,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -173,7 +179,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -195,7 +202,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -217,7 +225,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -239,7 +248,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -261,7 +271,8 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteIntegers": [1, 2, 3, 5, 8]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -292,7 +303,8 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteFloats": [3.1425, 0.00000000001, 10]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -314,7 +326,8 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteFloats": [3.1425, 0.00000000001, 10]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -336,7 +349,8 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteFloats": [3.1425, 0.00000000001, 10]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -358,7 +372,8 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteFloats": [3.1425, 0.00000000001, 10]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -380,7 +395,8 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 					(`{
 						"Name": "John",
 						"FavouriteFloats": [3.1425, 0.00000000001, 10]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -411,7 +427,8 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 					(`{
 						"Name": "John",
 						"PreferredStrings": ["", "the previous", "the first", "empty string"]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -433,7 +450,8 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 					(`{
 						"Name": "John",
 						"PreferredStrings": ["", "the previous", "the first", "empty string"]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -455,7 +473,8 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 					(`{
 						"Name": "John",
 						"PreferredStrings": ["", "the previous", "the first", "empty string"]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -477,7 +496,8 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 					(`{
 						"Name": "John",
 						"PreferredStrings": ["", "the previous", "the first", "empty string"]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -499,7 +519,8 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 					(`{
 						"Name": "John",
 						"PreferredStrings": ["", "the previous", "the first", "empty string"]
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{

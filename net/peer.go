@@ -38,14 +38,12 @@ import (
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
-var (
-	numWorkers = 5
-)
+var numWorkers = 5
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	//config??
+	// config??
 
 	db client.DB
 

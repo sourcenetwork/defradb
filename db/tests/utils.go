@@ -125,10 +125,12 @@ For each test:
 */
 var detectDbChanges bool
 
-var detectDbChangesCodeDir string
-var setupOnly bool
-var areDatabaseFormatChangesDocumented bool
-var previousTestCaseTestName string
+var (
+	detectDbChangesCodeDir             string
+	setupOnly                          bool
+	areDatabaseFormatChangesDocumented bool
+	previousTestCaseTestName           string
+)
 
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
@@ -549,7 +551,6 @@ func setupDatabaseUsingTargetBranch(
 		fileBadgerPathEnvName+"="+dbi.path,
 	)
 	out, err := goTestCmd.Output()
-
 	if err != nil {
 		// If file is not found - this must be a new test and
 		// doesn't exist in the target branch, so we pass it

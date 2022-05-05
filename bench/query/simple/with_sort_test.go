@@ -17,8 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-var (
-	userSimpleWithSortQuery = `
+var userSimpleWithSortQuery = `
 	query {
 		User(order: {Age: ASC}) {
 			_key
@@ -29,7 +28,6 @@ var (
 		}
 	}
 	`
-)
 
 func Benchmark_Query_UserSimple_Query_WithSort_Sync_1(b *testing.B) {
 	ctx := context.Background()

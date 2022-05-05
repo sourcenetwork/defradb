@@ -32,61 +32,59 @@ type update struct {
 	cid     string
 }
 
-var (
-	testStates = []update{
-		{
-			payload: []byte(`{
+var testStates = []update{
+	{
+		payload: []byte(`{
 				"name": "Alice",
 				"age": 31,
 				"points": 100,
 				"verified": true
-			}`),
-			// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
-			cid: "bafybeigxazren4cw3fla22hvs3773udxynn53mk4hwezobv3fbirusgxnq",
-		},
-		{
-			payload: []byte(`{
+		}`),
+		// cid: "Qmcv2iU3myUBwuFCHe3w97sBMMER2FTY2rpbNBP6cqWb4S",
+		cid: "bafybeigxazren4cw3fla22hvs3773udxynn53mk4hwezobv3fbirusgxnq",
+	},
+	{
+		payload: []byte(`{
 				"name": "Pete",
 				"age": 31,
 				"points": 99.9,
 				"verified": true
-			}`),
-			diffOps: map[string]interface{}{
-				"name":   "Pete",
-				"points": 99.9,
-			},
-			// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
-			cid: "bafybeies2gdj2xzswz4jdxev3bouuefo6q5f377ur7a3ly2jursh5kgkyu",
+		}`),
+		diffOps: map[string]interface{}{
+			"name":   "Pete",
+			"points": 99.9,
 		},
-		{
-			payload: []byte(`{
+		// cid: "QmPgnQvhPuLGwVU4ZEcbRy7RNCxSkeS72eKwXusUrAEEXR",
+		cid: "bafybeies2gdj2xzswz4jdxev3bouuefo6q5f377ur7a3ly2jursh5kgkyu",
+	},
+	{
+		payload: []byte(`{
 				"name": "Pete",
 				"age": 22,
 				"points": 99.9,
 				"verified": false
-			}`),
-			diffOps: map[string]interface{}{
-				"verified": false,
-				"age":      22,
-			},
-			// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
-			cid: "bafybeia2gx47ypcpwd3bt4xl26det6mw7pxevcw7sh4njnjcfh4z7wh5fa",
+		}`),
+		diffOps: map[string]interface{}{
+			"verified": false,
+			"age":      22,
 		},
-		{
-			payload: []byte(`{
+		// cid: "QmRpMfTzExGrXat5W9uCAEtnSpRTvWBcd1hBYNWVPdN9Xh",
+		cid: "bafybeia2gx47ypcpwd3bt4xl26det6mw7pxevcw7sh4njnjcfh4z7wh5fa",
+	},
+	{
+		payload: []byte(`{
 				"name": "Pete",
 				"age": 22,
 				"points": 129.99,
 				"verified": false
-			}`),
-			diffOps: map[string]interface{}{
-				"points": 129.99,
-			},
-			// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
-			cid: "bafybeif45vokvqg47ahuvgfbhuayw54pmjidwjefonzrlakesbi2v4aeki",
+		}`),
+		diffOps: map[string]interface{}{
+			"points": 129.99,
 		},
-	}
-)
+		// cid: "QmRWYwKadjWqHLrzPKd7MdS4EoQuT2RzWVTaBxxVkeSjFH",
+		cid: "bafybeif45vokvqg47ahuvgfbhuayw54pmjidwjefonzrlakesbi2v4aeki",
+	},
+}
 
 func newMemoryDB(ctx context.Context) (client.DB, error) {
 	rootstore := ds.NewMapDatastore()

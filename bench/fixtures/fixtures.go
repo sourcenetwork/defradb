@@ -21,11 +21,9 @@ import (
 	"github.com/bxcodec/faker"
 )
 
-var (
-	registeredFixtures = map[string][]interface{}{
-		"user_simple": {User{}},
-	}
-)
+var registeredFixtures = map[string][]interface{}{
+	"user_simple": {User{}},
+}
 
 type Generator struct {
 	ctx context.Context

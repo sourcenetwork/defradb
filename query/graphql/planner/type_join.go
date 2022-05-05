@@ -176,7 +176,7 @@ func (p *Planner) makeTypeJoinOne(
 	source planNode,
 	subType *parser.Select,
 ) (*typeJoinOne, error) {
-	//ignore recurse for now.
+	// ignore recurse for now.
 	typeJoin := &typeJoinOne{
 		p:    p,
 		root: source,
@@ -313,7 +313,6 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	// or if we encounter an error just return the base doc,
 	// with an empty map for the subdoc
 	next, err := n.subType.Next()
-
 	if err != nil {
 		log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
 		return doc
@@ -359,7 +358,7 @@ func (p *Planner) makeTypeJoinMany(
 	source planNode,
 	subType *parser.Select,
 ) (*typeJoinMany, error) {
-	//ignore recurse for now.
+	// ignore recurse for now.
 	typeJoin := &typeJoinMany{
 		p:    p,
 		root: source,

@@ -74,7 +74,6 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 
 		i := 0
 		if keyResults != nil {
-
 			for key := range keyResults {
 				if key.Err != nil {
 					log.ErrorE(p.ctx, "Failed to get a key to register pubsub topic", key.Err)
@@ -308,7 +307,6 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
-
 	// get all collections
 	cols, err := s.db.GetAllCollections(s.peer.ctx)
 	if err != nil {

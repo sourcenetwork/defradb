@@ -40,7 +40,8 @@ func (p *Peer) processLog(
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
-	getter format.NodeGetter) ([]cid.Cid, error) {
+	getter format.NodeGetter,
+) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
 	txn, err := p.db.NewTxn(ctx, false)

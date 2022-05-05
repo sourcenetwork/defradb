@@ -30,7 +30,8 @@ func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": null
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -57,7 +58,8 @@ func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
 				(`{
 				"Name": "John",
 				"FavouriteIntegers": []
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -84,7 +86,8 @@ func TestQueryInlineIntegerArrayWithsWithCountAndPopulatedArray(t *testing.T) {
 				(`{
 				"Name": "Shahzad",
 				"FavouriteIntegers": [-1, 2, -1, 1, 0]
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

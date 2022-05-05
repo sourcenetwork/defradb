@@ -112,11 +112,13 @@ func init() {
 		DefaultOptions.Options.MaxTableSize = 16 << 20*/
 }
 
-var _ ds.Datastore = (*Datastore)(nil)
-var _ ds.TxnDatastore = (*Datastore)(nil)
-var _ ds.TTLDatastore = (*Datastore)(nil)
-var _ ds.GCDatastore = (*Datastore)(nil)
-var _ ds.Batching = (*Datastore)(nil)
+var (
+	_ ds.Datastore    = (*Datastore)(nil)
+	_ ds.TxnDatastore = (*Datastore)(nil)
+	_ ds.TTLDatastore = (*Datastore)(nil)
+	_ ds.GCDatastore  = (*Datastore)(nil)
+	_ ds.Batching     = (*Datastore)(nil)
+)
 
 // NewDatastore creates a new badger datastore.
 //
@@ -526,8 +528,10 @@ func (b *batch) cancel() {
 	runtime.SetFinalizer(b, nil)
 }
 
-var _ ds.Datastore = (*txn)(nil)
-var _ ds.TTLDatastore = (*txn)(nil)
+var (
+	_ ds.Datastore    = (*txn)(nil)
+	_ ds.TTLDatastore = (*txn)(nil)
+)
 
 func (t *txn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	t.ds.closeLk.RLock()
@@ -603,7 +607,6 @@ func (t *txn) setTTL(key ds.Key, ttl time.Duration) error {
 	return item.Value(func(data []byte) error {
 		return t.putWithTTL(key, data, ttl)
 	})
-
 }
 
 func (t *txn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
@@ -758,7 +761,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				case <-qrb.Process.Closing():
 				}
 			}
-
 		}()
 		if t.ds.closed {
 			closedEarly = true

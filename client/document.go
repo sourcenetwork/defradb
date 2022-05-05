@@ -300,13 +300,13 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		// case int64:
 
 		// Check if its actually a float or just an int
-		if float64(int64(val)) == val { //int
+		if float64(int64(val)) == val { // int
 			err := doc.setCBOR(LWW_REGISTER, field, int64(val))
 			if err != nil {
 				return err
 			}
 
-		} else { //float
+		} else { // float
 			err := doc.setCBOR(LWW_REGISTER, field, val)
 			if err != nil {
 				return err
@@ -397,7 +397,7 @@ func (doc *Document) Bytes() ([]byte, error) {
 func (doc *Document) String() string {
 	docMap, err := doc.toMap()
 	if err != nil {
-		panic(err) //should we return (string, error)?
+		panic(err) // should we return (string, error)?
 	}
 
 	j, err := json.MarshalIndent(docMap, "", "\t")
@@ -445,7 +445,6 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 			}
 			docMap[k] = subDocMap
 		} else {
-
 		}
 		docMap[k] = value.Value()
 	}
@@ -471,7 +470,6 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 			}
 			docMap[k] = subDocMap
 		} else {
-
 		}
 		docMap[k] = value.Value()
 	}

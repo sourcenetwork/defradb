@@ -17,9 +17,8 @@ import (
 	"github.com/sourcenetwork/defradb/bench/fixtures"
 )
 
-var (
-	// 10x dockey will be replaced in the bench runner func
-	userSimpleWithMultiLookupQuery = `
+// 10x dockey will be replaced in the bench runner func
+var userSimpleWithMultiLookupQuery = `
 	query {
 		User(dockeys: ["{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}", "{{dockey}}"]) {
 			_key
@@ -30,7 +29,6 @@ var (
 		}
 	}
 	`
-)
 
 func Benchmark_Query_UserSimple_Query_WithMultiLookup_Sync_10(b *testing.B) {
 	ctx := context.Background()

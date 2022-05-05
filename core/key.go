@@ -66,7 +66,7 @@ var _ Key = (*PrimaryDataStoreKey)(nil)
 
 type HeadStoreKey struct {
 	DocKey  string
-	FieldId string //can be 'C'
+	FieldId string // can be 'C'
 	Cid     cid.Cid
 }
 

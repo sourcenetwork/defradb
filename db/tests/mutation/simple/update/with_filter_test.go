@@ -35,7 +35,8 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 						"age": 27,
 						"verified": true,
 						"points": 42.1
-					}`)},
+					}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -67,7 +68,8 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					"age": 39,
 					"verified": false,
 					"points": 66.6
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -99,7 +101,8 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					"age": 39,
 					"verified": true,
 					"points": 66.6
-				}`)},
+				}`),
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -144,7 +147,8 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 				"age": 39,
 				"verified": false,
 				"points": 66.6
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -186,7 +190,8 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 				"age": 39,
 				"verified": false,
 				"points": 66.6
-			}`)},
+			}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

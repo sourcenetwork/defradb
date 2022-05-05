@@ -86,7 +86,6 @@ func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql
 	}
 
 	result, err := g.fromAST(ctx, document)
-
 	if err != nil {
 		// - If there is an error we should drop any new objects as they may be partial, polluting
 		//   the in-memory cache.
@@ -258,7 +257,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				obj.AddFieldConfig(f, expandedField)
 			}
 			// @todo: check if NonNull is possible here
-			//case *gql.NonNull:
+			// case *gql.NonNull:
 			// get subtype
 		}
 	}

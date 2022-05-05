@@ -19,7 +19,6 @@ import (
 
 func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
-
 		{
 			Description: "Delete using filter - One matching document, that exists.",
 

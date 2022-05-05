@@ -28,10 +28,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// interface check
-	_ Fetcher = (*VersionedFetcher)(nil)
-)
+// interface check
+var _ Fetcher = (*VersionedFetcher)(nil)
 
 // HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
 // to a specific version in the documents history graph, and return the fetched
@@ -113,7 +111,6 @@ func (vf *VersionedFetcher) Init(
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(col, fields, reverse)
-
 }
 
 // Start serializes the correct state accoriding to the Key and CID

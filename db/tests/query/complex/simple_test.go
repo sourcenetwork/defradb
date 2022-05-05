@@ -31,15 +31,16 @@ func TestQueryComplex(t *testing.T) {
 			}
 		}`,
 		Docs: map[int][]string{
-			//books
+			// books
 			0: {
 				// bae-7e5ae688-3a77-5b4f-a74c-59301bd1eb25
 				(`{
 					"name": "The Coffee Table Book",
 					"rating": 4.9,
 					"publisher_id": "bae-81804a20-4d08-509e-a3e8-fd770622a356"
-				}`)},
-			//authors
+				}`),
+			},
+			// authors
 			1: {
 				// bae-5eae6a8a-0c52-535c-9c20-df42b7044e20
 				(`{
@@ -47,14 +48,16 @@ func TestQueryComplex(t *testing.T) {
 					"age": 44,
 					"verified": true,
 					"wrote_id": "bae-7e5ae688-3a77-5b4f-a74c-59301bd1eb25"
-				}`)},
+				}`),
+			},
 			// publishers
 			2: {
 				// bae-81804a20-4d08-509e-a3e8-fd770622a356
 				(`{
 					"name": "Pendant Publishing",
 					"address": "600 Madison Ave., New York, New York"
-				}`)},
+				}`),
+			},
 		},
 		Results: []map[string]interface{}{
 			{

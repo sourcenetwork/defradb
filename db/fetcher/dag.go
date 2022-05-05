@@ -25,13 +25,11 @@ import (
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
 
-type BlockFetcher struct {
-}
+type BlockFetcher struct{}
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
-
 	// Commented because this code is not used yet according to the linter.
 	// txn   datastore.Txn
 
@@ -93,7 +91,6 @@ func (hf *HeadFetcher) nextKey() (bool, error) {
 	hf.kvEnd = done
 	if hf.kvEnd {
 		return true, nil
-
 	}
 	return false, nil
 }

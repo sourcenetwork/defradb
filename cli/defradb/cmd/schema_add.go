@@ -25,9 +25,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	schemaFile string
-)
+var schemaFile string
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{

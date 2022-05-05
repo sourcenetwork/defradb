@@ -16,11 +16,9 @@ import (
 	"testing"
 )
 
-var (
-	valueSize = []int{
-		64, 128, 256, 512, 1024,
-	}
-)
+var valueSize = []int{
+	64, 128, 256, 512, 1024,
+}
 
 func Benchmark_Storage_Simple_Read_Sync_1_1(b *testing.B) {
 	for _, vsz := range valueSize {
