@@ -162,11 +162,6 @@ issues:
         - errcheck
         - lll
 
-    # Exclude some staticcheck messages
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-
     # Exclude running header check in these paths
     - path: '(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)'
       linters:
@@ -221,16 +216,6 @@ linters-settings:
     # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
     check-blank: false
-
-    # [deprecated] comma-separated list of pairs of the form pkg:regex
-    # the regex is used to ignore names within pkg. (default "fmt:.*").
-    # see https://github.com/kisielk/errcheck#the-deprecated-method for details
-    ignore: fmt:.*
-
-    # [deprecated] use exclude-functions instead.
-    # path to a file containing a list of functions to exclude from checking
-    # see https://github.com/kisielk/errcheck#excluding-functions for details
-    # exclude: /path/to/file.txt
 
     # list of functions to exclude from checking, where each entry is a single function to exclude.
     # see https://github.com/kisielk/errcheck#excluding-functions for details
