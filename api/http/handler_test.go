@@ -11,11 +11,19 @@
 package http
 
 import (
+	"bytes"
+	"context"
+	"io/ioutil"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"path"
 	"testing"
 
+	badger "github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +41,9 @@ func TestNewHandlerWithLogger(t *testing.T) {
 	})
 
 	req, err := http.NewRequest("GET", "/ping", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec := httptest.NewRecorder()
 
@@ -42,8 +52,123 @@ func TestNewHandlerWithLogger(t *testing.T) {
 
 	// inspect the log file
 	kv, err := readLog(logFile)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, "defra.http", kv["logger"])
 
+}
+
+func TestGetJSON(t *testing.T) {
+	var obj struct {
+		Name string
+	}
+
+	jsonStr := []byte(`
+		{
+			"Name": "John Doe"
+		}
+	`)
+
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = getJSON(req, &obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "John Doe", obj.Name)
+
+}
+
+func TestGetJSONWithError(t *testing.T) {
+	var obj struct {
+		Name string
+	}
+
+	jsonStr := []byte(`
+		{
+			"Name": 10
+		}
+	`)
+
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = getJSON(req, &obj)
+	assert.Error(t, err)
+}
+
+func TestSendJSONWithNoErrors(t *testing.T) {
+	obj := struct {
+		Name string
+	}{
+		Name: "John Doe",
+	}
+
+	rec := httptest.NewRecorder()
+
+	sendJSON(context.Background(), rec, obj, 200)
+
+	body, err := ioutil.ReadAll(rec.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []byte("{\"Name\":\"John Doe\"}"), body)
+}
+
+func TestSendJSONWithMarshallFailure(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	sendJSON(context.Background(), rec, math.Inf(1), 200)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Result().StatusCode)
+}
+
+type loggerTest struct {
+	loggingResponseWriter
+}
+
+func (lt *loggerTest) Write(b []byte) (int, error) {
+	return 0, errors.New("this write will fail")
+}
+
+func TestSendJSONWithWriteFailure(t *testing.T) {
+	rec := httptest.NewRecorder()
+	lrw := loggerTest{}
+	lrw.ResponseWriter = rec
+
+	sendJSON(context.Background(), &lrw, math.Inf(1), 200)
+
+	assert.Equal(t, http.StatusInternalServerError, lrw.statusCode)
+}
+
+func TestDbFromContext(t *testing.T) {
+	_, err := dbFromContext(context.Background())
+	assert.Error(t, err)
+
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var options []db.Option
+	ctx := context.Background()
+
+	defra, err := db.NewDB(ctx, rootstore, options...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reqCtx := context.WithValue(ctx, ctxKey("DB"), defra)
+
+	_, err = dbFromContext(reqCtx)
+	assert.NoError(t, err)
 }

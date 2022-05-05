@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -34,19 +35,46 @@ func TestNewLoggingResponseWriterLogger(t *testing.T) {
 	content := "Hello world!"
 
 	length, err := lrw.Write([]byte(content))
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, length, lrw.contentLength)
 	assert.Equal(t, rec.Body.String(), content)
 }
 
-func TestLoggerLogs(t *testing.T) {
+func TestLogginResponseWriterWriteWithChunks(t *testing.T) {
+	rec := httptest.NewRecorder()
+	lrw := newLoggingResponseWriter(rec)
+
+	content := "Hello world!"
+	contentLength := len(content)
+
+	lrw.Header().Set("Content-Length", strconv.Itoa(contentLength))
+
+	length1, err := lrw.Write([]byte(content[:contentLength/2]))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	length2, err := lrw.Write([]byte(content[contentLength/2:]))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, contentLength, length1+length2)
+	assert.Equal(t, rec.Body.String(), content)
+}
+
+func TestLoggerKeyValueOutput(t *testing.T) {
 	dir := t.TempDir()
 
 	// send logs to temp file so we can inspect it
 	logFile := path.Join(dir, "http_test.log")
 
 	req, err := http.NewRequest("GET", "/ping", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec2 := httptest.NewRecorder()
 
@@ -60,7 +88,9 @@ func TestLoggerLogs(t *testing.T) {
 
 	// inspect the log file
 	kv, err := readLog(logFile)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// check that everything is as expected
 	assert.Equal(t, "pong", rec2.Body.String())

@@ -38,7 +38,9 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusBadRequest)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec := httptest.NewRecorder()
 
@@ -48,7 +50,9 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 
 	errResponse := errorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, http.StatusBadRequest, errResponse.Status)
 	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Message)
@@ -63,7 +67,9 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusInternalServerError)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec := httptest.NewRecorder()
 
@@ -73,7 +79,9 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 
 	errResponse := errorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, http.StatusInternalServerError, errResponse.Status)
 	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Message)
@@ -88,7 +96,9 @@ func TestHandleErrOnNotFound(t *testing.T) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusNotFound)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec := httptest.NewRecorder()
 
@@ -98,7 +108,9 @@ func TestHandleErrOnNotFound(t *testing.T) {
 
 	errResponse := errorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, http.StatusNotFound, errResponse.Status)
 	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Message)
@@ -113,7 +125,9 @@ func TestHandleErrOnDefault(t *testing.T) {
 		handleErr(req.Context(), rw, errors.New("Unauthorized"), http.StatusUnauthorized)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	rec := httptest.NewRecorder()
 
@@ -123,7 +137,9 @@ func TestHandleErrOnDefault(t *testing.T) {
 
 	errResponse := errorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, http.StatusUnauthorized, errResponse.Status)
 	assert.Equal(t, "Unauthorized", errResponse.Message)
