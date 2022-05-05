@@ -444,9 +444,8 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 				return nil, err
 			}
 			docMap[k] = subDocMap
-		} else {
-
 		}
+
 		docMap[k] = value.Value()
 	}
 
@@ -470,9 +469,8 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 				return nil, err
 			}
 			docMap[k] = subDocMap
-		} else {
-
 		}
+
 		docMap[k] = value.Value()
 	}
 	docMap["_key"] = doc.Key().String()
