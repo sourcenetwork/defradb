@@ -217,16 +217,6 @@ linters-settings:
     # default is false: such cases aren't reported by default.
     check-blank: false
 
-    # [deprecated] comma-separated list of pairs of the form pkg:regex
-    # the regex is used to ignore names within pkg. (default "fmt:.*").
-    # see https://github.com/kisielk/errcheck#the-deprecated-method for details
-    ignore: fmt:.*
-
-    # [deprecated] use exclude-functions instead.
-    # path to a file containing a list of functions to exclude from checking
-    # see https://github.com/kisielk/errcheck#excluding-functions for details
-    # exclude: /path/to/file.txt
-
     # list of functions to exclude from checking, where each entry is a single function to exclude.
     # see https://github.com/kisielk/errcheck#excluding-functions for details
     exclude-functions:
