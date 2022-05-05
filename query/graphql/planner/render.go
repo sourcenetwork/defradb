@@ -46,11 +46,14 @@ func buildTopLevelRenderInfo(parsed parser.Selection) topLevelRenderInfo {
 	childSelections := parsed.GetSelections()
 
 	info := topLevelRenderInfo{
-		children: make([]renderInfo, len(childSelections)),
+		children: []renderInfo{},
 	}
 
-	for i, selection := range childSelections {
-		info.children[i] = buildRenderInfo(selection)
+	for _, selection := range childSelections {
+		if slct, isSelect := selection.(*parser.Select); isSelect && slct.Hidden {
+			continue
+		}
+		info.children = append(info.children, buildRenderInfo(selection))
 	}
 
 	return info
@@ -71,11 +74,14 @@ func buildRenderInfo(parsed parser.Selection) renderInfo {
 	info := renderInfo{
 		sourceFieldName:      sourceFieldName,
 		destinationFieldName: destinationFieldName,
-		children:             make([]renderInfo, len(childSelections)),
+		children:             []renderInfo{},
 	}
 
-	for i, selection := range childSelections {
-		info.children[i] = buildRenderInfo(selection)
+	for _, selection := range childSelections {
+		if slct, isSelect := selection.(*parser.Select); isSelect && slct.Hidden {
+			continue
+		}
+		info.children = append(info.children, buildRenderInfo(selection))
 	}
 
 	return info

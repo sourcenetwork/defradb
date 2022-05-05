@@ -107,6 +107,7 @@ type Select struct {
 	Alias          string
 	ExternalName   string
 	CollectionName string
+	Hidden         bool
 
 	// QueryType indicates what kind of query this is
 	// Currently supports: ScanQuery, VersionedScanQuery
@@ -160,6 +161,15 @@ func (s Select) Equal(other Select) bool {
 	}
 
 	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
+}
+
+func (s Select) CopyWithName(name string, externalName string) *Select {
+	return &Select{
+		Name:         name,
+		ExternalName: externalName,
+		Filter:       s.Filter,
+		Statement:    s.Statement,
+	}
 }
 
 // Field implements Selection
@@ -301,7 +311,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err = ParseSelect(ObjectSelection, node, i)
+				parsed, err = parseSelect(ObjectSelection, node, i)
 			}
 			if err != nil {
 				return nil, err
@@ -317,10 +327,10 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // for generated object queries, and general
 // API queries
 
-// ParseSelect parses a typed selection field
+// parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func ParseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, error) {
+func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, error) {
 	var name string
 	var alias string
 
@@ -462,7 +472,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isAggregate := Aggregates[node.Name.Value]; isAggregate {
-				s, err := ParseSelect(root, node, i)
+				s, err := parseSelect(root, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -479,7 +489,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 				case "_version":
 					subroot = CommitSelection
 				}
-				s, err := ParseSelect(subroot, node, i)
+				s, err := parseSelect(subroot, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -550,24 +560,41 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 		externalHostName = argumentValue
 	case []*ast.ObjectField:
 		externalHostName = field.Statement.Arguments[0].Name.Value
-		if len(argumentValue) > 0 {
-			if innerPathStringValue, isString := argumentValue[0].Value.GetValue().(string); isString {
+		fieldArg, hasFieldArg := tryGet(argumentValue, "field")
+		if hasFieldArg {
+			if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
 				childProperty = innerPathStringValue
 			}
 		}
 	}
 
-	hostProperty = externalHostName
-	for _, childField := range host.GetSelections() {
-		if childSelect, isSelect := childField.(*Select); isSelect {
-			if childSelect.Equal(Select{
-				ExternalName: externalHostName,
-				Filter:       field.Filter,
-			}) {
-				hostProperty = childSelect.Name
-				break
+	childFields := host.GetSelections()
+	targetField := field.CopyWithName(externalHostName, externalHostName)
+
+	for _, childField := range childFields {
+		childSelect, isSelect := childField.(*Select)
+		if isSelect && childSelect.Equal(*targetField) {
+			hostProperty = childSelect.Name
+			break
+		}
+	}
+
+	if hostProperty == "" {
+		for _, childField := range childFields {
+			if childSelect, isSelect := childField.(*Select); isSelect {
+				// If we can't find anything with a matching filter - look for something
+				// with no filter, there should be little-no cost in doing so
+				if childSelect.ExternalName == externalHostName && childSelect.Filter == nil {
+					hostProperty = childSelect.Name
+					break
+				}
 			}
 		}
+	}
+
+	if hostProperty == "" {
+		// child relationships use this currently due to bug https://github.com/sourcenetwork/defradb/issues/390
+		hostProperty = externalHostName
 	}
 
 	return AggregateTarget{
@@ -575,4 +602,13 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 		ExternalHostName: externalHostName,
 		ChildProperty:    childProperty,
 	}, nil
+}
+
+func tryGet(fields []*ast.ObjectField, name string) (arg *ast.ObjectField, hasArg bool) {
+	for _, field := range fields {
+		if field.Name.Value == name {
+			return field, true
+		}
+	}
+	return nil, false
 }
