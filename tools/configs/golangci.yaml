@@ -140,7 +140,7 @@ linters:
     # - whitespace
     # - wrapcheck
     # - wsl
-    # - golint # Definately need this to never have an undocumented exported function,
+    # - golint # Definitely need this to never have an undocumented exported function,
                #  once the deadcode issue is resolved.
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
