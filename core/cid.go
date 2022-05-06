@@ -15,7 +15,7 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
-func NewCidV1_SHA2_256(data []byte) (cid.Cid, error) {
+func NewSHA256CidV1(data []byte) (cid.Cid, error) {
 	pref := cid.Prefix{
 		Version:  1,
 		Codec:    cid.Raw,
