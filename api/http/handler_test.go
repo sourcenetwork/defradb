@@ -139,6 +139,16 @@ func (lt *loggerTest) Write(b []byte) (int, error) {
 	return 0, errors.New("this write will fail")
 }
 
+func TestSendJSONWithMarshallFailureAndWriteFailer(t *testing.T) {
+	rec := httptest.NewRecorder()
+	lrw := loggerTest{}
+	lrw.ResponseWriter = rec
+
+	sendJSON(context.Background(), &lrw, math.Inf(1), 200)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Result().StatusCode)
+}
+
 func TestSendJSONWithWriteFailure(t *testing.T) {
 	obj := struct {
 		Name string
