@@ -159,7 +159,7 @@ func (db *db) CreateCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewCidV1_SHA2_256(buf)
+	cid, err := core.NewSHA256CidV1(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewCidV1_SHA2_256(buf)
+	cid, err := core.NewSHA256CidV1(buf)
 	if err != nil {
 		return nil, err
 	}
