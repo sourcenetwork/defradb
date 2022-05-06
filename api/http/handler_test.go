@@ -140,11 +140,17 @@ func (lt *loggerTest) Write(b []byte) (int, error) {
 }
 
 func TestSendJSONWithWriteFailure(t *testing.T) {
+	obj := struct {
+		Name string
+	}{
+		Name: "John Doe",
+	}
+
 	rec := httptest.NewRecorder()
 	lrw := loggerTest{}
 	lrw.ResponseWriter = rec
 
-	sendJSON(context.Background(), &lrw, math.Inf(1), 200)
+	sendJSON(context.Background(), &lrw, obj, 200)
 
 	assert.Equal(t, http.StatusInternalServerError, lrw.statusCode)
 }

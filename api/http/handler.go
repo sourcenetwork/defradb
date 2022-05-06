@@ -64,6 +64,7 @@ func sendJSON(ctx context.Context, rw http.ResponseWriter, v interface{}, code i
 
 	rw.WriteHeader(code)
 	if _, err = rw.Write(b); err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
 		log.Error(ctx, err.Error())
 	}
 }
