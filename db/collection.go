@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/utils"
 
 	"errors"
 
@@ -160,7 +159,7 @@ func (db *db) CreateCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := utils.NewCidV1(buf)
+	cid, err := core.NewCidV1_SHA2_256(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +203,7 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := utils.NewCidV1(buf)
+	cid, err := core.NewCidV1_SHA2_256(buf)
 	if err != nil {
 		return nil, err
 	}

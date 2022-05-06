@@ -8,14 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package utils
+package core
 
 import (
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
 )
 
-func NewCidV1(data []byte) (cid.Cid, error) {
+func NewCidV1_SHA2_256(data []byte) (cid.Cid, error) {
 	pref := cid.Prefix{
 		Version:  1,
 		Codec:    cid.Raw,
