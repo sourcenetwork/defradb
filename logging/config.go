@@ -10,11 +10,13 @@
 
 package logging
 
-type EncoderFormat = int8
-type EncoderFormatOption struct {
-	EncoderFormat EncoderFormat
-	HasValue      bool
-}
+type (
+	EncoderFormat       = int8
+	EncoderFormatOption struct {
+		EncoderFormat EncoderFormat
+		HasValue      bool
+	}
+)
 
 func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 	return EncoderFormatOption{
@@ -28,11 +30,13 @@ const (
 	CSV
 )
 
-type LogLevel = int8
-type LogLevelOption struct {
-	LogLevel LogLevel
-	HasValue bool
-}
+type (
+	LogLevel       = int8
+	LogLevelOption struct {
+		LogLevel LogLevel
+		HasValue bool
+	}
+)
 
 func NewLogLevelOption(v LogLevel) LogLevelOption {
 	return LogLevelOption{
@@ -54,6 +58,11 @@ type EnableStackTraceOption struct {
 	HasValue         bool
 }
 
+type EnableCallerOption struct {
+	EnableCaller bool
+	HasValue     bool
+}
+
 func NewEnableStackTraceOption(enable bool) EnableStackTraceOption {
 	return EnableStackTraceOption{
 		EnableStackTrace: enable,
@@ -61,18 +70,27 @@ func NewEnableStackTraceOption(enable bool) EnableStackTraceOption {
 	}
 }
 
+func NewEnableCallerOption(enable bool) EnableCallerOption {
+	return EnableCallerOption{
+		EnableCaller: enable,
+		HasValue:     true,
+	}
+}
+
 type Config struct {
 	Level                 LogLevelOption
-	EnableStackTrace      EnableStackTraceOption
 	EncoderFormat         EncoderFormatOption
+	EnableStackTrace      EnableStackTraceOption
+	EnableCaller          EnableCallerOption
 	OutputPaths           []string
 	OverridesByLoggerName map[string]OverrideConfig
 }
 
 type OverrideConfig struct {
 	Level            LogLevelOption
-	EnableStackTrace EnableStackTraceOption
 	EncoderFormat    EncoderFormatOption
+	EnableStackTrace EnableStackTraceOption
+	EnableCaller     EnableCallerOption
 	OutputPaths      []string
 }
 
@@ -80,6 +98,7 @@ func (c Config) forLogger(name string) Config {
 	loggerConfig := Config{
 		Level:            c.Level,
 		EnableStackTrace: c.EnableStackTrace,
+		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
 	}
@@ -90,6 +109,9 @@ func (c Config) forLogger(name string) Config {
 		}
 		if override.EnableStackTrace.HasValue {
 			loggerConfig.EnableStackTrace = override.EnableStackTrace
+		}
+		if override.EnableCaller.HasValue {
+			loggerConfig.EnableCaller = override.EnableCaller
 		}
 		if override.EncoderFormat.HasValue {
 			loggerConfig.EncoderFormat = override.EncoderFormat
@@ -118,6 +140,7 @@ func (c Config) copy() Config {
 		EnableStackTrace:      c.EnableStackTrace,
 		EncoderFormat:         c.EncoderFormat,
 		OutputPaths:           c.OutputPaths,
+		EnableCaller:          c.EnableCaller,
 		OverridesByLoggerName: overridesByLoggerName,
 	}
 }
@@ -131,6 +154,10 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 
 	if newConfigOptions.EnableStackTrace.HasValue {
 		newConfig.EnableStackTrace = newConfigOptions.EnableStackTrace
+	}
+
+	if newConfigOptions.EnableCaller.HasValue {
+		newConfig.EnableCaller = newConfigOptions.EnableCaller
 	}
 
 	if newConfigOptions.EncoderFormat.HasValue {
@@ -147,6 +174,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 		newConfig.OverridesByLoggerName[k] = OverrideConfig{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
+			EnableCaller:     o.EnableCaller,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      o.OutputPaths,
 		}
