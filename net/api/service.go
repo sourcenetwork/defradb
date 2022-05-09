@@ -15,18 +15,18 @@ package api
 import (
 	"context"
 
-	logging "github.com/ipfs/go-log/v2"
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 	pb "github.com/sourcenetwork/defradb/net/api/pb"
 )
 
 var (
-	log = logging.Logger("netapi")
+	log = logging.MustNewLogger("defradb.netapi")
 )
 
 type Service struct {
@@ -41,7 +41,7 @@ func (s *Service) AddReplicator(
 	ctx context.Context,
 	req *pb.AddReplicatorRequest,
 ) (*pb.AddReplicatorReply, error) {
-	log.Debug("Received AddReplicator requeust")
+	log.Debug(context.Background(), "Received AddReplicator request")
 
 	collection := string(req.Collection)
 	if len(collection) == 0 {
