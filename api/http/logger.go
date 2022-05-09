@@ -39,9 +39,12 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
+	// used for chucked payloads. Content-Length should not be set
+	// for each chunk.
 	if lrw.ResponseWriter.Header().Get("Content-Length") != "" {
 		return lrw.ResponseWriter.Write(b)
 	}
+
 	lrw.contentLength = len(b)
 	lrw.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(lrw.contentLength))
 	return lrw.ResponseWriter.Write(b)

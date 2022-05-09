@@ -28,7 +28,7 @@ type errorResponse struct {
 
 func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
 	if status == http.StatusInternalServerError {
-		log.ErrorE(context.Background(), http.StatusText(status), err)
+		log.ErrorE(ctx, http.StatusText(status), err)
 	}
 
 	sendJSON(

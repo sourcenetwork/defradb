@@ -27,7 +27,7 @@ type handler struct {
 	*chi.Mux
 }
 
-type ctxKey string
+type ctxDB struct{}
 
 // newHandler returns a handler with the router instantiated.
 func newHandler(db client.DB) *handler {
@@ -36,7 +36,7 @@ func newHandler(db client.DB) *handler {
 
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), ctxKey("DB"), h.db)
+		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
 		f(rw, req.WithContext(ctx))
 	}
 }
@@ -70,7 +70,7 @@ func sendJSON(ctx context.Context, rw http.ResponseWriter, v interface{}, code i
 }
 
 func dbFromContext(ctx context.Context) (client.DB, error) {
-	db, ok := ctx.Value(ctxKey("DB")).(client.DB)
+	db, ok := ctx.Value(ctxDB{}).(client.DB)
 	if !ok {
 		return nil, errors.New("no database available")
 	}

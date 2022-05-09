@@ -11,17 +11,31 @@
 package http
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewServerAndListen(t *testing.T) {
-	// @TODO: maybe it would be worth doing something a bit more thorough
-
-	// test with no config
 	s := NewServer(nil)
 	if ok := assert.NotNil(t, s); ok {
 		assert.Error(t, s.Listen(":303000"))
 	}
+
+	serverRunning := make(chan struct{})
+	serverDone := make(chan struct{})
+	go func() {
+		close(serverRunning)
+		err := s.Listen(":3131")
+		assert.ErrorIs(t, http.ErrServerClosed, err)
+		defer close(serverDone)
+	}()
+
+	<-serverRunning
+
+	s.Shutdown(context.Background())
+
+	<-serverDone
 }

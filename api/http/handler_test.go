@@ -183,7 +183,7 @@ func TestDbFromContext(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reqCtx := context.WithValue(ctx, ctxKey("DB"), defra)
+	reqCtx := context.WithValue(ctx, ctxDB{}, defra)
 
 	_, err = dbFromContext(reqCtx)
 	assert.NoError(t, err)

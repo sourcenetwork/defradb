@@ -18,17 +18,20 @@ import (
 
 // The Server struct holds the Handler for the HTTP API
 type Server struct {
-	Handler http.Handler
+	http.Server
 }
 
 // NewServer instantiated a new server with the given http.Handler.
 func NewServer(db client.DB) *Server {
 	return &Server{
-		Handler: newHandler(db),
+		http.Server{
+			Handler: newHandler(db),
+		},
 	}
 }
 
 // Listen calls ListenAndServe with our router.
 func (s *Server) Listen(addr string) error {
-	return http.ListenAndServe(addr, s.Handler)
+	s.Addr = addr
+	return s.ListenAndServe()
 }
