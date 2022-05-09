@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defradb.netapi")
+	log = logging.MustNewLogger("defra.netapi")
 )
 
 type Service struct {
@@ -41,7 +41,7 @@ func (s *Service) AddReplicator(
 	ctx context.Context,
 	req *pb.AddReplicatorRequest,
 ) (*pb.AddReplicatorReply, error) {
-	log.Debug(context.Background(), "Received AddReplicator request")
+	log.Debug(ctx, "Received AddReplicator request")
 
 	collection := string(req.Collection)
 	if len(collection) == 0 {
