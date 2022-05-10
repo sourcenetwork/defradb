@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Returns the default rootdir path, which is at the user's home directory.
 func DefaultRootDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -54,6 +55,7 @@ func GetRootDir(rootDir string) (string, bool, error) {
 	return path, exists, nil
 }
 
+// Creates a rootdir with default configuration.
 func CreateRootDirWithDefaultConfig(rootDir string) error {
 	var err error
 	err = os.MkdirAll(rootDir, defaultDirPerm)

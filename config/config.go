@@ -69,6 +69,7 @@ const (
 	defraEnvPrefix               = "DEFRA"
 )
 
+// Config is DefraDB's main configuration struct, embedding component-specific config structs.
 type Config struct {
 	Datastore *DatastoreConfig
 	API       *APIConfig
@@ -139,6 +140,7 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	return nil
 }
 
+// Return the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
 		Datastore: defaultDatastoreConfig(),
@@ -182,11 +184,13 @@ type DatastoreConfig struct {
 	Badger BadgerConfig
 }
 
+// Configuration of Badger's on-disk / filesystem mode.
 type BadgerConfig struct {
 	Path string
 	*badgerds.Options
 }
 
+// Configuration of Badger's memory mode.
 type MemoryConfig struct {
 	Size uint64
 }
@@ -231,6 +235,7 @@ func (apicfg *APIConfig) validateBasic() error {
 	return nil
 }
 
+// Provides the API address as URL.
 func (apicfg *APIConfig) AddressToURL() string {
 	return fmt.Sprintf("http://%s", apicfg.Address)
 }
@@ -282,6 +287,7 @@ func (netcfg *NetConfig) validateBasic() error {
 	return nil
 }
 
+// Gives the RPC timeout as a time.Duration.
 func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
@@ -290,6 +296,7 @@ func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	return d, nil
 }
 
+// Gives the RPC MaxConnectionIdle as a time.Duration.
 func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
@@ -375,6 +382,7 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	}, nil
 }
 
+// Serializes the config to a JSON string.
 func (c *Config) ToJSON() ([]byte, error) {
 	jsonbytes, err := json.Marshal(c)
 	if err != nil {

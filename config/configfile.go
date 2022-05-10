@@ -31,6 +31,7 @@ func (cfg *Config) writeConfigFile(path string) error {
 	return nil
 }
 
+// WriteConfigFile writes a config file in a given root directory.
 func (cfg *Config) WriteConfigFileToRootDir(rootDir string) error {
 	path := fmt.Sprintf("%v/%v", rootDir, defaultDefraDBConfigFileName)
 	return cfg.writeConfigFile(path)
