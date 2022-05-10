@@ -25,9 +25,9 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 
+	badgerds "github.com/ipfs/go-ds-badger2"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
 )

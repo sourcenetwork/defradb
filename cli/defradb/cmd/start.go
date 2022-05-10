@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
+	badgerds "github.com/ipfs/go-ds-badger2"
 	ma "github.com/multiformats/go-multiaddr"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
 	netpb "github.com/sourcenetwork/defradb/net/api/pb"

@@ -20,9 +20,9 @@ require (
 	github.com/ipfs/go-ipfs-ds-help v1.1.0
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-log v1.0.5 // indirect
-	github.com/ipfs/go-log/v2 v2.3.0
+	github.com/ipfs/go-log/v2 v2.5.0 // indirect
 	github.com/ipfs/go-merkledag v0.5.1
-	github.com/jbenet/goprocess v0.1.4
+	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.16.0
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
@@ -43,13 +43,14 @@ require (
 	github.com/textileio/go-libp2p-pubsub-rpc v0.0.6
 	github.com/textileio/go-threads v1.1.2
 	github.com/ugorji/go/codec v1.1.7
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.19.1
 	google.golang.org/grpc v1.44.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
 	github.com/fatih/color v1.13.0
+	github.com/ipfs/go-ds-badger2 v0.1.3
 	github.com/pkg/errors v0.9.1
 )
 
@@ -207,7 +208,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.2 // indirect
+	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
@@ -220,9 +221,12 @@ require (
 replace (
 	github.com/SierraSoftworks/connor => github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12
 
-	// SourceNetwork fork og graphql-go
+	// SourceNetwork fork of graphql-go
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc
 
 	// dev branch for ipfslite until merged
 	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f
+
+	// SourceNetwork fork of ipfs/go-ds-badger2
+	github.com/ipfs/go-ds-badger2 => github.com/sourcenetwork/go-ds-badger2 v0.1.4-0.20220510064810-19e7ca7f635c
 )

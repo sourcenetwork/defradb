@@ -11,7 +11,7 @@
 package cmd
 
 import (
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	badgerds "github.com/ipfs/go-ds-badger2"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
