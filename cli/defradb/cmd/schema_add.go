@@ -21,7 +21,6 @@ import (
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -36,7 +35,6 @@ var addCmd = &cobra.Command{
 > defradb client schema add -f user.sdl`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
 
 		var schema []byte
 		if len(args) > 0 {
@@ -49,14 +47,7 @@ var addCmd = &cobra.Command{
 			log.Fatal(ctx, "Missing schema")
 		}
 
-		dbaddr := viper.GetString("database.address")
-		if dbaddr == "" {
-			log.Error(ctx, "No database URL provided")
-		}
-		if !strings.HasPrefix(dbaddr, "http") {
-			dbaddr = "http://" + dbaddr
-		}
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
 		if err != nil {
 			log.ErrorE(ctx, "join paths failed", err)
 			return

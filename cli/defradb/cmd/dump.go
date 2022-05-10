@@ -15,12 +15,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // dumpCmd represents the dump command
@@ -29,17 +26,8 @@ var dumpCmd = &cobra.Command{
 	Short: "Dumps the state of the entire database (server side)",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
 
-		dbaddr := viper.GetString("database.address")
-		if dbaddr == "" {
-			log.Error(ctx, "No database URL provided")
-		}
-		if !strings.HasPrefix(dbaddr, "http") {
-			dbaddr = "http://" + dbaddr
-		}
-
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.DumpPath)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.DumpPath)
 		if err != nil {
 			log.ErrorE(ctx, "join paths failed", err)
 			return

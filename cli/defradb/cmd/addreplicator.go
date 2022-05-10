@@ -22,11 +22,6 @@ import (
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
-var (
-// Commented because it is deadcode, for linter.
-// queryStr string
-)
-
 // queryCmd represents the query command
 var addReplicatorCmd = &cobra.Command{
 	Use:   "addreplicator",
@@ -37,7 +32,6 @@ for the p2p data sync system.
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
 
 		// get args
 		collection := args[0]
@@ -51,15 +45,19 @@ for the p2p data sync system.
 			"Adding replicator for collection",
 			logging.NewKV("PeerAddress", peerAddr),
 			logging.NewKV("Collection", collection),
-			logging.NewKV("RPCAddress", rpcAddr))
+			logging.NewKV("RPCAddress", cfg.Net.RPCAddress))
 
 		cred := insecure.NewCredentials()
-		client, err := netclient.NewClient(rpcAddr, grpc.WithTransportCredentials(cred))
+		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 		if err != nil {
 			log.FatalE(ctx, "Couldn't create RPC client", err)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
+		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
+		if err != nil {
+			log.FatalE(ctx, "Failed to parse RPC timeout duration", err)
+		}
+		ctx, cancel := context.WithTimeout(ctx, rpcTimeoutDuration)
 		defer cancel()
 
 		pid, err := client.AddReplicator(ctx, collection, peerAddr)

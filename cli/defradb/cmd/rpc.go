@@ -11,14 +11,7 @@
 package cmd
 
 import (
-	"time"
-
 	"github.com/spf13/cobra"
-)
-
-var (
-	rpcAddr    string
-	rpcTimeout = 10 * time.Second
 )
 
 // clientCmd represents the client command
@@ -43,9 +36,9 @@ func init() {
 	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	rpcCmd.PersistentFlags().StringVar(
-		&rpcAddr,
+		&cfg.Net.RPCAddress,
 		"addr",
-		"0.0.0.0:9161",
+		defaultCfg.Net.RPCAddress,
 		"Specify the gRPC endpoint address",
 	)
 }

@@ -10,8 +10,11 @@
 
 package main
 
-import "github.com/sourcenetwork/defradb/cli/defradb/cmd"
+import (
+	"github.com/sourcenetwork/defradb/cli/defradb/cmd"
+)
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
 	cmd.Execute()
 }

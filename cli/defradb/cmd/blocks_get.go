@@ -14,12 +14,10 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // getCmd represents the get command
@@ -28,22 +26,13 @@ var getCmd = &cobra.Command{
 	Short: "Get a block by its CID from the blockstore",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
-
-		dbaddr := viper.GetString("database.address")
-		if dbaddr == "" {
-			log.Error(ctx, "No database URL provided")
-		}
-		if !strings.HasPrefix(dbaddr, "http") {
-			dbaddr = "http://" + dbaddr
-		}
 
 		if len(args) != 1 {
 			log.Fatal(ctx, "Needs a single CID")
 		}
 		cid := args[0]
 
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.BlocksPath, cid)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.BlocksPath, cid)
 		if err != nil {
 			log.ErrorE(ctx, "join paths failed", err)
 			return

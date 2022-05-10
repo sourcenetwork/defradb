@@ -15,12 +15,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // pingCmd represents the ping command
@@ -29,19 +26,10 @@ var pingCmd = &cobra.Command{
 	Short: "Ping defradb to test an API connection",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
-
-		dbaddr := viper.GetString("database.address")
-		if dbaddr == "" {
-			log.Error(ctx, "No database URL provided")
-		}
-		if !strings.HasPrefix(dbaddr, "http") {
-			dbaddr = "http://" + dbaddr
-		}
 
 		log.Info(ctx, "Sending ping...")
 
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.PingPath)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PingPath)
 		if err != nil {
 			log.ErrorE(ctx, "join paths failed", err)
 			return

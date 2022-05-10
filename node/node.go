@@ -67,7 +67,7 @@ func NewNode(
 ) (*Node, error) {
 	// merge all the options args together
 	var options Options
-	for _, opt := range append(opts, DefaultOpts()) {
+	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
@@ -96,7 +96,9 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.Peerstore(peerstore),
 		libp2p.ConnectionManager(options.ConnManager),
-		libp2p.DisableRelay(), // @todo: Possibly bind this to an Option
+	}
+	if options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
 	}
 
 	h, d, err := ipfslite.SetupLibp2p(

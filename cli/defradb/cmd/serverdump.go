@@ -23,15 +23,12 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 )
 
-const databaseStoreName string = "badger"
-
 // dumpCmd represents the dump command
 var srvDumpCmd = &cobra.Command{
 	Use:   "server-dump",
 	Short: "Dumps the state of the entire database (server side)",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
 		log.Info(ctx, "Starting DefraDB process...")
 
 		// setup signal handlers
@@ -40,15 +37,15 @@ var srvDumpCmd = &cobra.Command{
 
 		var rootstore ds.Batching
 		var err error
-		if config.Database.Store == databaseStoreName {
+		if cfg.Datastore.Store == databaseStoreName {
 			log.Info(
 				ctx,
 				"opening badger store",
-				logging.NewKV("Path", config.Database.Badger.Path),
+				logging.NewKV("Path", cfg.Datastore.Badger.Path),
 			)
 			rootstore, err = badgerds.NewDatastore(
-				config.Database.Badger.Path,
-				config.Database.Badger.Options,
+				cfg.Datastore.Badger.Path,
+				cfg.Datastore.Badger.Options,
 			)
 		} else {
 			log.Fatal(ctx, "Server side dump is only supported for the Badger datastore")
@@ -71,7 +68,7 @@ func init() {
 	rootCmd.AddCommand(srvDumpCmd)
 	srvDumpCmd.Flags().String(
 		"store",
-		databaseStoreName,
+		defaultCfg.Datastore.Store,
 		"Specify the data store to use (supported: badger, memory)",
 	)
 }
