@@ -102,10 +102,6 @@ func DefaultOpts() NodeOpt {
 			if err != nil {
 				return err
 			}
-			if err != nil {
-				return err
-			}
-			opt.ConnManager = connMgr
 		}
 		return nil
 	}
