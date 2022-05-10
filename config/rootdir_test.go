@@ -15,27 +15,28 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateRootDirWithDefaultConfig(t *testing.T) {
 	tempdir := t.TempDir()
 	rootdir := filepath.Join(tempdir, "defra_rootdir")
-	CreateRootDirWithDefaultConfig(rootdir)
-	if _, err := os.Stat(rootdir); os.IsNotExist(err) {
-		t.Errorf("rootdir %q wasn't created properly, it does not exist", rootdir)
-	}
-	viper.SetConfigName(defaultDefraDBConfigFileName)
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(rootdir)
-	if err := viper.ReadInConfig(); err != nil {
-		t.Errorf("could not read config file from rootdir %q", rootdir)
-	}
+
+	err := CreateRootDirWithDefaultConfig(rootdir)
+
+	_, errStat := os.Stat(rootdir)
+	notExists := os.IsNotExist(errStat)
+	assert.Equal(t, false, notExists)
+	assert.NoError(t, errStat)
+	assert.NoError(t, err)
 }
 
 func TestGetRootDirDefault(t *testing.T) {
 	rootdir := ""
-	d, _ := GetRootDir(rootdir)
-	assert.Equal(t, DefaultRootDir(), d)
+	obtainedRootDir, _, err := GetRootDir(rootdir)
+	defaultDir, errDefaultRootDir := DefaultRootDir()
+
+	assert.NoError(t, err)
+	assert.Equal(t, defaultDir, obtainedRootDir)
+	assert.NoError(t, errDefaultRootDir)
 }

@@ -11,35 +11,35 @@
 package config
 
 import (
-	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/viper"
 )
 
-func DefaultRootDir() string {
+func DefaultRootDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal(context.Background(), fmt.Sprintf("could not get home directory: %v", home), logging.NewKV("Error", err))
+		return "", err
 	}
-	return filepath.Join(home, defaultDefraDBRootDir)
+	return filepath.Join(home, defaultDefraDBRootDir), nil
 }
 
 // Returns rootdir path and whether it exists as directory, considering the env. variable and CLI flag.
-func GetRootDir(rootDir string) (string, bool) {
+func GetRootDir(rootDir string) (string, bool, error) {
 	var err error
 	var path string
 	var exists bool
 	err = viper.BindEnv("rootdir", defraEnvPrefix+"_ROOT")
 	if err != nil {
-		log.Fatal(context.Background(), "could not bind env variable", logging.NewKV("Error", err))
+		return "", false, err
 	}
 	rootDirEnv := viper.GetString("rootdir")
 	if rootDirEnv == "" && rootDir == "" {
-		path = DefaultRootDir()
+		path, err = DefaultRootDir()
+		if err != nil {
+			return "", false, err
+		}
 	} else if rootDirEnv != "" && rootDir == "" {
 		path = rootDirEnv
 	} else {
@@ -47,25 +47,23 @@ func GetRootDir(rootDir string) (string, bool) {
 	}
 	path, err = filepath.Abs(path)
 	if err != nil {
-		log.Fatal(context.Background(), fmt.Sprintf("could not get absolute path for %q", path), logging.NewKV("error", err))
+		return "", false, err
 	}
 	info, err := os.Stat(path)
 	exists = (err == nil && info.IsDir())
-	return path, exists
+	return path, exists, nil
 }
 
-func CreateRootDirWithDefaultConfig(rootDir string) {
+func CreateRootDirWithDefaultConfig(rootDir string) error {
 	var err error
 	err = os.MkdirAll(rootDir, defaultDirPerm)
 	if err != nil {
-		log.Fatal(context.Background(), fmt.Sprintf("could not create directory %q", rootDir), logging.NewKV("error", err))
+		return err
 	}
 	cfg := DefaultConfig()
 	err = cfg.WriteConfigFileToRootDir(rootDir)
 	if err != nil {
-		log.Fatal(
-			context.Background(),
-			fmt.Sprintf("could not write config file to directory %q", rootDir),
-			logging.NewKV("error", err))
+		return err
 	}
+	return nil
 }

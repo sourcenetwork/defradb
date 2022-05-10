@@ -45,6 +45,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -130,7 +131,11 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	if err := viper.Unmarshal(cfg); err != nil {
 		return err
 	}
-	cfg.handleParams(DefaultRootDir())
+	rootDir, err := DefaultRootDir()
+	if err != nil {
+		log.FatalE(context.Background(), "could not get home directory", err)
+	}
+	cfg.handleParams(rootDir)
 	return nil
 }
 
@@ -367,7 +372,6 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Logging.Stacktrace),
 		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:      []string{cfg.Logging.OutputPath},
-		// OverridesByLoggerName: map[string]OverrideConfig
 	}, nil
 }
 

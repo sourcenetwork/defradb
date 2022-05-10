@@ -49,20 +49,27 @@ var startCmd = &cobra.Command{
 	Long:  `Start a new instance of DefraDB server:`,
 	// Load the root config if it exists, otherwise create it.
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		rootDir, exists := config.GetRootDir(rootDir)
-		if !exists {
-			config.CreateRootDirWithDefaultConfig(rootDir)
-		}
-		err := cfg.Load(rootDir)
+		ctx := context.Background()
+		rootDir, exists, err := config.GetRootDir(rootDir)
 		if err != nil {
-			log.FatalE(context.Background(), "Failed to load config", err)
+			log.FatalE(ctx, "Failed to get root dir", err)
+		}
+		if !exists {
+			err = config.CreateRootDirWithDefaultConfig(rootDir)
+			if err != nil {
+				log.FatalE(ctx, "Failed to create root dir", err)
+			}
+		}
+		err = cfg.Load(rootDir)
+		if err != nil {
+			log.FatalE(ctx, "Failed to load config", err)
 		}
 		loggingConfig, err := cfg.GetLoggingConfig()
 		if err != nil {
-			log.FatalE(context.Background(), "Failed to load logging config", err)
+			log.FatalE(ctx, "Failed to load logging config", err)
 		}
 		logging.SetConfig(loggingConfig)
-		log.Info(context.Background(), "Configuration loaded from DefraDB root directory", logging.NewKV("rootdir", rootDir))
+		log.Info(ctx, "Configuration loaded from DefraDB root directory", logging.NewKV("rootdir", rootDir))
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()

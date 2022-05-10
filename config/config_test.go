@@ -67,40 +67,45 @@ func FixtureEnvVarsUnset(envVars map[string]string) {
 func FixtureDefaultConfigFile(t *testing.T) string {
 	dir := t.TempDir()
 	cfg := DefaultConfig()
-	err := cfg.writeConfigFile(dir)
-	assert.NoError(t, err)
+
+	cfg.writeConfigFile(dir)
 	return dir
 }
 
 func TestConfigValidateBasic(t *testing.T) {
 	cfg := DefaultConfig()
 	assert.NoError(t, cfg.validateBasic())
-
 	// Borked configuration gives out error
 	cfg.API.Address = "*%(*&"
-	assert.Error(t, cfg.validateBasic())
+
+	err := cfg.validateBasic()
+
+	assert.Error(t, err)
 }
 
 func TestJSONSerialization(t *testing.T) {
 	cfg := DefaultConfig()
-	b, err := cfg.ToJSON()
-	assert.NoError(t, err)
-	assert.NotEmpty(t, b)
 	var m map[string]interface{}
-	if err := json.Unmarshal(b, &m); err != nil {
-		t.Fatal(err)
-	}
+
+	b, errSerialize := cfg.ToJSON()
+	errUnmarshal := json.Unmarshal(b, &m)
+
+	assert.NoError(t, errUnmarshal)
+	assert.NoError(t, errSerialize)
+	assert.NotEmpty(t, b)
 }
 
 func TestLoadDefaultsConfigFileEnv(t *testing.T) {
 	dir := t.TempDir()
 	cfg := DefaultConfig()
-	err := cfg.WriteConfigFileToRootDir(dir)
-	assert.NoError(t, err)
+	errWriteConfig := cfg.WriteConfigFileToRootDir(dir)
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
-	err = cfg.Load(dir)
-	assert.NoError(t, err)
+
+	errLoad := cfg.Load(dir)
+
+	assert.NoError(t, errLoad)
+	assert.NoError(t, errWriteConfig)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
 	assert.Equal(t, filepath.Join(dir, "defra_data"), cfg.Datastore.Badger.Path)
 }
@@ -109,20 +114,26 @@ func TestLoadDefaultsEnv(t *testing.T) {
 	cfg := DefaultConfig()
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+
 	err := cfg.LoadWithoutRootDir()
+
 	assert.NoError(t, err)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
-	assert.Equal(t, filepath.Join(DefaultRootDir(), "defra_data"), cfg.Datastore.Badger.Path)
+	defaultRootDir, _ := DefaultRootDir()
+	assert.Equal(t, filepath.Join(defaultRootDir, "defra_data"), cfg.Datastore.Badger.Path)
 }
 
 func TestEnvVariablesAllConsidered(t *testing.T) {
 	cfg := DefaultConfig()
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+
 	err := cfg.LoadWithoutRootDir()
+
 	assert.NoError(t, err)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
-	assert.Equal(t, filepath.Join(DefaultRootDir(), "defra_data"), cfg.Datastore.Badger.Path)
+	defaultRootDir, _ := DefaultRootDir()
+	assert.Equal(t, filepath.Join(defaultRootDir, "defra_data"), cfg.Datastore.Badger.Path)
 	assert.Equal(t, "memory", cfg.Datastore.Store)
 	assert.Equal(t, true, cfg.Net.P2PDisabled)
 	assert.Equal(t, "localhost:9876", cfg.Net.P2PAddress)
@@ -135,16 +146,21 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "json", cfg.Logging.Format)
 }
 
-func TestGetRootDir(t *testing.T) {
-	var dir string
-	var exists bool
-	dir, exists = GetRootDir("/tmp/defra_cli/")
+func TestGetRootDirExists(t *testing.T) {
+	dir, exists, err := GetRootDir("/tmp/defra_cli/")
+
+	assert.NoError(t, err)
 	assert.Equal(t, "/tmp/defra_cli", dir)
 	assert.Equal(t, false, exists)
+}
 
+func TestGetRootDir(t *testing.T) {
 	os.Setenv("DEFRA_ROOT", "/tmp/defra_env/")
 	defer os.Unsetenv("DEFRA_ROOT")
-	dir, exists = GetRootDir("")
+
+	dir, exists, err := GetRootDir("")
+
+	assert.NoError(t, err)
 	assert.Equal(t, "/tmp/defra_env", dir)
 	assert.Equal(t, false, exists)
 }
@@ -152,7 +168,9 @@ func TestGetRootDir(t *testing.T) {
 func TestLoadNonExistingConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	dir := t.TempDir()
+
 	err := cfg.Load(dir)
+
 	assert.Error(t, err)
 }
 
@@ -160,7 +178,9 @@ func TestLoadInvalidConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	dir := t.TempDir()
 	ioutil.WriteFile(filepath.Join(dir, defaultDefraDBConfigFileName), []byte("{"), 0644)
+
 	err := cfg.Load(dir)
+
 	assert.Error(t, err)
 }
 
@@ -168,28 +188,36 @@ func TestInvalidEnvVars(t *testing.T) {
 	cfg := DefaultConfig()
 	FixtureEnvVars(envVarsInvalid)
 	defer FixtureEnvVarsUnset(envVarsInvalid)
+
 	err := cfg.LoadWithoutRootDir()
+
 	assert.Error(t, err)
 }
 
 func TestValidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
+
 	cfg.Net.Peers = "/ip4/127.0.0.1/udp/1234,/ip4/7.7.7.7/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N"
 	err := cfg.LoadWithoutRootDir()
+
 	assert.NoError(t, err)
 }
 
 func TestInvalidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
+
 	err := cfg.LoadWithoutRootDir()
+
 	assert.Error(t, err)
 }
 
 func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "123123"
+
 	err := cfg.LoadWithoutRootDir()
+
 	assert.Error(t, err)
 }
 
@@ -203,9 +231,11 @@ func TestInvalidRPCTimeout(t *testing.T) {
 func TestValidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "1s"
-	err := cfg.LoadWithoutRootDir()
+
+	cfg.LoadWithoutRootDir()
+	_, err := cfg.Net.RPCTimeoutDuration()
+
 	assert.NoError(t, err)
-	_, err = cfg.Net.RPCTimeoutDuration()
 	assert.NoError(t, err)
 }
 
@@ -220,16 +250,20 @@ func TestInvalidRPCTimeoutDuration(t *testing.T) {
 func TestValidRPCMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "1s"
+
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
+
 	assert.NoError(t, err)
 }
 
 func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
+
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
+
 	assert.Error(t, err)
 }
 
@@ -241,6 +275,7 @@ func TestGetLoggingConfig(t *testing.T) {
 	cfg.Logging.OutputPath = "stdout"
 
 	loggingConfig, err := cfg.GetLoggingConfig()
+
 	assert.NoError(t, err)
 	assert.Equal(t, logging.Debug, loggingConfig.Level.LogLevel)
 	assert.Equal(t, logging.JSON, loggingConfig.EncoderFormat.EncoderFormat)
@@ -252,7 +287,9 @@ func TestInvalidGetLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Logging.Level = "546578"
 	cfg.Logging.Format = "*&)*&"
+
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.GetLoggingConfig()
+
 	assert.Error(t, err)
 }

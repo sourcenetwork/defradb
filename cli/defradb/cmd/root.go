@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	log        = logging.MustNewLogger("defra.cli")
-	cfg        = config.DefaultConfig()
-	defaultCfg = config.DefaultConfig() // providing default values for the flags
+	log = logging.MustNewLogger("defra.cli")
+	cfg = config.DefaultConfig()
+	// defaultCfg provides default values for the flags.
+	defaultCfg = config.DefaultConfig()
 	rootDir    string
 )
 
@@ -48,34 +49,38 @@ For example:
 	// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 	// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		rootDir, exists := config.GetRootDir(rootDir)
+		ctx := context.Background()
+		rootDir, exists, err := config.GetRootDir(rootDir)
+		if err != nil {
+			log.Fatal(ctx, "could not get rootdir", logging.NewKV("error", err))
+		}
 		if exists {
 			err := cfg.Load(rootDir)
 			if err != nil {
-				log.FatalE(context.Background(), "could not load config file", err)
+				log.FatalE(ctx, "could not load config file", err)
 			}
 			loggingConfig, err := cfg.GetLoggingConfig()
 			if err != nil {
-				log.FatalE(context.Background(), "could not get logging config", err)
+				log.FatalE(ctx, "could not get logging config", err)
 			}
 			logging.SetConfig(loggingConfig)
 			log.Debug(
-				context.Background(),
+				ctx,
 				"Configuration loaded from DefraDB root directory",
 				logging.NewKV("rootdir", rootDir),
 			)
 		} else {
 			err := cfg.LoadWithoutRootDir()
 			if err != nil {
-				log.FatalE(context.Background(), "could not load config file", err)
+				log.FatalE(ctx, "could not load config file", err)
 			}
 			loggingConfig, err := cfg.GetLoggingConfig()
 			if err != nil {
-				log.FatalE(context.Background(), "could not get logging config", err)
+				log.FatalE(ctx, "could not get logging config", err)
 			}
 			logging.SetConfig(loggingConfig)
 			log.Info(
-				context.Background(),
+				ctx,
 				"Using default configuration. To create DefraDB's root directory, use defradb init.",
 			)
 		}
