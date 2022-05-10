@@ -13,8 +13,8 @@ package node
 import (
 	"time"
 
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	cconnmgr "github.com/libp2p/go-libp2p-core/connmgr"
+	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 )
@@ -97,7 +97,11 @@ func DefaultOpts() NodeOpt {
 			opt.TCPAddr = addr
 		}
 		if opt.ConnManager == nil {
-			opt.ConnManager = connmgr.NewConnManager(100, 400, time.Second*20)
+			var err error
+			opt.ConnManager, err = connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	}
