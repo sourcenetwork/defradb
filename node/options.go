@@ -97,7 +97,11 @@ func DefaultOpts() NodeOpt {
 			opt.TCPAddr = addr
 		}
 		if opt.ConnManager == nil {
-			connMgr, err := connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
+			var err error
+			opt.ConnManager, err = connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
+			if err != nil {
+				return err
+			}
 			if err != nil {
 				return err
 			}
