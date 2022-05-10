@@ -246,15 +246,15 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
 			} else if f.Statement.Name.Value == parser.AverageFieldName {
-				// We must not count nil values else they will corrupt the average
 				averageSource, err := f.GetAggregateSource(parsed)
 				if err != nil {
 					return nil, err
 				}
 				childField := n.p.getSourceProperty(averageSource, parsed)
-				// We must append the nil filter to the average (and derivatives) before joining any children.
-				// We append the nil clause to average and sum as well as count in order to make it much easier
-				// to find them.
+				// We must not count nil values else they will corrupt the average (they would be counted otherwise)
+				// so here we append the nil filter to the average (and child nodes) before joining any children.
+				// The nil clause is appended to average and sum as well as count in order to make it much easier
+				// to find them and safely identify existing nodes.
 				appendNotNilFilter(f, childField)
 
 				// then we join the potentially missing child using the dummy field (will be used by sum+count)
