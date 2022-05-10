@@ -339,6 +339,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	return aggregates, nil
 }
 
+// appendNotNilFilter appends a not nil filter for the given child field
+// to the given Select.
 func appendNotNilFilter(field *parser.Select, childField string) {
 	if field.Filter == nil {
 		field.Filter = &parser.Filter{}
