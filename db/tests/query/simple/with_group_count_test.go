@@ -55,6 +55,21 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCollection(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, count on non-rendered group, empty collection",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_count(_group: {})
+					}
+				}`,
+		Results: []map[string]interface{}{},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by number, no children, count on rendered group",

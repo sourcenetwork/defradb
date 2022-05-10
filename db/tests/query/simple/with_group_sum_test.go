@@ -38,6 +38,21 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, sum on non-rendered group, empty collection",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_sum(_group: {field: Age})
+					}
+				}`,
+		Results: []map[string]interface{}{},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group integer value",
