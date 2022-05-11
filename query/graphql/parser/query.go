@@ -157,6 +157,9 @@ func (s Select) GetAlias() string {
 	return s.Alias
 }
 
+// Equal compares the given Selects and returns true if they can be considered equal.
+// Note: Currently only compares Name, ExternalName and Filter as that is all that is
+// currently required, but this should be extended in the future.
 func (s Select) Equal(other Select) bool {
 	if s.Name != other.Name &&
 		s.ExternalName != other.ExternalName {
