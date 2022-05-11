@@ -598,11 +598,11 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 		}
 	}
 
+	// If we didn't find a field matching the target, we look for something with no filter,
+	// as it should yield all the items required by the aggregate.
 	if hostProperty == "" {
 		for _, childField := range childFields {
 			if childSelect, isSelect := childField.(*Select); isSelect {
-				// If we can't find anything with a matching filter - look for something
-				// with no filter, there should be little-no cost in doing so
 				if childSelect.ExternalName == externalHostName && childSelect.Filter == nil {
 					hostProperty = childSelect.Name
 					break
