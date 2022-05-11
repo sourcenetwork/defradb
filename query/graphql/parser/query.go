@@ -589,6 +589,7 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 	childFields := host.GetSelections()
 	targetField := field.CopyWithName(externalHostName, externalHostName)
 
+	// Check for any fields matching the targetField
 	for _, childField := range childFields {
 		childSelect, isSelect := childField.(*Select)
 		if isSelect && childSelect.Equal(*targetField) {
