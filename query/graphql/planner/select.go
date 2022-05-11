@@ -266,6 +266,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				countField, countExists := tryGetAggregateField(parsed.Fields, f, parser.CountFieldName, parser.CountFieldName)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
+					// value of the suffix is unimportant here, just needs to be unique
 					countField = f.CopyWithName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
 					countPlan, err := n.p.Count(countField, parsed)
 					if err != nil {
@@ -277,6 +278,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				sumField, sumExists := tryGetAggregateField(parsed.Fields, f, parser.SumFieldName, parser.SumFieldName)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !sumExists {
+					// value of the suffix is unimportant here, just needs to be unique
 					sumField = f.CopyWithName(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
 					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
 					if err != nil {
