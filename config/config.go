@@ -173,10 +173,6 @@ func (cfg *Config) handleParams(rootDir string) {
 	}
 }
 
-// func (cfg *Config) deprecatedFieldWarning() {
-// 	panic("placeholder for future configuration deprecation")
-// }
-
 // DatastoreConfig configures datastores.
 type DatastoreConfig struct {
 	Store  string
