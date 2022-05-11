@@ -120,11 +120,15 @@ var startCmd = &cobra.Command{
 		var n *node.Node
 		if !cfg.Net.P2PDisabled {
 			log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+			nodeConfig, err := cfg.NodeConfig()
+			if err != nil {
+				log.FatalE(ctx, "Failed to get node config", err)
+			}
 			n, err = node.NewNode(
 				ctx,
 				db,
 				bs,
-				cfg.NodeConfig(),
+				nodeConfig,
 			)
 			if err != nil {
 				log.ErrorE(ctx, "Failed to start p2p node", err)

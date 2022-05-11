@@ -306,9 +306,9 @@ func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 }
 
 // From top-level Net config to Node-specific configuration
-func (cfg *Config) NodeConfig() node.NodeOpt {
+func (cfg *Config) NodeConfig() (node.NodeOpt, error) {
+	var err error
 	return func(opt *node.Options) error {
-		var err error
 		err = node.ListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
 		if err != nil {
 			return err
@@ -320,9 +320,12 @@ func (cfg *Config) NodeConfig() node.NodeOpt {
 		opt.EnableRelay = cfg.Net.RelayEnabled
 		opt.EnablePubSub = cfg.Net.PubSubEnabled
 		opt.DataPath = cfg.Datastore.Badger.Path
-		opt.ConnManager = node.NewConnManager(100, 400, time.Second*20)
+		opt.ConnManager, err = node.NewConnManager(100, 400, time.Second*20)
+		if err != nil {
+			return err
+		}
 		return nil
-	}
+	}, err
 }
 
 // LoggingConfig configures output and logger.

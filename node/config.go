@@ -34,8 +34,12 @@ type Options struct {
 
 type NodeOpt func(*Options) error
 
-func NewConnManager(low int, high int, grace time.Duration) cconnmgr.ConnManager {
-	return connmgr.NewConnManager(low, high, grace)
+func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManager, error) {
+	c, err := connmgr.NewConnManager(low, high, connmgr.WithGracePeriod(grace))
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 func DataPath(path string) NodeOpt {
