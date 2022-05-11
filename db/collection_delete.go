@@ -19,7 +19,7 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	query "github.com/ipfs/go-datastore/query"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -344,7 +344,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 
 	// Get the block using the cid.
 	block, err := d.bstore.Get(ctx, targetCid)
-	if err == blockstore.ErrNotFound {
+	if (err == ipld.ErrNotFound{Cid: targetCid}) {
 		// If we have multiple heads corresponding to a dockey, one of the heads
 		//  could have already deleted the parental dag chain.
 		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
