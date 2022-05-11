@@ -103,11 +103,18 @@ type Selection interface {
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name           string
-	Alias          string
+	// The unique, internal name of the Select - this may differ from that which
+	// is visible in the query string
+	Name string
+	// The identifier to be used in the rendered results, typically specified by
+	// the user.
+	Alias string
+	// The name by which the the consumer refers to the select, e.g. `_group`
 	ExternalName   string
 	CollectionName string
-	Hidden         bool
+	// If true, this Select will not be exposed/rendered to the consumer and will
+	// only be used internally
+	Hidden bool
 
 	// QueryType indicates what kind of query this is
 	// Currently supports: ScanQuery, VersionedScanQuery
