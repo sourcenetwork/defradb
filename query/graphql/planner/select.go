@@ -267,7 +267,6 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
 					countField = f.CopyWithName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
-					//parsed.Fields = append(parsed.Fields, countField)
 					countPlan, err := n.p.Count(countField, parsed)
 					if err != nil {
 						return nil, err
