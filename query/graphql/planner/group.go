@@ -93,11 +93,13 @@ func (n *groupNode) Start() error {
 	}
 	return nil
 }
+
 func (n *groupNode) Spans(spans core.Spans) {
 	for _, dataSource := range n.dataSources {
 		dataSource.Spans(spans)
 	}
 }
+
 func (n *groupNode) Close() error {
 	for _, dataSource := range n.dataSources {
 		err := dataSource.Close()
@@ -107,6 +109,7 @@ func (n *groupNode) Close() error {
 	}
 	return nil
 }
+
 func (n *groupNode) Source() planNode { return n.dataSources[0].Source() }
 
 func (n *groupNode) Next() (bool, error) {
