@@ -111,6 +111,10 @@ validate\:circleci:
 lint:
 	golangci-lint run --config tools/configs/golangci.yaml
 
+.PHONY: lint\:fix
+lint\:fix:
+	golangci-lint run --config tools/configs/golangci.yaml --fix
+
 .PHONY: lint\:todo
 lint\:todo:
 	rg "nolint" -g '!{Makefile}'
