@@ -173,7 +173,10 @@ func (s Select) Equal(other Select) bool {
 	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
 }
 
-func (s Select) CopyWithName(name string, externalName string) *Select {
+// CloneWithNewName shallow-clones the Select using the provided names.
+// Note: Currently only Filter and Statement are taken from the source select,
+// this will likely expand in the near future.
+func (s Select) CloneWithNewName(name string, externalName string) *Select {
 	return &Select{
 		Name:         name,
 		ExternalName: externalName,
@@ -587,7 +590,7 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 	}
 
 	childFields := host.GetSelections()
-	targetField := field.CopyWithName(externalHostName, externalHostName)
+	targetField := field.CloneWithNewName(externalHostName, externalHostName)
 
 	// Check for any fields matching the targetField
 	for _, childField := range childFields {

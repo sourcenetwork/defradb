@@ -264,7 +264,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummyCountField := f.CopyWithName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
+				dummyCountField := f.CloneWithNewName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
 				countField, countExists := tryGetField(parsed.Fields, dummyCountField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
@@ -277,7 +277,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummySumField := f.CopyWithName(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
+				dummySumField := f.CloneWithNewName(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
 				sumField, sumExists := tryGetField(parsed.Fields, dummySumField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !sumExists {
@@ -391,7 +391,7 @@ func (n *selectNode) joinAggregatedChild(
 		return err
 	}
 
-	targetField := field.CopyWithName(source.HostProperty, source.ExternalHostName)
+	targetField := field.CloneWithNewName(source.HostProperty, source.ExternalHostName)
 
 	hasChildProperty := false
 	for _, siblingField := range parsed.Fields {
