@@ -341,27 +341,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
 func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, error) {
-	var name string
-	var alias string
-
-	// Fields that take arguments (e.g. filters) that can be aliased must be renamed internally
-	// to allow code to distinguish between multiple properties targeting the same underlying field
-	// that may or may not have different arguments.  It is hoped that this renaming can be removed
-	// once we migrate to an array-based document structure as per
-	// https://github.com/sourcenetwork/defradb/issues/395
-	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate || field.Name.Value == GroupFieldName {
-		name = fmt.Sprintf("_agg%v", index)
-		if field.Alias == nil {
-			alias = field.Name.Value
-		} else {
-			alias = field.Alias.Value
-		}
-	} else {
-		name = field.Name.Value
-		if field.Alias != nil {
-			alias = field.Alias.Value
-		}
-	}
+	name, alias := getFieldName(field, index)
 
 	slct := &Select{
 		Name:         name,
@@ -475,6 +455,32 @@ func getArgumentKeyValue(field *ast.Field, argument *ast.Argument) (string, ast.
 		}
 	}
 	return argument.Name.Value, argument.Value
+}
+
+// getFieldName returns the internal name and alias of the given field at the given index.
+// The returned name/alias may be different from the values directly on the field in order to
+// distinguish between multiple aliases of the same underlying field.
+func getFieldName(field *ast.Field, index int) (name string, alias string) {
+	// Fields that take arguments (e.g. filters) that can be aliased must be renamed internally
+	// to allow code to distinguish between multiple properties targeting the same underlying field
+	// that may or may not have different arguments.  It is hoped that this renaming can be removed
+	// once we migrate to an array-based document structure as per
+	// https://github.com/sourcenetwork/defradb/issues/395
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate || field.Name.Value == GroupFieldName {
+		name = fmt.Sprintf("_agg%v", index)
+		if field.Alias == nil {
+			alias = field.Name.Value
+		} else {
+			alias = field.Alias.Value
+		}
+	} else {
+		name = field.Name.Value
+		if field.Alias != nil {
+			alias = field.Alias.Value
+		}
+	}
+
+	return name, alias
 }
 
 func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
