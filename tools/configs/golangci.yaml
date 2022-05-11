@@ -194,14 +194,8 @@ issues:
   # of integration: much better don't allow issues in new code.
   new: false
 
-  # Show only new issues created after git revision `REV`
-  # new-from-rev: REV
-
-  # Show only new issues created in git patch with set file path.
-  # new-from-patch: path/to/patch/file
-
-  # Fix found issues (if it's supported by the linter)
-  fix: true
+  # Don't auto-fix found issues by default (even if it's supported by the linter).
+  fix: false
 
 
 #==================================================================[ All Settings Of Specific Linters We Have Enabled]
