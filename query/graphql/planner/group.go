@@ -28,6 +28,7 @@ type groupNode struct {
 	// will include any parent group-by fields (if any)
 	groupByFields []string
 
+	// The data sources that this node will draw data from.
 	dataSources []*dataSource
 
 	values       []map[string]interface{}
