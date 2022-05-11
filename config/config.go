@@ -240,24 +240,26 @@ func (apicfg *APIConfig) AddressToURL() string {
 type NetConfig struct {
 	P2PAddress           string
 	P2PDisabled          bool
-	TCPAddress           string
-	RPCTimeout           string
-	RPCAddress           string
+	Peers                string
 	PubSubEnabled        bool `mapstructure:"pubsub"`
 	RelayEnabled         bool `mapstructure:"relay"`
+	RPCAddress           string
 	RPCMaxConnectionIdle string
-	Peers                string
+	RPCTimeout           string
+	TCPAddress           string
 }
 
 func defaultNetConfig() *NetConfig {
 	return &NetConfig{
 		P2PAddress:           "/ip4/0.0.0.0/tcp/9171",
-		TCPAddress:           "/ip4/0.0.0.0/tcp/9161",
-		RPCAddress:           "0.0.0.0:9161",
-		RPCTimeout:           "10s",
 		P2PDisabled:          false,
-		RPCMaxConnectionIdle: "5m",
 		Peers:                "",
+		PubSubEnabled:        true,
+		RelayEnabled:         true,
+		RPCAddress:           "0.0.0.0:9161",
+		RPCMaxConnectionIdle: "5m",
+		RPCTimeout:           "10s",
+		TCPAddress:           "/ip4/0.0.0.0/tcp/9161",
 	}
 }
 
@@ -302,9 +304,9 @@ func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 }
 
 // From top-level Net config to Node-specific configuration
-func (cfg *Config) NodeConfig() (node.NodeOpt, error) {
-	var err error
+func (cfg *Config) NodeConfig() node.NodeOpt {
 	return func(opt *node.Options) error {
+		var err error
 		err = node.ListenP2PAddrStrings(cfg.Net.P2PAddress)(opt)
 		if err != nil {
 			return err
@@ -321,7 +323,7 @@ func (cfg *Config) NodeConfig() (node.NodeOpt, error) {
 			return err
 		}
 		return nil
-	}, err
+	}
 }
 
 // LoggingConfig configures output and logger.
