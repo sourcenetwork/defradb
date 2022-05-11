@@ -34,6 +34,7 @@ type Options struct {
 
 type NodeOpt func(*Options) error
 
+// NewConnManager gives a new ConnManager.
 func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManager, error) {
 	c, err := connmgr.NewConnManager(low, high, connmgr.WithGracePeriod(grace))
 	if err != nil {
@@ -42,6 +43,7 @@ func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManage
 	return c, nil
 }
 
+// DataPath sets the data path.
 func DataPath(path string) NodeOpt {
 	return func(opt *Options) error {
 		opt.DataPath = path
@@ -49,6 +51,7 @@ func DataPath(path string) NodeOpt {
 	}
 }
 
+// WithPubSub enables the pubsub feature.
 func WithPubSub(enable bool) NodeOpt {
 	return func(opt *Options) error {
 		opt.EnablePubSub = enable
@@ -56,6 +59,7 @@ func WithPubSub(enable bool) NodeOpt {
 	}
 }
 
+// WithEnableRelay enables the relay feature.
 func WithEnableRelay(enable bool) NodeOpt {
 	return func(opt *Options) error {
 		opt.EnableRelay = enable
@@ -63,7 +67,7 @@ func WithEnableRelay(enable bool) NodeOpt {
 	}
 }
 
-// ListenP2PAddrStrings sets the address to listen on given as strings
+// ListenP2PAddrStrings sets the address to listen on given as strings.
 func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	return func(opt *Options) error {
 		for _, addrstr := range addrs {
@@ -77,6 +81,7 @@ func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	}
 }
 
+// ListenTCPAddrString sets the TCP address to listen on, as Multiaddr.
 func ListenTCPAddrString(addr string) NodeOpt {
 	return func(opt *Options) error {
 		a, err := ma.NewMultiaddr(addr)
@@ -88,7 +93,7 @@ func ListenTCPAddrString(addr string) NodeOpt {
 	}
 }
 
-// ListenAddrs sets the address to listen on given as MultiAddr(s)
+// ListenAddrs sets the address to listen on given as MultiAddr(s).
 func ListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
 	return func(opt *Options) error {
 		opt.ListenAddrs = addrs
