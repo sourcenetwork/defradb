@@ -21,7 +21,7 @@ type groupNode struct {
 
 	p *Planner
 
-	// The child select information.  Will be nil if there is no child `_group` item requested.
+	// The child select information.  Will be empty if there are no child `_group` items requested.
 	childSelects []*parser.Select
 
 	// The fields to group by - this must be an ordered collection and
