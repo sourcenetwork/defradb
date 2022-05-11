@@ -263,11 +263,12 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					return nil, aggregateError
 				}
 
-				countField, countExists := tryGetAggregateField(parsed.Fields, f, parser.CountFieldName, parser.CountFieldName)
+				// value of the suffix is unimportant here, just needs to be unique
+				dummyCountField := f.CopyWithName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
+				countField, countExists := tryGetField(parsed.Fields, dummyCountField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
-					// value of the suffix is unimportant here, just needs to be unique
-					countField = f.CopyWithName(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
+					countField = dummyCountField
 					countPlan, err := n.p.Count(countField, parsed)
 					if err != nil {
 						return nil, err
@@ -275,11 +276,12 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					aggregates = append(aggregates, countPlan)
 				}
 
-				sumField, sumExists := tryGetAggregateField(parsed.Fields, f, parser.SumFieldName, parser.SumFieldName)
+				// value of the suffix is unimportant here, just needs to be unique
+				dummySumField := f.CopyWithName(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
+				sumField, sumExists := tryGetField(parsed.Fields, dummySumField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !sumExists {
-					// value of the suffix is unimportant here, just needs to be unique
-					sumField = f.CopyWithName(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
+					sumField = dummySumField
 					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
 					if err != nil {
 						return nil, err
@@ -361,23 +363,16 @@ func appendNotNilFilter(field *parser.Select, childField string) {
 	typedChildBlock["$ne"] = nil
 }
 
-// tryGetAggregateField attempts to find an existing aggregate field that matches the given
-// name and template field.  Will return the match field and true if one is found, false otherwise.
-func tryGetAggregateField(
-	fields []parser.Selection,
-	template *parser.Select,
-	name string,
-	externalName string,
-) (*parser.Select, bool) {
-	targetField := template.CopyWithName(name, externalName)
-
+// tryGetField scans the given list of fields for an item matching the given searchTerm.
+// Will return the matched value and true if one is found, else will return nil and false.
+func tryGetField(fields []parser.Selection, searchTerm *parser.Select) (*parser.Select, bool) {
 	for _, field := range fields {
 		f, isSelect := field.(*parser.Select)
 		if !isSelect {
 			continue
 		}
 
-		if f.Equal(*targetField) {
+		if f.Equal(*searchTerm) {
 			return f, true
 		}
 	}
