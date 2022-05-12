@@ -136,7 +136,7 @@ defradb client ping
 ```
 which should respond with `Success!`
 
-Once you've confirmed your node is running correctly, if you're using the GraphiQL client to interact with the database, then make sure you set the `GraphQL Endpoint` to `http://localhost:9181/graphql` and the `Method` to `GET`.
+Once you've confirmed your node is running correctly, if you're using the GraphiQL client to interact with the database, then make sure you set the `GraphQL Endpoint` to `http://localhost:9181/api/v1/graphql`.
 
 ### Add a Schema type
 
@@ -391,6 +391,7 @@ When contributing to a DefraDB feature, you can find the relevant license in the
 - Andrew Sisley ([@AndrewSisley](https://github.com/AndrewSisley))
 - Shahzad Lone ([@shahzadlone](https://github.com/shahzadlone))
 - Orpheus Lummis ([@orpheuslummis](https://github.com/orpheuslummis))
+- Fred Carle ([@fredcarle](https://github.com/fredcarle))
 
 <br>
 

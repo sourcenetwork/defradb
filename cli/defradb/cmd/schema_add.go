@@ -13,13 +13,12 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -57,9 +56,11 @@ var addCmd = &cobra.Command{
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr
 		}
-		endpointStr := fmt.Sprintf("%s/schema/load", dbaddr)
-		endpoint, err := url.Parse(endpointStr)
-		cobra.CheckErr(err)
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
 
 		res, err := http.Post(endpoint.String(), "text", bytes.NewBuffer(schema))
 		cobra.CheckErr(err)

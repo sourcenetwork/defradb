@@ -21,6 +21,7 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -32,7 +33,7 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
-	api "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/textileio/go-threads/broadcast"
@@ -173,12 +174,14 @@ var startCmd = &cobra.Command{
 			log.Info(
 				ctx,
 				fmt.Sprintf(
-					"Providing HTTP API at http://%s. Use the GraphQL query endpoint at http://%s/graphql ",
+					"Providing HTTP API at http://%s%s. Use the GraphQL query endpoint at http://%s%s/graphql ",
 					config.Database.Address,
+					httpapi.RootPath,
 					config.Database.Address,
+					httpapi.RootPath,
 				),
 			)
-			s := api.NewServer(db)
+			s := http.NewServer(db)
 			if err := s.Listen(config.Database.Address); err != nil {
 				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {

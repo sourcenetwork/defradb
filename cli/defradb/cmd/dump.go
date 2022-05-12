@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strings"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,7 +39,13 @@ var dumpCmd = &cobra.Command{
 			dbaddr = "http://" + dbaddr
 		}
 
-		res, err := http.Get(fmt.Sprintf("%s/dump", dbaddr))
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.DumpPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
+
+		res, err := http.Get(endpoint.String())
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return
