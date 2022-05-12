@@ -264,7 +264,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummyCountField := f.Clone(fmt.Sprintf("%s_count", f.Name), parser.CountFieldName)
+				dummyCountField := f.Clone(fmt.Sprintf("%s_internalCount", f.Name), parser.CountFieldName)
 				countField, countExists := tryGetField(parsed.Fields, dummyCountField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
@@ -277,7 +277,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummySumField := f.Clone(fmt.Sprintf("%s_sum", f.Name), parser.SumFieldName)
+				dummySumField := f.Clone(fmt.Sprintf("%s_internalSum", f.Name), parser.SumFieldName)
 				sumField, sumExists := tryGetField(parsed.Fields, dummySumField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !sumExists {
