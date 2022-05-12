@@ -20,6 +20,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
+	ipld "github.com/ipfs/go-ipld-format"
 )
 
 // Blockstore implementation taken from:
@@ -70,11 +71,11 @@ func (bs *bstore) HashOnRead(enabled bool) {
 func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		log.Error(ctx, "Undefined cid in blockstore")
-		return nil, blockstore.ErrNotFound
+		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return nil, blockstore.ErrNotFound
+		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	if err != nil {
 		return nil, err
@@ -128,7 +129,7 @@ func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
 	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if err == ds.ErrNotFound {
-		return -1, blockstore.ErrNotFound
+		return -1, ipld.ErrNotFound{Cid: k}
 	}
 	return size, err
 }
