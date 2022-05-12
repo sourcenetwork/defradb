@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strings"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,7 +40,14 @@ var pingCmd = &cobra.Command{
 		}
 
 		log.Info(ctx, "Sending ping...")
-		res, err := http.Get(fmt.Sprintf("%s/ping", dbaddr))
+
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.PingPath)
+		if err != nil {
+			log.ErrorE(ctx, "join paths failed", err)
+			return
+		}
+
+		res, err := http.Get(endpoint.String())
 		if err != nil {
 			log.ErrorE(ctx, "request failed", err)
 			return

@@ -12,12 +12,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -60,10 +60,11 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 			log.Error(ctx, "missing query")
 			return
 		}
-		endpointStr := fmt.Sprintf("%s/graphql", dbaddr)
-		endpoint, err := url.Parse(endpointStr)
+
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
 		if err != nil {
-			log.FatalE(ctx, "", err)
+			log.ErrorE(ctx, "join paths failed", err)
+			return
 		}
 
 		p := url.Values{}
