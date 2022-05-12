@@ -287,7 +287,6 @@ func (c *collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysRe
 	if err != nil {
 		return nil, err
 	}
-	defer c.discardImplicitTxn(ctx, txn)
 
 	return c.getAllDocKeysChan(ctx, txn)
 }
@@ -314,6 +313,7 @@ func (c *collection) getAllDocKeysChan(
 				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
 			}
 			close(resCh)
+			c.discardImplicitTxn(ctx, txn)
 		}()
 		for res := range q.Next() {
 			// check for Done on context first
