@@ -121,6 +121,30 @@ func (n *groupNode) Next() (bool, error) {
 		}
 
 		n.values = values.values
+
+		for _, group := range n.values {
+			for _, childSelect := range n.childSelects {
+				subSelect, hasSubSelect := group[childSelect.Name]
+				if !hasSubSelect {
+					continue
+				}
+
+				childDocs := subSelect.([]map[string]interface{})
+				if childSelect.Limit != nil {
+					l := int64(len(childDocs))
+
+					// We must hide all child documents before the offset
+					for i := int64(0); i < childSelect.Limit.Offset && i < l; i++ {
+						childDocs[i][parser.HiddenFieldName] = struct{}{}
+					}
+
+					// We must hide all child documents after the offset plus limit
+					for i := childSelect.Limit.Limit + childSelect.Limit.Offset; i < l; i++ {
+						childDocs[i][parser.HiddenFieldName] = struct{}{}
+					}
+				}
+			}
+		}
 	}
 
 	if n.currentIndex < len(n.values) {

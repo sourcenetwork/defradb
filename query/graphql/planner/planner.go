@@ -339,6 +339,13 @@ func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode
 			return nil
 		}
 
+		// Limits get more complicated with groups and have to be handled internally, so we ensure
+		// any limit plan is disabled here
+		if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
+			plan.limit = nil
+			return nil
+		}
+
 		// if this is a child node, and the parent select has an aggregate then we need to
 		// replace the hard limit with a render limit to allow the full set of child records
 		// to be aggregated
