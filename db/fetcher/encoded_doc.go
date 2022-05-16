@@ -153,17 +153,18 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 	return doc, nil
 }
 
-// DecodeToMap returns a decoded document as a
+// DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToMap() (core.Doc, error) {
-	doc := make(core.Doc)
-	doc["_key"] = string(encdoc.Key)
+func (encdoc *encodedDocument) DecodeToDoc(mapping *core.DocumentMapping) (core.Doc, error) {
+	doc := mapping.NewDoc()
+
+	doc.SetKey(string(encdoc.Key))
 	for fieldDesc, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()
 		if err != nil {
-			return nil, err
+			return core.Doc{}, err
 		}
-		doc[fieldDesc.Name] = val
+		doc.Fields[fieldDesc.ID] = val
 	}
 	return doc, nil
 }

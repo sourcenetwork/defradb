@@ -12,13 +12,11 @@ package planner
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
-
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // valuesNode contains a collection
@@ -28,16 +26,18 @@ import (
 // then the rest of the nodes in the graph. It
 // has no children planNodes.
 type valuesNode struct {
+	docMapper
+
 	p *Planner
 	// plan planNode
 
-	ordering []parserTypes.SortCondition
+	ordering []mapper.OrderCondition
 
 	docs     *container.DocumentContainer
 	docIndex int
 }
 
-func (p *Planner) newContainerValuesNode(ordering []parserTypes.SortCondition) *valuesNode {
+func (p *Planner) newContainerValuesNode(ordering []mapper.OrderCondition) *valuesNode {
 	return &valuesNode{
 		p:        p,
 		ordering: ordering,
@@ -94,12 +94,12 @@ func (n *valuesNode) Less(i, j int) bool {
 func (n *valuesNode) docValueLess(da, db core.Doc) bool {
 	var ra, rb interface{}
 	for _, order := range n.ordering {
-		if order.Direction == parserTypes.ASC {
-			ra = getMapProp(da, order.Field)
-			rb = getMapProp(db, order.Field)
-		} else if order.Direction == parserTypes.DESC { // redundant, just else
-			ra = getMapProp(db, order.Field)
-			rb = getMapProp(da, order.Field)
+		if order.Direction == mapper.ASC {
+			ra = getDocProp(da, order.FieldIndexes)
+			rb = getDocProp(db, order.FieldIndexes)
+		} else if order.Direction == mapper.DESC { // redundant, just else
+			ra = getDocProp(db, order.FieldIndexes)
+			rb = getDocProp(da, order.FieldIndexes)
 		}
 
 		if c := base.Compare(ra, rb); c < 0 {
@@ -133,31 +133,25 @@ func (n *valuesNode) Len() int {
 // case of nested objects. The key delimeter is a ".".
 // Eg.
 // prop = "author.name" -> {author: {name: ...}}
-func getMapProp(obj core.Doc, prop string) interface{} {
-	if prop == "" {
+func getDocProp(obj core.Doc, prop []int) interface{} {
+	if len(prop) == 0 {
 		return nil
 	}
-	props := strings.Split(prop, ".")
-	numProps := len(props)
-	return getMapPropList(obj, props, numProps)
+	return getMapPropList(obj, prop)
 }
 
-func getMapPropList(obj core.Doc, props []string, numProps int) interface{} {
-	if numProps == 1 {
-		val, ok := obj[props[0]]
-		if !ok {
-			return nil
-		}
-		return val
+func getMapPropList(obj core.Doc, props []int) interface{} {
+	if len(props) == 1 {
+		return obj.Fields[props[0]]
 	}
 
-	val, ok := obj[props[0]]
-	if !ok {
+	val := obj.Fields[props[0]]
+	if val == nil {
 		return nil
 	}
 	subObj, ok := val.(core.Doc)
 	if !ok {
 		return nil
 	}
-	return getMapPropList(subObj, props[1:], numProps-1)
+	return getMapPropList(subObj, props[1:])
 }

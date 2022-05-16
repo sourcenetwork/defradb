@@ -413,16 +413,14 @@ func getFieldName(field *ast.Field, index int) (name string, alias string) {
 	if _, isAggregate := parserTypes.Aggregates[field.Name.Value]; isAggregate ||
 		field.Name.Value == parserTypes.GroupFieldName {
 		name = fmt.Sprintf("_agg%v", index)
-		if field.Alias == nil {
-			alias = field.Name.Value
-		} else {
-			alias = field.Alias.Value
-		}
 	} else {
 		name = field.Name.Value
-		if field.Alias != nil {
-			alias = field.Alias.Value
-		}
+	}
+
+	if field.Alias == nil {
+		alias = field.Name.Value
+	} else {
+		alias = field.Alias.Value
 	}
 
 	return name, alias

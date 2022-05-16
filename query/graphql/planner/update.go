@@ -16,17 +16,18 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 type updateNode struct {
 	documentIterator
+	docMapper
 
 	p *Planner
 
 	collection client.Collection
 
-	filter *parser.Filter
+	filter *mapper.Filter
 	ids    []string
 
 	patch string
@@ -81,7 +82,9 @@ func (n *updateNode) Next() (bool, error) {
 
 		// consume the updates into our valuesNode
 		for _, resKey := range results.DocKeys {
-			err := n.updateIter.docs.AddDoc(core.Doc{"_key": resKey})
+			doc := n.docMapper.documentMapping.NewDoc()
+			doc.SetKey(resKey)
+			err := n.updateIter.docs.AddDoc(doc)
 			if err != nil {
 				return false, err
 			}
@@ -99,7 +102,7 @@ func (n *updateNode) Next() (bool, error) {
 
 	updatedDoc := n.updateIter.Value()
 	// create a new span with the updateDoc._key
-	docKeyStr := updatedDoc["_key"].(string)
+	docKeyStr := updatedDoc.GetKey()
 	desc := n.collection.Description()
 	updatedDocKeyIndex := base.MakeDocKey(desc, docKeyStr)
 	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
@@ -149,10 +152,10 @@ func (n *updateNode) Explain() (map[string]interface{}, error) {
 	explainerMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
-	if n.filter == nil || n.filter.Conditions == nil {
+	if n.filter == nil || n.filter.ExternalConditions == nil {
 		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	// Add the attribute that represents the patch to update with.
@@ -166,25 +169,25 @@ func (n *updateNode) Explain() (map[string]interface{}, error) {
 	return explainerMap, nil
 }
 
-func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
+func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.IDs,
+		ids:        parsed.DocKeys,
 		isUpdating: true,
 		patch:      parsed.Data,
+		docMapper:  docMapper{&parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 	update.collection = col.WithTxn(p.txn)
 
 	// create the results Select node
-	slct := parsed.ToSelect()
-	slctNode, err := p.Select(slct)
+	slctNode, err := p.Select(&parsed.Select)
 	if err != nil {
 		return nil, err
 	}

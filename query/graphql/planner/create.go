@@ -16,7 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // createNode is used to construct and execute
@@ -28,6 +28,8 @@ import (
 // or Select plans
 type createNode struct {
 	documentIterator
+	docMapper
+
 	p *Planner
 
 	// cache information about the original data source
@@ -40,7 +42,8 @@ type createNode struct {
 
 	err error
 
-	returned bool
+	returned  bool
+	selection *mapper.Select
 }
 
 func (n *createNode) Kind() string { return "createNode" }
@@ -76,9 +79,13 @@ func (n *createNode) Next() (bool, error) {
 		return false, err
 	}
 
-	currentValue, err := n.doc.ToMap()
-	if err != nil {
-		return false, err
+	currentValue := n.documentMapping.NewDoc()
+
+	currentValue.SetKey(n.doc.Key().String())
+	for i, value := range n.doc.Values() {
+		// On create the document will have no aliased fields/aggregates/etc so we can safely take
+		// the first index.
+		n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
 	}
 
 	n.returned = true
@@ -106,25 +113,20 @@ func (n *createNode) Explain() (map[string]interface{}, error) {
 	}, nil
 }
 
-func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
+func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		newDocStr: parsed.Data,
+		selection: &parsed.Select,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 	create.collection = col
-
-	// last step, create a basic Select statement
-	// from the parsed Mutation object
-	// and construct a new Select planNode
-	// which uses the new create node as its
-	// source, instead of a scan node.
-	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create, true, nil)
+	return p.SelectFromSource(&parsed.Select, create, true, nil)
 }

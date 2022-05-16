@@ -2,10 +2,9 @@ package connor
 
 import (
 	"reflect"
-	"strings"
 
-	"github.com/sourcenetwork/defradb/connor/fields"
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 func init() {
@@ -34,7 +33,8 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 				return true, nil
 			}
 		}
-	case []map[string]interface{}:
+		return false, nil
+	case []core.Doc:
 		for _, item := range arr {
 			m, err := MatchWith("$eq", condition, item)
 			if err != nil {
@@ -45,6 +45,7 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 				return true, nil
 			}
 		}
+		return false, nil
 	}
 
 	switch cn := condition.(type) {
@@ -65,7 +66,7 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
-	case map[string]interface{}:
+	case map[FilterKey]interface{}:
 		m := true
 		for prop, cond := range cn {
 			if !m {
@@ -73,23 +74,12 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 				continue
 			}
 
-			if strings.HasPrefix(prop, "$") {
-				mm, err := MatchWith(prop, cond, data)
-				if err != nil {
-					return false, err
-				}
-
-				m = m && mm
-			} else if d, ok := data.(map[string]interface{}); ok {
-				mm, err := MatchWith("$eq", cond, fields.TryGet(d, prop))
-				if err != nil {
-					return false, err
-				}
-
-				m = m && mm
-			} else {
-				return reflect.DeepEqual(condition, data), nil
+			mm, err := MatchWith(prop.GetOperatorOrDefault("$eq"), cond, prop.GetProp(data))
+			if err != nil {
+				return false, err
 			}
+
+			m = m && mm
 		}
 
 		return m, nil

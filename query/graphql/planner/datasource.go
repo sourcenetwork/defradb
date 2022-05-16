@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // sourceInfo stores info about the data source
@@ -29,24 +30,22 @@ type planSource struct {
 	plan planNode
 }
 
-// datasource is a set of utilities for constructing scan/index/join nodes
-// from a given query statement
-func (p *Planner) getSource(collection string, versioned bool) (planSource, error) {
+func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 	// for now, we only handle simple collection scannodes
-	return p.getCollectionScanPlan(collection, versioned)
+	return p.getCollectionScanPlan(parsed)
 }
 
 // @todo: Add field selection
-func (p *Planner) getCollectionScanPlan(collection string, versioned bool) (planSource, error) {
-	if collection == "" {
+func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, error) {
+	if parsed.CollectionName == "" {
 		return planSource{}, fmt.Errorf("collection name cannot be empty")
 	}
-	colDesc, err := p.getCollectionDesc(collection)
+	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
 	if err != nil {
 		return planSource{}, err
 	}
 
-	scan := p.Scan(versioned)
+	scan := p.Scan(parsed)
 	err = scan.initCollection(colDesc)
 	if err != nil {
 		return planSource{}, err
