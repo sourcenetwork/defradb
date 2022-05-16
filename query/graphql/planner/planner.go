@@ -45,7 +45,7 @@ type planNode interface {
 	Next() (bool, error)
 
 	// Values returns the value of the current doc, should only be called *after* Next().
-	Value() map[string]interface{}
+	Value() core.Doc
 
 	// Source returns the child planNode that generates the source values for this plan.
 	// If a plan has no source, nil is returned.
@@ -60,10 +60,10 @@ type planNode interface {
 }
 
 type documentIterator struct {
-	currentValue map[string]interface{}
+	currentValue core.Doc
 }
 
-func (n *documentIterator) Value() map[string]interface{} {
+func (n *documentIterator) Value() core.Doc {
 	return n.currentValue
 }
 
@@ -461,7 +461,8 @@ func (p *Planner) executeRequest(
 
 	for next {
 		if values := plan.Value(); values != nil {
-			docs = append(docs, copyMap(values))
+			copy := copyDocToMap(values)
+			docs = append(docs, copy)
 		}
 
 		next, err = plan.Next()
@@ -521,12 +522,18 @@ func multiErr(errorsToWrap ...error) error {
 	return errs
 }
 
-func copyMap(m map[string]interface{}) map[string]interface{} {
+func copyDocToMap(m core.Doc) map[string]interface{} {
 	cp := make(map[string]interface{})
 	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
+		vm, ok := v.(core.Doc)
 		if ok {
-			cp[k] = copyMap(vm)
+			cp[k] = copyDocToMap(vm)
+		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
+			innerMaps := make([]map[string]interface{}, len(innerDocs))
+			for i, d := range innerDocs {
+				innerMaps[i] = copyDocToMap(d)
+			}
+			cp[k] = innerMaps
 		} else {
 			cp[k] = v
 		}

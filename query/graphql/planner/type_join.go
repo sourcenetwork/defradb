@@ -117,7 +117,7 @@ func (n *typeIndexJoin) Next() (bool, error) {
 	return n.joinPlan.Next()
 }
 
-func (n *typeIndexJoin) Value() map[string]interface{} {
+func (n *typeIndexJoin) Value() core.Doc {
 	return n.joinPlan.Value()
 }
 
@@ -322,7 +322,7 @@ func (n *typeJoinOne) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]interface{} {
+func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	docKey := doc["_key"].(string)
 	filter := map[string]interface{}{
 		n.subTypeFieldName + "_id": docKey,
@@ -333,7 +333,7 @@ func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]int
 		return nil
 	}
 
-	doc[n.subTypeName] = make(map[string]interface{})
+	doc[n.subTypeName] = make(core.Doc)
 	next, err := n.subType.Next()
 	if !next || err != nil {
 		return doc
@@ -344,7 +344,7 @@ func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]int
 	return doc
 }
 
-func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]interface{} {
+func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	// get the subtype doc key
 	subDocKey, ok := doc[n.subTypeName+"_id"]
 	if !ok {
@@ -357,7 +357,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	}
 
 	subDocField := n.subTypeName
-	doc[subDocField] = map[string]interface{}{}
+	doc[subDocField] = core.Doc{}
 
 	// create the collection key for the sub doc
 	slct := n.subType.(*selectTopNode).selectnode
@@ -494,7 +494,7 @@ func (n *typeJoinMany) Next() (bool, error) {
 	// check if theres an index
 	// if there is, scan and aggregate resuts
 	// if not, then manually scan the subtype table
-	subdocs := make([]map[string]interface{}, 0)
+	subdocs := make([]core.Doc, 0)
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {

@@ -33,7 +33,7 @@ type Fetcher interface {
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
 	FetchNext(ctx context.Context) (*encodedDocument, error)
 	FetchNextDecoded(ctx context.Context) (*client.Document, error)
-	FetchNextMap(ctx context.Context) ([]byte, map[string]interface{}, error)
+	FetchNextMap(ctx context.Context) ([]byte, core.Doc, error)
 	Close() error
 }
 
@@ -367,11 +367,11 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 	return df.decodedDoc, nil
 }
 
-// FetchNextMap returns the next document as a map[string]interface{}
+// FetchNextMap returns the next document as a core.Doc
 // The first return value is the parsed document key
 func (df *DocumentFetcher) FetchNextMap(
 	ctx context.Context,
-) ([]byte, map[string]interface{}, error) {
+) ([]byte, core.Doc, error) {
 	encdoc, err := df.FetchNext(ctx)
 	if err != nil {
 		return nil, nil, err

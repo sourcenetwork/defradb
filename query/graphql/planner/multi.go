@@ -127,7 +127,7 @@ func (p *parallelNode) Close() error {
 // It only needs a single child plan to return true for it
 // to return true. Same with errors.
 func (p *parallelNode) Next() (bool, error) {
-	p.currentValue = make(map[string]interface{})
+	p.currentValue = make(core.Doc)
 	var orNext bool
 	for i, plan := range p.children {
 		var next bool
@@ -220,7 +220,7 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 		return false, nil
 	}
 
-	results := make([]map[string]interface{}, 0)
+	results := make([]core.Doc, 0)
 	for {
 		next, err := plan.Next()
 		if err != nil {

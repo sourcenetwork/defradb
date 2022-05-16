@@ -114,7 +114,7 @@ func (source *dataSource) mergeParent(
 	keyFields []string,
 	destination *orderedMap,
 	childNames []string,
-) (map[string]interface{}, bool, error) {
+) (core.Doc, bool, error) {
 	// This needs to be set manually for each item, in case other nodes
 	// aggregate items from the pipe progressing the docIndex beyond the first item
 	// for example, if the child is sorted.
@@ -142,7 +142,7 @@ func (source *dataSource) mergeParent(
 func (source *dataSource) appendChild(
 	keyFields []string,
 	valuesByKey *orderedMap,
-) (map[string]interface{}, bool, error) {
+) (core.Doc, bool, error) {
 	// Most of the time this will be the same document as the parent (with different rendering),
 	// however if the child group is sorted it will be different, the child may also be missing
 	// if it is filtered out by a child filter.  The parent will always exist, but may be
@@ -173,7 +173,7 @@ func (source *dataSource) appendChild(
 
 func join(sources []*dataSource, keyFields []string) (*orderedMap, error) {
 	result := orderedMap{
-		values:       []map[string]interface{}{},
+		values:       []core.Doc{},
 		indexesByKey: map[string]int{},
 	}
 
@@ -207,7 +207,7 @@ func join(sources []*dataSource, keyFields []string) (*orderedMap, error) {
 	return &result, nil
 }
 
-func generateKey(doc map[string]interface{}, keyFields []string) string {
+func generateKey(doc core.Doc, keyFields []string) string {
 	keyBuilder := strings.Builder{}
 	for _, keyField := range keyFields {
 		keyBuilder.WriteString(keyField)
@@ -219,11 +219,11 @@ func generateKey(doc map[string]interface{}, keyFields []string) string {
 // A specialized collection that allows retrieval of items by key whilst preserving the order
 // in which they were added.
 type orderedMap struct {
-	values       []map[string]interface{}
+	values       []core.Doc
 	indexesByKey map[string]int
 }
 
-func (m *orderedMap) mergeParent(key string, childAddresses []string, value map[string]interface{}) {
+func (m *orderedMap) mergeParent(key string, childAddresses []string, value core.Doc) {
 	index, exists := m.indexesByKey[key]
 	if exists {
 		existingValue := m.values[index]
@@ -244,7 +244,7 @@ func (m *orderedMap) mergeParent(key string, childAddresses []string, value map[
 	// If the value is new, we can safely set the child group to an empty
 	// collection (required if children are filtered out)
 	for _, childAddress := range childAddresses {
-		value[childAddress] = []map[string]interface{}{}
+		value[childAddress] = []core.Doc{}
 	}
 
 	index = len(m.values)
@@ -252,13 +252,13 @@ func (m *orderedMap) mergeParent(key string, childAddresses []string, value map[
 	m.indexesByKey[key] = index
 }
 
-func (m *orderedMap) appendChild(key string, childAddress string, value map[string]interface{}) {
+func (m *orderedMap) appendChild(key string, childAddress string, value core.Doc) {
 	index, exists := m.indexesByKey[key]
-	var parent map[string]interface{}
+	var parent core.Doc
 	if !exists {
 		index = len(m.values)
 
-		parent = map[string]interface{}{}
+		parent = core.Doc{}
 		m.values = append(m.values, parent)
 
 		m.indexesByKey[key] = index
@@ -268,13 +268,13 @@ func (m *orderedMap) appendChild(key string, childAddress string, value map[stri
 
 	childProperty, hasChildCollection := parent[childAddress]
 	if !hasChildCollection {
-		childProperty = []map[string]interface{}{
+		childProperty = []core.Doc{
 			value,
 		}
 		parent[childAddress] = childProperty
 		return
 	}
 
-	childCollection := childProperty.([]map[string]interface{})
+	childCollection := childProperty.([]core.Doc)
 	parent[childAddress] = append(childCollection, value)
 }
