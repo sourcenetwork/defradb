@@ -583,13 +583,14 @@ func (p *Planner) SelectFromSource(
 
 // Select constructs a SelectPlan
 func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
-	s := &selectNode{p: p}
-	s.filter = parsed.Filter
+	s := &selectNode{
+		p:          p,
+		filter:     parsed.Filter,
+		renderInfo: &renderInfo{},
+	}
 	limit := parsed.Limit
 	sort := parsed.OrderBy
 	groupBy := parsed.GroupBy
-	s.renderInfo = &renderInfo{}
-	s.groupSelects = []*parser.Select{}
 
 	aggregates, err := s.initSource(parsed)
 	if err != nil {
