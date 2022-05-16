@@ -14,28 +14,43 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type averageNode struct {
 	documentIterator
+	docMapper
 
 	plan planNode
 
-	sumFieldName   string
-	countFieldName string
-	virtualFieldId string
+	sumFieldIndex     int
+	countFieldIndex   int
+	virtualFieldIndex int
 }
 
 func (p *Planner) Average(
-	sumField *parser.Select,
-	countField *parser.Select,
-	field *parser.Select,
+	field *mapper.Aggregate,
 ) (*averageNode, error) {
+	var sumField *mapper.Aggregate
+	var countField *mapper.Aggregate
+
+	for _, dependency := range field.Dependencies {
+		switch dependency.Name {
+		case parserTypes.CountFieldName:
+			countField = dependency
+		case parserTypes.SumFieldName:
+			sumField = dependency
+		default:
+			return nil, fmt.Errorf("Unknown dependency, name: %s", dependency.Name)
+		}
+	}
+
 	return &averageNode{
-		sumFieldName:   sumField.Name,
-		countFieldName: countField.Name,
-		virtualFieldId: field.Name,
+		sumFieldIndex:     sumField.Index,
+		countFieldIndex:   countField.Index,
+		virtualFieldIndex: field.Index,
+		docMapper:         docMapper{&field.DocumentMapping},
 	}, nil
 }
 
@@ -57,34 +72,26 @@ func (n *averageNode) Next() (bool, error) {
 
 	n.currentValue = n.plan.Value()
 
-	countProp, hasCount := n.currentValue[n.countFieldName]
-	sumProp, hasSum := n.currentValue[n.sumFieldName]
-
-	count := 0
-	if hasCount {
-		typedCount, isInt := countProp.(int)
-		if !isInt {
-			return false, fmt.Errorf("Expected count to be int but was: %T", countProp)
-		}
-		count = typedCount
+	countProp := n.currentValue.Fields[n.countFieldIndex]
+	typedCount, isInt := countProp.(int)
+	if !isInt {
+		return false, fmt.Errorf("Expected count to be int but was: %T", countProp)
 	}
+	count := typedCount
 
 	if count == 0 {
-		n.currentValue[n.virtualFieldId] = float64(0)
+		n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
 		return true, nil
 	}
 
-	if hasSum {
-		switch sum := sumProp.(type) {
-		case float64:
-			n.currentValue[n.virtualFieldId] = sum / float64(count)
-		case int64:
-			n.currentValue[n.virtualFieldId] = float64(sum) / float64(count)
-		default:
-			return false, fmt.Errorf("Expected sum to be either float64 or int64 or int but was: %T", sumProp)
-		}
-	} else {
-		n.currentValue[n.virtualFieldId] = float64(0)
+	sumProp := n.currentValue.Fields[n.sumFieldIndex]
+	switch sum := sumProp.(type) {
+	case float64:
+		n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
+	case int64:
+		n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
+	default:
+		return false, fmt.Errorf("Expected sum to be either float64 or int64 or int but was: %T", sumProp)
 	}
 
 	return true, nil

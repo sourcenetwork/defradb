@@ -128,9 +128,12 @@ func (m Mutation) GetAlias() string {
 // Select planNode for the mutation return objects
 func (m Mutation) ToSelect() *Select {
 	return &Select{
-		Name:   m.Schema,
-		Alias:  m.Alias,
-		Fields: m.Fields,
+		Name:         m.Schema,
+		ExternalName: m.Schema,
+		Alias:        m.Alias,
+		Fields:       m.Fields,
+		DocKeys:      m.IDs,
+		Filter:       m.Filter,
 	}
 }
 

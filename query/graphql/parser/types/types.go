@@ -66,11 +66,18 @@ const (
 	CountFieldName   = "_count"
 	DocKeyFieldName  = "_key"
 	GroupFieldName   = "_group"
-	HiddenFieldName  = "_hidden"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
 	ExplainLabel = "explain"
+
+	LinksFieldName  = "links"
+	HeightFieldName = "height"
+	CidFieldName    = "cid"
+	DeltaFieldName  = "delta"
+
+	LinksNameFieldName = "name"
+	LinksCidFieldName  = "cid"
 
 	ASC  = SortDirection("ASC")
 	DESC = SortDirection("DESC")
@@ -99,7 +106,6 @@ var (
 		CountFieldName:   true,
 		SumFieldName:     true,
 		AverageFieldName: true,
-		HiddenFieldName:  true,
 		DocKeyFieldName:  true,
 	}
 
@@ -107,5 +113,16 @@ var (
 		CountFieldName:   {},
 		SumFieldName:     {},
 		AverageFieldName: {},
+	}
+
+	VersionFields = map[string]struct{}{
+		HeightFieldName: {},
+		CidFieldName:    {},
+		DeltaFieldName:  {},
+	}
+
+	LinksFields = map[string]struct{}{
+		LinksNameFieldName: {},
+		LinksCidFieldName:  {},
 	}
 )

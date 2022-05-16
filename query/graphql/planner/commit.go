@@ -16,12 +16,14 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // commitSelectTopNode is a wrapper for the selectTopNode
 // in the case where the select is actually a CommitSelect
 type commitSelectTopNode struct {
+	docMapper
+
 	p    *Planner
 	plan planNode
 }
@@ -36,7 +38,7 @@ func (n *commitSelectTopNode) Next() (bool, error) { return n.plan.Next() }
 
 func (n *commitSelectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
-func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
+func (n *commitSelectTopNode) Value() core.Doc { return n.plan.Value() }
 
 func (n *commitSelectTopNode) Source() planNode { return n.plan }
 
@@ -51,12 +53,11 @@ func (n *commitSelectTopNode) Append() bool { return true }
 
 type commitSelectNode struct {
 	documentIterator
+	docMapper
 
 	p *Planner
 
 	source *dagScanNode
-
-	subRenderInfo map[string]renderInfo
 }
 
 func (n *commitSelectNode) Kind() string {
@@ -98,16 +99,16 @@ func (n *commitSelectNode) Explain() (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
 
-func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
+func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	// check type of commit select (all, latest, one)
 	var commit *commitSelectNode
 	var err error
 	switch parsed.Type {
-	case parser.LatestCommits:
+	case mapper.LatestCommits:
 		commit, err = p.commitSelectLatest(parsed)
-	case parser.OneCommit:
+	case mapper.OneCommit:
 		commit, err = p.commitSelectBlock(parsed)
-	case parser.AllCommits:
+	case mapper.AllCommits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
 		return nil, fmt.Errorf("Invalid CommitSelect type")
@@ -115,21 +116,21 @@ func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	slct := parsed.ToSelect()
-	plan, err := p.SelectFromSource(slct, commit, false, nil)
+	plan, err := p.SelectFromSource(&parsed.Select, commit, false, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &commitSelectTopNode{
-		p:    p,
-		plan: plan,
+		p:         p,
+		plan:      plan,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
 }
 
 // commitSelectLatest is a CommitSelect node initalized with a headsetScanNode and a DocKey
-func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan()
-	headset := p.HeadScan()
+func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
+	dag := p.DAGScan(parsed)
+	headset := p.HeadScan(parsed)
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
 		parsed.FieldName = core.COMPOSITE_NAMESPACE
@@ -141,19 +142,18 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	}
 	dag.headset = headset
 	commit := &commitSelectNode{
-		p:             p,
-		source:        dag,
-		subRenderInfo: make(map[string]renderInfo),
+		p:      p,
+		source: dag,
 	}
 
 	return commit, nil
 }
 
 // commitSelectBlock is a CommitSelect node intialized witout a headsetScanNode, and is
-// expected to be given a target CID in the parser.CommitSelect object. It returns
+// expected to be given a target CID in the mapper.CommitSelect object. It returns
 // a single commit if found
-func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan()
+func (p *Planner) commitSelectBlock(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
+	dag := p.DAGScan(parsed)
 	if parsed.Cid != "" {
 		c, err := cid.Decode(parsed.Cid)
 		if err != nil {
@@ -163,17 +163,16 @@ func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectN
 	} // @todo: handle error if no CID is given
 
 	return &commitSelectNode{
-		p:             p,
-		source:        dag,
-		subRenderInfo: make(map[string]renderInfo),
+		p:      p,
+		source: dag,
 	}, nil
 }
 
 // commitSelectAll is a CommitSelect initialized with a headsetScanNode, and will
 // recursively return all graph commits in order.
-func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan()
-	headset := p.HeadScan()
+func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
+	dag := p.DAGScan(parsed)
+	headset := p.HeadScan(parsed)
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
 		parsed.FieldName = core.COMPOSITE_NAMESPACE
@@ -187,9 +186,8 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
-		p:             p,
-		source:        dag,
-		subRenderInfo: make(map[string]renderInfo),
+		p:      p,
+		source: dag,
 	}
 
 	return commit, nil

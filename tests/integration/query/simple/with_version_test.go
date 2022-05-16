@@ -64,3 +64,63 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Embedded, aliased, latest commits query within object query",
+		Query: `query {
+					users {
+						Name
+						Age
+						_version {
+							cid
+							L1: links {
+								cid
+								name
+							}
+							L2: links {
+								name
+							}
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 21
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+				"_version": []map[string]interface{}{
+					{
+						"cid": "bafybeihtn2xjbjjqxeqp2uhwhvk3tmjfkaf2qtfqh5w5q3ews7ax2dc75a",
+						"L1": []map[string]interface{}{
+							{
+								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+								"name": "Age",
+							},
+							{
+								"cid":  "bafybeidkse2jiqekdebh6zdq4zvyx4gzyrupujbtb6gd7qqdb4hj3pyaeq",
+								"name": "Name",
+							},
+						},
+						"L2": []map[string]interface{}{
+							{
+								"name": "Age",
+							},
+							{
+								"name": "Name",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

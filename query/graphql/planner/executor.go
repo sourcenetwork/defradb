@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
@@ -51,7 +52,7 @@ func (e *QueryExecutor) MakeSelectQuery(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	selectStmt *parser.Select,
+	selectStmt *mapper.Select,
 ) (Query, error) {
 	if selectStmt == nil {
 		return nil, fmt.Errorf("Cannot create query without a selection")

@@ -12,12 +12,15 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Limit the results, yielding only what the limit/offset permits
 // @todo: Handle cursor
 type hardLimitNode struct {
+	docMapper
+
 	p    *Planner
 	plan planNode
 
@@ -27,15 +30,16 @@ type hardLimitNode struct {
 }
 
 // HardLimit creates a new hardLimitNode initalized from the parser.Limit object.
-func (p *Planner) HardLimit(n *parserTypes.Limit) (*hardLimitNode, error) {
+func (p *Planner) HardLimit(parsed *mapper.Select, n *mapper.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
 	return &hardLimitNode{
-		p:        p,
-		limit:    n.Limit,
-		offset:   n.Offset,
-		rowIndex: 0,
+		p:         p,
+		limit:     n.Limit,
+		offset:    n.Offset,
+		rowIndex:  0,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
 }
 
@@ -82,6 +86,7 @@ func (n *hardLimitNode) Source() planNode { return n.plan }
 // the full dataset.
 type renderLimitNode struct {
 	documentIterator
+	docMapper
 
 	p    *Planner
 	plan planNode
@@ -92,16 +97,17 @@ type renderLimitNode struct {
 }
 
 // RenderLimit creates a new renderLimitNode initalized from
-// the parserTypes.Limit object.
-func (p *Planner) RenderLimit(n *parserTypes.Limit) (*renderLimitNode, error) {
+// the parser.Limit object.
+func (p *Planner) RenderLimit(docMap *core.DocumentMapping, n *parserTypes.Limit) (*renderLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
 	return &renderLimitNode{
-		p:        p,
-		limit:    n.Limit,
-		offset:   n.Offset,
-		rowIndex: 0,
+		p:         p,
+		limit:     n.Limit,
+		offset:    n.Offset,
+		rowIndex:  0,
+		docMapper: docMapper{docMap},
 	}, nil
 }
 
@@ -127,7 +133,7 @@ func (n *renderLimitNode) Next() (bool, error) {
 
 	n.rowIndex++
 	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
-		n.currentValue[parserTypes.HiddenFieldName] = struct{}{}
+		n.currentValue.Hidden = true
 	}
 	return true, nil
 }

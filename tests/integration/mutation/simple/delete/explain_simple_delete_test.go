@@ -46,16 +46,14 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -95,17 +93,15 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-											"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+										"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -155,17 +151,15 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-											"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+										"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -199,16 +193,14 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -251,18 +243,16 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": dataMap{
-											"name": dataMap{
-												"$eq": "Shahzad",
-											},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"name": dataMap{
+											"$eq": "Shahzad",
 										},
-										"ids": []string(nil),
 									},
-									"filter": nil,
+									"ids": []string(nil),
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -325,27 +315,25 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": dataMap{
-											"$and": []interface{}{
-												dataMap{
-													"age": dataMap{
-														"$lt": int64(26),
-													},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"$and": []interface{}{
+											dataMap{
+												"age": dataMap{
+													"$lt": int64(26),
 												},
-												dataMap{
-													"verified": dataMap{
-														"$eq": true,
-													},
+											},
+											dataMap{
+												"verified": dataMap{
+													"$eq": true,
 												},
 											},
 										},
-										"ids": []string(nil),
 									},
-									"filter": nil,
+									"ids": []string(nil),
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -403,14 +391,12 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": dataMap{},
-										"ids":    []string(nil),
-									},
-									"filter": nil,
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{},
+									"ids":    []string(nil),
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -452,16 +438,14 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -485,17 +469,15 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids": []string{
-											"bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
-											"bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
-										},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids": []string{
+										"bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
+										"bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -537,30 +519,28 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": dataMap{
-											"$and": []interface{}{
-												dataMap{
-													"age": dataMap{
-														"$lt": int64(26),
-													},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"$and": []interface{}{
+											dataMap{
+												"age": dataMap{
+													"$lt": int64(26),
 												},
-												dataMap{
-													"verified": dataMap{
-														"$eq": true,
-													},
+											},
+											dataMap{
+												"verified": dataMap{
+													"$eq": true,
 												},
 											},
 										},
-										"ids": []string{
-											"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-											"test",
-										},
 									},
-									"filter": nil,
+									"ids": []string{
+										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+										"test",
+									},
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -585,18 +565,16 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": dataMap{
-											"name": dataMap{
-												"$eq": "Shahzad",
-											},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"name": dataMap{
+											"$eq": "Shahzad",
 										},
-										"ids": []string(nil),
 									},
-									"filter": nil,
+									"ids": []string(nil),
 								},
+								"filter": nil,
 							},
 						},
 					},
@@ -630,14 +608,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"deleteNode": dataMap{
-										"filter": nil,
-										"ids":    []string{},
-									},
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
+									"ids":    []string{},
 								},
+								"filter": nil,
 							},
 						},
 					},

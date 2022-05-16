@@ -70,15 +70,17 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 							},
 							"ids": []string(nil),
 							"selectTopNode": dataMap{
-								"renderNode": dataMap{
-									"selectNode": dataMap{
-										"filter": nil,
-										"scanNode": dataMap{
-											"collectionID":   "1",
-											"collectionName": "user",
-											"filter":         nil,
-											"spans":          []dataMap{},
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter": dataMap{
+											"verified": dataMap{
+												"$eq": true,
+											},
 										},
+										"spans": []dataMap{},
 									},
 								},
 							},
@@ -142,14 +144,21 @@ func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 							"bae-958c9334-73cf-5695-bf06-cf06826babfa",
 						},
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
-										"filter":         nil,
-										"spans":          []dataMap{},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "user",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"end":   "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475e",
+											"start": "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+										},
+										{
+											"end":   "/1/bae-958c9334-73cf-5695-bf06-cf06826babfb",
+											"start": "/1/bae-958c9334-73cf-5695-bf06-cf06826babfa",
+										},
 									},
 								},
 							},
@@ -207,14 +216,17 @@ func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 							"bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 						},
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
-										"filter":         nil,
-										"spans":          []dataMap{},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "user",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"end":   "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475e",
+											"start": "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+										},
 									},
 								},
 							},
@@ -285,14 +297,25 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 							"bae-958c9334-73cf-5695-bf06-cf06826babfa",
 						},
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
-										"filter":         nil,
-										"spans":          []dataMap{},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "user",
+									"filter": dataMap{
+										"verified": dataMap{
+											"$eq": true,
+										},
+									},
+									"spans": []dataMap{
+										{
+											"end":   "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475e",
+											"start": "/1/bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+										},
+										{
+											"end":   "/1/bae-958c9334-73cf-5695-bf06-cf06826babfb",
+											"start": "/1/bae-958c9334-73cf-5695-bf06-cf06826babfa",
+										},
 									},
 								},
 							},

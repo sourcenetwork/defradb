@@ -50,13 +50,11 @@ func (c *DocumentContainer) Len() int {
 }
 
 // AddDoc adds a new document to the DocumentContainer.
-// It makes a deep copy before its added
+//
+// It makes a deep copy before its added to allow for independent mutation of
+// the added clone.
 func (c *DocumentContainer) AddDoc(doc core.Doc) error {
-	if doc == nil {
-		return nil
-	}
-	// append to docs slice
-	copyDoc := copyDoc(doc)
+	copyDoc := doc.Clone()
 	c.docs = append(c.docs, copyDoc)
 	c.numDocs++
 	return nil
@@ -78,24 +76,4 @@ func (c *DocumentContainer) Close() error {
 	c.docs = nil
 	c.numDocs = 0
 	return nil
-}
-
-func copyDoc(m core.Doc) core.Doc {
-	cp := make(core.Doc)
-	for k, v := range m {
-		vm, ok := v.(core.Doc)
-		if ok {
-			cp[k] = copyDoc(vm)
-		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
-			innerMaps := make([]core.Doc, len(innerDocs))
-			for i, d := range innerDocs {
-				innerMaps[i] = copyDoc(d)
-			}
-			cp[k] = innerMaps
-		} else {
-			cp[k] = v
-		}
-	}
-
-	return cp
 }

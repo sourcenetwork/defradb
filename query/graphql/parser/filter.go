@@ -22,8 +22,6 @@ import (
 
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
-	"github.com/sourcenetwork/defradb/connor"
-	"github.com/sourcenetwork/defradb/core"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -224,16 +222,6 @@ func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
 	}
 
 	return nil, errors.New("Failed to parse condition value from query filter statement")
-}
-
-// RunFilter runs the given filter expression
-// using the document, and evaluates.
-func RunFilter(doc core.Doc, filter *Filter, ctx EvalContext) (bool, error) {
-	if filter == nil {
-		return true, nil
-	}
-
-	return connor.Match(filter.Conditions, doc)
 }
 
 /*
