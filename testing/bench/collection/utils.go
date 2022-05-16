@@ -17,9 +17,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	benchutils "github.com/sourcenetwork/defradb/testing/bench"
 	"github.com/sourcenetwork/defradb/testing/bench/fixtures"
-	"github.com/sourcenetwork/defradb/client"
 )
 
 const (
