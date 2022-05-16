@@ -13,6 +13,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -102,9 +103,18 @@ type Selection interface {
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name           string
-	Alias          string
+	// The unique, internal name of the Select - this may differ from that which
+	// is visible in the query string
+	Name string
+	// The identifier to be used in the rendered results, typically specified by
+	// the user.
+	Alias string
+	// The name by which the the consumer refers to the select, e.g. `_group`
+	ExternalName   string
 	CollectionName string
+	// If true, this Select will not be exposed/rendered to the consumer and will
+	// only be used internally
+	Hidden bool
 
 	// QueryType indicates what kind of query this is
 	// Currently supports: ScanQuery, VersionedScanQuery
@@ -145,6 +155,34 @@ func (s Select) GetName() string {
 
 func (s Select) GetAlias() string {
 	return s.Alias
+}
+
+// Equal compares the given Selects and returns true if they can be considered equal.
+// Note: Currently only compares Name, ExternalName and Filter as that is all that is
+// currently required, but this should be extended in the future.
+func (s Select) Equal(other Select) bool {
+	if s.Name != other.Name &&
+		s.ExternalName != other.ExternalName {
+		return false
+	}
+
+	if s.Filter == nil {
+		return other.Filter == nil
+	}
+
+	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
+}
+
+// Clone shallow-clones the Select using the provided names.
+// Note: Currently only Filter and Statement are taken from the source select,
+// this will likely expand in the near future.
+func (s Select) Clone(name string, externalName string) *Select {
+	return &Select{
+		Name:         name,
+		ExternalName: externalName,
+		Filter:       s.Filter,
+		Statement:    s.Statement,
+	}
 }
 
 // Field implements Selection
@@ -286,7 +324,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err = parseSelect(ObjectSelection, node)
+				parsed, err = parseSelect(ObjectSelection, node, i)
 			}
 			if err != nil {
 				return nil, err
@@ -305,22 +343,24 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
+func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, error) {
+	name, alias := getFieldName(field, index)
+
 	slct := &Select{
-		Root:      rootType,
-		Statement: field,
-	}
-	slct.Name = field.Name.Value
-	if field.Alias != nil {
-		slct.Alias = field.Alias.Value
+		Name:         name,
+		Alias:        alias,
+		ExternalName: field.Name.Value,
+		Root:         rootType,
+		Statement:    field,
 	}
 
 	// parse arguments
 	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
+		prop, astValue := getArgumentKeyValue(field, argument)
+
 		// parse filter
 		if prop == "filter" {
-			obj := argument.Value.(*ast.ObjectValue)
+			obj := astValue.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
 				return slct, err
@@ -328,20 +368,20 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 
 			slct.Filter = filter
 		} else if prop == "dockey" { // parse single dockey query field
-			val := argument.Value.(*ast.StringValue)
+			val := astValue.(*ast.StringValue)
 			slct.DocKeys = []string{val.Value}
 		} else if prop == "dockeys" {
-			docKeyValues := argument.Value.(*ast.ListValue).Values
+			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
 			slct.DocKeys = docKeys
 		} else if prop == "cid" { // parse single CID query field
-			val := argument.Value.(*ast.StringValue)
+			val := astValue.(*ast.StringValue)
 			slct.CID = val.Value
 		} else if prop == "limit" { // parse limit/offset
-			val := argument.Value.(*ast.IntValue)
+			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
 				return slct, err
@@ -351,7 +391,7 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			}
 			slct.Limit.Limit = i
 		} else if prop == "offset" { // parse limit/offset
-			val := argument.Value.(*ast.IntValue)
+			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
 				return slct, err
@@ -361,7 +401,7 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 			}
 			slct.Limit.Offset = i
 		} else if prop == "order" { // parse sort (order by)
-			obj := argument.Value.(*ast.ObjectValue)
+			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
@@ -371,7 +411,7 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 				Statement:  obj,
 			}
 		} else if prop == "groupBy" {
-			obj := argument.Value.(*ast.ListValue)
+			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
 				fields = append(fields, v.GetValue().(string))
@@ -404,14 +444,62 @@ func parseSelect(rootType SelectionType, field *ast.Field) (*Select, error) {
 	return slct, err
 }
 
+// getArgumentKeyValue returns the relevant arguement name and value for the given field-argument
+// Note: this function will likely need some rework when adding more aggregate options (e.g. limit)
+func getArgumentKeyValue(field *ast.Field, argument *ast.Argument) (string, ast.Value) {
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
+		switch innerProps := argument.Value.(type) {
+		case *ast.ObjectValue:
+			for _, innerV := range innerProps.Fields {
+				if innerV.Name.Value == "filter" {
+					return "filter", innerV.Value
+				}
+			}
+		}
+	}
+	return argument.Name.Value, argument.Value
+}
+
+// getFieldName returns the internal name and alias of the given field at the given index.
+// The returned name/alias may be different from the values directly on the field in order to
+// distinguish between multiple aliases of the same underlying field.
+func getFieldName(field *ast.Field, index int) (name string, alias string) {
+	// Fields that take arguments (e.g. filters) that can be aliased must be renamed internally
+	// to allow code to distinguish between multiple properties targeting the same underlying field
+	// that may or may not have different arguments.  It is hoped that this renaming can be removed
+	// once we migrate to an array-based document structure as per
+	// https://github.com/sourcenetwork/defradb/issues/395
+	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate || field.Name.Value == GroupFieldName {
+		name = fmt.Sprintf("_agg%v", index)
+		if field.Alias == nil {
+			alias = field.Name.Value
+		} else {
+			alias = field.Alias.Value
+		}
+	} else {
+		name = field.Name.Value
+		if field.Alias != nil {
+			alias = field.Alias.Value
+		}
+	}
+
+	return name, alias
+}
+
 func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
 	selections := make([]Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			if node.SelectionSet == nil { // regular field
-				f, err := ParseField(i, root, node)
+			if _, isAggregate := Aggregates[node.Name.Value]; isAggregate {
+				s, err := parseSelect(root, node, i)
+				if err != nil {
+					return nil, err
+				}
+				selections[i] = s
+			} else if node.SelectionSet == nil { // regular field
+				f, err := parseField(root, node)
 				if err != nil {
 					return nil, err
 				}
@@ -422,7 +510,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 				case "_version":
 					subroot = CommitSelection
 				}
-				s, err := parseSelect(subroot, node)
+				s, err := parseSelect(subroot, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -434,24 +522,14 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 	return selections, nil
 }
 
-// ParseField simply parses the Name/Alias
+// parseField simply parses the Name/Alias
 // into a Field type
-func ParseField(i int, root SelectionType, field *ast.Field) (*Field, error) {
-	var name string
+func parseField(root SelectionType, field *ast.Field) (*Field, error) {
 	var alias string
 
-	if _, isAggregate := Aggregates[field.Name.Value]; isAggregate {
-		name = fmt.Sprintf("_agg%v", i)
-		if field.Alias == nil {
-			alias = field.Name.Value
-		} else {
-			alias = field.Alias.Value
-		}
-	} else {
-		name = field.Name.Value
-		if field.Alias != nil {
-			alias = field.Alias.Value
-		}
+	name := field.Name.Value
+	if field.Alias != nil {
+		alias = field.Alias.Value
 	}
 
 	f := &Field{
@@ -477,6 +555,9 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 type AggregateTarget struct {
 	// The property on the object hosting the aggregate.  This should never be empty
 	HostProperty string
+	// The static name of the target host property as it appears in the aggregate
+	// query.  For example `_group`.
+	ExternalHostName string
 	// The property on the `HostProperty` that this aggregate targets.
 	//
 	// This may be empty if the aggregate targets a whole collection (e.g. Count),
@@ -485,7 +566,7 @@ type AggregateTarget struct {
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func (field Field) GetAggregateSource() (AggregateTarget, error) {
+func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) {
 	if len(field.Statement.Arguments) == 0 {
 		return AggregateTarget{}, fmt.Errorf(
 			"Aggregate must be provided with a property to aggregate.",
@@ -493,21 +574,63 @@ func (field Field) GetAggregateSource() (AggregateTarget, error) {
 	}
 
 	var hostProperty string
+	var externalHostName string
 	var childProperty string
 	switch argumentValue := field.Statement.Arguments[0].Value.GetValue().(type) {
 	case string:
-		hostProperty = argumentValue
+		externalHostName = argumentValue
 	case []*ast.ObjectField:
-		hostProperty = field.Statement.Arguments[0].Name.Value
-		if len(argumentValue) > 0 {
-			if innerPathStringValue, isString := argumentValue[0].Value.GetValue().(string); isString {
+		externalHostName = field.Statement.Arguments[0].Name.Value
+		fieldArg, hasFieldArg := tryGet(argumentValue, "field")
+		if hasFieldArg {
+			if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
 				childProperty = innerPathStringValue
 			}
 		}
 	}
 
+	childFields := host.GetSelections()
+	targetField := field.Clone(externalHostName, externalHostName)
+
+	// Check for any fields matching the targetField
+	for _, childField := range childFields {
+		childSelect, isSelect := childField.(*Select)
+		if isSelect && childSelect.Equal(*targetField) {
+			hostProperty = childSelect.Name
+			break
+		}
+	}
+
+	// If we didn't find a field matching the target, we look for something with no filter,
+	// as it should yield all the items required by the aggregate.
+	if hostProperty == "" {
+		for _, childField := range childFields {
+			if childSelect, isSelect := childField.(*Select); isSelect {
+				if childSelect.ExternalName == externalHostName && childSelect.Filter == nil {
+					hostProperty = childSelect.Name
+					break
+				}
+			}
+		}
+	}
+
+	if hostProperty == "" {
+		// child relationships use this currently due to bug https://github.com/sourcenetwork/defradb/issues/390
+		hostProperty = externalHostName
+	}
+
 	return AggregateTarget{
-		HostProperty:  hostProperty,
-		ChildProperty: childProperty,
+		HostProperty:     hostProperty,
+		ExternalHostName: externalHostName,
+		ChildProperty:    childProperty,
 	}, nil
+}
+
+func tryGet(fields []*ast.ObjectField, name string) (arg *ast.ObjectField, hasArg bool) {
+	for _, field := range fields {
+		if field.Name.Value == name {
+			return field, true
+		}
+	}
+	return nil, false
 }

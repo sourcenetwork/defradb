@@ -207,3 +207,74 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by with child filter",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						G1: _group (filter: {Age: {_gt: 26}}){
+							Age
+						}
+						G2: _group (filter: {Age: {_lt: 26}}){
+							Age
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 25
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Carlo",
+				"Age": 55
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Alice",
+				"G1":   []map[string]interface{}{},
+				"G2": []map[string]interface{}{
+					{
+						"Age": uint64(19),
+					},
+				},
+			},
+			{
+				"Name": "John",
+				"G1": []map[string]interface{}{
+					{
+						"Age": uint64(32),
+					},
+				},
+				"G2": []map[string]interface{}{
+					{
+						"Age": uint64(25),
+					},
+				},
+			},
+			{
+				"Name": "Carlo",
+				"G1": []map[string]interface{}{
+					{
+						"Age": uint64(55),
+					},
+				},
+				"G2": []map[string]interface{}{},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -38,6 +38,21 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageOnEmptyCollection(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, average on non-rendered group, empty collection",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_avg(_group: {field: Age})
+					}
+				}`,
+		Results: []map[string]interface{}{},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, average on non-rendered group integer value",

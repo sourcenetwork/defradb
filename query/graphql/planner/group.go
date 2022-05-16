@@ -21,14 +21,15 @@ type groupNode struct {
 
 	p *Planner
 
-	// The child select information.  Will be nil if there is no child `_group` item requested.
-	childSelect *parser.Select
+	// The child select information.  Will be empty if there are no child `_group` items requested.
+	childSelects []*parser.Select
 
 	// The fields to group by - this must be an ordered collection and
 	// will include any parent group-by fields (if any)
 	groupByFields []string
 
-	dataSource dataSource
+	// The data sources that this node will draw data from.
+	dataSources []*dataSource
 
 	values       []map[string]interface{}
 	currentIndex int
@@ -37,22 +38,32 @@ type groupNode struct {
 // Creates a new group node.  The function is recursive and will construct the node-chain for any
 //  child (`_group`) collections. `groupSelect` is optional and will typically be nil if the
 //  child `_group` is not requested.
-func (p *Planner) GroupBy(n *parser.GroupBy, childSelect *parser.Select) (*groupNode, error) {
+func (p *Planner) GroupBy(n *parser.GroupBy, childSelects []*parser.Select) (*groupNode, error) {
 	if n == nil {
 		return nil, nil
 	}
 
-	if childSelect != nil && childSelect.GroupBy != nil {
-		// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
-		// groups will only group on the fields they explicitly reference
-		childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
+	dataSources := []*dataSource{}
+	// GroupBy must always have at least one data source, for example
+	// childSelects may be empty if no group members are requested
+	if len(childSelects) == 0 {
+		dataSources = append(dataSources, newDataSource(parser.GroupFieldName))
+	}
+
+	for _, childSelect := range childSelects {
+		if childSelect.GroupBy != nil {
+			// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
+			// groups will only group on the fields they explicitly reference
+			childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
+		}
+		dataSources = append(dataSources, newDataSource(childSelect.Name))
 	}
 
 	groupNodeObj := groupNode{
 		p:             p,
-		childSelect:   childSelect,
+		childSelects:  childSelects,
 		groupByFields: n.Fields,
-		dataSource:    newDataSource(parser.GroupFieldName),
+		dataSources:   dataSources,
 	}
 	return &groupNodeObj, nil
 }
@@ -63,17 +74,48 @@ func (n *groupNode) Init() error {
 	n.values = nil
 	n.currentValue = nil
 	n.currentIndex = 0
-	return n.dataSource.Init()
+
+	for _, dataSource := range n.dataSources {
+		err := dataSource.Init()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (n *groupNode) Start() error           { return n.dataSource.Start() }
-func (n *groupNode) Spans(spans core.Spans) { n.dataSource.Spans(spans) }
-func (n *groupNode) Close() error           { return n.dataSource.Close() }
-func (n *groupNode) Source() planNode       { return n.dataSource.Source() }
+func (n *groupNode) Start() error {
+	for _, dataSource := range n.dataSources {
+		err := dataSource.Start()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *groupNode) Spans(spans core.Spans) {
+	for _, dataSource := range n.dataSources {
+		dataSource.Spans(spans)
+	}
+}
+
+func (n *groupNode) Close() error {
+	for _, dataSource := range n.dataSources {
+		err := dataSource.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *groupNode) Source() planNode { return n.dataSources[0].Source() }
 
 func (n *groupNode) Next() (bool, error) {
 	if n.values == nil {
-		values, err := join([]dataSource{n.dataSource}, n.groupByFields)
+		values, err := join(n.dataSources, n.groupByFields)
 		if err != nil {
 			return false, err
 		}
