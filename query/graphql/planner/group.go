@@ -33,7 +33,7 @@ type groupNode struct {
 	// The data sources that this node will draw data from.
 	dataSources []*dataSource
 
-	values       []map[string]interface{}
+	values       []core.Doc
 	currentIndex int
 }
 
@@ -135,7 +135,7 @@ func (n *groupNode) Next() (bool, error) {
 					continue
 				}
 
-				childDocs := subSelect.([]map[string]interface{})
+				childDocs := subSelect.([]core.Doc)
 				if childSelect.Limit != nil {
 					l := int64(len(childDocs))
 

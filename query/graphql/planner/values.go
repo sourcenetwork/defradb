@@ -69,7 +69,7 @@ func (n *valuesNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *valuesNode) Value() map[string]interface{} {
+func (n *valuesNode) Value() core.Doc {
 	return n.docs.At(n.docIndex)
 }
 
@@ -91,7 +91,7 @@ func (n *valuesNode) Less(i, j int) bool {
 }
 
 // docValueLess extracts and compare field values of a document
-func (n *valuesNode) docValueLess(da, db map[string]interface{}) bool {
+func (n *valuesNode) docValueLess(da, db core.Doc) bool {
 	var ra, rb interface{}
 	for _, order := range n.ordering {
 		if order.Direction == parserTypes.ASC {
@@ -133,7 +133,7 @@ func (n *valuesNode) Len() int {
 // case of nested objects. The key delimeter is a ".".
 // Eg.
 // prop = "author.name" -> {author: {name: ...}}
-func getMapProp(obj map[string]interface{}, prop string) interface{} {
+func getMapProp(obj core.Doc, prop string) interface{} {
 	if prop == "" {
 		return nil
 	}
@@ -142,7 +142,7 @@ func getMapProp(obj map[string]interface{}, prop string) interface{} {
 	return getMapPropList(obj, props, numProps)
 }
 
-func getMapPropList(obj map[string]interface{}, props []string, numProps int) interface{} {
+func getMapPropList(obj core.Doc, props []string, numProps int) interface{} {
 	if numProps == 1 {
 		val, ok := obj[props[0]]
 		if !ok {
@@ -155,7 +155,7 @@ func getMapPropList(obj map[string]interface{}, props []string, numProps int) in
 	if !ok {
 		return nil
 	}
-	subObj, ok := val.(map[string]interface{})
+	subObj, ok := val.(core.Doc)
 	if !ok {
 		return nil
 	}

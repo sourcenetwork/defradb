@@ -101,7 +101,7 @@ func (n *countNode) Next() (bool, error) {
 			// so this is fine here now, but may need to be moved later once external
 			// count filter support is added.
 			if count > 0 && n.filter != nil {
-				docArray, isDocArray := property.([]map[string]interface{})
+				docArray, isDocArray := property.([]core.Doc)
 				if isDocArray {
 					count = 0
 					for _, doc := range docArray {

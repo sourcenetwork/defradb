@@ -77,6 +77,26 @@ func (n *pipeNode) Next() (bool, error) {
 
 	// Values must be copied out of the node, in case consumers mutate the item
 	// for example: when rendering
-	n.currentValue = copyMap(n.docs.At(n.docIndex))
+	n.currentValue = copyDoc(n.docs.At(n.docIndex))
 	return true, nil
+}
+
+func copyDoc(m core.Doc) core.Doc {
+	cp := make(core.Doc)
+	for k, v := range m {
+		vm, ok := v.(core.Doc)
+		if ok {
+			cp[k] = copyDoc(vm)
+		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
+			innerMaps := make([]core.Doc, len(innerDocs))
+			for i, d := range innerDocs {
+				innerMaps[i] = copyDoc(d)
+			}
+			cp[k] = innerMaps
+		} else {
+			cp[k] = v
+		}
+	}
+
+	return cp
 }

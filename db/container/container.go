@@ -10,6 +10,10 @@
 
 package container
 
+import (
+	"github.com/sourcenetwork/defradb/core"
+)
+
 // DocumentContainer is a specialized buffer to store potentially
 // thousands of document value maps. Its used by the Planner system
 // to store documents that need to have logic applied to all of them.
@@ -19,7 +23,7 @@ package container
 // Close() is called if you want to free all the memory associated
 // with the container
 type DocumentContainer struct {
-	docs    []map[string]interface{}
+	docs    []core.Doc
 	numDocs int
 }
 
@@ -28,13 +32,13 @@ type DocumentContainer struct {
 // A capacity of 0 ignores any initial pre-allocation.
 func NewDocumentContainer(capacity int) *DocumentContainer {
 	return &DocumentContainer{
-		docs:    make([]map[string]interface{}, capacity),
+		docs:    make([]core.Doc, capacity),
 		numDocs: 0,
 	}
 }
 
 // At returns the document at the specified index.
-func (c *DocumentContainer) At(index int) map[string]interface{} {
+func (c *DocumentContainer) At(index int) core.Doc {
 	if index < 0 || index >= c.numDocs {
 		panic("Invalid index for document container")
 	}
@@ -47,12 +51,13 @@ func (c *DocumentContainer) Len() int {
 
 // AddDoc adds a new document to the DocumentContainer.
 // It makes a deep copy before its added
-func (c *DocumentContainer) AddDoc(doc map[string]interface{}) error {
+func (c *DocumentContainer) AddDoc(doc core.Doc) error {
 	if doc == nil {
 		return nil
 	}
 	// append to docs slice
-	c.docs = append(c.docs, copyMap(doc))
+	copyDoc := copyDoc(doc)
+	c.docs = append(c.docs, copyDoc)
 	c.numDocs++
 	return nil
 }
@@ -75,12 +80,18 @@ func (c *DocumentContainer) Close() error {
 	return nil
 }
 
-func copyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
+func copyDoc(m core.Doc) core.Doc {
+	cp := make(core.Doc)
 	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
+		vm, ok := v.(core.Doc)
 		if ok {
-			cp[k] = copyMap(vm)
+			cp[k] = copyDoc(vm)
+		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
+			innerMaps := make([]core.Doc, len(innerDocs))
+			for i, d := range innerDocs {
+				innerMaps[i] = copyDoc(d)
+			}
+			cp[k] = innerMaps
 		} else {
 			cp[k] = v
 		}
