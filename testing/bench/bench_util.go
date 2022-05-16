@@ -36,7 +36,7 @@ const (
 
 var (
 	storage string = "memory"
-	log            = logging.MustNewLogger("defra.bench")
+	log            = logging.MustNewLogger("defra.testing.bench")
 )
 
 func init() {

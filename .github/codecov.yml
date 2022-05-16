@@ -1,7 +1,7 @@
 # Source Network's codecov configuration file.
 
 github_checks:
-    annotations: true
+  annotations: true
 
 codecov:
   require_ci_to_pass: yes
@@ -31,13 +31,11 @@ coverage:
 
     changes: false
 
-
 comment:
   layout: "reach, diff, files"
   behavior: default # update if exists else create new
   require_changes: true
 
 ignore:
-  - "bench"
-  - "db/tests"
+  - "testing"
   - "**/*_test.go"

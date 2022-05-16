@@ -45,7 +45,7 @@ const (
 )
 
 var (
-	log            = logging.MustNewLogger("defra.db.tests")
+	log            = logging.MustNewLogger("defra.testing.db")
 	badgerInMemory bool
 	badgerFile     bool
 	mapStore       bool
@@ -523,9 +523,9 @@ func setupDatabaseUsingTargetBranch(
 		panic(err)
 	}
 
-	targetTestPackage := detectDbChangesCodeDir + "/db/tests/" + strings.Split(
+	targetTestPackage := detectDbChangesCodeDir + "/testing/db/" + strings.Split(
 		currentTestPackage,
-		"/db/tests/",
+		"/testing/db/",
 	)[1]
 
 	// If we are checking for database changes, and we are not seting up the database,
