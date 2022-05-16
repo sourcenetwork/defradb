@@ -33,8 +33,8 @@ type countNode struct {
 	filter *parser.Filter
 }
 
-func (p *Planner) Count(field *parser.Field) (*countNode, error) {
-	source, err := field.GetAggregateSource()
+func (p *Planner) Count(field *parser.Select, host *parser.Select) (*countNode, error) {
+	source, err := field.GetAggregateSource(host)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +43,7 @@ func (p *Planner) Count(field *parser.Field) (*countNode, error) {
 		p:              p,
 		sourceProperty: source.HostProperty,
 		virtualFieldId: field.Name,
+		filter:         field.Filter,
 	}, nil
 }
 

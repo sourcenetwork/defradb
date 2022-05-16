@@ -28,14 +28,16 @@ type sumNode struct {
 	sourceCollection string
 	sourceProperty   string
 	virtualFieldId   string
+
+	filter *parser.Filter
 }
 
 func (p *Planner) Sum(
 	sourceInfo *sourceInfo,
-	field *parser.Field,
+	field *parser.Select,
 	parent *parser.Select,
 ) (*sumNode, error) {
-	source, err := field.GetAggregateSource()
+	source, err := field.GetAggregateSource(parent)
 	if err != nil {
 		return nil, err
 	}
@@ -52,13 +54,14 @@ func (p *Planner) Sum(
 		sourceCollection: source.HostProperty,
 		sourceProperty:   sourceProperty,
 		virtualFieldId:   field.Name,
+		filter:           field.Filter,
 	}, nil
 }
 
 // Returns true if the value to be summed is a float, otherwise false.
 func (p *Planner) isValueFloat(
 	sourceInfo *sourceInfo,
-	parent parser.Selection,
+	parent *parser.Select,
 	source parser.AggregateTarget,
 	sourceProperty string,
 ) (bool, error) {
@@ -114,7 +117,7 @@ func (p *Planner) getSourceField(
 		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
 		// the root field in order to determine the value type.  This is recursive to allow handling
 		// of N-depth aggregations (e.g. sum of sum of sum of...)
-		var sourceField *parser.Field
+		var sourceField *parser.Select
 		var sourceParent parser.Selection
 		for _, field := range parent.GetSelections() {
 			if field.GetName() == source.HostProperty {
@@ -124,11 +127,11 @@ func (p *Planner) getSourceField(
 
 		for _, field := range sourceParent.GetSelections() {
 			if field.GetAlias() == source.ChildProperty {
-				sourceField = field.(*parser.Field)
+				sourceField = field.(*parser.Select)
 				break
 			}
 		}
-		sourceSource, err := sourceField.GetAggregateSource()
+		sourceSource, err := sourceField.GetAggregateSource(parent)
 		if err != nil {
 			return client.FieldDescription{}, err
 		}
@@ -142,7 +145,7 @@ func (p *Planner) getSourceField(
 		)
 	}
 
-	if source.HostProperty == parser.GroupFieldName {
+	if source.ExternalHostName == parser.GroupFieldName {
 		// If the source collection is a group, then the description of the collection
 		// to sum is this object.
 		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
@@ -185,7 +188,7 @@ func (p *Planner) getSourceProperty(source parser.AggregateTarget, parent parser
 			if field.GetName() == source.HostProperty {
 				for _, childField := range field.(*parser.Select).Fields {
 					if childField.GetAlias() == source.ChildProperty {
-						return childField.(*parser.Field).GetName()
+						return childField.(*parser.Select).GetName()
 					}
 				}
 			}
@@ -218,6 +221,14 @@ func (n *sumNode) Next() (bool, error) {
 		switch childCollection := child.(type) {
 		case []map[string]interface{}:
 			for _, childItem := range childCollection {
+				passed, err := parser.RunFilter(childItem, n.filter, n.p.evalCtx)
+				if err != nil {
+					return false, err
+				}
+				if !passed {
+					continue
+				}
+
 				if childProperty, hasChildProperty := childItem[n.sourceProperty]; hasChildProperty {
 					switch v := childProperty.(type) {
 					case int:

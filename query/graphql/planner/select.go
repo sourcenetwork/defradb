@@ -11,18 +11,15 @@
 package planner
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
@@ -110,7 +107,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *parser.Filter
 
-	groupSelect *parser.Select
+	groupSelects []*parser.Select
 }
 
 func (n *selectNode) Init() error {
@@ -231,10 +228,69 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
 		case *parser.Select:
+			var plan aggregateNode
+			var aggregateError error
 			// @todo: check select type:
 			// - TypeJoin
 			// - commitScan
-			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
+			if f.Statement.Name.Value == parser.CountFieldName {
+				aggregateError = n.joinAggregatedChild(parsed, f)
+				if aggregateError != nil {
+					return nil, aggregateError
+				}
+				plan, aggregateError = n.p.Count(f, parsed)
+			} else if f.Statement.Name.Value == parser.SumFieldName {
+				aggregateError = n.joinAggregatedChild(parsed, f)
+				if aggregateError != nil {
+					return nil, aggregateError
+				}
+				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
+			} else if f.Statement.Name.Value == parser.AverageFieldName {
+				averageSource, err := f.GetAggregateSource(parsed)
+				if err != nil {
+					return nil, err
+				}
+				childField := n.p.getSourceProperty(averageSource, parsed)
+				// We must not count nil values else they will corrupt the average (they would be counted otherwise)
+				// so here we append the nil filter to the average (and child nodes) before joining any children.
+				// The nil clause is appended to average and sum as well as count in order to make it much easier
+				// to find them and safely identify existing nodes.
+				appendNotNilFilter(f, childField)
+
+				// then we join the potentially missing child using the dummy field (will be used by sum+count)
+				aggregateError = n.joinAggregatedChild(parsed, f)
+				if aggregateError != nil {
+					return nil, aggregateError
+				}
+
+				// value of the suffix is unimportant here, just needs to be unique
+				dummyCountField := f.Clone(fmt.Sprintf("%s_internalCount", f.Name), parser.CountFieldName)
+				countField, countExists := tryGetField(parsed.Fields, dummyCountField)
+				// Note: sumExists will always be false until we support filtering by nil in the query
+				if !countExists {
+					countField = dummyCountField
+					countPlan, err := n.p.Count(countField, parsed)
+					if err != nil {
+						return nil, err
+					}
+					aggregates = append(aggregates, countPlan)
+				}
+
+				// value of the suffix is unimportant here, just needs to be unique
+				dummySumField := f.Clone(fmt.Sprintf("%s_internalSum", f.Name), parser.SumFieldName)
+				sumField, sumExists := tryGetField(parsed.Fields, dummySumField)
+				// Note: sumExists will always be false until we support filtering by nil in the query
+				if !sumExists {
+					sumField = dummySumField
+					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
+					if err != nil {
+						return nil, err
+					}
+					aggregates = append(aggregates, sumPlan)
+				}
+
+				plan, aggregateError = n.p.Average(sumField, countField, f)
+			} else if f.Name == parser.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
 					Name:  f.Name,
 					Alias: f.Alias,
@@ -265,102 +321,20 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 					return nil, err
 				}
 			} else if f.Root == parser.ObjectSelection {
-				if f.Name == parser.GroupFieldName {
-					n.groupSelect = f
+				if f.Statement.Name.Value == parser.GroupFieldName {
+					n.groupSelects = append(n.groupSelects, f)
 				} else {
 					// nolint:errcheck
 					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 				}
 			}
-		case *parser.Field:
-			var plan aggregateNode
-			var aggregateError error
-
-			switch f.Statement.Name.Value {
-			case parser.CountFieldName:
-				plan, aggregateError = n.p.Count(f)
-			case parser.SumFieldName:
-				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
-			case parser.AverageFieldName:
-				// Average utilises count and sum in order to calculate it's return value,
-				// so we have to add those nodes here if they do not exist else the generated
-				// field names could collide.  Value is currently 3 as if each field was an
-				// _avg field - then the final number of fields would be 3N (count+sum+average)
-				const fieldLenMultiplier = 3
-				countField, countExists := tryGetAggregateField(
-					n.p.ctx,
-					parsed.Fields,
-					parser.CountFieldName,
-					f.Statement.Arguments,
-				)
-
-				if !countExists {
-					const countFieldIndexOffset = 1
-					astField := ast.Field{
-						Name:      &ast.Name{Value: parser.CountFieldName},
-						Arguments: f.Statement.Arguments,
-					}
-					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
-					countFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + countFieldIndexOffset
-					countField, aggregateError = parser.ParseField(countFieldIndex, f.Root, &astField)
-					if aggregateError != nil {
-						return nil, aggregateError
-					}
-
-					countPlan, err := n.p.Count(countField)
-					if err != nil {
-						return nil, err
-					}
-					// We must not count nil values else they will corrupt the average
-					averageSource, err := f.GetAggregateSource()
-					if err != nil {
-						return nil, err
-					}
-					childField := n.p.getSourceProperty(averageSource, parsed)
-					countPlan.filter = &parser.Filter{
-						Conditions: map[string]interface{}{
-							childField: map[string]interface{}{
-								"$ne": nil,
-							},
-						},
-					}
-					aggregates = append(aggregates, countPlan)
-				}
-
-				sumField, sumExists := tryGetAggregateField(n.p.ctx, parsed.Fields, parser.SumFieldName, f.Statement.Arguments)
-				if !sumExists {
-					const sumFieldIndexOffset = 2
-					astField := ast.Field{
-						Name:      &ast.Name{Value: parser.SumFieldName},
-						Arguments: f.Statement.Arguments,
-					}
-					// We need to make sure the new aggregate index does not clash with any existing aggregate fields
-					sumFieldIndex := (len(parsed.Fields) * fieldLenMultiplier) + sumFieldIndexOffset
-					sumField, aggregateError = parser.ParseField(sumFieldIndex, f.Root, &astField)
-					if aggregateError != nil {
-						return nil, aggregateError
-					}
-					sumPlan, err := n.p.Sum(&n.sourceInfo, sumField, parsed)
-					if err != nil {
-						return nil, err
-					}
-					aggregates = append(aggregates, sumPlan)
-				}
-
-				plan, aggregateError = n.p.Average(sumField, countField, f)
-			default:
-				continue
-			}
 
 			if aggregateError != nil {
 				return nil, aggregateError
 			}
 
-			aggregates = append(aggregates, plan)
-
-			aggregateError = n.joinAggregatedChild(parsed, f)
-			if aggregateError != nil {
-				return nil, aggregateError
+			if plan != nil {
+				aggregates = append(aggregates, plan)
 			}
 		}
 	}
@@ -368,111 +342,61 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	return aggregates, nil
 }
 
-// tryGetAggregateField attempts to find an existing aggregate field that matches the given
-// name and arguements.  Will return the match field and true if one is found, false otherwise.
-func tryGetAggregateField(
-	ctx context.Context,
-	fields []parser.Selection,
-	name string,
-	arguements []*ast.Argument,
-) (*parser.Field, bool) {
+// appendNotNilFilter appends a not nil filter for the given child field
+// to the given Select.
+func appendNotNilFilter(field *parser.Select, childField string) {
+	if field.Filter == nil {
+		field.Filter = &parser.Filter{}
+	}
+
+	if field.Filter.Conditions == nil {
+		field.Filter.Conditions = map[string]interface{}{}
+	}
+
+	childBlock, hasChildBlock := field.Filter.Conditions[childField]
+	if !hasChildBlock {
+		childBlock = map[string]interface{}{}
+		field.Filter.Conditions[childField] = childBlock
+	}
+
+	typedChildBlock := childBlock.(map[string]interface{})
+	typedChildBlock["$ne"] = nil
+}
+
+// tryGetField scans the given list of fields for an item matching the given searchTerm.
+// Will return the matched value and true if one is found, else will return nil and false.
+func tryGetField(fields []parser.Selection, searchTerm *parser.Select) (*parser.Select, bool) {
 	for _, field := range fields {
-		f, isField := field.(*parser.Field)
-		if !isField {
+		f, isSelect := field.(*parser.Select)
+		if !isSelect {
 			continue
 		}
 
-		// compare the name on the statement vs the given name.
-		// the field name should not be compared here as it may be
-		// different.
-		if f.Statement.Name.Value == name {
-			allArguementsMatch := true
-
-			for _, possibleMatchingArguement := range f.Statement.Arguments {
-				for _, targetArguement := range arguements {
-					if possibleMatchingArguement.Name.Value != targetArguement.Name.Value {
-						allArguementsMatch = false
-						break
-					}
-
-					if !areASTValuesEqual(ctx, possibleMatchingArguement.Value, targetArguement.Value) {
-						allArguementsMatch = false
-						break
-					}
-				}
-				if !allArguementsMatch {
-					break
-				}
-			}
-
-			if allArguementsMatch {
-				return f, true
-			}
+		if f.Equal(*searchTerm) {
+			return f, true
 		}
 	}
+
 	return nil, false
-}
-
-func areASTValuesEqual(ctx context.Context, thisValue ast.Value, otherValue ast.Value) bool {
-	if thisValue.GetKind() != otherValue.GetKind() {
-		return false
-	}
-
-	switch thisTypedValue := thisValue.GetValue().(type) {
-	case *ast.Variable, *ast.IntValue, *ast.FloatValue, *ast.StringValue, *ast.EnumValue, *ast.BooleanValue:
-		// For these primative types we just have to compare the inner values
-		if thisTypedValue != otherValue.GetValue() {
-			return false
-		}
-	case *ast.ObjectValue:
-		return areASTValuesEqual(ctx, thisTypedValue, otherValue.GetValue().(*ast.ObjectValue))
-	case *ast.ListValue:
-		otherTypedValue := otherValue.GetValue().(*ast.ListValue)
-		if len(thisTypedValue.Values) != len(otherTypedValue.Values) {
-			return false
-		}
-		for i, innerValue := range thisTypedValue.Values {
-			if !areASTValuesEqual(ctx, innerValue, otherTypedValue.Values[i]) {
-				return false
-			}
-		}
-	case []*ast.ObjectField:
-		for i, field := range thisTypedValue {
-			otherTypedValue := otherValue.GetValue().([]*ast.ObjectField)
-			if len(thisTypedValue) != len(otherTypedValue) {
-				return false
-			}
-			if !areASTValuesEqual(ctx, field, otherTypedValue[i]) {
-				return false
-			}
-		}
-	default:
-		// If we do not recognise the type, we should state that they do not equal and continue
-		log.Error(
-			ctx,
-			"Could not evaluate arguement equality, unknown type.",
-			logging.NewKV("Type", fmt.Sprintf("%T", thisValue.GetValue())),
-		)
-		return false
-	}
-
-	return true
 }
 
 // Join any child collections required by the given transformation if the child
 //  collections have not been requested for render by the consumer
 func (n *selectNode) joinAggregatedChild(
 	parsed *parser.Select,
-	field *parser.Field,
+	field *parser.Select,
 ) error {
-	source, err := field.GetAggregateSource()
+	source, err := field.GetAggregateSource(parsed)
 	if err != nil {
 		return err
 	}
 
+	targetField := field.Clone(source.HostProperty, source.ExternalHostName)
+
 	hasChildProperty := false
-	for _, field := range parsed.Fields {
-		if source.HostProperty == field.GetName() {
+	for _, siblingField := range parsed.Fields {
+		siblingSelect, isSelect := siblingField.(*parser.Select)
+		if isSelect && siblingSelect.Equal(*targetField) {
 			hasChildProperty = true
 			break
 		}
@@ -481,17 +405,39 @@ func (n *selectNode) joinAggregatedChild(
 	// If the child item is not requested, then we have add in the necessary components
 	//  to force the child records to be scanned through (they wont be rendered)
 	if !hasChildProperty {
-		if source.HostProperty == parser.GroupFieldName {
-			// It doesn't really matter at the moment if multiple counts are requested
-			//  and we overwrite the n.groupSelect property
-			n.groupSelect = &parser.Select{
-				Name: parser.GroupFieldName,
+		if source.ExternalHostName == parser.GroupFieldName {
+			hasGroupSelect := false
+			for _, childSelect := range n.groupSelects {
+				if childSelect.Equal(*targetField) {
+					hasGroupSelect = true
+					break
+				}
+
+				// if the child filter is nil then we can use it as source with no meaningful overhead
+				//
+				// todo - this might be incorrect when the groupby contains a filter - test
+				// consider adding fancy inclusive logic
+				if childSelect.ExternalName == parser.GroupFieldName && childSelect.Filter == nil {
+					hasGroupSelect = true
+					break
+				}
+			}
+			if !hasGroupSelect {
+				newGroup := &parser.Select{
+					Alias:        source.HostProperty,
+					Name:         fmt.Sprintf("_agg%v", len(parsed.Fields)),
+					ExternalName: parser.GroupFieldName,
+					Hidden:       true,
+				}
+				parsed.Fields = append(parsed.Fields, newGroup)
+				n.groupSelects = append(n.groupSelects, newGroup)
 			}
 		} else if parsed.Root != parser.CommitSelection {
 			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(source.HostProperty)
 			if fieldDescription.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 				subtype := &parser.Select{
-					Name: source.HostProperty,
+					Name:         source.HostProperty,
+					ExternalName: parser.GroupFieldName,
 				}
 				return n.addTypeIndexJoin(subtype)
 			}
@@ -577,7 +523,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
@@ -611,13 +557,14 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	sort := parsed.OrderBy
 	groupBy := parsed.GroupBy
 	s.renderInfo = &renderInfo{}
+	s.groupSelects = []*parser.Select{}
 
 	aggregates, err := s.initSource(parsed)
 	if err != nil {
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}

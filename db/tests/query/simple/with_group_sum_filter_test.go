@@ -16,13 +16,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/db/tests"
 )
 
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testing.T) {
+func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, no children, count on non-rendered group",
+		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						_count(_group: {})
+						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
 		Docs: map[int][]string{
@@ -42,12 +42,12 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 		},
 		Results: []map[string]interface{}{
 			{
-				"Age":    uint64(32),
-				"_count": 2,
+				"Age":  uint64(32),
+				"_sum": int64(64),
 			},
 			{
-				"Age":    uint64(19),
-				"_count": 1,
+				"Age":  uint64(19),
+				"_sum": int64(0),
 			},
 		},
 	}
@@ -55,28 +55,13 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCollection(t *testing.T) {
+func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, no children, count on non-rendered group, empty collection",
+		Description: "Simple query with group by number, no children, sum on rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						_count(_group: {})
-					}
-				}`,
-		Results: []map[string]interface{}{},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, no children, count on rendered group",
-		Query: `query {
-					users(groupBy: [Age]) {
-						Age
-						_count(_group: {})
+						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
 						_group {
 							Name
 						}
@@ -99,8 +84,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 		},
 		Results: []map[string]interface{}{
 			{
-				"Age":    uint64(32),
-				"_count": 2,
+				"Age":  uint64(32),
+				"_sum": int64(64),
 				"_group": []map[string]interface{}{
 					{
 						"Name": "Bob",
@@ -111,8 +96,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				},
 			},
 			{
-				"Age":    uint64(19),
-				"_count": 1,
+				"Age":  uint64(19),
+				"_sum": int64(0),
 				"_group": []map[string]interface{}{
 					{
 						"Name": "Alice",
@@ -125,43 +110,16 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
+func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithMatchingFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, count on undefined field",
+		Description: "Simple query with group by number, no children, sum on rendered, matching filtered group",
 		Query: `query {
 					users(groupBy: [Age]) {
 						Age
-						_count
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
-		},
-		ExpectedError: "Aggregate must be provided with a property to aggregate.",
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, no children, aliased count on non-rendered group",
-		Query: `query {
-					users(groupBy: [Age]) {
-						Age
-						Count: _count(_group: {})
+						_sum(_group: {field: Age, filter: {Name: {_eq: "John"}}})
+						_group(filter: {Name: {_eq: "John"}}) {
+							Name
+						}
 					}
 				}`,
 		Docs: map[int][]string{
@@ -181,56 +139,108 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 		},
 		Results: []map[string]interface{}{
 			{
-				"Age":   uint64(32),
-				"Count": 2,
-			},
-			{
-				"Age":   uint64(19),
-				"Count": 1,
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChildCounts(
-	t *testing.T,
-) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by number, no children, duplicated aliased count on non-rendered group",
-		Query: `query {
-					users(groupBy: [Age]) {
-						Age
-						Count1: _count(_group: {})
-						Count2: _count(_group: {})
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
-		},
-		Results: []map[string]interface{}{
-			{
-				"Age":    uint64(32),
-				"Count1": 2,
-				"Count2": 2,
+				"Age":  uint64(32),
+				"_sum": int64(32),
+				"_group": []map[string]interface{}{
+					{
+						"Name": "John",
+					},
+				},
 			},
 			{
 				"Age":    uint64(19),
-				"Count1": 1,
-				"Count2": 1,
+				"_sum":   int64(0),
+				"_group": []map[string]interface{}{},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithDifferentFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, sum on non-rendered, different filtered group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						_group(filter: {Name: {_eq: "John"}}) {
+							Name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Bob",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Age":  uint64(32),
+				"_sum": int64(64),
+				"_group": []map[string]interface{}{
+					{
+						"Name": "John",
+					},
+				},
+			},
+			{
+				"Age":    uint64(19),
+				"_sum":   int64(0),
+				"_group": []map[string]interface{}{},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDifferentFilters(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						S1: _sum(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						S2: _sum(_group: {field: Age, filter: {Age: {_lt: 26}}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Bob",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Age": uint64(32),
+				"S1":  int64(64),
+				"S2":  int64(0),
+			},
+			{
+				"Age": uint64(19),
+				"S1":  int64(0),
+				"S2":  int64(19),
 			},
 		},
 	}

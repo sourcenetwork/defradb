@@ -191,9 +191,15 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n, parentPlan)
 	case *groupNode:
-		// We only care about expanding the child source here, it is assumed that the parent source
-		// is expanded elsewhere/already
-		return p.expandPlan(n.dataSource.childSource, parentPlan)
+		for _, dataSource := range n.dataSources {
+			// We only care about expanding the child source here, it is assumed that the parent source
+			// is expanded elsewhere/already
+			err := p.expandPlan(dataSource.childSource, parentPlan)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	case MultiNode:
 		return p.expandMultiNode(n, parentPlan)
 	case *updateNode:
@@ -276,7 +282,6 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
-	var childSource planNode
 	// Find the first scan node in the plan, we assume that it will be for the correct collection
 	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
 	// Check for any existing pipe nodes in the plan, we should use it if there is one
@@ -288,9 +293,15 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		pipe.source = scanNode
 	}
 
-	if plan.group.childSelect != nil {
+	if len(plan.group.childSelects) == 0 {
+		dataSource := plan.group.dataSources[0]
+		dataSource.parentSource = plan.plan
+		dataSource.pipeNode = pipe
+	}
+
+	for i, childSelect := range plan.group.childSelects {
 		childSelectNode, err := p.SelectFromSource(
-			plan.group.childSelect,
+			childSelect,
 			pipe,
 			false,
 			&plan.source.(*selectNode).sourceInfo,
@@ -301,18 +312,24 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		// We need to remove the render so that any child records are preserved on arrival at the parent
 		childSelectNode.(*selectTopNode).render = nil
 
-		childSource = childSelectNode
+		dataSource := plan.group.dataSources[i]
+		dataSource.childSource = childSelectNode
+		dataSource.parentSource = plan.plan
+		dataSource.pipeNode = pipe
 	}
-
-	plan.group.dataSource.childSource = childSource
-	plan.group.dataSource.parentSource = plan.plan
-	plan.group.dataSource.pipeNode = pipe
 
 	if err := p.walkAndReplacePlan(plan.group, scanNode, pipe); err != nil {
 		return err
 	}
 
-	return p.expandPlan(childSource, plan)
+	for _, dataSource := range plan.group.dataSources {
+		err := p.expandPlan(dataSource.childSource, plan)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {

@@ -28,9 +28,9 @@ type averageNode struct {
 }
 
 func (p *Planner) Average(
-	sumField *parser.Field,
-	countField *parser.Field,
-	field *parser.Field,
+	sumField *parser.Select,
+	countField *parser.Select,
+	field *parser.Select,
 ) (*averageNode, error) {
 	return &averageNode{
 		sumFieldName:   sumField.Name,
