@@ -38,16 +38,19 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type headsetScanNode struct {
 	documentIterator
+	docMapper
 
 	p   *Planner
 	key core.DataStoreKey
@@ -58,6 +61,7 @@ type headsetScanNode struct {
 	cid *cid.Cid
 
 	fetcher fetcher.HeadFetcher
+	parsed  *mapper.CommitSelect
 }
 
 func (n *headsetScanNode) Kind() string {
@@ -106,9 +110,9 @@ func (h *headsetScanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	h.currentValue = map[string]interface{}{
-		"cid": *h.cid,
-	}
+	h.currentValue = h.parsed.DocumentMapping.NewDoc()
+	h.parsed.DocumentMapping.SetFirstOfName(&h.currentValue, "cid", *h.cid)
+
 	return true, nil
 }
 
@@ -118,12 +122,17 @@ func (h *headsetScanNode) Close() error {
 
 func (h *headsetScanNode) Source() planNode { return nil }
 
-func (p *Planner) HeadScan() *headsetScanNode {
-	return &headsetScanNode{p: p}
+func (p *Planner) HeadScan(parsed *mapper.CommitSelect) *headsetScanNode {
+	return &headsetScanNode{
+		p:         p,
+		parsed:    parsed,
+		docMapper: docMapper{&parsed.DocumentMapping},
+	}
 }
 
 type dagScanNode struct {
 	documentIterator
+	docMapper
 
 	p     *Planner
 	cid   *cid.Cid
@@ -141,6 +150,7 @@ type dagScanNode struct {
 	queuedCids *list.List
 
 	headset *headsetScanNode
+	parsed  *mapper.CommitSelect
 
 	// previousScanNode planNode
 	// linksScanNode    planNode
@@ -148,11 +158,13 @@ type dagScanNode struct {
 	// block blocks.Block
 }
 
-func (p *Planner) DAGScan() *dagScanNode {
+func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
 	return &dagScanNode{
 		p:            p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   list.New(),
+		parsed:       parsed,
+		docMapper:    docMapper{&parsed.DocumentMapping},
 	}
 }
 
@@ -232,7 +244,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		val := n.headset.Value()
-		cid, ok := val["cid"].(cid.Cid)
+		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(cid.Cid)
 		if !ok {
 			return false, fmt.Errorf("Headset scan node returned an invalid cid")
 		}
@@ -263,7 +275,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 	var heads []*ipld.Link
-	n.currentValue, heads, err = dagBlockToNodeMap(block)
+	n.currentValue, heads, err = n.dagBlockToNodeDoc(block)
 	if err != nil {
 		return false, err
 	}
@@ -328,46 +340,55 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func dagBlockToNodeMap(block blocks.Block) (map[string]interface{}, []*ipld.Link, error) {
-	commit := map[string]interface{}{
-		"cid": block.Cid().String(),
-	}
+func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
+	commit := n.parsed.DocumentMapping.NewDoc()
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", block.Cid().String())
 
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())
 	if err != nil {
-		return nil, nil, err
+		return core.Doc{}, nil, err
 	}
 
 	// @todo: Wrap delta unmarshaling into a proper typed interface.
 	var delta map[string]interface{}
 	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
-		return nil, nil, err
+		return core.Doc{}, nil, err
 	}
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return nil, nil, fmt.Errorf("Commit Delta missing priority key")
+		return core.Doc{}, nil, fmt.Errorf("Commit Delta missing priority key")
 	}
 
-	commit["height"] = int64(prio)
-	commit["delta"] = delta["Data"] // check
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
 
 	heads := make([]*ipld.Link, 0)
 
 	// links
-	links := make([]map[string]interface{}, len(nd.Links()))
-	for i, l := range nd.Links() {
-		link := map[string]interface{}{
-			"name": l.Name,
-			"cid":  l.Cid.String(),
-		}
-		links[i] = link
+	linksIndexes := n.parsed.DocumentMapping.IndexesByName[parserTypes.LinksFieldName]
 
+	for _, linksIndex := range linksIndexes {
+		links := make([]core.Doc, len(nd.Links()))
+		linksMapping := n.parsed.DocumentMapping.ChildMappings[linksIndex]
+
+		for i, l := range nd.Links() {
+			link := linksMapping.NewDoc()
+			linksMapping.SetFirstOfName(&link, "name", l.Name)
+			linksMapping.SetFirstOfName(&link, "cid", l.Cid.String())
+
+			links[i] = link
+		}
+
+		commit.Fields[linksIndex] = links
+	}
+
+	for _, l := range nd.Links() {
 		if l.Name == "_head" {
 			heads = append(heads, l)
 		}
 	}
-	commit["links"] = links
+
 	return commit, heads, nil
 }

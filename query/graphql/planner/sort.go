@@ -12,7 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // simplified planNode interface.
@@ -38,10 +38,12 @@ type sortingStrategy interface {
 
 // order the results
 type sortNode struct {
+	docMapper
+
 	p    *Planner
 	plan planNode
 
-	ordering []parserTypes.SortCondition
+	ordering []mapper.OrderCondition
 
 	// simplified planNode interface
 	// used for iterating through
@@ -61,15 +63,16 @@ type sortNode struct {
 // plans values in a sorted mannor. The field to sort by, and the
 // direction of sorting is determined by the given parserTypes.OrderBy
 // object.
-func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
+func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*sortNode, error) {
 	if n == nil { // no orderby info
 		return nil, nil
 	}
 
 	return &sortNode{
-		p:        p,
-		ordering: n.Conditions,
-		needSort: true,
+		p:         p,
+		ordering:  n.Conditions,
+		needSort:  true,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
 }
 

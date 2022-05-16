@@ -20,6 +20,7 @@ import (
 // requested more than once will not be re-loaded from source.
 type pipeNode struct {
 	documentIterator
+	docMapper
 
 	source planNode
 
@@ -29,11 +30,12 @@ type pipeNode struct {
 	docIndex int
 }
 
-func newPipeNode() pipeNode {
+func newPipeNode(docMap *core.DocumentMapping) pipeNode {
 	return pipeNode{
 		docs: container.NewDocumentContainer(0),
 		// A docIndex of minus -1 indicated that nothing has been read yet
-		docIndex: -1,
+		docIndex:  -1,
+		docMapper: docMapper{docMap},
 	}
 }
 
@@ -77,26 +79,6 @@ func (n *pipeNode) Next() (bool, error) {
 
 	// Values must be copied out of the node, in case consumers mutate the item
 	// for example: when rendering
-	n.currentValue = copyDoc(n.docs.At(n.docIndex))
+	n.currentValue = n.docs.At(n.docIndex).Clone()
 	return true, nil
-}
-
-func copyDoc(m core.Doc) core.Doc {
-	cp := make(core.Doc)
-	for k, v := range m {
-		vm, ok := v.(core.Doc)
-		if ok {
-			cp[k] = copyDoc(vm)
-		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
-			innerMaps := make([]core.Doc, len(innerDocs))
-			for i, d := range innerDocs {
-				innerMaps[i] = copyDoc(d)
-			}
-			cp[k] = innerMaps
-		} else {
-			cp[k] = v
-		}
-	}
-
-	return cp
 }

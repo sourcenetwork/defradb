@@ -25,7 +25,6 @@ var (
 	_ planNode = (*parallelNode)(nil)
 	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*renderLimitNode)(nil)
-	_ planNode = (*renderNode)(nil)
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*selectNode)(nil)
 	_ planNode = (*selectTopNode)(nil)

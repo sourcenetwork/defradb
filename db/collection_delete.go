@@ -21,7 +21,6 @@ import (
 	query "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -228,7 +227,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Extract the dockey in the string format from the document value.
-		docKey := query.Value()[parserTypes.DocKeyFieldName].(string)
+		docKey := query.Value().GetKey()
 
 		// Convert from string to client.DocKey.
 		key := core.PrimaryDataStoreKey{

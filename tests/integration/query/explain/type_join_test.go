@@ -118,40 +118,38 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"direction": "primary",
-									"joinType":  "typeJoinOne",
-									"rootName":  "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"filter":         nil,
-											"collectionID":   "3",
-											"collectionName": "author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
+						"selectNode": dataMap{
+							"filter": nil,
+							"typeIndexJoin": dataMap{
+								"direction": "primary",
+								"joinType":  "typeJoinOne",
+								"rootName":  "author",
+								"root": dataMap{
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "3",
+										"collectionName": "author",
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
 											},
 										},
 									},
-									"subTypeName": "contact",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"scanNode": dataMap{
-													"filter":         nil,
-													"collectionID":   "4",
-													"collectionName": "authorContact",
-													"spans": []dataMap{
-														{
-															"start": "/4",
-															"end":   "/5",
-														},
+								},
+								"subTypeName": "contact",
+								"subType": dataMap{
+									"selectTopNode": dataMap{
+										"selectNode": dataMap{
+											"filter": nil,
+											"scanNode": dataMap{
+												"filter":         nil,
+												"collectionID":   "4",
+												"collectionName": "authorContact",
+												"spans": []dataMap{
+													{
+														"start": "/4",
+														"end":   "/5",
 													},
 												},
 											},
@@ -275,42 +273,40 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"parallelNode": []dataMap{
-									{
-										"typeIndexJoin": dataMap{
-											"joinType":  "typeJoinOne",
-											"direction": "primary",
-											"rootName":  "author",
-											"root": dataMap{
-												"scanNode": dataMap{
-													"filter":         nil,
-													"collectionID":   "3",
-													"collectionName": "author",
-													"spans": []dataMap{
-														{
-															"start": "/3",
-															"end":   "/4",
-														},
+						"selectNode": dataMap{
+							"filter": nil,
+							"parallelNode": []dataMap{
+								{
+									"typeIndexJoin": dataMap{
+										"joinType":  "typeJoinOne",
+										"direction": "primary",
+										"rootName":  "author",
+										"root": dataMap{
+											"scanNode": dataMap{
+												"filter":         nil,
+												"collectionID":   "3",
+												"collectionName": "author",
+												"spans": []dataMap{
+													{
+														"start": "/3",
+														"end":   "/4",
 													},
 												},
 											},
-											"subTypeName": "contact",
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"filter": nil,
-														"scanNode": dataMap{
-															"filter":         nil,
-															"collectionID":   "4",
-															"collectionName": "authorContact",
-															"spans": []dataMap{
-																{
-																	"start": "/4",
-																	"end":   "/5",
-																},
+										},
+										"subTypeName": "contact",
+										"subType": dataMap{
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"filter": nil,
+													"scanNode": dataMap{
+														"filter":         nil,
+														"collectionID":   "4",
+														"collectionName": "authorContact",
+														"spans": []dataMap{
+															{
+																"start": "/4",
+																"end":   "/5",
 															},
 														},
 													},
@@ -318,38 +314,38 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 											},
 										},
 									},
-									{
-										"typeIndexJoin": dataMap{
-											"joinType":  "typeJoinOne",
-											"direction": "primary",
-											"rootName":  "author",
-											"root": dataMap{
-												"scanNode": dataMap{
-													"filter":         nil,
-													"collectionID":   "3",
-													"collectionName": "author",
-													"spans": []dataMap{
-														{
-															"start": "/3",
-															"end":   "/4",
-														},
+								},
+								{
+									"typeIndexJoin": dataMap{
+										"joinType":  "typeJoinOne",
+										"direction": "primary",
+										"rootName":  "author",
+										"root": dataMap{
+											"scanNode": dataMap{
+												"filter":         nil,
+												"collectionID":   "3",
+												"collectionName": "author",
+												"spans": []dataMap{
+													{
+														"start": "/3",
+														"end":   "/4",
 													},
 												},
 											},
-											"subTypeName": "contact",
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"filter": nil,
-														"scanNode": dataMap{
-															"filter":         nil,
-															"collectionID":   "4",
-															"collectionName": "authorContact",
-															"spans": []dataMap{
-																{
-																	"start": "/4",
-																	"end":   "/5",
-																},
+										},
+										"subTypeName": "contact",
+										"subType": dataMap{
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"filter": nil,
+													"scanNode": dataMap{
+														"filter":         nil,
+														"collectionID":   "4",
+														"collectionName": "authorContact",
+														"spans": []dataMap{
+															{
+																"start": "/4",
+																"end":   "/5",
 															},
 														},
 													},
@@ -476,62 +472,60 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType":  "typeJoinOne",
-									"direction": "primary",
-									"rootName":  "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"filter":         nil,
-											"collectionID":   "3",
-											"collectionName": "author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
-												},
+						"selectNode": dataMap{
+							"filter": nil,
+							"typeIndexJoin": dataMap{
+								"joinType":  "typeJoinOne",
+								"direction": "primary",
+								"rootName":  "author",
+								"root": dataMap{
+									"scanNode": dataMap{
+										"filter":         nil,
+										"collectionID":   "3",
+										"collectionName": "author",
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
 											},
 										},
 									},
-									"subTypeName": "contact",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"selectNode": dataMap{
-												"filter": nil,
-												"typeIndexJoin": dataMap{
-													"joinType":  "typeJoinOne",
-													"direction": "primary",
-													"rootName":  "contact",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"filter":         nil,
-															"collectionID":   "4",
-															"collectionName": "authorContact",
-															"spans": []dataMap{
-																{
-																	"start": "/4",
-																	"end":   "/5",
-																},
+								},
+								"subTypeName": "contact",
+								"subType": dataMap{
+									"selectTopNode": dataMap{
+										"selectNode": dataMap{
+											"filter": nil,
+											"typeIndexJoin": dataMap{
+												"joinType":  "typeJoinOne",
+												"direction": "primary",
+												"rootName":  "contact",
+												"root": dataMap{
+													"scanNode": dataMap{
+														"filter":         nil,
+														"collectionID":   "4",
+														"collectionName": "authorContact",
+														"spans": []dataMap{
+															{
+																"start": "/4",
+																"end":   "/5",
 															},
 														},
 													},
-													"subTypeName": "address",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"filter":         nil,
-																	"collectionID":   "5",
-																	"collectionName": "contactAddress",
-																	"spans": []dataMap{
-																		{
-																			"start": "/5",
-																			"end":   "/6",
-																		},
+												},
+												"subTypeName": "address",
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"filter": nil,
+															"scanNode": dataMap{
+																"filter":         nil,
+																"collectionID":   "5",
+																"collectionName": "contactAddress",
+																"spans": []dataMap{
+																	{
+																		"start": "/5",
+																		"end":   "/6",
 																	},
 																},
 															},

@@ -15,12 +15,13 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // scans an index for records
 type scanNode struct {
 	documentIterator
+	docMapper
 
 	p    *Planner
 	desc client.CollectionDescription
@@ -31,7 +32,7 @@ type scanNode struct {
 	spans   core.Spans
 	reverse bool
 
-	filter *parser.Filter
+	filter *mapper.Filter
 
 	scanInitialized bool
 
@@ -83,15 +84,16 @@ func (n *scanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.currentValue, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.DocumentMapping)
 		if err != nil {
 			return false, err
 		}
-		if n.currentValue == nil {
+
+		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
+		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}
@@ -132,10 +134,10 @@ func (n *scanNode) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{}
 
 	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.Conditions == nil {
+	if n.filter == nil || n.filter.ExternalConditions == nil {
 		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	// Add the collection attributes.
@@ -151,14 +153,18 @@ func (n *scanNode) Explain() (map[string]interface{}, error) {
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(versioned bool) *scanNode {
+func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
 	var f fetcher.Fetcher
-	if versioned {
+	if parsed.Cid != "" {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
 	}
-	return &scanNode{p: p, fetcher: f}
+	return &scanNode{
+		p:         p,
+		fetcher:   f,
+		docMapper: docMapper{&parsed.DocumentMapping},
+	}
 }
 
 // multiScanNode is a buffered scanNode that has
@@ -171,6 +177,8 @@ func (p *Planner) Scan(versioned bool) *scanNode {
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
 type multiScanNode struct {
+	docMapper
+
 	scanNode   *scanNode
 	numReaders int
 	numCalls   int
@@ -204,7 +212,7 @@ func (n *multiScanNode) Next() (bool, error) {
 	return n.lastBool, n.lastErr
 }
 
-func (n *multiScanNode) Value() map[string]interface{} {
+func (n *multiScanNode) Value() core.Doc {
 	return n.scanNode.documentIterator.Value()
 }
 
