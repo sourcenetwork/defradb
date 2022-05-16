@@ -65,12 +65,12 @@ type selectTopNode struct {
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
-func (n *selectTopNode) Init() error                   { return n.plan.Init() }
-func (n *selectTopNode) Start() error                  { return n.plan.Start() }
-func (n *selectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *selectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
-func (n *selectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *selectTopNode) Source() planNode              { return n.source }
+func (n *selectTopNode) Init() error            { return n.plan.Init() }
+func (n *selectTopNode) Start() error           { return n.plan.Start() }
+func (n *selectTopNode) Next() (bool, error)    { return n.plan.Next() }
+func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *selectTopNode) Value() core.Doc        { return n.plan.Value() }
+func (n *selectTopNode) Source() planNode       { return n.source }
 func (n *selectTopNode) Close() error {
 	if n.plan == nil {
 		return nil

@@ -50,7 +50,7 @@ type planNode interface {
 	Next() (bool, error)
 
 	// Values returns the value of the current doc
-	Value() map[string]interface{}
+	Value() core.Doc
 
 	// Source returns the child planNode that
 	// generates the source values for this plan.
@@ -67,19 +67,19 @@ type baseNode struct { //nolint:unused
 	plan planNode
 }
 
-func (n *baseNode) Init() error                   { return n.plan.Init() }  //nolint:unused
-func (n *baseNode) Start() error                  { return n.plan.Start() } //nolint:unused
-func (n *baseNode) Next() (bool, error)           { return n.plan.Next() }  //nolint:unused
-func (n *baseNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }   //nolint:unused
-func (n *baseNode) Value() map[string]interface{} { return n.plan.Value() } //nolint:unused
-func (n *baseNode) Close() error                  { return n.plan.Close() } //nolint:unused
-func (n *baseNode) Source() planNode              { return n.plan }         //nolint:unused
+func (n *baseNode) Init() error            { return n.plan.Init() }  //nolint:unused
+func (n *baseNode) Start() error           { return n.plan.Start() } //nolint:unused
+func (n *baseNode) Next() (bool, error)    { return n.plan.Next() }  //nolint:unused
+func (n *baseNode) Spans(spans core.Spans) { n.plan.Spans(spans) }   //nolint:unused
+func (n *baseNode) Value() core.Doc        { return n.plan.Value() } //nolint:unused
+func (n *baseNode) Close() error           { return n.plan.Close() } //nolint:unused
+func (n *baseNode) Source() planNode       { return n.plan }         //nolint:unused
 
 type documentIterator struct {
-	currentValue map[string]interface{}
+	currentValue core.Doc
 }
 
-func (n *documentIterator) Value() map[string]interface{} {
+func (n *documentIterator) Value() core.Doc {
 	return n.currentValue
 }
 
@@ -460,7 +460,7 @@ func (p *Planner) queryDocs(
 	var docs []map[string]interface{}
 	for {
 		if values := plan.Value(); values != nil {
-			copy := copyMap(values)
+			copy := copyDocToMap(values)
 			docs = append(docs, copy)
 		}
 
@@ -485,12 +485,18 @@ func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
 }
 
-func copyMap(m map[string]interface{}) map[string]interface{} {
+func copyDocToMap(m core.Doc) map[string]interface{} {
 	cp := make(map[string]interface{})
 	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
+		vm, ok := v.(core.Doc)
 		if ok {
-			cp[k] = copyMap(vm)
+			cp[k] = copyDocToMap(vm)
+		} else if innerDocs, isDocArray := v.([]core.Doc); isDocArray {
+			innerMaps := make([]map[string]interface{}, len(innerDocs))
+			for i, d := range innerDocs {
+				innerMaps[i] = copyDocToMap(d)
+			}
+			cp[k] = innerMaps
 		} else {
 			cp[k] = v
 		}

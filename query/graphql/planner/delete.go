@@ -74,7 +74,7 @@ func (n *deleteNode) Next() (bool, error) {
 
 		// Consume the deletes into our valuesNode
 		for _, resKey := range results.DocKeys {
-			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			err := n.deleteIter.docs.AddDoc(core.Doc{"_key": resKey})
 			if err != nil {
 				return false, err
 			}
@@ -89,7 +89,7 @@ func (n *deleteNode) Next() (bool, error) {
 	return n.deleteIter.Next()
 }
 
-func (n *deleteNode) Value() map[string]interface{} {
+func (n *deleteNode) Value() core.Doc {
 	return n.deleteIter.Value()
 }
 

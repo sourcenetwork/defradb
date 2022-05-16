@@ -219,7 +219,7 @@ func (n *sumNode) Next() (bool, error) {
 
 	if child, hasProperty := n.currentValue[n.sourceCollection]; hasProperty {
 		switch childCollection := child.(type) {
-		case []map[string]interface{}:
+		case []core.Doc:
 			for _, childItem := range childCollection {
 				passed, err := parser.RunFilter(childItem, n.filter, n.p.evalCtx)
 				if err != nil {

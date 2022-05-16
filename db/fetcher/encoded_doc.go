@@ -15,6 +15,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 type EPTuple []encProperty
@@ -154,8 +155,8 @@ func (encdoc *encodedDocument) Decode() (*client.Document, error) {
 
 // DecodeToMap returns a decoded document as a
 // map of field/value pairs
-func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
-	doc := make(map[string]interface{})
+func (encdoc *encodedDocument) DecodeToMap() (core.Doc, error) {
+	doc := make(core.Doc)
 	doc["_key"] = string(encdoc.Key)
 	for fieldDesc, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()

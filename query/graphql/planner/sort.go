@@ -20,7 +20,7 @@ import (
 // in value generation and retrieval.
 type valueIterator interface {
 	Next() (bool, error)
-	Value() map[string]interface{}
+	Value() core.Doc
 	Close()
 }
 
@@ -30,7 +30,7 @@ type sortingStrategy interface {
 	// copies data if its needed.
 	// Ideally stores inside a valuesNode
 	// rowContainer buffer.
-	Add(map[string]interface{}) error
+	Add(core.Doc) error
 	// Finish finalizes and applies the actual
 	// sorting mechanism to all the stored data.
 	Finish()
@@ -82,7 +82,7 @@ func (n *sortNode) Init() error {
 func (n *sortNode) Start() error           { return n.plan.Start() }
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
-func (n *sortNode) Value() map[string]interface{} {
+func (n *sortNode) Value() core.Doc {
 	return n.valueIter.Value()
 }
 
@@ -154,7 +154,7 @@ func newAllSortStrategy(v *valuesNode) *allSortStrategy {
 }
 
 // Add adds a new document to underlying valueNode
-func (s *allSortStrategy) Add(doc map[string]interface{}) error {
+func (s *allSortStrategy) Add(doc core.Doc) error {
 	err := s.valueNode.docs.AddDoc(doc)
 	return err
 }
@@ -170,7 +170,7 @@ func (s *allSortStrategy) Next() (bool, error) {
 }
 
 // Values returns the values of the next doc from the underliny valueNode
-func (s *allSortStrategy) Value() map[string]interface{} {
+func (s *allSortStrategy) Value() core.Doc {
 	return s.valueNode.Value()
 }
 

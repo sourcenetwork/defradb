@@ -167,12 +167,12 @@ type commitSelectTopNode struct {
 	plan planNode
 }
 
-func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
-func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
-func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
-func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *commitSelectTopNode) Source() planNode              { return n.plan }
+func (n *commitSelectTopNode) Init() error            { return n.plan.Init() }
+func (n *commitSelectTopNode) Start() error           { return n.plan.Start() }
+func (n *commitSelectTopNode) Next() (bool, error)    { return n.plan.Next() }
+func (n *commitSelectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *commitSelectTopNode) Value() core.Doc        { return n.plan.Value() }
+func (n *commitSelectTopNode) Source() planNode       { return n.plan }
 func (n *commitSelectTopNode) Close() error {
 	if n.plan == nil {
 		return nil

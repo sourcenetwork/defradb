@@ -104,7 +104,7 @@ func (n *renderNode) Next() (bool, error) {
 		return n.Next()
 	}
 
-	n.currentValue = map[string]interface{}{}
+	n.currentValue = core.Doc{}
 	for _, renderInfo := range n.renderInfo.children {
 		renderInfo.render(doc, n.currentValue)
 	}
@@ -117,13 +117,13 @@ func (n *renderNode) Source() planNode       { return n.plan }
 
 // Renders the source document into the destination document using the given renderInfo.
 // Function recursively handles any nested children defined in the render info.
-func (r *renderInfo) render(src map[string]interface{}, destination map[string]interface{}) {
+func (r *renderInfo) render(src core.Doc, destination core.Doc) {
 	var resultValue interface{}
 	if val, ok := src[r.sourceFieldName]; ok {
 		switch v := val.(type) {
 		// If the current property is itself a map, we should render any properties of the child
-		case map[string]interface{}:
-			inner := map[string]interface{}{}
+		case core.Doc:
+			inner := core.Doc{}
 
 			if _, isHidden := v[parser.HiddenFieldName]; isHidden {
 				return
@@ -134,14 +134,14 @@ func (r *renderInfo) render(src map[string]interface{}, destination map[string]i
 			}
 			resultValue = inner
 		// If the current property is an array of maps, we should render each child map
-		case []map[string]interface{}:
-			subdocs := make([]map[string]interface{}, 0)
+		case []core.Doc:
+			subdocs := make([]core.Doc, 0)
 			for _, subv := range v {
 				if _, isHidden := subv[parser.HiddenFieldName]; isHidden {
 					continue
 				}
 
-				inner := map[string]interface{}{}
+				inner := core.Doc{}
 				for _, child := range r.children {
 					child.render(subv, inner)
 				}

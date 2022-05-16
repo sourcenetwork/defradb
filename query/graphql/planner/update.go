@@ -79,7 +79,7 @@ func (n *updateNode) Next() (bool, error) {
 
 		// consume the updates into our valuesNode
 		for _, resKey := range results.DocKeys {
-			err := n.updateIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			err := n.updateIter.docs.AddDoc(core.Doc{"_key": resKey})
 			if err != nil {
 				return false, err
 			}

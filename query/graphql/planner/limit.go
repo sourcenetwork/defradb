@@ -45,10 +45,10 @@ func (n *hardLimitNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *hardLimitNode) Start() error                  { return n.plan.Start() }
-func (n *hardLimitNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
-func (n *hardLimitNode) Close() error                  { return n.plan.Close() }
-func (n *hardLimitNode) Value() map[string]interface{} { return n.plan.Value() }
+func (n *hardLimitNode) Start() error           { return n.plan.Start() }
+func (n *hardLimitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *hardLimitNode) Close() error           { return n.plan.Close() }
+func (n *hardLimitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *hardLimitNode) Next() (bool, error) {
 	// check if we're passed the limit
