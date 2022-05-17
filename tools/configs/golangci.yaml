@@ -55,7 +55,6 @@ run:
   # If false (default) - golangci-lint acquires file lock on start.
   allow-parallel-runners: false
 
-
 #=====================================================================================[ Output Configuration Options ]
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
@@ -76,7 +75,6 @@ output:
   # sorts results by: filepath, line and column
   sort-results: true
 
-
 #===========================================================================[ Linter Specific Severity Configuration ]
 severity:
   default-severity: error
@@ -93,7 +91,6 @@ severity:
   #   - linters:
   #     - dupl
   #     severity: info
-
 
 #==================================================================================================[ Enabled Linters ]
 linters:
@@ -142,8 +139,7 @@ linters:
     # - wrapcheck
     # - wsl
     # - golint # Definitely need this to never have an undocumented exported function,
-               #  once the deadcode issue is resolved.
-
+    #  once the deadcode issue is resolved.
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
@@ -152,18 +148,18 @@ issues:
   # it can be disabled by `exclude-use-default: false`. To list all
   # excluded by default patterns execute `golangci-lint run --help`
   exclude:
-    # - abcdef
+  # - abcdef
 
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     # Exclude some linters from running on tests files.
-    - path: '_test.go$'
+    - path: "_test.go$"
       linters:
         - errcheck
         - lll
 
     # Exclude running header check in these paths
-    - path: '(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)'
+    - path: "(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)"
       linters:
         - goheader
 
@@ -197,11 +193,8 @@ issues:
   # Don't auto-fix found issues by default (even if it's supported by the linter).
   fix: false
 
-
 #==================================================================[ All Settings Of Specific Linters We Have Enabled]
 linters-settings:
-
-
   errcheck:
     # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
@@ -218,7 +211,6 @@ linters-settings:
       # - io.Copy(*bytes.Buffer)
       # - io.Copy(os.Stdout)
 
-
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     forbid:
@@ -226,17 +218,15 @@ linters-settings:
     # Exclude godoc examples from forbidigo checks.
     exclude_godoc_examples: false
 
-
   gofmt:
     simplify: true
-
 
   goheader:
     values:
       const:
         # define here const type values in format k:v, for example:
-        BSL: 'Business Source License'
-        APL: 'Apache License, Version 2.0'
+        BSL: "Business Source License"
+        APL: "Apache License, Version 2.0"
 
       regexp:
         # define here regexp type values, for example
@@ -256,16 +246,14 @@ linters-settings:
     template-path:
       # also as alternative of directive 'template' you may put the path to file with the template source
 
-
   gosimple:
     # Select the Go version to target.
-    go: '1.17'
+    go: "1.17"
     # https://staticcheck.io/docs/options#checks
-    checks: [ "all", "-S1038" ]
+    checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
     # - S1038 - Unnecessarily complex way of printing formatted string. Which said
     #   instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...).
-
 
   govet:
     # report about shadowed variables
@@ -292,14 +280,12 @@ linters-settings:
 
     disable-all: false
 
-
   lll:
     # max line length, lines longer will be reported.
     # '\t' is counted as 1 character.
     line-length: 120
     # tab width in spaces.
     tab-width: 1
-
 
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
@@ -309,29 +295,24 @@ linters-settings:
       - name: superfluous-else
         severity: error
 
-
   staticcheck:
     # Select the Go version to target.
-    go: '1.17'
+    go: "1.17"
     # https://staticcheck.io/docs/options#checks
-    checks: [ "all" ]
-
+    checks: ["all"]
 
   unused:
     # Select the Go version to target.
-    go: '1.17'
-
+    go: "1.17"
 
   # The custom section can be used to define linter plugins to be loaded at runtime.
   # See README doc for more info.
   custom:
     # Each custom linter should have a unique name.
-     example:
+    example:
       # The path to the plugin *.so. Can be absolute or local. Required for each custom linter
       # path: /path/to/example.so
       # The description of the linter. Optional, just for documentation purposes.
       # description: This is an example usage of a plugin linter.
       # Intended to point to the repo location of the linter. Optional, just for documentation purposes.
       # original-url: github.com/golangci/example-linter
-
-

@@ -37,5 +37,5 @@ comment:
   require_changes: true
 
 ignore:
-  - "testing"
+  - "tests"
   - "**/*_test.go"
