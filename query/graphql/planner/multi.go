@@ -32,8 +32,6 @@ results in all the attached multinodes.
 type MultiNode interface {
 	planNode
 	Children() []planNode
-	AddChild(string, planNode) error
-	ReplaceChildAt(int, string, planNode) error
 }
 
 // mergeNode is a special interface for the MultiNode
@@ -280,19 +278,9 @@ func (p *parallelNode) Children() []planNode {
 	return p.children
 }
 
-func (p *parallelNode) AddChild(field string, node planNode) error {
+func (p *parallelNode) addChild(field string, node planNode) error {
 	p.children = append(p.children, node)
 	p.childFields = append(p.childFields, field)
-	return nil
-}
-
-func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
-	if i >= len(p.children) {
-		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
-	}
-
-	p.children[i] = node
-	p.childFields[i] = field
 	return nil
 }
 
@@ -398,10 +386,10 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			s.source = plan
 		case appendNode:
 			m := &parallelNode{p: s.p}
-			if err := m.AddChild("", src); err != nil {
+			if err := m.addChild("", src); err != nil {
 				return err
 			}
-			if err := m.AddChild(field, plan); err != nil {
+			if err := m.addChild(field, plan); err != nil {
 				return err
 			}
 			s.source = m
@@ -427,7 +415,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			return err
 		}
 		// add our newly updated source to the multinode
-		if err := multinode.AddChild("", src); err != nil {
+		if err := multinode.addChild("", src); err != nil {
 			return err
 		}
 		multiscan.addReader()
@@ -436,18 +424,18 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			return err
 		}
 		// add our newly updated plan to the multinode
-		if err := multinode.AddChild(field, plan); err != nil {
+		if err := multinode.addChild(field, plan); err != nil {
 			return err
 		}
 		multiscan.addReader()
 		s.source = multinode
 
 	// we already have an existing MultiNode as our source
-	case MultiNode:
+	case *parallelNode:
 		switch plan.(type) {
 		// easy, just append, since append doest need any internal relaced scannode
 		case appendNode:
-			if err := node.AddChild(field, plan); err != nil {
+			if err := node.addChild(field, plan); err != nil {
 				return err
 			}
 
@@ -464,7 +452,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			}
 			multiscan.addReader()
 			// add our newly updated plan to the multinode
-			if err := node.AddChild(field, plan); err != nil {
+			if err := node.addChild(field, plan); err != nil {
 				return err
 			}
 		default:
