@@ -114,7 +114,7 @@ func (source *dataSource) mergeParent(
 	keyFields []string,
 	destination *orderedMap,
 	childNames []string,
-) (core.Doc, bool, error) {
+) (bool, error) {
 	// This needs to be set manually for each item, in case other nodes
 	// aggregate items from the pipe progressing the docIndex beyond the first item
 	// for example, if the child is sorted.
@@ -125,10 +125,10 @@ func (source *dataSource) mergeParent(
 
 	hasNext, err := source.parentSource.Next()
 	if err != nil {
-		return nil, false, err
+		return false, err
 	}
 	if !hasNext {
-		return nil, false, nil
+		return false, nil
 	}
 
 	value := source.parentSource.Value()
@@ -136,13 +136,13 @@ func (source *dataSource) mergeParent(
 
 	destination.mergeParent(key, childNames, value)
 
-	return value, true, nil
+	return true, nil
 }
 
 func (source *dataSource) appendChild(
 	keyFields []string,
 	valuesByKey *orderedMap,
-) (core.Doc, bool, error) {
+) (bool, error) {
 	// Most of the time this will be the same document as the parent (with different rendering),
 	// however if the child group is sorted it will be different, the child may also be missing
 	// if it is filtered out by a child filter.  The parent will always exist, but may be
@@ -154,10 +154,10 @@ func (source *dataSource) appendChild(
 
 	hasNext, err := source.childSource.Next()
 	if err != nil {
-		return nil, false, err
+		return false, err
 	}
 	if !hasNext {
-		return nil, false, nil
+		return false, nil
 	}
 
 	// Note that even if the source yields both parent and child items, they may not be yielded in
@@ -168,7 +168,7 @@ func (source *dataSource) appendChild(
 
 	valuesByKey.appendChild(key, source.childName, value)
 
-	return value, true, nil
+	return true, nil
 }
 
 func join(sources []*dataSource, keyFields []string) (*orderedMap, error) {
@@ -189,14 +189,14 @@ func join(sources []*dataSource, keyFields []string) (*orderedMap, error) {
 
 		for hasNextParent || hasNextChild {
 			if hasNextParent {
-				_, hasNextParent, err = source.mergeParent(keyFields, &result, childNames)
+				hasNextParent, err = source.mergeParent(keyFields, &result, childNames)
 				if err != nil {
 					return nil, err
 				}
 			}
 
 			if hasNextChild {
-				_, hasNextChild, err = source.appendChild(keyFields, &result)
+				hasNextChild, err = source.appendChild(keyFields, &result)
 				if err != nil {
 					return nil, err
 				}
