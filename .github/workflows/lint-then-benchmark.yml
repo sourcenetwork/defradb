@@ -1,6 +1,5 @@
 name: Lint and then Benchmark
 
-
 on:
   pull_request:
 
@@ -11,22 +10,17 @@ on:
       - master
       - develop
 
-
 ## These are the permissions for the lint check job.
 permissions:
   # Allow read access to pull request (Required for the `only-new-issues` option.)
   pull-requests: read
   contents: read
 
-
 env:
   # This is the default benchmark type which if no labels are specified will be used.
   DEFAULT_BENCHMARK_TYPE: SHORT
 
-
 jobs:
-
-
   # ========================================================= Step-1: Run the lint check.
   golangci:
     name: Lint Check
@@ -44,7 +38,7 @@ jobs:
       - name: Setup Go environment explicitly
         uses: actions/setup-go@v3
         with:
-          go-version: '1.17'
+          go-version: "1.17"
           check-latest: true
 
       - name: Run the golangci-lint
@@ -65,7 +59,7 @@ jobs:
           #  indicating that the linter ran successfully (weather or not linter errors
           #  exist or not doesn't matter). But the good think is that the annotations
           #  will still show up. I think this can be useful if we don't want the pipeline
-          #  to stop just because we had some linter errors. 
+          #  to stop just because we had some linter errors.
           args: --issues-exit-code=1 --config tools/configs/golangci.yaml
 
           # Optional: we can set the below to `true` if we only want to see newly
@@ -76,7 +70,6 @@ jobs:
           #  anyways so there shouldn't be any linter errors anyways. The enforces us to
           #  always have a clean lint state.
           only-new-issues: false
-
 
   # =================== Step-2: Decide what type of benchmarks to run based on label(s).
   # This job acts like a switch to simplify our ci control flow later on.
@@ -116,7 +109,6 @@ jobs:
       - name: Set the output to be the benchmark type
         id: set-benchmark-type
         run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
-
 
   # ================== Step-3: Start the runner and get it registered as a github runner.
   start-runner:
@@ -158,7 +150,6 @@ jobs:
           ##     {"Key": "Name", "Value": "ec2-github-runner"},
           ##     {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
           ##   ]
-
 
   # =========================== Step-4: Run the benchmarks on the runner we just started.
   benchmark-ec2-runner:
@@ -210,7 +201,7 @@ jobs:
 
       # ------------- Download & Compare - If PR going into develop
 
-      # To find the latest commit on remote develop branch we essentially 
+      # To find the latest commit on remote develop branch we essentially
       #  just need to do the following:
       # >> git fetch origin develop > /dev/null 2>&1 \
       #    && git rev-parse origin/develop
@@ -240,16 +231,24 @@ jobs:
           branch: develop
           name: bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}
           repo: ${{ github.repository }}
-          check_artifacts:  false
+          check_artifacts: false
           search_artifacts: false
 
-      - name: Run the benchmark comparisons
+      - name: Prepare benchmark reports for comparisons
         if: |
           github.event_name == 'pull_request' &&
           github.base_ref == 'develop'
         run: >
           make deps:bench &&
           cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
+          sed -i '/^pkg: /s/^pkg:\ .*\/bench\//pkg:\ /g' develop.txt &&
+          sed -i '/^pkg: /s/^pkg:\ .*\/bench\//pkg:\ /g' current.txt
+
+      - name: Run the benchmark comparisons
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        run: >
           ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
           ./tools/scripts/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
 
@@ -262,7 +261,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_SCOPE_PAT }}
         with:
           path: pretty-comparison.md
-
 
   # =============================== Step-5: Stop the runner once the benchmarks have ran.
   stop-runner:
