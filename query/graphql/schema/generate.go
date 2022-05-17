@@ -14,12 +14,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
@@ -552,15 +553,15 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	childTypesByFieldName := map[string]*gql.InputObject{}
+	caser := cases.Title(language.Und)
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
 		if _, isList := field.Type.(*gql.List); !isList {
 			continue
 		}
-
 		countableObject := gql.NewInputObject(gql.InputObjectConfig{
-			Name: fmt.Sprintf("%s%s%s", obj.Name(), strings.Title(field.Name), "CountInputObj"),
+			Name: fmt.Sprintf("%s%s%s", obj.Name(), caser.String(field.Name), "CountInputObj"),
 			Fields: gql.InputObjectConfigFieldMap{
 				"_": &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
@@ -669,6 +670,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[strin
 
 func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.InputObject {
 	objects := []*gql.InputObject{}
+	caser := cases.Title(language.Und)
 	for _, field := range obj.Fields() {
 		// we can only act on list items
 		listType, isList := field.Type.(*gql.List)
@@ -680,7 +682,7 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			// If it is an inline scalar array then we require an empty
 			//  object as an argument due to the lack of union input types
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
-				Name: genNumericInlineArraySelectorName(obj.Name(), strings.Title(field.Name)),
+				Name: genNumericInlineArraySelectorName(obj.Name(), caser.String(field.Name)),
 				Fields: gql.InputObjectConfigFieldMap{
 					"_": &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
@@ -696,7 +698,8 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 }
 
 func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
-	return fmt.Sprintf("%s%s%s", hostName, strings.Title(fieldName), "NumericInlineArraySelector")
+	caser := cases.Title(language.Und)
+	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "NumericInlineArraySelector")
 }
 
 // Generates the base (numeric-only) aggregate input object-type for the give gql object,
