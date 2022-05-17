@@ -523,9 +523,9 @@ func setupDatabaseUsingTargetBranch(
 		panic(err)
 	}
 
-	targetTestPackage := detectDbChangesCodeDir + "/testing/db/" + strings.Split(
+	targetTestPackage := detectDbChangesCodeDir + "/tests/integration/" + strings.Split(
 		currentTestPackage,
-		"/testing/db/",
+		"/tests/integration/",
 	)[1]
 
 	// If we are checking for database changes, and we are not seting up the database,
