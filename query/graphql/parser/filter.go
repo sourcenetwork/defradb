@@ -17,11 +17,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SierraSoftworks/connor"
+	//"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
 
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
