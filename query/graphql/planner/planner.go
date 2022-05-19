@@ -103,12 +103,12 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, fmt.Errorf("Error: Query is missing query or mutation statements")
+			return nil, fmt.Errorf("Query is missing query or mutation statements")
 		}
 
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, fmt.Errorf("Error: OperationDefinition is missing selections")
+			return nil, fmt.Errorf("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -122,7 +122,7 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		return p.newObjectMutationPlan(n)
 
 	}
-	return nil, fmt.Errorf("Error: Unknown statement type %T", stmt)
+	return nil, fmt.Errorf("Unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
@@ -139,7 +139,7 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 		return p.DeleteDocs(stmt)
 
 	default:
-		return nil, fmt.Errorf("Error: Unknown mutation action %T", stmt.Type)
+		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
 	}
 
 }
@@ -275,7 +275,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return fmt.Errorf("Error: Unknown type index join plan")
+	return fmt.Errorf("Unknown type index join plan")
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -400,7 +400,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
-		return fmt.Errorf("Error: Unknown plan node type to replace: %T", node)
+		return fmt.Errorf("Unknown plan node type to replace: %T", node)
 	}
 
 	return nil
@@ -430,20 +430,16 @@ func (p *Planner) explainRequest(
 	plan planNode,
 ) ([]map[string]interface{}, error) {
 	if plan == nil {
-		if errToLog := (plan.Close()); errToLog != nil {
-			log.ErrorE(ctx, "Error: Failure closing plan while explaining `planNode`.", errToLog)
-		}
-		return nil, fmt.Errorf("Error: Can't explain an empty plan.")
+		return nil, fmt.Errorf("Can't explain an empty / nil plan.")
 	}
 
-	var topExplainGraph []map[string]interface{} = []map[string]interface{}{
+	topExplainGraph := []map[string]interface{}{
 		{
 			parser.DirectiveLabel.ExplainLabel: buildExplainGraph(plan),
 		},
 	}
 
-	err := plan.Close()
-	return topExplainGraph, err
+	return topExplainGraph, plan.Close()
 }
 
 // executeRequest executes the plan graph that represents the request that was made.
@@ -453,8 +449,8 @@ func (p *Planner) executeRequest(
 ) ([]map[string]interface{}, error) {
 
 	if err := plan.Start(); err != nil {
-		if loggingErr := (plan.Close()); loggingErr != nil {
-			log.ErrorE(ctx, "Error: Failure closing plan after `plan.Start()` got an error.", loggingErr)
+		if err := plan.Close(); err != nil {
+			log.ErrorE(ctx, "Failure closing plan after `plan.Start()` got an error.", err)
 		}
 		return nil, err
 	}
@@ -462,13 +458,13 @@ func (p *Planner) executeRequest(
 	var next bool
 	var err error
 	if next, err = plan.Next(); err != nil {
-		if loggingErr := (plan.Close()); loggingErr != nil {
-			log.ErrorE(ctx, "Error: Failure closing plan after initial `plan.Next()` call.", loggingErr)
+		if err := plan.Close(); err != nil {
+			log.ErrorE(ctx, "Failure closing plan after initial `plan.Next()` call.", err)
 		}
 		return nil, err
 	}
 
-	var docs []map[string]interface{} = []map[string]interface{}{}
+	docs := []map[string]interface{}{}
 
 	for next {
 		if values := plan.Value(); values != nil {
@@ -477,15 +473,15 @@ func (p *Planner) executeRequest(
 
 		next, err = plan.Next()
 		if err != nil {
-			if loggingErr := (plan.Close()); loggingErr != nil {
-				log.ErrorE(ctx, "Error: Failure closing plan after `plan.Next()` got an error.", loggingErr)
+			if err := plan.Close(); err != nil {
+				log.ErrorE(ctx, "Failure closing plan after `plan.Next()` got an error.", err)
 			}
 			return nil, err
 		}
 	}
 
-	if loggingErr := (plan.Close()); loggingErr != nil {
-		log.ErrorE(ctx, "Error: Failure closing plan near the end of plan execution.", loggingErr)
+	if err := plan.Close(); err != nil {
+		log.ErrorE(ctx, "Failure closing plan near the end of plan execution.", err)
 	}
 
 	return docs, err
@@ -503,11 +499,11 @@ func (p *Planner) runRequest(
 		return nil, err
 	}
 
-	thisIsAnExplainRequest :=
+	isAnExplainRequest :=
 		(len(query.Queries) > 0 && query.Queries[0].IsExplain) ||
 			(len(query.Mutations) > 0 && query.Mutations[0].IsExplain)
 
-	if thisIsAnExplainRequest {
+	if isAnExplainRequest {
 		return p.explainRequest(ctx, plan)
 	}
 

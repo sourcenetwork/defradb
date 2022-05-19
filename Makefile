@@ -30,7 +30,7 @@ client\:dump:
 
 .PHONY: client\:add-schema
 client\:add-schema:
-	./build/defradb client schema add -f cli/defradb/examples/user.graphql
+	./build/defradb client schema add -f cli/defradb/examples/bookauthpub.graphql
 
 .PHONY: deps\:lint
 deps\:lint:

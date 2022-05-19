@@ -51,7 +51,7 @@ func styleAttribute(attributeName string) string {
 
 func buildExplainGraph(source planNode) map[string]interface{} {
 
-	var explainGraph map[string]interface{} = map[string]interface{}{}
+	explainGraph := map[string]interface{}{}
 
 	if source == nil {
 		return explainGraph
