@@ -9,12 +9,9 @@ install:
 build:
 	go build -o build/defradb cli/defradb/main.go
 
-.PHONY: multi-build
-multi-build:
-	echo "Compiling for multiple OS and Platforms"
-	GOOS=linux GOARCH=arm go build -o build/defradb-linux-arm cli/defradb/main.go
-	GOOS=linux GOARCH=arm64 go build -o build/defradb-linux-arm64 cli/defradb/main.go
-	GOOS=freebsd GOARCH=386 go build -o build/defradb-freebsd-386 cli/defradb/main.go
+.PHONY: multi-cross-build
+multi-cross-build:
+	sh tools/scripts/multi-cross-build.sh
 
 .PHONY: start
 start: build

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-command="cli/defradb/main.go"
-build_dir="./build/"
-platforms=("windows/amd64" "windows/386" "linux/amd64" "darwin/amd64" "darwin/arm64")
+defradb_main="cli/defradb/main.go"
+build_dir="build/"
+platforms=("windows/amd64" "windows/386" "linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64")
 
 for platform in "${platforms[@]}"
 do
@@ -13,8 +13,7 @@ do
     if [ $GOOS = "windows" ]; then
         output_name+='.exe'
     fi
-
-    env GOOS=$GOOS GOARCH=$GOARCH go build -o $output_name $command
+    env GOOS=$GOOS GOARCH=$GOARCH go build -o $output_name $defradb_main
     if [ $? -ne 0 ]; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
