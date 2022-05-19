@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // simplified planNode interface.
@@ -41,7 +42,7 @@ type sortNode struct {
 	p    *Planner
 	plan planNode
 
-	ordering []parser.SortCondition
+	ordering []parserTypes.SortCondition
 
 	// simplified planNode interface
 	// used for iterating through

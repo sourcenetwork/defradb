@@ -53,8 +53,8 @@ type CommitSelect struct {
 	Statement *ast.Field
 }
 
-func (c CommitSelect) GetRoot() SelectionType {
-	return CommitSelection
+func (c CommitSelect) GetRoot() parserTypes.SelectionType {
+	return parserTypes.CommitSelection
 }
 
 func (c CommitSelect) GetStatement() ast.Node {
@@ -81,7 +81,7 @@ func (c CommitSelect) ToSelect() *Select {
 		OrderBy:   c.OrderBy,
 		Statement: c.Statement,
 		Fields:    c.Fields,
-		Root:      CommitSelection,
+		Root:      parserTypes.CommitSelection,
 	}
 }
 

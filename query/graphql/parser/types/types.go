@@ -10,7 +10,26 @@
 
 package types
 
-type SortDirection string
+type (
+	SortDirection string
+
+	SelectionType int
+
+	// Enum for different types of read Select queries
+	SelectQueryType int
+
+	SortCondition struct {
+		// field may be a compound field statement
+		// since the sort statement allows sorting on
+		// sub objects.
+		//
+		// Given the statement: {sort: {author: {birthday: DESC}}}
+		// The field value would be "author.birthday"
+		// and the direction would be "DESC"
+		Field     string
+		Direction SortDirection
+	}
+)
 
 const (
 	Cid     = string("cid")
@@ -29,11 +48,42 @@ const (
 
 	ASC  = SortDirection("ASC")
 	DESC = SortDirection("DESC")
+
+	VersionFieldName = "_version"
+	GroupFieldName   = "_group"
+	DocKeyFieldName  = "_key"
+	CountFieldName   = "_count"
+	SumFieldName     = "_sum"
+	AverageFieldName = "_avg"
+	HiddenFieldName  = "_hidden"
+
+	ScanQuery = iota
+	VersionedScanQuery
+
+	NoneSelection = iota
+	ObjectSelection
+	CommitSelection
 )
 
 var (
 	NameToSortDirection = map[string]SortDirection{
 		string(ASC):  ASC,
 		string(DESC): DESC,
+	}
+
+	ReservedFields = map[string]bool{
+		VersionFieldName: true,
+		GroupFieldName:   true,
+		CountFieldName:   true,
+		SumFieldName:     true,
+		AverageFieldName: true,
+		HiddenFieldName:  true,
+		DocKeyFieldName:  true,
+	}
+
+	Aggregates = map[string]struct{}{
+		CountFieldName:   {},
+		SumFieldName:     {},
+		AverageFieldName: {},
 	}
 )

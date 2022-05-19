@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -32,13 +31,13 @@ type valuesNode struct {
 	p *Planner
 	// plan planNode
 
-	ordering []parser.SortCondition
+	ordering []parserTypes.SortCondition
 
 	docs     *container.DocumentContainer
 	docIndex int
 }
 
-func (p *Planner) newContainerValuesNode(ordering []parser.SortCondition) *valuesNode {
+func (p *Planner) newContainerValuesNode(ordering []parserTypes.SortCondition) *valuesNode {
 	return &valuesNode{
 		p:        p,
 		ordering: ordering,

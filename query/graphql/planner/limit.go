@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Limit the results, yielding only what the limit/offset permits
@@ -120,7 +121,7 @@ func (n *renderLimitNode) Next() (bool, error) {
 
 	n.rowIndex++
 	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
-		n.currentValue[parser.HiddenFieldName] = struct{}{}
+		n.currentValue[parserTypes.HiddenFieldName] = struct{}{}
 	}
 	return true, nil
 }

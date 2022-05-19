@@ -718,7 +718,7 @@ func TestParseConditionsInOrder_Empty(t *testing.T) {
 		query {
 			users(order: {})
 		}`),
-		[]SortCondition{},
+		[]parserTypes.SortCondition{},
 	)
 }
 
@@ -727,7 +727,7 @@ func TestParseConditionsInOrder_Simple(t *testing.T) {
 		query {
 			users(order: {name: ASC})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "name",
 				Direction: parserTypes.ASC,
@@ -741,7 +741,7 @@ func TestParseConditionsInOrder_Simple_Multiple(t *testing.T) {
 		query {
 			users(order: {name: ASC, date: DESC})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "name",
 				Direction: parserTypes.ASC,
@@ -759,7 +759,7 @@ func TestParseConditionsInOrder_Embedded(t *testing.T) {
 		query {
 			users(order: {author: {name: ASC}})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "author.name",
 				Direction: parserTypes.ASC,
@@ -773,7 +773,7 @@ func TestParseConditionsInOrder_Embedded_Multiple(t *testing.T) {
 		query {
 			users(order: {author: {name: ASC, birthday: DESC}})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "author.name",
 				Direction: parserTypes.ASC,
@@ -791,7 +791,7 @@ func TestParseConditionsInOrder_Embedded_Nested(t *testing.T) {
 		query {
 			users(order: {author: {address: {street_name: DESC}}})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "author.address.street_name",
 				Direction: parserTypes.DESC,
@@ -805,7 +805,7 @@ func TestParseConditionsInOrder_Complex(t *testing.T) {
 		query {
 			users(order: {name: ASC, author: {birthday: ASC, address: {street_name: DESC}}})
 		}`),
-		[]SortCondition{
+		[]parserTypes.SortCondition{
 			{
 				Field:     "name",
 				Direction: parserTypes.ASC,
@@ -822,7 +822,7 @@ func TestParseConditionsInOrder_Complex(t *testing.T) {
 	)
 }
 
-func runParseConditionInOrderTest(t *testing.T, query string, target []SortCondition) {
+func runParseConditionInOrderTest(t *testing.T, query string, target []parserTypes.SortCondition) {
 	sort, err := getQuerySortObject(query)
 	assert.NoError(t, err)
 

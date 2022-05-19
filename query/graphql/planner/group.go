@@ -13,6 +13,8 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // A node responsible for the grouping of documents by a given selection of fields.
@@ -47,7 +49,7 @@ func (p *Planner) GroupBy(n *parser.GroupBy, childSelects []*parser.Select) (*gr
 	// GroupBy must always have at least one data source, for example
 	// childSelects may be empty if no group members are requested
 	if len(childSelects) == 0 {
-		dataSources = append(dataSources, newDataSource(parser.GroupFieldName))
+		dataSources = append(dataSources, newDataSource(parserTypes.GroupFieldName))
 	}
 
 	for _, childSelect := range childSelects {
@@ -135,12 +137,12 @@ func (n *groupNode) Next() (bool, error) {
 
 					// We must hide all child documents before the offset
 					for i := int64(0); i < childSelect.Limit.Offset && i < l; i++ {
-						childDocs[i][parser.HiddenFieldName] = struct{}{}
+						childDocs[i][parserTypes.HiddenFieldName] = struct{}{}
 					}
 
 					// We must hide all child documents after the offset plus limit
 					for i := childSelect.Limit.Limit + childSelect.Limit.Offset; i < l; i++ {
-						childDocs[i][parser.HiddenFieldName] = struct{}{}
+						childDocs[i][parserTypes.HiddenFieldName] = struct{}{}
 					}
 				}
 			}

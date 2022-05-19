@@ -103,8 +103,8 @@ type Mutation struct {
 	Statement *ast.Field
 }
 
-func (m Mutation) GetRoot() SelectionType {
-	return ObjectSelection
+func (m Mutation) GetRoot() parserTypes.SelectionType {
+	return parserTypes.ObjectSelection
 }
 
 func (m Mutation) GetStatement() ast.Node {

@@ -83,20 +83,20 @@ type parseFn func(*ast.ObjectValue) (interface{}, error)
 // This function is mostly used by the Sort parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]SortCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.SortCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]SortCondition); ok {
+	if v, ok := cond.([]parserTypes.SortCondition); ok {
 		return v, nil
 	}
 	return nil, errors.New("Failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
-	conditions := make([]SortCondition, 0)
+	conditions := make([]parserTypes.SortCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -113,12 +113,12 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 			if !ok {
 				return nil, errors.New("Invalid sort direction string")
 			}
-			conditions = append(conditions, SortCondition{
+			conditions = append(conditions, parserTypes.SortCondition{
 				Field:     name,
 				Direction: dir,
 			})
 
-		case []SortCondition: // flatten and incorporate the parsed slice into our current one
+		case []parserTypes.SortCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
 				// Eg. sort: {author: {name: ASC, birthday: DESC}}
@@ -174,7 +174,7 @@ func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(name, "_") && name != DocKeyFieldName {
+		if strings.HasPrefix(name, "_") && name != parserTypes.DocKeyFieldName {
 			name = strings.Replace(name, "_", "$", 1)
 		}
 		conditions[name] = val
