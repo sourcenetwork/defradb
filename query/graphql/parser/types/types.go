@@ -10,6 +10,8 @@
 
 package types
 
+import "github.com/graphql-go/graphql/language/ast"
+
 type (
 	SortDirection string
 
@@ -28,6 +30,20 @@ type (
 		// and the direction would be "DESC"
 		Field     string
 		Direction SortDirection
+	}
+
+	GroupBy struct {
+		Fields []string
+	}
+
+	OrderBy struct {
+		Conditions []SortCondition
+		Statement  *ast.ObjectValue
+	}
+
+	Limit struct {
+		Limit  int64
+		Offset int64
 	}
 )
 

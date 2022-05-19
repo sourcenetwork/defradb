@@ -12,7 +12,6 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -28,8 +27,8 @@ type hardLimitNode struct {
 }
 
 // HardLimit creates a new hardLimitNode initalized from
-// the parser.Limit object.
-func (p *Planner) HardLimit(n *parser.Limit) (*hardLimitNode, error) {
+// the parserTypes.Limit object.
+func (p *Planner) HardLimit(n *parserTypes.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
@@ -90,8 +89,8 @@ type renderLimitNode struct {
 }
 
 // RenderLimit creates a new renderLimitNode initalized from
-// the parser.Limit object.
-func (p *Planner) RenderLimit(n *parser.Limit) (*renderLimitNode, error) {
+// the parserTypes.Limit object.
+func (p *Planner) RenderLimit(n *parserTypes.Limit) (*renderLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}

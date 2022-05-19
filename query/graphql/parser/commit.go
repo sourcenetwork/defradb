@@ -45,8 +45,8 @@ type CommitSelect struct {
 	FieldName string
 	Cid       string
 
-	Limit   *Limit
-	OrderBy *OrderBy
+	Limit   *parserTypes.Limit
+	OrderBy *parserTypes.OrderBy
 
 	Fields []Selection
 

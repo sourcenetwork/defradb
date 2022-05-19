@@ -77,6 +77,9 @@ type Select struct {
 	// only be used internally
 	Hidden bool
 
+	DocKeys []string
+	CID     string
+
 	// QueryType indicates what kind of query this is
 	// Currently supports: ScanQuery, VersionedScanQuery
 	QueryType parserTypes.SelectQueryType
@@ -84,17 +87,17 @@ type Select struct {
 	// Root is the top level query parsed type
 	Root parserTypes.SelectionType
 
-	DocKeys []string
-	CID     string
+	Limit *parserTypes.Limit
 
-	Filter  *Filter
-	Limit   *Limit
-	OrderBy *OrderBy
-	GroupBy *GroupBy
+	OrderBy *parserTypes.OrderBy
+
+	GroupBy *parserTypes.GroupBy
+
+	Filter *Filter
 
 	Fields []Selection
 
-	// raw graphql statement
+	// Raw graphql statement
 	Statement *ast.Field
 }
 
@@ -177,24 +180,6 @@ func (f Field) GetAlias() string {
 func (f Field) GetStatement() ast.Node {
 	return f.Statement
 }
-
-type GroupBy struct {
-	Fields []string
-}
-
-type OrderBy struct {
-	Conditions []parserTypes.SortCondition
-	Statement  *ast.ObjectValue
-}
-
-type Limit struct {
-	Limit  int64
-	Offset int64
-}
-
-// type SubQuery struct{}
-
-// type
 
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
@@ -323,7 +308,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 				return slct, err
 			}
 			if slct.Limit == nil {
-				slct.Limit = &Limit{}
+				slct.Limit = &parserTypes.Limit{}
 			}
 			slct.Limit.Limit = i
 		} else if prop == parserTypes.OffsetClause { // parse limit/offset
@@ -333,7 +318,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 				return slct, err
 			}
 			if slct.Limit == nil {
-				slct.Limit = &Limit{}
+				slct.Limit = &parserTypes.Limit{}
 			}
 			slct.Limit.Offset = i
 		} else if prop == parserTypes.OrderClause { // parse sort (order by)
@@ -342,7 +327,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			if err != nil {
 				return nil, err
 			}
-			slct.OrderBy = &OrderBy{
+			slct.OrderBy = &parserTypes.OrderBy{
 				Conditions: cond,
 				Statement:  obj,
 			}
@@ -353,7 +338,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			slct.GroupBy = &GroupBy{
+			slct.GroupBy = &parserTypes.GroupBy{
 				Fields: fields,
 			}
 		}

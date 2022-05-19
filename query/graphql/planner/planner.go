@@ -20,6 +20,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -350,7 +352,7 @@ func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode
 		// replace the hard limit with a render limit to allow the full set of child records
 		// to be aggregated
 		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
-			renderLimit, err := p.RenderLimit(&parser.Limit{
+			renderLimit, err := p.RenderLimit(&parserTypes.Limit{
 				Offset: l.offset,
 				Limit:  l.limit,
 			})

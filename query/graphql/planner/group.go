@@ -40,7 +40,7 @@ type groupNode struct {
 // Creates a new group node.  The function is recursive and will construct the node-chain for any
 //  child (`_group`) collections. `groupSelect` is optional and will typically be nil if the
 //  child `_group` is not requested.
-func (p *Planner) GroupBy(n *parser.GroupBy, childSelects []*parser.Select) (*groupNode, error) {
+func (p *Planner) GroupBy(n *parserTypes.GroupBy, childSelects []*parser.Select) (*groupNode, error) {
 	if n == nil {
 		return nil, nil
 	}

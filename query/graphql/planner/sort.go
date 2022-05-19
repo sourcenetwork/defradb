@@ -12,7 +12,6 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -62,7 +61,7 @@ type sortNode struct {
 // plans values in a sorted mannor. The field to sort by, and the
 // direction of sorting is determined by the given parser.OrderBy
 // object.
-func (p *Planner) OrderBy(n *parser.OrderBy) (*sortNode, error) {
+func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
 	if n == nil { // no orderby info
 		return nil, nil
 	}

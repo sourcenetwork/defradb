@@ -691,7 +691,7 @@ func runRunFilterTest(t *testing.T, test testCase) {
 	assert.True(t, passed == test.shouldPass, "Test Case faild: %s", test.description)
 }
 
-func getQuerySortObject(query string) (*OrderBy, error) {
+func getQuerySortObject(query string) (*parserTypes.OrderBy, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(query),
 		Name: "",
@@ -707,7 +707,7 @@ func getQuerySortObject(query string) (*OrderBy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &OrderBy{
+	return &parserTypes.OrderBy{
 		Conditions: conditions,
 		Statement:  sortObj,
 	}, nil
