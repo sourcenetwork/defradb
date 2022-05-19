@@ -219,20 +219,6 @@ type GroupBy struct {
 	Fields []string
 }
 
-type SortDirection string
-
-const (
-	ASC  SortDirection = "ASC"
-	DESC SortDirection = "DESC"
-)
-
-var (
-	NameToSortDirection = map[string]SortDirection{
-		"ASC":  ASC,
-		"DESC": DESC,
-	}
-)
-
 type SortCondition struct {
 	// field may be a compound field statement
 	// since the sort statement allows sorting on
@@ -242,7 +228,7 @@ type SortCondition struct {
 	// The field value would be "author.birthday"
 	// and the direction would be "DESC"
 	Field     string
-	Direction SortDirection
+	Direction parserTypes.SortDirection
 }
 type OrderBy struct {
 	Conditions []SortCondition

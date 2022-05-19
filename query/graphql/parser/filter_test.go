@@ -13,8 +13,11 @@ package parser
 import (
 	"testing"
 
-	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+
+	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/source"
 	"github.com/stretchr/testify/assert"
 )
@@ -727,7 +730,7 @@ func TestParseConditionsInOrder_Simple(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "name",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 		},
 	)
@@ -741,11 +744,11 @@ func TestParseConditionsInOrder_Simple_Multiple(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "name",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 			{
 				Field:     "date",
-				Direction: DESC,
+				Direction: parserTypes.DESC,
 			},
 		},
 	)
@@ -759,7 +762,7 @@ func TestParseConditionsInOrder_Embedded(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "author.name",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 		},
 	)
@@ -773,11 +776,11 @@ func TestParseConditionsInOrder_Embedded_Multiple(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "author.name",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 			{
 				Field:     "author.birthday",
-				Direction: DESC,
+				Direction: parserTypes.DESC,
 			},
 		},
 	)
@@ -791,7 +794,7 @@ func TestParseConditionsInOrder_Embedded_Nested(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "author.address.street_name",
-				Direction: DESC,
+				Direction: parserTypes.DESC,
 			},
 		},
 	)
@@ -805,15 +808,15 @@ func TestParseConditionsInOrder_Complex(t *testing.T) {
 		[]SortCondition{
 			{
 				Field:     "name",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 			{
 				Field:     "author.birthday",
-				Direction: ASC,
+				Direction: parserTypes.ASC,
 			},
 			{
 				Field:     "author.address.street_name",
-				Direction: DESC,
+				Direction: parserTypes.DESC,
 			},
 		},
 	)

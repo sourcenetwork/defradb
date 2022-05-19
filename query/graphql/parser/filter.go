@@ -19,8 +19,11 @@ import (
 
 	"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
+
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type EvalContext struct {
@@ -106,7 +109,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 
 		switch v := val.(type) {
 		case string: // base direction parsed (hopefully, check NameToSortDirection)
-			dir, ok := NameToSortDirection[v]
+			dir, ok := parserTypes.NameToSortDirection[v]
 			if !ok {
 				return nil, errors.New("Invalid sort direction string")
 			}

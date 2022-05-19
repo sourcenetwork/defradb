@@ -18,6 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // valuesNode contains a collection
@@ -87,10 +89,10 @@ func (n *valuesNode) Less(i, j int) bool {
 func (n *valuesNode) docValueLess(da, db map[string]interface{}) bool {
 	var ra, rb interface{}
 	for _, order := range n.ordering {
-		if order.Direction == parser.ASC {
+		if order.Direction == parserTypes.ASC {
 			ra = getMapProp(da, order.Field)
 			rb = getMapProp(db, order.Field)
-		} else if order.Direction == parser.DESC { // redundant, just else
+		} else if order.Direction == parserTypes.DESC { // redundant, just else
 			ra = getMapProp(db, order.Field)
 			rb = getMapProp(da, order.Field)
 		}

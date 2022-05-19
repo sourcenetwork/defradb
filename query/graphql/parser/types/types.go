@@ -10,6 +10,8 @@
 
 package types
 
+type SortDirection string
+
 const (
 	Cid     = string("cid")
 	Data    = string("data")
@@ -24,4 +26,14 @@ const (
 	LimitClause   = string("limit")
 	OffsetClause  = string("offset")
 	OrderClause   = string("order")
+
+	ASC  = SortDirection("ASC")
+	DESC = SortDirection("DESC")
+)
+
+var (
+	NameToSortDirection = map[string]SortDirection{
+		string(ASC):  ASC,
+		string(DESC): DESC,
+	}
 )
