@@ -59,7 +59,7 @@ type sortNode struct {
 
 // OrderBy creates a new sortNode which returns the underlying
 // plans values in a sorted mannor. The field to sort by, and the
-// direction of sorting is determined by the given parser.OrderBy
+// direction of sorting is determined by the given parserTypes.OrderBy
 // object.
 func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
 	if n == nil { // no orderby info

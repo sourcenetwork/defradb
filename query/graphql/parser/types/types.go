@@ -48,30 +48,30 @@ type (
 )
 
 const (
-	Cid     = string("cid")
-	Data    = string("data")
-	DocKey  = string("dockey")
-	DocKeys = string("dockeys")
-	Field   = string("field")
-	Id      = string("id")
-	Ids     = string("ids")
+	Cid     = "cid"
+	Data    = "data"
+	DocKey  = "dockey"
+	DocKeys = "dockeys"
+	Field   = "field"
+	Id      = "id"
+	Ids     = "ids"
 
-	FilterClause  = string("filter")
-	GroupByClause = string("groupBy")
-	LimitClause   = string("limit")
-	OffsetClause  = string("offset")
-	OrderClause   = string("order")
+	FilterClause  = "filter"
+	GroupByClause = "groupBy"
+	LimitClause   = "limit"
+	OffsetClause  = "offset"
+	OrderClause   = "order"
+
+	AverageFieldName = "_avg"
+	CountFieldName   = "_count"
+	DocKeyFieldName  = "_key"
+	GroupFieldName   = "_group"
+	HiddenFieldName  = "_hidden"
+	SumFieldName     = "_sum"
+	VersionFieldName = "_version"
 
 	ASC  = SortDirection("ASC")
 	DESC = SortDirection("DESC")
-
-	VersionFieldName = "_version"
-	GroupFieldName   = "_group"
-	DocKeyFieldName  = "_key"
-	CountFieldName   = "_count"
-	SumFieldName     = "_sum"
-	AverageFieldName = "_avg"
-	HiddenFieldName  = "_hidden"
 
 	ScanQuery = iota
 	VersionedScanQuery
