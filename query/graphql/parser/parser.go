@@ -17,9 +17,3 @@ import (
 type Statement interface {
 	GetStatement() ast.Node
 }
-
-var DirectiveLabel = struct {
-	ExplainLabel string
-}{
-	ExplainLabel: "explain",
-}

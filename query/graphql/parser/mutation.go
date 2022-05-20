@@ -15,9 +15,9 @@ import (
 	"errors"
 	"strings"
 
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-
 	"github.com/graphql-go/graphql/language/ast"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type MutationType int
@@ -156,7 +156,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	//       - Do a for loop here and in `./query.go` to match directive name rather than
 	//         checking for only the first one. Will be fixed in issue#455.
 	directives := def.Directives
-	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
+	if len(directives) > 0 && directives[0].Name.Value == parserTypes.ExplainLabel {
 		qdef.IsExplain = true
 	}
 

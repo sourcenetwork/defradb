@@ -70,6 +70,8 @@ const (
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
 
+	ExplainLabel = "explain"
+
 	ASC  = SortDirection("ASC")
 	DESC = SortDirection("DESC")
 )

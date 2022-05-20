@@ -435,7 +435,7 @@ func (p *Planner) explainRequest(
 
 	topExplainGraph := []map[string]interface{}{
 		{
-			parser.DirectiveLabel.ExplainLabel: buildExplainGraph(plan),
+			parserTypes.ExplainLabel: buildExplainGraph(plan),
 		},
 	}
 

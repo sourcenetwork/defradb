@@ -19,10 +19,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/logging"
-
 	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/logging"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,7 +57,7 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -122,7 +122,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -170,7 +170,7 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -218,7 +218,7 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -266,7 +266,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -314,7 +314,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -367,7 +367,7 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -439,7 +439,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -474,7 +474,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -528,7 +528,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -567,7 +567,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -612,7 +612,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 				},
 				"_version": &gql.Field{
 					Name: "_version",
-					Type: gql.NewList(commit),
+					Type: gql.NewList(schemaTypes.CommitObject),
 				},
 				"_group": &gql.Field{
 					Name: "_group",
@@ -660,7 +660,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -726,7 +726,7 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",

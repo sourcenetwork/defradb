@@ -12,6 +12,18 @@ package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
+)
+
+var (
+	QueryLatestCommits = &gql.Field{
+		Name: "latestCommits",
+		Type: gql.NewList(schemaTypes.CommitObject),
+		Args: gql.FieldConfigArgument{
+			"dockey": schemaTypes.NewArgConfig(gql.NewNonNull(gql.ID)),
+			"field":  schemaTypes.NewArgConfig(gql.String),
+		},
+	}
 )
 
 // SchemaManager creates an instanced management point
@@ -91,9 +103,9 @@ func defaultQueryType() *gql.Object {
 			},
 
 			// database API queries
-			queryAllCommits.Name:    queryAllCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-			queryCommit.Name:        queryCommit,
+			schemaTypes.QueryAllCommits.Name:    schemaTypes.QueryAllCommits,
+			schemaTypes.QueryLatestCommits.Name: schemaTypes.QueryLatestCommits,
+			schemaTypes.QueryCommit.Name:        schemaTypes.QueryCommit,
 		},
 	})
 }
@@ -113,7 +125,7 @@ func defaultMutationType() *gql.Object {
 // default directives type.
 func defaultDirectivesType() []*gql.Directive {
 	return []*gql.Directive{
-		directiveType.Explain,
+		schemaTypes.ExplainDirective,
 	}
 }
 
@@ -141,8 +153,8 @@ func defaultTypes() []gql.Type {
 		intOperatorBlock,
 		stringOperatorBlock,
 
-		commitLink,
-		commit,
-		delta,
+		schemaTypes.CommitLinkObject,
+		schemaTypes.CommitObject,
+		schemaTypes.DeltaObject,
 	}
 }

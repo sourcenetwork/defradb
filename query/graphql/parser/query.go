@@ -245,7 +245,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	//       - Do a for loop here and in `./mutation.go` to match directive name rather than
 	//         checking for only the first one. Will be fixed in issue#455.
 	directives := def.Directives
-	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
+	if len(directives) > 0 && directives[0].Name.Value == parserTypes.ExplainLabel {
 		qdef.IsExplain = true
 	}
 

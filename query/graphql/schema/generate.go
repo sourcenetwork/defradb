@@ -26,8 +26,9 @@ import (
 
 	gql "github.com/graphql-go/graphql"
 	gqlp "github.com/graphql-go/graphql/language/parser"
+
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-	// schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
 // Given a basic developer defined schema in GraphQL Schema Definition Language
@@ -306,7 +307,7 @@ func (g *Generator) createExpandedFieldSingle(
 		Name: f.Name,
 		Type: t,
 		Args: gql.FieldConfigArgument{
-			"filter": newArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"filter": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
 		},
 	}
 	return field, nil
@@ -323,14 +324,14 @@ func (g *Generator) createExpandedFieldList(
 		Name: f.Name,
 		Type: gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"filter": newArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
-			"groupBy": newArgConfig(
+			"filter": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"having": newArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
-			"order":  newArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			"limit":  newArgConfig(gql.Int),
-			"offset": newArgConfig(gql.Int),
+			"having": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
+			"order":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			"limit":  schemaTypes.NewArgConfig(gql.Int),
+			"offset": schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -445,7 +446,7 @@ func (g *Generator) buildTypesFromAST(
 
 				// add _version field
 				fields["_version"] = &gql.Field{
-					Type: gql.NewList(commit),
+					Type: gql.NewList(schemaTypes.CommitObject),
 				}
 
 				// @todo Pairup on removing the staticcheck linter error below.
@@ -586,7 +587,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = newArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
 	}
 
 	return field, nil
@@ -625,7 +626,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*g
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = newArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
 	}
 
 	return field, nil
@@ -664,7 +665,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[strin
 	}
 
 	for name, inputObject := range childTypesByFieldName {
-		field.Args[name] = newArgConfig(inputObject)
+		field.Args[name] = schemaTypes.NewArgConfig(inputObject)
 	}
 
 	return field, nil
@@ -871,7 +872,7 @@ func (g *Generator) genTypeMutationCreateField(obj *gql.Object) (*gql.Field, err
 		Name: "create_" + obj.Name(),
 		Type: obj,
 		Args: gql.FieldConfigArgument{
-			"data": newArgConfig(gql.String),
+			"data": schemaTypes.NewArgConfig(gql.String),
 		},
 	}
 	return field, nil
@@ -886,10 +887,10 @@ func (g *Generator) genTypeMutationUpdateField(
 		Name: "update_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     newArgConfig(gql.ID),
-			"ids":    newArgConfig(gql.NewList(gql.ID)),
-			"filter": newArgConfig(filter),
-			"data":   newArgConfig(gql.String),
+			"id":     schemaTypes.NewArgConfig(gql.ID),
+			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID)),
+			"filter": schemaTypes.NewArgConfig(filter),
+			"data":   schemaTypes.NewArgConfig(gql.String),
 		},
 	}
 	return field, nil
@@ -904,9 +905,9 @@ func (g *Generator) genTypeMutationDeleteField(
 		Name: "delete_" + obj.Name(),
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"id":     newArgConfig(gql.ID),
-			"ids":    newArgConfig(gql.NewList(gql.ID)),
-			"filter": newArgConfig(filter),
+			"id":     schemaTypes.NewArgConfig(gql.ID),
+			"ids":    schemaTypes.NewArgConfig(gql.NewList(gql.ID)),
+			"filter": schemaTypes.NewArgConfig(filter),
 			// "data":   newArgConfig(gql.String),
 		},
 	}
@@ -1122,15 +1123,15 @@ func (g *Generator) genTypeQueryableFieldList(
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  newArgConfig(gql.String),
-			"dockeys": newArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":     newArgConfig(gql.String),
-			"filter":  newArgConfig(config.filter),
-			"groupBy": newArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"having":  newArgConfig(config.having),
-			"order":   newArgConfig(config.order),
-			"limit":   newArgConfig(gql.Int),
-			"offset":  newArgConfig(gql.Int),
+			"dockey":  schemaTypes.NewArgConfig(gql.String),
+			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"cid":     schemaTypes.NewArgConfig(gql.String),
+			"filter":  schemaTypes.NewArgConfig(config.filter),
+			"groupBy": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"having":  schemaTypes.NewArgConfig(config.having),
+			"order":   schemaTypes.NewArgConfig(config.order),
+			"limit":   schemaTypes.NewArgConfig(gql.Int),
+			"offset":  schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -1142,12 +1143,6 @@ func (g *Generator) genTypeQueryableFieldList(
 func (g *Generator) Reset() {
 	g.typeDefs = make([]*gql.Object, 0)
 	g.expandedFields = make(map[string]bool)
-}
-
-func newArgConfig(t gql.Input) *gql.ArgumentConfig {
-	return &gql.ArgumentConfig{
-		Type: t,
-	}
 }
 
 func genTypeName(obj gql.Type, name string) string {

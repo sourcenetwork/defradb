@@ -49,6 +49,7 @@ require (
 require (
 	github.com/fatih/color v1.13.0
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/iancoleman/strcase v0.2.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/text v0.3.7
 )
@@ -89,7 +90,6 @@ require (
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huin/goupnp v1.0.3 // indirect
-	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-bitfield v1.0.0 // indirect

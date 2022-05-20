@@ -163,7 +163,6 @@ func (n *scanNode) Explain() map[string]interface{} {
 
 	// Add the collection attributes.
 	explainerMap[plannerTypes.CollectionName] = n.desc.Name
-
 	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
 
 	// @todo: Add the index attribute.
