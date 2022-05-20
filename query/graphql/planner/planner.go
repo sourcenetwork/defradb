@@ -31,39 +31,32 @@ var (
 // planNode is an interface all nodes in the plan tree need to implement. The file `operations.go`
 // does a compile-time check of all the nodes that satisfy (implement) `planNode`.
 type planNode interface {
-	// Explain describes / explains the planNode (does not execute the plan).
-	Kind() string
-
-	// Initializes or Re-Initializes an existing planNode
-	// Often called internally by Start()
+	// Initializes or Re-Initializes an existing planNode, often called internally by Start().
 	Init() error
 
-	// Starts any internal logic or processes
-	// required by the plan node.
+	// Starts any internal logic or processes required by the planNode. Should be called *after* Init().
 	Start() error
 
-	// Spans sets the planNodes target
-	// spans. This is primarily only used
-	// for a scanNode, but based on the tree
-	// structure, may need to be propagated
-	// Eg. From a selectNode -> scanNode.
+	// Spans sets the planNodes target spans. This is primarily only used for a scanNode,
+	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// Next processes the next result doc from
-	// the query. Can only be called *after*
-	// Start(). Can't be called again if any
-	// previous call returns false.
+	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Can't be called again if any previous call returns false.
 	Next() (bool, error)
 
-	// Values returns the value of the current doc
+	// Values returns the value of the current doc, should only be called *after* Next().
 	Value() map[string]interface{}
 
-	// Source returns the child planNode that
-	// generates the source values for this plan.
-	// If a plan has no source, return nil
+	// Source returns the child planNode that generates the source values for this plan.
+	// If a plan has no source, nil is returned.
 	Source() planNode
 
-	// Close terminates the planNode execution releases its resources.
+	// Kind tells the name of concrete planNode type.
+	Kind() string
+
+	// Close terminates the planNode execution and releases its resources. After this
+	// method is called you can only safely call Kind() and Source() methods.
 	Close() error
 }
 
@@ -152,14 +145,8 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 }
 
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
-// an initiated plan.
-// @ask-question: is the caller responsible to `Close()` the plan as this function returns
-//                 a plan with Init() call on it???  if yes then document it or return a
-//                 non-initiated plan so the user is responsible and aware that they
-//                 have to call Close() since they Initialized the plan. Also might be
-//                 easier to handle by caller in that case to just handle it with a `defer`
-//                 function rather than polluting that block scope at every return or exit
-//                 call to remember to free the resources. example: `executeRequest()` function.
+// an initiated plan. The caller of makePlan is also responsible of calling Close()
+// on the plan to free it's resources.
 func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
@@ -442,22 +429,33 @@ func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]interface{}, error) {
-	src := plan
-	if src == nil {
+	if plan == nil {
 		if errToLog := (plan.Close()); errToLog != nil {
 			log.ErrorE(ctx, "Error: Failure closing plan while explaining `planNode`.", errToLog)
 		}
 		return nil, fmt.Errorf("Error: Can't explain an empty plan.")
 	}
 
-	var explains []string
-	for src != nil {
-		explains = append(explains, src.Kind())
-		src = src.Source()
+	// TEST CODE
+	// var explains []string
+	// src := plan
+	// for src != nil {
+	// explains = append(explains, src.Kind())
+	// src = src.Source()
+	// }
+	// println("==================================")
+	// fmt.Println(strings.Join(explains, ", "))
+	// println("==================================")
+	// +++++++++
+
+	var topExplainGraph []map[string]interface{} = []map[string]interface{}{
+		{
+			parser.DirectiveLabel.ExplainLabel: buildExplainGraph(plan),
+		},
 	}
 
 	err := plan.Close()
-	return ExplainAllText(explains), err
+	return topExplainGraph, err
 }
 
 // executeRequest executes the plan graph that represents the request that was made.

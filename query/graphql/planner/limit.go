@@ -26,8 +26,7 @@ type hardLimitNode struct {
 	rowIndex int64
 }
 
-// HardLimit creates a new hardLimitNode initalized from
-// the parserTypes.Limit object.
+// HardLimit creates a new hardLimitNode initalized from the parser.Limit object.
 func (p *Planner) HardLimit(n *parserTypes.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
