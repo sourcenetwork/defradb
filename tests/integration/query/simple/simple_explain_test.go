@@ -64,13 +64,13 @@ func TestExplainQuerySimple(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter":         nil,
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter":         nil,
 							},
 						},
 					},
@@ -101,13 +101,13 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter":         nil,
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter":         nil,
 							},
 						},
 					},
@@ -142,13 +142,13 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter":         nil,
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter":         nil,
 							},
 						},
 					},

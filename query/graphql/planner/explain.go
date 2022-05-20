@@ -10,45 +10,41 @@
 
 package planner
 
+import (
+	"github.com/iancoleman/strcase"
+	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
+)
+
+// buildExplainGraph builds the explainGraph from the given top level plan.
+//
 // Request:
-//query @explain {
-//  user {
-//    _key
-//    age
-//    name
-//  }
-//}
-
-// Response:
-//{
-//  "data": [
-//    {
-//      "explain": {
-//        "Node => selectTopNode": {
-//          "Node => selectNode": {
-//            "-> Filter": null,
-//            "Node => scanNode": {
-//              "-> CollectionID": "1",
-//              "-> CollectionName": "user",
-//              "-> Filter": null
-//            }
-//          }
-//        }
-//      }
-//    }
-//  ]
-//}
-const explainNodeStyler string = "Node => "
-const explainAttributeStyler string = "-> "
-
-func styleNode(nodeName string) string {
-	return explainNodeStyler + nodeName
-}
-
-func styleAttribute(attributeName string) string {
-	return explainAttributeStyler + attributeName
-}
-
+// query @explain {
+//     user {
+//       _key
+//       age
+//       name
+//     }
+// }
+//
+//  Response:
+// {
+//   "data": [
+//     {
+//       "explain": {
+//         "selectTopNode": {
+//           "selectNode": {
+//             "filter": null,
+//             "scanNode": {
+//               "collectionID": "1",
+//               "collectionName": "user",
+//               "filter": null
+//             }
+//           }
+//         }
+//       }
+//     }
+//   ]
+// }
 func buildExplainGraph(source planNode) map[string]interface{} {
 
 	explainGraph := map[string]interface{}{}
@@ -80,7 +76,7 @@ func buildExplainGraph(source planNode) map[string]interface{} {
 			}
 		}
 
-		explainNodeLabelTitle := styleNode(explainableSource.Kind())
+		explainNodeLabelTitle := strcase.ToLowerCamel(explainableSource.Kind())
 		explainGraph[explainNodeLabelTitle] = explainGraphBuilder
 	}
 
@@ -142,11 +138,10 @@ func (n *selectNode) Explain() map[string]interface{} {
 	}
 
 	// Add the filter attribute if it exists.
-	filterAttribute := styleAttribute("Filter")
 	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[filterAttribute] = nil
+		explainerMap[plannerTypes.Filter] = nil
 	} else {
-		explainerMap[filterAttribute] = n.filter.Conditions
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
 	}
 
 	return explainerMap
@@ -160,19 +155,16 @@ func (n *scanNode) Explain() map[string]interface{} {
 	}
 
 	// Add the filter attribute if it exists.
-	filterAttribute := styleAttribute("Filter")
 	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[filterAttribute] = nil
+		explainerMap[plannerTypes.Filter] = nil
 	} else {
-		explainerMap[filterAttribute] = n.filter.Conditions
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
 	}
 
 	// Add the collection attributes.
-	collectionNameAttribute := styleAttribute("CollectionName")
-	explainerMap[collectionNameAttribute] = n.desc.Name
+	explainerMap[plannerTypes.CollectionName] = n.desc.Name
 
-	collectionIDAttribute := styleAttribute("CollectionID")
-	explainerMap[collectionIDAttribute] = n.desc.IDString()
+	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
 
 	// @todo: Add the index attribute.
 

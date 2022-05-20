@@ -37,13 +37,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -70,13 +70,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -107,13 +107,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -148,13 +148,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -181,13 +181,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -218,13 +218,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -259,13 +259,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter":         nil,
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
 								},
 							},
 						},
@@ -299,13 +299,13 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"_key": map[string]interface{}{
 										"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 									},
@@ -341,13 +341,13 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"Name": map[string]interface{}{
 										"$eq": "John",
 									},
@@ -382,13 +382,13 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Name": map[string]interface{}{
 											"$eq": "John",
 										},
@@ -418,13 +418,13 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Name": map[string]interface{}{
 											"$eq": "John",
 										},
@@ -455,13 +455,13 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Name": map[string]interface{}{
 											"$eq": "Bob",
 										},
@@ -499,13 +499,13 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"Age": map[string]interface{}{
 										"$eq": int64(21), // Should this be `uint64`?
 									},
@@ -541,13 +541,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Age": map[string]interface{}{
 											"$gt": int64(20), // Should this be `uint64`?
 										},
@@ -582,13 +582,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Age": map[string]interface{}{
 											"$gt": int64(40), // Should this be `uint64`?
 										},
@@ -624,13 +624,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
-						"Node => selectTopNode": map[string]interface{}{
-							"Node => selectNode": map[string]interface{}{
-								"-> Filter": nil,
-								"Node => scanNode": map[string]interface{}{
-									"-> CollectionID":   "1",
-									"-> CollectionName": "users",
-									"-> Filter": map[string]interface{}{
+						"selectTopNode": map[string]interface{}{
+							"selectNode": map[string]interface{}{
+								"filter": nil,
+								"scanNode": map[string]interface{}{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": map[string]interface{}{
 										"Age": map[string]interface{}{
 											"$gt": int64(20), // Should this be `uint64`?
 										},
@@ -680,13 +680,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"$and": []interface{}{
 										map[string]interface{}{
 											"Age": map[string]interface{}{
@@ -742,13 +742,13 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"$or": []interface{}{
 										map[string]interface{}{
 											"Age": map[string]interface{}{
@@ -804,13 +804,13 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
-					"Node => selectTopNode": map[string]interface{}{
-						"Node => selectNode": map[string]interface{}{
-							"-> Filter": nil,
-							"Node => scanNode": map[string]interface{}{
-								"-> CollectionID":   "1",
-								"-> CollectionName": "users",
-								"-> Filter": map[string]interface{}{
+					"selectTopNode": map[string]interface{}{
+						"selectNode": map[string]interface{}{
+							"filter": nil,
+							"scanNode": map[string]interface{}{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": map[string]interface{}{
 									"Age": map[string]interface{}{
 										"$in": []interface{}{
 											int64(19), // Should this be uint64?
