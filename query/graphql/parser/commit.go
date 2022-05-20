@@ -14,6 +14,7 @@ import (
 	"errors"
 
 	"github.com/graphql-go/graphql/language/ast"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type CommitType int
@@ -44,16 +45,16 @@ type CommitSelect struct {
 	FieldName string
 	Cid       string
 
-	Limit   *Limit
-	OrderBy *OrderBy
+	Limit   *parserTypes.Limit
+	OrderBy *parserTypes.OrderBy
 
 	Fields []Selection
 
 	Statement *ast.Field
 }
 
-func (c CommitSelect) GetRoot() SelectionType {
-	return CommitSelection
+func (c CommitSelect) GetRoot() parserTypes.SelectionType {
+	return parserTypes.CommitSelection
 }
 
 func (c CommitSelect) GetStatement() ast.Node {
@@ -80,7 +81,7 @@ func (c CommitSelect) ToSelect() *Select {
 		OrderBy:   c.OrderBy,
 		Statement: c.Statement,
 		Fields:    c.Fields,
-		Root:      CommitSelection,
+		Root:      parserTypes.CommitSelection,
 	}
 }
 
@@ -101,13 +102,13 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
-		if prop == "dockey" {
+		if prop == parserTypes.DocKey {
 			raw := argument.Value.(*ast.StringValue)
 			commit.DocKey = raw.Value
-		} else if prop == "cid" {
+		} else if prop == parserTypes.Cid {
 			raw := argument.Value.(*ast.StringValue)
 			commit.Cid = raw.Value
-		} else if prop == "field" {
+		} else if prop == parserTypes.Field {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = raw.Value
 		}

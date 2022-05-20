@@ -121,8 +121,12 @@ func (l *logger) ApplyConfig(config Config) {
 }
 
 func buildZapLogger(name string, config Config) (*zap.Logger, error) {
+	const (
+		encodingTypeConsole string = "console"
+		encodingTypeJSON    string = "json"
+	)
 	defaultConfig := zap.NewProductionConfig()
-	defaultConfig.Encoding = "console"
+	defaultConfig.Encoding = encodingTypeConsole
 	defaultConfig.EncoderConfig.ConsoleSeparator = ", "
 	defaultConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -143,10 +147,10 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 
 	if config.EncoderFormat.HasValue {
 		if config.EncoderFormat.EncoderFormat == JSON {
-			defaultConfig.Encoding = "json"
+			defaultConfig.Encoding = encodingTypeJSON
 			defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 		} else if config.EncoderFormat.EncoderFormat == CSV {
-			defaultConfig.Encoding = "console"
+			defaultConfig.Encoding = encodingTypeConsole
 		}
 	}
 

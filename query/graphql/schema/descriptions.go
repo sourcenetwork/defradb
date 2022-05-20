@@ -17,9 +17,9 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	gql "github.com/graphql-go/graphql"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -61,20 +61,29 @@ var (
 )
 
 func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
+	const (
+		typeID      string = "ID"
+		typeBoolean string = "Boolean"
+		typeInt     string = "Int"
+		typeFloat   string = "Float"
+		typeDate    string = "Date"
+		typeString  string = "String"
+	)
+
 	switch v := t.(type) {
 	case *gql.Scalar:
 		switch v.Name() {
-		case "ID":
+		case typeID:
 			return client.FieldKind_DocKey
-		case "Boolean":
+		case typeBoolean:
 			return client.FieldKind_BOOL
-		case "Int":
+		case typeInt:
 			return client.FieldKind_INT
-		case "Float":
+		case typeFloat:
 			return client.FieldKind_FLOAT
-		case "Date":
+		case typeDate:
 			return client.FieldKind_DATE
-		case "String":
+		case typeString:
 			return client.FieldKind_STRING
 		}
 	case *gql.Object:
@@ -82,13 +91,13 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 	case *gql.List:
 		if scalar, isScalar := v.OfType.(*gql.Scalar); isScalar {
 			switch scalar.Name() {
-			case "Boolean":
+			case typeBoolean:
 				return client.FieldKind_BOOL_ARRAY
-			case "Int":
+			case typeInt:
 				return client.FieldKind_INT_ARRAY
-			case "Float":
+			case typeFloat:
 				return client.FieldKind_FLOAT_ARRAY
-			case "String":
+			case typeString:
 				return client.FieldKind_STRING_ARRAY
 			}
 		}
@@ -119,7 +128,7 @@ func (g *Generator) CreateDescriptions(
 			Name: t.Name(),
 			Fields: []client.FieldDescription{
 				{
-					Name: "_key",
+					Name: parserTypes.DocKeyFieldName,
 					Kind: client.FieldKind_DocKey,
 					Typ:  client.NONE_CRDT,
 				},
@@ -127,7 +136,7 @@ func (g *Generator) CreateDescriptions(
 		}
 		// and schema fields
 		for fname, field := range t.Fields() {
-			if _, ok := parser.ReservedFields[fname]; ok {
+			if _, ok := parserTypes.ReservedFields[fname]; ok {
 				continue
 			}
 
@@ -208,10 +217,10 @@ func (g *Generator) CreateDescriptions(
 
 		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
-			// make sure that the _key is always at the beginning
-			if desc.Schema.Fields[i].Name == "_key" {
+			// make sure that the _key (DocKeyFieldName) is always at the beginning
+			if desc.Schema.Fields[i].Name == parserTypes.DocKeyFieldName {
 				return true
-			} else if desc.Schema.Fields[j].Name == "_key" {
+			} else if desc.Schema.Fields[j].Name == parserTypes.DocKeyFieldName {
 				return false
 			}
 			return desc.Schema.Fields[i].Name < desc.Schema.Fields[j].Name

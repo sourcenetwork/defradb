@@ -15,12 +15,14 @@ import (
 	"sort"
 	"strings"
 
-	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	cid "github.com/ipfs/go-cid"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 /*
@@ -160,7 +162,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 	}
 	sourcePlan, err := n.p.getSource(
 		parsed.CollectionName,
-		parsed.QueryType == parser.VersionedScanQuery,
+		parsed.QueryType == parserTypes.VersionedScanQuery,
 	)
 	if err != nil {
 		return nil, err
@@ -181,7 +183,7 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 		// If we have both a DocKey and a CID, then we need to run
 		// a TimeTravel (History-Traversing Versioned) query, which means
 		// we need to propagate the values to the underlying VersionedFetcher
-		if parsed.QueryType == parser.VersionedScanQuery {
+		if parsed.QueryType == parserTypes.VersionedScanQuery {
 			c, err := cid.Decode(parsed.CID)
 			if err != nil {
 				return nil, fmt.Errorf(
@@ -233,19 +235,19 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 			// @todo: check select type:
 			// - TypeJoin
 			// - commitScan
-			if f.Statement.Name.Value == parser.CountFieldName {
+			if f.Statement.Name.Value == parserTypes.CountFieldName {
 				aggregateError = n.joinAggregatedChild(parsed, f)
 				if aggregateError != nil {
 					return nil, aggregateError
 				}
 				plan, aggregateError = n.p.Count(f, parsed)
-			} else if f.Statement.Name.Value == parser.SumFieldName {
+			} else if f.Statement.Name.Value == parserTypes.SumFieldName {
 				aggregateError = n.joinAggregatedChild(parsed, f)
 				if aggregateError != nil {
 					return nil, aggregateError
 				}
 				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
-			} else if f.Statement.Name.Value == parser.AverageFieldName {
+			} else if f.Statement.Name.Value == parserTypes.AverageFieldName {
 				averageSource, err := f.GetAggregateSource(parsed)
 				if err != nil {
 					return nil, err
@@ -264,7 +266,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummyCountField := f.Clone(fmt.Sprintf("%s_internalCount", f.Name), parser.CountFieldName)
+				dummyCountField := f.Clone(fmt.Sprintf("%s_internalCount", f.Name), parserTypes.CountFieldName)
 				countField, countExists := tryGetField(parsed.Fields, dummyCountField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !countExists {
@@ -277,7 +279,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				// value of the suffix is unimportant here, just needs to be unique
-				dummySumField := f.Clone(fmt.Sprintf("%s_internalSum", f.Name), parser.SumFieldName)
+				dummySumField := f.Clone(fmt.Sprintf("%s_internalSum", f.Name), parserTypes.SumFieldName)
 				sumField, sumExists := tryGetField(parsed.Fields, dummySumField)
 				// Note: sumExists will always be false until we support filtering by nil in the query
 				if !sumExists {
@@ -290,7 +292,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				}
 
 				plan, aggregateError = n.p.Average(sumField, countField, f)
-			} else if f.Name == parser.VersionFieldName { // reserved sub type for object queries
+			} else if f.Name == parserTypes.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &parser.CommitSelect{
 					Name:  f.Name,
 					Alias: f.Alias,
@@ -300,7 +302,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				// handle _version sub selection query differently
 				// if we are executing a regular Scan query
 				// or a TimeTravel query.
-				if parsed.QueryType == parser.VersionedScanQuery {
+				if parsed.QueryType == parserTypes.VersionedScanQuery {
 					// for a TimeTravel query, we don't need the Latest
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
@@ -320,8 +322,8 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				if err := n.addSubPlan(field.GetName(), commitPlan); err != nil {
 					return nil, err
 				}
-			} else if f.Root == parser.ObjectSelection {
-				if f.Statement.Name.Value == parser.GroupFieldName {
+			} else if f.Root == parserTypes.ObjectSelection {
+				if f.Statement.Name.Value == parserTypes.GroupFieldName {
 					n.groupSelects = append(n.groupSelects, f)
 				} else {
 					// nolint:errcheck
@@ -405,7 +407,7 @@ func (n *selectNode) joinAggregatedChild(
 	// If the child item is not requested, then we have add in the necessary components
 	//  to force the child records to be scanned through (they wont be rendered)
 	if !hasChildProperty {
-		if source.ExternalHostName == parser.GroupFieldName {
+		if source.ExternalHostName == parserTypes.GroupFieldName {
 			hasGroupSelect := false
 			for _, childSelect := range n.groupSelects {
 				if childSelect.Equal(*targetField) {
@@ -417,7 +419,7 @@ func (n *selectNode) joinAggregatedChild(
 				//
 				// todo - this might be incorrect when the groupby contains a filter - test
 				// consider adding fancy inclusive logic
-				if childSelect.ExternalName == parser.GroupFieldName && childSelect.Filter == nil {
+				if childSelect.ExternalName == parserTypes.GroupFieldName && childSelect.Filter == nil {
 					hasGroupSelect = true
 					break
 				}
@@ -426,18 +428,18 @@ func (n *selectNode) joinAggregatedChild(
 				newGroup := &parser.Select{
 					Alias:        source.HostProperty,
 					Name:         fmt.Sprintf("_agg%v", len(parsed.Fields)),
-					ExternalName: parser.GroupFieldName,
+					ExternalName: parserTypes.GroupFieldName,
 					Hidden:       true,
 				}
 				parsed.Fields = append(parsed.Fields, newGroup)
 				n.groupSelects = append(n.groupSelects, newGroup)
 			}
-		} else if parsed.Root != parser.CommitSelection {
+		} else if parsed.Root != parserTypes.CommitSelection {
 			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(source.HostProperty)
 			if fieldDescription.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
 				subtype := &parser.Select{
 					Name:         source.HostProperty,
-					ExternalName: parser.GroupFieldName,
+					ExternalName: parserTypes.GroupFieldName,
 				}
 				return n.addTypeIndexJoin(subtype)
 			}
