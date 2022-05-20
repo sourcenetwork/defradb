@@ -35,31 +35,18 @@ import (
 type Query planNode
 
 type QueryExecutor struct {
-	// some context
-	// schema manager
 	SchemaManager *schema.SchemaManager
 }
 
 func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
-	// sm, err := schema.NewSchemaManager()
-	// if err != nil {
-	// 	return nil, nil
-	// }
 	if manager == nil {
 		return nil, fmt.Errorf("SchemaManager cannot be nil")
 	}
 
-	// g := schema.NewGenerator(sm)
 	return &QueryExecutor{
 		SchemaManager: manager,
 	}, nil
 }
-
-//func (e *QueryExecutor) ExecQuery(
-//	query string,
-//	args ...interface{},
-//) ([]map[string]interface{}, error) {
-//}
 
 func (e *QueryExecutor) MakeSelectQuery(
 	ctx context.Context,
@@ -81,13 +68,14 @@ func (e *QueryExecutor) ExecQuery(
 	query string,
 	args ...interface{},
 ) ([]map[string]interface{}, error) {
-	q, err := e.ParseQueryString(query)
+	q, err := e.ParseRequestString(query)
 	if err != nil {
 		return nil, err
 	}
 
 	planner := makePlanner(ctx, db, txn)
-	return planner.queryDocs(ctx, q)
+	return planner.runRequest(ctx, q)
+
 }
 
 func (e *QueryExecutor) MakePlanFromParser(
@@ -100,9 +88,9 @@ func (e *QueryExecutor) MakePlanFromParser(
 	return planner.makePlan(query)
 }
 
-func (e *QueryExecutor) ParseQueryString(query string) (*parser.Query, error) {
+func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error) {
 	source := source.NewSource(&source.Source{
-		Body: []byte(query),
+		Body: []byte(request),
 		Name: "GraphQL request",
 	})
 

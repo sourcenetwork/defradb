@@ -15,34 +15,8 @@ import (
 )
 
 var (
-	// Delta represents a Delta State update for a CRDT
-	// type Delta {
-	// 	Payload: String
-	// }
-	Delta = gql.NewObject(gql.ObjectConfig{
-		Name: "Delta",
-		Fields: gql.Fields{
-			"payload": &gql.Field{
-				Type: gql.String,
-			},
-		},
-	})
-
-	// CommitLink is a named DAG link between commits.
-	// This is primary used for CompositeDAG CRDTs
-	CommitLink = gql.NewObject(gql.ObjectConfig{
-		Name: "CommitLink",
-		Fields: gql.Fields{
-			"name": &gql.Field{
-				Type: gql.String,
-			},
-			"cid": &gql.Field{
-				Type: gql.String,
-			},
-		},
-	})
-
-	CommitCountFieldArg = gql.NewEnum(gql.EnumConfig{
+	// Helper only for `Commit` below.
+	commitCountFieldArg = gql.NewEnum(gql.EnumConfig{
 		Name: "commitCountFieldArg",
 		Values: gql.EnumValueConfigMap{
 			"links": &gql.EnumValueConfig{Value: "links"},
@@ -82,7 +56,7 @@ var (
 				Type: gql.Int,
 				Args: gql.FieldConfigArgument{
 					"field": &gql.ArgumentConfig{
-						Type: CommitCountFieldArg,
+						Type: commitCountFieldArg,
 					},
 				},
 			},
@@ -91,8 +65,31 @@ var (
 			// },
 		},
 	})
+
+	// Delta represents a Delta State update for a CRDT
+	// type Delta {
+	// 	Payload: String
+	// }
+	Delta = gql.NewObject(gql.ObjectConfig{
+		Name: "Delta",
+		Fields: gql.Fields{
+			"payload": &gql.Field{
+				Type: gql.String,
+			},
+		},
+	})
+
+	// CommitLink is a named DAG link between commits.
+	// This is primary used for CompositeDAG CRDTs
+	CommitLink = gql.NewObject(gql.ObjectConfig{
+		Name: "CommitLink",
+		Fields: gql.Fields{
+			"name": &gql.Field{
+				Type: gql.String,
+			},
+			"cid": &gql.Field{
+				Type: gql.String,
+			},
+		},
+	})
 )
-
-func init() {
-
-}

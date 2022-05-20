@@ -20,9 +20,13 @@ cross-build:
 start: build
 	./build/defradb start
 
-.PHONY: dump
-dump: build
+.PHONY: client\:dump
+client\:dump:
 	./build/defradb client dump
+
+.PHONY: client\:add-schema
+client\:add-schema:
+	./build/defradb client schema add -f cli/defradb/examples/user.graphql
 
 .PHONY: deps\:lint
 deps\:lint:

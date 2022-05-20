@@ -134,16 +134,27 @@ func (m Mutation) ToSelect() *Select {
 	}
 }
 
-// parseOperationDefinition parses the individual GraphQL
-// 'query' operations, which there may be multiple of.
+// parseMutationOperationDefinition parses the individual GraphQL
+// 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
+
 	if def.Name != nil {
 		qdef.Name = def.Name.Value
 	}
+
+	// Todo: - iterate through all directives and ensure that the directive is at the
+	//          right location that we expect it to be at (create a parseDirectives function).
+	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
+	directives := def.Directives
+	if len(directives) > 0 && directives[0].Name.Value == "explain" {
+		qdef.IsExplain = true
+	}
+
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:

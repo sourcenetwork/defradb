@@ -47,9 +47,7 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 
 */
 
-// wraps a selectNode and all the logic of a plan
-// graph into a single struct for proper plan
-// expansion
+// Wraps a selectNode and all the logic of a plan graph into a single struct for proper plan expansion.
 // Executes the top level plan node.
 type selectTopNode struct {
 	source     planNode
@@ -63,7 +61,6 @@ type selectTopNode struct {
 	plan planNode
 
 	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRATEGY) -> render -> source
-
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 

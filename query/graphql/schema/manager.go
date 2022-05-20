@@ -11,9 +11,10 @@
 package schema
 
 import (
-	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
-
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/query/graphql/schema/directives"
+	"github.com/sourcenetwork/defradb/query/graphql/schema/root"
+	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
 // SchemaManager creates an instanced management point
@@ -29,9 +30,10 @@ type SchemaManager struct {
 func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{}
 	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types:    defaultTypes(),
-		Query:    defaultQueryType(),
-		Mutation: defaultMutationType(),
+		Types:      defaultTypes(),
+		Query:      defaultQueryType(),
+		Mutation:   defaultMutationType(),
+		Directives: defaultDirectivesType(),
 	})
 	if err != nil {
 		return sm, err
@@ -111,6 +113,13 @@ func defaultMutationType() *gql.Object {
 	})
 }
 
+// default directives type.
+func defaultDirectivesType() []*gql.Directive {
+	return []*gql.Directive{
+		directives.Explain,
+	}
+}
+
 // default type map includes all the native scalar types
 func defaultTypes() []gql.Type {
 	return []gql.Type{
@@ -125,18 +134,18 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		OrderingEnum,
+		root.OrderingEnum,
 
 		// filter scalar blocks
-		BooleanOperatorBlock,
-		DateTimeOperatorBlock,
-		FloatOperatorBlock,
-		IDOperatorBlock,
-		IntOperatorBlock,
-		StringOperatorBlock,
+		root.BooleanOperatorBlock,
+		root.DateTimeOperatorBlock,
+		root.FloatOperatorBlock,
+		root.IDOperatorBlock,
+		root.IntOperatorBlock,
+		root.StringOperatorBlock,
 
-		types.CommitLink,
 		// types.CommitLinks,
+		types.CommitLink,
 		types.Commit,
 		types.Delta,
 	}

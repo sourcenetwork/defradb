@@ -40,8 +40,8 @@ func (q Query) GetStatement() ast.Node {
 type OperationDefinition struct {
 	Name       string
 	Selections []Selection
-
-	Statement *ast.OperationDefinition
+	Statement  *ast.OperationDefinition
+	IsExplain  bool
 }
 
 func (q OperationDefinition) GetStatement() ast.Node {
@@ -194,17 +194,19 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 		Queries:   make([]*OperationDefinition, 0),
 		Mutations: make([]*OperationDefinition, 0),
 	}
+
 	for _, def := range q.Statement.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
 			if node.Operation == "query" {
-				// parse query or mutation operation definition
+				// parse query operation definition.
 				qdef, err := parseQueryOperationDefinition(node)
 				if err != nil {
 					return nil, err
 				}
 				q.Queries = append(q.Queries, qdef)
 			} else if node.Operation == "mutation" {
+				// parse mutation operation definition.
 				mdef, err := parseMutationOperationDefinition(node)
 				if err != nil {
 					return nil, err
@@ -219,16 +221,29 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	return q, nil
 }
 
-// parseOperationDefinition parses the individual GraphQL
+// parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
+
 	if def.Name != nil {
 		qdef.Name = def.Name.Value
 	}
+
+	// Todo: - iterate through all directives and ensure that the directive is at the
+	//          right location that we expect it to be at (create a parseDirectives function).
+	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
+	//       - Also refactor this file into a `request.go` file and isolate `query` operation
+	//          specific code into a separate file like we currently have `mutation.go` file.
+	directives := def.Directives
+	if len(directives) > 0 && directives[0].Name.Value == "explain" {
+		qdef.IsExplain = true
+	}
+
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		var parsed Selection
 		var err error

@@ -19,6 +19,28 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
+// commitSelectTopNode is a wrapper for the selectTopNode
+// in the case where the select is actually a CommitSelect
+type commitSelectTopNode struct {
+	p    *Planner
+	plan planNode
+}
+
+func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
+func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
+func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
+func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
+func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
+func (n *commitSelectTopNode) Source() planNode              { return n.plan }
+func (n *commitSelectTopNode) Close() error {
+	if n.plan == nil {
+		return nil
+	}
+	return n.plan.Close()
+}
+
+func (n *commitSelectTopNode) Append() bool { return true }
+
 type commitSelectNode struct {
 	documentIterator
 
@@ -57,12 +79,6 @@ func (n *commitSelectNode) Close() error {
 func (n *commitSelectNode) Source() planNode {
 	return n.source
 }
-
-// AppendNode implements appendNode
-// func (n *commitSelectNode) AppendNode() bool {
-// 	return true
-// }
-
 func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	// check type of commit select (all, latest, one)
 	var commit *commitSelectNode
@@ -159,25 +175,3 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 
 	return commit, nil
 }
-
-// commitSelectTopNode is a wrapper for the selectTopNode
-// in the case where the select is actually a CommitSelect
-type commitSelectTopNode struct {
-	p    *Planner
-	plan planNode
-}
-
-func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
-func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
-func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
-func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *commitSelectTopNode) Source() planNode              { return n.plan }
-func (n *commitSelectTopNode) Close() error {
-	if n.plan == nil {
-		return nil
-	}
-	return n.plan.Close()
-}
-
-func (n *commitSelectTopNode) Append() bool { return true }
