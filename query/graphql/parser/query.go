@@ -17,6 +17,8 @@ import (
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type SelectionType int
@@ -85,10 +87,6 @@ type OperationDefinition struct {
 func (q OperationDefinition) GetStatement() ast.Node {
 	return q.Statement
 }
-
-// type SelectionSet struct {
-// 	Selections []Selection
-// }
 
 type Selection interface {
 	Statement
@@ -359,7 +357,7 @@ func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 		prop, astValue := getArgumentKeyValue(field, argument)
 
 		// parse filter
-		if prop == "filter" {
+		if prop == parserTypes.FilterClause {
 			obj := astValue.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
@@ -367,20 +365,20 @@ func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 			}
 
 			slct.Filter = filter
-		} else if prop == "dockey" { // parse single dockey query field
+		} else if prop == parserTypes.DocKey { // parse single dockey query field
 			val := astValue.(*ast.StringValue)
 			slct.DocKeys = []string{val.Value}
-		} else if prop == "dockeys" {
+		} else if prop == parserTypes.DocKeys {
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
 			slct.DocKeys = docKeys
-		} else if prop == "cid" { // parse single CID query field
+		} else if prop == parserTypes.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
 			slct.CID = val.Value
-		} else if prop == "limit" { // parse limit/offset
+		} else if prop == parserTypes.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
@@ -390,7 +388,7 @@ func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 				slct.Limit = &Limit{}
 			}
 			slct.Limit.Limit = i
-		} else if prop == "offset" { // parse limit/offset
+		} else if prop == parserTypes.OffsetClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
 			if err != nil {
@@ -400,7 +398,7 @@ func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 				slct.Limit = &Limit{}
 			}
 			slct.Limit.Offset = i
-		} else if prop == "order" { // parse sort (order by)
+		} else if prop == parserTypes.OrderClause { // parse sort (order by)
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
@@ -410,7 +408,7 @@ func parseSelect(rootType SelectionType, field *ast.Field, index int) (*Select, 
 				Conditions: cond,
 				Statement:  obj,
 			}
-		} else if prop == "groupBy" {
+		} else if prop == parserTypes.GroupByClause {
 			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
@@ -451,8 +449,8 @@ func getArgumentKeyValue(field *ast.Field, argument *ast.Argument) (string, ast.
 		switch innerProps := argument.Value.(type) {
 		case *ast.ObjectValue:
 			for _, innerV := range innerProps.Fields {
-				if innerV.Name.Value == "filter" {
-					return "filter", innerV.Value
+				if innerV.Name.Value == parserTypes.FilterClause {
+					return parserTypes.FilterClause, innerV.Value
 				}
 			}
 		}
@@ -507,7 +505,7 @@ func parseSelectFields(root SelectionType, fields *ast.SelectionSet) ([]Selectio
 			} else { // sub type with extra fields
 				subroot := root
 				switch node.Name.Value {
-				case "_version":
+				case VersionFieldName:
 					subroot = CommitSelection
 				}
 				s, err := parseSelect(subroot, node, i)
@@ -581,7 +579,7 @@ func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) 
 		externalHostName = argumentValue
 	case []*ast.ObjectField:
 		externalHostName = field.Statement.Arguments[0].Name.Value
-		fieldArg, hasFieldArg := tryGet(argumentValue, "field")
+		fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
 		if hasFieldArg {
 			if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
 				childProperty = innerPathStringValue

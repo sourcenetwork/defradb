@@ -15,6 +15,8 @@ import (
 	"errors"
 	"strings"
 
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+
 	"github.com/graphql-go/graphql/language/ast"
 )
 
@@ -199,13 +201,13 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		// parse each individual arg type seperately
-		if prop == "data" { // parse data
+		if prop == parserTypes.Data { // parse data
 			raw := argument.Value.(*ast.StringValue)
 			if raw.Value == "" {
 				return nil, ErrEmptyDataPayload
 			}
 			mut.Data = raw.Value
-		} else if prop == "filter" { // parse filter
+		} else if prop == parserTypes.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
@@ -213,10 +215,10 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 			}
 
 			mut.Filter = filter
-		} else if prop == "id" {
+		} else if prop == parserTypes.Id {
 			raw := argument.Value.(*ast.StringValue)
 			mut.IDs = []string{raw.Value}
-		} else if prop == "ids" {
+		} else if prop == parserTypes.Ids {
 			raw := argument.Value.(*ast.ListValue)
 			mut.IDs = make([]string, len(raw.Values))
 			for i, val := range raw.Values {
@@ -234,23 +236,6 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 	if field.SelectionSet == nil {
 		return mut, nil
 	}
-
-	// // parse field selections
-	// for _, selection := range field.SelectionSet.Selections {
-	// 	switch node := selection.(type) {
-	// 	case *ast.Field:
-	// 		if node.SelectionSet == nil { // regular field
-	// 			f := parseField(node)
-	// 			mut.Fields = append(mut.Fields, f)
-	// 		} else { // sub type with extra fields
-	// 			s, err := parseSelect(node)
-	// 			if err != nil {
-	// 				return nil, err
-	// 			}
-	// 			mut.Fields = append(mut.Fields, s)
-	// 		}
-	// 	}
-	// }
 
 	var err error
 	mut.Fields, err = parseSelectFields(mut.GetRoot(), field.SelectionSet)

@@ -377,7 +377,7 @@ func (g *Generator) buildTypesFromAST(
 				// @todo: Check if this is a collection (relation) type
 				// or just a embedded only type (which doesn't need a key)
 				// automatically add the _key: ID field to the type
-				fields["_key"] = &gql.Field{Type: gql.ID}
+				fields[parser.DocKeyFieldName] = &gql.Field{Type: gql.ID}
 
 				for _, field := range defType.Fields {
 					fType := new(gql.Field)
@@ -955,7 +955,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				if _, ok := parser.ReservedFields[f]; ok && f != parser.DocKeyFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1047,7 +1047,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				if _, ok := parser.ReservedFields[f]; ok && f != parser.DocKeyFieldName {
 					continue
 				}
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums

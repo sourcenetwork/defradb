@@ -171,7 +171,7 @@ func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(name, "_") && name != "_key" {
+		if strings.HasPrefix(name, "_") && name != DocKeyFieldName {
 			name = strings.Replace(name, "_", "$", 1)
 		}
 		conditions[name] = val
