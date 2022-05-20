@@ -72,10 +72,14 @@ const (
 
 	ASC  = SortDirection("ASC")
 	DESC = SortDirection("DESC")
+)
 
+const (
 	ScanQuery = iota
 	VersionedScanQuery
+)
 
+const (
 	NoneSelection = iota
 	ObjectSelection
 	CommitSelection
