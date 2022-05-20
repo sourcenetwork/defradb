@@ -34,6 +34,7 @@ var (
 	_ planNode = (*typeJoinMany)(nil)
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*updateNode)(nil)
+	_ planNode = (*valuesNode)(nil)
 )
 
 // type joinNode struct {

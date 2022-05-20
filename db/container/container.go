@@ -69,9 +69,10 @@ func (c *DocumentContainer) Swap(i, j int) {
 	c.docs[j] = tmp
 }
 
-func (c *DocumentContainer) Close() {
+func (c *DocumentContainer) Close() error {
 	c.docs = nil
 	c.numDocs = 0
+	return nil
 }
 
 func copyMap(m map[string]interface{}) map[string]interface{} {

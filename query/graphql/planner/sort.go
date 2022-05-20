@@ -21,7 +21,7 @@ import (
 type valueIterator interface {
 	Next() (bool, error)
 	Value() map[string]interface{}
-	Close()
+	Close() error
 }
 
 type sortingStrategy interface {
@@ -133,10 +133,11 @@ func (n *sortNode) Close() error {
 	}
 
 	if n.valueIter != nil {
-		n.valueIter.Close()
+		return n.valueIter.Close()
 	}
+
 	if n.sortStrategy != nil {
-		n.sortStrategy.Close()
+		return n.sortStrategy.Close()
 	}
 	return nil
 }
@@ -179,6 +180,6 @@ func (s *allSortStrategy) Value() map[string]interface{} {
 }
 
 // Close closes the underling valueNode
-func (s *allSortStrategy) Close() {
-	s.valueNode.Close()
+func (s *allSortStrategy) Close() error {
+	return s.valueNode.Close()
 }
