@@ -68,8 +68,7 @@ func buildExplainGraph(source planNode) map[string]interface{} {
 		explainGraphBuilder := explainableSource.Explain()
 
 		// If not the last child then keep walking the graph to find more explainable nodes.
-		notLeafSource := explainableSource.Source() != nil
-		if notLeafSource {
+		if explainableSource.Source() != nil {
 			childExplainGraph := buildExplainGraph(explainableSource.Source())
 			for key, value := range childExplainGraph {
 				explainGraphBuilder[key] = value
@@ -133,10 +132,6 @@ func (n *selectTopNode) Explain() map[string]interface{} {
 func (n *selectNode) Explain() map[string]interface{} {
 	explainerMap := map[string]interface{}{}
 
-	if n == nil {
-		return explainerMap
-	}
-
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.Conditions == nil {
 		explainerMap[plannerTypes.Filter] = nil
@@ -149,10 +144,6 @@ func (n *selectNode) Explain() map[string]interface{} {
 
 func (n *scanNode) Explain() map[string]interface{} {
 	explainerMap := map[string]interface{}{}
-
-	if n == nil {
-		return explainerMap
-	}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.Conditions == nil {

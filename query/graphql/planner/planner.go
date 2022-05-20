@@ -28,8 +28,7 @@ var (
 	log = logging.MustNewLogger("defra.query.planner")
 )
 
-// planNode is an interface all nodes in the plan tree need to implement. The file `operations.go`
-// does a compile-time check of all the nodes that satisfy (implement) `planNode`.
+// planNode is an interface all nodes in the plan tree need to implement.
 type planNode interface {
 	// Initializes or Re-Initializes an existing planNode, often called internally by Start().
 	Init() error
@@ -429,9 +428,6 @@ func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]interface{}, error) {
-	if plan == nil {
-		return nil, fmt.Errorf("Can't explain an empty / nil plan.")
-	}
 
 	topExplainGraph := []map[string]interface{}{
 		{
@@ -495,8 +491,13 @@ func (p *Planner) runRequest(
 ) ([]map[string]interface{}, error) {
 
 	plan, err := p.makePlan(query)
+
 	if err != nil {
 		return nil, err
+	}
+
+	if plan == nil {
+		return nil, fmt.Errorf("Can't run request of an empty / nil plan.")
 	}
 
 	isAnExplainRequest :=
