@@ -1,0 +1,93 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package all_commits
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestQueryAllCommitsSingleDAG(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple latest commits query",
+		Query: `query {
+					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						cid
+						links {
+							cid
+							name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 21
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"links": []map[string]interface{}{
+					{
+						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+						"name": "Age",
+					},
+					{
+						"cid":  "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+						"name": "Name",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryAllCommitsMultipleDAG(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple latest commits query",
+		Query: `query {
+					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						cid
+						height
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 21
+			}`)},
+		},
+		Updates: map[int][]string{
+			0: {
+				// update to change age to 22 on document 0
+				(`{"Age": 22}`),
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"height": int64(2),
+			},
+			{
+				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"height": int64(1),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

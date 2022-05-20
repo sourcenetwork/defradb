@@ -77,11 +77,11 @@ test\:clean: clean\:test test
 
 .PHONY: test\:bench
 test\:bench:
-	make -C ./bench/ bench
+	make -C ./tests/bench/ bench
 
 .PHONY: test\:bench-short
 test\:bench-short:
-	make -C ./bench/ bench:short
+	make -C ./tests/bench/ bench:short
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
