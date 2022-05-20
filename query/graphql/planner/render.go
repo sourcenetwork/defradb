@@ -13,6 +13,8 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // the final field select and render
@@ -100,7 +102,7 @@ func (n *renderNode) Next() (bool, error) {
 		return n.Next()
 	}
 
-	if _, isHidden := doc[parser.HiddenFieldName]; isHidden {
+	if _, isHidden := doc[parserTypes.HiddenFieldName]; isHidden {
 		return n.Next()
 	}
 
@@ -125,7 +127,7 @@ func (r *renderInfo) render(src map[string]interface{}, destination map[string]i
 		case map[string]interface{}:
 			inner := map[string]interface{}{}
 
-			if _, isHidden := v[parser.HiddenFieldName]; isHidden {
+			if _, isHidden := v[parserTypes.HiddenFieldName]; isHidden {
 				return
 			}
 
@@ -137,7 +139,7 @@ func (r *renderInfo) render(src map[string]interface{}, destination map[string]i
 		case []map[string]interface{}:
 			subdocs := make([]map[string]interface{}, 0)
 			for _, subv := range v {
-				if _, isHidden := subv[parser.HiddenFieldName]; isHidden {
+				if _, isHidden := subv[parserTypes.HiddenFieldName]; isHidden {
 					continue
 				}
 

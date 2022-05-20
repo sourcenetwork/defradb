@@ -12,7 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Limit the results, yielding only what the limit/offset permits
@@ -27,8 +27,8 @@ type hardLimitNode struct {
 }
 
 // HardLimit creates a new hardLimitNode initalized from
-// the parser.Limit object.
-func (p *Planner) HardLimit(n *parser.Limit) (*hardLimitNode, error) {
+// the parserTypes.Limit object.
+func (p *Planner) HardLimit(n *parserTypes.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
@@ -89,8 +89,8 @@ type renderLimitNode struct {
 }
 
 // RenderLimit creates a new renderLimitNode initalized from
-// the parser.Limit object.
-func (p *Planner) RenderLimit(n *parser.Limit) (*renderLimitNode, error) {
+// the parserTypes.Limit object.
+func (p *Planner) RenderLimit(n *parserTypes.Limit) (*renderLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
@@ -120,7 +120,7 @@ func (n *renderLimitNode) Next() (bool, error) {
 
 	n.rowIndex++
 	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
-		n.currentValue[parser.HiddenFieldName] = struct{}{}
+		n.currentValue[parserTypes.HiddenFieldName] = struct{}{}
 	}
 	return true, nil
 }

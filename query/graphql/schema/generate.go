@@ -15,17 +15,17 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/graphql-go/graphql/language/ast"
+	"github.com/graphql-go/graphql/language/source"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Given a basic developer defined schema in GraphQL Schema Definition Language
@@ -212,8 +212,8 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
 		// ignore reserved fields, execpt the Group field (as that requires typing), and aggregates
-		if _, ok := parser.ReservedFields[f]; ok && f != parser.GroupFieldName {
-			if _, isAggregate := parser.Aggregates[f]; !isAggregate {
+		if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.GroupFieldName {
+			if _, isAggregate := parserTypes.Aggregates[f]; !isAggregate {
 				continue
 			}
 		}
@@ -261,7 +261,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				obj.AddFieldConfig(f, expandedField)
 			}
 		case *gql.Scalar:
-			if _, isAggregate := parser.Aggregates[f]; isAggregate {
+			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
 				g.createExpandedFieldAggregate(obj, def, t)
 			}
 			// @todo: check if NonNull is possible here
@@ -281,7 +281,7 @@ func (g *Generator) createExpandedFieldAggregate(
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var targetType string
-		if target == parser.GroupFieldName {
+		if target == parserTypes.GroupFieldName {
 			targetType = obj.Name()
 		} else {
 			targetType = obj.Fields()[target].Type.Name()
@@ -377,7 +377,7 @@ func (g *Generator) buildTypesFromAST(
 				// @todo: Check if this is a collection (relation) type
 				// or just a embedded only type (which doesn't need a key)
 				// automatically add the _key: ID field to the type
-				fields["_key"] = &gql.Field{Type: gql.ID}
+				fields[parserTypes.DocKeyFieldName] = &gql.Field{Type: gql.ID}
 
 				for _, field := range defType.Fields {
 					fType := new(gql.Field)
@@ -455,7 +455,7 @@ func (g *Generator) buildTypesFromAST(
 					)
 				}
 
-				fields[parser.GroupFieldName] = &gql.Field{
+				fields[parserTypes.GroupFieldName] = &gql.Field{
 					Type: gql.NewList(gqlType),
 				}
 
@@ -578,7 +578,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: parser.CountFieldName,
+		Name: parserTypes.CountFieldName,
 		Type: gql.Int,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -617,7 +617,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*g
 	}
 
 	field := gql.Field{
-		Name: parser.SumFieldName,
+		Name: parserTypes.SumFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -656,7 +656,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[strin
 	}
 
 	field := gql.Field{
-		Name: parser.AverageFieldName,
+		Name: parserTypes.AverageFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -728,13 +728,13 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 						fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					} else {
 						// If it is a related list, we need to add count in here so that we can sum it
-						fieldsEnumCfg.Values[parser.CountFieldName] = &gql.EnumValueConfig{Value: parser.CountFieldName}
+						fieldsEnumCfg.Values[parserTypes.CountFieldName] = &gql.EnumValueConfig{Value: parserTypes.CountFieldName}
 					}
 				}
 			}
 			// A child aggregate will always be aggregatable, as it can be present via an inner grouping
-			fieldsEnumCfg.Values[parser.SumFieldName] = &gql.EnumValueConfig{Value: parser.SumFieldName}
-			fieldsEnumCfg.Values[parser.AverageFieldName] = &gql.EnumValueConfig{Value: parser.AverageFieldName}
+			fieldsEnumCfg.Values[parserTypes.SumFieldName] = &gql.EnumValueConfig{Value: parserTypes.SumFieldName}
+			fieldsEnumCfg.Values[parserTypes.AverageFieldName] = &gql.EnumValueConfig{Value: parserTypes.AverageFieldName}
 
 			if !hasSumableFields {
 				return nil, nil
@@ -955,7 +955,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1047,7 +1047,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := parser.ReservedFields[f]; ok && f != "_key" {
+				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
 					continue
 				}
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums
@@ -1161,7 +1161,7 @@ func genTypeName(obj gql.Type, name string) string {
 
 typeDefs := ` ... `
 
-ast, err := parser.Parse(typeDefs)
+ast, err := parserTypes.Parse(typeDefs)
 types, err := buildTypesFromAST(ast)
 
 types, err := GenerateDBQuerySchema(ast)

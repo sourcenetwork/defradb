@@ -16,6 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type sumNode struct {
@@ -67,7 +69,7 @@ func (p *Planner) isValueFloat(
 ) (bool, error) {
 	// It is important that averages are floats even if their underlying values are ints
 	// else sum will round them down to the nearest whole number
-	if source.ChildProperty == parser.AverageFieldName {
+	if source.ChildProperty == parserTypes.AverageFieldName {
 		return true, nil
 	}
 
@@ -106,14 +108,14 @@ func (p *Planner) getSourceField(
 	}
 
 	// If path length is two, we are summing a group or a child relationship
-	if source.ChildProperty == parser.CountFieldName {
+	if source.ChildProperty == parserTypes.CountFieldName {
 		// If we are summing a count, we know it is an int and can return early
 		return client.FieldDescription{
 			Kind: client.FieldKind_INT,
 		}, nil
 	}
 
-	if _, isAggregate := parser.Aggregates[source.ChildProperty]; isAggregate {
+	if _, isAggregate := parserTypes.Aggregates[source.ChildProperty]; isAggregate {
 		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
 		// the root field in order to determine the value type.  This is recursive to allow handling
 		// of N-depth aggregations (e.g. sum of sum of sum of...)
@@ -145,7 +147,7 @@ func (p *Planner) getSourceField(
 		)
 	}
 
-	if source.ExternalHostName == parser.GroupFieldName {
+	if source.ExternalHostName == parserTypes.GroupFieldName {
 		// If the source collection is a group, then the description of the collection
 		// to sum is this object.
 		fieldDescription, fieldDescriptionFound := sourceInfo.collectionDescription.GetField(sourceProperty)
@@ -183,7 +185,7 @@ func (p *Planner) getSourceProperty(source parser.AggregateTarget, parent parser
 		return ""
 	}
 
-	if _, isAggregate := parser.Aggregates[source.ChildProperty]; isAggregate {
+	if _, isAggregate := parserTypes.Aggregates[source.ChildProperty]; isAggregate {
 		for _, field := range parent.GetSelections() {
 			if field.GetName() == source.HostProperty {
 				for _, childField := range field.(*parser.Select).Fields {

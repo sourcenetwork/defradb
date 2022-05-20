@@ -23,6 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 )
 
+const databaseStoreName string = "badger"
+
 // dumpCmd represents the dump command
 var srvDumpCmd = &cobra.Command{
 	Use:   "server-dump",
@@ -38,7 +40,7 @@ var srvDumpCmd = &cobra.Command{
 
 		var rootstore ds.Batching
 		var err error
-		if config.Database.Store == "badger" {
+		if config.Database.Store == databaseStoreName {
 			log.Info(
 				ctx,
 				"opening badger store",
@@ -69,7 +71,7 @@ func init() {
 	rootCmd.AddCommand(srvDumpCmd)
 	srvDumpCmd.Flags().String(
 		"store",
-		"badger",
+		databaseStoreName,
 		"Specify the data store to use (supported: badger, memory)",
 	)
 }
