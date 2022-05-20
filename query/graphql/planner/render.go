@@ -89,6 +89,7 @@ func buildRenderInfo(parsed parser.Selection) renderInfo {
 	return info
 }
 
+func (n *renderNode) Kind() string { return "renderNode" }
 func (n *renderNode) Init() error  { return n.plan.Init() }
 func (n *renderNode) Start() error { return n.plan.Start() }
 func (n *renderNode) Next() (bool, error) {

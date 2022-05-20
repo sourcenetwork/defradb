@@ -73,6 +73,10 @@ func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
 	}, nil
 }
 
+func (n *sortNode) Kind() string {
+	return "sortNode"
+}
+
 func (n *sortNode) Init() error {
 	// reset stateful data
 	n.needSort = true

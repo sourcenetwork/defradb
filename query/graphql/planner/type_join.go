@@ -99,6 +99,10 @@ func (p *Planner) makeTypeIndexJoin(
 	return typeJoin, nil
 }
 
+func (n *typeIndexJoin) Kind() string {
+	return "typeIndexJoin"
+}
+
 func (n *typeIndexJoin) Init() error {
 	return n.joinPlan.Init()
 }
@@ -222,6 +226,10 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	return typeJoin, nil
+}
+
+func (n *typeJoinOne) Kind() string {
+	return "typeJoinOne"
 }
 
 func (n *typeJoinOne) Init() error {
@@ -394,6 +402,10 @@ func (p *Planner) makeTypeJoinMany(
 	}
 	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 	return typeJoin, nil
+}
+
+func (n *typeJoinMany) Kind() string {
+	return "typeJoinMany"
 }
 
 func (n *typeJoinMany) Init() error {

@@ -42,6 +42,8 @@ type createNode struct {
 	returned bool
 }
 
+func (n *createNode) Kind() string { return "createNode" }
+
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {

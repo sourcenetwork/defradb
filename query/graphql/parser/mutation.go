@@ -151,7 +151,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	//          right location that we expect it to be at (create a parseDirectives function).
 	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
 	directives := def.Directives
-	if len(directives) > 0 && directives[0].Name.Value == "explain" {
+	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
 		qdef.IsExplain = true
 	}
 

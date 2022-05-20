@@ -70,6 +70,10 @@ func (p *Planner) GroupBy(n *parserTypes.GroupBy, childSelects []*parser.Select)
 	return &groupNodeObj, nil
 }
 
+func (n *groupNode) Kind() string {
+	return "groupNode"
+}
+
 func (n *groupNode) Init() error {
 	// We need to make sure state is cleared down on Init,
 	// this function may be called multiple times per instance (for example during a join)

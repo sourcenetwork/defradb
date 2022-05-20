@@ -64,6 +64,7 @@ type selectTopNode struct {
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
+func (n *selectTopNode) Kind() string                  { return "selectTopNode" }
 func (n *selectTopNode) Init() error                   { return n.plan.Init() }
 func (n *selectTopNode) Start() error                  { return n.plan.Start() }
 func (n *selectTopNode) Next() (bool, error)           { return n.plan.Next() }
@@ -107,6 +108,10 @@ type selectNode struct {
 	filter *parser.Filter
 
 	groupSelects []*parser.Select
+}
+
+func (n *selectNode) Kind() string {
+	return "selectNode"
 }
 
 func (n *selectNode) Init() error {

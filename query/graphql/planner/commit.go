@@ -26,6 +26,7 @@ type commitSelectTopNode struct {
 	plan planNode
 }
 
+func (n *commitSelectTopNode) Kind() string                  { return "commitSelectTopNode" }
 func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
 func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
 func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
@@ -49,6 +50,10 @@ type commitSelectNode struct {
 	source *dagScanNode
 
 	subRenderInfo map[string]renderInfo
+}
+
+func (n *commitSelectNode) Kind() string {
+	return "commitSelectNode"
 }
 
 func (n *commitSelectNode) Init() error {

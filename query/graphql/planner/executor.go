@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
-	//github.com/uber-go/multierr
 	gql "github.com/graphql-go/graphql"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"

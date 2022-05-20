@@ -8,14 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package types
+package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
 )
 
 var (
-	// Helper only for `Commit` below.
+	// Helper only for `commit` below.
 	commitCountFieldArg = gql.NewEnum(gql.EnumConfig{
 		Name: "commitCountFieldArg",
 		Values: gql.EnumValueConfigMap{
@@ -23,7 +23,7 @@ var (
 		},
 	})
 
-	// Commit represents an individual commit to a MerkleCRDT
+	// commit represents an individual commit to a MerkleCRDT
 	// type Commit {
 	// 	Height: Int
 	// 	CID: String
@@ -34,7 +34,7 @@ var (
 	//
 	// Any self referential type needs to be initalized
 	// inside the init() func
-	Commit = gql.NewObject(gql.ObjectConfig{
+	commit = gql.NewObject(gql.ObjectConfig{
 		Name: "Commit",
 		Fields: gql.Fields{
 			"height": &gql.Field{
@@ -50,7 +50,7 @@ var (
 			// 	Type: gql.NewList(Commit),
 			// },
 			"links": &gql.Field{
-				Type: gql.NewList(CommitLink),
+				Type: gql.NewList(commitLink),
 			},
 			"_count": &gql.Field{
 				Type: gql.Int,
@@ -70,7 +70,7 @@ var (
 	// type Delta {
 	// 	Payload: String
 	// }
-	Delta = gql.NewObject(gql.ObjectConfig{
+	delta = gql.NewObject(gql.ObjectConfig{
 		Name: "Delta",
 		Fields: gql.Fields{
 			"payload": &gql.Field{
@@ -81,7 +81,7 @@ var (
 
 	// CommitLink is a named DAG link between commits.
 	// This is primary used for CompositeDAG CRDTs
-	CommitLink = gql.NewObject(gql.ObjectConfig{
+	commitLink = gql.NewObject(gql.ObjectConfig{
 		Name: "CommitLink",
 		Fields: gql.Fields{
 			"name": &gql.Field{

@@ -47,6 +47,10 @@ func (p *Planner) Count(field *parser.Select, host *parser.Select) (*countNode, 
 	}, nil
 }
 
+func (n *countNode) Kind() string {
+	return "countNode"
+}
+
 func (n *countNode) Init() error {
 	return n.plan.Init()
 }

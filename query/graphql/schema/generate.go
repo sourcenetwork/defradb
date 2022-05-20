@@ -17,15 +17,17 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/source"
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
+
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/logging"
 
 	gql "github.com/graphql-go/graphql"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	// schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
 // Given a basic developer defined schema in GraphQL Schema Definition Language
@@ -443,7 +445,7 @@ func (g *Generator) buildTypesFromAST(
 
 				// add _version field
 				fields["_version"] = &gql.Field{
-					Type: gql.NewList(types.Commit),
+					Type: gql.NewList(commit),
 				}
 
 				// @todo Pairup on removing the staticcheck linter error below.
@@ -804,8 +806,6 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	return ttype, nil
 }
 
-// type SchemaObject
-
 // GenerateQueryInputForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
@@ -823,11 +823,8 @@ func (g *Generator) GenerateQueryInputForGQLType(
 	types.groupBy = g.genTypeFieldsEnum(obj)
 	types.having = g.genTypeHavingArgInput(obj)
 	types.order = g.genTypeOrderArgInput(obj)
-	// var queryField *gql.Field
-	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
 
-	// queryType := g.manager.schema.QueryType()
-	// queryType.AddFieldConfig(queryField.Name, queryField)
+	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
 
 	return queryField, nil
 }

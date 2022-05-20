@@ -97,6 +97,10 @@ func (n *deleteNode) Spans(spans core.Spans) {
 	/* no-op */
 }
 
+func (n *deleteNode) Kind() string {
+	return "deleteNode"
+}
+
 func (n *deleteNode) Init() error {
 	return nil
 }

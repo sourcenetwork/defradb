@@ -40,6 +40,10 @@ func (p *Planner) HardLimit(n *parserTypes.Limit) (*hardLimitNode, error) {
 	}, nil
 }
 
+func (n *hardLimitNode) Kind() string {
+	return "hardLimitNode"
+}
+
 func (n *hardLimitNode) Init() error {
 	n.rowIndex = 0
 	return n.plan.Init()
@@ -100,6 +104,10 @@ func (p *Planner) RenderLimit(n *parserTypes.Limit) (*renderLimitNode, error) {
 		offset:   n.Offset,
 		rowIndex: 0,
 	}, nil
+}
+
+func (n *renderLimitNode) Kind() string {
+	return "renderLimitNode"
 }
 
 func (n *renderLimitNode) Init() error {

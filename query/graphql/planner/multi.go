@@ -94,6 +94,10 @@ func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
 	return nil
 }
 
+func (n *parallelNode) Kind() string {
+	return "parallelNode"
+}
+
 func (p *parallelNode) Init() error {
 	return p.applyToPlans(func(n planNode) error {
 		return n.Init()

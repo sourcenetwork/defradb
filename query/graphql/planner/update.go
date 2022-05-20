@@ -122,8 +122,11 @@ func (n *updateNode) Next() (bool, error) {
 	return true, nil
 }
 
+func (n *updateNode) Kind() string { return "updateNode" }
+
 func (n *updateNode) Spans(spans core.Spans) { /* no-op */ }
-func (n *updateNode) Init() error            { return nil }
+
+func (n *updateNode) Init() error { return nil }
 
 func (n *updateNode) Start() error {
 	return n.results.Start()

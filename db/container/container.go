@@ -52,8 +52,7 @@ func (c *DocumentContainer) AddDoc(doc map[string]interface{}) error {
 		return nil
 	}
 	// append to docs slice
-	copyDoc := copyMap(doc)
-	c.docs = append(c.docs, copyDoc)
+	c.docs = append(c.docs, copyMap(doc))
 	c.numDocs++
 	return nil
 }

@@ -12,9 +12,6 @@ package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
-	"github.com/sourcenetwork/defradb/query/graphql/schema/directives"
-	"github.com/sourcenetwork/defradb/query/graphql/schema/root"
-	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
 // SchemaManager creates an instanced management point
@@ -116,7 +113,7 @@ func defaultMutationType() *gql.Object {
 // default directives type.
 func defaultDirectivesType() []*gql.Directive {
 	return []*gql.Directive{
-		directives.Explain,
+		directiveType.Explain,
 	}
 }
 
@@ -134,19 +131,18 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		root.OrderingEnum,
+		orderingEnum,
 
-		// filter scalar blocks
-		root.BooleanOperatorBlock,
-		root.DateTimeOperatorBlock,
-		root.FloatOperatorBlock,
-		root.IDOperatorBlock,
-		root.IntOperatorBlock,
-		root.StringOperatorBlock,
+		// Filter scalar blocks
+		booleanOperatorBlock,
+		dateTimeOperatorBlock,
+		floatOperatorBlock,
+		idOperatorBlock,
+		intOperatorBlock,
+		stringOperatorBlock,
 
-		// types.CommitLinks,
-		types.CommitLink,
-		types.Commit,
-		types.Delta,
+		commitLink,
+		commit,
+		delta,
 	}
 }

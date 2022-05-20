@@ -200,6 +200,10 @@ func (p *Planner) getSourceProperty(source parser.AggregateTarget, parent parser
 	return source.ChildProperty
 }
 
+func (n *sumNode) Kind() string {
+	return "sumNode"
+}
+
 func (n *sumNode) Init() error {
 	return n.plan.Init()
 }

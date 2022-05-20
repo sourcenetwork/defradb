@@ -43,6 +43,7 @@ func (n *averageNode) Init() error {
 	return n.plan.Init()
 }
 
+func (n *averageNode) Kind() string           { return "averageNode" }
 func (n *averageNode) Start() error           { return n.plan.Start() }
 func (n *averageNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *averageNode) Close() error           { return n.plan.Close() }

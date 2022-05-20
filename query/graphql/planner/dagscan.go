@@ -60,6 +60,10 @@ type headsetScanNode struct {
 	fetcher fetcher.HeadFetcher
 }
 
+func (n *headsetScanNode) Kind() string {
+	return "headsetScanNode"
+}
+
 func (h *headsetScanNode) Init() error {
 	return h.initScan()
 }
@@ -150,6 +154,10 @@ func (p *Planner) DAGScan() *dagScanNode {
 		visitedNodes: make(map[string]bool),
 		queuedCids:   list.New(),
 	}
+}
+
+func (n *dagScanNode) Kind() string {
+	return "dagScanNode"
 }
 
 func (n *dagScanNode) Init() error {

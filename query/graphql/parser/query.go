@@ -240,7 +240,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	//       - Also refactor this file into a `request.go` file and isolate `query` operation
 	//          specific code into a separate file like we currently have `mutation.go` file.
 	directives := def.Directives
-	if len(directives) > 0 && directives[0].Name.Value == "explain" {
+	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
 		qdef.IsExplain = true
 	}
 

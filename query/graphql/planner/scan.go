@@ -46,6 +46,10 @@ type scanNode struct {
 	fetcher fetcher.Fetcher
 }
 
+func (n *scanNode) Kind() string {
+	return "scanNode"
+}
+
 func (n *scanNode) Init() error {
 	// init the fetcher
 	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {

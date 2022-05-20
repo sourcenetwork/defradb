@@ -8,15 +8,20 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package directives
+package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
-var (
-	Explain = gql.NewDirective(gql.DirectiveConfig{
-		Name: "explain",
+var directiveType = struct {
+	Explain *gql.Directive
+}{
+	Explain: gql.NewDirective(gql.DirectiveConfig{
+
+		Name: parser.DirectiveLabel.ExplainLabel,
+
 		Args: gql.FieldConfigArgument{
 			"simple": &gql.ArgumentConfig{
 				Type:         gql.Boolean,
@@ -31,11 +36,12 @@ var (
 				DefaultValue: false,
 			},
 		},
+
 		// A directive is unique to it's location and the location must be provided for directives.
 		// We limit @explain directive to only be valid at these two locations: `MUTATION`, `QUERY`.
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
 		},
-	})
-)
+	}),
+}
