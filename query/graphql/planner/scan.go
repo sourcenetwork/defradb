@@ -28,17 +28,9 @@ type scanNode struct {
 	fields []*client.FieldDescription
 	docKey []byte
 
-	// Commenting out because unused code (structcheck) according to linter.
-	// // map between fieldID and index in fields
-	// fieldIdxMap map[base.FieldID]int
-	// isSecondaryIndex bool
-
 	spans   core.Spans
 	reverse bool
 
-	// rowIndex int64
-
-	// filter data
 	filter *parser.Filter
 
 	scanInitialized bool

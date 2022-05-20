@@ -272,8 +272,6 @@ _version: commitSelectTopNode(append)
 	}
 	...
 ]
-
-
 */
 
 func (p *parallelNode) Source() planNode { return p.multiscan }

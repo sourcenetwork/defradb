@@ -436,18 +436,6 @@ func (p *Planner) explainRequest(
 		return nil, fmt.Errorf("Error: Can't explain an empty plan.")
 	}
 
-	// TEST CODE
-	// var explains []string
-	// src := plan
-	// for src != nil {
-	// explains = append(explains, src.Kind())
-	// src = src.Source()
-	// }
-	// println("==================================")
-	// fmt.Println(strings.Join(explains, ", "))
-	// println("==================================")
-	// +++++++++
-
 	var topExplainGraph []map[string]interface{} = []map[string]interface{}{
 		{
 			parser.DirectiveLabel.ExplainLabel: buildExplainGraph(plan),

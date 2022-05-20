@@ -150,6 +150,11 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	// Todo: - iterate through all directives and ensure that the directive is at the
 	//          right location that we expect it to be at (create a parseDirectives function).
 	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
+	//       - Note: the location we don't need to worry about as the schema takes care of it,
+	//               will give a syntax error, unless we add make it legal to add another
+	//               directive named `explain` (which we should not).
+	//       - Do a for loop here and in `./query.go` to match directive name rather than
+	//         checking for only the first one. Will be fixed in issue#455.
 	directives := def.Directives
 	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
 		qdef.IsExplain = true

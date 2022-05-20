@@ -20,6 +20,10 @@ cross-build:
 start: build
 	./build/defradb start
 
+.PHONY: dev\:start
+dev\:start: build
+	DEFRA_ENV=dev ./build/defradb start
+
 .PHONY: client\:dump
 client\:dump:
 	./build/defradb client dump

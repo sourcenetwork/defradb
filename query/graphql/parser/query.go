@@ -239,6 +239,11 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
 	//       - Also refactor this file into a `request.go` file and isolate `query` operation
 	//          specific code into a separate file like we currently have `mutation.go` file.
+	//       - Note: the location we don't need to worry about as the schema takes care of it,
+	//               will give a syntax error, unless we add make it legal to add another
+	//               directive named `explain` (which we should not).
+	//       - Do a for loop here and in `./mutation.go` to match directive name rather than
+	//         checking for only the first one. Will be fixed in issue#455.
 	directives := def.Directives
 	if len(directives) > 0 && directives[0].Name.Value == DirectiveLabel.ExplainLabel {
 		qdef.IsExplain = true
@@ -249,10 +254,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 		var err error
 		switch node := selection.(type) {
 		case *ast.Field:
-			// which query type is this
-			// database API query
-			// object query
-			// etc
+			// which query type is this database API query object query etc.
 			_, exists := dbAPIQueryNames[node.Name.Value]
 			if exists {
 				// the query matches a reserved DB API query name
