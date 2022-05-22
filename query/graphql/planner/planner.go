@@ -429,9 +429,14 @@ func (p *Planner) explainRequest(
 	plan planNode,
 ) ([]map[string]interface{}, error) {
 
+	explainGraph, err := buildExplainGraph(plan)
+	if err != nil {
+		return nil, err
+	}
+
 	topExplainGraph := []map[string]interface{}{
 		{
-			parserTypes.ExplainLabel: buildExplainGraph(plan),
+			parserTypes.ExplainLabel: explainGraph,
 		},
 	}
 

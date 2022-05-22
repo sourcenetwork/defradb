@@ -11,7 +11,8 @@
 package types
 
 const (
-	Filter         string = "filter"
-	CollectionName string = "collectionName"
-	CollectionID   string = "collectionID"
+	Filter         = "filter"
+	CollectionName = "collectionName"
+	CollectionID   = "collectionID"
+	Data           = "data"
 )

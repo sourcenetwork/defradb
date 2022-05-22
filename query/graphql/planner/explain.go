@@ -11,8 +11,47 @@
 package planner
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/iancoleman/strcase"
 	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
+)
+
+type explainablePlanNode interface {
+	planNode
+	Explain() (map[string]interface{}, error)
+}
+
+// Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
+var (
+	_ explainablePlanNode = (*scanNode)(nil)
+	_ explainablePlanNode = (*selectNode)(nil)
+	_ explainablePlanNode = (*selectTopNode)(nil)
+	_ explainablePlanNode = (*createNode)(nil)
+
+	// Nodes to implement in the next explain request PRs.
+	// _ explainablePlanNode = (*averageNode)(nil)
+	// _ explainablePlanNode = (*commitSelectNode)(nil)
+	// _ explainablePlanNode = (*countNode)(nil)
+	// _ explainablePlanNode = (*dagScanNode)(nil)
+	// _ explainablePlanNode = (*deleteNode)(nil)
+	// _ explainablePlanNode = (*renderNode)(nil)
+	// _ explainablePlanNode = (*sortNode)(nil)
+	// _ explainablePlanNode = (*sumNode)(nil)
+	// _ explainablePlanNode = (*typeIndexJoin)(nil)
+	// _ explainablePlanNode = (*updateNode)(nil)
+
+	// Internal Nodes that we don't want to expose / explain.
+	// - commitSelectTopNode
+	// - renderLimitNode
+	// - groupNode
+	// - hardLimitNode
+	// - headsetScanNode
+	// - parallelNode
+	// - pipeNode
+	// - typeJoinMany
+	// - typeJoinOne
 )
 
 // buildExplainGraph builds the explainGraph from the given top level plan.
@@ -45,12 +84,14 @@ import (
 //     }
 //   ]
 // }
-func buildExplainGraph(source planNode) map[string]interface{} {
+func buildExplainGraph(source planNode) (map[string]interface{}, error) {
+
+	fmt.Println("======================= source      : ", source.Kind())
 
 	explainGraph := map[string]interface{}{}
 
 	if source == nil {
-		return explainGraph
+		return explainGraph, nil
 	}
 
 	// Walk the multiple children if it is a MultiNode (MultiNode itself is non-explainable).
@@ -58,18 +99,29 @@ func buildExplainGraph(source planNode) map[string]interface{} {
 	if isMultiNode {
 		childrenSources := multiNode.Children()
 		for _, childSource := range childrenSources {
-			explainGraph = buildExplainGraph(childSource.Source())
+			var err error
+			explainGraph, err = buildExplainGraph(childSource.Source())
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	// Only explain the node if it is explainable.
 	explainableSource, isExplainable := source.(explainablePlanNode)
 	if isExplainable {
-		explainGraphBuilder := explainableSource.Explain()
+		// @todo: handle error
+		explainGraphBuilder, err := explainableSource.Explain()
+		if err != nil {
+			return nil, err
+		}
 
 		// If not the last child then keep walking the graph to find more explainable nodes.
 		if explainableSource.Source() != nil {
-			childExplainGraph := buildExplainGraph(explainableSource.Source())
+			childExplainGraph, err := buildExplainGraph(explainableSource.Source())
+			if err != nil {
+				return nil, err
+			}
 			for key, value := range childExplainGraph {
 				explainGraphBuilder[key] = value
 			}
@@ -79,57 +131,21 @@ func buildExplainGraph(source planNode) map[string]interface{} {
 		explainGraph[explainNodeLabelTitle] = explainGraphBuilder
 	}
 
-	return explainGraph
+	return explainGraph, nil
 
 }
-
-type explainablePlanNode interface {
-	planNode
-	Explain() map[string]interface{}
-}
-
-// Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
-var (
-	_ explainablePlanNode = (*scanNode)(nil)
-	_ explainablePlanNode = (*selectNode)(nil)
-	_ explainablePlanNode = (*selectTopNode)(nil)
-
-	// Nodes to implement in the next explain request PRs.
-	// _ explainablePlanNode = (*averageNode)(nil)
-	// _ explainablePlanNode = (*commitSelectNode)(nil)
-	// _ explainablePlanNode = (*countNode)(nil)
-	// _ explainablePlanNode = (*createNode)(nil)
-	// _ explainablePlanNode = (*dagScanNode)(nil)
-	// _ explainablePlanNode = (*deleteNode)(nil)
-	// _ explainablePlanNode = (*renderNode)(nil)
-	// _ explainablePlanNode = (*sortNode)(nil)
-	// _ explainablePlanNode = (*sumNode)(nil)
-	// _ explainablePlanNode = (*typeIndexJoin)(nil)
-	// _ explainablePlanNode = (*updateNode)(nil)
-
-	// Internal Nodes that we don't want to expose / explain.
-	// - commitSelectTopNode
-	// - renderLimitNode
-	// - groupNode
-	// - hardLimitNode
-	// - headsetScanNode
-	// - parallelNode
-	// - pipeNode
-	// - typeJoinMany
-	// - typeJoinOne
-)
 
 // Following are all the planNodes that are subscribing to the explainablePlanNode.
 
-func (n *selectTopNode) Explain() map[string]interface{} {
+func (n *selectTopNode) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{
 		// No attributes are returned for selectTopNode.
 	}
 
-	return explainerMap
+	return explainerMap, nil
 }
 
-func (n *selectNode) Explain() map[string]interface{} {
+func (n *selectNode) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{}
 
 	// Add the filter attribute if it exists.
@@ -139,10 +155,10 @@ func (n *selectNode) Explain() map[string]interface{} {
 		explainerMap[plannerTypes.Filter] = n.filter.Conditions
 	}
 
-	return explainerMap
+	return explainerMap, nil
 }
 
-func (n *scanNode) Explain() map[string]interface{} {
+func (n *scanNode) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{}
 
 	// Add the filter attribute if it exists.
@@ -162,5 +178,18 @@ func (n *scanNode) Explain() map[string]interface{} {
 	// spansAttribute := styleAttribute("Spans")
 	// explainerMap[spansAttribute] = n.spans
 
-	return explainerMap
+	return explainerMap, nil
+}
+
+func (n *createNode) Explain() (map[string]interface{}, error) {
+
+	data := map[string]interface{}{}
+	err := json.Unmarshal([]byte(n.newDocStr), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		plannerTypes.Data: data,
+	}, nil
 }
