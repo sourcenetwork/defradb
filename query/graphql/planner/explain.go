@@ -12,7 +12,6 @@ package planner
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/iancoleman/strcase"
 	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
@@ -86,7 +85,7 @@ var (
 // }
 func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 
-	fmt.Println("======================= source      : ", source.Kind())
+	// fmt.Println("======================= source      : ", source.Kind())
 
 	explainGraph := map[string]interface{}{}
 
@@ -94,10 +93,11 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 		return explainGraph, nil
 	}
 
+	switch node := source.(type) {
+
 	// Walk the multiple children if it is a MultiNode (MultiNode itself is non-explainable).
-	multiNode, isMultiNode := source.(MultiNode)
-	if isMultiNode {
-		childrenSources := multiNode.Children()
+	case MultiNode:
+		childrenSources := node.Children()
 		for _, childSource := range childrenSources {
 			var err error
 			explainGraph, err = buildExplainGraph(childSource.Source())
@@ -105,20 +105,17 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 				return nil, err
 			}
 		}
-	}
 
 	// Only explain the node if it is explainable.
-	explainableSource, isExplainable := source.(explainablePlanNode)
-	if isExplainable {
-		// @todo: handle error
-		explainGraphBuilder, err := explainableSource.Explain()
+	case explainablePlanNode:
+		explainGraphBuilder, err := node.Explain()
 		if err != nil {
 			return nil, err
 		}
 
 		// If not the last child then keep walking the graph to find more explainable nodes.
-		if explainableSource.Source() != nil {
-			childExplainGraph, err := buildExplainGraph(explainableSource.Source())
+		if node.Source() != nil {
+			childExplainGraph, err := buildExplainGraph(node.Source())
 			if err != nil {
 				return nil, err
 			}
@@ -127,8 +124,16 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 			}
 		}
 
-		explainNodeLabelTitle := strcase.ToLowerCamel(explainableSource.Kind())
+		explainNodeLabelTitle := strcase.ToLowerCamel(node.Kind())
 		explainGraph[explainNodeLabelTitle] = explainGraphBuilder
+
+	default:
+		// Node is neither a MultiNode or any explainable node. Skip over it but walk it's children.
+		var err error
+		explainGraph, err = buildExplainGraph(source.Source())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return explainGraph, nil
