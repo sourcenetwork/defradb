@@ -44,7 +44,7 @@ func TestNewServerAndListen(t *testing.T) {
 func TestNewServerWithoutOptions(t *testing.T) {
 	s := NewServer(nil)
 	assert.Equal(t, "localhost:9181", s.Addr)
-	assert.Equal(t, []string{"https://*", "http://*"}, s.allowedOrigins)
+	assert.Equal(t, []string(nil), s.options.allowedOrigins)
 }
 
 func TestNewServerWithAddress(t *testing.T) {
@@ -54,5 +54,5 @@ func TestNewServerWithAddress(t *testing.T) {
 
 func TestNewServerWithAllowedOrigins(t *testing.T) {
 	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
-	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.allowedOrigins)
+	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.allowedOrigins)
 }

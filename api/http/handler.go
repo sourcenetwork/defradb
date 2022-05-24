@@ -26,8 +26,8 @@ type handler struct {
 	db client.DB
 	*chi.Mux
 
-	// user configuratble options
-	serverOptions
+	// user configurable options
+	options serverOptions
 }
 
 type ctxDB struct{}
@@ -35,8 +35,8 @@ type ctxDB struct{}
 // newHandler returns a handler with the router instantiated.
 func newHandler(db client.DB, opts serverOptions) *handler {
 	return setRoutes(&handler{
-		db:            db,
-		serverOptions: opts,
+		db:      db,
+		options: opts,
 	})
 }
 

@@ -37,12 +37,14 @@ func setRoutes(h *handler) *handler {
 	h.Mux = chi.NewRouter()
 
 	// setup CORS
-	h.Use(cors.Handler(cors.Options{
-		AllowedOrigins: h.allowedOrigins,
-		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type"},
-		MaxAge:         300,
-	}))
+	if len(h.options.allowedOrigins) != 0 {
+		h.Use(cors.Handler(cors.Options{
+			AllowedOrigins: h.options.allowedOrigins,
+			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type"},
+			MaxAge:         300,
+		}))
+	}
 
 	// setup logger middleware
 	h.Use(loggerMiddleware)

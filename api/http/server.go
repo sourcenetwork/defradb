@@ -18,7 +18,7 @@ import (
 
 // The Server struct holds the Handler for the HTTP API
 type Server struct {
-	serverOptions
+	options serverOptions
 	http.Server
 }
 
@@ -34,17 +34,13 @@ func NewServer(db client.DB, options ...func(*Server)) *Server {
 		opt(svr)
 	}
 
-	svr.Server.Handler = newHandler(db, svr.serverOptions)
+	svr.Server.Handler = newHandler(db, svr.options)
 
 	return svr
 }
 
 func DefaultOpts() func(*Server) {
 	return func(s *Server) {
-		if len(s.allowedOrigins) == 0 {
-			s.allowedOrigins = []string{"https://*", "http://*"}
-		}
-
 		if s.Addr == "" {
 			s.Addr = "localhost:9181"
 		}
@@ -53,7 +49,7 @@ func DefaultOpts() func(*Server) {
 
 func WithAllowedOrigins(origins ...string) func(*Server) {
 	return func(s *Server) {
-		s.allowedOrigins = append(s.allowedOrigins, origins...)
+		s.options.allowedOrigins = append(s.options.allowedOrigins, origins...)
 	}
 }
 
