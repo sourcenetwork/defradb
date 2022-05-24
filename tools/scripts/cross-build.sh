@@ -25,14 +25,13 @@ fi
 for platform in "${platforms[@]}"
 do
     platform_split=(${platform//\// })
-    GOOS=${platform_split[0]}
-    GOARCH=${platform_split[1]}
+    GOOS="${platform_split[0]}"
+    GOARCH="${platform_split[1]}"
     output_name=$BUILD_DIR'defradb-'$GOOS'-'$GOARCH
-    if [ $GOOS = "windows" ]; then
+    if [ "$GOOS" = "windows" ]; then
         output_name+='.exe'
     fi
-    env GOOS=$GOOS GOARCH=$GOARCH go build -o $output_name $DEFRADB_MAIN
-    if [ $? -ne 0 ]; then
+    if ! env GOOS="$GOOS" GOARCH="$GOARCH" go build -o $output_name $DEFRADB_MAIN; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
     fi
