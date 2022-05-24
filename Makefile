@@ -14,7 +14,7 @@ build:
 # If none is specified, build for all platforms.
 .PHONY: cross-build
 cross-build:
-	sh tools/scripts/cross-build.sh $(platforms)
+	bash tools/scripts/cross-build.sh $(platforms)
 
 .PHONY: start
 start: build
