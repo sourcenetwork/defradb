@@ -18,4 +18,5 @@ do
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
     fi
+    echo "Completed: ${output_name}"
 done
