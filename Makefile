@@ -92,7 +92,11 @@ test\:coverage-full: deps\:coverage
 # Usage: make test:coverage-html path="{pathToPackage}"
 .PHONY: test\:coverage-html
 test\:coverage-html:
-	go test -v $(path) -race -coverprofile=coverage.out
+ifeq ($(path),)
+	go test ./... -v -race -coverprofile=coverage.out
+else 
+	go test $(path) -v -race -coverprofile=coverage.out
+endif
 	go tool cover -html=coverage.out
 	rm ./coverage.out
 
