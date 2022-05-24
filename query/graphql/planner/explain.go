@@ -25,17 +25,17 @@ type explainablePlanNode interface {
 
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
 var (
+	_ explainablePlanNode = (*createNode)(nil)
+	_ explainablePlanNode = (*deleteNode)(nil)
 	_ explainablePlanNode = (*scanNode)(nil)
 	_ explainablePlanNode = (*selectNode)(nil)
 	_ explainablePlanNode = (*selectTopNode)(nil)
-	_ explainablePlanNode = (*createNode)(nil)
 
 	// Nodes to implement in the next explain request PRs.
 	// _ explainablePlanNode = (*averageNode)(nil)
 	// _ explainablePlanNode = (*commitSelectNode)(nil)
 	// _ explainablePlanNode = (*countNode)(nil)
 	// _ explainablePlanNode = (*dagScanNode)(nil)
-	// _ explainablePlanNode = (*deleteNode)(nil)
 	// _ explainablePlanNode = (*renderNode)(nil)
 	// _ explainablePlanNode = (*sortNode)(nil)
 	// _ explainablePlanNode = (*sumNode)(nil)
@@ -192,4 +192,21 @@ func (n *createNode) Explain() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		plannerTypes.Data: data,
 	}, nil
+}
+
+func (n *deleteNode) Explain() (map[string]interface{}, error) {
+
+	explainerMap := map[string]interface{}{}
+
+	// Add the document id(s) that request wants to delete.
+	explainerMap[plannerTypes.IDs] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[plannerTypes.Filter] = nil
+	} else {
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+	}
+
+	return explainerMap, nil
 }

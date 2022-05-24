@@ -42,7 +42,7 @@ func TestMutationCreateSimple(t *testing.T) {
 
 func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple create mutation",
+		Description: "Simple create mutation where document already exists.",
 		Query: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key

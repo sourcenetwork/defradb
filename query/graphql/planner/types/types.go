@@ -15,4 +15,5 @@ const (
 	CollectionName = "collectionName"
 	CollectionID   = "collectionID"
 	Data           = "data"
+	IDs            = "ids"
 )
