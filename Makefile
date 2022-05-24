@@ -9,9 +9,15 @@ install:
 build:
 	go build -o build/defradb cli/defradb/main.go
 
-.PHONY: multi-cross-build
-multi-cross-build:
-	sh tools/scripts/multi-cross-build.sh
+# Usage: make cross-build platforms="{platforms}"
+# platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
+.PHONY: cross-build
+cross-build:
+	sh tools/scripts/cross-build.sh $(platforms)
+
+.PHONY: cross-build-all
+cross-build-all:
+	sh tools/scripts/cross-build.sh all
 
 .PHONY: start
 start: build

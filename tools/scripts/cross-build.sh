@@ -2,7 +2,16 @@
 
 defradb_main="cli/defradb/main.go"
 build_dir="build/"
-platforms=("windows/amd64" "windows/386" "linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64")
+platforms=$1
+if [[ -z "$platforms" ]]; then
+  echo "usage: $0 <platforms>"
+  exit 1
+fi
+if [[ "$platforms" == "all" ]]; then
+    platforms=("windows/amd64" "windows/386" "linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64")
+else
+    platforms=(${platforms//,/ })
+fi
 
 for platform in "${platforms[@]}"
 do
