@@ -6,7 +6,18 @@ BUILD_DIR="build/"
 platforms=$1
 if [[ -z "${platforms}" ]]; then
     echo "Building for all platforms"
-    platforms=("windows/amd64" "windows/386" "linux/amd64" "linux/arm64" "darwin/amd64" "darwin/arm64")
+    # A subset of the comprehensive list found at https://go.dev/doc/install/source#environment
+    platforms=(
+        "windows/amd64"
+        "windows/arm64"
+        "windows/arm"
+        "linux/amd64"
+        "linux/arm64"
+        "linux/arm"
+        "darwin/amd64"
+        "darwin/arm64"
+        # "js/wasm"
+    )
 else
     platforms=(${platforms//,/ })
 fi
