@@ -7,3 +7,4 @@ coverage-quick.txt
 tests/bench/*.log
 tests/bench/*.svg
 .vscode
+coverage.out
