@@ -11,13 +11,10 @@ build:
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
+# If none is specified, build for all platforms.
 .PHONY: cross-build
 cross-build:
 	sh tools/scripts/cross-build.sh $(platforms)
-
-.PHONY: cross-build-all
-cross-build-all:
-	sh tools/scripts/cross-build.sh all
 
 .PHONY: start
 start: build
