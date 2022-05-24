@@ -89,6 +89,7 @@ test\:coverage-full: deps\:coverage
 	go-acc ./... --output=coverage-full.txt --covermode=atomic
 	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
 
+# Usage: make test:coverage-html path="{pathToPackage}"
 .PHONY: test\:coverage-html
 test\:coverage-html:
 	go test -v $(path) -race -coverprofile=coverage.out
