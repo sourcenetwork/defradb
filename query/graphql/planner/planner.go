@@ -12,6 +12,7 @@ package planner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -450,17 +451,18 @@ func (p *Planner) executeRequest(
 ) ([]map[string]interface{}, error) {
 
 	if err := plan.Start(); err != nil {
-		if err := plan.Close(); err != nil {
-			log.ErrorE(ctx, "Failure closing plan after `plan.Start()` got an error.", err)
+		if closeErr := plan.Close(); closeErr != nil {
+			closeErr = fmt.Errorf("Failure closing plan after `Start()` : %w", closeErr)
+			err = errors.New(err.Error() + closeErr.Error())
 		}
 		return nil, err
 	}
 
-	var next bool
-	var err error
-	if next, err = plan.Next(); err != nil {
-		if err := plan.Close(); err != nil {
-			log.ErrorE(ctx, "Failure closing plan after initial `plan.Next()` call.", err)
+	next, err := plan.Next()
+	if err != nil {
+		if closeErr := plan.Close(); closeErr != nil {
+			closeErr = fmt.Errorf("Failure closing plan after initial `Next()` : %w", closeErr)
+			err = errors.New(err.Error() + closeErr.Error())
 		}
 		return nil, err
 	}
@@ -474,15 +476,16 @@ func (p *Planner) executeRequest(
 
 		next, err = plan.Next()
 		if err != nil {
-			if err := plan.Close(); err != nil {
-				log.ErrorE(ctx, "Failure closing plan after `plan.Next()` got an error.", err)
+			if closeErr := plan.Close(); closeErr != nil {
+				closeErr = fmt.Errorf("Failure closing plan after `Next()` : %w", closeErr)
+				err = errors.New(err.Error() + closeErr.Error())
 			}
 			return nil, err
 		}
 	}
 
-	if err := plan.Close(); err != nil {
-		log.ErrorE(ctx, "Failure closing plan near the end of plan execution.", err)
+	if err = plan.Close(); err != nil {
+		err = fmt.Errorf("Failure closing plan near the end of plan execution : %w", err)
 	}
 
 	return docs, err
