@@ -12,7 +12,6 @@ package planner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -451,20 +450,12 @@ func (p *Planner) executeRequest(
 ) ([]map[string]interface{}, error) {
 
 	if err := plan.Start(); err != nil {
-		if closeErr := plan.Close(); closeErr != nil {
-			closeErr = fmt.Errorf("Failure closing plan after `Start()` : %w", closeErr)
-			err = errors.New(err.Error() + closeErr.Error())
-		}
-		return nil, err
+		return nil, multiErr(err, plan.Close())
 	}
 
 	next, err := plan.Next()
 	if err != nil {
-		if closeErr := plan.Close(); closeErr != nil {
-			closeErr = fmt.Errorf("Failure closing plan after initial `Next()` : %w", closeErr)
-			err = errors.New(err.Error() + closeErr.Error())
-		}
-		return nil, err
+		return nil, multiErr(err, plan.Close())
 	}
 
 	docs := []map[string]interface{}{}
@@ -476,16 +467,12 @@ func (p *Planner) executeRequest(
 
 		next, err = plan.Next()
 		if err != nil {
-			if closeErr := plan.Close(); closeErr != nil {
-				closeErr = fmt.Errorf("Failure closing plan after `Next()` : %w", closeErr)
-				err = errors.New(err.Error() + closeErr.Error())
-			}
-			return nil, err
+			return nil, multiErr(err, plan.Close())
 		}
 	}
 
 	if err = plan.Close(); err != nil {
-		err = fmt.Errorf("Failure closing plan near the end of plan execution : %w", err)
+		return nil, err
 	}
 
 	return docs, err
@@ -523,6 +510,22 @@ func (p *Planner) runRequest(
 // MakePlan makes a plan from the parsed query. @todo: Test this exported function.
 func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
+}
+
+// multiErr wraps all the non-nil errors and returns the wrapped error result.
+func multiErr(errorsToWrap ...error) error {
+	var errs error
+	for _, err := range errorsToWrap {
+		if err == nil {
+			continue
+		}
+		if errs == nil {
+			errs = fmt.Errorf("%w", err)
+			continue
+		}
+		errs = fmt.Errorf("%s: %w", errs, err)
+	}
+	return errs
 }
 
 func copyMap(m map[string]interface{}) map[string]interface{} {
