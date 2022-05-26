@@ -16,6 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 // scans an index for records
@@ -58,7 +60,7 @@ func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 // Start starts the internal logic of the scanner
 // like the DocumentFetcher, and more.
 func (n *scanNode) Start() error {
-	return nil // noop
+	return nil // no op
 }
 
 func (n *scanNode) initScan() error {
@@ -110,6 +112,30 @@ func (n *scanNode) Close() error {
 }
 
 func (n *scanNode) Source() planNode { return nil }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *scanNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[plannerTypes.Filter] = nil
+	} else {
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+	}
+
+	// Add the collection attributes.
+	explainerMap[plannerTypes.CollectionName] = n.desc.Name
+	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
+
+	// @todo Add explain attributes ().
+	// Add the spans attribute.
+	// explainerMap[plannerTypes.Spans] = n.spans
+	// Add the index attribute.
+
+	return explainerMap, nil
+}
 
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
@@ -166,10 +192,3 @@ func (n *multiScanNode) Next() (bool, error) {
 
 	return n.lastBool, n.lastErr
 }
-
-/*
-multiscan := p.MultiScan(scan)
-multiscan.Register(typeJoin1)
-multiscan.Register(typeJoin2)
-multiscan.Register(commitScan)
-*/

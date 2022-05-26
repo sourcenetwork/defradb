@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 
 	cid "github.com/ipfs/go-cid"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -64,13 +65,28 @@ type selectTopNode struct {
 	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
-func (n *selectTopNode) Kind() string                  { return "selectTopNode" }
-func (n *selectTopNode) Init() error                   { return n.plan.Init() }
-func (n *selectTopNode) Start() error                  { return n.plan.Start() }
-func (n *selectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *selectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
+func (n *selectTopNode) Kind() string { return "selectTopNode" }
+
+func (n *selectTopNode) Init() error { return n.plan.Init() }
+
+func (n *selectTopNode) Start() error { return n.plan.Start() }
+
+func (n *selectTopNode) Next() (bool, error) { return n.plan.Next() }
+
+func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+
 func (n *selectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *selectTopNode) Source() planNode              { return n.source }
+
+func (n *selectTopNode) Source() planNode { return n.source }
+
+// Explain method for selectTopNode returns no attributes but is used to
+// subscribe / opt-into being an explainablePlanNode.
+func (n *selectTopNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		// No attributes are returned for selectTopNode.
+	}, nil
+}
+
 func (n *selectTopNode) Close() error {
 	if n.plan == nil {
 		return nil
@@ -151,6 +167,21 @@ func (n *selectNode) Spans(spans core.Spans) {
 
 func (n *selectNode) Close() error {
 	return n.source.Close()
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *selectNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[plannerTypes.Filter] = nil
+	} else {
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+	}
+
+	return explainerMap, nil
 }
 
 // initSource is the main workhorse for recursively constructing

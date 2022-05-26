@@ -26,13 +26,20 @@ type commitSelectTopNode struct {
 	plan planNode
 }
 
-func (n *commitSelectTopNode) Kind() string                  { return "commitSelectTopNode" }
-func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
-func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
-func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
+func (n *commitSelectTopNode) Kind() string { return "commitSelectTopNode" }
+
+func (n *commitSelectTopNode) Init() error { return n.plan.Init() }
+
+func (n *commitSelectTopNode) Start() error { return n.plan.Start() }
+
+func (n *commitSelectTopNode) Next() (bool, error) { return n.plan.Next() }
+
+func (n *commitSelectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+
 func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *commitSelectTopNode) Source() planNode              { return n.plan }
+
+func (n *commitSelectTopNode) Source() planNode { return n.plan }
+
 func (n *commitSelectTopNode) Close() error {
 	if n.plan == nil {
 		return nil
@@ -84,6 +91,13 @@ func (n *commitSelectNode) Close() error {
 func (n *commitSelectNode) Source() planNode {
 	return n.source
 }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *commitSelectNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
 func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	// check type of commit select (all, latest, one)
 	var commit *commitSelectNode

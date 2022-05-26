@@ -11,10 +11,7 @@
 package planner
 
 import (
-	"encoding/json"
-
 	"github.com/iancoleman/strcase"
-	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 type explainablePlanNode interface {
@@ -143,90 +140,4 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 
 	return explainGraph, nil
 
-}
-
-// Following are all the planNodes that are subscribing to the explainablePlanNode.
-
-func (n *selectTopNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{
-		// No attributes are returned for selectTopNode.
-	}
-
-	return explainerMap, nil
-}
-
-func (n *selectNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
-
-	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
-	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
-	}
-
-	return explainerMap, nil
-}
-
-func (n *scanNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
-
-	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
-	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
-	}
-
-	// Add the collection attributes.
-	explainerMap[plannerTypes.CollectionName] = n.desc.Name
-	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
-
-	// @todo: Add the index attribute.
-
-	// @todo: Add the spans attribute (couldn't find an example to test).
-	// spansAttribute := styleAttribute("Spans")
-	// explainerMap[spansAttribute] = n.spans
-
-	return explainerMap, nil
-}
-
-func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
-
-	// Add the type attribute.
-	// Add the relation attribute.
-	// Add the relation attribute.
-
-	return explainerMap, nil
-}
-
-func (n *createNode) Explain() (map[string]interface{}, error) {
-
-	data := map[string]interface{}{}
-	err := json.Unmarshal([]byte(n.newDocStr), &data)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]interface{}{
-		plannerTypes.Data: data,
-	}, nil
-}
-
-func (n *deleteNode) Explain() (map[string]interface{}, error) {
-
-	explainerMap := map[string]interface{}{}
-
-	// Add the document id(s) that request wants to delete.
-	explainerMap[plannerTypes.IDs] = n.ids
-
-	// Add the filter attribute if it exists, otherwise have it nil.
-	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
-	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
-	}
-
-	return explainerMap, nil
 }

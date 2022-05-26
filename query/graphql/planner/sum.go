@@ -208,10 +208,19 @@ func (n *sumNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *sumNode) Start() error           { return n.plan.Start() }
+func (n *sumNode) Start() error { return n.plan.Start() }
+
 func (n *sumNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *sumNode) Close() error           { return n.plan.Close() }
-func (n *sumNode) Source() planNode       { return n.plan }
+
+func (n *sumNode) Close() error { return n.plan.Close() }
+
+func (n *sumNode) Source() planNode { return n.plan }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *sumNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
 
 func (n *sumNode) Next() (bool, error) {
 	hasNext, err := n.plan.Next()

@@ -83,11 +83,18 @@ func (n *sortNode) Init() error {
 	n.sortStrategy = nil
 	return n.plan.Init()
 }
-func (n *sortNode) Start() error           { return n.plan.Start() }
+func (n *sortNode) Start() error { return n.plan.Start() }
+
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
 func (n *sortNode) Value() map[string]interface{} {
 	return n.valueIter.Value()
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *sortNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
 }
 
 func (n *sortNode) Next() (bool, error) {

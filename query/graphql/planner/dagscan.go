@@ -210,6 +210,12 @@ func (n *dagScanNode) Close() error {
 
 func (n *dagScanNode) Source() planNode { return n.headset }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *dagScanNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
 func (n *dagScanNode) Next() (bool, error) {
 	// find target CID either through headset or direct cid.
 	if n.queuedCids.Len() > 0 {

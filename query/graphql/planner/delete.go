@@ -16,6 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 type deleteNode struct {
@@ -115,6 +117,24 @@ func (n *deleteNode) Close() error {
 
 func (n *deleteNode) Source() planNode {
 	return nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *deleteNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the document id(s) that request wants to delete.
+	explainerMap[plannerTypes.IDs] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[plannerTypes.Filter] = nil
+	} else {
+		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+	}
+
+	return explainerMap, nil
 }
 
 func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {

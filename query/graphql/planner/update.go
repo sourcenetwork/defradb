@@ -138,6 +138,12 @@ func (n *updateNode) Close() error {
 
 func (n *updateNode) Source() planNode { return nil }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *updateNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
 func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,

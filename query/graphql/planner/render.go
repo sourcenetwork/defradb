@@ -90,8 +90,11 @@ func buildRenderInfo(parsed parser.Selection) renderInfo {
 }
 
 func (n *renderNode) Kind() string { return "renderNode" }
-func (n *renderNode) Init() error  { return n.plan.Init() }
+
+func (n *renderNode) Init() error { return n.plan.Init() }
+
 func (n *renderNode) Start() error { return n.plan.Start() }
+
 func (n *renderNode) Next() (bool, error) {
 	hasNext, err := n.plan.Next()
 	if err != nil || !hasNext {
@@ -115,8 +118,16 @@ func (n *renderNode) Next() (bool, error) {
 	return true, nil
 }
 func (n *renderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *renderNode) Close() error           { return n.plan.Close() }
-func (n *renderNode) Source() planNode       { return n.plan }
+
+func (n *renderNode) Close() error { return n.plan.Close() }
+
+func (n *renderNode) Source() planNode { return n.plan }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *renderNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
 
 // Renders the source document into the destination document using the given renderInfo.
 // Function recursively handles any nested children defined in the render info.

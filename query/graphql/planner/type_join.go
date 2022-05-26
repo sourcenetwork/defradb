@@ -127,6 +127,19 @@ func (n *typeIndexJoin) Close() error {
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// @todo Add explain attributes.
+	// Add the type attribute.
+	// Add the relation attribute.
+	// Add the relation attribute.
+
+	return explainerMap, nil
+}
+
 // Merge implements mergeNode
 func (n *typeIndexJoin) Merge() bool { return true }
 
