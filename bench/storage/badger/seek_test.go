@@ -104,3 +104,15 @@ func Benchmark_Badger_Simple_Seek_WithPrefetch_1000_500_500(b *testing.B) {
 		})
 	}
 }
+
+func Benchmark_Badger_Simple_Seek2_WithoutPrefetch_100000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runBadgerIteratorSeek2(b, ctx, vsz, 100000, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}

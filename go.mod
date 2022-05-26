@@ -48,9 +48,12 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/pkg/errors v0.9.1
+require (
+	github.com/pkg/errors v0.9.1
+)
 
 require (
+	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Stebalien/go-bitfield v0.0.1 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -224,4 +227,7 @@ replace (
 
 	// dev branch for go-datastore
 	github.com/ipfs/go-datastore => ./../go-datastore
+
+	// dev branch for badger (with Item.Copy added)
+	github.com/dgraph-io/badger/v3 => ./../badger
 )

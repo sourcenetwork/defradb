@@ -8,7 +8,7 @@ import (
 
 var (
 	valueSize = []int{
-		64, //128, 256, 512, 1024,
+		256, //128, 256, 512, 1024,
 	}
 )
 
@@ -119,12 +119,23 @@ func Benchmark_Badger_Simple_Read_Sync_100000_1000(b *testing.B) {
 		})
 	}
 }
-
 func Benchmark_Badger_Simple_Read_Sync_100000_100000(b *testing.B) {
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
 			err := runBadgerBenchGet(b, ctx, vsz, 100000, 100000, true)
+			if err != nil {
+				b.Fatal(err)
+			}
+		})
+	}
+}
+
+func Benchmark_Badger_Simple_Read2_Sync_10000(b *testing.B) {
+	for _, vsz := range valueSize {
+		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
+			ctx := context.Background()
+			err := runBadgerBenchGet2(b, ctx, vsz, 10000, false)
 			if err != nil {
 				b.Fatal(err)
 			}

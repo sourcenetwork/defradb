@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3"
 )
 
 var (
@@ -198,6 +198,226 @@ func runBadgerIteratorSeek(b *testing.B, ctx context.Context, valueSize int, doc
 			seekpos++
 		}
 		b.StartTimer()
+	}
+
+	return nil
+}
+
+func runBadgerIteratorSeek2(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	keys, err := backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		b.StartTimer()
+
+		for j := 0; j < docCount; j++ {
+			it.Seek([]byte(keys[j]))
+			item := it.Item()
+			item.ValueCopy(nil)
+			// b.Log(item.Key())
+		}
+	}
+
+	return nil
+}
+
+func runBadgerIterator2(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	_, err = backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		it.Rewind()
+		b.StartTimer()
+
+		for ; it.Valid(); it.Next() {
+			_ = it.Item()
+		}
+	}
+
+	return nil
+}
+
+func runBadgerIterator5(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	_, err = backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		it.Rewind()
+		b.StartTimer()
+
+		var total int
+		for ; it.Valid(); it.Next() {
+			bz, _ := it.Item().ValueCopy(nil)
+			total += len(bz)
+		}
+	}
+
+	return nil
+}
+
+func runBadgerIterator3(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	_, err = backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		it.Rewind()
+		b.StartTimer()
+
+		for ; it.Valid(); it.Next() {
+			_ = it.Item().SafeCopy()
+		}
+	}
+
+	return nil
+}
+
+func runBadgerIterator4(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	_, err = backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		it.Rewind()
+		b.StartTimer()
+
+		for ; it.Valid(); it.Next() {
+			_ = it.Item().Copy()
+		}
+	}
+
+	return nil
+}
+
+func runBadgerIterator6(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	_, err = backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		txn := db.NewTransaction(false)
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = prefetch
+		it := txn.NewIterator(opts)
+		it.Rewind()
+		b.StartTimer()
+
+		var total int
+		for ; it.Valid(); it.Next() {
+			i := it.Item().Copy()
+			bz, _ := i.ValueCopy(nil)
+			total += len(bz)
+		}
+	}
+
+	return nil
+}
+
+func runBadgerBenchGet2(b *testing.B, ctx context.Context, valueSize int, docCount int, prefetch bool) error {
+	db, err := newBadgerDB(b)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	//backfill
+	keys, err := backfillBenchmarkBadgerDB(ctx, db, docCount, valueSize)
+	if err != nil {
+		return err
+	}
+
+	txn := db.NewTransaction(false)
+	defer txn.Discard()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		b.StartTimer()
+		for j := 0; j < docCount; j++ {
+			txn.Get([]byte(keys[j]))
+		}
 	}
 
 	return nil

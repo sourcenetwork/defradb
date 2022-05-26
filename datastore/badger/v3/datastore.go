@@ -733,11 +733,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 	}
 
 	it := t.txn.NewIterator(opt)
-	seekFn := func(key string) {
-		// fmt.Println("Internal seek call!", key)
-		it.Seek([]byte(key))
-	}
-	qrb := dsq.NewResultBuilder(q, seekFn)
+	qrb := dsq.NewResultBuilder(q)
 	qrb.Process.Go(func(worker goprocess.Process) {
 		t.ds.closeLk.RLock()
 		closedEarly := false
@@ -823,7 +819,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 			}
 		}
 
-		<-qrb.Ack // wait until first ack
 		for sent := 0; (q.Limit <= 0 || sent < q.Limit) && it.Valid(); it.Next() {
 			item := it.Item()
 			// fmt.Println("next iterator item:", string(item.Key()))
@@ -831,13 +826,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 
 			// Maybe get the value
 			var result dsq.Result
-			// fmt.Println("Saving value copy for key:", e.Key, item.ValueCopy)
-			// e.ValueCopy = func(fn func(dst []byte) ([]byte, error)) func(dst []byte) ([]byte, error) {
-			// 	// fmt.Println("yo:", e.Key)
-
-			// 	return fn
-			// }(item.ValueCopy)
-			e.ValueCopy = item.ValueCopy
 			if !q.KeysOnly {
 				b, err := item.ValueCopy(nil)
 				if err != nil {
@@ -849,6 +837,7 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				}
 			} else {
 				e.Size = int(item.ValueSize())
+				e.Raw = item.Copy()
 				result = dsq.Result{Entry: e}
 			}
 
@@ -869,17 +858,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				sent++
 				// wait for ack
 				// fmt.Println("check next state/ack")
-				select {
-				case <-qrb.Ack:
-					// fmt.Println("acked")
-				case <-t.ds.closing: // datastore closing.
-					closedEarly = true
-					// fmt.Println("closed early")
-					return
-				case <-worker.Closing(): // client told us to close early
-					// fmt.Println("closing")
-					return
-				}
 			case <-t.ds.closing: // datastore closing.
 				closedEarly = true
 				return
