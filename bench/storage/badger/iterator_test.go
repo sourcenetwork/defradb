@@ -54,7 +54,7 @@ func Benchmark_Badger_Simple_Iterator_WithValues_WithoutPrefetch_100000(b *testi
 	}
 }
 
-func Benchmark_Badger_Simple_Iterator2_WithValues_WithoutPrefetch_100000(b *testing.B) {
+func Benchmark_Badger_Simple_Iterator2_WithoutValues_WithoutPrefetch_100000(b *testing.B) {
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
@@ -66,7 +66,7 @@ func Benchmark_Badger_Simple_Iterator2_WithValues_WithoutPrefetch_100000(b *test
 	}
 }
 
-func Benchmark_Badger_Simple_Iterator3_WithValues_WithoutPrefetch_10000(b *testing.B) {
+func Benchmark_Badger_Simple_Iterator3_WithoutValues_WithSafeCopy_WithoutPrefetch_100000(b *testing.B) {
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
@@ -78,7 +78,7 @@ func Benchmark_Badger_Simple_Iterator3_WithValues_WithoutPrefetch_10000(b *testi
 	}
 }
 
-func Benchmark_Badger_Simple_Iterator4_WithValues_WithoutPrefetch_10000(b *testing.B) {
+func Benchmark_Badger_Simple_Iterator4_WithoutValues_WithCopy_WithoutPrefetch_100000(b *testing.B) {
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
@@ -102,7 +102,7 @@ func Benchmark_Badger_Simple_Iterator5_WithValues_WithoutPrefetch_10000(b *testi
 	}
 }
 
-func Benchmark_Badger_Simple_Iterator6_WithValues_WithoutPrefetch_10000(b *testing.B) {
+func Benchmark_Badger_Simple_Iterator6_WithValues_WithCopy_WithoutPrefetch_10000(b *testing.B) {
 	for _, vsz := range valueSize {
 		b.Run(fmt.Sprintf("ValueSize:%04d", vsz), func(b *testing.B) {
 			ctx := context.Background()
