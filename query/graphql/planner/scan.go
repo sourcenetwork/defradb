@@ -129,7 +129,7 @@ func (n *scanNode) Explain() (map[string]interface{}, error) {
 	explainerMap[plannerTypes.CollectionName] = n.desc.Name
 	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
 
-	// @todo Add explain attributes ().
+	// @TODO: {defradb/issues/474} Add explain attributes.
 	// Add the spans attribute.
 	// explainerMap[plannerTypes.Spans] = n.spans
 	// Add the index attribute.

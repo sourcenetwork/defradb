@@ -449,7 +449,6 @@ func (g *Generator) buildTypesFromAST(
 					Type: gql.NewList(schemaTypes.CommitObject),
 				}
 
-				// @todo Pairup on removing the staticcheck linter error below.
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
 					return nil, fmt.Errorf(

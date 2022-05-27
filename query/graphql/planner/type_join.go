@@ -132,10 +132,10 @@ func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{}
 
-	// @todo Add explain attributes.
+	// @TODO {defradb/issues/475} Add explain attributes:
 	// Add the type attribute.
 	// Add the relation attribute.
-	// Add the relation attribute.
+	// Add the direction attribute.
 
 	return explainerMap, nil
 }
