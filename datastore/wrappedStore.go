@@ -99,10 +99,6 @@ func (w *wrappedStore) Query(ctx context.Context, q dsq.Query) (dsq.Results, err
 		Close: func() error {
 			return cqr.Close()
 		},
-		Seek: func(key string) {
-			wrappedKey := w.transform.ConvertKey(ds.NewKey(key)).String()
-			cqr.Seek(wrappedKey)
-		},
 	})
 	return dsq.NaiveQueryApply(nq, qr), nil
 }
