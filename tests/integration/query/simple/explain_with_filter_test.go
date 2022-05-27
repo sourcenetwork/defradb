@@ -294,6 +294,10 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
+				}`),
+				(`{
+				"Name": "Bob",
+				"Age": 32
 			}`)},
 		},
 		Results: []map[string]interface{}{
@@ -335,6 +339,10 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
+				}`),
+				(`{
+				"Name": "Bob",
+				"Age": 32
 			}`)},
 		},
 
@@ -494,6 +502,10 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 				(`{
 				"Name": "John",
 				"Age": 21
+				}`),
+				(`{
+				"Name": "Bob",
+				"Age": 32
 			}`)},
 		},
 		Results: []map[string]interface{}{
@@ -536,6 +548,10 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					(`{
 					"Name": "John",
 					"Age": 21
+					}`),
+					(`{
+					"Name": "Bob",
+					"Age": 19
 				}`)},
 			},
 			Results: []map[string]interface{}{

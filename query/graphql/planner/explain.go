@@ -27,27 +27,14 @@ var (
 	_ explainablePlanNode = (*selectNode)(nil)
 	_ explainablePlanNode = (*selectTopNode)(nil)
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
-
-	// Nodes to implement in the next explain request PRs.
-	// _ explainablePlanNode = (*averageNode)(nil)
-	// _ explainablePlanNode = (*commitSelectNode)(nil)
-	// _ explainablePlanNode = (*countNode)(nil)
-	// _ explainablePlanNode = (*dagScanNode)(nil)
-	// _ explainablePlanNode = (*renderNode)(nil)
-	// _ explainablePlanNode = (*sortNode)(nil)
-	// _ explainablePlanNode = (*sumNode)(nil)
-	// _ explainablePlanNode = (*updateNode)(nil)
-
-	// Internal Nodes that we don't want to expose / explain.
-	// - commitSelectTopNode
-	// - renderLimitNode
-	// - groupNode
-	// - hardLimitNode
-	// - headsetScanNode
-	// - parallelNode
-	// - pipeNode
-	// - typeJoinMany
-	// - typeJoinOne
+	_ explainablePlanNode = (*averageNode)(nil)
+	_ explainablePlanNode = (*commitSelectNode)(nil)
+	_ explainablePlanNode = (*countNode)(nil)
+	_ explainablePlanNode = (*dagScanNode)(nil)
+	_ explainablePlanNode = (*renderNode)(nil)
+	_ explainablePlanNode = (*sortNode)(nil)
+	_ explainablePlanNode = (*sumNode)(nil)
+	_ explainablePlanNode = (*updateNode)(nil)
 )
 
 // buildExplainGraph builds the explainGraph from the given top level plan.
@@ -68,11 +55,9 @@ var (
 //       "explain": {
 //         "selectTopNode": {
 //           "selectNode": {
-//             "filter": null,
+//	           ...
 //             "scanNode": {
-//               "collectionID": "1",
-//               "collectionName": "user",
-//               "filter": null
+//               ...
 //             }
 //           }
 //         }

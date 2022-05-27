@@ -29,8 +29,6 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 					}
 				}`,
 
-		Docs: map[int][]string{},
-
 		Results: []map[string]interface{}{
 			{
 				"explain": map[string]interface{}{
@@ -38,7 +36,6 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 						"selectNode": map[string]interface{}{
 							"createNode": map[string]interface{}{
 								"data": map[string]interface{}{
-									// Potential explain bug, need to investigate why this is a float.
 									"age":      float64(27),
 									"name":     "John",
 									"points":   float64(42.1),
@@ -85,7 +82,6 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 						"selectNode": map[string]interface{}{
 							"createNode": map[string]interface{}{
 								"data": map[string]interface{}{
-									// Potential explain bug, need to investigate why this is a float.
 									"age":  float64(27),
 									"name": "John",
 								},

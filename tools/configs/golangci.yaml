@@ -136,7 +136,6 @@ linters:
     # - nlreturn
     # - nolintlint
     # - tagliatelle
-    # - unparam
     # - whitespace
     # - wrapcheck
     # - wsl

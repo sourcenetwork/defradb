@@ -67,14 +67,6 @@ func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T
 				},
 			},
 
-			Updates: map[int][]string{
-				0: {
-					(`{
-						"name": "Rust in Action.",
-						"publisher_id": "bae-5c599633-d6d2-56ae-b3f0-1b65b4cee9fe"
-					}`)},
-			},
-
 			Results: []map[string]interface{}{
 				{
 					"explain": map[string]interface{}{
