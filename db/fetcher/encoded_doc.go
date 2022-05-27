@@ -17,19 +17,30 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+type valueCopier interface {
+	ValueCopy([]byte) ([]byte, error)
+}
+
 type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
-	Desc client.FieldDescription
-	Raw  []byte
+	Desc    client.FieldDescription
+	Raw     []byte
+	lazyVal valueCopier
 
+	val   interface{}
+	ctype client.CType
 	// // encoding meta data
 	// encoding base.DataEncoding
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e encProperty) Decode() (client.CType, interface{}, error) {
+func (e *encProperty) Decode() (client.CType, interface{}, error) {
+	if e.val != nil {
+		return e.ctype, e.val, nil
+	}
+
 	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
 	// fmt.Println("decode...", e.Desc.Name, buf)
@@ -102,7 +113,14 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 	}
 
 	// fmt.Println("decoded:", val)
+	e.ctype = ctype
+	e.val = val
 	return ctype, val, nil
+}
+
+func (e *encProperty) reset() {
+	e.ctype = client.NONE_CRDT
+	e.val = nil
 }
 
 // @todo: Implement Encoded Document type
@@ -152,4 +170,19 @@ func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
 		doc[prop.Desc.Name] = val
 	}
 	return doc, nil
+}
+
+func (encdoc *encodedDocument) ResolveLazyValues() error {
+	var err error
+	for _, prop := range encdoc.Properties {
+		fmt.Println("checking lazy val for prop:", prop.Desc.Name)
+		if prop.Raw == nil && prop.lazyVal != nil {
+			fmt.Println("getting value copy")
+			prop.Raw, err = prop.lazyVal.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
