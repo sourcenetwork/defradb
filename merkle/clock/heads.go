@@ -95,7 +95,7 @@ func (hh *heads) Len(ctx context.Context) (int, error) {
 
 // Replace replaces a head with a new cid.
 func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
-	log.Info(
+	log.Debug(
 		ctx,
 		"Replacing DAG head",
 		logging.NewKV("Old", h),
@@ -132,7 +132,7 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 }
 
 func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
-	log.Info(ctx, "Adding new DAG head",
+	log.Debug(ctx, "Adding new DAG head",
 		logging.NewKV("Cid", c),
 		logging.NewKV("Height", height))
 	return hh.write(ctx, hh.store, c, height)
