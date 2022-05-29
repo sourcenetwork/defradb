@@ -23,6 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 )
 
+const databaseStoreName = "badger"
+
 // dumpCmd represents the dump command
 var srvDumpCmd = &cobra.Command{
 	Use:   "server-dump",
