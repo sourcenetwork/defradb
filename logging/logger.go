@@ -131,7 +131,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	defaultConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	defaultConfig.DisableStacktrace = true
-	defaultConfig.DisableCaller = true
+	defaultConfig.DisableCaller = false
 
 	if config.Level.HasValue {
 		defaultConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel))
