@@ -8,13 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package one_to_many_multiple
+package test_explain
 
 import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
+
+type dataMap = map[string]interface{}
 
 var bookAuthorGQLSchema = (`
 	type article {

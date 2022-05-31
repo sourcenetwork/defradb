@@ -17,6 +17,8 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
+type dataMap = map[string]interface{}
+
 func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 
@@ -40,12 +42,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
@@ -87,12 +89,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
@@ -145,12 +147,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
@@ -187,12 +189,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
@@ -237,14 +239,14 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
-									"filter": map[string]interface{}{
-										"name": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"name": dataMap{
 											"$eq": "Shahzad",
 										},
 									},
@@ -309,21 +311,21 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
-									"filter": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
 										"$and": []interface{}{
-											map[string]interface{}{
-												"age": map[string]interface{}{
+											dataMap{
+												"age": dataMap{
 													"$lt": int64(26),
 												},
 											},
-											map[string]interface{}{
-												"verified": map[string]interface{}{
+											dataMap{
+												"verified": dataMap{
 													"$eq": true,
 												},
 											},
@@ -385,13 +387,13 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
-									"filter": map[string]interface{}{},
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{},
 									"ids":    []string(nil),
 								},
 								"filter": nil,
@@ -432,12 +434,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
@@ -463,12 +465,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 							}`,
 			Docs: map[int][]string{},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
@@ -513,21 +515,21 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
-									"filter": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
 										"$and": []interface{}{
-											map[string]interface{}{
-												"age": map[string]interface{}{
+											dataMap{
+												"age": dataMap{
 													"$lt": int64(26),
 												},
 											},
-											map[string]interface{}{
-												"verified": map[string]interface{}{
+											dataMap{
+												"verified": dataMap{
 													"$eq": true,
 												},
 											},
@@ -559,14 +561,14 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Docs: map[int][]string{},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
-									"filter": map[string]interface{}{
-										"name": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
+									"filter": dataMap{
+										"name": dataMap{
 											"$eq": "Shahzad",
 										},
 									},
@@ -602,12 +604,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids":    []string{},
 								},
@@ -645,7 +647,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 				},
 			},
 
-			Results: []map[string]interface{}{},
+			Results: []dataMap{},
 
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},

@@ -37,7 +37,7 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 			}`)},
 		},
 
-		Results: []map[string]interface{}{},
+		Results: []dataMap{},
 
 		ExpectedError: "[Directive \"explain\" may not be used on FIELD.]",
 	}
@@ -61,13 +61,13 @@ func TestExplainQuerySimple(t *testing.T) {
 				"Age": 21
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,
@@ -98,13 +98,13 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 				"Age": 21
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,
@@ -139,13 +139,13 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 				"Age": 27
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,

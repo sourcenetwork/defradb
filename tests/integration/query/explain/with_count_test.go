@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package one_to_many_multiple
+package test_explain
 
 import (
 	"testing"
@@ -79,14 +79,14 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		//         ----> typeIndexJoin    (explainable)
 		//             ----> typeJoinMany (non-explainable)
 		//                 ----> scanNode (explainable)
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"typeIndexJoin": map[string]interface{}{
-								"scanNode": map[string]interface{}{
+							"typeIndexJoin": dataMap{
+								"scanNode": dataMap{
 									"collectionID":   "3",
 									"collectionName": "author",
 									"filter":         nil,
@@ -174,19 +174,19 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 		//                 ----> typeJoinMany      (non-explainable)
 		//                     ----> scanNode      (explainable)
 		//                         ----> scanNode  (explainable)
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
-							"parallelNode": []map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"parallelNode": []dataMap{
 								{
-									"typeIndexJoin": map[string]interface{}{
-										"scanNode": map[string]interface{}{
+									"typeIndexJoin": dataMap{
+										"scanNode": dataMap{
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
-											"scanNode": map[string]interface{}{
+											"scanNode": dataMap{
 												"collectionID":   "3",
 												"collectionName": "author",
 												"filter":         nil,
@@ -195,12 +195,12 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 									},
 								},
 								{
-									"typeIndexJoin": map[string]interface{}{
-										"scanNode": map[string]interface{}{
+									"typeIndexJoin": dataMap{
+										"scanNode": dataMap{
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
-											"scanNode": map[string]interface{}{
+											"scanNode": dataMap{
 												"collectionID":   "3",
 												"collectionName": "author",
 												"filter":         nil,

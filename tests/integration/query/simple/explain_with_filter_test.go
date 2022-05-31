@@ -34,13 +34,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 				}`)},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -67,13 +67,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 							"Age": 21
 						}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -104,13 +104,13 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 								"Age": 32
 							}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -145,13 +145,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 					"Age": 21
 				}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -178,13 +178,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 					"Age": 21
 				}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -215,13 +215,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 								"Age": 32
 							}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -256,13 +256,13 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 								"Age": 27
 							}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
@@ -300,17 +300,17 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 				"Age": 32
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
-									"_key": map[string]interface{}{
+								"filter": dataMap{
+									"_key": dataMap{
 										"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 									},
 								},
@@ -346,17 +346,17 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 			}`)},
 		},
 
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
-									"Name": map[string]interface{}{
+								"filter": dataMap{
+									"Name": dataMap{
 										"$eq": "John",
 									},
 								},
@@ -387,17 +387,17 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					"Age": 21
 				}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Name": map[string]interface{}{
+									"filter": dataMap{
+										"Name": dataMap{
 											"$eq": "John",
 										},
 									},
@@ -423,17 +423,17 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 							"Age": 21
 						}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Name": map[string]interface{}{
+									"filter": dataMap{
+										"Name": dataMap{
 											"$eq": "John",
 										},
 									},
@@ -460,17 +460,17 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 							"Age": 21
 						}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Name": map[string]interface{}{
+									"filter": dataMap{
+										"Name": dataMap{
 											"$eq": "Bob",
 										},
 									},
@@ -508,17 +508,17 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 				"Age": 32
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
-									"Age": map[string]interface{}{
+								"filter": dataMap{
+									"Age": dataMap{
 										"$eq": int64(21), // Should this be `uint64`?
 									},
 								},
@@ -554,17 +554,17 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					"Age": 19
 				}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Age": map[string]interface{}{
+									"filter": dataMap{
+										"Age": dataMap{
 											"$gt": int64(20), // Should this be `uint64`?
 										},
 									},
@@ -595,17 +595,17 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 							"Age": 32
 						}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Age": map[string]interface{}{
+									"filter": dataMap{
+										"Age": dataMap{
 											"$gt": int64(40), // Should this be `uint64`?
 										},
 									},
@@ -637,17 +637,17 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 							"Age": 32
 						}`)},
 			},
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
 								"filter": nil,
-								"scanNode": map[string]interface{}{
+								"scanNode": dataMap{
 									"collectionID":   "1",
 									"collectionName": "users",
-									"filter": map[string]interface{}{
-										"Age": map[string]interface{}{
+									"filter": dataMap{
+										"Age": dataMap{
 											"$gt": int64(20), // Should this be `uint64`?
 										},
 									},
@@ -693,24 +693,24 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 				"Age": 19
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
+								"filter": dataMap{
 									"$and": []interface{}{
-										map[string]interface{}{
-											"Age": map[string]interface{}{
+										dataMap{
+											"Age": dataMap{
 												"$gt": int64(20), // Should this be `uint64`?
 											},
 										},
-										map[string]interface{}{
-											"Age": map[string]interface{}{
+										dataMap{
+											"Age": dataMap{
 												"$lt": int64(50), // Should this be `uint64`?
 											},
 										},
@@ -755,24 +755,24 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 				"Age": 19
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
+								"filter": dataMap{
 									"$or": []interface{}{
-										map[string]interface{}{
-											"Age": map[string]interface{}{
+										dataMap{
+											"Age": dataMap{
 												"$eq": int64(55), // Should this be `uint64`?
 											},
 										},
-										map[string]interface{}{
-											"Age": map[string]interface{}{
+										dataMap{
+											"Age": dataMap{
 												"$eq": int64(19), // Should this be uint64?
 											},
 										},
@@ -817,17 +817,17 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 				"Age": 19
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
 							"filter": nil,
-							"scanNode": map[string]interface{}{
+							"scanNode": dataMap{
 								"collectionID":   "1",
 								"collectionName": "users",
-								"filter": map[string]interface{}{
-									"Age": map[string]interface{}{
+								"filter": dataMap{
+									"Age": dataMap{
 										"$in": []interface{}{
 											int64(19), // Should this be uint64?
 											int64(40), // Should this be uint64?

@@ -17,6 +17,8 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
+type dataMap = map[string]interface{}
+
 func TestExplainMutationCreateSimple(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain simple create mutation.",
@@ -29,13 +31,13 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 					}
 				}`,
 
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
-							"createNode": map[string]interface{}{
-								"data": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"createNode": dataMap{
+								"data": dataMap{
 									"age":      float64(27),
 									"name":     "John",
 									"points":   float64(42.1),
@@ -75,13 +77,13 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 			}`)},
 		},
 
-		Results: []map[string]interface{}{
+		Results: []dataMap{
 			{
-				"explain": map[string]interface{}{
-					"selectTopNode": map[string]interface{}{
-						"selectNode": map[string]interface{}{
-							"createNode": map[string]interface{}{
-								"data": map[string]interface{}{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"createNode": dataMap{
+								"data": dataMap{
 									"age":  float64(27),
 									"name": "John",
 								},

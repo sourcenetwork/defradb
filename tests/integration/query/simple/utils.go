@@ -16,6 +16,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+type dataMap = map[string]interface{}
+
 var userCollectionGQLSchema = (`
 	type users {
 		Name: String

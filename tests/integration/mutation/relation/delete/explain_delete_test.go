@@ -17,6 +17,8 @@ import (
 	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
+type dataMap = map[string]interface{}
+
 func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 
@@ -67,12 +69,12 @@ func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []dataMap{
 				{
-					"explain": map[string]interface{}{
-						"selectTopNode": map[string]interface{}{
-							"selectNode": map[string]interface{}{
-								"deleteNode": map[string]interface{}{
+					"explain": dataMap{
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"deleteNode": dataMap{
 									"filter": nil,
 									"ids": []string{
 										"bae-2f80f359-535d-508e-ba58-088a309ce3c3",
