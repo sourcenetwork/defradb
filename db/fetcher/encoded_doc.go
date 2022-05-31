@@ -164,7 +164,7 @@ func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
 	for _, prop := range encdoc.Properties {
 		_, val, err := prop.Decode()
 		if err != nil {
-			fmt.Println("err5")
+			// fmt.Println("err5")
 			return nil, err
 		}
 		doc[prop.Desc.Name] = val
@@ -175,9 +175,9 @@ func (encdoc *encodedDocument) DecodeToMap() (map[string]interface{}, error) {
 func (encdoc *encodedDocument) ResolveLazyValues() error {
 	var err error
 	for _, prop := range encdoc.Properties {
-		fmt.Println("checking lazy val for prop:", prop.Desc.Name)
+		// fmt.Println("checking lazy val for prop:", prop.Desc.Name)
 		if prop.Raw == nil && prop.lazyVal != nil {
-			fmt.Println("getting value copy")
+			// fmt.Println("getting value copy")
 			prop.Raw, err = prop.lazyVal.ValueCopy(nil)
 			if err != nil {
 				return err
