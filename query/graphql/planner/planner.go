@@ -429,6 +429,10 @@ func (p *Planner) explainRequest(
 	plan planNode,
 ) ([]map[string]interface{}, error) {
 
+	if plan == nil {
+		return nil, fmt.Errorf("Can't explain request of a nil plan.")
+	}
+
 	explainGraph, err := buildExplainGraph(plan)
 	if err != nil {
 		return nil, err
@@ -448,6 +452,10 @@ func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]interface{}, error) {
+
+	if plan == nil {
+		return nil, fmt.Errorf("Can't execute request of a nil plan.")
+	}
 
 	if err := plan.Start(); err != nil {
 		return nil, multiErr(err, plan.Close())
@@ -489,10 +497,6 @@ func (p *Planner) runRequest(
 
 	if err != nil {
 		return nil, err
-	}
-
-	if plan == nil {
-		return nil, fmt.Errorf("Can't run request of an empty / nil plan.")
 	}
 
 	isAnExplainRequest :=
