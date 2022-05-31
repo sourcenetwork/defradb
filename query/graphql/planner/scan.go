@@ -158,7 +158,7 @@ func (p *Planner) Scan(versioned bool) *scanNode {
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
 type multiScanNode struct {
-	*scanNode
+	scanNode   *scanNode
 	numReaders int
 	numCalls   int
 
@@ -166,12 +166,12 @@ type multiScanNode struct {
 	lastErr  error
 }
 
-func (n *multiScanNode) addReader() {
-	n.numReaders++
+func (n *multiScanNode) Init() error {
+	return n.scanNode.Init()
 }
 
-func (n *multiScanNode) Source() planNode {
-	return n.scanNode
+func (n *multiScanNode) Start() error {
+	return n.scanNode.Start()
 }
 
 // Next only calls Next() on the underlying
@@ -189,4 +189,28 @@ func (n *multiScanNode) Next() (bool, error) {
 	}
 
 	return n.lastBool, n.lastErr
+}
+
+func (n *multiScanNode) Value() map[string]interface{} {
+	return n.scanNode.documentIterator.Value()
+}
+
+func (n *multiScanNode) Spans(spans core.Spans) {
+	n.scanNode.Spans(spans)
+}
+
+func (n *multiScanNode) Source() planNode {
+	return n.scanNode
+}
+
+func (n *multiScanNode) Kind() string {
+	return "multiScanNode"
+}
+
+func (n *multiScanNode) Close() error {
+	return n.scanNode.Close()
+}
+
+func (n *multiScanNode) addReader() {
+	n.numReaders++
 }

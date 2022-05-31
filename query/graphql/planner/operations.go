@@ -21,6 +21,7 @@ var (
 	_ planNode = (*groupNode)(nil)
 	_ planNode = (*hardLimitNode)(nil)
 	_ planNode = (*headsetScanNode)(nil)
+	_ planNode = (*multiScanNode)(nil)
 	_ planNode = (*parallelNode)(nil)
 	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*renderLimitNode)(nil)

@@ -186,11 +186,6 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "author",
-												"filter":         nil,
-											},
 										},
 									},
 								},
@@ -200,11 +195,6 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "author",
-												"filter":         nil,
-											},
 										},
 									},
 								},
