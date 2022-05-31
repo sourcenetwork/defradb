@@ -16,8 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 type deleteNode struct {
@@ -125,13 +123,13 @@ func (n *deleteNode) Explain() (map[string]interface{}, error) {
 	explainerMap := map[string]interface{}{}
 
 	// Add the document id(s) that request wants to delete.
-	explainerMap[plannerTypes.IDs] = n.ids
+	explainerMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
 	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
+		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.Conditions
 	}
 
 	return explainerMap, nil

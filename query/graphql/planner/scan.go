@@ -16,8 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 // scans an index for records
@@ -120,18 +118,18 @@ func (n *scanNode) Explain() (map[string]interface{}, error) {
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
+		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.Conditions
 	}
 
 	// Add the collection attributes.
-	explainerMap[plannerTypes.CollectionName] = n.desc.Name
-	explainerMap[plannerTypes.CollectionID] = n.desc.IDString()
+	explainerMap[collectionNameLabel] = n.desc.Name
+	explainerMap[collectionIDLabel] = n.desc.IDString()
 
 	// @TODO: {defradb/issues/474} Add explain attributes.
 	// Add the spans attribute.
-	// explainerMap[plannerTypes.Spans] = n.spans
+	// explainerMap[spansLabel] = n.spans
 	// Add the index attribute.
 
 	return explainerMap, nil

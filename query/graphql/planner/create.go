@@ -17,8 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
-	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 )
 
 // createNode is used to construct and execute
@@ -105,7 +103,7 @@ func (n *createNode) Explain() (map[string]interface{}, error) {
 	}
 
 	return map[string]interface{}{
-		plannerTypes.Data: data,
+		dataLabel: data,
 	}, nil
 }
 

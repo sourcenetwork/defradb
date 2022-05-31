@@ -37,6 +37,15 @@ var (
 	_ explainablePlanNode = (*updateNode)(nil)
 )
 
+const (
+	collectionIDLabel   = "collectionID"
+	collectionNameLabel = "collectionName"
+	dataLabel           = "data"
+	filterLabel         = "filter"
+	idsLabel            = "ids"
+	// spansLabel          = "spans"
+)
+
 // buildExplainGraph builds the explainGraph from the given top level plan.
 //
 // Request:

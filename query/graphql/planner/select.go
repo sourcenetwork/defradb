@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	plannerTypes "github.com/sourcenetwork/defradb/query/graphql/planner/types"
 
 	cid "github.com/ipfs/go-cid"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -176,9 +175,9 @@ func (n *selectNode) Explain() (map[string]interface{}, error) {
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[plannerTypes.Filter] = nil
+		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[plannerTypes.Filter] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.Conditions
 	}
 
 	return explainerMap, nil
