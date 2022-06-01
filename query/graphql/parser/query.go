@@ -221,6 +221,24 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	return q, nil
 }
 
+// parseExplainDirective returns true if we parsed / detected the explain directive label
+// in this ast, and false otherwise.
+func parseExplainDirective(directives []*ast.Directive) bool {
+
+	// Iterate through all directives and ensure that the directive is at there.
+	// - Note: the location we don't need to worry about as the schema takes care of it, as when
+	//         request is made there will be a syntax error for directive usage at the wrong location,
+	//         unless we add another directive named `@explain` at another location (which we should not).
+	for _, directive := range directives {
+		// The arguments pased to the directive are at `directive.Arguments`.
+		if directive.Name.Value == parserTypes.ExplainLabel {
+			return true
+		}
+	}
+
+	return false
+}
+
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
@@ -234,20 +252,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 		qdef.Name = def.Name.Value
 	}
 
-	// Todo: - iterate through all directives and ensure that the directive is at the
-	//          right location that we expect it to be at (create a parseDirectives function).
-	//       - Parse the arguments of directive stored at: def.Directives[0].Arguments
-	//       - Also refactor this file into a `request.go` file and isolate `query` operation
-	//          specific code into a separate file like we currently have `mutation.go` file.
-	//       - Note: the location we don't need to worry about as the schema takes care of it,
-	//               will give a syntax error, unless we add make it legal to add another
-	//               directive named `explain` (which we should not).
-	//       - Do a for loop here and in `./mutation.go` to match directive name rather than
-	//         checking for only the first one. Will be fixed in issue#455.
-	directives := def.Directives
-	if len(directives) > 0 && directives[0].Name.Value == parserTypes.ExplainLabel {
-		qdef.IsExplain = true
-	}
+	qdef.IsExplain = parseExplainDirective(def.Directives)
 
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		var parsed Selection
