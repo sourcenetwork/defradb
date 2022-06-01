@@ -237,13 +237,14 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					(`{
-							"Name": "John",
-							"Age": 21
-							}`),
+					"Name": "John",
+					"Age": 21
+					}`),
 					(`{
-								"Name": "Bob",
-								"Age": 32
-							}`)},
+					"Name": "Bob",
+					"Age": 32
+					}`),
+				},
 			},
 			Results: []dataMap{
 				{
@@ -284,17 +285,18 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					(`{
-							"Name": "John",
-							"Age": 21
-							}`),
+						"Name": "John",
+						"Age": 21
+					}`),
 					(`{
-								"Name": "Bob",
-								"Age": 32
-							}`),
+						"Name": "Bob",
+						"Age": 32
+					}`),
 					(`{
-								"Name": "Jim",
-								"Age": 27
-							}`)},
+						"Name": "Jim",
+						"Age": 27
+					}`),
+				},
 			},
 			Results: []dataMap{
 				{
@@ -599,7 +601,7 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Age": dataMap{
-										"$eq": int64(21), // Should this be `uint64`?
+										"$eq": int64(21),
 									},
 								},
 								"spans": []dataMap{
@@ -651,7 +653,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(20), // Should this be `uint64`?
+											"$gt": int64(20),
 										},
 									},
 									"spans": []dataMap{
@@ -698,7 +700,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(40), // Should this be `uint64`?
+											"$gt": int64(40),
 										},
 									},
 									"spans": []dataMap{
@@ -746,7 +748,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(20), // Should this be `uint64`?
+											"$gt": int64(20),
 										},
 									},
 									"spans": []dataMap{
@@ -810,12 +812,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 									"$and": []interface{}{
 										dataMap{
 											"Age": dataMap{
-												"$gt": int64(20), // Should this be `uint64`?
+												"$gt": int64(20),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"$lt": int64(50), // Should this be `uint64`?
+												"$lt": int64(50),
 											},
 										},
 									},
@@ -878,12 +880,12 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 									"$or": []interface{}{
 										dataMap{
 											"Age": dataMap{
-												"$eq": int64(55), // Should this be `uint64`?
+												"$eq": int64(55),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"$eq": int64(19), // Should this be uint64?
+												"$eq": int64(19),
 											},
 										},
 									},
@@ -945,9 +947,9 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 								"filter": dataMap{
 									"Age": dataMap{
 										"$in": []interface{}{
-											int64(19), // Should this be uint64?
-											int64(40), // Should this be uint64?
-											int64(55), // Should this be uint64?
+											int64(19),
+											int64(40),
+											int64(55),
 										},
 									},
 								},
