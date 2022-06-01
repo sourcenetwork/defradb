@@ -44,6 +44,12 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+									},
 								},
 							},
 						},
@@ -77,6 +83,12 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
+										},
+									},
 								},
 							},
 						},
@@ -114,6 +126,12 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+									},
 								},
 							},
 						},
@@ -155,6 +173,12 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+									},
 								},
 							},
 						},
@@ -188,6 +212,12 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
+										},
+									},
 								},
 							},
 						},
@@ -225,6 +255,16 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+									},
 								},
 							},
 						},
@@ -266,6 +306,16 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 									"collectionID":   "1",
 									"collectionName": "users",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+										{
+											"start": "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f94",
+											"end":   "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f95",
+										},
+									},
 								},
 							},
 						},
@@ -314,6 +364,12 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 										"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 									},
 								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -360,6 +416,12 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 										"$eq": "John",
 									},
 								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -401,6 +463,12 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 											"$eq": "John",
 										},
 									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
+										},
+									},
 								},
 							},
 						},
@@ -435,6 +503,12 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 									"filter": dataMap{
 										"Name": dataMap{
 											"$eq": "John",
+										},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -472,6 +546,12 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 									"filter": dataMap{
 										"Name": dataMap{
 											"$eq": "Bob",
+										},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -522,6 +602,12 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 										"$eq": int64(21), // Should this be `uint64`?
 									},
 								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -568,6 +654,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 											"$gt": int64(20), // Should this be `uint64`?
 										},
 									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
+										},
+									},
 								},
 							},
 						},
@@ -607,6 +699,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"filter": dataMap{
 										"Age": dataMap{
 											"$gt": int64(40), // Should this be `uint64`?
+										},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -649,6 +747,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"filter": dataMap{
 										"Age": dataMap{
 											"$gt": int64(20), // Should this be `uint64`?
+										},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -716,6 +820,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 										},
 									},
 								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -778,6 +888,12 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 										},
 									},
 								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -833,6 +949,12 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 											int64(40), // Should this be uint64?
 											int64(55), // Should this be uint64?
 										},
+									},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},

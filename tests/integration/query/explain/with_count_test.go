@@ -90,6 +90,12 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 									"collectionID":   "3",
 									"collectionName": "author",
 									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/3",
+											"end":   "/4",
+										},
+									},
 								},
 							},
 						},
@@ -186,6 +192,12 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
+											"spans": []dataMap{
+												{
+													"start": "/3",
+													"end":   "/4",
+												},
+											},
 										},
 									},
 								},
@@ -195,6 +207,12 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 											"collectionID":   "3",
 											"collectionName": "author",
 											"filter":         nil,
+											"spans": []dataMap{
+												{
+													"start": "/3",
+													"end":   "/4",
+												},
+											},
 										},
 									},
 								},

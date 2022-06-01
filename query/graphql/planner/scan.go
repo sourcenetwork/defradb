@@ -111,6 +111,21 @@ func (n *scanNode) Close() error {
 
 func (n *scanNode) Source() planNode { return nil }
 
+// explainSpans explains the spans attribute.
+func (n *scanNode) explainSpans() []map[string]interface{} {
+	spansExplainer := []map[string]interface{}{}
+	for _, span := range n.spans {
+		spanExplainer := map[string]interface{}{
+			"start": span.Start().ToString(),
+			"end":   span.End().ToString(),
+		}
+
+		spansExplainer = append(spansExplainer, spanExplainer)
+	}
+
+	return spansExplainer
+}
+
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *scanNode) Explain() (map[string]interface{}, error) {
@@ -127,10 +142,8 @@ func (n *scanNode) Explain() (map[string]interface{}, error) {
 	explainerMap[collectionNameLabel] = n.desc.Name
 	explainerMap[collectionIDLabel] = n.desc.IDString()
 
-	// @TODO: {defradb/issues/474} Add explain attributes.
 	// Add the spans attribute.
-	// explainerMap[spansLabel] = n.spans
-	// Add the index attribute.
+	explainerMap[spansLabel] = n.explainSpans()
 
 	return explainerMap, nil
 }
