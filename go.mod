@@ -49,6 +49,7 @@ require (
 require (
 	github.com/fatih/color v1.13.0
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/iancoleman/strcase v0.2.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/text v0.3.7
 )

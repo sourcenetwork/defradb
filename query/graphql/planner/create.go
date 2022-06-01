@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -41,6 +42,8 @@ type createNode struct {
 
 	returned bool
 }
+
+func (n *createNode) Kind() string { return "createNode" }
 
 func (n *createNode) Init() error { return nil }
 
@@ -88,6 +91,21 @@ func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
 func (n *createNode) Close() error { return nil }
 
 func (n *createNode) Source() planNode { return nil }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *createNode) Explain() (map[string]interface{}, error) {
+
+	data := map[string]interface{}{}
+	err := json.Unmarshal([]byte(n.newDocStr), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		dataLabel: data,
+	}, nil
+}
 
 func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
 	// create a mutation createNode.

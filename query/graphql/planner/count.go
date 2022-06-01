@@ -47,14 +47,27 @@ func (p *Planner) Count(field *parser.Select, host *parser.Select) (*countNode, 
 	}, nil
 }
 
+func (n *countNode) Kind() string {
+	return "countNode"
+}
+
 func (n *countNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *countNode) Start() error           { return n.plan.Start() }
+func (n *countNode) Start() error { return n.plan.Start() }
+
 func (n *countNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-func (n *countNode) Close() error           { return n.plan.Close() }
-func (n *countNode) Source() planNode       { return n.plan }
+
+func (n *countNode) Close() error { return n.plan.Close() }
+
+func (n *countNode) Source() planNode { return n.plan }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *countNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
 
 func (n *countNode) Next() (bool, error) {
 	hasValue, err := n.plan.Next()

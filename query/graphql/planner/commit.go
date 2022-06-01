@@ -19,6 +19,36 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
+// commitSelectTopNode is a wrapper for the selectTopNode
+// in the case where the select is actually a CommitSelect
+type commitSelectTopNode struct {
+	p    *Planner
+	plan planNode
+}
+
+func (n *commitSelectTopNode) Kind() string { return "commitSelectTopNode" }
+
+func (n *commitSelectTopNode) Init() error { return n.plan.Init() }
+
+func (n *commitSelectTopNode) Start() error { return n.plan.Start() }
+
+func (n *commitSelectTopNode) Next() (bool, error) { return n.plan.Next() }
+
+func (n *commitSelectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+
+func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
+
+func (n *commitSelectTopNode) Source() planNode { return n.plan }
+
+func (n *commitSelectTopNode) Close() error {
+	if n.plan == nil {
+		return nil
+	}
+	return n.plan.Close()
+}
+
+func (n *commitSelectTopNode) Append() bool { return true }
+
 type commitSelectNode struct {
 	documentIterator
 
@@ -27,6 +57,10 @@ type commitSelectNode struct {
 	source *dagScanNode
 
 	subRenderInfo map[string]renderInfo
+}
+
+func (n *commitSelectNode) Kind() string {
+	return "commitSelectNode"
 }
 
 func (n *commitSelectNode) Init() error {
@@ -58,10 +92,11 @@ func (n *commitSelectNode) Source() planNode {
 	return n.source
 }
 
-// AppendNode implements appendNode
-// func (n *commitSelectNode) AppendNode() bool {
-// 	return true
-// }
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *commitSelectNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
 
 func (p *Planner) CommitSelect(parsed *parser.CommitSelect) (planNode, error) {
 	// check type of commit select (all, latest, one)
@@ -159,25 +194,3 @@ func (p *Planner) commitSelectAll(parsed *parser.CommitSelect) (*commitSelectNod
 
 	return commit, nil
 }
-
-// commitSelectTopNode is a wrapper for the selectTopNode
-// in the case where the select is actually a CommitSelect
-type commitSelectTopNode struct {
-	p    *Planner
-	plan planNode
-}
-
-func (n *commitSelectTopNode) Init() error                   { return n.plan.Init() }
-func (n *commitSelectTopNode) Start() error                  { return n.plan.Start() }
-func (n *commitSelectTopNode) Next() (bool, error)           { return n.plan.Next() }
-func (n *commitSelectTopNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }
-func (n *commitSelectTopNode) Value() map[string]interface{} { return n.plan.Value() }
-func (n *commitSelectTopNode) Source() planNode              { return n.plan }
-func (n *commitSelectTopNode) Close() error {
-	if n.plan == nil {
-		return nil
-	}
-	return n.plan.Close()
-}
-
-func (n *commitSelectTopNode) Append() bool { return true }

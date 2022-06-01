@@ -49,10 +49,16 @@ func (p *Planner) newContainerValuesNode(ordering []parserTypes.SortCondition) *
 func (n *valuesNode) Init() error            { return nil }
 func (n *valuesNode) Start() error           { return nil }
 func (n *valuesNode) Spans(spans core.Spans) {}
-func (n *valuesNode) Close() {
+
+func (n *valuesNode) Kind() string {
+	return "valuesNode"
+}
+
+func (n *valuesNode) Close() error {
 	if n.docs != nil {
-		n.docs.Close()
+		return n.docs.Close()
 	}
+	return nil
 }
 
 func (n *valuesNode) Next() (bool, error) {

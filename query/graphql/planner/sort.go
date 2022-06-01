@@ -21,7 +21,7 @@ import (
 type valueIterator interface {
 	Next() (bool, error)
 	Value() map[string]interface{}
-	Close()
+	Close() error
 }
 
 type sortingStrategy interface {
@@ -73,17 +73,28 @@ func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
 	}, nil
 }
 
+func (n *sortNode) Kind() string {
+	return "sortNode"
+}
+
 func (n *sortNode) Init() error {
 	// reset stateful data
 	n.needSort = true
 	n.sortStrategy = nil
 	return n.plan.Init()
 }
-func (n *sortNode) Start() error           { return n.plan.Start() }
+func (n *sortNode) Start() error { return n.plan.Start() }
+
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
 func (n *sortNode) Value() map[string]interface{} {
 	return n.valueIter.Value()
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *sortNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
 }
 
 func (n *sortNode) Next() (bool, error) {
@@ -129,10 +140,11 @@ func (n *sortNode) Close() error {
 	}
 
 	if n.valueIter != nil {
-		n.valueIter.Close()
+		return n.valueIter.Close()
 	}
+
 	if n.sortStrategy != nil {
-		n.sortStrategy.Close()
+		return n.sortStrategy.Close()
 	}
 	return nil
 }
@@ -175,6 +187,6 @@ func (s *allSortStrategy) Value() map[string]interface{} {
 }
 
 // Close closes the underling valueNode
-func (s *allSortStrategy) Close() {
-	s.valueNode.Close()
+func (s *allSortStrategy) Close() error {
+	return s.valueNode.Close()
 }

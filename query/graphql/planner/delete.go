@@ -97,6 +97,10 @@ func (n *deleteNode) Spans(spans core.Spans) {
 	/* no-op */
 }
 
+func (n *deleteNode) Kind() string {
+	return "deleteNode"
+}
+
 func (n *deleteNode) Init() error {
 	return nil
 }
@@ -111,6 +115,24 @@ func (n *deleteNode) Close() error {
 
 func (n *deleteNode) Source() planNode {
 	return nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *deleteNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the document id(s) that request wants to delete.
+	explainerMap[idsLabel] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.Conditions
+	}
+
+	return explainerMap, nil
 }
 
 func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {

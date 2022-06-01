@@ -52,8 +52,7 @@ func (c *DocumentContainer) AddDoc(doc map[string]interface{}) error {
 		return nil
 	}
 	// append to docs slice
-	copyDoc := copyMap(doc)
-	c.docs = append(c.docs, copyDoc)
+	c.docs = append(c.docs, copyMap(doc))
 	c.numDocs++
 	return nil
 }
@@ -70,9 +69,10 @@ func (c *DocumentContainer) Swap(i, j int) {
 	c.docs[j] = tmp
 }
 
-func (c *DocumentContainer) Close() {
+func (c *DocumentContainer) Close() error {
 	c.docs = nil
 	c.numDocs = 0
+	return nil
 }
 
 func copyMap(m map[string]interface{}) map[string]interface{} {

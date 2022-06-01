@@ -8,5 +8,5 @@ type author {
     name: String
     age: Int
     verified: Boolean
-    published: book 
+    published: book
 }
