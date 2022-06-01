@@ -108,6 +108,12 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Support nil to signal as if there are no attributes to explain for that node.
+		if explainGraphBuilder == nil {
+			explainGraphBuilder = map[string]interface{}{}
+		}
+
 		// If not the last child then keep walking the graph to find more explainable nodes.
 		if node.Source() != nil {
 			nextExplainGraph, err := buildExplainGraph(node.Source())

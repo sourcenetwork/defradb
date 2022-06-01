@@ -81,9 +81,8 @@ func (n *selectTopNode) Source() planNode { return n.source }
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
 func (n *selectTopNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		// No attributes are returned for selectTopNode.
-	}, nil
+	// No attributes are returned for selectTopNode.
+	return nil, nil
 }
 
 func (n *selectTopNode) Close() error {
