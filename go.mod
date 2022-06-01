@@ -48,12 +48,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require (
-	github.com/pkg/errors v0.9.1
-)
+require github.com/pkg/errors v0.9.1
 
 require (
-	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Stebalien/go-bitfield v0.0.1 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -219,6 +216,9 @@ require (
 replace (
 	github.com/SierraSoftworks/connor => github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12
 
+	// dev branch for badger (with Item.Copy added)
+	github.com/dgraph-io/badger/v3 => github.com/sourcenetwork/badger/v3 v3.0.0-20220601074023-ff745de0ad4b
+
 	// SourceNetwork fork og graphql-go
 	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql v0.7.10-0.20220122211559-2fe60b2360cc
 
@@ -226,8 +226,5 @@ replace (
 	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220204200507-1ab1dc63476f
 
 	// dev branch for go-datastore
-	github.com/ipfs/go-datastore => ./../go-datastore
-
-	// dev branch for badger (with Item.Copy added)
-	github.com/dgraph-io/badger/v3 => ./../badger
+	github.com/ipfs/go-datastore => github.com/sourcenetwork/go-datastore v0.5.2-0.20220601073520-a912e058f043
 )
