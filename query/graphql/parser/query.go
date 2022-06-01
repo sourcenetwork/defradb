@@ -40,8 +40,8 @@ func (q Query) GetStatement() ast.Node {
 type OperationDefinition struct {
 	Name       string
 	Selections []Selection
-
-	Statement *ast.OperationDefinition
+	Statement  *ast.OperationDefinition
+	IsExplain  bool
 }
 
 func (q OperationDefinition) GetStatement() ast.Node {
@@ -194,17 +194,19 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 		Queries:   make([]*OperationDefinition, 0),
 		Mutations: make([]*OperationDefinition, 0),
 	}
+
 	for _, def := range q.Statement.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
 			if node.Operation == "query" {
-				// parse query or mutation operation definition
+				// parse query operation definition.
 				qdef, err := parseQueryOperationDefinition(node)
 				if err != nil {
 					return nil, err
 				}
 				q.Queries = append(q.Queries, qdef)
 			} else if node.Operation == "mutation" {
+				// parse mutation operation definition.
 				mdef, err := parseMutationOperationDefinition(node)
 				if err != nil {
 					return nil, err
@@ -219,25 +221,45 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 	return q, nil
 }
 
-// parseOperationDefinition parses the individual GraphQL
+// parseExplainDirective returns true if we parsed / detected the explain directive label
+// in this ast, and false otherwise.
+func parseExplainDirective(directives []*ast.Directive) bool {
+
+	// Iterate through all directives and ensure that the directive is at there.
+	// - Note: the location we don't need to worry about as the schema takes care of it, as when
+	//         request is made there will be a syntax error for directive usage at the wrong location,
+	//         unless we add another directive named `@explain` at another location (which we should not).
+	for _, directive := range directives {
+		// The arguments pased to the directive are at `directive.Arguments`.
+		if directive.Name.Value == parserTypes.ExplainLabel {
+			return true
+		}
+	}
+
+	return false
+}
+
+// parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
+
 	if def.Name != nil {
 		qdef.Name = def.Name.Value
 	}
+
+	qdef.IsExplain = parseExplainDirective(def.Directives)
+
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		var parsed Selection
 		var err error
 		switch node := selection.(type) {
 		case *ast.Field:
-			// which query type is this
-			// database API query
-			// object query
-			// etc
+			// which query type is this database API query object query etc.
 			_, exists := dbAPIQueryNames[node.Name.Value]
 			if exists {
 				// the query matches a reserved DB API query name

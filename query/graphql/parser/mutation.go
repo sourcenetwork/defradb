@@ -15,9 +15,9 @@ import (
 	"errors"
 	"strings"
 
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-
 	"github.com/graphql-go/graphql/language/ast"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type MutationType int
@@ -134,16 +134,21 @@ func (m Mutation) ToSelect() *Select {
 	}
 }
 
-// parseOperationDefinition parses the individual GraphQL
-// 'query' operations, which there may be multiple of.
+// parseMutationOperationDefinition parses the individual GraphQL
+// 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
+
 	if def.Name != nil {
 		qdef.Name = def.Name.Value
 	}
+
+	qdef.IsExplain = parseExplainDirective(def.Directives)
+
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:

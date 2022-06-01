@@ -43,6 +43,7 @@ func (n *averageNode) Init() error {
 	return n.plan.Init()
 }
 
+func (n *averageNode) Kind() string           { return "averageNode" }
 func (n *averageNode) Start() error           { return n.plan.Start() }
 func (n *averageNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *averageNode) Close() error           { return n.plan.Close() }
@@ -90,3 +91,9 @@ func (n *averageNode) Next() (bool, error) {
 }
 
 func (n *averageNode) SetPlan(p planNode) { n.plan = p }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *averageNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}

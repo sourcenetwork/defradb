@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package test_explain
 
 import (
 	"testing"
@@ -18,15 +18,26 @@ import (
 
 type dataMap = map[string]interface{}
 
-var userCollectionGQLSchema = (`
-	type users {
-		Name: String
-		Age: Int
-		HeightM: Float
-		Verified: Boolean
+var bookAuthorGQLSchema = (`
+	type article {
+		name: String
+		author: author
+	}
+
+	type book {
+		name: String
+		author: author
+	}
+
+	type author {
+		name: String
+		age: Int
+		verified: Boolean
+		books: [book]
+		articles: [article]
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+	testUtils.ExecuteQueryTestCase(t, bookAuthorGQLSchema, []string{"article", "book", "author"}, test)
 }

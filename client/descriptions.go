@@ -40,8 +40,8 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
-func (c CollectionDescription) GetPrimaryIndex() IndexDescription {
-	return c.Indexes[0]
+func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
+	return col.Indexes[0]
 }
 
 // IndexDescription describes an Index on a Collection

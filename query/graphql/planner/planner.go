@@ -28,54 +28,36 @@ var (
 	log = logging.MustNewLogger("defra.query.planner")
 )
 
-// planNode is an interface all nodes in the plan tree need to implement
+// planNode is an interface all nodes in the plan tree need to implement.
 type planNode interface {
-	// Initializes or Re-Initializes an existing planNode
-	// Often called internally by Start()
+	// Initializes or Re-Initializes an existing planNode, often called internally by Start().
 	Init() error
 
-	// Starts any internal logic or processes
-	// required by the plan node.
+	// Starts any internal logic or processes required by the planNode. Should be called *after* Init().
 	Start() error
 
-	// Spans sets the planNodes target
-	// spans. This is primarily only used
-	// for a scanNode, but based on the tree
-	// structure, may need to be propagated
-	// Eg. From a selectNode -> scanNode.
+	// Spans sets the planNodes target spans. This is primarily only used for a scanNode,
+	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// Next processes the next result doc from
-	// the query. Can only be called *after*
-	// Start(). Can't be called again if any
-	// previous call returns false.
+	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Can't be called again if any previous call returns false.
 	Next() (bool, error)
 
-	// Values returns the value of the current doc
+	// Values returns the value of the current doc, should only be called *after* Next().
 	Value() map[string]interface{}
 
-	// Source returns the child planNode that
-	// generates the source values for this plan.
-	// If a plan has no source, return nil
+	// Source returns the child planNode that generates the source values for this plan.
+	// If a plan has no source, nil is returned.
 	Source() planNode
 
-	// Close terminates the planNode execution releases its resources.
+	// Kind tells the name of concrete planNode type.
+	Kind() string
+
+	// Close terminates the planNode execution and releases its resources. After this
+	// method is called you can only safely call Kind() and Source() methods.
 	Close() error
 }
-
-// basic plan Node that implements the planNode interface
-// can be added to any struct to turn it into a planNode
-type baseNode struct { //nolint:unused
-	plan planNode
-}
-
-func (n *baseNode) Init() error                   { return n.plan.Init() }  //nolint:unused
-func (n *baseNode) Start() error                  { return n.plan.Start() } //nolint:unused
-func (n *baseNode) Next() (bool, error)           { return n.plan.Next() }  //nolint:unused
-func (n *baseNode) Spans(spans core.Spans)        { n.plan.Spans(spans) }   //nolint:unused
-func (n *baseNode) Value() map[string]interface{} { return n.plan.Value() } //nolint:unused
-func (n *baseNode) Close() error                  { return n.plan.Close() } //nolint:unused
-func (n *baseNode) Source() planNode              { return n.plan }         //nolint:unused
 
 type documentIterator struct {
 	currentValue map[string]interface{}
@@ -93,13 +75,6 @@ type PlanContext struct {
 	context.Context
 }
 
-type Statement struct {
-	// Commenting out because unused code (structcheck) according to linter.
-	// requestString   string
-	// requestDocument *ast.Document parser.Statement -> parser.Query - >
-	// requestQuery    parser.Query
-}
-
 // Planner combines session state and database state to
 // produce a query plan, which is run by the execution context.
 type Planner struct {
@@ -108,9 +83,6 @@ type Planner struct {
 
 	ctx     context.Context
 	evalCtx parser.EvalContext
-
-	// isFinalized bool
-
 }
 
 func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
@@ -123,6 +95,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 
 func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 	switch n := stmt.(type) {
+
 	case *parser.Query:
 		if len(n.Queries) > 0 {
 			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
@@ -131,35 +104,48 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		} else {
 			return nil, fmt.Errorf("Query is missing query or mutation statements")
 		}
+
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
 			return nil, fmt.Errorf("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
+
 	case *parser.Select:
 		return p.Select(n)
+
 	case *parser.CommitSelect:
 		return p.CommitSelect(n)
+
 	case *parser.Mutation:
 		return p.newObjectMutationPlan(n)
+
 	}
-	return nil, fmt.Errorf("unknown statement type %T", stmt)
+	return nil, fmt.Errorf("Unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
+
 	switch stmt.Type {
+
 	case parser.CreateObjects:
 		return p.CreateDoc(stmt)
+
 	case parser.UpdateObjects:
 		return p.UpdateDocs(stmt)
+
 	case parser.DeleteObjects:
 		return p.DeleteDocs(stmt)
+
 	default:
-		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
+		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
 	}
 
 }
 
+// makePlan creates a new plan from the parsed data, optimizes the plan and returns
+// an initiated plan. The caller of makePlan is also responsible of calling Close()
+// on the plan to free it's resources.
 func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
@@ -175,23 +161,29 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	return plan, err
 }
 
-// plan optimization. Includes plan expansion and wiring
+// optimizePlan optimizes the plan using plan expansion and wiring.
 func (p *Planner) optimizePlan(plan planNode) error {
 	err := p.expandPlan(plan, nil)
 	return err
 }
 
-// full plan graph expansion and optimization
+// expandPlan does a full plan graph expansion and other optimizations.
 func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
+
 	switch n := plan.(type) {
+
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
+
 	case *commitSelectTopNode:
 		return p.expandPlan(n.plan, parentPlan)
+
 	case *selectNode:
 		return p.expandPlan(n.source, parentPlan)
+
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n, parentPlan)
+
 	case *groupNode:
 		for _, dataSource := range n.dataSources {
 			// We only care about expanding the child source here, it is assumed that the parent source
@@ -204,8 +196,10 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 		return nil
 	case MultiNode:
 		return p.expandMultiNode(n, parentPlan)
+
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
+
 	default:
 		return nil
 	}
@@ -428,63 +422,114 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 	return src
 }
 
-func (p *Planner) queryDocs(
+// explainRequest walks through the plan graph, and outputs the concrete planNodes that should
+//  be executed, maintaing their order in the plan graph (does not actually execute them).
+func (p *Planner) explainRequest(
 	ctx context.Context,
-	query *parser.Query,
+	plan planNode,
 ) ([]map[string]interface{}, error) {
-	plan, err := p.makePlan(query)
+
+	if plan == nil {
+		return nil, fmt.Errorf("Can't explain request of a nil plan.")
+	}
+
+	explainGraph, err := buildExplainGraph(plan)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = plan.Start(); err != nil {
-		if err2 := (plan.Close()); err2 != nil {
-			log.ErrorE(ctx, "Error closing plan node", err2)
-		}
-		return nil, err
+	topExplainGraph := []map[string]interface{}{
+		{
+			parserTypes.ExplainLabel: explainGraph,
+		},
 	}
 
-	var next bool
-	if next, err = plan.Next(); err != nil {
-		if err2 := (plan.Close()); err2 != nil {
-			log.ErrorE(ctx, "Error closing plan node", err2)
-		}
-		return nil, err
+	return topExplainGraph, plan.Close()
+}
+
+// executeRequest executes the plan graph that represents the request that was made.
+func (p *Planner) executeRequest(
+	ctx context.Context,
+	plan planNode,
+) ([]map[string]interface{}, error) {
+
+	if plan == nil {
+		return nil, fmt.Errorf("Can't execute request of a nil plan.")
 	}
 
-	if !next {
-		if err2 := (plan.Close()); err2 != nil {
-			log.ErrorE(ctx, "Error closing plan node", err2)
-		}
-		return []map[string]interface{}{}, nil
+	if err := plan.Start(); err != nil {
+		return nil, multiErr(err, plan.Close())
 	}
 
-	var docs []map[string]interface{}
-	for {
+	next, err := plan.Next()
+	if err != nil {
+		return nil, multiErr(err, plan.Close())
+	}
+
+	docs := []map[string]interface{}{}
+
+	for next {
 		if values := plan.Value(); values != nil {
-			copy := copyMap(values)
-			docs = append(docs, copy)
+			docs = append(docs, copyMap(values))
 		}
 
 		next, err = plan.Next()
 		if err != nil {
-			if err2 := (plan.Close()); err2 != nil {
-				log.ErrorE(ctx, "Error closing plan node", err2)
-			}
-			return nil, err
-		}
-
-		if !next {
-			break
+			return nil, multiErr(err, plan.Close())
 		}
 	}
 
-	err = plan.Close()
+	if err = plan.Close(); err != nil {
+		return nil, err
+	}
+
 	return docs, err
+
 }
 
+// runRequest plans how to run the request, then attempts to run the request and returns the results.
+func (p *Planner) runRequest(
+	ctx context.Context,
+	query *parser.Query,
+) ([]map[string]interface{}, error) {
+
+	plan, err := p.makePlan(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	isAnExplainRequest :=
+		(len(query.Queries) > 0 && query.Queries[0].IsExplain) ||
+			(len(query.Mutations) > 0 && query.Mutations[0].IsExplain)
+
+	if isAnExplainRequest {
+		return p.explainRequest(ctx, plan)
+	}
+
+	// This won't execute if it's an explain request.
+	return p.executeRequest(ctx, plan)
+}
+
+// MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
+}
+
+// multiErr wraps all the non-nil errors and returns the wrapped error result.
+func multiErr(errorsToWrap ...error) error {
+	var errs error
+	for _, err := range errorsToWrap {
+		if err == nil {
+			continue
+		}
+		if errs == nil {
+			errs = fmt.Errorf("%w", err)
+			continue
+		}
+		errs = fmt.Errorf("%s: %w", errs, err)
+	}
+	return errs
 }
 
 func copyMap(m map[string]interface{}) map[string]interface{} {

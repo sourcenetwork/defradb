@@ -17,38 +17,58 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-func TestMutationCreateSimple(t *testing.T) {
+type dataMap = map[string]interface{}
+
+func TestExplainMutationCreateSimple(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple create mutation",
-		Query: `mutation {
+		Description: "Explain simple create mutation.",
+
+		Query: `mutation @explain {
 					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
 					}
 				}`,
-		Results: []map[string]interface{}{
+
+		Results: []dataMap{
 			{
-				"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
-				"age":  int64(27),
-				"name": "John",
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"createNode": dataMap{
+								"data": dataMap{
+									"age":      float64(27),
+									"name":     "John",
+									"points":   float64(42.1),
+									"verified": true,
+								},
+							},
+							"filter": nil,
+						},
+					},
+				},
 			},
 		},
+
+		ExpectedError: "",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
+func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple create mutation where document already exists.",
-		Query: `mutation {
+		Description: "Explain simple create mutation, where document already exists.",
+
+		Query: `mutation @explain {
 					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 						name
 						age
 					}
 				}`,
+
 		Docs: map[int][]string{
 			0: {
 				(`{
@@ -56,7 +76,26 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				"age": 27
 			}`)},
 		},
-		ExpectedError: "A document with the given key already exists",
+
+		Results: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"selectNode": dataMap{
+							"createNode": dataMap{
+								"data": dataMap{
+									"age":  float64(27),
+									"name": "John",
+								},
+							},
+							"filter": nil,
+						},
+					},
+				},
+			},
+		},
+
+		ExpectedError: "",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)

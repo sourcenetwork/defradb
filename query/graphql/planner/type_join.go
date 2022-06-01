@@ -99,6 +99,10 @@ func (p *Planner) makeTypeIndexJoin(
 	return typeJoin, nil
 }
 
+func (n *typeIndexJoin) Kind() string {
+	return "typeIndexJoin"
+}
+
 func (n *typeIndexJoin) Init() error {
 	return n.joinPlan.Init()
 }
@@ -122,6 +126,19 @@ func (n *typeIndexJoin) Close() error {
 }
 
 func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// @TODO {defradb/issues/475} Add explain attributes:
+	// Add the type attribute.
+	// Add the relation attribute.
+	// Add the direction attribute.
+
+	return explainerMap, nil
+}
 
 // Merge implements mergeNode
 func (n *typeIndexJoin) Merge() bool { return true }
@@ -222,6 +239,10 @@ func (p *Planner) makeTypeJoinOne(
 	}
 
 	return typeJoin, nil
+}
+
+func (n *typeJoinOne) Kind() string {
+	return "typeJoinOne"
 }
 
 func (n *typeJoinOne) Init() error {
@@ -394,6 +415,10 @@ func (p *Planner) makeTypeJoinMany(
 	}
 	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 	return typeJoin, nil
+}
+
+func (n *typeJoinMany) Kind() string {
+	return "typeJoinMany"
 }
 
 func (n *typeJoinMany) Init() error {

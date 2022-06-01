@@ -37,6 +37,10 @@ func newPipeNode() pipeNode {
 	}
 }
 
+func (n *pipeNode) Kind() string {
+	return "pipeNode"
+}
+
 func (n *pipeNode) Init() error {
 	// We need to make sure state is cleared down on Init,
 	// this function may be called multiple times per instance (for example during a join)

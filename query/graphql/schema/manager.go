@@ -11,9 +11,19 @@
 package schema
 
 import (
-	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
-
 	gql "github.com/graphql-go/graphql"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
+)
+
+var (
+	QueryLatestCommits = &gql.Field{
+		Name: "latestCommits",
+		Type: gql.NewList(schemaTypes.CommitObject),
+		Args: gql.FieldConfigArgument{
+			"dockey": schemaTypes.NewArgConfig(gql.NewNonNull(gql.ID)),
+			"field":  schemaTypes.NewArgConfig(gql.String),
+		},
+	}
 )
 
 // SchemaManager creates an instanced management point
@@ -29,9 +39,10 @@ type SchemaManager struct {
 func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{}
 	schema, err := gql.NewSchema(gql.SchemaConfig{
-		Types:    defaultTypes(),
-		Query:    defaultQueryType(),
-		Mutation: defaultMutationType(),
+		Types:      defaultTypes(),
+		Query:      defaultQueryType(),
+		Mutation:   defaultMutationType(),
+		Directives: defaultDirectivesType(),
 	})
 	if err != nil {
 		return sm, err
@@ -92,9 +103,9 @@ func defaultQueryType() *gql.Object {
 			},
 
 			// database API queries
-			queryAllCommits.Name:    queryAllCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-			queryCommit.Name:        queryCommit,
+			schemaTypes.QueryAllCommits.Name:    schemaTypes.QueryAllCommits,
+			schemaTypes.QueryLatestCommits.Name: schemaTypes.QueryLatestCommits,
+			schemaTypes.QueryCommit.Name:        schemaTypes.QueryCommit,
 		},
 	})
 }
@@ -111,6 +122,13 @@ func defaultMutationType() *gql.Object {
 	})
 }
 
+// default directives type.
+func defaultDirectivesType() []*gql.Directive {
+	return []*gql.Directive{
+		schemaTypes.ExplainDirective,
+	}
+}
+
 // default type map includes all the native scalar types
 func defaultTypes() []gql.Type {
 	return []gql.Type{
@@ -125,19 +143,18 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		OrderingEnum,
+		orderingEnum,
 
-		// filter scalar blocks
-		BooleanOperatorBlock,
-		DateTimeOperatorBlock,
-		FloatOperatorBlock,
-		IDOperatorBlock,
-		IntOperatorBlock,
-		StringOperatorBlock,
+		// Filter scalar blocks
+		booleanOperatorBlock,
+		dateTimeOperatorBlock,
+		floatOperatorBlock,
+		idOperatorBlock,
+		intOperatorBlock,
+		stringOperatorBlock,
 
-		types.CommitLink,
-		// types.CommitLinks,
-		types.Commit,
-		types.Delta,
+		schemaTypes.CommitLinkObject,
+		schemaTypes.CommitObject,
+		schemaTypes.DeltaObject,
 	}
 }
