@@ -174,7 +174,7 @@ var startCmd = &cobra.Command{
 			log.Info(
 				ctx,
 				fmt.Sprintf(
-					"Providing HTTP API at http://%s%s. Use the GraphQL query endpoint at http://%s%s/graphql ",
+					"Providing HTTP API at http://%s%s. Use the GraphQL request(query) endpoint at http://%s%s/graphql ",
 					config.Database.Address,
 					httpapi.RootPath,
 					config.Database.Address,

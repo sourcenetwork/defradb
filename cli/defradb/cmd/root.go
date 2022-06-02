@@ -41,14 +41,11 @@ var rootCmd = &cobra.Command{
 	Short: "DefraDB Edge Database",
 	Long: `DefraDB is the edge database to power the user-centric future.
 This CLI is the main reference implementation of DefraDB. Use it to start
-a new database process, query a local or remote instance, and much more.
+a new database process, request (query) a local or remote instance, and much more.
 For example:
 
 # Start a new database instance
 > defradb start `,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // expose root as public

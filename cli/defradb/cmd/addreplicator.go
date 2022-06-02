@@ -27,7 +27,6 @@ var (
 // queryStr string
 )
 
-// queryCmd represents the query command
 var addReplicatorCmd = &cobra.Command{
 	Use:   "addreplicator",
 	Short: "Add a new replicator <collection> <peer>",
@@ -72,14 +71,4 @@ for the p2p data sync system.
 
 func init() {
 	rpcCmd.AddCommand(addReplicatorCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// queryCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// queryCmd.Flags().StringVar(&queryStr, "query", "", "Query to run on the database")
 }

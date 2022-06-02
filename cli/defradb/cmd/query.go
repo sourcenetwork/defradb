@@ -17,23 +17,19 @@ import (
 	"net/url"
 	"strings"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 )
 
-var (
-// Commented because it is deadcode, for linter.
-// queryStr string
-)
-
-// queryCmd represents the query command
-var queryCmd = &cobra.Command{
-	Use:   "query",
-	Short: "Send a GraphQL query",
+// requestCmd represents the query request command
+var requestCmd = &cobra.Command{
+	Use:   "request",
+	Short: "Send a GraphQL query request",
 	Long: `Use this command if you wish to send a formatted GraphQL
-query to the database. It's advised to use a proper GraphQL client
+query request to the database. It's advised to use a proper GraphQL client
 to interact with the database, the reccomended approach is with a
 local GraphiQL application (https://github.com/graphql/graphiql).
 
@@ -53,11 +49,11 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		}
 
 		if len(args) != 1 {
-			log.Fatal(ctx, "needs a single query argument")
+			log.Fatal(ctx, "needs a single request argument")
 		}
-		query := args[0]
-		if query == "" {
-			log.Error(ctx, "missing query")
+		request := args[0]
+		if request == "" {
+			log.Error(ctx, "missing request")
 			return
 		}
 
@@ -68,7 +64,7 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		}
 
 		p := url.Values{}
-		p.Add("query", query)
+		p.Add("request", request)
 		endpoint.RawQuery = p.Encode()
 
 		res, err := http.Get(endpoint.String())
@@ -95,15 +91,5 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 }
 
 func init() {
-	clientCmd.AddCommand(queryCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// queryCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// queryCmd.Flags().StringVar(&queryStr, "query", "", "Query to run on the database")
+	clientCmd.AddCommand(requestCmd)
 }
