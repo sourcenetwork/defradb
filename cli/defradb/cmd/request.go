@@ -24,7 +24,7 @@ import (
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 )
 
-// requestCmd represents the query request command
+// requestCmd represents the query request command.
 var requestCmd = &cobra.Command{
 	Use:   "request",
 	Short: "Send a GraphQL query request",
