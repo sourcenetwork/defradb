@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -26,7 +25,8 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 
 	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
+	dsRequest "github.com/ipfs/go-datastore/query"
+	request "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 )
@@ -58,8 +58,8 @@ type db struct {
 
 	broadcaster corenet.Broadcaster
 
-	schema        *schema.SchemaManager
-	queryExecutor *planner.RequestExecutor
+	schema          *schema.SchemaManager
+	requestExecutor *planner.RequestExecutor
 
 	// The options used to init the database
 	options interface{}
@@ -91,7 +91,7 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 		return nil, err
 	}
 
-	log.Debug(ctx, "loading: query executor")
+	log.Debug(ctx, "loading: request executor")
 	exec, err := planner.NewRequestExecutor(sm)
 	if err != nil {
 		return nil, err
@@ -103,9 +103,9 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 
 		crdtFactory: &crdtFactory,
 
-		schema:        sm,
-		queryExecutor: exec,
-		options:       options,
+		schema:          sm,
+		requestExecutor: exec,
+		options:         options,
 	}
 
 	// apply options
@@ -180,7 +180,7 @@ func (db *db) PrintDump(ctx context.Context) {
 }
 
 func (db *db) Executor() *planner.RequestExecutor {
-	return db.queryExecutor
+	return db.requestExecutor
 }
 
 func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
@@ -209,13 +209,13 @@ func (db *db) Close(ctx context.Context) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) {
-	q := query.Query{
+	req := request.Query{
 		Prefix:   "",
 		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
+		Orders:   []dsRequest.Order{dsRequest.OrderByKey{}},
 	}
 
-	results, err := store.Query(ctx, q)
+	results, err := store.Query(ctx, req)
 
 	if err != nil {
 		panic(err)
@@ -224,7 +224,7 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	defer func() {
 		err := results.Close()
 		if err != nil {
-			log.ErrorE(ctx, "Failure closing set of query store results", err)
+			log.ErrorE(ctx, "Failure closing set of request (query store) results", err)
 		}
 	}()
 

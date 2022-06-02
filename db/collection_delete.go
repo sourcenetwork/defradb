@@ -196,7 +196,7 @@ func (c *collection) deleteWithFilter(
 ) (*client.DeleteResult, error) {
 
 	// Do a selection query to scan through documents using the given filter.
-	query, err := c.makeSelectionQuery(ctx, txn, filter)
+	query, err := c.makeSelectionRequest(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}

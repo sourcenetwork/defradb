@@ -238,7 +238,7 @@ func (c *collection) updateWithFilter(
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter)
+	query, err := c.makeSelectionRequest(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -549,11 +549,11 @@ func (c *collection) applyMergePatchOp( //nolint:unused
 	return nil
 }
 
-// makeQuery constructs a simple query of the collection using the given filter.
-// currently it doesn't support any other query operation other than filters.
+// makeSelectionRequest constructs a simple request plan of the collection using the given filter.
+// currently it doesn't support any other operation other than filters.
 // (IE: No limit, order, etc)
-// Additionally it only queries for the root scalar fields of the object
-func (c *collection) makeSelectionQuery(
+// Additionally it only requests for the root scalar fields of the object
+func (c *collection) makeSelectionRequest(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
@@ -582,7 +582,7 @@ func (c *collection) makeSelectionQuery(
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectRequest(ctx, c.db, txn, slct)
+	return c.db.requestExecutor.MakeSelectRequest(ctx, c.db, txn, slct)
 }
 
 func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
@@ -714,11 +714,3 @@ func parseUpdaterSlice(v []interface{}) (patcher, error) {
 
 	return parseUpdater(patches)
 }
-
-/*
-
-filter := NewFilterFromString("Name: {_eq: 'bob'}")
-
-filter := db.NewQuery().And()
-
-*/

@@ -34,7 +34,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	}
 	defer txn.Discard(ctx)
 
-	results, err := db.queryExecutor.ExecuteRequest(ctx, db, txn, query)
+	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, query)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
@@ -60,7 +60,7 @@ func (db *db) ExecTransactionalQuery(
 		return db.ExecIntrospection(query)
 	}
 
-	results, err := db.queryExecutor.ExecuteRequest(ctx, db, txn, query)
+	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, query)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
