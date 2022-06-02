@@ -81,13 +81,13 @@ func (e *QueryExecutor) MakePlanFromParser(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	query *parser.Query,
+	query *parser.Request,
 ) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(query)
 }
 
-func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error) {
+func (e *QueryExecutor) ParseRequestString(request string) (*parser.Request, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",
@@ -104,5 +104,5 @@ func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error
 		return nil, fmt.Errorf("%v", validationResult.Errors)
 	}
 
-	return parser.ParseQuery(ast)
+	return parser.ParseRequest(ast)
 }

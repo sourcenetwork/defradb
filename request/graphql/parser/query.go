@@ -27,39 +27,8 @@ var dbAPIQueryNames = map[string]bool{
 	"commit":        true,
 }
 
-type Query struct {
-	Queries   []*OperationDefinition
-	Mutations []*OperationDefinition
-	Statement *ast.Document
-}
-
-func (q Query) GetStatement() ast.Node {
-	return q.Statement
-}
-
-type OperationDefinition struct {
-	Name       string
-	Selections []Selection
-	Statement  *ast.OperationDefinition
-	IsExplain  bool
-}
-
-func (q OperationDefinition) GetStatement() ast.Node {
-	return q.Statement
-}
-
-type Selection interface {
-	Statement
-	GetName() string
-	GetAlias() string
-	GetSelections() []Selection
-	GetRoot() parserTypes.SelectionType
-}
-
-// Select is a complex Field with strong typing
-// It used for sub types in a query. Includes
-// fields, and query arguments like filters,
-// limits, etc.
+// Select is a complex Field with strong typing, it's used for sub-types in a query.
+// Includes fields, and query arguments like filters, limits, etc.
 type Select struct {
 	// The unique, internal name of the Select - this may differ from that which
 	// is visible in the query string
@@ -181,64 +150,6 @@ func (f Field) GetStatement() ast.Node {
 	return f.Statement
 }
 
-// ParseQuery parses a root ast.Document, and returns a
-// formatted Query object.
-// Requires a non-nil doc, will error if given a nil
-// doc
-func ParseQuery(doc *ast.Document) (*Query, error) {
-	if doc == nil {
-		return nil, errors.New("ParseQuery requires a non nil ast.Document")
-	}
-	q := &Query{
-		Statement: doc,
-		Queries:   make([]*OperationDefinition, 0),
-		Mutations: make([]*OperationDefinition, 0),
-	}
-
-	for _, def := range q.Statement.Definitions {
-		switch node := def.(type) {
-		case *ast.OperationDefinition:
-			if node.Operation == "query" {
-				// parse query operation definition.
-				qdef, err := parseQueryOperationDefinition(node)
-				if err != nil {
-					return nil, err
-				}
-				q.Queries = append(q.Queries, qdef)
-			} else if node.Operation == "mutation" {
-				// parse mutation operation definition.
-				mdef, err := parseMutationOperationDefinition(node)
-				if err != nil {
-					return nil, err
-				}
-				q.Mutations = append(q.Mutations, mdef)
-			} else {
-				return nil, errors.New("Unkown graphql operation type")
-			}
-		}
-	}
-
-	return q, nil
-}
-
-// parseExplainDirective returns true if we parsed / detected the explain directive label
-// in this ast, and false otherwise.
-func parseExplainDirective(directives []*ast.Directive) bool {
-
-	// Iterate through all directives and ensure that the directive is at there.
-	// - Note: the location we don't need to worry about as the schema takes care of it, as when
-	//         request is made there will be a syntax error for directive usage at the wrong location,
-	//         unless we add another directive named `@explain` at another location (which we should not).
-	for _, directive := range directives {
-		// The arguments pased to the directive are at `directive.Arguments`.
-		if directive.Name.Value == parserTypes.ExplainLabel {
-			return true
-		}
-	}
-
-	return false
-}
-
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
@@ -279,13 +190,10 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	return qdef, nil
 }
 
-// @todo: Create separate select parse functions
-// for generated object queries, and general
-// API queries
+// @todo: Create separate select parse functions for generated object queries, and general API queries
 
-// parseSelect parses a typed selection field
-// which includes sub fields, and may include
-// filters, limits, orders, etc..
+// parseSelect parses a typed selection field which includes sub fields,
+// and may include filters, limits, orders, etc..
 func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
 	name, alias := getFieldName(field, index)
 

@@ -79,19 +79,14 @@ func NewObjectPayload(payload string) (ObjectPayload, error) {
 	return obj, nil
 }
 
-// Mutation is a field on the MutationType
-// of a graphql query. It includes all the possible
-// arguments and all
-//
-// @todo: Change name to ObjectMutation to indicate
-// generated object mutation actions
+// Mutation is a field on the `mutation` operation of a graphql request. It includes
+// all the possible arguments.
 type Mutation struct {
 	Name  string
 	Alias string
 	Type  MutationType
 
-	// Schema is the target schema/collection
-	// if this mutation is on an object.
+	// Schema is the target schema/collection if this mutation is on an object.
 	Schema string
 
 	IDs    []string
@@ -163,13 +158,10 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 	return qdef, nil
 }
 
-// @todo: Create separate mutation parse functions
-// for generated object mutations, and general
-// API mutations.
+// @todo: Create separate mutation parse functions for generated object mutations, and general API mutations.
 
-// parseMutation parses a typed mutation field
-// which includes sub fields, and may include
-// filters, IDs, payloads, etc.
+// parseMutation parses a typed mutation field which includes sub fields, and
+// may include filters, IDs, payloads, etc.
 func parseMutation(field *ast.Field) (*Mutation, error) {
 	mut := &Mutation{Statement: field}
 	mut.Name = field.Name.Value

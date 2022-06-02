@@ -36,7 +36,7 @@ func TestQueryParse_Limit_Limit(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	limit := q.Queries[0].Selections[0].(*Select).Limit
@@ -58,7 +58,7 @@ func TestQueryParse_FindByDockey(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	dockey := q.Queries[0].Selections[0].(*Select).DocKeys[0]
@@ -79,7 +79,7 @@ func TestQueryParse_Offset(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	limit := q.Queries[0].Selections[0].(*Select).Limit
@@ -101,7 +101,7 @@ func TestQueryParse_Limit_Offset(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	limit := q.Queries[0].Selections[0].(*Select).Limit
@@ -125,7 +125,7 @@ func TestQueryParse_Commit_Latest(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	commit := q.Queries[0].Selections[0].(*CommitSelect)

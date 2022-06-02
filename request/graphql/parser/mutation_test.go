@@ -34,7 +34,7 @@ func TestMutationParse_Create_Simple(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	createMutation, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -65,7 +65,7 @@ func TestMutationParse_Create_Error_Missing_Data(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	_, err = ParseQuery(doc)
+	_, err = ParseRequest(doc)
 	assert.Error(t, err)
 
 	// createMutation, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -96,7 +96,7 @@ func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	_, err = ParseQuery(doc)
+	_, err = ParseRequest(doc)
 	assert.Error(t, err)
 
 	// createMutation, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -127,7 +127,7 @@ func TestMutationParse_Update_Simple_Object(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -158,7 +158,7 @@ func TestMutationParse_Update_Simple_Array(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	_, err = ParseQuery(doc)
+	_, err = ParseRequest(doc)
 	assert.NoError(t, err)
 
 	// mut, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -192,7 +192,7 @@ func TestMutationParse_Update_Filter(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -229,7 +229,7 @@ func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
@@ -260,7 +260,7 @@ func TestMutationParse_Delete_Simple(t *testing.T) {
 	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
 	assert.NoError(t, err)
 
-	q, err := ParseQuery(doc)
+	q, err := ParseRequest(doc)
 	assert.NoError(t, err)
 
 	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
