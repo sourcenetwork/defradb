@@ -21,9 +21,17 @@ import (
 var env = os.Getenv("DEFRA_ENV")
 
 type errorResponse struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-	Stack   string `json:"stack,omitempty"`
+	Errors []errorItem `json:"errors"`
+}
+
+type errorItem struct {
+	Message    string      `json:"message"`
+	Extensions *extensions `json:"extensions,omitempty"`
+}
+
+type extensions struct {
+	Status int    `json:"status"`
+	Stack  string `json:"stack,omitempty"`
 }
 
 func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
@@ -35,9 +43,15 @@ func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status in
 		ctx,
 		rw,
 		errorResponse{
-			Status:  status,
-			Message: http.StatusText(status),
-			Stack:   formatError(err),
+			Errors: []errorItem{
+				{
+					Message: http.StatusText(status),
+					Extensions: &extensions{
+						Status: status,
+						Stack:  formatError(err),
+					},
+				},
+			},
 		},
 		status,
 	)

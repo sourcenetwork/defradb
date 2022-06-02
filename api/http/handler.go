@@ -32,6 +32,10 @@ type handler struct {
 
 type ctxDB struct{}
 
+type dataResponse struct {
+	Data interface{} `json:"data"`
+}
+
 // newHandler returns a handler with the router instantiated.
 func newHandler(db client.DB, opts serverOptions) *handler {
 	return setRoutes(&handler{
@@ -57,6 +61,13 @@ func getJSON(req *http.Request, v interface{}) error {
 
 func sendJSON(ctx context.Context, rw http.ResponseWriter, v interface{}, code int) {
 	rw.Header().Set("Content-Type", "application/json")
+
+	switch val := v.(type) {
+	case map[string]interface{}:
+		v = dataResponse{
+			Data: val,
+		}
+	}
 
 	b, err := json.Marshal(v)
 	if err != nil {
