@@ -238,18 +238,18 @@ func (c *collection) updateWithFilter(
 	}
 
 	// scan through docs with filter
-	query, err := c.makeSelectionRequest(ctx, txn, filter)
+	request, err := c.makeSelectionRequest(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err = query.Start(); err != nil {
+	if err = request.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point log the error.
+	// If the request object isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := query.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close query after filter update", err)
+		if err := request.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close request after filter update", err)
 		}
 	}()
 
@@ -257,19 +257,19 @@ func (c *collection) updateWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	// loop while we still have results from the filter query
+	// loop while we still have results from the filter request
 	for {
-		next, nextErr := query.Next()
+		next, nextErr := request.Next()
 		if nextErr != nil {
 			return nil, err
 		}
-		// if theres no more records from the query, jump out of the loop
+		// if theres no more records from the request, jump out of the loop
 		if !next {
 			break
 		}
 
 		// Get the document, and apply the patch
-		doc := query.Value()
+		doc := request.Value()
 		if isPatch {
 			err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
 		} else if isMerge { // else is fine here
@@ -607,7 +607,7 @@ func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, err
 // If it's within the schema, then patchIsSubType is false
 // subTypeName is empty.
 // If the target type is an array, isArray is true.
-// May need to query the database for other schema types
+// May need to request the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
 func (c *collection) getCollectionForPatchOpPath(

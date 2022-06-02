@@ -13,9 +13,11 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -23,11 +25,8 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 
-	"errors"
-
-	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
+	dsRequest "github.com/ipfs/go-datastore/query"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -244,21 +243,20 @@ func (db *db) GetCollectionBySchemaID(
 	return db.GetCollectionByName(ctx, name)
 }
 
-// GetAllCollections gets all the currently defined collections in the
-// database
+// GetAllCollections gets all the currently defined collections in the database.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := core.NewCollectionKey("")
-	q, err := db.systemstore().Query(ctx, query.Query{
+	q, err := db.systemstore().Query(ctx, dsRequest.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
+		return nil, fmt.Errorf("Failed to create collection prefix query request: %w", err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close collection query", err)
+			log.ErrorE(ctx, "Failed to close collection query request.", err)
 		}
 	}()
 
@@ -298,7 +296,7 @@ func (c *collection) getAllDocKeysChan(
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionId: fmt.Sprint(c.colID),
 	}
-	q, err := txn.Datastore().Query(ctx, query.Query{
+	queryRequest, err := txn.Datastore().Query(ctx, dsRequest.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
@@ -309,13 +307,13 @@ func (c *collection) getAllDocKeysChan(
 	resCh := make(chan client.DocKeysResult)
 	go func() {
 		defer func() {
-			if err := q.Close(); err != nil {
-				log.ErrorE(ctx, "Failed to close AllDocKeys query", err)
+			if err := queryRequest.Close(); err != nil {
+				log.ErrorE(ctx, "Failed to close AllDocKeys query request.", err)
 			}
 			close(resCh)
 			c.discardImplicitTxn(ctx, txn)
 		}()
-		for res := range q.Next() {
+		for res := range queryRequest.Next() {
 			// check for Done on context first
 			select {
 			case <-ctx.Done():
@@ -515,7 +513,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given key exists
-// Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
+// Note: Should we CompareAndSet the update, IE: check the state, and update if changed
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
@@ -669,11 +667,11 @@ func (c *collection) delete(
 		return false, err
 	}
 
-	q := query.Query{
+	request := dsRequest.Query{
 		Prefix:   key.ToDataStoreKey().ToString(),
 		KeysOnly: true,
 	}
-	res, err := txn.Datastore().Query(ctx, q)
+	res, err := txn.Datastore().Query(ctx, request)
 
 	for e := range res.Next() {
 		if e.Error != nil {

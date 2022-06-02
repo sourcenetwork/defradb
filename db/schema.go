@@ -13,16 +13,16 @@ package db
 import (
 	"context"
 
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/graphql-go/graphql/language/ast"
 	"github.com/sourcenetwork/defradb/core"
 
-	"github.com/graphql-go/graphql/language/ast"
+	dsRequest "github.com/ipfs/go-datastore/query"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
-// and creates the necessary collections, query types, etc.
+// and creates the necessary collections, query request  types, etc.
 func (db *db) AddSchema(ctx context.Context, schema string) error {
-	// @todo: create collection after generating query types
+	// @todo: create collection after generating query request types
 	types, astdoc, err := db.schema.Generator.FromSDL(ctx, schema)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (db *db) AddSchema(ctx context.Context, schema string) error {
 
 func (db *db) loadSchema(ctx context.Context) error {
 	var sdl string
-	q := dsq.Query{
+	q := dsRequest.Query{
 		Prefix: "/schema",
 	}
 	res, err := db.systemstore().Query(ctx, q)

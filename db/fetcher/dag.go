@@ -20,7 +20,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/ipfs/go-cid"
-	dsq "github.com/ipfs/go-datastore/query"
+
+	dsRequest "github.com/ipfs/go-datastore/query"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
@@ -42,7 +43,7 @@ type HeadFetcher struct {
 	cid   *cid.Cid
 
 	kv     *core.HeadKeyValue
-	kvIter dsq.Results
+	kvIter dsRequest.Results
 	kvEnd  bool
 }
 
@@ -62,9 +63,9 @@ func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.
 	}
 	hf.spans = spans
 
-	q := dsq.Query{
+	q := dsRequest.Query{
 		Prefix: hf.spans[0].Start().ToString(),
-		Orders: []dsq.Order{dsq.OrderByKey{}},
+		Orders: []dsRequest.Order{dsRequest.OrderByKey{}},
 	}
 
 	var err error
@@ -152,7 +153,7 @@ func (hf *HeadFetcher) Close() error {
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List() ([]cid.Cid, uint64, error) {
-	q := query.Query{
+	q := dsRequest.Query{
 		Prefix:   hh.namespace.String(),
 		KeysOnly: false,
 	}
@@ -167,7 +168,7 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, fmt.Errorf("Failed to get next query result : %w", err)
+			return nil, 0, fmt.Errorf("Failed to get next request (query) result : %w", err)
 		}
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)

@@ -24,7 +24,7 @@ import (
 	block "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	query "github.com/ipfs/go-datastore/query"
+	dsRequest "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	parserTypes "github.com/sourcenetwork/defradb/request/graphql/parser/types"
@@ -195,19 +195,19 @@ func (c *collection) deleteWithFilter(
 	filter interface{},
 ) (*client.DeleteResult, error) {
 
-	// Do a selection query to scan through documents using the given filter.
-	query, err := c.makeSelectionRequest(ctx, txn, filter)
+	// Do a selection request to scan through documents using the given filter.
+	request, err := c.makeSelectionRequest(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err := query.Start(); err != nil {
+	if err := request.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point log the error.
+	// If the request object isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := query.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close query after filter delete", err)
+		if err := request.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close request after filter delete", err)
 		}
 	}()
 
@@ -215,9 +215,9 @@ func (c *collection) deleteWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	// Keep looping until results from the filter query have been iterated through.
+	// Keep looping until results from the filter request have been iterated through.
 	for {
-		next, err := query.Next()
+		next, err := request.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +228,7 @@ func (c *collection) deleteWithFilter(
 		}
 
 		// Extract the dockey in the string format from the document value.
-		docKey := query.Value()[parserTypes.DocKeyFieldName].(string)
+		docKey := request.Value()[parserTypes.DocKeyFieldName].(string)
 
 		// Convert from string to client.DocKey.
 		key := core.PrimaryDataStoreKey{
@@ -319,7 +319,7 @@ func (c *collection) applyFullDelete(
 	// ======================== Successfully deleted the datastore state of this document
 
 	// 3. =========================== Delete headstore state ===========================
-	headQuery := query.Query{
+	headQuery := dsRequest.Query{
 		Prefix:   dockey.ToString(),
 		KeysOnly: true,
 	}

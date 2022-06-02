@@ -15,13 +15,13 @@ import (
 	"context"
 	"errors"
 
-	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
-
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+
+	dsRequest "github.com/ipfs/go-datastore/query"
 )
 
 // Fetcher is the interface for collecting documents
@@ -47,7 +47,7 @@ type DocumentFetcher struct {
 
 	txn          datastore.Txn
 	spans        core.Spans
-	order        []dsq.Order
+	order        []dsRequest.Order
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
 	curSpanIndex int
 
@@ -60,7 +60,7 @@ type DocumentFetcher struct {
 
 	kv                *core.KeyValue
 	kvIter            iterable.Iterator
-	kvResultsIter     dsq.Results
+	kvResultsIter     dsRequest.Results
 	kvEnd             bool
 	isReadingDocument bool
 }
@@ -139,9 +139,9 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	df.txn = txn
 
 	if df.reverse {
-		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
+		df.order = []dsRequest.Order{dsRequest.OrderByKeyDescending{}}
 	} else {
-		df.order = []dsq.Order{dsq.OrderByKey{}}
+		df.order = []dsRequest.Order{dsRequest.OrderByKey{}}
 	}
 
 	_, err := df.startNextSpan(ctx)
@@ -156,9 +156,11 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 
 	var err error
 	if df.kvIter == nil {
-		df.kvIter, err = df.txn.Datastore().GetIterator(dsq.Query{
-			Orders: df.order,
-		})
+		df.kvIter, err = df.txn.Datastore().GetIterator(
+			dsRequest.Query{
+				Orders: df.order,
+			},
+		)
 	}
 	if err != nil {
 		return false, err
