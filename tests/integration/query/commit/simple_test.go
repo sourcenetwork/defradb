@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "query for a single block by CID",
-		Query: `query {
+		Request: `query {
 					commit(cid: "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu") {
 						cid
 						height

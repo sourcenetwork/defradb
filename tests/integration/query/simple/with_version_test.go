@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age

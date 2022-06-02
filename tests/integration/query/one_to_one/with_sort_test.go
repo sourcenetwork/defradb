@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToOneWithChildBooleanSortDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple sort by sub type",
-		Query: `query {
+		Request: `query {
 			book(order: {author: {verified: DESC}}) {
 				name
 				rating

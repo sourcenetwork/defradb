@@ -18,10 +18,10 @@ import (
 )
 
 func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with boolean array, replace with nil",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"LikedIndexes\": null}") {
 							Name
 							LikedIndexes
@@ -43,7 +43,7 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with empty",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"LikedIndexes\": []}") {
 							Name
 							LikedIndexes
@@ -65,7 +65,7 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with same size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"LikedIndexes\": [true, false, true, false]}") {
 							Name
 							LikedIndexes
@@ -87,7 +87,7 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with smaller size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"LikedIndexes\": [false, true]}") {
 							Name
 							LikedIndexes
@@ -109,7 +109,7 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean array, replace with larger size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"LikedIndexes\": [true, false, true, false, true, true]}") {
 							Name
 							LikedIndexes
@@ -137,10 +137,10 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with integer array, replace with nil",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": null}") {
 							Name
 							FavouriteIntegers
@@ -162,7 +162,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with empty",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": []}") {
 							Name
 							FavouriteIntegers
@@ -184,7 +184,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with same size, positive values",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": [8, 5, 3, 2, 1]}") {
 							Name
 							FavouriteIntegers
@@ -206,7 +206,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with same size, positive to mixed values",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": [-1, 2, -3, 5, -8]}") {
 							Name
 							FavouriteIntegers
@@ -228,7 +228,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with smaller size, positive values",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": [1, 2, 3]}") {
 							Name
 							FavouriteIntegers
@@ -250,7 +250,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with integer array, replace with larger size, positive values",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteIntegers\": [1, 2, 3, 5, 8, 13, 21]}") {
 							Name
 							FavouriteIntegers
@@ -278,10 +278,10 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with float array, replace with nil",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteFloats\": null}") {
 							Name
 							FavouriteFloats
@@ -303,7 +303,7 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with float array, replace with empty",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteFloats\": []}") {
 							Name
 							FavouriteFloats
@@ -325,7 +325,7 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with float array, replace with same size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteFloats\": [3.1425, -0.00000000001, 1000000]}") {
 							Name
 							FavouriteFloats
@@ -347,7 +347,7 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with float array, replace with smaller size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteFloats\": [3.14]}") {
 							Name
 							FavouriteFloats
@@ -369,7 +369,7 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with float array, replace with larger size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"FavouriteFloats\": [3.1425, 0.00000000001, -10, 6.626070]}") {
 							Name
 							FavouriteFloats
@@ -397,10 +397,10 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with string array, replace with nil",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"PreferredStrings\": null}") {
 							Name
 							PreferredStrings
@@ -422,7 +422,7 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with string array, replace with empty",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"PreferredStrings\": []}") {
 							Name
 							PreferredStrings
@@ -444,7 +444,7 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with string array, replace with same size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"PreferredStrings\": [null, \"the previous\", \"the first\", \"null string\"]}") {
 							Name
 							PreferredStrings
@@ -466,7 +466,7 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with string array, replace with smaller size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"PreferredStrings\": [\"\", \"the first\"]}") {
 							Name
 							PreferredStrings
@@ -488,7 +488,7 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with string array, replace with larger size",
-			Query: `mutation {
+			Request: `mutation {
 						update_users(data: "{\"PreferredStrings\": [\"\", \"the previous\", \"the first\", \"empty string\", \"blank string\", \"hitchi\"]}") {
 							Name
 							PreferredStrings

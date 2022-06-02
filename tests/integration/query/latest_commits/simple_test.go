@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryLatestCommits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {

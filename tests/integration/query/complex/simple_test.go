@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryComplex(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "multinode: One-to-one relation query with no filter",
-		Query: `query {
+		Request: `query {
 			book {
 				name
 				author {

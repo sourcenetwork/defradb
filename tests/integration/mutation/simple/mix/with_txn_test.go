@@ -18,12 +18,12 @@ import (
 )
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create followed by delete in same transaction",
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalQueries: []testUtils.TransactionRequest{
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 					}
@@ -36,7 +36,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			},
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					delete_user(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
 						_key
 					}
@@ -56,12 +56,12 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 }
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create followed by delete on 2nd transaction",
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalQueries: []testUtils.TransactionRequest{
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 					}
@@ -74,7 +74,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			},
 			{
 				TransactionId: 1,
-				Query: `mutation {
+				Request: `mutation {
 					delete_user(id: "bae-88b63198-7d38-5714-a9ff-21ba46374fd1") {
 						_key
 					}
@@ -83,7 +83,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			},
 			{
 				TransactionId: 0,
-				Query: `query {
+				Request: `query {
 					user {
 						_key
 						name
@@ -100,7 +100,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			},
 			{
 				TransactionId: 1,
-				Query: `query {
+				Request: `query {
 					user {
 						_key
 						name
@@ -118,7 +118,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 }
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update followed by read in same transaction",
 		Docs: map[int][]string{
 			0: {
@@ -127,10 +127,10 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				"age": 27
 			}`)},
 		},
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalQueries: []testUtils.TransactionRequest{
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					update_user(data: "{\"age\": 28}") {
 						_key
 					}
@@ -143,7 +143,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 			},
 			{
 				TransactionId: 0,
-				Query: `query {
+				Request: `query {
 					user {
 						_key
 						name
@@ -167,7 +167,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 }
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update followed by read in different transaction",
 		Docs: map[int][]string{
 			0: {
@@ -176,10 +176,10 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				"age": 27
 			}`)},
 		},
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalQueries: []testUtils.TransactionRequest{
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					update_user(data: "{\"age\": 28}") {
 						_key
 						name
@@ -196,7 +196,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 			},
 			{
 				TransactionId: 1,
-				Query: `query {
+				Request: `query {
 					user {
 						_key
 						name
@@ -220,7 +220,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 }
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update by two different transactions",
 		Docs: map[int][]string{
 			0: {
@@ -229,10 +229,10 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				"age": 27
 			}`)},
 		},
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalQueries: []testUtils.TransactionRequest{
 			{
 				TransactionId: 0,
-				Query: `mutation {
+				Request: `mutation {
 					update_user(data: "{\"age\": 28}") {
 						_key
 						name
@@ -249,7 +249,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			},
 			{
 				TransactionId: 1,
-				Query: `mutation {
+				Request: `mutation {
 					update_user(data: "{\"age\": 29}") {
 						_key
 						name
@@ -266,8 +266,8 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				ExpectedError: "Transaction Conflict. Please retry",
 			},
 		},
-		// Query after transactions have been commited:
-		Query: `query {
+		// Do a query operation after transactions have been commited:
+		Request: `query {
 			user {
 				_key
 				name

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithNumericSortAscending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic sort ASC",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: ASC}) {
 						Name
 						Age
@@ -68,9 +68,9 @@ func TestQuerySimpleWithNumericSortAscending(t *testing.T) {
 }
 
 func TestQuerySimpleWithNumericSortDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic sort DESC",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: DESC}) {
 						Name
 						Age
@@ -119,9 +119,9 @@ func TestQuerySimpleWithNumericSortDescending(t *testing.T) {
 }
 
 func TestQuerySimpleWithNumericSortDescendingAndBooleanSortAscending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with compound sort",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: DESC, Verified: ASC}) {
 						Name
 						Age

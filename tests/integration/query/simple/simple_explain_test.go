@@ -17,11 +17,11 @@ import (
 )
 
 func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain a query by providing the directive on wrong location (field).",
 
-		Query: `query {
+		Request: `query {
 					users @explain {
 						_key
 						Name
@@ -45,9 +45,9 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 }
 
 func TestExplainQuerySimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a query with no filter",
-		Query: `query @explain {
+		Request: `query @explain {
 					users {
 						_key
 						Name
@@ -89,9 +89,9 @@ func TestExplainQuerySimple(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a query with alias, no filter",
-		Query: `query @explain {
+		Request: `query @explain {
 					users {
 						username: Name
 						age: Age
@@ -132,9 +132,9 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a query with no filter, mutiple rows",
-		Query: `query @explain {
+		Request: `query @explain {
 					users {
 						Name
 						Age

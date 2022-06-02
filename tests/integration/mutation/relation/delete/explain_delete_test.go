@@ -20,12 +20,12 @@ import (
 type dataMap = map[string]interface{}
 
 func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Explain relational delete of an updated document and an aliased _key name.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							Key: _key
 					}

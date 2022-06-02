@@ -18,11 +18,11 @@ import (
 )
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Simple multi-key delete mutation with one key that exists.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 							_key
 						}
@@ -47,7 +47,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, when given multiple keys.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							_key
 						}
@@ -81,7 +81,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, when given multiple keys with alias.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							AliasKey: _key
 						}
@@ -115,7 +115,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist, where an update happens too.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 							AliasKey: _key
 						}
@@ -163,10 +163,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 }
 
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Deletion of one document using a list when it doesn't exist, in a non-empty collection.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
 							_key
 						}
@@ -187,7 +187,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete mutation while no documents exist.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 							_key
 						}
@@ -199,7 +199,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete mutation while one document doesn't exist.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 							_key
 						}
@@ -220,7 +220,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete used with filter.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"], filter: {}) {
 							_key
 						}
@@ -241,7 +241,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete mutation but no ids given.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: []) {
 							_key
 						}
@@ -262,7 +262,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete mutation but no ids given.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: []) {
 							_key
 						}
@@ -283,7 +283,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist without sub selection, should give error.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
 					}`,
 			Docs: map[int][]string{
@@ -308,7 +308,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 
 		{
 			Description: "Delete multiple documents that exist without _key sub-selection.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 						}
 					}`,

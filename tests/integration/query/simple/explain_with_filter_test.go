@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (key by DocKey arg)",
-			Query: `query @explain {
+			Request: `query @explain {
 						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							Name
 							Age
@@ -60,7 +60,7 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter (key by DocKey arg), no results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
 									Name
 									Age
@@ -99,7 +99,7 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter (key by DocKey arg), partial results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 									Name
 									Age
@@ -147,10 +147,10 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (single key by DocKeys arg)",
-			Query: `query @explain {
+			Request: `query @explain {
 						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 							Name
 							Age
@@ -189,7 +189,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter (single key by DocKeys arg), no results",
-			Query: `query @explain {
+			Request: `query @explain {
 						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
 							Name
 							Age
@@ -228,7 +228,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter (duplicate key by DocKeys arg), partial results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
 									Name
 									Age
@@ -276,7 +276,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter (multiple key by DocKeys arg), partial results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
 									Name
 									Age
@@ -333,9 +333,9 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with basic filter (key by filter block)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {_key: {_eq: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"}}) {
 						Name
 						Age
@@ -384,9 +384,9 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with basic filter (Name)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {Name: {_eq: "John"}}) {
 						Name
 						Age
@@ -436,10 +436,10 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter and selection",
-			Query: `query @explain {
+			Request: `query @explain {
 						users(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
@@ -481,7 +481,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter and selection (diff from filter)",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(filter: {Name: {_eq: "John"}}) {
 									Age
 								}
@@ -523,7 +523,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter(name), no results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(filter: {Name: {_eq: "Bob"}}) {
 									Name
 									Age
@@ -571,9 +571,9 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with basic filter(age)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {Age: {_eq: 21}}) {
 						Name
 						Age
@@ -622,10 +622,10 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter(age), greater than",
-			Query: `query @explain {
+			Request: `query @explain {
 						users(filter: {Age: {_gt: 20}}) {
 							Name
 							Age
@@ -672,7 +672,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter(age), no results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(filter: {Age: {_gt: 40}}) {
 									Name
 									Age
@@ -719,7 +719,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 
 		{
 			Description: "Explain query with basic filter(age), and aliased, multiple results",
-			Query: `query @explain {
+			Request: `query @explain {
 								users(filter: {Age: {_gt: 20}}) {
 									Name
 									Alias: Age
@@ -772,9 +772,9 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with logical compound filter (and)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {_and: [{Age: {_gt: 20}}, {Age: {_lt: 50}}]}) {
 						Name
 						Age
@@ -840,9 +840,9 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 }
 
 func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with logical compound filter (or)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {_or: [{Age: {_eq: 55}}, {Age: {_eq: 19}}]}) {
 						Name
 						Age
@@ -908,9 +908,9 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with special filter (or)",
-		Query: `query @explain {
+		Request: `query @explain {
 					users(filter: {Age: {_in: [19, 40, 55]}}) {
 						Name
 						Age

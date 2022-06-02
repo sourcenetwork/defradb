@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count and limit",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					_count(published: {})

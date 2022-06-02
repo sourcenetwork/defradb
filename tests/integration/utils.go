@@ -51,25 +51,25 @@ var (
 	mapStore       bool
 )
 
-// Represents a query assigned to a particular transaction.
-type TransactionQuery struct {
+// TransactionRequest represents a request assigned to a particular transaction.
+type TransactionRequest struct {
 	// Used to identify the transaction for this to run against (allows multiple
 	//  queries to share a single transaction)
 	TransactionId int
-	// The query to run against the transaction
-	Query string
-	// The expected (data) results of the query
+	// The request to run against the transaction
+	Request string
+	// The expected (data) results from the request.
 	Results []map[string]interface{}
-	// The expected error resulting from the query.  Also checked against the txn commit.
+	// The expected error resulting from the request.  Also checked against the txn commit.
 	ExpectedError string
 }
 
-type QueryTestCase struct {
+type RequestTestCase struct {
 	Description string
-	Query       string
-	// A collection of queries tied to a specific transaction.
-	// These will be executed before `Query` (if specified), in the order that they are listed here.
-	TransactionalQueries []TransactionQuery
+	Request     string
+	// A collection of requests tied to a specific transaction.
+	// These will be executed before `Request` (if specified), in the order that they are listed here.
+	TransactionalQueries []TransactionRequest
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -121,7 +121,7 @@ For each test:
 - Create a new (test/auto-deleted) temp dir for defra to live/run in
 - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
    if test does not exist in target and is new to this branch)
-- Run the test query and assert results (as per normal tests) using the current branch
+- Run the test request and assert results (as per normal tests) using the current branch
 */
 var detectDbChanges bool
 
@@ -225,7 +225,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 	}, nil
 }
 
-func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
+func getDatabases(ctx context.Context, t *testing.T, test RequestTestCase) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
@@ -255,11 +255,11 @@ func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]data
 	return databases, nil
 }
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	collectionNames []string,
-	test QueryTestCase,
+	test RequestTestCase,
 ) {
 	if detectDbChanges && detectDbChangesPreTestChecks(t, collectionNames, test) {
 		return
@@ -313,8 +313,8 @@ func ExecuteQueryTestCase(
 			if erroredQueries[i] {
 				continue
 			}
-			result := dbi.db.ExecuteTransactionalRequest(ctx, tq.Query, transactions[tq.TransactionId])
-			if assertQueryResults(ctx, t, test.Description, result, tq.Results, tq.ExpectedError) {
+			result := dbi.db.ExecuteTransactionalRequest(ctx, tq.Request, transactions[tq.TransactionId])
+			if assertRequestResults(ctx, t, test.Description, result, tq.Results, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}
 		}
@@ -341,11 +341,11 @@ func ExecuteQueryTestCase(
 			}
 		}
 
-		// We run the core query after the explicitly transactional ones to permit tests to query
-		//  the commited result of the transactional queries
-		if test.Query != "" {
-			result := dbi.db.ExecuteRequest(ctx, test.Query)
-			if assertQueryResults(
+		// We run the core requests after the explicitly transactional ones to permit tests to request (query)
+		//  the commited result of the transactional request (queries).
+		if test.Request != "" {
+			result := dbi.db.ExecuteRequest(ctx, test.Request)
+			if assertRequestResults(
 				ctx,
 				t,
 				test.Description,
@@ -425,7 +425,7 @@ func detectDbChangesInit(repository string, targetBranch string) {
 func detectDbChangesPreTestChecks(
 	t *testing.T,
 	collectionNames []string,
-	test QueryTestCase,
+	test RequestTestCase,
 ) bool {
 	if previousTestCaseTestName == t.Name() {
 		// The database format changer currently only supports running the first test
@@ -461,7 +461,7 @@ func setupDatabase(
 	dbi databaseInfo,
 	schema string,
 	collectionNames []string,
-	test QueryTestCase,
+	test RequestTestCase,
 ) {
 	db := dbi.db
 	err := db.AddSchema(ctx, schema)
@@ -585,7 +585,7 @@ func setupDatabaseUsingTargetBranch(
 	return refreshedDb
 }
 
-func assertQueryResults(
+func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
 	description string,
@@ -599,7 +599,7 @@ func assertQueryResults(
 	resultantData := result.Data.([]map[string]interface{})
 
 	// We log with level warn to highlight this item
-	log.Warn(ctx, "", logging.NewKV("QueryResults", result.Data))
+	log.Warn(ctx, "", logging.NewKV("RequestResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)

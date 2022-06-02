@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryComplexWithSumOnInlineAndManyToMany(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of integer array",
-		Query: `query {
+		Request: `query {
 					publisher {
 						name
 						ThisMakesNoSenseToSumButHey: _sum(favouritePageNumbers: {})

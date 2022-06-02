@@ -20,12 +20,12 @@ import (
 type dataMap = map[string]interface{}
 
 func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Explain simple multi-key delete mutation with one key that exists.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 									_key
 								}
@@ -66,7 +66,7 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 		{
 			Description: "Explain deletion of multiple documents that exist, when given multiple keys with alias.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 									AliasKey: _key
 								}
@@ -114,7 +114,7 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 		{
 			Description: "Explain the deletion of multiple documents that exist, where an update has happened too.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
 									AliasKey: _key
 								}
@@ -172,7 +172,7 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 		{
 			Description: "Explain simple delete mutation with single id, where the doc exists.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
@@ -217,12 +217,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 }
 
 func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Explain deletion using filter - One matching document, that exists.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
@@ -265,7 +265,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 		{
 			Description: "Explain deletion using filter - Multiple matching documents that exist with alias.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(filter: {
 									_and: [
 										{age: {_lt: 26}},
@@ -346,7 +346,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 		{
 			Description: "Explain deletion using filter - Match everything in this collection.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(filter: {}) {
 									DeletedKeyByFilter: _key
 								}
@@ -413,11 +413,11 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 }
 
 func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain deletion of one document using a list when it doesn't exist.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
 							_key
 						}
@@ -458,7 +458,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 		{
 			Description: "Explain a simple multi-key delete mutation while no documents exist.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 									_key
 								}
@@ -490,7 +490,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 		{
 			Description: "Explain a simple multi-key delete used with filter.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(
 								    ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "test"],
 								    filter: {
@@ -553,7 +553,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 		{
 			Description: "Explain no delete with filter: because the collection is empty.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
@@ -587,7 +587,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 		{
 			Description: "Explain a simple multi-key delete mutation but no ids given.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: []) {
 									_key
 								}
@@ -626,7 +626,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 		{
 			Description: "Explain deletion of multiple documents that exist without sub selection, should give error.",
 
-			Query: `mutation @explain {
+			Request: `mutation @explain {
 								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
 							}`,
 

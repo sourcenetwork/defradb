@@ -17,10 +17,10 @@ import (
 )
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							rating
@@ -109,7 +109,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 		},
 		{
 			Description: "One-to-many relation query from many side",
-			Query: `query {
+			Request: `query {
 				author {
 					name
 					age
@@ -208,10 +208,10 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 }
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							rating
@@ -331,7 +331,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 		},
 		{
 			Description: "One-to-many relation query from many side",
-			Query: `query {
+			Request: `query {
 				author {
 					name
 					age

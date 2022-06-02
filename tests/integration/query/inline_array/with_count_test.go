@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of nil integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {})
@@ -44,9 +44,9 @@ func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of empty integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {})
@@ -71,9 +71,9 @@ func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithsWithCountAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {})

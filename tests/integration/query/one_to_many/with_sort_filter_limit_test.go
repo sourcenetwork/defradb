@@ -19,9 +19,9 @@ import (
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingAndLimitOnChild(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, order & limit on sub",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age

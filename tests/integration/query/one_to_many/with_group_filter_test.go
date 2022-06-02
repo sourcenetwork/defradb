@@ -17,10 +17,10 @@ import (
 )
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with parent level group and filter on join",
-			Query: `query {
+			Request: `query {
 				author (groupBy: [age]) {
 					age
 					_group {
@@ -135,10 +135,10 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 }
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with parent level group and group filter",
-			Query: `query {
+			Request: `query {
 				author (groupBy: [age]) {
 					age
 					_group (filter: {published: {rating: {_gt: 4.6}}}) {
@@ -257,10 +257,10 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 }
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroupJoin(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with parent level group and filters",
-			Query: `query {
+			Request: `query {
 				author (groupBy: [age], filter: {age: {_gt: 300}}) {
 					age
 					_group {

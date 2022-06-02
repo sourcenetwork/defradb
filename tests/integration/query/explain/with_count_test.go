@@ -17,9 +17,9 @@ import (
 )
 
 func TestExplainQueryOneToManyWithACount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain one one-to-many relation query with count",
-		Query: `query @explain {
+		Request: `query @explain {
 				author {
 					name
 					numberOfBooks: _count(books: {})
@@ -109,11 +109,11 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 }
 
 func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain two one-to-many relation query with count",
 
-		Query: `query @explain {
+		Request: `query @explain {
 				author {
 					name
 					numberOfBooks: _count(books: {})

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter",
-		Query: `query {
+		Request: `query {
 					users {
 						_key
 						Name
@@ -46,9 +46,9 @@ func TestQuerySimple(t *testing.T) {
 }
 
 func TestQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with alias, no filter",
-		Query: `query {
+		Request: `query {
 					users {
 						username: Name
 						age: Age
@@ -73,9 +73,9 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter, mutiple rows",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age

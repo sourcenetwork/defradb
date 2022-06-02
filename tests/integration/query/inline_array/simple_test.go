@@ -17,10 +17,10 @@ import (
 )
 
 func TestQueryInlineArrayWithBooleans(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil boolean array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							LikedIndexes
@@ -42,7 +42,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, empty boolean array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							LikedIndexes
@@ -64,7 +64,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, booleans",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							LikedIndexes
@@ -92,10 +92,10 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithIntegers(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil integer array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteIntegers
@@ -117,7 +117,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, empty integer array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteIntegers
@@ -139,7 +139,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, positive integers",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteIntegers
@@ -161,7 +161,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, negative integers",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteIntegers
@@ -183,7 +183,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, mixed integers",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteIntegers
@@ -211,10 +211,10 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithFloats(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil float array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteFloats
@@ -236,7 +236,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, empty float array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteFloats
@@ -258,7 +258,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, positive floats",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							FavouriteFloats
@@ -286,10 +286,10 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithStrings(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil string array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							PreferredStrings
@@ -311,7 +311,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, empty string array",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							PreferredStrings
@@ -333,7 +333,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 		},
 		{
 			Description: "Simple inline array with no filter, strings",
-			Query: `query {
+			Request: `query {
 						users {
 							Name
 							PreferredStrings

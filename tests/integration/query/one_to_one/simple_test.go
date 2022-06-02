@@ -17,10 +17,10 @@ import (
 )
 
 func TestQueryOneToOne(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-one relation query with no filter",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							rating
@@ -59,7 +59,7 @@ func TestQueryOneToOne(t *testing.T) {
 		},
 		{
 			Description: "One-to-one relation secondary direction, no filter",
-			Query: `query {
+			Request: `query {
 						author {
 							name
 							age

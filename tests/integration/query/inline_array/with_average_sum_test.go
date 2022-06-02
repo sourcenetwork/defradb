@@ -21,9 +21,9 @@ import (
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average and sum of populated integer array",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(FavouriteIntegers: {})

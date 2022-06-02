@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSort(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child sort ascending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: ASC}){
@@ -81,9 +81,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSort(t *testing.T) 
 }
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSortDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child sort descending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (order: {Age: DESC}){
@@ -145,9 +145,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSortDescending(t *t
 }
 
 func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupSort(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, and child sort ascending",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name], order: {Name: DESC}) {
 						Name
 						_group (order: {Age: ASC}){
@@ -209,9 +209,9 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupS
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerSortDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child sort desc",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified]){
@@ -310,9 +310,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerSortDescendin
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerSortDescending(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child sort desc",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified], order: {Verified: ASC}){

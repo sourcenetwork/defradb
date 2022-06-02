@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age
@@ -86,9 +86,9 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 }
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age

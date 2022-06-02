@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, unfiltered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
@@ -56,9 +56,9 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, filtered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
@@ -111,9 +111,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithMatchingFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, matching filtered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Name: {_eq: "John"}}})
@@ -159,9 +159,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithDifferentFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered, different group filter",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {filter: {Age: {_gt: 26}}})
@@ -207,9 +207,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDifferentFilters(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, multiple counts on non-rendered, unfiltered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						C1: _count(_group: {filter: {Age: {_gt: 26}}})
