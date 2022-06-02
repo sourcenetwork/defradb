@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.query.planner")
+	log = logging.MustNewLogger("defra.request.planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -40,7 +40,7 @@ type planNode interface {
 	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Next processes the next result doc from the request. Can only be called *after* Start().
 	// Can't be called again if any previous call returns false.
 	Next() (bool, error)
 
@@ -75,8 +75,8 @@ type PlanContext struct {
 	context.Context
 }
 
-// Planner combines session state and database state to
-// produce a query plan, which is run by the execution context.
+// Planner combines session state and database state to produce a request plan,
+// which is run by the execution context.
 type Planner struct {
 	txn datastore.Txn
 	db  client.DB
@@ -98,11 +98,11 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 
 	case *parser.Request:
 		if len(n.Queries) > 0 {
-			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
+			return p.newPlan(n.Queries[0]) // @todo, handle multiple query operation statements
 		} else if len(n.Mutations) > 0 {
-			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
+			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation operation statements
 		} else {
-			return nil, fmt.Errorf("Query is missing query or mutation statements")
+			return nil, fmt.Errorf("Request is missing query or mutation statements")
 		}
 
 	case *parser.OperationDefinition:
@@ -490,18 +490,18 @@ func (p *Planner) executeRequest(
 // runRequest plans how to run the request, then attempts to run the request and returns the results.
 func (p *Planner) runRequest(
 	ctx context.Context,
-	query *parser.Request,
+	request *parser.Request,
 ) ([]map[string]interface{}, error) {
 
-	plan, err := p.makePlan(query)
+	plan, err := p.makePlan(request)
 
 	if err != nil {
 		return nil, err
 	}
 
 	isAnExplainRequest :=
-		(len(query.Queries) > 0 && query.Queries[0].IsExplain) ||
-			(len(query.Mutations) > 0 && query.Mutations[0].IsExplain)
+		(len(request.Queries) > 0 && request.Queries[0].IsExplain) ||
+			(len(request.Mutations) > 0 && request.Mutations[0].IsExplain)
 
 	if isAnExplainRequest {
 		return p.explainRequest(ctx, plan)
@@ -512,8 +512,8 @@ func (p *Planner) runRequest(
 }
 
 // MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(query *parser.Request) (planNode, error) {
-	return p.makePlan(query)
+func (p *Planner) MakePlan(request *parser.Request) (planNode, error) {
+	return p.makePlan(request)
 }
 
 // multiErr wraps all the non-nil errors and returns the wrapped error result.
