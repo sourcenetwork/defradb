@@ -24,50 +24,50 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-// Query is an external hook into the planNode
+// RequestPlan is an external hook into the planNode
 // system. It allows outside packages to
-// execute and manage a query plan graph directly.
+// execute and manage a request plan graph directly.
 // Instead of using one of the available functions
-// like ExecQuery(...).
+// like ExecRequest(...).
 // Currently, this is used by the collection.Update
 // system.
-type Query planNode
+type RequestPlan planNode
 
-type QueryExecutor struct {
+type RequestExecutor struct {
 	SchemaManager *schema.SchemaManager
 }
 
-func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
+func NewRequestExecutor(manager *schema.SchemaManager) (*RequestExecutor, error) {
 	if manager == nil {
-		return nil, fmt.Errorf("SchemaManager cannot be nil")
+		return nil, fmt.Errorf("SchemaManager cannot be nil.")
 	}
 
-	return &QueryExecutor{
+	return &RequestExecutor{
 		SchemaManager: manager,
 	}, nil
 }
 
-func (e *QueryExecutor) MakeSelectQuery(
+func (e *RequestExecutor) MakeSelectRequest(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
 	selectStmt *parser.Select,
-) (Query, error) {
+) (RequestPlan, error) {
 	if selectStmt == nil {
-		return nil, fmt.Errorf("Cannot create query without a selection")
+		return nil, fmt.Errorf("Cannot create a request plan without a selection.")
 	}
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(
+func (e *RequestExecutor) ExecuteRequest(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	query string,
+	request string,
 	args ...interface{},
 ) ([]map[string]interface{}, error) {
-	q, err := e.ParseRequestString(query)
+	q, err := e.ParseRequestString(request)
 	if err != nil {
 		return nil, err
 	}
@@ -77,17 +77,17 @@ func (e *QueryExecutor) ExecQuery(
 
 }
 
-func (e *QueryExecutor) MakePlanFromParser(
+func (e *RequestExecutor) MakePlanFromParser(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	query *parser.Request,
+	request *parser.Request,
 ) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
-	return planner.makePlan(query)
+	return planner.makePlan(request)
 }
 
-func (e *QueryExecutor) ParseRequestString(request string) (*parser.Request, error) {
+func (e *RequestExecutor) ParseRequestString(request string) (*parser.Request, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",

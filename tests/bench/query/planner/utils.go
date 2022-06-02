@@ -85,7 +85,7 @@ func runMakePlanBench(
 func buildExecutor(
 	ctx context.Context,
 	fixture fixtures.Generator,
-) (*planner.QueryExecutor, error) {
+) (*planner.RequestExecutor, error) {
 	sm, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err
@@ -103,5 +103,5 @@ func buildExecutor(
 		return nil, err
 	}
 
-	return planner.NewQueryExecutor(sm)
+	return planner.NewRequestExecutor(sm)
 }

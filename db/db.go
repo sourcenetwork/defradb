@@ -59,7 +59,7 @@ type db struct {
 	broadcaster corenet.Broadcaster
 
 	schema        *schema.SchemaManager
-	queryExecutor *planner.QueryExecutor
+	queryExecutor *planner.RequestExecutor
 
 	// The options used to init the database
 	options interface{}
@@ -92,7 +92,7 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 	}
 
 	log.Debug(ctx, "loading: query executor")
-	exec, err := planner.NewQueryExecutor(sm)
+	exec, err := planner.NewRequestExecutor(sm)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (db *db) PrintDump(ctx context.Context) {
 	printStore(ctx, db.multistore.Rootstore())
 }
 
-func (db *db) Executor() *planner.QueryExecutor {
+func (db *db) Executor() *planner.RequestExecutor {
 	return db.queryExecutor
 }
 

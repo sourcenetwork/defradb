@@ -557,7 +557,7 @@ func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter interface{},
-) (planner.Query, error) {
+) (planner.RequestPlan, error) {
 	var f *parser.Filter
 	var err error
 	switch fval := filter.(type) {
@@ -582,7 +582,7 @@ func (c *collection) makeSelectionQuery(
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
+	return c.db.queryExecutor.MakeSelectRequest(ctx, c.db, txn, slct)
 }
 
 func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
