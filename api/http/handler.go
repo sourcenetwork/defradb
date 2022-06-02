@@ -25,13 +25,19 @@ import (
 type handler struct {
 	db client.DB
 	*chi.Mux
+
+	// user configuratble options
+	serverOptions
 }
 
 type ctxDB struct{}
 
 // newHandler returns a handler with the router instantiated.
-func newHandler(db client.DB) *handler {
-	return setRoutes(&handler{db: db})
+func newHandler(db client.DB, opts serverOptions) *handler {
+	return setRoutes(&handler{
+		db:            db,
+		serverOptions: opts,
+	})
 }
 
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {

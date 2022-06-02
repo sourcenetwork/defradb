@@ -29,7 +29,7 @@ import (
 )
 
 func TestNewHandlerWithLogger(t *testing.T) {
-	h := newHandler(nil)
+	h := newHandler(nil, serverOptions{})
 
 	dir := t.TempDir()
 

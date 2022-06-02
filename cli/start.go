@@ -181,8 +181,8 @@ var startCmd = &cobra.Command{
 					httpapi.RootPath,
 				),
 			)
-			s := http.NewServer(db)
-			if err := s.Listen(config.Database.Address); err != nil {
+			s := http.NewServer(db, http.WithAddress(config.Database.Address))
+			if err := s.Listen(); err != nil {
 				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {
 					n.Close() //nolint
