@@ -15,10 +15,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
-	benchutils "github.com/sourcenetwork/defradb/tests/bench"
+	"github.com/sourcenetwork/defradb/request/graphql/planner"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
+
+	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
 func runQueryParserBench(

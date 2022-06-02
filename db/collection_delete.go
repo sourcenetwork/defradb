@@ -15,19 +15,19 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/merkle/clock"
+	"github.com/sourcenetwork/defradb/request/graphql/parser"
+
 	block "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	query "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/merkle/clock"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	parserTypes "github.com/sourcenetwork/defradb/request/graphql/parser/types"
 )
 
 var (

@@ -21,8 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
+	"github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/defradb/request/graphql/planner"
 
 	cbor "github.com/fxamacker/cbor/v2"
 )
