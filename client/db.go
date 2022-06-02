@@ -32,14 +32,14 @@ type DB interface {
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
-	ExecQuery(context.Context, string) *QueryResult
-	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
+	ExecuteRequest(context.Context, string) *RequestResult
+	ExecuteTransactionalRequest(ctx context.Context, request string, txn datastore.Txn) *RequestResult
 	Close(context.Context)
 
 	PrintDump(ctx context.Context)
 }
 
-type QueryResult struct {
+type RequestResult struct {
 	Errors []interface{} `json:"errors,omitempty"`
 	Data   interface{}   `json:"data"`
 }

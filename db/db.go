@@ -26,7 +26,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsRequest "github.com/ipfs/go-datastore/query"
-	request "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 )
@@ -209,13 +208,13 @@ func (db *db) Close(ctx context.Context) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) {
-	req := request.Query{
+	request := dsRequest.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsRequest.Order{dsRequest.OrderByKey{}},
 	}
 
-	results, err := store.Query(ctx, req)
+	results, err := store.Query(ctx, request)
 
 	if err != nil {
 		panic(err)

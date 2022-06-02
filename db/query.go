@@ -20,11 +20,13 @@ import (
 	gql "github.com/graphql-go/graphql"
 )
 
-func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
-	res := &client.QueryResult{}
-	// check if its Introspection query
-	if strings.Contains(query, "IntrospectionQuery") {
-		return db.ExecIntrospection(query)
+const introspectionRequest string = "IntrospectionQuery"
+
+func (db *db) ExecuteRequest(ctx context.Context, request string) *client.RequestResult {
+	res := &client.RequestResult{}
+	// check if its an Introspection request.
+	if strings.Contains(request, introspectionRequest) {
+		return db.ExecuteIntrospection(request)
 	}
 
 	txn, err := db.NewTxn(ctx, false)
@@ -34,7 +36,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	}
 	defer txn.Discard(ctx)
 
-	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, query)
+	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, request)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
@@ -49,18 +51,18 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
-func (db *db) ExecTransactionalQuery(
+func (db *db) ExecuteTransactionalRequest(
 	ctx context.Context,
-	query string,
+	request string,
 	txn datastore.Txn,
-) *client.QueryResult {
-	res := &client.QueryResult{}
-	// check if its Introspection query
-	if strings.Contains(query, "IntrospectionQuery") {
-		return db.ExecIntrospection(query)
+) *client.RequestResult {
+	res := &client.RequestResult{}
+	// check if its Introspection request.
+	if strings.Contains(request, introspectionRequest) {
+		return db.ExecuteIntrospection(request)
 	}
 
-	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, query)
+	results, err := db.requestExecutor.ExecuteRequest(ctx, db, txn, request)
 	if err != nil {
 		res.Errors = []interface{}{err.Error()}
 		return res
@@ -70,14 +72,12 @@ func (db *db) ExecTransactionalQuery(
 	return res
 }
 
-func (db *db) ExecIntrospection(query string) *client.QueryResult {
+func (db *db) ExecuteIntrospection(request string) *client.RequestResult {
 	schema := db.schema.Schema()
-	// t := schema.Type("userFilterArg")
-	// spew.Dump(t.(*gql.InputObject).Fields())
-	params := gql.Params{Schema: *schema, RequestString: query}
+	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
-	res := &client.QueryResult{
+	res := &client.RequestResult{
 		Data:   r.Data,
 		Errors: make([]interface{}, len(r.Errors)),
 	}

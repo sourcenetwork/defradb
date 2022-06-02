@@ -69,7 +69,7 @@ func runQueryBenchGetSync(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res := db.ExecQuery(ctx, query)
+		res := db.ExecuteRequest(ctx, query)
 		if len(res.Errors) > 0 {
 			return fmt.Errorf("Query error: %v", res.Errors)
 		}

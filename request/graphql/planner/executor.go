@@ -28,9 +28,7 @@ import (
 // system. It allows outside packages to
 // execute and manage a request plan graph directly.
 // Instead of using one of the available functions
-// like ExecRequest(...).
-// Currently, this is used by the collection.Update
-// system.
+// like ExecuteRequest(...).
 type RequestPlan planNode
 
 type RequestExecutor struct {

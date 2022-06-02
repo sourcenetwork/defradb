@@ -142,7 +142,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	result := db.ExecQuery(req.Context(), query)
+	result := db.ExecuteRequest(req.Context(), query)
 
 	err = json.NewEncoder(rw).Encode(result)
 	if err != nil {
@@ -152,7 +152,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	var result client.QueryResult
+	var result client.RequestResult
 	sdl, err := io.ReadAll(req.Body)
 
 	defer func() {
@@ -206,7 +206,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
-	var result client.QueryResult
+	var result client.RequestResult
 	cidStr := chi.URLParam(req, "cid")
 
 	// try to parse CID
