@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	version string = "/api/v1"
+	version string = "/api/v0"
 
 	RootPath       string = version + ""
 	PingPath       string = version + "/ping"
