@@ -374,8 +374,7 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 	return selections, nil
 }
 
-// parseField simply parses the Name/Alias
-// into a Field type
+// parseField simply parses the Name/Alias into a Field type
 func parseField(root parserTypes.SelectionType, field *ast.Field) (*Field, error) {
 	var alias string
 

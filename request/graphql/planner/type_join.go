@@ -26,9 +26,9 @@ import (
 */
 
 // typeIndexJoin provides the needed join functionality
-// for querying relationship based sub types.
-// It constructs a new plan node, which queries the
-// root node, then does primary key point lookups
+// for requesting (querying) relationship based sub types.
+// It constructs a new plan node, which requests / queries
+// the root node, then does primary key point lookups
 // based on the type index key in the root.
 //
 // It will grab batches of docs from the root graph
@@ -170,8 +170,7 @@ func splitFilterByType(filter *parser.Filter, subType string) (*parser.Filter, *
 }
 
 // typeJoinOne is the plan node for a type index join
-// where the root type is the primary in a one-to-one relation
-// query.
+// where the root type is the primary in a one-to-one relation query.
 type typeJoinOne struct {
 	documentIterator
 

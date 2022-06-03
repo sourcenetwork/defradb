@@ -511,7 +511,7 @@ func (p *Planner) runRequest(
 	return p.executeRequest(ctx, plan)
 }
 
-// MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
+// MakePlan makes a plan from the parsed request. @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(request *parser.Request) (planNode, error) {
 	return p.makePlan(request)
 }

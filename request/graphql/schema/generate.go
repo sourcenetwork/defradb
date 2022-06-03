@@ -154,8 +154,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	// for each built type
-	// 		generate query inputs
+	// for each built type generate query inputs
 	queryType := g.manager.schema.QueryType()
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {

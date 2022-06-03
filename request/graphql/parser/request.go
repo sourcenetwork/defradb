@@ -47,11 +47,11 @@ func (q Request) GetStatement() ast.Node {
 	return q.Statement
 }
 
-// ParseRequest parses a root ast.Document, and returns a formatted Query object.
+// ParseRequest parses a root ast.Document, and returns a formatted Request object.
 // Requires a non-nil doc, will error if given a nil doc
 func ParseRequest(doc *ast.Document) (*Request, error) {
 	if doc == nil {
-		return nil, errors.New("ParseQuery requires a non nil ast.Document")
+		return nil, errors.New("ParseRequest requires a non nil ast.Document")
 	}
 	q := &Request{
 		Statement: doc,

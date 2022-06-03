@@ -221,7 +221,7 @@ func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
 		return conditions, nil
 	}
 
-	return nil, errors.New("Failed to parse condition value from query filter statement")
+	return nil, errors.New("Failed to parse condition value from request filter statement")
 }
 
 // RunFilter runs the given filter expression
