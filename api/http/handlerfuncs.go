@@ -34,13 +34,22 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		map[string]interface{}{"response": "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"},
+		dataResponse{
+			Data: map[string]interface{}{
+				"response": "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
+			},
+		},
 		http.StatusOK,
 	)
 }
 
 func pingHandler(rw http.ResponseWriter, req *http.Request) {
-	sendJSON(req.Context(), rw, map[string]interface{}{"response": "pong"}, http.StatusOK)
+	sendJSON(
+		req.Context(),
+		rw,
+		dataResponse{map[string]interface{}{"response": "pong"}},
+		http.StatusOK,
+	)
 }
 
 func dumpHandler(rw http.ResponseWriter, req *http.Request) {
@@ -51,7 +60,12 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	db.PrintDump(req.Context())
 
-	sendJSON(req.Context(), rw, map[string]interface{}{"response": "ok"}, http.StatusOK)
+	sendJSON(
+		req.Context(),
+		rw,
+		dataResponse{map[string]interface{}{"response": "ok"}},
+		http.StatusOK,
+	)
 }
 
 type gqlRequest struct {
@@ -137,7 +151,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		map[string]interface{}{"result": "success"},
+		dataResponse{map[string]interface{}{"result": "success"}},
 		http.StatusBadRequest,
 	)
 }
@@ -200,10 +214,12 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		map[string]interface{}{
-			"block": string(buf),
-			"delta": string(data),
-			"val":   delta.Value(),
+		dataResponse{
+			Data: map[string]interface{}{
+				"block": string(buf),
+				"delta": string(data),
+				"val":   delta.Value(),
+			},
 		},
 		http.StatusOK,
 	)

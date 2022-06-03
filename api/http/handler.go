@@ -62,13 +62,6 @@ func getJSON(req *http.Request, v interface{}) error {
 func sendJSON(ctx context.Context, rw http.ResponseWriter, v interface{}, code int) {
 	rw.Header().Set("Content-Type", "application/json")
 
-	switch val := v.(type) {
-	case map[string]interface{}:
-		v = dataResponse{
-			Data: val,
-		}
-	}
-
 	b, err := json.Marshal(v)
 	if err != nil {
 		log.Error(ctx, fmt.Sprintf("Error while encoding JSON: %v", err))
