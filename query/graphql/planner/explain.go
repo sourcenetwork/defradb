@@ -43,7 +43,7 @@ const (
 	dataLabel           = "data"
 	filterLabel         = "filter"
 	idsLabel            = "ids"
-	// spansLabel          = "spans"
+	spansLabel          = "spans"
 )
 
 // buildExplainGraph builds the explainGraph from the given top level plan.

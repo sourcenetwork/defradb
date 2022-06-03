@@ -71,6 +71,12 @@ func TestExplainQuerySimple(t *testing.T) {
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -108,6 +114,12 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
@@ -149,6 +161,12 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter":         nil,
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
+									},
+								},
 							},
 						},
 					},
