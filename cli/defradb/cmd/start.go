@@ -238,31 +238,31 @@ func init() {
 	startCmd.Flags().StringVar(
 		&cfg.Net.Peers,
 		"peers",
-		defaultCfg.Net.Peers,
+		cfg.Net.Peers,
 		"list of peers to connect to",
 	)
 	startCmd.Flags().StringVar(
 		&cfg.Datastore.Store,
 		"store",
-		defaultCfg.Datastore.Store,
+		cfg.Datastore.Store,
 		"Specify the data store to use (supported: badger, memory)",
 	)
 	startCmd.Flags().StringVar(
 		&cfg.Net.P2PAddress,
 		"p2paddr",
-		defaultCfg.Net.P2PAddress,
+		cfg.Net.P2PAddress,
 		"listener address for the p2p network (formatted as a libp2p MultiAddr)",
 	)
 	startCmd.Flags().StringVar(
 		&cfg.Net.TCPAddress,
 		"tcpaddr",
-		defaultCfg.Net.TCPAddress,
+		cfg.Net.TCPAddress,
 		"listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
 	)
 	startCmd.Flags().BoolVar(
 		&cfg.Net.P2PDisabled,
 		"no-p2p",
-		defaultCfg.Net.P2PDisabled,
+		cfg.Net.P2PDisabled,
 		"Turn off the peer-to-peer network synchronization system",
 	)
 }

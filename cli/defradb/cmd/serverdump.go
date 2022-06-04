@@ -70,7 +70,7 @@ func init() {
 	rootCmd.AddCommand(srvDumpCmd)
 	srvDumpCmd.Flags().String(
 		"store",
-		defaultCfg.Datastore.Store,
+		cfg.Datastore.Store,
 		"Specify the data store to use (supported: badger, memory)",
 	)
 }

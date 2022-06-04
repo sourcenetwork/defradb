@@ -19,11 +19,9 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.cli")
-	cfg = config.DefaultConfig()
-	// defaultCfg provides default values for the flags.
-	defaultCfg = config.DefaultConfig()
-	rootDir    string
+	log     = logging.MustNewLogger("defra.cli")
+	cfg     = config.DefaultConfig()
+	rootDir string
 )
 
 var RootCmd = rootCmd
@@ -97,37 +95,37 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&cfg.Logging.Level,
 		"loglevel",
-		defaultCfg.Logging.Level,
+		cfg.Logging.Level,
 		"Log level to use. Options are debug, info, warn, error, fatal",
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&cfg.Logging.OutputPath,
 		"logoutput",
-		defaultCfg.Logging.OutputPath,
+		cfg.Logging.OutputPath,
 		"Log output path",
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&cfg.Logging.Format,
 		"logformat",
-		defaultCfg.Logging.Format,
+		cfg.Logging.Format,
 		"Log format",
 	)
 	rootCmd.PersistentFlags().BoolVar(
 		&cfg.Logging.Stacktrace,
 		"stacktrace",
-		defaultCfg.Logging.Stacktrace,
+		cfg.Logging.Stacktrace,
 		"Include stacktrace in error and fatal logs",
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&cfg.API.Address,
 		"url",
-		defaultCfg.API.Address,
+		cfg.API.Address,
 		"URL of the target database's HTTP endpoint",
 	)
 	rootCmd.PersistentFlags().BoolVar(
 		&cfg.Logging.Color,
 		"color",
-		defaultCfg.Logging.Color,
+		cfg.Logging.Color,
 		"Toggle colored output",
 	)
 }

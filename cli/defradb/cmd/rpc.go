@@ -38,7 +38,7 @@ func init() {
 	rpcCmd.PersistentFlags().StringVar(
 		&cfg.Net.RPCAddress,
 		"addr",
-		defaultCfg.Net.RPCAddress,
+		cfg.Net.RPCAddress,
 		"Specify the gRPC endpoint address",
 	)
 }
