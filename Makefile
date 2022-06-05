@@ -145,3 +145,7 @@ lint\:list:
 .PHONY: chglog
 chglog:
 	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md
+
+.PHONY: gencmddocs
+gencmddocs:
+	go run cmd/gencmddocs/gencmddocs.go -o docs/cmd/

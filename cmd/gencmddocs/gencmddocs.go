@@ -11,17 +11,23 @@
 package main
 
 import (
-	"log"
+	"context"
+	"flag"
 
-	"github.com/sourcenetwork/defradb/cli/defradb/cmd"
+	cmd "github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/logging"
 
 	"github.com/spf13/cobra/doc"
 )
 
+var log = logging.MustNewLogger("defra.gencmddocs")
+
 func main() {
+	path := flag.String("o", "docs/cmd", "path to write the cmd docs to")
+	flag.Parse()
 	root := cmd.RootCmd
-	err := doc.GenMarkdownTree(root, "./")
+	err := doc.GenMarkdownTree(root, *path)
 	if err != nil {
-		log.Fatal(err)
+		log.FatalE(context.Background(), "Generating cmd docs failed", err)
 	}
 }
