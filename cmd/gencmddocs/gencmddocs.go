@@ -13,6 +13,7 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
 
 	cmd "github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/logging"
@@ -26,7 +27,11 @@ func main() {
 	path := flag.String("o", "docs/cmd", "path to write the cmd docs to")
 	flag.Parse()
 	root := cmd.RootCmd
-	err := doc.GenMarkdownTree(root, *path)
+	err := os.MkdirAll(*path, os.ModePerm)
+	if err != nil {
+		log.FatalE(context.Background(), "Creating the filesystem path failed", err)
+	}
+	err = doc.GenMarkdownTree(root, *path)
 	if err != nil {
 		log.FatalE(context.Background(), "Generating cmd docs failed", err)
 	}
