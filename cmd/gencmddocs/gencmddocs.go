@@ -26,12 +26,11 @@ var log = logging.MustNewLogger("defra.gencmddocs")
 func main() {
 	path := flag.String("o", "docs/cmd", "path to write the cmd docs to")
 	flag.Parse()
-	root := cmd.RootCmd
 	err := os.MkdirAll(*path, os.ModePerm)
 	if err != nil {
 		log.FatalE(context.Background(), "Creating the filesystem path failed", err)
 	}
-	err = doc.GenMarkdownTree(root, *path)
+	err = doc.GenMarkdownTree(cmd.RootCmd, *path)
 	if err != nil {
 		log.FatalE(context.Background(), "Generating cmd docs failed", err)
 	}
