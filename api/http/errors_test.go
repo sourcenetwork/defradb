@@ -55,7 +55,7 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 	}
 
 	if len(errResponse.Errors) != 1 {
-		t.Fatal("expeting exactly one error")
+		t.Fatal("expecting exactly one error")
 	}
 
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
@@ -86,7 +86,7 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 	}
 
 	if len(errResponse.Errors) != 1 {
-		t.Fatal("expeting exactly one error")
+		t.Fatal("expecting exactly one error")
 	}
 	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Errors[0].Message)
@@ -116,7 +116,7 @@ func TestHandleErrOnNotFound(t *testing.T) {
 	}
 
 	if len(errResponse.Errors) != 1 {
-		t.Fatal("expeting exactly one error")
+		t.Fatal("expecting exactly one error")
 	}
 
 	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
@@ -147,7 +147,7 @@ func TestHandleErrOnDefault(t *testing.T) {
 	}
 
 	if len(errResponse.Errors) != 1 {
-		t.Fatal("expeting exactly one error")
+		t.Fatal("expecting exactly one error")
 	}
 
 	assert.Equal(t, http.StatusUnauthorized, errResponse.Errors[0].Extensions.Status)
