@@ -26,7 +26,7 @@ const (
 	RootPath       string = version + ""
 	PingPath       string = version + "/ping"
 	DumpPath       string = version + "/debug/dump"
-	BlocksPath     string = version + "/blocks/get"
+	BlocksPath     string = version + "/blocks"
 	GraphQLPath    string = version + "/graphql"
 	SchemaLoadPath string = version + "/schema/load"
 )
