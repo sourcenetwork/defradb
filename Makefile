@@ -148,4 +148,4 @@ chglog:
 
 .PHONY: clidocs
 clidocs:
-	go run cmd/genclidocs/genclidocs.go -o docs/cmd/
+	go run cmd/genclidocs/genclidocs.go -o docs/cli/
