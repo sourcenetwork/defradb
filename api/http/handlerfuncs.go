@@ -34,11 +34,9 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		dataResponse{
-			Data: map[string]interface{}{
-				"response": "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
-			},
-		},
+		simpleDataResponse(
+			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
+		),
 		http.StatusOK,
 	)
 }
@@ -47,7 +45,7 @@ func pingHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		dataResponse{map[string]interface{}{"response": "pong"}},
+		simpleDataResponse("response", "pong", "test"),
 		http.StatusOK,
 	)
 }
@@ -63,7 +61,7 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		dataResponse{map[string]interface{}{"response": "ok"}},
+		simpleDataResponse("response", "ok"),
 		http.StatusOK,
 	)
 }
@@ -151,7 +149,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		dataResponse{map[string]interface{}{"result": "success"}},
+		simpleDataResponse("result", "success"),
 		http.StatusBadRequest,
 	)
 }
@@ -214,13 +212,11 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 	sendJSON(
 		req.Context(),
 		rw,
-		dataResponse{
-			Data: map[string]interface{}{
-				"block": string(buf),
-				"delta": string(data),
-				"val":   delta.Value(),
-			},
-		},
+		simpleDataResponse(
+			"block", string(buf),
+			"delta", string(data),
+			"val", delta.Value(),
+		),
 		http.StatusOK,
 	)
 }

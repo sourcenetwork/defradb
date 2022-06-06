@@ -36,6 +36,31 @@ type dataResponse struct {
 	Data interface{} `json:"data"`
 }
 
+// simpleDataResponse is a helper function that returns a dataResponse struct.
+// Odd arguments are the keys and must be strings otherwise they are ignored.
+// Even arguments are the values associated with the previous key.
+// Odd arguments are also ignored if there are no following arguments.
+func simpleDataResponse(args ...interface{}) dataResponse {
+	data := make(map[string]interface{})
+
+	for i := 0; i < len(args); i += 2 {
+		if len(args) >= i+2 {
+			switch a := args[i].(type) {
+			case string:
+				data[a] = args[i+1]
+
+			default:
+				continue
+
+			}
+		}
+	}
+
+	return dataResponse{
+		Data: data,
+	}
+}
+
 // newHandler returns a handler with the router instantiated.
 func newHandler(db client.DB, opts serverOptions) *handler {
 	return setRoutes(&handler{

@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -678,7 +677,7 @@ func testRequest(opt testOptions) {
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
 
-	respBody, err := ioutil.ReadAll(rec.Result().Body)
+	respBody, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
 		opt.Testing.Fatal(err)
 	}
