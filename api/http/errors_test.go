@@ -59,7 +59,8 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
@@ -89,7 +90,8 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 		t.Fatal("expecting exactly one error")
 	}
 	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
@@ -120,7 +122,8 @@ func TestHandleErrOnNotFound(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
@@ -151,6 +154,7 @@ func TestHandleErrOnDefault(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusUnauthorized, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, http.StatusText(http.StatusUnauthorized), errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "Unauthorized", errResponse.Errors[0].Message)
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] Unauthorized")
 }

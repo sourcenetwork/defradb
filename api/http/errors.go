@@ -30,8 +30,9 @@ type errorItem struct {
 }
 
 type extensions struct {
-	Status int    `json:"status"`
-	Stack  string `json:"stack,omitempty"`
+	Status    int    `json:"status"`
+	HTTPError string `json:"httpError"`
+	Stack     string `json:"stack,omitempty"`
 }
 
 func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
@@ -45,10 +46,11 @@ func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status in
 		errorResponse{
 			Errors: []errorItem{
 				{
-					Message: http.StatusText(status),
+					Message: err.Error(),
 					Extensions: &extensions{
-						Status: status,
-						Stack:  formatError(err),
+						Status:    status,
+						HTTPError: http.StatusText(status),
+						Stack:     formatError(err),
 					},
 				},
 			},

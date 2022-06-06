@@ -126,8 +126,9 @@ func TestDumpHandlerWithDBError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, 500, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithNilBody(t *testing.T) {
@@ -143,8 +144,9 @@ func TestExecGQLWithNilBody(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "body cannot be empty")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "body cannot be empty", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLWithEmptyBody(t *testing.T) {
@@ -160,8 +162,9 @@ func TestExecGQLWithEmptyBody(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL query")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "missing GraphQL query", errResponse.Errors[0].Message)
 
 }
 
@@ -191,21 +194,22 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
 
 }
 
 func TestExecGQLWithNoDB(t *testing.T) {
 	errResponse := errorResponse{}
-	stmt := []byte(`
-	mutation {
-		create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-			_key
-		}
-	}`)
+	stmt := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 	testRequest(testOptions{
 		Testing:        t,
 		Method:         "POST",
@@ -216,26 +220,27 @@ func TestExecGQLWithNoDB(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, 500, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
 
 }
 
 func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 	// statement with JSON formatting error
-	stmt := (`
-	[
-		"query": "mutation {
-			create_user(
-				data: \"{
-					\\\"age\\\": 31,
-					\\\"verified\\\": true,
-					\\\"points\\\": 90,
-					\\\"name\\\": \\\"Bob\\\"
-				}\"
-			) {_key}
-		}"
-	]`)
+	stmt := `
+[
+	"query": "mutation {
+		create_user(
+			data: \"{
+				\\\"age\\\": 31,
+				\\\"verified\\\": true,
+				\\\"points\\\": 90,
+				\\\"name\\\": \\\"Bob\\\"
+			}\"
+		) {_key}
+	}"
+]`
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	errResponse := errorResponse{}
@@ -251,8 +256,10 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "invalid character")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "unmarshall error: invalid character ':' after array element", errResponse.Errors[0].Message)
+
 }
 
 func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
@@ -263,19 +270,19 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	testLoadSchema(t, ctx, defra)
 
 	// add document
-	stmt := (`
-	{
-		"query": "mutation {
-			create_user(
-				data: \"{
-					\\\"age\\\": 31,
-					\\\"verified\\\": true,
-					\\\"points\\\": 90,
-					\\\"name\\\": \\\"Bob\\\"
-				}\"
-			) {_key}
-		}"
-	}`)
+	stmt := `
+{
+	"query": "mutation {
+		create_user(
+			data: \"{
+				\\\"age\\\": 31,
+				\\\"verified\\\": true,
+				\\\"points\\\": 90,
+				\\\"name\\\": \\\"Bob\\\"
+			}\"
+		) {_key}
+	}"
+}`
 	// remote line returns and tabulation from formatted statement
 	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
 
@@ -313,8 +320,10 @@ func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "content type application/x-www-form-urlencoded not yet supported")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "content type application/x-www-form-urlencoded not yet supported", errResponse.Errors[0].Message)
+
 }
 
 func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
@@ -325,14 +334,14 @@ func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
 	testLoadSchema(t, ctx, defra)
 
 	// add document
-	stmt := []byte(`
-	mutation {
-		create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-			_key
-		}
-	}`)
+	stmt := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
 	resp := dataResponse{
 		Data: &users,
@@ -359,14 +368,14 @@ func TestExecGQLHandlerContentTypeText(t *testing.T) {
 	testLoadSchema(t, ctx, defra)
 
 	// add document
-	stmt := []byte(`
-	mutation {
-		create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-			_key
-		}
-	}`)
+	stmt := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
 	resp := dataResponse{
 		Data: &users,
@@ -401,20 +410,22 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "error reading")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
+
 }
 
 func TestLoadSchemaHandlerWithoutDB(t *testing.T) {
-	stmt := []byte(`
-	type user {
-		name: String 
-		age: Int 
-		verified: Boolean 
-		points: Float
-	}`)
+	stmt := `
+type user {
+	name: String 
+	age: Int 
+	verified: Boolean 
+	points: Float
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 
 	errResponse := errorResponse{}
 	testRequest(testOptions{
@@ -428,8 +439,9 @@ func TestLoadSchemaHandlerWithoutDB(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, 500, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
@@ -437,15 +449,15 @@ func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
 	defra := testNewInMemoryDB(t, ctx)
 
 	// statement with types instead of type
-	stmt := []byte(`
-	types user {
-		name: String 
-		age: Int 
-		verified: Boolean 
-		points: Float
-	}`)
+	stmt := `
+types user {
+	name: String 
+	age: Int 
+	verified: Boolean 
+	points: Float
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 
 	errResponse := errorResponse{}
 	testRequest(testOptions{
@@ -458,24 +470,29 @@ func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "Syntax Error GraphQL (2:2) Unexpected Name")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "Syntax Error GraphQL (2:1) Unexpected Name")
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(
+		t,
+		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types user {\n   ^\n3: \\u0009name: String \n",
+		errResponse.Errors[0].Message,
+	)
 }
 
 func TestLoadSchemaHandlerWitNoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
-	stmt := []byte(`
-	type user {
-		name: String 
-		age: Int 
-		verified: Boolean 
-		points: Float
-	}`)
+	stmt := `
+type user {
+	name: String 
+	age: Int 
+	verified: Boolean 
+	points: Float
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 
 	resp := dataResponse{}
 	testRequest(testOptions{
@@ -510,8 +527,9 @@ func TestGetBlockHandlerWithMultihashError(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "illegal base32 data at input byte 0")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "illegal base32 data at input byte 0", errResponse.Errors[0].Message)
 }
 func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 	cID, err := cid.Parse("bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
@@ -532,8 +550,9 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, 500, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithNoDB(t *testing.T) {
@@ -549,8 +568,9 @@ func TestGetBlockHandlerWithNoDB(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no database available")
-	assert.Equal(t, 500, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
@@ -569,8 +589,9 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 	})
 
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
-	assert.Equal(t, 400, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Bad Request", errResponse.Errors[0].Message)
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "ipld: could not find bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm", errResponse.Errors[0].Message)
 }
 
 func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
@@ -580,14 +601,14 @@ func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
 	testLoadSchema(t, ctx, defra)
 
 	// add document
-	stmt := []byte(`
-	mutation {
-		create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-			_key
-		}
-	}`)
+	stmt := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
 
-	buf := bytes.NewBuffer(stmt)
+	buf := bytes.NewBuffer([]byte(stmt))
 
 	users := []testUser{}
 	resp := dataResponse{
@@ -608,16 +629,15 @@ func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
 	}
 
 	// get document cid
-	stmt2 := []byte(fmt.Sprintf(`
-	query {
-		user (dockey: "%s") {
-			_version {
-				cid
-			}
+	stmt2 := `
+query {
+	user (dockey: "%s") {
+		_version {
+			cid
 		}
-	}`, users[0].Key))
-
-	buf2 := bytes.NewBuffer(stmt2)
+	}
+}`
+	buf2 := bytes.NewBuffer([]byte(fmt.Sprintf(stmt2, users[0].Key)))
 
 	users2 := []testUser{}
 	resp2 := dataResponse{
@@ -706,13 +726,14 @@ func testNewInMemoryDB(t *testing.T, ctx context.Context) client.DB {
 }
 
 func testLoadSchema(t *testing.T, ctx context.Context, db client.DB) {
-	err := db.AddSchema(ctx, `
-	type user {
-		name: String 
-		age: Int 
-		verified: Boolean 
-		points: Float
-	}`)
+	stmt := `
+type user {
+	name: String 
+	age: Int 
+	verified: Boolean 
+	points: Float
+}`
+	err := db.AddSchema(ctx, stmt)
 	if err != nil {
 		t.Fatal(err)
 	}

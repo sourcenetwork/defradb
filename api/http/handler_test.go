@@ -94,13 +94,12 @@ func TestGetJSON(t *testing.T) {
 		Name string
 	}
 
-	jsonStr := []byte(`
-		{
-			"Name": "John Doe"
-		}
-	`)
+	jsonStr := `
+{
+	"Name": "John Doe"
+}`
 
-	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,13 +118,12 @@ func TestGetJSONWithError(t *testing.T) {
 		Name string
 	}
 
-	jsonStr := []byte(`
-		{
-			"Name": 10
-		}
-	`)
+	jsonStr := `
+{
+	"Name": 10
+}`
 
-	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {
 		t.Fatal(err)
 	}
