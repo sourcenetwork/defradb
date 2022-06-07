@@ -124,12 +124,12 @@ var startCmd = &cobra.Command{
 				if err != nil {
 					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
 				}
-				log.Debug(ctx, "Bootstraping with peers", logging.NewKV("Addresses", addrs))
+				log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(ctx, "Failed to start  listeners", err)
+				log.ErrorE(ctx, "Failed to start P2P listeners", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
