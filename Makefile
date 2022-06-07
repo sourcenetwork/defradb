@@ -146,6 +146,6 @@ lint\:list:
 chglog:
 	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md
 
-.PHONY: clidocs
-clidocs:
+.PHONY: docs\:cli
+docs\:cli:
 	go run cmd/genclidocs/genclidocs.go -o docs/cli/
