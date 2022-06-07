@@ -66,7 +66,22 @@ func (n *countNode) Source() planNode { return n.plan }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *countNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.Conditions
+	}
+
+	// Add the source property.
+	explainerMap["sourceProperty"] = n.sourceProperty
+
+	// Add the virtual field id of this countNode.
+	explainerMap["virtualFieldId"] = n.virtualFieldId
+
+	return explainerMap, nil
 }
 
 func (n *countNode) Next() (bool, error) {
