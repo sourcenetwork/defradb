@@ -8,23 +8,29 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cmd
+package cli
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 )
 
+var (
+	rpcAddr    string
+	rpcTimeout = 10 * time.Second
+)
+
 // clientCmd represents the client command
-var clientCmd = &cobra.Command{
-	Use:   "client",
-	Short: "Interact with a running DefraDB node as a client",
-	Long: `Interact with a running DefraDB node as a client.
-	This command allows you to execute queries, add schema
-	types, and run debug routines.`,
+var rpcCmd = &cobra.Command{
+	Use:   "rpc",
+	Short: "Interact with a running DefraDB gRPC server",
+	Long: `Interact with a running DefraDB gRPC server as a client.
+	This command allows you to add replicators and more.`,
 }
 
 func init() {
-	rootCmd.AddCommand(clientCmd)
+	clientCmd.AddCommand(rpcCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -35,4 +41,11 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rpcCmd.PersistentFlags().StringVar(
+		&rpcAddr,
+		"addr",
+		"0.0.0.0:9161",
+		"Specify the gRPC endpoint address",
+	)
 }
