@@ -124,7 +124,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Received a pushLog request", logging.NewKV("PID", pid))
+	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PID", pid))
 
 	// parse request object
 	cid := req.Body.Cid.Cid
