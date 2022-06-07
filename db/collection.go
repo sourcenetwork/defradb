@@ -171,7 +171,7 @@ func (db *db) CreateCollection(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
-		logging.NewKV("Id", col.SchemaID),
+		logging.NewKV("ID", col.SchemaID),
 	)
 	return col, err
 }
@@ -213,7 +213,7 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 		ctx,
 		"Retrieved collection",
 		logging.NewKV("Name", desc.Name),
-		logging.NewKV("Id", sid),
+		logging.NewKV("ID", sid),
 	)
 
 	return &collection{

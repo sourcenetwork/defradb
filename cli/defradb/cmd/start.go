@@ -102,7 +102,7 @@ var startCmd = &cobra.Command{
 		// init the p2p node
 		var n *node.Node
 		if !config.Net.P2PDisabled {
-			log.Info(ctx, "Starting P2P node", logging.NewKV("tcp address", config.Net.TCPAddress))
+			log.Info(ctx, "Starting P2P node", logging.NewKV("TCP address", config.Net.TCPAddress))
 			n, err = node.NewNode(
 				ctx,
 				db,
@@ -111,7 +111,7 @@ var startCmd = &cobra.Command{
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
 				node.WithPubSub(true))
 			if err != nil {
-				log.ErrorE(ctx, "Failed to start p2p node", err)
+				log.ErrorE(ctx, "Failed to start P2P node", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
@@ -129,7 +129,7 @@ var startCmd = &cobra.Command{
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(ctx, "Failed to start p2p listeners", err)
+				log.ErrorE(ctx, "Failed to start  listeners", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
@@ -160,11 +160,11 @@ var startCmd = &cobra.Command{
 			netService := netapi.NewService(n.Peer)
 
 			go func() {
-				log.Info(ctx, "Started gRPC server", logging.NewKV("Address", addr))
+				log.Info(ctx, "Started RPC server", logging.NewKV("Address", addr))
 				netpb.RegisterServiceServer(server, netService)
 				if err := server.Serve(tcplistener); err != nil &&
 					!errors.Is(err, grpc.ErrServerStopped) {
-					log.FatalE(ctx, "serve error", err)
+					log.FatalE(ctx, "Server error", err)
 				}
 			}()
 		}

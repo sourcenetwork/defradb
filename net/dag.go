@@ -86,7 +86,7 @@ func (p *Peer) dagWorker() {
 			p.ctx,
 			"Starting new job from DAG queue",
 			logging.NewKV("DocKey", job.dockey),
-			logging.NewKV("Cid", job.node.Cid()),
+			logging.NewKV("CID", job.node.Cid()),
 		)
 
 		select {
@@ -113,7 +113,7 @@ func (p *Peer) dagWorker() {
 				"Error processing log",
 				err,
 				logging.NewKV("DocKey", job.dockey),
-				logging.NewKV("Cid", job.node.Cid()),
+				logging.NewKV("CID", job.node.Cid()),
 			)
 			job.session.Done()
 			continue

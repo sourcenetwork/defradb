@@ -130,7 +130,7 @@ func (p *Peer) Start() error {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(p.ctx, "Fatal p2p RPC server error", err)
+			log.FatalE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
 
@@ -409,7 +409,7 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 		p.ctx,
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("CID", lg.Cid),
 		logging.NewKV("SchemaId", lg.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
