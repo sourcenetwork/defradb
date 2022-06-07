@@ -80,18 +80,18 @@ func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (clien
 }
 
 func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, error) {
-	log.Debug(ctx, "loading: internal datastores")
+	log.Debug(ctx, "Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
-	log.Debug(ctx, "loading: schema manager")
+	log.Debug(ctx, "Loading: schema manager")
 	sm, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debug(ctx, "loading: query executor")
+	log.Debug(ctx, "Loading: query executor")
 	exec, err := planner.NewQueryExecutor(sm)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
-	log.Debug(ctx, "Checking if db has already been initialized...")
+	log.Debug(ctx, "Checking if DB has already been initialized...")
 	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && err != ds.ErrNotFound {
 		return err
@@ -155,7 +155,7 @@ func (db *db) initialize(ctx context.Context) error {
 	// if we're loading an existing database, just load the schema
 	// and finish initialization
 	if exists {
-		log.Debug(ctx, "DB has already been initialized, continuing.")
+		log.Debug(ctx, "DB has already been initialized, continuing")
 		return db.loadSchema(ctx)
 	}
 

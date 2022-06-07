@@ -45,26 +45,26 @@ var getCmd = &cobra.Command{
 
 		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.BlocksPath, cid)
 		if err != nil {
-			log.ErrorE(ctx, "join paths failed", err)
+			log.ErrorE(ctx, "Join paths failed", err)
 			return
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "request failed", err)
+			log.ErrorE(ctx, "Request failed", err)
 			return
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "response body closing failed", err)
+				log.ErrorE(ctx, "Response body closing failed", err)
 			}
 		}()
 
 		buf, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "request failed", err)
+			log.ErrorE(ctx, "Request failed", err)
 			return
 		}
 		log.Debug(ctx, "", logging.NewKV("Block", string(buf)))

@@ -66,10 +66,10 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	s.opts = append(defaultOpts, opts...)
 	if s.peer.ps != nil {
 		// Get all DocKeys across all collections in the DB
-		log.Debug(p.ctx, "Getting all existing dockeys...")
+		log.Debug(p.ctx, "Getting all existing DocKey...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get dockeys for pubsub topic registration: %w", err)
+			return nil, fmt.Errorf("Failed to get DocKeys for pubsub topic registration: %w", err)
 		}
 
 		i := 0
@@ -124,7 +124,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, err
 	}
-	log.Debug(ctx, "Received a pushLog request", logging.NewKV("Pid", pid))
+	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PID", pid))
 
 	// parse request object
 	cid := req.Body.Cid.Cid
@@ -156,10 +156,10 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to process push log node",
+			"Failed to process PushLog node",
 			err,
 			logging.NewKV("DocKey", docKey),
-			logging.NewKV("Cid", cid),
+			logging.NewKV("CID", cid),
 		)
 	}
 
@@ -169,13 +169,13 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			ctx,
 			"Handling children for log",
 			logging.NewKV("NChildren", len(cids)),
-			logging.NewKV("Cid", cid),
+			logging.NewKV("CID", cid),
 		)
 		var session sync.WaitGroup
 		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
 		session.Wait()
 	} else {
-		log.Debug(ctx, "No more children to process for log", logging.NewKV("Cid", cid))
+		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
 	}
 
 	return &pb.PushLogReply{}, nil
@@ -267,7 +267,7 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	log.Debug(
 		ctx,
 		"Published log",
-		logging.NewKV("Cid", req.Body.Cid.Cid),
+		logging.NewKV("CID", req.Body.Cid.Cid),
 		logging.NewKV("DocKey", dockey),
 	)
 	return nil
@@ -291,8 +291,8 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
-		log.ErrorE(ctx, "failed pushing log for doc", err, logging.NewKV("Topic", topic))
-		return nil, fmt.Errorf("failed pushing log for doc %s: %w", topic, err)
+		log.ErrorE(ctx, "Failed pushing log for doc", err, logging.NewKV("Topic", topic))
+		return nil, fmt.Errorf("Failed pushing log for doc %s: %w", topic, err)
 	}
 	return nil, nil
 }

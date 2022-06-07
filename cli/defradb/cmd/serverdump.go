@@ -43,7 +43,7 @@ var srvDumpCmd = &cobra.Command{
 		if config.Database.Store == databaseStoreName {
 			log.Info(
 				ctx,
-				"opening badger store",
+				"Opening badger store",
 				logging.NewKV("Path", config.Database.Badger.Path),
 			)
 			rootstore, err = badgerds.NewDatastore(
@@ -51,18 +51,18 @@ var srvDumpCmd = &cobra.Command{
 				config.Database.Badger.Options,
 			)
 		} else {
-			log.Fatal(ctx, "Server side dump is only supported for the Badger datastore")
+			log.Fatal(ctx, "Server-side dump is only supported for the Badger datastore")
 		}
 		if err != nil {
-			log.FatalE(ctx, "Failed to initiate datastore:", err)
+			log.FatalE(ctx, "Failed to initialize datastore", err)
 		}
 
 		db, err := db.NewDB(ctx, rootstore)
 		if err != nil {
-			log.FatalE(ctx, "Failed to initiate database:", err)
+			log.FatalE(ctx, "Failed to initialize database", err)
 		}
 
-		log.Info(ctx, "Dumping DB state:")
+		log.Info(ctx, "Dumping DB state...")
 		db.PrintDump(ctx)
 	},
 }
