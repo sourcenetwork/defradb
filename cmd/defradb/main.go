@@ -10,8 +10,8 @@
 
 package main
 
-import "github.com/sourcenetwork/defradb/cli/defradb/cmd"
+import "github.com/sourcenetwork/defradb/cli"
 
 func main() {
-	cmd.Execute()
+	cli.Execute()
 }

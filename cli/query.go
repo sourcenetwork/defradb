@@ -8,13 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cmd
+package cli
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
@@ -23,10 +23,23 @@ import (
 	"github.com/spf13/viper"
 )
 
-// pingCmd represents the ping command
-var pingCmd = &cobra.Command{
-	Use:   "ping",
-	Short: "Ping defradb to test an API connection",
+var (
+// Commented because it is deadcode, for linter.
+// queryStr string
+)
+
+// queryCmd represents the query command
+var queryCmd = &cobra.Command{
+	Use:   "query",
+	Short: "Send a GraphQL query",
+	Long: `Use this command if you wish to send a formatted GraphQL
+query to the database. It's advised to use a proper GraphQL client
+to interact with the database, the reccomended approach is with a
+local GraphiQL application (https://github.com/graphql/graphiql).
+
+To learn more about the DefraDB GraphQL Query Language, you may use
+the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
+		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		logging.SetConfig(config.Logging.toLogConfig())
@@ -39,13 +52,24 @@ var pingCmd = &cobra.Command{
 			dbaddr = "http://" + dbaddr
 		}
 
-		log.Info(ctx, "Sending ping...")
+		if len(args) != 1 {
+			log.Fatal(ctx, "Needs a single query argument")
+		}
+		query := args[0]
+		if query == "" {
+			log.Error(ctx, "Missing query")
+			return
+		}
 
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.PingPath)
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
 		if err != nil {
 			log.ErrorE(ctx, "Join paths failed", err)
 			return
 		}
+
+		p := url.Values{}
+		p.Add("query", query)
+		endpoint.RawQuery = p.Encode()
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
@@ -56,7 +80,7 @@ var pingCmd = &cobra.Command{
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "Response body closing failed", err)
+				log.ErrorE(ctx, "Response body closing failed: ", err)
 			}
 		}()
 
@@ -65,24 +89,21 @@ var pingCmd = &cobra.Command{
 			log.ErrorE(ctx, "Request failed", err)
 			return
 		}
-		if string(buf) == "pong" {
-			log.Info(ctx, "Success!")
-		} else {
-			log.ErrorE(ctx, "Unexpected result", fmt.Errorf(string(buf)))
-		}
+
+		log.Info(ctx, "", logging.NewKV("Response", string(buf)))
 	},
 }
 
 func init() {
-	clientCmd.AddCommand(pingCmd)
+	clientCmd.AddCommand(queryCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// pingCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// queryCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// pingCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// queryCmd.Flags().StringVar(&queryStr, "query", "", "Query to run on the database")
 }

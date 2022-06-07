@@ -1,13 +1,13 @@
 default:
-	go run cli/defradb/main.go
+	go run cmd/defradb/main.go
 
 .PHONY: install
 install:
-	go install ./cli/defradb/
+	go install ./cmd/defradb
 
 .PHONY: build
 build:
-	go build -o build/defradb cli/defradb/main.go
+	go build -o build/defradb cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
@@ -30,7 +30,7 @@ client\:dump:
 
 .PHONY: client\:add-schema
 client\:add-schema:
-	./build/defradb client schema add -f cli/defradb/examples/bookauthpub.graphql
+	./build/defradb client schema add -f examples/schema/bookauthpub.graphql
 
 .PHONY: deps\:lint
 deps\:lint:
@@ -69,7 +69,7 @@ tidy:
 
 .PHONY: clean
 clean:
-	go clean cli/defradb/main.go
+	go clean cmd/defradb/main.go
 	rm -f build/defradb
 
 .PHONY: clean\:test
@@ -145,3 +145,7 @@ lint\:list:
 .PHONY: chglog
 chglog:
 	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md
+
+.PHONY: docs\:cli
+docs\:cli:
+	go run cmd/genclidocs/genclidocs.go -o docs/cli/

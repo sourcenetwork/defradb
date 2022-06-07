@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEFRADB_MAIN="cli/defradb/main.go"
+DEFRADB_MAIN="cmd/defradb/main.go"
 BUILD_DIR="build/"
 
 platforms=$1

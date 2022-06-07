@@ -8,13 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cmd
+package cli
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
@@ -23,13 +24,30 @@ import (
 	"github.com/spf13/viper"
 )
 
-// dumpCmd represents the dump command
-var dumpCmd = &cobra.Command{
-	Use:   "dump",
-	Short: "Dumps the state of the entire database (server side)",
+var (
+	schemaFile string
+)
+
+// addCmd represents the add command
+var addCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add a new schema type to a DefraDB instance",
+	Long: `Example Usage:
+> defradb client schema add -f user.sdl`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		logging.SetConfig(config.Logging.toLogConfig())
+
+		var schema []byte
+		if len(args) > 0 {
+			schema = []byte(strings.Join(args, "\n"))
+		} else if schemaFile != "" {
+			buf, err := os.ReadFile(schemaFile)
+			cobra.CheckErr(err)
+			schema = buf
+		} else {
+			log.Fatal(ctx, "Missing schema")
+		}
 
 		dbaddr := viper.GetString("database.address")
 		if dbaddr == "" {
@@ -38,18 +56,14 @@ var dumpCmd = &cobra.Command{
 		if !strings.HasPrefix(dbaddr, "http") {
 			dbaddr = "http://" + dbaddr
 		}
-
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.DumpPath)
+		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
 		if err != nil {
 			log.ErrorE(ctx, "Join paths failed", err)
 			return
 		}
 
-		res, err := http.Get(endpoint.String())
-		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
-		}
+		res, err := http.Post(endpoint.String(), "text", bytes.NewBuffer(schema))
+		cobra.CheckErr(err)
 
 		defer func() {
 			err = res.Body.Close()
@@ -58,29 +72,22 @@ var dumpCmd = &cobra.Command{
 			}
 		}()
 
-		buf, err := io.ReadAll(res.Body)
-		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
-		}
-		if string(buf) == "ok" {
-			log.Info(ctx, "Success!")
-		} else {
-			log.ErrorE(ctx, "Unexpected result: ", fmt.Errorf(string(buf)))
-		}
+		result, err := io.ReadAll(res.Body)
+		cobra.CheckErr(err)
+		log.Info(ctx, "", logging.NewKV("Result", string(result)))
 	},
 }
 
 func init() {
-	clientCmd.AddCommand(dumpCmd)
+	schemaCmd.AddCommand(addCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// dumpCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// addCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// dumpCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	addCmd.Flags().StringVarP(&schemaFile, "file", "f", "", "File to load a schema from")
 }
