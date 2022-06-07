@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
@@ -71,8 +70,7 @@ func TestNewNodeNoPubSub(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	var ps *pubsub.PubSub
-	assert.Equal(t, ps, n.pubsub)
+	assert.Nil(t, n.pubsub)
 }
 
 func TestNewNodeWithPubSub(t *testing.T) {
@@ -91,8 +89,7 @@ func TestNewNodeWithPubSub(t *testing.T) {
 	}
 
 	// overly simple check of validity of pubsub, avoiding the process of creating a PubSub
-	var ps *pubsub.PubSub
-	assert.NotEqual(t, ps, n.pubsub)
+	assert.NotNil(t, n.pubsub)
 }
 
 func TestNewNodeWithPubSubFailsWithoutDataPath(t *testing.T) {
