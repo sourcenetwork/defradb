@@ -33,13 +33,9 @@ func FixtureNewMemoryDBWithBroadcaster(t *testing.T) (client.DB, *broadcast.Broa
 	options = append(options, db.WithBroadcaster(bs))
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	database, err = db.NewDB(ctx, rootstore, options...)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	return database, bs
 }
 
@@ -52,9 +48,7 @@ func TestNewNode(t *testing.T) {
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 }
 
 func TestNewNodeNoPubSub(t *testing.T) {
@@ -67,9 +61,7 @@ func TestNewNodeNoPubSub(t *testing.T) {
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	assert.Nil(t, n.pubsub)
 }
 
@@ -84,10 +76,7 @@ func TestNewNodeWithPubSub(t *testing.T) {
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
-	if err != nil {
-		t.Error(err)
-	}
-
+	assert.NoError(t, err)
 	// overly simple check of validity of pubsub, avoiding the process of creating a PubSub
 	assert.NotNil(t, n.pubsub)
 }
@@ -101,7 +90,7 @@ func TestNewNodeWithPubSubFailsWithoutDataPath(t *testing.T) {
 		bs,
 		WithPubSub(true),
 	)
-	assert.Error(t, err)
+	assert.EqualError(t, err, "1 error occurred:\n\t* mkdir : no such file or directory\n\n")
 }
 
 func TestNodeClose(t *testing.T) {
@@ -113,13 +102,9 @@ func TestNodeClose(t *testing.T) {
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	err = n.Close()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 }
 
 func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
@@ -139,6 +124,6 @@ func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
 func TestInvalidListenTCPAddrStrings(t *testing.T) {
 	opt := ListenTCPAddrStrings("/ip4/碎片整理")
 	options, err := mergeOptions(opt)
-	assert.Error(t, err)
+	assert.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
 	assert.Equal(t, Options{}, options)
 }
