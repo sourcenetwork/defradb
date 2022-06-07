@@ -72,7 +72,7 @@ func (p *Peer) processLog(
 
 	log.Debug(
 		ctx,
-		"Processing pushLog request",
+		"Processing PushLog request",
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("CID", c),
 	)
