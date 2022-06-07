@@ -16,7 +16,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/sourcenetwork/defradb/core"
 
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
@@ -42,7 +42,7 @@ func (db *db) AddSchema(ctx context.Context, schema string) error {
 
 func (db *db) loadSchema(ctx context.Context) error {
 	var sdl string
-	q := dsRequest.Query{
+	q := dsq.Query{
 		Prefix: "/schema",
 	}
 	res, err := db.systemstore().Query(ctx, q)

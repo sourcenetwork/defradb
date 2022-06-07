@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 
 	ds "github.com/ipfs/go-datastore"
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 )
@@ -208,10 +208,10 @@ func (db *db) Close(ctx context.Context) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) {
-	request := dsRequest.Query{
+	request := dsq.Query{
 		Prefix:   "",
 		KeysOnly: false,
-		Orders:   []dsRequest.Order{dsRequest.OrderByKey{}},
+		Orders:   []dsq.Order{dsq.OrderByKey{}},
 	}
 
 	results, err := store.Query(ctx, request)

@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/db/base"
 
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 )
 
 // Fetcher is the interface for collecting documents
@@ -47,7 +47,7 @@ type DocumentFetcher struct {
 
 	txn          datastore.Txn
 	spans        core.Spans
-	order        []dsRequest.Order
+	order        []dsq.Order
 	uniqueSpans  map[core.Span]struct{} // nolint:structcheck,unused
 	curSpanIndex int
 
@@ -60,7 +60,7 @@ type DocumentFetcher struct {
 
 	kv                *core.KeyValue
 	kvIter            iterable.Iterator
-	kvResultsIter     dsRequest.Results
+	kvResultsIter     dsq.Results
 	kvEnd             bool
 	isReadingDocument bool
 }
@@ -139,9 +139,9 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 	df.txn = txn
 
 	if df.reverse {
-		df.order = []dsRequest.Order{dsRequest.OrderByKeyDescending{}}
+		df.order = []dsq.Order{dsq.OrderByKeyDescending{}}
 	} else {
-		df.order = []dsRequest.Order{dsRequest.OrderByKey{}}
+		df.order = []dsq.Order{dsq.OrderByKey{}}
 	}
 
 	_, err := df.startNextSpan(ctx)
@@ -157,7 +157,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	var err error
 	if df.kvIter == nil {
 		df.kvIter, err = df.txn.Datastore().GetIterator(
-			dsRequest.Query{
+			dsq.Query{
 				Orders: df.order,
 			},
 		)

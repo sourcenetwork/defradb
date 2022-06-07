@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 
 	ds "github.com/ipfs/go-datastore"
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -247,7 +247,7 @@ func (db *db) GetCollectionBySchemaID(
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := core.NewCollectionKey("")
-	q, err := db.systemstore().Query(ctx, dsRequest.Query{
+	q, err := db.systemstore().Query(ctx, dsq.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
@@ -296,7 +296,7 @@ func (c *collection) getAllDocKeysChan(
 	prefix := core.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionId: fmt.Sprint(c.colID),
 	}
-	queryRequest, err := txn.Datastore().Query(ctx, dsRequest.Query{
+	queryRequest, err := txn.Datastore().Query(ctx, dsq.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
 	})
@@ -667,7 +667,7 @@ func (c *collection) delete(
 		return false, err
 	}
 
-	request := dsRequest.Query{
+	request := dsq.Query{
 		Prefix:   key.ToDataStoreKey().ToString(),
 		KeysOnly: true,
 	}

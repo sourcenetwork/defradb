@@ -24,7 +24,7 @@ import (
 	block "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	parserTypes "github.com/sourcenetwork/defradb/request/graphql/parser/types"
@@ -319,7 +319,7 @@ func (c *collection) applyFullDelete(
 	// ======================== Successfully deleted the datastore state of this document
 
 	// 3. =========================== Delete headstore state ===========================
-	headQuery := dsRequest.Query{
+	headQuery := dsq.Query{
 		Prefix:   dockey.ToString(),
 		KeysOnly: true,
 	}

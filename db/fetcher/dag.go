@@ -21,7 +21,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	dsRequest "github.com/ipfs/go-datastore/query"
+	dsq "github.com/ipfs/go-datastore/query"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
@@ -43,7 +43,7 @@ type HeadFetcher struct {
 	cid   *cid.Cid
 
 	kv     *core.HeadKeyValue
-	kvIter dsRequest.Results
+	kvIter dsq.Results
 	kvEnd  bool
 }
 
@@ -63,9 +63,9 @@ func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.
 	}
 	hf.spans = spans
 
-	q := dsRequest.Query{
+	q := dsq.Query{
 		Prefix: hf.spans[0].Start().ToString(),
-		Orders: []dsRequest.Order{dsRequest.OrderByKey{}},
+		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 
 	var err error
