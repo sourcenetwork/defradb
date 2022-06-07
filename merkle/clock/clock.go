@@ -194,7 +194,7 @@ func (mc *MerkleClock) ProcessNode(
 			if err != nil {
 				log.ErrorE(
 					ctx,
-					"Error adding head (when root is new head)",
+					"Failure adding head (when root is a new head)",
 					err,
 					logging.NewKV("Root", root),
 				)
