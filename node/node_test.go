@@ -95,6 +95,18 @@ func TestNewNodeWithPubSub(t *testing.T) {
 	assert.NotEqual(t, ps, n.pubsub)
 }
 
+func TestNewNodeWithPubSubFailsWithoutDataPath(t *testing.T) {
+	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	_, err := NewNode(
+		ctx,
+		db,
+		bs,
+		WithPubSub(true),
+	)
+	assert.Error(t, err)
+}
+
 func TestNodeClose(t *testing.T) {
 	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
