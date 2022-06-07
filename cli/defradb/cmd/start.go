@@ -68,7 +68,7 @@ var startCmd = &cobra.Command{
 		if config.Database.Store == "badger" {
 			log.Info(
 				ctx,
-				"opening badger store",
+				"Opening badger store",
 				logging.NewKV("Path", config.Database.Badger.Path),
 			)
 			rootstore, err = badgerds.NewDatastore(
@@ -76,7 +76,7 @@ var startCmd = &cobra.Command{
 				config.Database.Badger.Options,
 			)
 		} else if config.Database.Store == "memory" {
-			log.Info(ctx, "building new memory store")
+			log.Info(ctx, "Building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
 		}
@@ -194,7 +194,7 @@ var startCmd = &cobra.Command{
 
 		// wait for shutdown signal
 		<-signalCh
-		log.Info(ctx, "Received interrupt; closing db")
+		log.Info(ctx, "Received interrupt; closing database...")
 		if n != nil {
 			n.Close() //nolint
 		}

@@ -199,7 +199,7 @@ func (d *Datastore) periodicGC() {
 			case ErrClosed:
 				return
 			default:
-				log.Errorf("error during a GC cycle: %s", err)
+				log.Errorf("Error during a GC cycle: %s", err)
 				// Not much we can do on a random error but log it and continue.
 				gcTimeout.Reset(d.gcInterval)
 			}
@@ -431,7 +431,7 @@ func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
 	// batch is abandoned.
 	runtime.SetFinalizer(b, func(b *batch) {
 		b.cancel()
-		log.Error("batch not committed or canceled")
+		log.Error("Batch not committed or canceled")
 	})
 
 	return b, nil

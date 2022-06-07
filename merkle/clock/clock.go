@@ -146,7 +146,7 @@ func (mc *MerkleClock) ProcessNode(
 	hasHeads := false
 	log.Debug(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.Debug(ctx, "checking link", logging.NewKV("Name", l.Name), logging.NewKV("Cid", l.Cid))
+		log.Debug(ctx, "Checking link", logging.NewKV("Name", l.Name), logging.NewKV("Cid", l.Cid))
 		if l.Name == "_head" {
 			hasHeads = true
 			break
@@ -194,7 +194,7 @@ func (mc *MerkleClock) ProcessNode(
 			if err != nil {
 				log.ErrorE(
 					ctx,
-					"error adding head (when root is new head)",
+					"Error adding head (when root is new head)",
 					err,
 					logging.NewKV("Root", root),
 				)

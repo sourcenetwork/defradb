@@ -326,7 +326,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 
 	// re-initialize the sub type plan
 	if err := n.subType.Init(); err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
+		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
 		return doc
 	}
 
@@ -336,7 +336,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	next, err := n.subType.Next()
 
 	if err != nil {
-		log.ErrorE(n.p.ctx, "Sub-type initalization error at scan node reset", err)
+		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
 		return doc
 	}
 

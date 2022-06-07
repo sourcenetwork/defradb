@@ -130,7 +130,7 @@ func (p *Peer) Start() error {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(p.ctx, "Fatal p2p rpc serve error", err)
+			log.FatalE(p.ctx, "Fatal p2p RPC serve error", err)
 		}
 	}()
 
@@ -352,8 +352,8 @@ func (p *Peer) AddReplicator(
 				blk, err := txn.DAGstore().Get(ctx, c)
 				if err != nil {
 					log.ErrorE(p.ctx, "Failed to get block", err,
-						logging.NewKV("Cid", c),
-						logging.NewKV("Pid", pid),
+						logging.NewKV("CID", c),
+						logging.NewKV("PID", pid),
 						logging.NewKV("Collection", collectionName))
 					continue
 				}
@@ -462,7 +462,7 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	select {
 	case <-timer.C:
 		server.Stop()
-		log.Warn(ctx, "peer GRPC server was shutdown ungracefully")
+		log.Warn(ctx, "Peer gRPC server was shutdown ungracefully")
 	case <-stopped:
 		timer.Stop()
 	}

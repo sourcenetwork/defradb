@@ -72,7 +72,7 @@ func (p *Peer) processLog(
 
 	log.Debug(
 		ctx,
-		"Processing push log request",
+		"Processing pushLog request",
 		logging.NewKV("DocKey", dockey),
 		logging.NewKV("Cid", c),
 	)
@@ -189,7 +189,7 @@ func (p *Peer) handleChildBlocks(
 
 		log.Debug(
 			ctx,
-			"Submitting new job to dag queue",
+			"Submitting new job to DAG queue",
 			logging.NewKV("Collection", col.Name()),
 			logging.NewKV("DocKey", dockey),
 			logging.NewKV("Field", fieldName),

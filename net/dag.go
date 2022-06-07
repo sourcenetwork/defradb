@@ -84,7 +84,7 @@ func (p *Peer) dagWorker() {
 	for job := range p.jobQueue {
 		log.Debug(
 			p.ctx,
-			"Starting new job from dag queue",
+			"Starting new job from DAG queue",
 			logging.NewKV("DocKey", job.dockey),
 			logging.NewKV("Cid", job.node.Cid()),
 		)

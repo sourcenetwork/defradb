@@ -69,7 +69,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		log.Debug(p.ctx, "Getting all existing dockeys...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get dockeys for pubsub topic registration: %w", err)
+			return nil, fmt.Errorf("Failed to get DocKeys for pubsub topic registration: %w", err)
 		}
 
 		i := 0
@@ -156,7 +156,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to process push log node",
+			"Failed to process pushLog node",
 			err,
 			logging.NewKV("DocKey", docKey),
 			logging.NewKV("Cid", cid),
@@ -267,7 +267,7 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	log.Debug(
 		ctx,
 		"Published log",
-		logging.NewKV("Cid", req.Body.Cid.Cid),
+		logging.NewKV("CID", req.Body.Cid.Cid),
 		logging.NewKV("DocKey", dockey),
 	)
 	return nil
@@ -291,8 +291,8 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		Addr: addr{from},
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
-		log.ErrorE(ctx, "failed pushing log for doc", err, logging.NewKV("Topic", topic))
-		return nil, fmt.Errorf("failed pushing log for doc %s: %w", topic, err)
+		log.ErrorE(ctx, "Failed pushing log for doc", err, logging.NewKV("Topic", topic))
+		return nil, fmt.Errorf("Failed pushing log for doc %s: %w", topic, err)
 	}
 	return nil, nil
 }

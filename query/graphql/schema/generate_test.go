@@ -796,7 +796,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
 		log.Info(
 			ctx,
-			"expected vs actual objects",
+			"Expected vs actual objects",
 			logging.NewKV("DefinitionFields", objDef.Fields()),
 			logging.NewKV("ActualFields", myObjectActual.Fields()))
 
