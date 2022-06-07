@@ -156,7 +156,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to process pushLog node",
+			"Failed to process PushLog node",
 			err,
 			logging.NewKV("DocKey", docKey),
 			logging.NewKV("CID", cid),
