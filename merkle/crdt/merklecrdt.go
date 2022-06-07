@@ -105,7 +105,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 		ctx,
 		"Broadcasting new DAG node",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", c),
+		logging.NewKV("CID", c),
 	)
 	// we dont want to wait around for the broadcast
 	go func() {
@@ -122,7 +122,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 				"Failed to broadcast MerkleCRDT update",
 				err,
 				logging.NewKV("DocKey", dockey),
-				logging.NewKV("Cid", c),
+				logging.NewKV("CID", c),
 			)
 		}
 	}()

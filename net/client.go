@@ -42,7 +42,7 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 		ctx,
 		"Preparing pushLog request",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("CID", lg.Cid),
 		logging.NewKV("SchemaId", lg.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
@@ -60,8 +60,8 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 	log.Debug(
 		ctx, "Pushing log",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
-		logging.NewKV("Pid", pid))
+		logging.NewKV("CID", lg.Cid),
+		logging.NewKV("PID", pid))
 
 	client, err := s.dial(pid) // grpc dial over p2p stream
 	if err != nil {

@@ -53,17 +53,17 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		}
 
 		if len(args) != 1 {
-			log.Fatal(ctx, "needs a single query argument")
+			log.Fatal(ctx, "Needs a single query argument")
 		}
 		query := args[0]
 		if query == "" {
-			log.Error(ctx, "missing query")
+			log.Error(ctx, "Missing query")
 			return
 		}
 
 		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
 		if err != nil {
-			log.ErrorE(ctx, "join paths failed", err)
+			log.ErrorE(ctx, "Join paths failed", err)
 			return
 		}
 
@@ -73,20 +73,20 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "request failed", err)
+			log.ErrorE(ctx, "Request failed", err)
 			return
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "response body closing failed: ", err)
+				log.ErrorE(ctx, "Response body closing failed: ", err)
 			}
 		}()
 
 		buf, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "request failed", err)
+			log.ErrorE(ctx, "Request failed", err)
 			return
 		}
 

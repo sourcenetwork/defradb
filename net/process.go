@@ -72,9 +72,9 @@ func (p *Peer) processLog(
 
 	log.Debug(
 		ctx,
-		"Processing push log request",
+		"Processing PushLog request",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", c),
+		logging.NewKV("CID", c),
 	)
 	height := delta.GetPriority()
 
@@ -183,17 +183,17 @@ func (p *Peer) handleChildBlocks(
 		// get object
 		cNode, err := getter.Get(ctx, c)
 		if err != nil {
-			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("Cid", c))
+			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("CID", c))
 			continue
 		}
 
 		log.Debug(
 			ctx,
-			"Submitting new job to dag queue",
+			"Submitting new job to DAG queue",
 			logging.NewKV("Collection", col.Name()),
 			logging.NewKV("DocKey", dockey),
 			logging.NewKV("Field", fieldName),
-			logging.NewKV("Cid", cNode.Cid()))
+			logging.NewKV("CID", cNode.Cid()))
 
 		session.Add(1)
 		job := &dagJob{

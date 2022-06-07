@@ -68,7 +68,7 @@ var startCmd = &cobra.Command{
 		if config.Database.Store == "badger" {
 			log.Info(
 				ctx,
-				"opening badger store",
+				"Opening badger store",
 				logging.NewKV("Path", config.Database.Badger.Path),
 			)
 			rootstore, err = badgerds.NewDatastore(
@@ -76,7 +76,7 @@ var startCmd = &cobra.Command{
 				config.Database.Badger.Options,
 			)
 		} else if config.Database.Store == "memory" {
-			log.Info(ctx, "building new memory store")
+			log.Info(ctx, "Building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
 		}
@@ -102,7 +102,7 @@ var startCmd = &cobra.Command{
 		// init the p2p node
 		var n *node.Node
 		if !config.Net.P2PDisabled {
-			log.Info(ctx, "Starting P2P node", logging.NewKV("tcp address", config.Net.TCPAddress))
+			log.Info(ctx, "Starting P2P node", logging.NewKV("TCP address", config.Net.TCPAddress))
 			n, err = node.NewNode(
 				ctx,
 				db,
@@ -111,7 +111,7 @@ var startCmd = &cobra.Command{
 				node.ListenP2PAddrStrings(config.Net.P2PAddress),
 				node.WithPubSub(true))
 			if err != nil {
-				log.ErrorE(ctx, "Failed to start p2p node", err)
+				log.ErrorE(ctx, "Failed to start P2P node", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
@@ -124,12 +124,12 @@ var startCmd = &cobra.Command{
 				if err != nil {
 					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
 				}
-				log.Debug(ctx, "Bootstraping with peers", logging.NewKV("Addresses", addrs))
+				log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(ctx, "Failed to start p2p listeners", err)
+				log.ErrorE(ctx, "Failed to start P2P listeners", err)
 				n.Close() //nolint
 				db.Close(ctx)
 				os.Exit(1)
@@ -160,11 +160,11 @@ var startCmd = &cobra.Command{
 			netService := netapi.NewService(n.Peer)
 
 			go func() {
-				log.Info(ctx, "Started gRPC server", logging.NewKV("Address", addr))
+				log.Info(ctx, "Started RPC server", logging.NewKV("Address", addr))
 				netpb.RegisterServiceServer(server, netService)
 				if err := server.Serve(tcplistener); err != nil &&
 					!errors.Is(err, grpc.ErrServerStopped) {
-					log.FatalE(ctx, "serve error", err)
+					log.FatalE(ctx, "Server error", err)
 				}
 			}()
 		}
@@ -194,7 +194,7 @@ var startCmd = &cobra.Command{
 
 		// wait for shutdown signal
 		<-signalCh
-		log.Info(ctx, "Received interrupt; closing db")
+		log.Info(ctx, "Received interrupt; closing database...")
 		if n != nil {
 			n.Close() //nolint
 		}

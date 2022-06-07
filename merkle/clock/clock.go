@@ -135,7 +135,7 @@ func (mc *MerkleClock) ProcessNode(
 	node ipld.Node,
 ) ([]cid.Cid, error) {
 	current := node.Cid()
-	log.Debug(ctx, "Running ProcessNode", logging.NewKV("Cid", current))
+	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
@@ -146,7 +146,7 @@ func (mc *MerkleClock) ProcessNode(
 	hasHeads := false
 	log.Debug(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.Debug(ctx, "checking link", logging.NewKV("Name", l.Name), logging.NewKV("Cid", l.Cid))
+		log.Debug(ctx, "Checking link", logging.NewKV("Name", l.Name), logging.NewKV("CID", l.Cid))
 		if l.Name == "_head" {
 			hasHeads = true
 			break
@@ -194,7 +194,7 @@ func (mc *MerkleClock) ProcessNode(
 			if err != nil {
 				log.ErrorE(
 					ctx,
-					"error adding head (when root is new head)",
+					"Failure adding head (when root is a new head)",
 					err,
 					logging.NewKV("Root", root),
 				)

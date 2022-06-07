@@ -58,7 +58,7 @@ var addCmd = &cobra.Command{
 		}
 		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.SchemaLoadPath)
 		if err != nil {
-			log.ErrorE(ctx, "join paths failed", err)
+			log.ErrorE(ctx, "Join paths failed", err)
 			return
 		}
 
@@ -68,7 +68,7 @@ var addCmd = &cobra.Command{
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "response body closing failed", err)
+				log.ErrorE(ctx, "Response body closing failed", err)
 			}
 		}()
 
