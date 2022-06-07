@@ -50,7 +50,7 @@ var startCmd = &cobra.Command{
 	// Load the root config if it exists, otherwise create it.
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		rootDir, exists, err := config.GetRootDir(rootDir)
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
 			log.FatalE(ctx, "Failed to get root dir", err)
 		}

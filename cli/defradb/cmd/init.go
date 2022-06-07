@@ -40,9 +40,9 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		if len(args) > 0 {
-			rootDir = args[0]
+			rootDirParam = args[0]
 		}
-		rootDir, exists, err := config.GetRootDir(rootDir)
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
 			log.FatalE(ctx, "Failed to get root dir", err)
 		}

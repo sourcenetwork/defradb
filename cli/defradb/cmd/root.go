@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	log     = logging.MustNewLogger("defra.cli")
-	cfg     = config.DefaultConfig()
-	rootDir string
+	log          = logging.MustNewLogger("defra.cli")
+	cfg          = config.DefaultConfig()
+	rootDirParam string
 )
 
 var RootCmd = rootCmd
@@ -48,7 +48,7 @@ For example:
 	// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		rootDir, exists, err := config.GetRootDir(rootDir)
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
 			log.Fatal(ctx, "could not get rootdir", logging.NewKV("error", err))
 		}
@@ -87,7 +87,7 @@ For example:
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(
-		&rootDir,
+		&rootDirParam,
 		"rootdir",
 		"",
 		"DefraDB's root directory (default \"$HOME/.defradb\")",
