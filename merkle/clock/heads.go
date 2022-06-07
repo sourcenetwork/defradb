@@ -99,7 +99,7 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		ctx,
 		"Replacing DAG head",
 		logging.NewKV("Old", h),
-		logging.NewKV("Cid", c),
+		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 	var store ds.Write = hh.store
 	var err error
@@ -133,7 +133,7 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 
 func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
 	log.Info(ctx, "Adding new DAG head",
-		logging.NewKV("Cid", c),
+		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 	return hh.write(ctx, hh.store, c, height)
 }

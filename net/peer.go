@@ -130,7 +130,7 @@ func (p *Peer) Start() error {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
 		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
 			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(p.ctx, "Fatal p2p RPC serve error", err)
+			log.FatalE(p.ctx, "Fatal p2p RPC server error", err)
 		}
 	}()
 
@@ -187,7 +187,7 @@ func (p *Peer) handleBroadcastLoop() {
 			} else if msg.Priority > 1 {
 				err = p.handleDocUpdateLog(msg)
 			} else {
-				log.Warn(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("Cid", msg.Cid))
+				log.Warn(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", msg.Cid))
 			}
 
 			if err != nil {
@@ -211,7 +211,7 @@ func (p *Peer) RegisterNewDocument(
 
 	block, err := p.db.Blockstore().Get(ctx, c)
 	if err != nil {
-		log.ErrorE(p.ctx, "Failed to get document cid", err)
+		log.ErrorE(p.ctx, "Failed to get document CID", err)
 		return err
 	}
 
@@ -343,7 +343,7 @@ func (p *Peer) AddReplicator(
 					"Failed to get heads",
 					err,
 					logging.NewKV("DocKey", dockey),
-					logging.NewKV("Pid", pid),
+					logging.NewKV("PID", pid),
 					logging.NewKV("Collection", collectionName))
 				continue
 			}
@@ -361,7 +361,7 @@ func (p *Peer) AddReplicator(
 				// @todo: remove encode/decode loop for core.Log data
 				nd, err := dag.DecodeProtobuf(blk.RawData())
 				if err != nil {
-					log.ErrorE(p.ctx, "Failed to decode protobuf", err, logging.NewKV("Cid", c))
+					log.ErrorE(p.ctx, "Failed to decode protobuf", err, logging.NewKV("CID", c))
 					continue
 				}
 
@@ -377,8 +377,8 @@ func (p *Peer) AddReplicator(
 						p.ctx,
 						"Failed to replicate log",
 						err,
-						logging.NewKV("Cid", c),
-						logging.NewKV("Pid", pid),
+						logging.NewKV("CID", c),
+						logging.NewKV("PID", pid),
 					)
 				}
 			}
@@ -444,7 +444,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 						"Failed pushing log",
 						err,
 						logging.NewKV("DocKey", lg.DocKey),
-						logging.NewKV("Cid", lg.Cid),
+						logging.NewKV("CID", lg.Cid),
 						logging.NewKV("PeerId", peerID))
 				}
 			}(pid)
