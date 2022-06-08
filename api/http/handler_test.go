@@ -188,3 +188,57 @@ func TestDbFromContext(t *testing.T) {
 	_, err = dbFromContext(reqCtx)
 	assert.NoError(t, err)
 }
+
+func TestCORSRequest(t *testing.T) {
+	cases := []struct {
+		name       string
+		method     string
+		reqHeaders map[string]string
+		resHeaders map[string]string
+	}{
+		{
+			"DisallowedOrigin",
+			"OPTIONS",
+			map[string]string{
+				"Origin": "https://notsource.network",
+			},
+			map[string]string{
+				"Vary": "Origin",
+			},
+		},
+		{
+			"AllowedOrigin",
+			"OPTIONS",
+			map[string]string{
+				"Origin": "https://source.network",
+			},
+			map[string]string{
+				"Access-Control-Allow-Origin": "https://source.network",
+				"Vary":                        "Origin",
+			},
+		},
+	}
+
+	s := NewServer(nil, WithAllowedOrigins("https://source.network"))
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(c.method, PingPath, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			for header, value := range c.reqHeaders {
+				req.Header.Add(header, value)
+			}
+
+			rec := httptest.NewRecorder()
+
+			s.Handler.ServeHTTP(rec, req)
+
+			for header, value := range c.resHeaders {
+				assert.Equal(t, value, rec.Result().Header.Get(header))
+			}
+		})
+	}
+}
