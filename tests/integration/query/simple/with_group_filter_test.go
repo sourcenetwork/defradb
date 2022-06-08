@@ -126,6 +126,46 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by with number filter",
+		Query: `query {
+					users(groupBy: [Name], filter: {Age: {_gt: 26}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 25
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "Carlo",
+				"Age": 55
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+			},
+			{
+				"Name": "Carlo",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterThatExcludesAll(
 	t *testing.T,
 ) {
