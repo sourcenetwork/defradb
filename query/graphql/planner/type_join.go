@@ -140,7 +140,6 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 		joinDirectionPrimaryLabel   = "primary"
 		joinDirectionSecondaryLabel = "secondary"
 		joinSubTypeLabel            = "subType"
-		joinSubTypeNameLabel        = "subTypeName"
 		joinRootLabel               = "rootName"
 	)
 
@@ -161,7 +160,6 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 
 		// Add the attribute(s).
 		explainerMap[joinRootLabel] = joinType.subTypeFieldName
-		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
 		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
 		if err != nil {
@@ -174,7 +172,6 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 	case *typeJoinMany:
 		// Add the attribute(s).
 		explainerMap[joinRootLabel] = joinType.rootName
-		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
 		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
 		if err != nil {
@@ -248,53 +245,45 @@ func (p *Planner) makeTypeJoinOne(
 	source planNode,
 	subType *mapper.Select,
 ) (*typeJoinOne, error) {
-	//ignore recurse for now.
-	typeJoin := &typeJoinOne{
-		p:         p,
-		root:      source,
-		subSelect: subType,
-		docMapper: docMapper{parent.documentMapping},
-	}
-
-	desc := parent.sourceInfo.collectionDescription
-	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := desc.GetField(subType.Name)
-	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
-	}
-
-	subType.CollectionName = subTypeFieldDesc.Schema
-
-	selectPlan, err := p.SubSelect(subType)
-	if err != nil {
-		return nil, err
-	}
-	typeJoin.subType = selectPlan
-
-	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.subTypeFieldName, err = p.db.GetRelationshipIdField(
-		subType.Name,
-		subTypeFieldDesc.Schema,
-		desc.Name,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// split filter
 	if scan, ok := source.(*scanNode); ok {
 		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
 	}
 
-	// determine relation direction (primary or secondary?)
-	// check if the field we're querying is the primary side of the relation
-	if subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0 {
-		typeJoin.primary = true
-	} else {
-		typeJoin.primary = false
+	selectPlan, err := p.SubSelect(subType)
+	if err != nil {
+		return nil, err
 	}
 
-	return typeJoin, nil
+	subTypeFieldName, err := p.db.GetRelationshipIdField(
+		subType.Name,
+		subType.CollectionName,
+		parent.parsed.CollectionName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the correct sub field schema type (collection)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	if !ok {
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
+	}
+
+	// determine relation direction (primary or secondary?)
+	// check if the field we're querying is the primary side of the relation
+	isPrimary := subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0
+
+	return &typeJoinOne{
+		p:                p,
+		root:             source,
+		subSelect:        subType,
+		subTypeName:      subType.Name,
+		subTypeFieldName: subTypeFieldName,
+		subType:          selectPlan,
+		primary:          isPrimary,
+		docMapper:        docMapper{parent.documentMapping},
+	}, nil
 }
 
 func (n *typeJoinOne) Kind() string {
@@ -426,8 +415,7 @@ type typeJoinMany struct {
 	// the index to use to gather the subtype IDs
 	index *scanNode
 	// the subtype plan to get the subtype docs
-	subType     planNode
-	subTypeName string
+	subType planNode
 
 	subSelect *mapper.Select
 }
@@ -437,43 +425,33 @@ func (p *Planner) makeTypeJoinMany(
 	source planNode,
 	subType *mapper.Select,
 ) (*typeJoinMany, error) {
-	//ignore recurse for now.
-	typeJoin := &typeJoinMany{
-		p:         p,
-		root:      source,
-		subSelect: subType,
-		docMapper: docMapper{parent.documentMapping},
+	// split filter
+	if scan, ok := source.(*scanNode); ok {
+		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
 	}
-
-	desc := parent.sourceInfo.collectionDescription
-	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := desc.GetField(subType.Name)
-	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
-	}
-	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
 		return nil, err
 	}
-	typeJoin.subType = selectPlan
-	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.rootName, err = p.db.GetRelationshipIdField(
+
+	rootName, err := p.db.GetRelationshipIdField(
 		subType.Name,
-		subTypeFieldDesc.Schema,
-		desc.Name,
+		subType.CollectionName,
+		parent.parsed.CollectionName,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// split filter
-	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
-	}
-	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
-	return typeJoin, nil
+	return &typeJoinMany{
+		p:         p,
+		root:      source,
+		subSelect: subType,
+		rootName:  rootName,
+		subType:   selectPlan,
+		docMapper: docMapper{parent.documentMapping},
+	}, nil
 }
 
 func (n *typeJoinMany) Kind() string {

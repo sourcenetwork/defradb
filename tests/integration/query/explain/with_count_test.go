@@ -126,7 +126,6 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 											},
 										},
 									},
-									"subTypeName": "books",
 									"subType": dataMap{
 										"selectTopNode": dataMap{
 											"selectNode": dataMap{
