@@ -19,16 +19,17 @@ import (
 )
 
 func TestNewServerAndListen(t *testing.T) {
-	s := NewServer(nil)
+	s := NewServer(nil, WithAddress(":303000"))
 	if ok := assert.NotNil(t, s); ok {
-		assert.Error(t, s.Listen(":303000"))
+		assert.Error(t, s.Listen())
 	}
 
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
+	s = NewServer(nil, WithAddress(":3131"))
 	go func() {
 		close(serverRunning)
-		err := s.Listen(":3131")
+		err := s.Listen()
 		assert.ErrorIs(t, http.ErrServerClosed, err)
 		defer close(serverDone)
 	}()
@@ -38,4 +39,20 @@ func TestNewServerAndListen(t *testing.T) {
 	s.Shutdown(context.Background())
 
 	<-serverDone
+}
+
+func TestNewServerWithoutOptions(t *testing.T) {
+	s := NewServer(nil)
+	assert.Equal(t, "localhost:9181", s.Addr)
+	assert.Equal(t, []string(nil), s.options.allowedOrigins)
+}
+
+func TestNewServerWithAddress(t *testing.T) {
+	s := NewServer(nil, WithAddress("localhost:9999"))
+	assert.Equal(t, "localhost:9999", s.Addr)
+}
+
+func TestNewServerWithAllowedOrigins(t *testing.T) {
+	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
+	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.allowedOrigins)
 }

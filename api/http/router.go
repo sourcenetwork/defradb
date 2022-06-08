@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 )
 
@@ -34,6 +35,16 @@ var schemeError = errors.New("base must start with the http or https scheme")
 
 func setRoutes(h *handler) *handler {
 	h.Mux = chi.NewRouter()
+
+	// setup CORS
+	if len(h.options.allowedOrigins) != 0 {
+		h.Use(cors.Handler(cors.Options{
+			AllowedOrigins: h.options.allowedOrigins,
+			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type"},
+			MaxAge:         300,
+		}))
+	}
 
 	// setup logger middleware
 	h.Use(loggerMiddleware)
