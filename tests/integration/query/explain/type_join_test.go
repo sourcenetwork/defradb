@@ -137,7 +137,6 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 										},
 									},
 								},
-								"subTypeName": "contact",
 								"subType": dataMap{
 									"selectTopNode": dataMap{
 										"selectNode": dataMap{
@@ -294,7 +293,6 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 												},
 											},
 										},
-										"subTypeName": "contact",
 										"subType": dataMap{
 											"selectTopNode": dataMap{
 												"selectNode": dataMap{
@@ -333,7 +331,6 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 												},
 											},
 										},
-										"subTypeName": "contact",
 										"subType": dataMap{
 											"selectTopNode": dataMap{
 												"selectNode": dataMap{
@@ -491,7 +488,6 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 										},
 									},
 								},
-								"subTypeName": "contact",
 								"subType": dataMap{
 									"selectTopNode": dataMap{
 										"selectNode": dataMap{
@@ -513,7 +509,6 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 														},
 													},
 												},
-												"subTypeName": "address",
 												"subType": dataMap{
 													"selectTopNode": dataMap{
 														"selectNode": dataMap{
