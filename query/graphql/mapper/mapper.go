@@ -147,8 +147,8 @@ func resolveAggregates(
 				index := mapping.NextIndex
 
 				dummyParsed := &parser.Select{
-					Root:         parsed.Root,
-					ExternalName: target.hostExternalName,
+					Root: parsed.Root,
+					Name: target.hostExternalName,
 				}
 
 				childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, desc.Name)
@@ -367,20 +367,14 @@ func getRequestables(
 			// All fields should have already been mapped by getTopLevelInfo
 			index := mapping.FirstIndexOfName(f.Name)
 
-			var renderName string
-			if f.Alias != "" {
-				renderName = f.Alias
-			} else {
-				renderName = f.Name
-			}
-
 			fields = append(fields, &Field{
 				Index: index,
 				Name:  f.Name,
 			})
+
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   renderName,
+				Key:   f.Alias,
 			})
 		case *parser.Select:
 			index := mapping.NextIndex
@@ -389,7 +383,7 @@ func getRequestables(
 			// after all requested fields have been evaluated - so we note which
 			// aggregates have been requested and their targets here, before finalizing
 			// their evaluation later.
-			if _, isAggregate := parserTypes.Aggregates[f.ExternalName]; isAggregate {
+			if _, isAggregate := parserTypes.Aggregates[f.Name]; isAggregate {
 				aggregateTargets, err := getAggregateSources(f)
 				if err != nil {
 					return nil, nil, err
@@ -404,7 +398,7 @@ func getRequestables(
 				aggregates = append(aggregates, &aggregateRequest{
 					field: Field{
 						Index: index,
-						Name:  f.ExternalName,
+						Name:  f.Name,
 					},
 					targets: aggregateTargets,
 				})
@@ -422,7 +416,7 @@ func getRequestables(
 				Key:   f.Alias,
 			})
 
-			mapping.Add(index, f.ExternalName)
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, fmt.Errorf(
 				"Unexpected field type: %T",
@@ -440,7 +434,7 @@ func getCollectionName(
 	parsed *parser.Select,
 	parentCollectionName string,
 ) (string, error) {
-	if parsed.ExternalName == parserTypes.GroupFieldName {
+	if parsed.Name == parserTypes.GroupFieldName {
 		return parentCollectionName, nil
 	} else if parsed.Root == parserTypes.CommitSelection {
 		return parentCollectionName, nil
@@ -452,13 +446,13 @@ func getCollectionName(
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentDescription.GetField(parsed.ExternalName)
+		hostFieldDesc, parentHasField := parentDescription.GetField(parsed.Name)
 		if parentHasField && hostFieldDesc.RelationType != 0 {
 			return hostFieldDesc.Schema, nil
 		}
 	}
 
-	return parsed.ExternalName, nil
+	return parsed.Name, nil
 }
 
 // getTopLevelInfo returns the collection description and maps the fields directly
@@ -491,7 +485,7 @@ func getTopLevelInfo(
 		return mapping, &desc, nil
 	}
 
-	if parsed.ExternalName == parserTypes.LinksFieldName {
+	if parsed.Name == parserTypes.LinksFieldName {
 		for f := range parserTypes.LinksFields {
 			mapping.Add(mapping.NextIndex, f)
 		}
@@ -553,7 +547,7 @@ func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping
 func toField(index int, parsed *parser.Select) Field {
 	return Field{
 		Index: index,
-		Name:  parsed.ExternalName,
+		Name:  parsed.Name,
 	}
 }
 
