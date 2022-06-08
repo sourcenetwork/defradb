@@ -11,23 +11,17 @@
 package parser
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	//"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
 
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
-
-type EvalContext struct {
-	context.Context
-}
 
 // Filter contains the parsed condition map to be
 // run by the Filter Evaluator.
@@ -36,9 +30,6 @@ type EvalContext struct {
 type Filter struct {
 	// parsed filter conditions
 	Conditions map[string]interface{}
-
-	// raw graphql statement
-	Statement *ast.ObjectValue
 }
 
 // type condition
@@ -51,7 +42,6 @@ func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 		return nil, err
 	}
 	return &Filter{
-		Statement:  stmt,
 		Conditions: conditions,
 	}, nil
 }

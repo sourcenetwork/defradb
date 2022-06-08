@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -41,44 +40,6 @@ var (
 	ErrEmptyDataPayload = errors.New("given data payload is empty")
 )
 
-type ObjectPayload struct {
-	Object map[string]interface{}
-	Array  []interface{}
-}
-
-// NewObjectPayload parses a given payload string as JSON
-// and returns a ObjectPayload struct decoded with either
-// a JSON object, or JSON array.
-func NewObjectPayload(payload string) (ObjectPayload, error) {
-	obj := ObjectPayload{}
-	if payload == "" {
-		return obj, errors.New("Object payload value cannot be empty")
-	}
-	var d interface{}
-	err := json.Unmarshal([]byte(payload), &d)
-	if err != nil {
-		return obj, err
-	}
-
-	switch v := d.(type) {
-
-	// array usually means its a JSON PATCH object, unless its a create, then its
-	//  just multiple documents
-	case []interface{}:
-		obj.Array = v
-
-	case map[string]interface{}:
-		obj.Object = v
-
-	default:
-		return obj, errors.New(
-			"Object payload value has unknown structure, must be a JSON object or array",
-		)
-	}
-
-	return obj, nil
-}
-
 // Mutation is a field on the MutationType
 // of a graphql query. It includes all the possible
 // arguments and all
@@ -99,28 +60,10 @@ type Mutation struct {
 	Data   string
 
 	Fields []Selection
-
-	Statement *ast.Field
 }
 
 func (m Mutation) GetRoot() parserTypes.SelectionType {
 	return parserTypes.ObjectSelection
-}
-
-func (m Mutation) GetStatement() ast.Node {
-	return m.Statement
-}
-
-func (m Mutation) GetSelections() []Selection {
-	return m.Fields
-}
-
-func (m Mutation) GetName() string {
-	return m.Name
-}
-
-func (m Mutation) GetAlias() string {
-	return m.Alias
 }
 
 // ToSelect returns a basic Select object, with the same Name,
@@ -128,12 +71,11 @@ func (m Mutation) GetAlias() string {
 // Select planNode for the mutation return objects
 func (m Mutation) ToSelect() *Select {
 	return &Select{
-		Name:         m.Schema,
-		ExternalName: m.Schema,
-		Alias:        m.Alias,
-		Fields:       m.Fields,
-		DocKeys:      m.IDs,
-		Filter:       m.Filter,
+		Name:    m.Schema,
+		Alias:   m.Alias,
+		Fields:  m.Fields,
+		DocKeys: m.IDs,
+		Filter:  m.Filter,
 	}
 }
 
@@ -174,7 +116,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
 func parseMutation(field *ast.Field) (*Mutation, error) {
-	mut := &Mutation{Statement: field}
+	mut := &Mutation{}
 	mut.Name = field.Name.Value
 	if field.Alias != nil {
 		mut.Alias = field.Alias.Value

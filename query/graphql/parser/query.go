@@ -12,8 +12,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -33,10 +31,6 @@ type Query struct {
 	Statement *ast.Document
 }
 
-func (q Query) GetStatement() ast.Node {
-	return q.Statement
-}
-
 type OperationDefinition struct {
 	Name       string
 	Selections []Selection
@@ -49,10 +43,6 @@ func (q OperationDefinition) GetStatement() ast.Node {
 }
 
 type Selection interface {
-	Statement
-	GetName() string
-	GetAlias() string
-	GetSelections() []Selection
 	GetRoot() parserTypes.SelectionType
 }
 
@@ -61,21 +51,10 @@ type Selection interface {
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	// The unique, internal name of the Select - this may differ from that which
-	// is visible in the query string
 	Name string
-
 	// The identifier to be used in the rendered results, typically specified by
 	// the user.
 	Alias string
-
-	// The name by which the the consumer refers to the select, e.g. `_group`
-	ExternalName   string
-	CollectionName string
-
-	// If true, this Select will not be exposed/rendered to the consumer and will
-	// only be used internally
-	Hidden bool
 
 	DocKeys []string
 	CID     string
@@ -105,80 +84,16 @@ func (s Select) GetRoot() parserTypes.SelectionType {
 	return s.Root
 }
 
-func (s Select) GetStatement() ast.Node {
-	return s.Statement
-}
-
-func (s Select) GetSelections() []Selection {
-	return s.Fields
-}
-
-func (s Select) GetName() string {
-	return s.Name
-}
-
-func (s Select) GetAlias() string {
-	return s.Alias
-}
-
-// Equal compares the given Selects and returns true if they can be considered equal.
-// Note: Currently only compares Name, ExternalName and Filter as that is all that is
-// currently required, but this should be extended in the future.
-func (s Select) Equal(other Select) bool {
-	if s.Name != other.Name &&
-		s.ExternalName != other.ExternalName {
-		return false
-	}
-
-	if s.Filter == nil {
-		return other.Filter == nil
-	}
-
-	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
-}
-
-// Clone shallow-clones the Select using the provided names.
-// Note: Currently only Filter and Statement are taken from the source select,
-// this will likely expand in the near future.
-func (s Select) Clone(name string, externalName string) *Select {
-	return &Select{
-		Name:         name,
-		ExternalName: externalName,
-		Filter:       s.Filter,
-		Statement:    s.Statement,
-	}
-}
-
 // Field implements Selection
 type Field struct {
 	Name  string
 	Alias string
 
 	Root parserTypes.SelectionType
-
-	// raw graphql statement
-	Statement *ast.Field
 }
 
 func (c Field) GetRoot() parserTypes.SelectionType {
 	return c.Root
-}
-
-// GetSelectionSet implements Selection
-func (f Field) GetSelections() []Selection {
-	return []Selection{}
-}
-
-func (f Field) GetName() string {
-	return f.Name
-}
-
-func (f Field) GetAlias() string {
-	return f.Alias
-}
-
-func (f Field) GetStatement() ast.Node {
-	return f.Statement
 }
 
 // ParseQuery parses a root ast.Document, and returns a
@@ -287,14 +202,11 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
 func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
-	name, alias := getFieldName(field, index)
-
 	slct := &Select{
-		Name:         name,
-		Alias:        alias,
-		ExternalName: field.Name.Value,
-		Root:         rootType,
-		Statement:    field,
+		Alias:     getFieldAlias(field),
+		Name:      field.Name.Value,
+		Root:      rootType,
+		Statement: field,
 	}
 
 	// parse arguments
@@ -403,29 +315,11 @@ func getArgumentKeyValue(field *ast.Field, argument *ast.Argument) (string, ast.
 	return argument.Name.Value, argument.Value
 }
 
-// getFieldName returns the internal name and alias of the given field at the given index.
-// The returned name/alias may be different from the values directly on the field in order to
-// distinguish between multiple aliases of the same underlying field.
-func getFieldName(field *ast.Field, index int) (name string, alias string) {
-	// Fields that take arguments (e.g. filters) that can be aliased must be renamed internally
-	// to allow code to distinguish between multiple properties targeting the same underlying field
-	// that may or may not have different arguments.  It is hoped that this renaming can be removed
-	// once we migrate to an array-based document structure as per
-	// https://github.com/sourcenetwork/defradb/issues/395
-	if _, isAggregate := parserTypes.Aggregates[field.Name.Value]; isAggregate ||
-		field.Name.Value == parserTypes.GroupFieldName {
-		name = fmt.Sprintf("_agg%v", index)
-	} else {
-		name = field.Name.Value
-	}
-
+func getFieldAlias(field *ast.Field) string {
 	if field.Alias == nil {
-		alias = field.Name.Value
-	} else {
-		alias = field.Alias.Value
+		return field.Name.Value
 	}
-
-	return name, alias
+	return field.Alias.Value
 }
 
 func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
@@ -441,11 +335,7 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 				}
 				selections[i] = s
 			} else if node.SelectionSet == nil { // regular field
-				f, err := parseField(root, node)
-				if err != nil {
-					return nil, err
-				}
-				selections[i] = f
+				selections[i] = parseField(root, node)
 			} else { // sub type with extra fields
 				subroot := root
 				switch node.Name.Value {
@@ -466,21 +356,12 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(root parserTypes.SelectionType, field *ast.Field) (*Field, error) {
-	var alias string
-
-	name := field.Name.Value
-	if field.Alias != nil {
-		alias = field.Alias.Value
+func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
+	return &Field{
+		Root:  root,
+		Name:  field.Name.Value,
+		Alias: getFieldAlias(field),
 	}
-
-	f := &Field{
-		Root:      root,
-		Name:      name,
-		Statement: field,
-		Alias:     alias,
-	}
-	return f, nil
 }
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {
@@ -490,89 +371,4 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	default:
 		return nil, errors.New("Unknown query")
 	}
-}
-
-// The relative target/path from the object hosting an aggregate, to the property to
-// be aggregated.
-type AggregateTarget struct {
-	// The property on the object hosting the aggregate.  This should never be empty
-	HostProperty string
-	// The static name of the target host property as it appears in the aggregate
-	// query.  For example `_group`.
-	ExternalHostName string
-	// The property on the `HostProperty` that this aggregate targets.
-	//
-	// This may be empty if the aggregate targets a whole collection (e.g. Count),
-	// or if `HostProperty` is an inline array.
-	ChildProperty string
-}
-
-// Returns the source of the aggregate as requested by the consumer
-func (field Select) GetAggregateSource(host Selection) (AggregateTarget, error) {
-	if len(field.Statement.Arguments) == 0 {
-		return AggregateTarget{}, fmt.Errorf(
-			"Aggregate must be provided with a property to aggregate.",
-		)
-	}
-
-	var hostProperty string
-	var externalHostName string
-	var childProperty string
-	switch argumentValue := field.Statement.Arguments[0].Value.GetValue().(type) {
-	case string:
-		externalHostName = argumentValue
-	case []*ast.ObjectField:
-		externalHostName = field.Statement.Arguments[0].Name.Value
-		fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
-		if hasFieldArg {
-			if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
-				childProperty = innerPathStringValue
-			}
-		}
-	}
-
-	childFields := host.GetSelections()
-	targetField := field.Clone(externalHostName, externalHostName)
-
-	// Check for any fields matching the targetField
-	for _, childField := range childFields {
-		childSelect, isSelect := childField.(*Select)
-		if isSelect && childSelect.Equal(*targetField) {
-			hostProperty = childSelect.Name
-			break
-		}
-	}
-
-	// If we didn't find a field matching the target, we look for something with no filter,
-	// as it should yield all the items required by the aggregate.
-	if hostProperty == "" {
-		for _, childField := range childFields {
-			if childSelect, isSelect := childField.(*Select); isSelect {
-				if childSelect.ExternalName == externalHostName && childSelect.Filter == nil {
-					hostProperty = childSelect.Name
-					break
-				}
-			}
-		}
-	}
-
-	if hostProperty == "" {
-		// child relationships use this currently due to bug https://github.com/sourcenetwork/defradb/issues/390
-		hostProperty = externalHostName
-	}
-
-	return AggregateTarget{
-		HostProperty:     hostProperty,
-		ExternalHostName: externalHostName,
-		ChildProperty:    childProperty,
-	}, nil
-}
-
-func tryGet(fields []*ast.ObjectField, name string) (arg *ast.ObjectField, hasArg bool) {
-	for _, field := range fields {
-		if field.Name.Value == name {
-			return field, true
-		}
-	}
-	return nil, false
 }
