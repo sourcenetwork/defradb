@@ -34,17 +34,23 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"createNode": dataMap{
-								"data": dataMap{
-									"age":      float64(27),
-									"name":     "John",
-									"points":   float64(42.1),
-									"verified": true,
+					"createNode": dataMap{
+						"data": dataMap{
+							"age":      float64(27),
+							"name":     "John",
+							"points":   42.1,
+							"verified": true,
+						},
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "user",
+									"filter":         nil,
+									"spans":          []dataMap{},
 								},
 							},
-							"filter": nil,
 						},
 					},
 				},
@@ -80,15 +86,21 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"createNode": dataMap{
-								"data": dataMap{
-									"age":  float64(27),
-									"name": "John",
+					"createNode": dataMap{
+						"data": dataMap{
+							"age":  float64(27),
+							"name": "John",
+						},
+						"selectTopNode": dataMap{
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "user",
+									"filter":         nil,
+									"spans":          []dataMap{},
 								},
 							},
-							"filter": nil,
 						},
 					},
 				},

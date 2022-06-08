@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -42,8 +43,8 @@ type createNode struct {
 
 	err error
 
-	returned  bool
-	selection *mapper.Select
+	returned bool
+	results  planNode
 }
 
 func (n *createNode) Kind() string { return "createNode" }
@@ -90,14 +91,41 @@ func (n *createNode) Next() (bool, error) {
 
 	n.returned = true
 	n.currentValue = currentValue
+
+	desc := n.collection.Description()
+	docKey := base.MakeDocKey(desc, currentValue.GetKey())
+	n.results.Spans(core.Spans{core.NewSpan(docKey, docKey.PrefixEnd())})
+
+	err := n.results.Init()
+	if err != nil {
+		return false, err
+	}
+
+	err = n.results.Start()
+	if err != nil {
+		return false, err
+	}
+
+	// get the next result based on our point lookup
+	next, err := n.results.Next()
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
+	}
+
+	n.currentValue = n.results.Value()
 	return true, nil
 }
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
 
-func (n *createNode) Close() error { return nil }
+func (n *createNode) Close() error {
+	return n.results.Close()
+}
 
-func (n *createNode) Source() planNode { return nil }
+func (n *createNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
@@ -114,11 +142,16 @@ func (n *createNode) Explain() (map[string]interface{}, error) {
 }
 
 func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
+	results, err := p.Select(&parsed.Select)
+	if err != nil {
+		return nil, err
+	}
+
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		newDocStr: parsed.Data,
-		selection: &parsed.Select,
+		results:   results,
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
@@ -128,5 +161,5 @@ func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 	create.collection = col
-	return p.SelectFromSource(&parsed.Select, create, true, nil)
+	return create, nil
 }

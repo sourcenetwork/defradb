@@ -199,11 +199,13 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	// otherwise, try to parse as a CID
 	if n.headset != nil {
 		// make sure we have the correct field suffix
-		span := spans[0].Start()
+		headSetSpans := make(core.Spans, len(spans))
+		copy(headSetSpans, spans)
+		span := headSetSpans[0].Start()
 		if !strings.HasSuffix(span.ToString(), n.field) {
-			spans[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
+			headSetSpans[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
 		}
-		n.headset.Spans(spans)
+		n.headset.Spans(headSetSpans)
 	} else {
 		data := spans[0].Start().ToString()
 		c, err := cid.Decode(data)

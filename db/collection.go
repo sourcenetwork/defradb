@@ -483,6 +483,20 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	}
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
+
+	// If this a Batch masked as a Transaction
+	// commit our writes so we can see them.
+	// Batches don't maintain serializability, or
+	// linearization, or any other transaction
+	// semantics, which the user already knows
+	// otherwise they wouldn't use a datastore
+	// that doesn't support proper transactions.
+	// So let's just commit, and keep going.
+	if txn.IsBatch() {
+		if err := txn.Commit(ctx); err != nil {
+			return err
+		}
+	}
 	return err
 }
 
