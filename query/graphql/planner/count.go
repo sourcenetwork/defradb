@@ -97,14 +97,13 @@ func (n *countNode) Next() (bool, error) {
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			count = v.Len()
+			length := v.Len()
 			// For now, we only support count filters internally to support averages
 			// so this is fine here now, but may need to be moved later once external
 			// count filter support is added.
 			if count > 0 && source.Filter != nil {
 				docArray, isDocArray := property.([]core.Doc)
 				if isDocArray {
-					count = 0
 					for _, doc := range docArray {
 						passed, err := mapper.RunFilter(doc, source.Filter)
 						if err != nil {
@@ -115,6 +114,8 @@ func (n *countNode) Next() (bool, error) {
 						}
 					}
 				}
+			} else {
+				count = count + length
 			}
 		}
 	}

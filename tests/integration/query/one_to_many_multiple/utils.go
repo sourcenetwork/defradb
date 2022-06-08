@@ -20,11 +20,13 @@ var bookAuthorGQLSchema = (`
 	type article {
 		name: String
 		author: author
+		rating: Int
 	}
 
 	type book {
 		name: String
 		author: author
+		score: Int
 	}
 
 	type author {
