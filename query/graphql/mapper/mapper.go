@@ -61,6 +61,13 @@ func toSelect(
 		return nil, err
 	}
 
+	// Needs to be done before resolving aggregates, else filter conversion may fail there  //todo - add tests for that
+	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping)
+	if err != nil {
+		return nil, err
+	}
+	fields = append(fields, filterDependencies...)
+
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
 		parsed,
@@ -496,6 +503,86 @@ func getTopLevelInfo(
 	}
 
 	return mapping, &client.CollectionDescription{}, nil
+}
+
+func resolveFilterDependencies(
+	descriptionsRepo *DescriptionsRepo,
+	parentCollectionName string,
+	source *parser.Filter,
+	mapping *core.DocumentMapping,
+) ([]Requestable, error) {
+	if source == nil {
+		return nil, nil
+	}
+
+	return resolveInnerFilterDependencies(
+		descriptionsRepo,
+		parentCollectionName,
+		source.Conditions,
+		mapping,
+	)
+}
+
+func resolveInnerFilterDependencies(
+	descriptionsRepo *DescriptionsRepo,
+	parentCollectionName string,
+	source map[string]interface{},
+	mapping *core.DocumentMapping,
+) ([]Requestable, error) {
+	newFields := []Requestable{}
+
+	for key := range source {
+		if strings.HasPrefix(key, "$") {
+			continue
+		}
+
+		propertyMapped := len(mapping.IndexesByName[key]) != 0
+
+		if propertyMapped {
+			// Inner properties should be recrusively checked here, however at the moment
+			// filters do not support quering any deeper anyway.
+			// https://github.com/sourcenetwork/defradb/issues/509
+			continue
+		}
+
+		index := mapping.NextIndex
+
+		dummyParsed := &parser.Select{
+			Name: key,
+		}
+
+		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+		if err != nil {
+			return nil, err
+		}
+
+		childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+		if err != nil {
+			return nil, err
+		}
+		childMapping = childMapping.CloneWithoutRender()
+		mapping.SetChildAt(index, *childMapping)
+
+		dummyJoin := &Select{
+			Targetable: Targetable{
+				Field: Field{
+					Index: index,
+					Name:  key,
+				},
+			},
+			CollectionName:  childCollectionName,
+			DocumentMapping: *childMapping,
+		}
+
+		newFields = append(newFields, dummyJoin)
+		mapping.Add(index, key)
+
+		// Inner properties should be recrusively checked here, however at the moment
+		// filters do not support quering any deeper anyway.
+		// https://github.com/sourcenetwork/defradb/issues/509
+	}
+
+	return newFields, nil
 }
 
 // ToCommitSelect converts the given [parser.CommitSelect] into a [CommitSelect].
