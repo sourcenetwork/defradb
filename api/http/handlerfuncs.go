@@ -11,7 +11,6 @@
 package http
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -22,7 +21,6 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
-	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 )
 
@@ -33,35 +31,23 @@ const (
 )
 
 func rootHandler(rw http.ResponseWriter, req *http.Request) {
-	_, err := rw.Write(
-		[]byte("Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database"),
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse(
+			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
+		),
+		http.StatusOK,
 	)
-	if err != nil {
-		handleErr(
-			req.Context(),
-			rw,
-			errors.WithMessage(
-				err,
-				"DefraDB HTTP API Welcome message writing failed",
-			),
-			http.StatusInternalServerError,
-		)
-	}
 }
 
 func pingHandler(rw http.ResponseWriter, req *http.Request) {
-	_, err := rw.Write([]byte("pong"))
-	if err != nil {
-		handleErr(
-			req.Context(),
-			rw,
-			errors.WithMessage(
-				err,
-				"Writing pong with HTTP failed",
-			),
-			http.StatusInternalServerError,
-		)
-	}
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("response", "pong", "test"),
+		http.StatusOK,
+	)
 }
 
 func dumpHandler(rw http.ResponseWriter, req *http.Request) {
@@ -72,30 +58,20 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	db.PrintDump(req.Context())
 
-	_, err = rw.Write([]byte("ok"))
-	if err != nil {
-		handleErr(
-			req.Context(),
-			rw,
-			errors.WithMessage(
-				err,
-				"Writing ok with HTTP failed",
-			),
-			http.StatusInternalServerError,
-		)
-	}
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("response", "ok"),
+		http.StatusOK,
+	)
 }
 
 type gqlRequest struct {
-	Query         string                 `json:"query"`
-	Variables     map[string]interface{} `json:"variables"`
-	OperationName string                 `json:"operationName"`
+	Query string `json:"query"`
 }
 
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
-
 	query := req.URL.Query().Get("query")
-
 	if query == "" {
 		switch req.Header.Get("Content-Type") {
 		case contentTypeJSON:
@@ -122,6 +98,10 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			fallthrough
 
 		default:
+			if req.Body == nil {
+				handleErr(req.Context(), rw, errors.New("body cannot be empty"), http.StatusBadRequest)
+				return
+			}
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
@@ -144,34 +124,13 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	err = json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
-		return
-	}
+	sendJSON(req.Context(), rw, result, http.StatusOK)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
-	var result client.QueryResult
 	sdl, err := io.ReadAll(req.Body)
-
-	defer func() {
-		err = req.Body.Close()
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-		}
-	}()
-
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -180,33 +139,22 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
+
 	err = db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
-	result.Data = map[string]string{
-		"result": "success",
-	}
-
-	err = json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-		return
-	}
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse("result", "success"),
+		http.StatusBadRequest,
+	)
 }
 
 func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
-	var result client.QueryResult
 	cidStr := chi.URLParam(req, "cid")
 
 	// try to parse CID
@@ -218,16 +166,7 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 		var hash multihash.Multihash
 		hash, err = dshelp.DsKeyToMultihash(key)
 		if err != nil {
-			result.Errors = []interface{}{err.Error()}
-			result.Data = err.Error()
-
-			err = json.NewEncoder(rw).Encode(result)
-			if err != nil {
-				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-				return
-			}
-
-			rw.WriteHeader(http.StatusBadRequest)
+			handleErr(req.Context(), rw, err, http.StatusBadRequest)
 			return
 		}
 		cID = cid.NewCidV1(cid.Raw, hash)
@@ -238,97 +177,46 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
+
 	block, err := db.Blockstore().Get(req.Context(), cID)
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
 
 	nd, err := dag.DecodeProtobuf(block.RawData())
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-		result.Data = err.Error()
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusBadRequest)
 		return
 	}
+
 	buf, err := nd.MarshalJSON()
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
 	reg := corecrdt.LWWRegister{}
 	delta, err := reg.DeltaDecode(nd)
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
 	data, err := delta.Marshal()
 	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-
-		err = json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
-	result.Data = map[string]interface{}{
-		"block": string(buf),
-		"delta": string(data),
-		"val":   delta.Value(),
-	}
-
-	enc := json.NewEncoder(rw)
-	enc.SetIndent("", "\t")
-	err = enc.Encode(result)
-	if err != nil {
-		result.Errors = []interface{}{err.Error()}
-		result.Data = nil
-
-		err := json.NewEncoder(rw).Encode(result)
-		if err != nil {
-			handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
-			return
-		}
-
-		rw.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse(
+			"block", string(buf),
+			"delta", string(data),
+			"val", delta.Value(),
+		),
+		http.StatusOK,
+	)
 }

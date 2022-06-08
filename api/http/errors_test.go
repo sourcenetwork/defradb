@@ -54,11 +54,14 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusBadRequest, errResponse.Status)
-	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Message)
+	if len(errResponse.Errors) != 1 {
+		t.Fatal("expecting exactly one error")
+	}
 
-	lines := strings.Split(errResponse.Stack, "\n")
-	assert.Equal(t, "[DEV] test error", lines[0])
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, http.StatusText(http.StatusBadRequest), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
 func TestHandleErrOnInternalServerError(t *testing.T) {
@@ -83,11 +86,13 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Status)
-	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Message)
-
-	lines := strings.Split(errResponse.Stack, "\n")
-	assert.Equal(t, "[DEV] test error", lines[0])
+	if len(errResponse.Errors) != 1 {
+		t.Fatal("expecting exactly one error")
+	}
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, http.StatusText(http.StatusInternalServerError), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
 func TestHandleErrOnNotFound(t *testing.T) {
@@ -112,11 +117,14 @@ func TestHandleErrOnNotFound(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusNotFound, errResponse.Status)
-	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Message)
+	if len(errResponse.Errors) != 1 {
+		t.Fatal("expecting exactly one error")
+	}
 
-	lines := strings.Split(errResponse.Stack, "\n")
-	assert.Equal(t, "[DEV] test error", lines[0])
+	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, http.StatusText(http.StatusNotFound), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "test error", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] test error")
 }
 
 func TestHandleErrOnDefault(t *testing.T) {
@@ -141,9 +149,12 @@ func TestHandleErrOnDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusUnauthorized, errResponse.Status)
-	assert.Equal(t, "Unauthorized", errResponse.Message)
+	if len(errResponse.Errors) != 1 {
+		t.Fatal("expecting exactly one error")
+	}
 
-	lines := strings.Split(errResponse.Stack, "\n")
-	assert.Equal(t, "[DEV] Unauthorized", lines[0])
+	assert.Equal(t, http.StatusUnauthorized, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, http.StatusText(http.StatusUnauthorized), errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "Unauthorized", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] Unauthorized")
 }

@@ -93,14 +93,14 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	}
 
 	// check that everything is as expected
-	assert.Equal(t, "pong", rec2.Body.String())
+	assert.Equal(t, "{\"data\":{\"response\":\"pong\"}}", rec2.Body.String())
 	assert.Equal(t, "INFO", kv["level"])
 	assert.Equal(t, "defra.http", kv["logger"])
 	assert.Equal(t, "Request", kv["msg"])
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])
 	assert.Equal(t, float64(200), kv["Status"])
-	assert.Equal(t, float64(4), kv["Length"])
+	assert.Equal(t, float64(28), kv["Length"])
 }
 
 func readLog(path string) (map[string]interface{}, error) {

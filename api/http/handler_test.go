@@ -28,6 +28,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSimpleDataResponse(t *testing.T) {
+	resp := simpleDataResponse("key", "value", "key2", "value2")
+	switch v := resp.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, "value", v["key"])
+		assert.Equal(t, "value2", v["key2"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+	}
+
+	resp2 := simpleDataResponse("key", "value", "key2")
+	switch v := resp2.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, "value", v["key"])
+		assert.Equal(t, nil, v["key2"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+	}
+
+	resp3 := simpleDataResponse("key", "value", 2, "value2")
+	switch v := resp3.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, "value", v["key"])
+		assert.Equal(t, nil, v["2"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+	}
+}
+
 func TestNewHandlerWithLogger(t *testing.T) {
 	h := newHandler(nil, serverOptions{})
 
@@ -40,14 +69,14 @@ func TestNewHandlerWithLogger(t *testing.T) {
 		OutputPaths:   []string{logFile},
 	})
 
-	req, err := http.NewRequest("GET", "/ping", nil)
+	req, err := http.NewRequest("GET", PingPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rec := httptest.NewRecorder()
-
-	loggerMiddleware(h.handle(pingHandler)).ServeHTTP(rec, req)
+	lrw := newLoggingResponseWriter(rec)
+	h.ServeHTTP(lrw, req)
 	assert.Equal(t, 200, rec.Result().StatusCode)
 
 	// inspect the log file
@@ -65,13 +94,12 @@ func TestGetJSON(t *testing.T) {
 		Name string
 	}
 
-	jsonStr := []byte(`
-		{
-			"Name": "John Doe"
-		}
-	`)
+	jsonStr := `
+{
+	"Name": "John Doe"
+}`
 
-	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,13 +118,12 @@ func TestGetJSONWithError(t *testing.T) {
 		Name string
 	}
 
-	jsonStr := []byte(`
-		{
-			"Name": 10
-		}
-	`)
+	jsonStr := `
+{
+	"Name": 10
+}`
 
-	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", "/ping", bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {
 		t.Fatal(err)
 	}
