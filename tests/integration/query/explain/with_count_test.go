@@ -74,26 +74,31 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNode            (explainable but no-attributes)
-		//     ----> selectNode           (explainable)
-		//         ----> typeIndexJoin    (explainable)
-		//             ----> typeJoinMany (non-explainable)
-		//                 ----> scanNode (explainable)
+		// ----> selectTopNode                (explainable but no-attributes)
+		//     ----> countNode                (explainable)
+		//         ----> selectNode           (explainable)
+		//             ----> typeIndexJoin    (explainable)
+		//                 ----> typeJoinMany (non-explainable)
+		//                     ----> scanNode (explainable)
 		Results: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"typeIndexJoin": dataMap{
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
+						"countNode": dataMap{
+							"filter":         nil,
+							"sourceProperty": "books",
+							"selectNode": dataMap{
+								"filter": nil,
+								"typeIndexJoin": dataMap{
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
+											},
 										},
 									},
 								},
@@ -117,7 +122,15 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 				author {
 					name
 					numberOfBooks: _count(books: {})
-					numberOfArticles: _count(articles: {})
+					numberOfArticles: _count(
+						articles: {
+							filter: {
+								name: {
+									_eq: "After Guantánamo, Another Injustice"
+								}
+							}
+						}
+					)
 				}
 			}`,
 
@@ -169,55 +182,69 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNode                     (explainable but no attributes)
-		//     ----> selectNode                    (explainable)
-		//         ----> parallelNode              (non-explainable but wraps children)
-		//             ----> typeIndexJoin         (explainable)
-		//                 ----> typeJoinMany      (non-explainable)
-		//                     ----> scanNode      (explainable)
-		//                         ----> scanNode  (explainable)
-		//             ----> typeIndexJoin         (explainable)
-		//                 ----> typeJoinMany      (non-explainable)
-		//                     ----> scanNode      (explainable)
-		//                         ----> scanNode  (explainable)
+		// ----> selectTopNode                             (explainable but no attributes)
+		//     ----> countNode                             (explainable)
+		//         ----> countNode                         (explainable)
+		//             ----> selectNode                    (explainable)
+		//                 ----> parallelNode              (non-explainable but wraps children)
+		//                     ----> typeIndexJoin         (explainable)
+		//                         ----> typeJoinMany      (non-explainable)
+		//                             ----> multiscanNode (non-explainable)
+		//                                 ----> scanNode  (explainable)
+		//                     ----> typeIndexJoin         (explainable)
+		//                         ----> typeJoinMany      (non-explainable)
+		//                             ----> multiscanNode (non-explainable)
+		//                                 ----> scanNode  (explainable)
 		Results: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"parallelNode": []dataMap{
-								{
-									"typeIndexJoin": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
+						"countNode": dataMap{
+							"filter":         nil,
+							"sourceProperty": "books",
+							"countNode": dataMap{
+								"filter": dataMap{
+									"name": dataMap{
+										"$eq": "After Guantánamo, Another Injustice",
+									},
+								},
+								"sourceProperty": "articles",
+								"selectNode": dataMap{
+									"filter": nil,
+									"parallelNode": []dataMap{
+										{
+											"typeIndexJoin": dataMap{
+												"scanNode": dataMap{
+													"collectionID":   "3",
+													"collectionName": "author",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"end":   "/4",
+															"start": "/3",
+														},
+													},
 												},
 											},
 										},
-									},
-								},
-								{
-									"typeIndexJoin": dataMap{
-										"scanNode": dataMap{
-											"collectionID":   "3",
-											"collectionName": "author",
-											"filter":         nil,
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
+										{
+											"typeIndexJoin": dataMap{
+												"scanNode": dataMap{
+													"collectionID":   "3",
+													"collectionName": "author",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"end":   "/4",
+															"start": "/3",
+														},
+													},
 												},
 											},
 										},
 									},
 								},
 							},
-							"filter": nil,
 						},
 					},
 				},

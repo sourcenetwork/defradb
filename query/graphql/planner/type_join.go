@@ -314,7 +314,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	doc[subDocField] = map[string]interface{}{}
 
 	// create the collection key for the sub doc
-	slct := n.subType.(*selectTopNode).source.(*selectNode)
+	slct := n.subType.(*selectTopNode).selectnode
 	desc := slct.sourceInfo.collectionDescription
 	subKeyIndexKey := base.MakeDocKey(desc, subDocKeyStr)
 
