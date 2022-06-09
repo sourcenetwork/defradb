@@ -78,9 +78,6 @@ func (n *countNode) Explain() (map[string]interface{}, error) {
 	// Add the source property.
 	explainerMap["sourceProperty"] = n.sourceProperty
 
-	// Add the virtual field id of this countNode.
-	explainerMap["virtualFieldId"] = n.virtualFieldId
-
 	return explainerMap, nil
 }
 

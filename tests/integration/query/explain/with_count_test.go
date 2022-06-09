@@ -87,7 +87,6 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 						"countNode": dataMap{
 							"filter":         nil,
 							"sourceProperty": "books",
-							"virtualFieldId": "_agg1",
 							"selectNode": dataMap{
 								"filter": nil,
 								"typeIndexJoin": dataMap{
@@ -123,7 +122,15 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 				author {
 					name
 					numberOfBooks: _count(books: {})
-					numberOfArticles: _count(articles: {})
+					numberOfArticles: _count(
+						articles: {
+							filter: {
+								name: {
+									_eq: "After Guantánamo, Another Injustice"
+								}
+							}
+						}
+					)
 				}
 			}`,
 
@@ -195,11 +202,13 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 						"countNode": dataMap{
 							"filter":         nil,
 							"sourceProperty": "books",
-							"virtualFieldId": "_agg1",
 							"countNode": dataMap{
-								"filter":         nil,
+								"filter": dataMap{
+									"name": dataMap{
+										"$eq": "After Guantánamo, Another Injustice",
+									},
+								},
 								"sourceProperty": "articles",
-								"virtualFieldId": "_agg2",
 								"selectNode": dataMap{
 									"filter": nil,
 									"parallelNode": []dataMap{

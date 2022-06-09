@@ -56,8 +56,8 @@ type selectTopNode struct {
 	render     *renderNode
 	aggregates []aggregateNode
 
-	// source is used pre-wiring of the plan (before expansion and all).
-	source planNode
+	// selectnode is used pre-wiring of the plan (before expansion and all).
+	selectnode *selectNode
 
 	// plan is the top of the plan graph (the wired and finalized plan graph).
 	plan planNode
@@ -571,7 +571,7 @@ func (p *Planner) SelectFromSource(
 	}
 
 	top := &selectTopNode{
-		source:     s,
+		selectnode: s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,
@@ -612,7 +612,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	}
 
 	top := &selectTopNode{
-		source:     s,
+		selectnode: s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,

@@ -206,12 +206,12 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 }
 
 func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selectTopNode) error {
-	if err := p.expandPlan(plan.source, plan); err != nil {
+	if err := p.expandPlan(plan.selectnode, plan); err != nil {
 		return err
 	}
 
 	// wire up source to plan
-	plan.plan = plan.source
+	plan.plan = plan.selectnode
 
 	// if group
 	if plan.group != nil {
@@ -300,7 +300,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 			childSelect,
 			pipe,
 			false,
-			&plan.source.(*selectNode).sourceInfo,
+			&plan.selectnode.sourceInfo,
 		)
 		if err != nil {
 			return err
