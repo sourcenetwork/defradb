@@ -75,7 +75,7 @@ func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
 func (n *selectTopNode) Value() map[string]interface{} { return n.plan.Value() }
 
-func (n *selectTopNode) Source() planNode { return n.plan.Source() }
+func (n *selectTopNode) Source() planNode { return n.plan }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.

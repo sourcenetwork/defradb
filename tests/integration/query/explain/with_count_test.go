@@ -91,48 +91,54 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNode                (explainable but no-attributes)
-		//     ----> countNode                (explainable)
-		//         ----> selectNode           (explainable)
-		//             ----> typeIndexJoin    (explainable)
-		//                 ----> typeJoinMany (non-explainable)
-		//                     ----> scanNode (explainable)
+		// ----> selectTopNode                    (explainable but no-attributes)
+		//     ----> renderNode                   (explainable)
+		//         ----> countNode                (explainable)
+		//             ----> selectNode           (explainable)
+		//                 ----> typeIndexJoin    (explainable)
+		//                     ----> typeJoinMany (non-explainable)
+		//                         ----> scanNode (explainable)
 		Results: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"countNode": dataMap{
-							"filter":         nil,
-							"sourceProperty": "books",
-							"selectNode": dataMap{
-								"filter": nil,
-								"typeIndexJoin": dataMap{
-									"joinType": "typeJoinMany",
-									"rootName": "author",
-									"root": dataMap{
-										"scanNode": dataMap{
-											"filter":         nil,
-											"collectionID":   "3",
-											"collectionName": "author",
-											"spans": []dataMap{
-												{
-													"start": "/3",
-													"end":   "/4",
+						"renderNode": dataMap{
+							"countNode": dataMap{
+								"filter":         nil,
+								"sourceProperty": "books",
+								"selectNode": dataMap{
+									"filter": nil,
+									"typeIndexJoin": dataMap{
+										"joinType": "typeJoinMany",
+										"rootName": "author",
+										"root": dataMap{
+											"scanNode": dataMap{
+												"filter":         nil,
+												"collectionID":   "3",
+												"collectionName": "author",
+												"spans": []dataMap{
+													{
+														"start": "/3",
+														"end":   "/4",
+													},
 												},
 											},
 										},
-									},
-									"subTypeName": "books",
-									"subType": dataMap{
-										"selectTopNode": dataMap{
-											"scanNode": dataMap{
-												"filter":         nil,
-												"collectionID":   "2",
-												"collectionName": "book",
-												"spans": []dataMap{
-													{
-														"start": "/2",
-														"end":   "/3",
+										"subTypeName": "books",
+										"subType": dataMap{
+											"selectTopNode": dataMap{
+												"selectNode": dataMap{
+													"filter": nil,
+													"scanNode": dataMap{
+														"filter":         nil,
+														"collectionID":   "2",
+														"collectionName": "book",
+														"spans": []dataMap{
+															{
+																"start": "/2",
+																"end":   "/3",
+															},
+														},
 													},
 												},
 											},
@@ -256,87 +262,109 @@ func TestExplainQueryOneToManyMultipleWithCounts(t *testing.T) {
 			},
 		},
 
+		// ----> selectTopNode                                 (explainable but no attributes)
+		//     ----> renderNode                                (explainable)
+		//         ----> countNode                             (explainable)
+		//             ----> countNode                         (explainable)
+		//                 ----> selectNode                    (explainable)
+		//                     ----> parallelNode              (non-explainable but wraps children)
+		//                         ----> typeIndexJoin         (explainable)
+		//                             ----> typeJoinMany      (non-explainable)
+		//                                 ----> multiscanNode (non-explainable)
+		//                                     ----> scanNode  (explainable)
+		//                         ----> typeIndexJoin         (explainable)
+		//                             ----> typeJoinMany      (non-explainable)
+		//                                 ----> multiscanNode (non-explainable)
+		//                                     ----> scanNode  (explainable)
 		Results: []dataMap{
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"countNode": dataMap{
-							"filter":         nil,
-							"sourceProperty": "books",
+						"renderNode": dataMap{
 							"countNode": dataMap{
-								"filter": dataMap{
-									"name": dataMap{
-										"$eq": "After Guantánamo, Another Injustice",
+								"filter":         nil,
+								"sourceProperty": "books",
+								"countNode": dataMap{
+									"filter": dataMap{
+										"name": dataMap{
+											"$eq": "After Guantánamo, Another Injustice",
+										},
 									},
-								},
-								"sourceProperty": "articles",
-								"selectNode": dataMap{
-									"filter": nil,
-									"parallelNode": []dataMap{
-										{
-											"typeIndexJoin": dataMap{
-												"joinType": "typeJoinMany",
-												"rootName": "author",
-												"root": dataMap{
-													"scanNode": dataMap{
-														"filter":         nil,
-														"collectionID":   "3",
-														"collectionName": "author",
-														"spans": []dataMap{
-															{
-																"start": "/3",
-																"end":   "/4",
+									"sourceProperty": "articles",
+									"selectNode": dataMap{
+										"filter": nil,
+										"parallelNode": []dataMap{
+											{
+												"typeIndexJoin": dataMap{
+													"joinType": "typeJoinMany",
+													"rootName": "author",
+													"root": dataMap{
+														"scanNode": dataMap{
+															"filter":         nil,
+															"collectionID":   "3",
+															"collectionName": "author",
+															"spans": []dataMap{
+																{
+																	"start": "/3",
+																	"end":   "/4",
+																},
 															},
 														},
 													},
-												},
-												"subTypeName": "articles",
-												"subType": dataMap{
-													"selectTopNode": dataMap{
-														"scanNode": dataMap{
-															"filter":         nil,
-															"collectionID":   "1",
-															"collectionName": "article",
-															"spans": []dataMap{
-																{
-																	"start": "/1",
-																	"end":   "/2",
+													"subTypeName": "articles",
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"filter": nil,
+																"scanNode": dataMap{
+																	"filter":         nil,
+																	"collectionID":   "1",
+																	"collectionName": "article",
+																	"spans": []dataMap{
+																		{
+																			"start": "/1",
+																			"end":   "/2",
+																		},
+																	},
 																},
 															},
 														},
 													},
 												},
 											},
-										},
-										{
-											"typeIndexJoin": dataMap{
-												"joinType":    "typeJoinMany",
-												"subTypeName": "books",
-												"subType": dataMap{
-													"selectTopNode": dataMap{
+											{
+												"typeIndexJoin": dataMap{
+													"joinType": "typeJoinMany",
+													"rootName": "author",
+													"root": dataMap{
 														"scanNode": dataMap{
 															"filter":         nil,
-															"collectionID":   "2",
-															"collectionName": "book",
+															"collectionID":   "3",
+															"collectionName": "author",
 															"spans": []dataMap{
 																{
-																	"start": "/2",
-																	"end":   "/3",
+																	"start": "/3",
+																	"end":   "/4",
 																},
 															},
 														},
 													},
-												},
-												"rootName": "author",
-												"root": dataMap{
-													"scanNode": dataMap{
-														"filter":         nil,
-														"collectionID":   "3",
-														"collectionName": "author",
-														"spans": []dataMap{
-															{
-																"start": "/3",
-																"end":   "/4",
+													"subTypeName": "books",
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"filter": nil,
+																"scanNode": dataMap{
+																	"filter":         nil,
+																	"collectionID":   "2",
+																	"collectionName": "book",
+																	"spans": []dataMap{
+																		{
+																			"start": "/2",
+																			"end":   "/3",
+																		},
+																	},
+																},
 															},
 														},
 													},
