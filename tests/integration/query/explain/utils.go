@@ -35,9 +35,29 @@ var bookAuthorGQLSchema = (`
 		verified: Boolean
 		books: [book]
 		articles: [article]
+		contact: authorContact
 	}
+
+	type authorContact {
+		cell: String
+		email: String
+		author: author
+		address: contactAddress
+	}
+
+	type contactAddress {
+		city: String
+		country: String
+		contact: authorContact
+	}
+
 `)
 
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, bookAuthorGQLSchema, []string{"article", "book", "author"}, test)
+	testUtils.ExecuteQueryTestCase(
+		t,
+		bookAuthorGQLSchema,
+		[]string{"article", "book", "author", "authorContact", "contactAddress"},
+		test,
+	)
 }

@@ -101,6 +101,27 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 		explainNodeLabelTitle := strcase.ToLowerCamel(node.Kind())
 		explainGraph[explainNodeLabelTitle] = multiChildExplainGraph
 
+	// For typeIndexJoin restructure the graphs to show both `root` and `subType` at the same level.
+	case *typeIndexJoin:
+		// Get the non-restructured explain graph.
+		indexJoinGraph, err := node.Explain()
+		if err != nil {
+			return nil, err
+		}
+
+		// If not the last child then keep walking and explaining the root graph,
+		// as long as there are more explainable nodes left under root.
+		if node.Source() != nil {
+			indexJoinRootExplainGraph, err := buildExplainGraph(node.Source())
+			if err != nil {
+				return nil, err
+			}
+			// Add the explaination of the rest of the explain graph under the "root" graph.
+			indexJoinGraph["root"] = indexJoinRootExplainGraph
+		}
+		// Add this restructured typeIndexJoin explain graph.
+		explainGraph[strcase.ToLowerCamel(node.Kind())] = indexJoinGraph
+
 	// If this node has subscribed to the optable-interface that makes a node explainable.
 	case explainablePlanNode:
 		// Start building the explain graph.
