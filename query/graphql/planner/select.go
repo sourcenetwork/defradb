@@ -50,18 +50,17 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 // Wraps a selectNode and all the logic of a plan graph into a single struct for proper plan expansion.
 // Executes the top level plan node.
 type selectTopNode struct {
-	source     planNode
 	group      *groupNode
 	sort       *sortNode
 	limit      planNode
 	render     *renderNode
 	aggregates []aggregateNode
 
-	// top of the plan graph
-	plan planNode
+	// selectnode is used pre-wiring of the plan (before expansion and all).
+	selectnode *selectNode
 
-	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRATEGY) -> render -> source
-	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
+	// plan is the top of the plan graph (the wired and finalized plan graph).
+	plan planNode
 }
 
 func (n *selectTopNode) Kind() string { return "selectTopNode" }
@@ -76,7 +75,7 @@ func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
 func (n *selectTopNode) Value() map[string]interface{} { return n.plan.Value() }
 
-func (n *selectTopNode) Source() planNode { return n.source }
+func (n *selectTopNode) Source() planNode { return n.plan.Source() }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
@@ -572,7 +571,7 @@ func (p *Planner) SelectFromSource(
 	}
 
 	top := &selectTopNode{
-		source:     s,
+		selectnode: s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,
@@ -613,7 +612,7 @@ func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
 	}
 
 	top := &selectTopNode{
-		source:     s,
+		selectnode: s,
 		render:     p.render(parsed),
 		limit:      limitPlan,
 		sort:       sortPlan,
