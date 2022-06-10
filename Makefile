@@ -159,20 +159,12 @@ docs\:cli:
 docs\:manpages:
 	go run cmd/genmanpages/main.go -o build/man/
 
-ifeq ($(OS),Windows_NT)
-detectedOS := "Windows"
-else
 detectedOS := $(shell uname)
-endif
-
 .PHONY: install\:manpages
-install\:manpages: docs\:manpages
+install\:manpages:
 ifeq ($(detectedOS),Linux)
 	cp build/man/* /usr/share/man/man1/
 endif
-ifeq ($(detectedOS),Darwin)
-	@echo "Installation of man pages is not supported on macOS."
-endif
-ifeq ($(detectedOS),Windows)
-	@echo "Installation of man pages is not supported on Windows."
+ifneq ($(detectedOS),Linux)
+	@echo "Direct installation of Defradb's man pages is not supported on your system."
 endif
