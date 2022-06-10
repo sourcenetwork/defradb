@@ -130,12 +130,59 @@ func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
+	const (
+		joinTypeLabel               = "joinType"
+		joinDirectionLabel          = "direction"
+		joinDirectionPrimaryLabel   = "primary"
+		joinDirectionSecondaryLabel = "secondary"
+		joinSubTypeLabel            = "subType"
+		joinSubTypeNameLabel        = "subTypeName"
+		joinRootLabel               = "rootName"
+	)
+
 	explainerMap := map[string]interface{}{}
 
-	// @TODO {defradb/issues/475} Add explain attributes:
 	// Add the type attribute.
-	// Add the relation attribute.
-	// Add the direction attribute.
+	explainerMap[joinTypeLabel] = n.joinPlan.Kind()
+
+	switch joinType := n.joinPlan.(type) {
+
+	case *typeJoinOne:
+		// Add the direction attribute.
+		if joinType.primary {
+			explainerMap[joinDirectionLabel] = joinDirectionPrimaryLabel
+		} else {
+			explainerMap[joinDirectionLabel] = joinDirectionSecondaryLabel
+		}
+
+		// Add the attribute(s).
+		explainerMap[joinRootLabel] = joinType.subTypeFieldName
+		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
+
+		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the joined (subType) type's entire explain graph.
+		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
+
+	case *typeJoinMany:
+		// Add the attribute(s).
+		explainerMap[joinRootLabel] = joinType.rootName
+		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
+
+		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the joined (subType) type's entire explain graph.
+		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
+
+	default:
+		return explainerMap, fmt.Errorf("Unknown type of an index join to explain.")
+	}
 
 	return explainerMap, nil
 }
