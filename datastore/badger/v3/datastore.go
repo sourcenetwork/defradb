@@ -639,7 +639,7 @@ func (t *txn) has(key ds.Key) (bool, error) {
 	_, err := t.txn.Get(key.Bytes())
 	if errors.Is(err, badger.ErrKeyNotFound) {
 		return false, nil
-	} else if errors.Is(err, nil) {
+	} else if err == nil {
 		return true, nil
 	} else {
 		return false, err
