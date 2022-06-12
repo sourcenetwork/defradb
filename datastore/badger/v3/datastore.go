@@ -191,7 +191,7 @@ func (d *Datastore) periodicGC() {
 				// Rejected means someone else is running a GC
 				// or we're closing.
 				gcTimeout.Reset(d.gcInterval)
-			} else if errors.Is(err, nil) {
+			} else if err == nil {
 				gcTimeout.Reset(d.gcSleep)
 			} else if errors.Is(err, ErrClosed) {
 				return
