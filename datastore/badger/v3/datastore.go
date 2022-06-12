@@ -658,7 +658,7 @@ func (t *txn) GetSize(ctx context.Context, key ds.Key) (int, error) {
 
 func (t *txn) getSize(key ds.Key) (int, error) {
 	item, err := t.txn.Get(key.Bytes())
-	if errors.Is(err, nil) {
+	if err == nil {
 		return int(item.ValueSize()), nil
 	} else if errors.Is(err, badger.ErrKeyNotFound) {
 		return -1, ds.ErrNotFound
