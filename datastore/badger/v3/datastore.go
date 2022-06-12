@@ -155,10 +155,7 @@ func NewDatastore(path string, options *Options) (*Datastore, error) {
 	kv, err := badger.Open(opt)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "manifest has unsupported version:") {
-			err = fmt.Errorf(
-				"unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %s",
-				err.Error(),
-			)
+			err = fmt.Errorf("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %w", err)
 		}
 		return nil, err
 	}
@@ -188,17 +185,17 @@ func (d *Datastore) periodicGC() {
 	for {
 		select {
 		case <-gcTimeout.C:
-			switch err := d.gcOnce(); err {
-			case badger.ErrNoRewrite, badger.ErrRejected:
+			err := d.gcOnce()
+			if errors.Is(err, badger.ErrNoRewrite) || errors.Is(err, badger.ErrRejected) {
 				// No rewrite means we've fully garbage collected.
 				// Rejected means someone else is running a GC
 				// or we're closing.
 				gcTimeout.Reset(d.gcInterval)
-			case nil:
+			} else if errors.Is(err, nil) {
 				gcTimeout.Reset(d.gcSleep)
-			case ErrClosed:
+			} else if errors.Is(err, ErrClosed) {
 				return
-			default:
+			} else {
 				log.Errorf("Error during a GC cycle: %s", err)
 				// Not much we can do on a random error but log it and continue.
 				gcTimeout.Reset(d.gcInterval)
@@ -444,7 +441,7 @@ func (d *Datastore) CollectGarbage(ctx context.Context) (err error) {
 		err = d.gcOnce()
 	}
 
-	if err == badger.ErrNoRewrite {
+	if errors.Is(err, badger.ErrNoRewrite) {
 		err = nil
 	}
 
@@ -577,7 +574,7 @@ func (t *txn) GetExpiration(ctx context.Context, key ds.Key) (time.Time, error) 
 
 func (t *txn) getExpiration(key ds.Key) (time.Time, error) {
 	item, err := t.txn.Get(key.Bytes())
-	if err == badger.ErrKeyNotFound {
+	if errors.Is(err, badger.ErrKeyNotFound) {
 		return time.Time{}, ds.ErrNotFound
 	} else if err != nil {
 		return time.Time{}, err
@@ -618,7 +615,7 @@ func (t *txn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 func (t *txn) get(key ds.Key) ([]byte, error) {
 	item, err := t.txn.Get(key.Bytes())
-	if err == badger.ErrKeyNotFound {
+	if errors.Is(err, badger.ErrKeyNotFound) {
 		err = ds.ErrNotFound
 	}
 	if err != nil {
@@ -640,12 +637,11 @@ func (t *txn) Has(ctx context.Context, key ds.Key) (bool, error) {
 
 func (t *txn) has(key ds.Key) (bool, error) {
 	_, err := t.txn.Get(key.Bytes())
-	switch err {
-	case badger.ErrKeyNotFound:
+	if errors.Is(err, badger.ErrKeyNotFound) {
 		return false, nil
-	case nil:
+	} else if errors.Is(err, nil) {
 		return true, nil
-	default:
+	} else {
 		return false, err
 	}
 }
@@ -662,12 +658,11 @@ func (t *txn) GetSize(ctx context.Context, key ds.Key) (int, error) {
 
 func (t *txn) getSize(key ds.Key) (int, error) {
 	item, err := t.txn.Get(key.Bytes())
-	switch err {
-	case nil:
+	if errors.Is(err, nil) {
 		return int(item.ValueSize()), nil
-	case badger.ErrKeyNotFound:
+	} else if errors.Is(err, badger.ErrKeyNotFound) {
 		return -1, ds.ErrNotFound
-	default:
+	} else {
 		return -1, err
 	}
 }

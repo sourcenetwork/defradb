@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"math/rand"
 	"reflect"
 	"sort"
@@ -106,7 +107,7 @@ func TestHeadsDelete(t *testing.T) {
 	}
 
 	_, err = heads.load(ctx, c)
-	if err != ds.ErrNotFound {
+	if !errors.Is(err, ds.ErrNotFound) {
 		t.Error("failed to delete from head set, value still set")
 		return
 	}

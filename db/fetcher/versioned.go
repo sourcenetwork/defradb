@@ -312,12 +312,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
-	if err != nil && err != dag.ErrLinkNotFound {
+	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
 		return fmt.Errorf("(version fetcher) failed to get node link from DAG: %w", err)
 	}
 
 	// only seekNext on parent if we have a HEAD link
-	if err != dag.ErrLinkNotFound {
+	if !errors.Is(err, dag.ErrLinkNotFound) {
 		err := vf.seekNext(l.Cid, true)
 		if err != nil {
 			return err

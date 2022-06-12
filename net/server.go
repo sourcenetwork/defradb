@@ -367,7 +367,7 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	}
 	pid, err := libpeer.Decode(ctxPeer.Addr.String())
 	if err != nil {
-		return "", fmt.Errorf("parsing stream peer id: %v", err)
+		return "", fmt.Errorf("parsing stream peer id: %w", err)
 	}
 	return pid, nil
 }

@@ -74,7 +74,7 @@ func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()))
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	if err != nil {
@@ -128,7 +128,7 @@ func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
 
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
 	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		return -1, ipld.ErrNotFound{Cid: k}
 	}
 	return size, err

@@ -123,7 +123,7 @@ linters:
     - typecheck
     - unused
     - varcheck
-    # - errorlint
+    - errorlint
     # - exportloopref
     # - gci
     # - gocyclo
@@ -158,6 +158,7 @@ issues:
       linters:
         - errcheck
         - lll
+        - errorlint
 
     # Exclude running header check in these paths
     - path: "(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)"
@@ -196,8 +197,6 @@ issues:
 
 #==================================================================[ All Settings Of Specific Linters We Have Enabled]
 linters-settings:
-
-
   errcheck:
     # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
@@ -214,7 +213,6 @@ linters-settings:
       # - io.Copy(*bytes.Buffer)
       # - io.Copy(os.Stdout)
 
-
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     forbid:
@@ -222,30 +220,27 @@ linters-settings:
     # Exclude godoc examples from forbidigo checks.
     exclude_godoc_examples: false
 
-
   goconst:
-      # Minimal length of string constant.
-      min-len: 2
-      # Minimum occurrences of constant string count to trigger issue.
-      min-occurrences: 2
-      # Ignore test files.
-      ignore-tests: true
-      # Look for existing constants matching the values.
-      match-constant: true
-      # Search also for duplicated numbers.
-      numbers: true
-      # Minimum value, only works with goconst.numbers
-      min: 2
-      # Maximum value, only works with goconst.numbers
-      max: 2
-      # Ignore when constant is not used as function argument.
-      # @todo: perhaps in the near future set this to false and resolve the warnings.
-      ignore-calls: true
-
+    # Minimal length of string constant.
+    min-len: 2
+    # Minimum occurrences of constant string count to trigger issue.
+    min-occurrences: 2
+    # Ignore test files.
+    ignore-tests: true
+    # Look for existing constants matching the values.
+    match-constant: true
+    # Search also for duplicated numbers.
+    numbers: true
+    # Minimum value, only works with goconst.numbers
+    min: 2
+    # Maximum value, only works with goconst.numbers
+    max: 2
+    # Ignore when constant is not used as function argument.
+    # @todo: perhaps in the near future set this to false and resolve the warnings.
+    ignore-calls: true
 
   gofmt:
     simplify: true
-
 
   goheader:
     values:
@@ -272,7 +267,6 @@ linters-settings:
     template-path:
       # also as alternative of directive 'template' you may put the path to file with the template source
 
-
   gosimple:
     # Select the Go version to target.
     go: "1.17"
@@ -281,7 +275,6 @@ linters-settings:
     # Turn on all except (these are disabled):
     # - S1038 - Unnecessarily complex way of printing formatted string. Which said
     #   instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...).
-
 
   govet:
     # report about shadowed variables
@@ -308,14 +301,12 @@ linters-settings:
 
     disable-all: false
 
-
   lll:
     # max line length, lines longer will be reported.
     # '\t' is counted as 1 character.
     line-length: 120
     # tab width in spaces.
     tab-width: 1
-
 
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
@@ -325,18 +316,15 @@ linters-settings:
       - name: superfluous-else
         severity: error
 
-
   staticcheck:
     # Select the Go version to target.
     go: "1.17"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
-
   unused:
     # Select the Go version to target.
     go: "1.17"
-
 
   # The custom section can be used to define linter plugins to be loaded at runtime.
   # See README doc for more info.
