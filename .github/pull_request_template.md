@@ -1,27 +1,26 @@
-## RELEVANT ISSUE(S)
+## Relevant issue(s)
 
 Resolves #
 
-## DESCRIPTION
+## Description
 
-Please include a summary of the change and which issue is fixed. If there isn't an issue, then please create one.
-Please also include relevant motivation and context. List any dependencies that are required for this change.
+Include a summary of the changes. List the issue(s) it solves in the section above, and create one if none exists.
+Include relevant motivation and context. Detail new dependencies required for this change.
 
-### HOW HAS THIS BEEN TESTED?
+## Checklist
 
-Please describe the tests that you ran to verify your changes.
-Provide instructions so we can reproduce.
+- [ ] I made sure the code is well commented, particularly hard-to-understand areas.
+- [ ] I made sure the repository-held documentation is changed accordingly.
+- [ ] I made sure the pull request title adheres to the conventional commit style (the subset used in the project can be found in [tools/configs/chglog/config.yml](tools/configs/chglog/config.yml).
+- [ ] I made sure to discuss its limitations such as threats to validity, vulnerability to mistake and misuse, robustness to invalidation of assumptions, resource requirements, ...
 
-### CHECKLIST:
+## How has this been tested?
 
-- [ ] I have commented the code, particularly in hard-to-understand areas.
-- [ ] I have made corresponding changes to the repo-held documentation.
-- [ ] I have made sure that the PR title adheres to the conventional commit style (subset of the ones we use can be found under: [tools/configs/chglog/config.yml](tools/configs/chglog/config.yml)
+Describe the tests performed to verify the changes.
+Provide instructions to reproduce them.
 
-### ENVIRONMENT / OS THIS WAS TESTED ON?
-
-Please specify which of the following was this tested on (remove or add your own):
-- [ ] Arch Linux
-- [ ] Debian Linux
-- [ ] MacOS
-- [ ] Windows
+Specify the platform(s) on which this was tested (modify the list accordingly):
+- Arch Linux
+- Debian Linux
+- MacOS
+- Windows
