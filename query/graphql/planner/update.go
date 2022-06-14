@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"encoding/json"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -136,12 +138,32 @@ func (n *updateNode) Close() error {
 	return n.results.Close()
 }
 
-func (n *updateNode) Source() planNode { return nil }
+func (n *updateNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *updateNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	explainerMap := map[string]interface{}{}
+
+	// Add the document id(s) that request wants to update.
+	explainerMap[idsLabel] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.Conditions
+	}
+
+	// Add the attribute that represents the patch to update with.
+	data := map[string]interface{}{}
+	err := json.Unmarshal([]byte(n.patch), &data)
+	if err != nil {
+		return nil, err
+	}
+	explainerMap[dataLabel] = data
+
+	return explainerMap, nil
 }
 
 func (p *Planner) UpdateDocs(parsed *parser.Mutation) (planNode, error) {
