@@ -4,8 +4,8 @@ Resolves #
 
 ## Description
 
-Include a summary of the changes. List the issue(s) it solves in the section above, and create one if none exists. 
-Include relevant motivation and context. Detail new dependencies required for this change.
+(*replace*) Include a summary of the changes. List the issue(s) it solves in the section above, and
+create one if none exists.  Include relevant motivation and context. Detail new dependencies required for this change.
 
 ## Tasks
 
@@ -16,10 +16,10 @@ Include relevant motivation and context. Detail new dependencies required for th
 
 ## How has this been tested?
 
-Describe the tests performed to verify the changes.
-Provide instructions to reproduce them.
+(*replace*) Describe the tests performed to verify the changes. Provide instructions to reproduce them.
 
-Specify the platform(s) on which this was tested (modify the list accordingly):
+Specify the platform(s) on which this was tested:
+- *(modify the list accordingly*)
 - Arch Linux
 - Debian Linux
 - MacOS
