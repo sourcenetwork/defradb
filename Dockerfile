@@ -5,8 +5,8 @@ FROM golang:1.17 AS BUILD
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go.mod go.sum Makefile ./
+RUN make deps:modules
 COPY . .
 RUN make build
 
