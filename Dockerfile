@@ -1,20 +1,20 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM golang:1.18 AS BUILD
+FROM golang:1.17 AS BUILD
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o /defradb cmd/defradb/main.go
+RUN make build
 
 # Run stage
 FROM gcr.io/distroless/base-debian11
 WORKDIR /
 
-COPY --from=build /defradb /defradb
+COPY --from=build /app/build/defradb /defradb
 
 EXPOSE 9161
 EXPOSE 9171
