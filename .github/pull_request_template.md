@@ -4,10 +4,10 @@ Resolves #
 
 ## Description
 
-Include a summary of the changes. List the issue(s) it solves in the section above, and create one if none exists.
+Include a summary of the changes. List the issue(s) it solves in the section above, and create one if none exists. 
 Include relevant motivation and context. Detail new dependencies required for this change.
 
-## Checklist
+## Tasks
 
 - [ ] I made sure the code is well commented, particularly hard-to-understand areas.
 - [ ] I made sure the repository-held documentation is changed accordingly.
