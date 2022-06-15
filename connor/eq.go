@@ -47,7 +47,7 @@ func eq(condition, data interface{}) (bool, error) {
 				continue
 			}
 
-			mm, err := matchWith(prop.GetOperatorOrDefault("$eq"), cond, prop.GetProp(data))
+			mm, err := matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
 			if err != nil {
 				return false, err
 			}

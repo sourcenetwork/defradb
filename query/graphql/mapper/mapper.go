@@ -532,7 +532,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if strings.HasPrefix(key, "$") {
+		if strings.HasPrefix(key, "_") && key != parserTypes.DocKeyFieldName {
 			continue
 		}
 
@@ -663,7 +663,7 @@ func toFilterMap(
 	sourceClause interface{},
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, interface{}) {
-	if strings.HasPrefix(sourceKey, "$") {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != parserTypes.DocKeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
@@ -998,5 +998,5 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	typedChildBlock := childBlock.(map[string]interface{})
-	typedChildBlock["$ne"] = nil
+	typedChildBlock["_ne"] = nil
 }
