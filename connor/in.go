@@ -12,7 +12,7 @@ func in(conditions, data interface{}) (bool, error) {
 	switch cn := conditions.(type) {
 	case []interface{}:
 		for _, ce := range cn {
-			if m, err := matchWith("$eq", ce, data); err != nil {
+			if m, err := eq(ce, data); err != nil {
 				return false, err
 			} else if m {
 				return true, nil
