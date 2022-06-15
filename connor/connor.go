@@ -2,7 +2,6 @@ package connor
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -17,8 +16,8 @@ func Match(conditions map[FilterKey]interface{}, data core.Doc) (bool, error) {
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.
 func matchWith(op string, conditions, data interface{}) (bool, error) {
-	if !strings.HasPrefix(op, "$") {
-		return false, fmt.Errorf("operator should have '$' prefix")
+	if op == "" {
+		return false, fmt.Errorf("operator cannot be empty")
 	}
 
 	operator, ok := opMap[op[1:]]
