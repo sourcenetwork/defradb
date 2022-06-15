@@ -22,18 +22,6 @@ func (o *EqualOperator) Name() string {
 
 func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 	switch arr := data.(type) {
-	case []interface{}:
-		for _, item := range arr {
-			m, err := MatchWith("$eq", condition, item)
-			if err != nil {
-				return false, err
-			}
-
-			if m {
-				return true, nil
-			}
-		}
-		return false, nil
 	case []core.Doc:
 		for _, item := range arr {
 			m, err := MatchWith("$eq", condition, item)
