@@ -2,7 +2,6 @@ package connor
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/sourcenetwork/defradb/connor/numbers"
 )
@@ -32,12 +31,6 @@ func ge(condition, data interface{}) (bool, error) {
 			return dn >= cn, nil
 		}
 
-		return false, nil
-	case time.Time:
-		switch dn := data.(type) {
-		case time.Time:
-			return !dn.Before(cn), nil
-		}
 		return false, nil
 	default:
 		return false, fmt.Errorf("unknown comparison type '%#v'", condition)
