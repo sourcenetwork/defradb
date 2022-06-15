@@ -14,15 +14,3 @@ type Operator interface {
 func Register(op Operator) {
 	opMap[op.Name()] = op
 }
-
-// Operators gets the list of all registered operators which can be
-// used with Connor
-func Operators() []string {
-	names := []string{}
-
-	for name := range opMap {
-		names = append(names, name)
-	}
-
-	return names
-}
