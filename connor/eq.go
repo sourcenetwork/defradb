@@ -24,7 +24,7 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		for _, item := range arr {
-			m, err := MatchWith("$eq", condition, item)
+			m, err := matchWith("$eq", condition, item)
 			if err != nil {
 				return false, err
 			}
@@ -54,7 +54,7 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 				continue
 			}
 
-			mm, err := MatchWith(prop.GetOperatorOrDefault("$eq"), cond, prop.GetProp(data))
+			mm, err := matchWith(prop.GetOperatorOrDefault("$eq"), cond, prop.GetProp(data))
 			if err != nil {
 				return false, err
 			}
