@@ -42,15 +42,7 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 			return d == cn, nil
 		}
 		return false, nil
-	case int8:
-		return numbers.Equal(cn, data), nil
-	case int16:
-		return numbers.Equal(cn, data), nil
-	case int32:
-		return numbers.Equal(cn, data), nil
 	case int64:
-		return numbers.Equal(cn, data), nil
-	case float32:
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
