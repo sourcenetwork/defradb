@@ -7,7 +7,7 @@ func init() {
 // nin performs set exclusion comparisons by inverting the results
 // of the InOperator under non-error conditions.
 func nin(conditions, data interface{}) (bool, error) {
-	m, err := matchWith("$in", conditions, data)
+	m, err := in(conditions, data)
 
 	if err != nil {
 		return false, err

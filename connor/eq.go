@@ -17,7 +17,7 @@ func eq(condition, data interface{}) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		for _, item := range arr {
-			m, err := matchWith("$eq", condition, item)
+			m, err := eq(condition, item)
 			if err != nil {
 				return false, err
 			}

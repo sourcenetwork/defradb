@@ -10,7 +10,7 @@ import (
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
 func Match(conditions map[FilterKey]interface{}, data core.Doc) (bool, error) {
-	return matchWith("$eq", conditions, data)
+	return eq(conditions, data)
 }
 
 // matchWith can be used to specify the exact operator to use when performing

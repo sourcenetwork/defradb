@@ -12,7 +12,7 @@ func and(condition, data interface{}) (bool, error) {
 	switch cn := condition.(type) {
 	case []interface{}:
 		for _, c := range cn {
-			if m, err := matchWith("$eq", c, data); err != nil {
+			if m, err := eq(c, data); err != nil {
 				return false, err
 			} else if !m {
 				return false, nil
