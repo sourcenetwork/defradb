@@ -14,7 +14,7 @@ func (o *NotInOperator) Name() string {
 }
 
 func (o *NotInOperator) Evaluate(conditions, data interface{}) (bool, error) {
-	m, err := MatchWith("$in", conditions, data)
+	m, err := matchWith("$in", conditions, data)
 
 	if err != nil {
 		return false, err

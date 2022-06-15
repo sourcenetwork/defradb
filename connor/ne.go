@@ -14,7 +14,7 @@ func (o *NotEqualOperator) Name() string {
 }
 
 func (o *NotEqualOperator) Evaluate(conditions, data interface{}) (bool, error) {
-	m, err := MatchWith("$eq", conditions, data)
+	m, err := matchWith("$eq", conditions, data)
 
 	if err != nil {
 		return false, err
