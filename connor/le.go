@@ -22,12 +22,6 @@ func (o *LessEqualOperator) Name() string {
 
 func (o *LessEqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 	switch cn := numbers.TryUpcast(condition).(type) {
-	case string:
-		switch dn := data.(type) {
-		case string:
-			return dn <= cn, nil
-		}
-		return false, nil
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {
 		case float64:
