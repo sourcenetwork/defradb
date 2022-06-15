@@ -21,10 +21,10 @@ func matchWith(op string, conditions, data interface{}) (bool, error) {
 		return false, fmt.Errorf("operator should have '$' prefix")
 	}
 
-	o, ok := opMap[op[1:]]
+	operator, ok := opMap[op[1:]]
 	if !ok {
 		return false, fmt.Errorf("unknown operator '%s'", op[1:])
 	}
 
-	return o.Evaluate(conditions, data)
+	return operator(conditions, data)
 }

@@ -1,19 +1,12 @@
 package connor
 
 func init() {
-	Register(&NotInOperator{})
+	opMap["nin"] = nin
 }
 
-// NotInOperator performs set exclusion comparisons by inverting the results
+// nin performs set exclusion comparisons by inverting the results
 // of the InOperator under non-error conditions.
-type NotInOperator struct {
-}
-
-func (o *NotInOperator) Name() string {
-	return "nin"
-}
-
-func (o *NotInOperator) Evaluate(conditions, data interface{}) (bool, error) {
+func nin(conditions, data interface{}) (bool, error) {
 	m, err := matchWith("$in", conditions, data)
 
 	if err != nil {

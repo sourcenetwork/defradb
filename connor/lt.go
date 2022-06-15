@@ -8,19 +8,12 @@ import (
 )
 
 func init() {
-	Register(&LessOperator{})
+	opMap["lt"] = lt
 }
 
-// LessOperator does value comparisons to determine whether one
+// lt does value comparisons to determine whether one
 // value is strictly less than another.
-type LessOperator struct {
-}
-
-func (o *LessOperator) Name() string {
-	return "lt"
-}
-
-func (o *LessOperator) Evaluate(condition, data interface{}) (bool, error) {
+func lt(condition, data interface{}) (bool, error) {
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {

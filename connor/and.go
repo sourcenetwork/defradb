@@ -3,19 +3,12 @@ package connor
 import "fmt"
 
 func init() {
-	Register(&AndOperator{})
+	opMap["and"] = and
 }
 
-// AndOperator is an operator which allows the evaluation of
+// and is an operator which allows the evaluation of
 // of a number of conditions, matching if all of them match.
-type AndOperator struct {
-}
-
-func (o *AndOperator) Name() string {
-	return "and"
-}
-
-func (o *AndOperator) Evaluate(condition, data interface{}) (bool, error) {
+func and(condition, data interface{}) (bool, error) {
 	switch cn := condition.(type) {
 	case []interface{}:
 		for _, c := range cn {
