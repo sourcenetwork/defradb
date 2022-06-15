@@ -16,7 +16,7 @@ cd defradb
 make start
 ```
 
-Refer to the `README.md` and project documentation for various usage examples.
+Refer to the [`README.md`](./README.md) and project documentation for various usage examples.
 
 
 ## Development flow
@@ -33,7 +33,7 @@ Basic development flow:
 3. Ensure that `make test` and `make lint` are passing
 
 Creating an issue:
-1. On https://github.com/sourcenetwork/defradb/issues, click "New issue".
+1. On [github.com/sourcenetwork/defradb/issues](https://github.com/sourcenetwork/defradb/issues), click "New issue".
 2. Select the relevant issue type.
 3. Fill the issue template.
 
