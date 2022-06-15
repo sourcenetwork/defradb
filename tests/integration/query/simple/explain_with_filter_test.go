@@ -363,7 +363,7 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"_key": dataMap{
-										"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+										"_eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 									},
 								},
 								"spans": []dataMap{
@@ -415,7 +415,7 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Name": dataMap{
-										"$eq": "John",
+										"_eq": "John",
 									},
 								},
 								"spans": []dataMap{
@@ -462,7 +462,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Name": dataMap{
-											"$eq": "John",
+											"_eq": "John",
 										},
 									},
 									"spans": []dataMap{
@@ -504,7 +504,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Name": dataMap{
-											"$eq": "John",
+											"_eq": "John",
 										},
 									},
 									"spans": []dataMap{
@@ -547,7 +547,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Name": dataMap{
-											"$eq": "Bob",
+											"_eq": "Bob",
 										},
 									},
 									"spans": []dataMap{
@@ -601,7 +601,7 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Age": dataMap{
-										"$eq": int64(21),
+										"_eq": int64(21),
 									},
 								},
 								"spans": []dataMap{
@@ -653,7 +653,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(20),
+											"_gt": int64(20),
 										},
 									},
 									"spans": []dataMap{
@@ -700,7 +700,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(40),
+											"_gt": int64(40),
 										},
 									},
 									"spans": []dataMap{
@@ -748,7 +748,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"$gt": int64(20),
+											"_gt": int64(20),
 										},
 									},
 									"spans": []dataMap{
@@ -809,15 +809,15 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter": dataMap{
-									"$and": []interface{}{
+									"_and": []interface{}{
 										dataMap{
 											"Age": dataMap{
-												"$gt": int64(20),
+												"_gt": int64(20),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"$lt": int64(50),
+												"_lt": int64(50),
 											},
 										},
 									},
@@ -877,15 +877,15 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter": dataMap{
-									"$or": []interface{}{
+									"_or": []interface{}{
 										dataMap{
 											"Age": dataMap{
-												"$eq": int64(55),
+												"_eq": int64(55),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"$eq": int64(19),
+												"_eq": int64(19),
 											},
 										},
 									},
@@ -946,7 +946,7 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Age": dataMap{
-										"$in": []interface{}{
+										"_in": []interface{}{
 											int64(19),
 											int64(40),
 											int64(55),

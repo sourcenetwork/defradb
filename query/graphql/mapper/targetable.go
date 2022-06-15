@@ -42,7 +42,7 @@ func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {
 type Operator struct {
 	// The filter operation string that this Operator represents.
 	//
-	// E.g. "$eq", or "$and".
+	// E.g. "_eq", or "_and".
 	Operation string
 }
 
