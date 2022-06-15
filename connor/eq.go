@@ -8,19 +8,12 @@ import (
 )
 
 func init() {
-	Register(&EqualOperator{})
+	opMap["eq"] = eq
 }
 
-// EqualOperator is an operator which performs object equality
+// eq is an operator which performs object equality
 // tests.
-type EqualOperator struct {
-}
-
-func (o *EqualOperator) Name() string {
-	return "eq"
-}
-
-func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
+func eq(condition, data interface{}) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		for _, item := range arr {

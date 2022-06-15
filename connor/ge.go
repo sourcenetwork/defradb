@@ -8,19 +8,12 @@ import (
 )
 
 func init() {
-	Register(&GreaterEqualOperator{})
+	opMap["ge"] = ge
 }
 
-// GreaterEqualOperator does value comparisons to determine whether one
+// ge does value comparisons to determine whether one
 // value is strictly larger than or equal to another.
-type GreaterEqualOperator struct {
-}
-
-func (o *GreaterEqualOperator) Name() string {
-	return "ge"
-}
-
-func (o *GreaterEqualOperator) Evaluate(condition, data interface{}) (bool, error) {
+func ge(condition, data interface{}) (bool, error) {
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {

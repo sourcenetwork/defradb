@@ -1,19 +1,12 @@
 package connor
 
 func init() {
-	Register(&NotEqualOperator{})
+	opMap["ne"] = ne
 }
 
-// NotEqualOperator performs object inequality comparisons by inverting
+// ne performs object inequality comparisons by inverting
 // the result of the EqualOperator for non-error cases.
-type NotEqualOperator struct {
-}
-
-func (o *NotEqualOperator) Name() string {
-	return "ne"
-}
-
-func (o *NotEqualOperator) Evaluate(conditions, data interface{}) (bool, error) {
+func ne(conditions, data interface{}) (bool, error) {
 	m, err := matchWith("$eq", conditions, data)
 
 	if err != nil {

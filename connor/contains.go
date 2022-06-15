@@ -6,18 +6,12 @@ import (
 )
 
 func init() {
-	Register(&ContainsOperator{})
+	opMap["contains"] = contains
 }
 
-// The ContainsOperator determines whether a string contains
+// contains determines whether a string contains
 // the provided substring.
-type ContainsOperator struct{}
-
-func (o *ContainsOperator) Name() string {
-	return "contains"
-}
-
-func (o *ContainsOperator) Evaluate(conditions, data interface{}) (bool, error) {
+func contains(conditions, data interface{}) (bool, error) {
 	if c, ok := conditions.(string); ok {
 		if d, ok := data.(string); ok {
 			return strings.Contains(d, c), nil
