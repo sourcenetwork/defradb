@@ -123,7 +123,7 @@ linters:
     - typecheck
     - unused
     - varcheck
-    # - errorlint
+    - errorlint
     # - exportloopref
     # - gci
     # - gocyclo
@@ -158,6 +158,7 @@ issues:
       linters:
         - errcheck
         - lll
+        - errorlint
 
     # Exclude running header check in these paths
     - path: "(net|datastore/badger/v3/compat_logger.go|datastore/badger/v3/datastore.go)"
@@ -224,23 +225,23 @@ linters-settings:
 
 
   goconst:
-      # Minimal length of string constant.
-      min-len: 2
-      # Minimum occurrences of constant string count to trigger issue.
-      min-occurrences: 2
-      # Ignore test files.
-      ignore-tests: true
-      # Look for existing constants matching the values.
-      match-constant: true
-      # Search also for duplicated numbers.
-      numbers: true
-      # Minimum value, only works with goconst.numbers
-      min: 2
-      # Maximum value, only works with goconst.numbers
-      max: 2
-      # Ignore when constant is not used as function argument.
-      # @todo: perhaps in the near future set this to false and resolve the warnings.
-      ignore-calls: true
+    # Minimal length of string constant.
+    min-len: 2
+    # Minimum occurrences of constant string count to trigger issue.
+    min-occurrences: 2
+    # Ignore test files.
+    ignore-tests: true
+    # Look for existing constants matching the values.
+    match-constant: true
+    # Search also for duplicated numbers.
+    numbers: true
+    # Minimum value, only works with goconst.numbers
+    min: 2
+    # Maximum value, only works with goconst.numbers
+    max: 2
+    # Ignore when constant is not used as function argument.
+    # @todo: perhaps in the near future set this to false and resolve the warnings.
+    ignore-calls: true
 
 
   gofmt:

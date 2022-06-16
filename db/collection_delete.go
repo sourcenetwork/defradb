@@ -345,7 +345,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 
 	// Get the block using the cid.
 	block, err := d.bstore.Get(ctx, targetCid)
-	if (err == ipld.ErrNotFound{Cid: targetCid}) {
+	if errors.Is(err, ipld.ErrNotFound{Cid: targetCid}) {
 		// If we have multiple heads corresponding to a dockey, one of the heads
 		//  could have already deleted the parental dag chain.
 		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
