@@ -38,17 +38,16 @@ func eq(condition, data interface{}) (bool, error) {
 	case map[FilterKey]interface{}:
 		m := true
 		for prop, cond := range cn {
-			if !m {
-				// No need to evaluate after we fail
-				continue
-			}
-
-			mm, err := matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
+			var err error
+			m, err = matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
 			if err != nil {
 				return false, err
 			}
 
-			m = m && mm
+			if !m {
+				// No need to evaluate after we fail
+				break
+			}
 		}
 
 		return m, nil
