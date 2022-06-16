@@ -16,32 +16,28 @@ func Match(conditions map[FilterKey]interface{}, data core.Doc) (bool, error) {
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.
 func matchWith(op string, conditions, data interface{}) (bool, error) {
-	if op == "" {
-		return false, fmt.Errorf("operator cannot be empty")
-	}
-
-	switch op[1:] {
-	case "and":
+	switch op {
+	case "_and":
 		return and(conditions, data)
-	case "eq":
+	case "_eq":
 		return eq(conditions, data)
-	case "ge":
+	case "_ge":
 		return ge(conditions, data)
-	case "gt":
+	case "_gt":
 		return gt(conditions, data)
-	case "in":
+	case "_in":
 		return in(conditions, data)
-	case "le":
+	case "_le":
 		return le(conditions, data)
-	case "lt":
+	case "_lt":
 		return lt(conditions, data)
-	case "ne":
+	case "_ne":
 		return ne(conditions, data)
-	case "nin":
+	case "_nin":
 		return nin(conditions, data)
-	case "or":
+	case "_or":
 		return or(conditions, data)
 	default:
-		return false, fmt.Errorf("unknown operator '%s'", op[1:])
+		return false, fmt.Errorf("unknown operator '%s'", op)
 	}
 }
