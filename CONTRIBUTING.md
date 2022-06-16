@@ -16,21 +16,21 @@ cd defradb
 make start
 ```
 
-Refer to the [`README.md`](./README.md) and project documentation for various usage examples.
+Refer to the [`README.md`](./README.md) and project documentation for usage examples.
 
 
 ## Development flow
 
 Methodologies the project follows:
 
-- *Issue-driven development*: Every pull request links to issue(s).
-- [Squash and merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges): Commits of a pull request are squashed into one before being merged onto the `develop` branch.
-- [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/): Every commit message is of the `<type>: <description>` format in which type is one of `feat`, `fix`, `tools`, `docs`, `perf`, `refactor`, `test`, `ci`, `chore`.
+- **Issue-driven development**: Every pull request links to issue(s).
+- **[Squash and merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges)**: Commits of a pull request are squashed into one before being merged onto the `develop` branch.
+- **[Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)**: Every commit message is of the `<type>: <description>` format in which "type" is one of `feat`, `fix`, `tools`, `docs`, `perf`, `refactor`, `test`, `ci`, `chore`.
 
 Basic development flow:
-1. Make changes
-2. If applicable, write tests of the new/changed behavior
-3. Ensure that `make test` and `make lint` are passing
+1. Make changes.
+2. Usually, write tests of the changed behavior.
+3. Ensure that `make test` and `make lint` are passing.
 
 Creating an issue:
 1. On [github.com/sourcenetwork/defradb/issues](https://github.com/sourcenetwork/defradb/issues), click "New issue".
@@ -42,8 +42,8 @@ Submitting a contribution:
 1. Fork the repository and with your changes create a branch following the convention `<your-name>/<type>/<description>`, for example `octavio/feat/compression-lru-data`.
 2. Create a pull request targeting the `develop` branch. Link the relevant existing issue(s), and create one if no related issue exists yet. Follow the instructions of the pull request template. Use a verb in the PR title to describe the code changes.
 3. Read through and accept the Contributor License Agreement, if it's your first contribution.
-4. Request review from the *database-team*, and discuss and adapt the pull request accordingly.
-5. If approved, click 'Squash and merge' to squash it into one commit and to be merged in `develop`. Make sure the title of the commit follows the conventional commits convention.
+4. Request review from the *database-team*. Discuss and adapt the pull request accordingly.
+5. If approved, click "Squash and merge" to squash it into one commit and to merge in `develop`. Make sure the title of the commit follows the *Conventional Commits* convention.
 
 
 ## Testing
@@ -58,36 +58,35 @@ Submitting a contribution:
 
 
 ## Documentation
-- The overall project's documentation is found at [docs.source.network](https://docs.source.network), and its source at [github.com/sourcenetwork/docs.source.network](https://github.com/sourcenetwork/docs.source.network).
-- The code documentation, doc comments, can be viewed as a website:
-	```shell
-	go install golang.org/x/pkgsite/cmd/pkgsite@latest
-	cd your-path-to/defradb/
-	pkgsite
-	# open http://localhost:8080/github.com/sourcenetwork/defradb
-	```
-	- [go.dev/doc/comment](https://go.dev/doc/comment) has guidelines on writing Go doc comments.
-- `docs/cmd/` is where auto-generated documentation of the `defradb` command-line program is.
-- `docs/data_format_changes/` details the historical breaking changes to data persistence.
+The overall project's documentation is found at [docs.source.network](https://docs.source.network), and its source at [github.com/sourcenetwork/docs.source.network](https://github.com/sourcenetwork/docs.source.network).
+
+The code documentation, doc comments, can be viewed as a website:
+```shell
+go install golang.org/x/pkgsite/cmd/pkgsite@latest
+cd your-path-to/defradb/
+pkgsite
+# open http://localhost:8080/github.com/sourcenetwork/defradb
+```
+- [go.dev/doc/comment](https://go.dev/doc/comment) has guidelines on writing Go doc comments.
+
+`docs/cmd/` is where auto-generated documentation of the `defradb` command-line program is.
+
+`docs/data_format_changes/` details the historical breaking changes to data persistence.
 
 
 ## Additional information
 
 This section includes good-to-know information for advanced contributors.
 
-Release process and versioning:
-- The project follows [Semantic Versioning](https://semver.org/).
-- `CHANGELOG.md` is automatically generated at the end of the release process, using `make chglog`, and finally manually verifying its content. This is possible because of conformance to *conventional commits*.
-
 Dependency management:
 - `go mod tidy` should be performed by pull requests changing dependency requirements.
-- Using `dependabot` for the automatic creation of pull requests updating dependencies.
+- The project uses `dependabot` for automatic creation of pull requests updating dependencies.
 
 Peer review of pull requests:
 - Using the [Conventional Comments](https://conventionalcomments.org/) methodology is recommended.
 
 Licensing:
-- A license header must be included at the top of every code file.
+- The [BSL license header](./licenses/BSL.txt) must be included at the top of every code file.
 
 Project management:
 - [Milestones](https://github.com/sourcenetwork/defradb/milestones)  and a [project board](https://github.com/orgs/sourcenetwork/projects/3) are used to coordinate work on releases.
