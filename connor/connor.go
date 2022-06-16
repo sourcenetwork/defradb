@@ -20,10 +20,28 @@ func matchWith(op string, conditions, data interface{}) (bool, error) {
 		return false, fmt.Errorf("operator cannot be empty")
 	}
 
-	operator, ok := opMap[op[1:]]
-	if !ok {
+	switch op[1:] {
+	case "and":
+		return and(conditions, data)
+	case "eq":
+		return eq(conditions, data)
+	case "ge":
+		return ge(conditions, data)
+	case "gt":
+		return gt(conditions, data)
+	case "in":
+		return in(conditions, data)
+	case "le":
+		return le(conditions, data)
+	case "lt":
+		return lt(conditions, data)
+	case "ne":
+		return ne(conditions, data)
+	case "nin":
+		return nin(conditions, data)
+	case "or":
+		return or(conditions, data)
+	default:
 		return false, fmt.Errorf("unknown operator '%s'", op[1:])
 	}
-
-	return operator(conditions, data)
 }

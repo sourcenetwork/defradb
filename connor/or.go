@@ -2,10 +2,6 @@ package connor
 
 import "fmt"
 
-func init() {
-	opMap["or"] = or
-}
-
 // or is an operator which allows the evaluation of
 // of a number of conditions, matching if any of them match.
 func or(condition, data interface{}) (bool, error) {

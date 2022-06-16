@@ -2,10 +2,6 @@ package connor
 
 import "fmt"
 
-func init() {
-	opMap["in"] = in
-}
-
 // in will determine whether a value exists within the
 // condition's array of available values.
 func in(conditions, data interface{}) (bool, error) {
