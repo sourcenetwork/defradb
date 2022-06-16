@@ -186,16 +186,17 @@ func (d *Datastore) periodicGC() {
 		select {
 		case <-gcTimeout.C:
 			err := d.gcOnce()
-			if errors.Is(err, badger.ErrNoRewrite) || errors.Is(err, badger.ErrRejected) {
+			switch {
+			case errors.Is(err, badger.ErrNoRewrite) || errors.Is(err, badger.ErrRejected):
 				// No rewrite means we've fully garbage collected.
 				// Rejected means someone else is running a GC
 				// or we're closing.
 				gcTimeout.Reset(d.gcInterval)
-			} else if err == nil {
+			case err == nil:
 				gcTimeout.Reset(d.gcSleep)
-			} else if errors.Is(err, ErrClosed) {
+			case errors.Is(err, ErrClosed):
 				return
-			} else {
+			default:
 				log.Errorf("Error during a GC cycle: %s", err)
 				// Not much we can do on a random error but log it and continue.
 				gcTimeout.Reset(d.gcInterval)
@@ -637,11 +638,12 @@ func (t *txn) Has(ctx context.Context, key ds.Key) (bool, error) {
 
 func (t *txn) has(key ds.Key) (bool, error) {
 	_, err := t.txn.Get(key.Bytes())
-	if errors.Is(err, badger.ErrKeyNotFound) {
+	switch {
+	case errors.Is(err, badger.ErrKeyNotFound):
 		return false, nil
-	} else if err == nil {
+	case err == nil:
 		return true, nil
-	} else {
+	default:
 		return false, err
 	}
 }
@@ -658,11 +660,12 @@ func (t *txn) GetSize(ctx context.Context, key ds.Key) (int, error) {
 
 func (t *txn) getSize(key ds.Key) (int, error) {
 	item, err := t.txn.Get(key.Bytes())
-	if err == nil {
+	switch {
+	case err == nil:
 		return int(item.ValueSize()), nil
-	} else if errors.Is(err, badger.ErrKeyNotFound) {
+	case errors.Is(err, badger.ErrKeyNotFound):
 		return -1, ds.ErrNotFound
-	} else {
+	default:
 		return -1, err
 	}
 }
