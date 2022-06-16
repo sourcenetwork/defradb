@@ -7,10 +7,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-func init() {
-	opMap["eq"] = eq
-}
-
 // eq is an operator which performs object equality
 // tests.
 func eq(condition, data interface{}) (bool, error) {

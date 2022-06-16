@@ -6,10 +6,6 @@ import (
 	"github.com/sourcenetwork/defradb/connor/numbers"
 )
 
-func init() {
-	opMap["ge"] = ge
-}
-
 // ge does value comparisons to determine whether one
 // value is strictly larger than or equal to another.
 func ge(condition, data interface{}) (bool, error) {

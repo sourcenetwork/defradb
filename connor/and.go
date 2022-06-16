@@ -2,10 +2,6 @@ package connor
 
 import "fmt"
 
-func init() {
-	opMap["and"] = and
-}
-
 // and is an operator which allows the evaluation of
 // of a number of conditions, matching if all of them match.
 func and(condition, data interface{}) (bool, error) {

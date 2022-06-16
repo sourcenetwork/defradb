@@ -6,10 +6,6 @@ import (
 	"github.com/sourcenetwork/defradb/connor/numbers"
 )
 
-func init() {
-	opMap["lt"] = lt
-}
-
 // lt does value comparisons to determine whether one
 // value is strictly less than another.
 func lt(condition, data interface{}) (bool, error) {
