@@ -57,7 +57,7 @@ func (base baseCRDT) getPriority(ctx context.Context, key core.DataStoreKey) (ui
 	pKey := key.WithPriorityFlag()
 	pbuf, err := base.store.Get(ctx, pKey.ToDS())
 	if err != nil {
-		if err == ds.ErrNotFound {
+		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil
 		}
 		return 0, err

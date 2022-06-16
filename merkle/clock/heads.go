@@ -73,7 +73,7 @@ func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height ui
 
 func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
 	err := store.Delete(ctx, hh.key(c).ToDS())
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		return nil
 	}
 	return err
@@ -82,7 +82,7 @@ func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
 	height, err := hh.load(ctx, c)
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		return false, 0, nil
 	}
 	return err == nil, height, err

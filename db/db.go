@@ -149,7 +149,7 @@ func (db *db) initialize(ctx context.Context) error {
 
 	log.Debug(ctx, "Checking if DB has already been initialized...")
 	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && err != ds.ErrNotFound {
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
 	// if we're loading an existing database, just load the schema

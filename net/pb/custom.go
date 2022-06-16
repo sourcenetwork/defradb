@@ -14,6 +14,7 @@ package net_pb
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-cid"
@@ -136,7 +137,7 @@ func (c ProtoCid) MarshalJSON() ([]byte, error) {
 
 func (c *ProtoCid) Unmarshal(data []byte) (err error) {
 	c.Cid, err = cid.Cast(data)
-	if err == varint.ErrUnderflow {
+	if errors.Is(err, varint.ErrUnderflow) {
 		c.Cid = cid.Undef
 		return nil
 	}

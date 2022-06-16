@@ -699,7 +699,7 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 
 	dsKey := c.getPrimaryKeyFromDocKey(key)
 	exists, err := c.exists(ctx, txn, dsKey)
-	if err != nil && err != ds.ErrNotFound {
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
 	return exists, c.commitImplicitTxn(ctx, txn)
