@@ -1,3 +1,5 @@
+# For compatibility, prerequisites are instead explicit calls to make.
+
 default:
 	go run cmd/defradb/main.go
 
@@ -17,11 +19,13 @@ cross-build:
 	bash tools/scripts/cross-build.sh $(platforms)
 
 .PHONY: start
-start: build
+start:
+	@$(MAKE) build
 	./build/defradb start
 
 .PHONY: dev\:start
-dev\:start: build
+dev\:start:
+	@$(MAKE) build
 	DEFRA_ENV=dev ./build/defradb start
 
 .PHONY: client\:dump
@@ -61,7 +65,9 @@ deps\:ci:
 	curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=${HOME}/bin bash
 
 .PHONY: deps
-deps: deps\:lint deps\:coverage deps\:bench deps\:golines deps\:chglog deps\:modules deps\:ci
+deps:
+	@$(MAKE) deps:lint && $(MAKE) deps:coverage && $(MAKE) deps:bench && $(MAKE) deps:golines && \
+	$(MAKE) deps:chglog && $(MAKE) deps:modules && $(MAKE) deps:ci
 
 .PHONY: tidy
 tidy:
@@ -81,19 +87,21 @@ test:
 	go test ./... -race
 
 .PHONY: test\:clean
-test\:clean: clean\:test test
+test\:clean:
+	@$(MAKE) clean:test && $(MAKE) test
 
 .PHONY: test\:bench
 test\:bench:
-	make -C ./tests/bench/ bench
+	@$(MAKE) -C ./tests/bench/ bench
 
 .PHONY: test\:bench-short
 test\:bench-short:
-	make -C ./tests/bench/ bench:short
+	@$(MAKE) -C ./tests/bench/ bench:short
 
 # This also takes integration tests into account.
 .PHONY: test\:coverage-full
-test\:coverage-full: deps\:coverage
+test\:coverage-full:
+	@$(MAKE) deps:coverage
 	go-acc ./... --output=coverage-full.txt --covermode=atomic
 	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
 
