@@ -73,7 +73,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	// tested as well here.
 }
 
-func TetMerkleClockPutBlockWithHeads(t *testing.T) {
+func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{

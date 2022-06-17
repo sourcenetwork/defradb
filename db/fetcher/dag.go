@@ -176,7 +176,7 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
-			return nil, 0, errors.New("error decocding height")
+			return nil, 0, errors.New("error decoding height")
 		}
 		heads = append(heads, headCid)
 		if height > maxHeight {

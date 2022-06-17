@@ -82,7 +82,7 @@ func (n *deleteNode) Next() (bool, error) {
 
 		n.isDeleting = false
 
-		// lets release the results dockeys slice memory
+		// let's release the results dockeys slice memory
 		results.DocKeys = nil
 	}
 

@@ -130,7 +130,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 
 // DeltaDecode is a typed helper to extract
 // a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
+// for now let's do cbor (quick to implement)
 func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)

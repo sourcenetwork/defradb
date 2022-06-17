@@ -54,7 +54,7 @@ func (delta *LWWRegDelta) SetPriority(prio uint64) {
 }
 
 // Marshal encodes the delta using CBOR
-// for now lets do cbor (quick to implement)
+// for now le'ts do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
@@ -171,7 +171,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 // DeltaDecode is a typed helper to extract
 // a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
+// for now let's do cbor (quick to implement)
 func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)

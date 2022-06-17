@@ -149,7 +149,7 @@ func (p *Planner) commitSelectLatest(parsed *parser.CommitSelect) (*commitSelect
 	return commit, nil
 }
 
-// commitSelectBlock is a CommitSelect node intialized witout a headsetScanNode, and is
+// commitSelectBlock is a CommitSelect node initialized witout a headsetScanNode, and is
 // expected to be given a target CID in the parser.CommitSelect object. It returns
 // a single commit if found
 func (p *Planner) commitSelectBlock(parsed *parser.CommitSelect) (*commitSelectNode, error) {
