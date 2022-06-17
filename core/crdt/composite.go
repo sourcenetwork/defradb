@@ -37,12 +37,12 @@ type CompositeDAGDelta struct {
 	SubDAGs  []core.DAGLink
 }
 
-// GetPriority gets the current priority for this delta
+// GetPriority gets the current priority for this delta.
 func (delta *CompositeDAGDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta
+// SetPriority will set the priority for this delta.
 func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }

@@ -79,7 +79,7 @@ func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 func getJSON(req *http.Request, v interface{}) error {
 	err := json.NewDecoder(req.Body).Decode(v)
 	if err != nil {
-		return errors.Wrap(err, "unmarshall error")
+		return errors.Wrap(err, "unmarshal error")
 	}
 	return nil
 }

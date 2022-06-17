@@ -8,6 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package node is responsible for interfacing a given DefraDB instance with a networked peer instance and GRPC server.
+
+Basically it combines db/DB, net/Peer, and net/Server into a single Node object.
+*/
 package node
 
 import (
@@ -31,15 +36,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
 )
-
-/*
-
-Package node is responsible for interfacing a given DefraDB instance with
-a networked peer instance and GRPC server.
-
-Basically it combines db/DB, net/Peer, and net/Server into a single Node
-object.
-*/
 
 var (
 	log = logging.MustNewLogger("defra.node")

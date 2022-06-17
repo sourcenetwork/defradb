@@ -86,9 +86,9 @@ func (mc *MerkleClock) putBlock(
 
 // @todo Change AddDAGNode to AddDelta
 
-// AddDAGNode adds a new delta to the existing DAG for this MerkleClock
+// AddDAGNode adds a new delta to the existing DAG for this MerkleClock.
 // It checks the current heads, sets the delta priority in the merkle dag
-// adds it to the blockstore the runs ProcessNode
+// adds it to the blockstore the runs ProcessNode.
 func (mc *MerkleClock) AddDAGNode(
 	ctx context.Context,
 	delta core.Delta,

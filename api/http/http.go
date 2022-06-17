@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package http provides DefraDB's HTTP API, offering various capabilities.
+*/
 package http
 
 import "github.com/sourcenetwork/defradb/logging"

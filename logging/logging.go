@@ -14,11 +14,13 @@ import (
 	"context"
 )
 
+// KV is a key-value pair used to pass structured data to loggers.
 type KV struct {
 	key   string
 	value interface{}
 }
 
+// NewKV creates a new KV key-value pair.
 func NewKV(key string, value interface{}) KV {
 	return KV{
 		key:   key,
@@ -27,23 +29,34 @@ func NewKV(key string, value interface{}) KV {
 }
 
 type Logger interface {
+	// Debug logs a message at debug log level. Key-value pairs can be added.
 	Debug(ctx context.Context, message string, keyvals ...KV)
+	// Info logs a message at info log level. Key-value pairs can be added.
 	Info(ctx context.Context, message string, keyvals ...KV)
+	// Warn logs a message at warn log level. Key-value pairs can be added.
 	Warn(ctx context.Context, message string, keyvals ...KV)
+	// Error logs a message at error log level. Key-value pairs can be added.
 	Error(ctx context.Context, message string, keyvals ...KV)
+	// ErrorErr logs a message and an error at error log level. Key-value pairs can be added.
 	ErrorE(ctx context.Context, message string, err error, keyvals ...KV)
+	// Fatal logs a message at fatal log level. Key-value pairs can be added.
 	Fatal(ctx context.Context, message string, keyvals ...KV)
+	// FatalE logs a message and an error at fatal log level. Key-value pairs can be added.
 	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
+	// Flush flushes any buffered log entries.
 	Flush() error
+	// ApplyConfig updates the logger with a new config.
 	ApplyConfig(config Config)
 }
 
+// MustNewLogger creates and registers a new logger with the given name, and panics if there is an error.
 func MustNewLogger(name string) Logger {
 	logger := mustNewLogger(name)
 	register(name, logger)
 	return logger
 }
 
+// SetConfig updates all registered loggers with the given config.
 func SetConfig(newConfig Config) {
 	updatedConfig := setConfig(newConfig)
 	updateLoggers(updatedConfig)

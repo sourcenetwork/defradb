@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// The Server struct holds the Handler for the HTTP API
+// Server struct holds the Handler for the HTTP API
 type Server struct {
 	options serverOptions
 	http.Server

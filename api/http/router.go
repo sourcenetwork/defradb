@@ -61,7 +61,7 @@ func setRoutes(h *handler) *handler {
 	return h
 }
 
-// JoinPaths takes a base path and any number of additionnal paths
+// JoinPaths takes a base path and any number of additional paths
 // and combines them safely to form a full URL path.
 // The base must start with a http or https.
 func JoinPaths(base string, paths ...string) (*url.URL, error) {

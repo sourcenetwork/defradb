@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package types defines the GraphQL types used by the query service.
+*/
 package types
 
 import "github.com/graphql-go/graphql/language/ast"

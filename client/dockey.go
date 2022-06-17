@@ -53,8 +53,7 @@ type DocKey struct {
 }
 
 // NewDocKeyV0 creates a new doc key identified by the root data CID, peer ID, and
-// namespaced by the versionNS
-// TODO: Parameterize namespace Version
+// namespaced by the versionNS.
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
 		version: v0,
