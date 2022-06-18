@@ -125,6 +125,7 @@ linters:
     - varcheck
     - errorlint
     - exportloopref
+    # - gocyclo
     # - makezero
     # - nakedret
     # - nestif
