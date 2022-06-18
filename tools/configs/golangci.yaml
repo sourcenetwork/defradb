@@ -131,7 +131,7 @@ linters:
     # - nilerr
     # - nilnil
     # - nlreturn
-    # - nolintlint
+    - nolintlint
     # - tagliatelle
     - whitespace
     # - wrapcheck

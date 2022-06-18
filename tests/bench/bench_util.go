@@ -232,7 +232,6 @@ type dbInfo interface {
 }
 
 func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
-	//nolint
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.DB(), err
 }
