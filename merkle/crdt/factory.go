@@ -23,11 +23,11 @@ var (
 	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
 )
 
-// MerkleCRDTInitFn instantiates a MerkleCRDT with a given key
+// MerkleCRDTInitFn instantiates a MerkleCRDT with a given key.
 type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 
-// MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore
-// returns a MerkleCRDTInitFn with all the necessary stores set
+// MerkleCRDTFactory instantiates a MerkleCRDTInitFn with a MultiStore.
+// Returns a MerkleCRDTInitFn with all the necessary stores set.
 type MerkleCRDTFactory func(
 	mstore datastore.MultiStore,
 	schemaID string,
@@ -36,7 +36,7 @@ type MerkleCRDTFactory func(
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
 // It removes some of the overhead of having to coordinate all the various
-// store parameters on every single new MerkleCRDT creation
+// store parameters on every single new MerkleCRDT creation.
 type Factory struct {
 	crdts      map[client.CType]*MerkleCRDTFactory
 	multistore datastore.MultiStore
@@ -50,7 +50,7 @@ var (
 )
 
 // NewFactory returns a newly instanciated factory object with the assigned stores
-// It may be called with all stores set to nil
+// It may be called with all stores set to nil.
 func NewFactory(multistore datastore.MultiStore) *Factory {
 	return &Factory{
 		crdts:      make(map[client.CType]*MerkleCRDTFactory),
@@ -66,7 +66,7 @@ func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 }
 
 // Instance and execute the registered factory function for a given MerkleCRDT type
-// supplied with all the current stores (passed in as a datastore.MultiStore object)
+// supplied with all the current stores (passed in as a datastore.MultiStore object).
 func (factory Factory) Instance(
 	schemaID string,
 	bs corenet.Broadcaster,
@@ -107,24 +107,24 @@ func (factory Factory) getRegisteredFactory(t client.CType) (*MerkleCRDTFactory,
 	return fn, nil
 }
 
-// SetStores sets all the current stores on the Factory in one call
+// SetStores sets all the current stores on the Factory in one call.
 func (factory *Factory) SetStores(multistore datastore.MultiStore) error {
 	factory.multistore = multistore
 	return nil
 }
 
-// WithStores returns a new instance of the Factory with all the stores set
+// WithStores returns a new instance of the Factory with all the stores set.
 func (factory Factory) WithStores(multistore datastore.MultiStore) Factory {
 	factory.multistore = multistore
 	return factory
 }
 
-// Rootstore impements MultiStore
+// Rootstore impements MultiStore.
 func (factory Factory) Rootstore() datastore.DSReaderWriter {
 	return nil
 }
 
-// Data implements datastore.MultiStore and returns the current Datastore
+// Data implements datastore.MultiStore and returns the current Datastore.
 func (factory Factory) Datastore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
@@ -132,7 +132,7 @@ func (factory Factory) Datastore() datastore.DSReaderWriter {
 	return factory.multistore.Datastore()
 }
 
-// Head implements datastore.MultiStore and returns the current Headstore
+// Head implements datastore.MultiStore and returns the current Headstore.
 func (factory Factory) Headstore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
@@ -140,7 +140,7 @@ func (factory Factory) Headstore() datastore.DSReaderWriter {
 	return factory.multistore.Headstore()
 }
 
-// Head implements datastore.MultiStore and returns the current Headstore
+// Head implements datastore.MultiStore and returns the current Headstore.
 func (factory Factory) Systemstore() datastore.DSReaderWriter {
 	if factory.multistore == nil {
 		return nil
@@ -148,7 +148,7 @@ func (factory Factory) Systemstore() datastore.DSReaderWriter {
 	return factory.multistore.Systemstore()
 }
 
-// Dag implements datastore.MultiStore and returns the current Dagstore
+// Dag implements datastore.MultiStore and returns the current Dagstore.
 func (factory Factory) DAGstore() datastore.DAGStore {
 	if factory.multistore == nil {
 		return nil
