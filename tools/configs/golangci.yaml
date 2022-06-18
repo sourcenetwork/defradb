@@ -133,7 +133,7 @@ linters:
     # - nlreturn
     # - nolintlint
     # - tagliatelle
-    # - whitespace
+    - whitespace
     # - wrapcheck
     # - wsl
     # - golint # Definitely need this to never have an undocumented exported function,

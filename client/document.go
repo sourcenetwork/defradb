@@ -289,7 +289,6 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 	}
 
 	switch val := value.(type) {
-
 	// int (any number)
 	case int:
 		err := doc.setCBOR(LWW_REGISTER, field, int64(val))
@@ -305,7 +304,6 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 			if err != nil {
 				return err
 			}
-
 		} else { //float
 			err := doc.setCBOR(LWW_REGISTER, field, val)
 			if err != nil {
@@ -343,7 +341,6 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 
 	default:
 		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
-
 	}
 	return nil
 }

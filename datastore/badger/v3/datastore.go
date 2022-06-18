@@ -601,7 +601,6 @@ func (t *txn) setTTL(key ds.Key, ttl time.Duration) error {
 	return item.Value(func(data []byte) error {
 		return t.putWithTTL(key, data, ttl)
 	})
-
 }
 
 func (t *txn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
@@ -756,7 +755,6 @@ func (t *txn) query(q dsq.Query) (dsq.Results, error) {
 				case <-qrb.Process.Closing():
 				}
 			}
-
 		}()
 		if t.ds.closed {
 			closedEarly = true

@@ -793,7 +793,6 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 		}
 
 		return gql.NewNonNull(ttype), nil
-
 	}
 
 	// default case, named type

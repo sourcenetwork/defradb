@@ -109,7 +109,6 @@ func (iterator *BadgerIterator) IteratePrefix(
 				case <-iterator.resultsBuilder.Process.Closing():
 				}
 			}
-
 		}()
 		if iterator.txn.ds.closed {
 			iterator.closedEarly = true

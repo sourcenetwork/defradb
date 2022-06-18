@@ -61,7 +61,6 @@ func NewObjectPayload(payload string) (ObjectPayload, error) {
 	}
 
 	switch v := d.(type) {
-
 	// array usually means its a JSON PATCH object, unless its a create, then its
 	//  just multiple documents
 	case []interface{}:
@@ -137,7 +136,6 @@ func (m Mutation) ToSelect() *Select {
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
-
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
@@ -233,7 +231,6 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 				}
 				mut.IDs[i] = id.Value
 			}
-
 		}
 	}
 

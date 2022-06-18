@@ -93,7 +93,6 @@ func (hf *HeadFetcher) nextKey() (bool, error) {
 	hf.kvEnd = done
 	if hf.kvEnd {
 		return true, nil
-
 	}
 	return false, nil
 }

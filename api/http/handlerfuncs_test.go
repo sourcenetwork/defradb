@@ -165,7 +165,6 @@ func TestExecGQLWithEmptyBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "missing GraphQL query", errResponse.Errors[0].Message)
-
 }
 
 type mockReadCloser struct {
@@ -197,7 +196,6 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
-
 }
 
 func TestExecGQLWithNoDB(t *testing.T) {
@@ -223,7 +221,6 @@ mutation {
 	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "no database available", errResponse.Errors[0].Message)
-
 }
 
 func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
@@ -259,7 +256,6 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "unmarshall error: invalid character ':' after array element", errResponse.Errors[0].Message)
-
 }
 
 func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
@@ -303,7 +299,6 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	})
 
 	assert.Contains(t, users[0].Key, "bae-")
-
 }
 
 func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
@@ -323,7 +318,6 @@ func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "content type application/x-www-form-urlencoded not yet supported", errResponse.Errors[0].Message)
-
 }
 
 func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
@@ -413,7 +407,6 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
-
 }
 
 func TestLoadSchemaHandlerWithoutDB(t *testing.T) {

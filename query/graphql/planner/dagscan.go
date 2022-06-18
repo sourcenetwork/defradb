@@ -237,7 +237,6 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, fmt.Errorf("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
-
 	} else if n.cid == nil {
 		// add this final elseif case in case another function
 		// manually sets the CID. Should prob migrate any remote CID
@@ -284,7 +283,6 @@ func (n *dagScanNode) Next() (bool, error) {
 			// queue our found heads
 			n.queuedCids.PushFront(h.Cid)
 		}
-
 	}
 	n.cid = nil // clear cid for next round
 	return true, nil

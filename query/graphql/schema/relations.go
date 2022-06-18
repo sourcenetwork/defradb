@@ -151,7 +151,6 @@ func (rm *RelationManager) RegisterSingle(
 		if err := rel.finalize(); err != nil {
 			return false, err
 		}
-
 	}
 
 	rm.relations[name] = rel
@@ -324,7 +323,6 @@ func genRelationName(t1, t2 string) (string, error) {
 		return fmt.Sprintf("%s_%s", t1, t2), nil
 	}
 	return fmt.Sprintf("%s_%s", t2, t1), nil
-
 }
 
 // IsPrimary returns true if the Relation_Primary bit is set

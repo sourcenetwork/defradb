@@ -129,7 +129,6 @@ func SetupDBAndCollections(
 	}
 
 	return db, collections, nil
-
 }
 
 // Loads the given test database using the provided fixture context.
@@ -177,7 +176,6 @@ func BackfillBenchmarkDB(
 					// create the documents
 					keys := make([]client.DocKey, numTypes)
 					for j := 0; j < numTypes; j++ {
-
 						doc, err := client.NewDocFromJSON([]byte(docs[j]))
 						if err != nil {
 							errCh <- fmt.Errorf("Failed to create document from fixture: %w", err)
@@ -226,7 +224,6 @@ func BackfillBenchmarkDB(
 	case err := <-errCh:
 		return nil, err
 	}
-
 }
 
 type dbInfo interface {

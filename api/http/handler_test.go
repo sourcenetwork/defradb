@@ -86,7 +86,6 @@ func TestNewHandlerWithLogger(t *testing.T) {
 	}
 
 	assert.Equal(t, "defra.http", kv["logger"])
-
 }
 
 func TestGetJSON(t *testing.T) {
@@ -110,7 +109,6 @@ func TestGetJSON(t *testing.T) {
 	}
 
 	assert.Equal(t, "John Doe", obj.Name)
-
 }
 
 func TestGetJSONWithError(t *testing.T) {
