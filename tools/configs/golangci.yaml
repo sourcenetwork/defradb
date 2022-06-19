@@ -109,6 +109,8 @@ linters:
   enable:
     - deadcode
     - errcheck
+    - errorlint
+    - exportloopref
     - forbidigo
     - goconst
     - gofmt
@@ -117,15 +119,13 @@ linters:
     - govet
     - ineffassign
     - lll
+    - nolintlint
     - revive
     - staticcheck
     - structcheck
     - typecheck
     - unused
     - varcheck
-    - errorlint
-    - exportloopref
-    - nolintlint
     - whitespace
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
