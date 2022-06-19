@@ -212,7 +212,7 @@ func (s *server) addPubSubTopic(dockey string) error {
 }
 
 // removePubSubTopic unsubscribes to a DocKey topic
-// nolint
+//nolint:unused
 func (s *server) removePubSubTopic(dockey string) error {
 	if s.peer.ps == nil {
 		return nil

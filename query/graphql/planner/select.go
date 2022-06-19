@@ -356,7 +356,7 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 				if f.Statement.Name.Value == parserTypes.GroupFieldName {
 					n.groupSelects = append(n.groupSelects, f)
 				} else {
-					// nolint:errcheck
+					//nolint:errcheck
 					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 				}
 			}

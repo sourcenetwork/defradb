@@ -120,7 +120,7 @@ func (iterator *BadgerIterator) IteratePrefix(
 		iterator.yieldResults(formattedStartPrefix, formattedEndPrefix, worker)
 	})
 
-	go iterator.resultsBuilder.Process.CloseAfterChildren() //nolint
+	go iterator.resultsBuilder.Process.CloseAfterChildren() //nolint:errcheck
 
 	return iterator.resultsBuilder.Results(), nil
 }

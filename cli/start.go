@@ -112,7 +112,7 @@ var startCmd = &cobra.Command{
 				node.WithPubSub(true))
 			if err != nil {
 				log.ErrorE(ctx, "Failed to start P2P node", err)
-				n.Close() //nolint
+				n.Close() //nolint:errcheck
 				db.Close(ctx)
 				os.Exit(1)
 			}
@@ -130,7 +130,7 @@ var startCmd = &cobra.Command{
 
 			if err := n.Start(); err != nil {
 				log.ErrorE(ctx, "Failed to start P2P listeners", err)
-				n.Close() //nolint
+				n.Close() //nolint:errcheck
 				db.Close(ctx)
 				os.Exit(1)
 			}
@@ -185,7 +185,7 @@ var startCmd = &cobra.Command{
 			if err := s.Listen(); err != nil {
 				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {
-					n.Close() //nolint
+					n.Close() //nolint:errcheck
 				}
 				db.Close(ctx)
 				os.Exit(1)
@@ -196,7 +196,7 @@ var startCmd = &cobra.Command{
 		<-signalCh
 		log.Info(ctx, "Received interrupt; closing database...")
 		if n != nil {
-			n.Close() //nolint
+			n.Close() //nolint:errcheck
 		}
 		db.Close(ctx)
 		os.Exit(0)
