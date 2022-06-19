@@ -325,6 +325,13 @@ linters-settings:
     go: "1.17"
 
 
+  whitespace:
+    # Enforces newlines (or comments) after every multi-line if statement.
+    multi-if: false
+    # Enforces newlines (or comments) after every multi-line function signature.
+    multi-func: false
+
+
   # The custom section can be used to define linter plugins to be loaded at runtime.
   # See README doc for more info.
   custom:
