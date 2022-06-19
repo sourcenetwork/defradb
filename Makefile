@@ -146,6 +146,25 @@ lint\:list:
 chglog:
 	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md
 
+.PHONY: docs
+docs:
+	make docs\:cli
+	make docs\:manpages
+
 .PHONY: docs\:cli
 docs\:cli:
 	go run cmd/genclidocs/genclidocs.go -o docs/cli/
+
+.PHONY: docs\:manpages
+docs\:manpages:
+	go run cmd/genmanpages/main.go -o build/man/
+
+detectedOS := $(shell uname)
+.PHONY: install\:manpages
+install\:manpages:
+ifeq ($(detectedOS),Linux)
+	cp build/man/* /usr/share/man/man1/
+endif
+ifneq ($(detectedOS),Linux)
+	@echo "Direct installation of Defradb's man pages is not supported on your system."
+endif

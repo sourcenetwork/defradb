@@ -1,6 +1,4 @@
-cli/defradb/defradb
-cli/defradb/defradb.exe
-build/defradb*
+build/*
 cover.out
 coverage-full.txt
 coverage-quick.txt
