@@ -156,8 +156,8 @@ chglog:
 
 .PHONY: docs
 docs:
-	make docs\:cli
-	make docs\:manpages
+	@$(MAKE) docs\:cli
+	@$(MAKE) docs\:manpages
 
 .PHONY: docs\:cli
 docs\:cli:
