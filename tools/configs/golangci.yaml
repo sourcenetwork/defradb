@@ -125,20 +125,8 @@ linters:
     - varcheck
     - errorlint
     - exportloopref
-    # - gocyclo
-    # - makezero
-    # - nakedret
-    # - nestif
-    # - nilerr
-    # - nilnil
-    # - nlreturn
     - nolintlint
-    # - tagliatelle
     - whitespace
-    # - wrapcheck
-    # - wsl
-    # - golint # Definitely need this to never have an undocumented exported function,
-    #  once the deadcode issue is resolved.
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
