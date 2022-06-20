@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsSingleDAG(t *testing.T) {
+func TestQueryAllCommitsWithDockeyAndLinks(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple all commits query with dockey, with links",
 		Query: `query {
 					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
@@ -30,10 +30,11 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -55,9 +56,9 @@ func TestQueryAllCommitsSingleDAG(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsMultipleDAG(t *testing.T) {
+func TestQueryAllCommitsWithDockeyAndUpdate(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple all commits query with dockey, multiple results",
 		Query: `query {
 					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
@@ -66,10 +67,11 @@ func TestQueryAllCommitsMultipleDAG(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Updates: map[int][]string{
 			0: {

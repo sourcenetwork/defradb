@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsSingleDAGWithLinkCount(t *testing.T) {
+func TestQueryAllCommitsWithDockeyAndLinkCount(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple latest commits query with dockey and link count",
 		Query: `query {
 					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
