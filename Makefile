@@ -1,5 +1,9 @@
 # For compatibility, prerequisites are instead explicit calls to make.
 
+ifndef VERBOSE
+MAKEFLAGS += --no-print-directory
+endif
+
 default:
 	go run cmd/defradb/main.go
 
