@@ -16,13 +16,14 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndLinkCount(t *testing.T) {
+// This test is for documentation reasons only. This is not
+// desired behaviour (should return all commits).
+func TestQueryAllCommits(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query with dockey and link count",
+		Description: "Simple all commits query",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					allCommits {
 						cid
-						_count(field: links)
 					}
 				}`,
 		Docs: map[int][]string{
@@ -33,12 +34,7 @@ func TestQueryAllCommitsWithDockeyAndLinkCount(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
-			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-				"_count": 2,
-			},
-		},
+		ExpectedError: "Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
 	}
 
 	executeTestCase(t, test)
