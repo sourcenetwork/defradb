@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryLatestCommits(t *testing.T) {
+func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple latest commits query with dockey",
 		Query: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
@@ -30,10 +30,11 @@ func TestQueryLatestCommits(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
