@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneCommit(t *testing.T) {
+func TestQueryOneCommitWithCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by CID",
 		Query: `query {
@@ -28,10 +28,11 @@ func TestQueryOneCommit(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
