@@ -457,3 +457,89 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, undefined group value",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+				`{
+					"Name": "Alice"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Age": nil,
+			},
+			{
+				"Age": uint64(32),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, with children, undefined group value",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_group {
+							Name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+				`{
+					"Name": "Alice"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Age": nil,
+				"_group": []map[string]interface{}{
+					{
+						"Name": "Bob",
+					},
+					{
+						"Name": "Alice",
+					},
+				},
+			},
+			{
+				"Age": uint64(32),
+				"_group": []map[string]interface{}{
+					{
+						"Name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
