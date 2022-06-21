@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package commit
+package latest_commits
 
 import (
 	"testing"
@@ -16,16 +16,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits).
-func TestQueryOneCommit(t *testing.T) {
+func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "query for a single block by CID",
+		Description: "Simple latest commits query with dockey",
 		Query: `query {
-					commit {
+					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
-						height
-						delta
+						links {
+							cid
+							name
+						}
 					}
 				}`,
 		Docs: map[int][]string{
@@ -36,7 +36,21 @@ func TestQueryOneCommit(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"commit\" argument \"cid\" of type \"ID!\" is required but not provided.",
+		Results: []map[string]interface{}{
+			{
+				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"links": []map[string]interface{}{
+					{
+						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+						"name": "Age",
+					},
+					{
+						"cid":  "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+						"name": "Name",
+					},
+				},
+			},
+		},
 	}
 
 	executeTestCase(t, test)

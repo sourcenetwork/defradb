@@ -17,12 +17,42 @@ import (
 )
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all latest commits).
-func TestQueryLatestCommits(t *testing.T) {
+// desired behaviour (should return all latest commits for given
+// field in the collection).
+func TestQueryLatestCommitsWithField(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple latest commits query with field",
 		Query: `query {
-					latestCommits {
+					latestCommits (field: "Age") {
+						cid
+						links {
+							cid
+							name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		ExpectedError: "Field \"latestCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+	}
+
+	executeTestCase(t, test)
+}
+
+// This test is for documentation reasons only. This is not
+// desired behaviour (should return all latest commits for given
+// field in the collection).
+func TestQueryLatestCommitsWithFieldId(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple latest commits query with field",
+		Query: `query {
+					latestCommits (field: "1") {
 						cid
 						links {
 							cid

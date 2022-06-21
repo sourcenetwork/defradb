@@ -16,8 +16,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. I do not see this
-// as desired behaviour.
+// This test is for documentation reasons only. This is not
+// desired behaviour.
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with cid",
