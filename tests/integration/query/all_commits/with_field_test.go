@@ -17,12 +17,36 @@ import (
 )
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits).
-func TestQueryAllCommits(t *testing.T) {
+// desired behaviour (should return all commits for field).
+func TestQueryAllCommitsWithField(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query",
+		Description: "Simple all commits query with field",
 		Query: `query {
-					allCommits {
+					allCommits (field: "Age") {
+						cid
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		ExpectedError: "Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+	}
+
+	executeTestCase(t, test)
+}
+
+// This test is for documentation reasons only. This is not
+// desired behaviour (should return all commits for field).
+func TestQueryAllCommitsWithFieldId(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple all commits query with field id",
+		Query: `query {
+					allCommits (field: "1") {
 						cid
 					}
 				}`,

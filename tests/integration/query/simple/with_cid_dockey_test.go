@@ -41,8 +41,8 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test is for documentation reasons only. I do not see this
-// as desired behaviour (should just return empty).
+// This test is for documentation reasons only. This is not
+// desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with unknown cid and invalid dockey",
