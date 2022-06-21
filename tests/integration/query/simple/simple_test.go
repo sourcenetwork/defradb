@@ -106,3 +106,18 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithUndefinedField(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query for undefined field",
+		Query: `query {
+					users {
+						Name
+						ThisFieldDoesNotExists
+					}
+				}`,
+		ExpectedError: "Cannot query field \"ThisFieldDoesNotExists\" on type \"users\".",
+	}
+
+	executeTestCase(t, test)
+}
