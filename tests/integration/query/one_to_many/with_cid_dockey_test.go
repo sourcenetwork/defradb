@@ -18,8 +18,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. I do not see this
-// as desired behaviour (should just return empty).
+// This test is for documentation reasons only. This is not
+// desired behaviour (should just return empty).
 func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
@@ -108,8 +108,8 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test is for documentation reasons only. I do not see this
-// as desired behaviour (no way to get state of child a time of
+// This test is for documentation reasons only. This is not
+// desired behaviour (no way to get state of child a time of
 // parent creation without explicit child cid, which is also not tied
 // to parent state).
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
