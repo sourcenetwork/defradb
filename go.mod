@@ -49,8 +49,8 @@ require (
 require (
 	github.com/fatih/color v1.13.0
 	github.com/go-chi/chi/v5 v5.0.7
-	github.com/iancoleman/strcase v0.2.0
 	github.com/go-chi/cors v1.2.1
+	github.com/iancoleman/strcase v0.2.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/text v0.3.7
 )
@@ -77,6 +77,7 @@ require (
 	github.com/flynn/noise v1.0.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/go-errors/errors v1.4.2
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
