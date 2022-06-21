@@ -46,11 +46,13 @@ func NewLogLevelOption(v LogLevel) LogLevelOption {
 }
 
 const (
-	Debug LogLevel = -1
-	Info  LogLevel = 0
-	Warn  LogLevel = 1
-	Error LogLevel = 2
-	Fatal LogLevel = 5
+	Debug LogLevel = iota - 1
+	Info
+	Warn
+	Error
+	_
+	_
+	Fatal
 )
 
 type EnableStackTraceOption struct {
