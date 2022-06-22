@@ -224,7 +224,6 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 // parseExplainDirective returns true if we parsed / detected the explain directive label
 // in this ast, and false otherwise.
 func parseExplainDirective(directives []*ast.Directive) bool {
-
 	// Iterate through all directives and ensure that the directive is at there.
 	// - Note: the location we don't need to worry about as the schema takes care of it, as when
 	//         request is made there will be a syntax error for directive usage at the wrong location,
@@ -242,7 +241,6 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
-
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),

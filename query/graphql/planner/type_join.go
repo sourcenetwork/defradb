@@ -146,7 +146,6 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 	explainerMap[joinTypeLabel] = n.joinPlan.Kind()
 
 	switch joinType := n.joinPlan.(type) {
-
 	case *typeJoinOne:
 		// Add the direction attribute.
 		if joinType.primary {

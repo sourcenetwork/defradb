@@ -51,7 +51,6 @@ func simpleDataResponse(args ...interface{}) dataResponse {
 
 			default:
 				continue
-
 			}
 		}
 	}

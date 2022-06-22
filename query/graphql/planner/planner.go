@@ -95,7 +95,6 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 
 func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 	switch n := stmt.(type) {
-
 	case *parser.Query:
 		if len(n.Queries) > 0 {
 			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
@@ -119,15 +118,12 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 
 	case *parser.Mutation:
 		return p.newObjectMutationPlan(n)
-
 	}
 	return nil, fmt.Errorf("Unknown statement type %T", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
-
 	switch stmt.Type {
-
 	case parser.CreateObjects:
 		return p.CreateDoc(stmt)
 
@@ -140,7 +136,6 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 	default:
 		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
 	}
-
 }
 
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
@@ -169,9 +164,7 @@ func (p *Planner) optimizePlan(plan planNode) error {
 
 // expandPlan does a full plan graph expansion and other optimizations.
 func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
-
 	switch n := plan.(type) {
-
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
 
@@ -428,7 +421,6 @@ func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]interface{}, error) {
-
 	if plan == nil {
 		return nil, fmt.Errorf("Can't explain request of a nil plan.")
 	}
@@ -452,7 +444,6 @@ func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]interface{}, error) {
-
 	if plan == nil {
 		return nil, fmt.Errorf("Can't execute request of a nil plan.")
 	}
@@ -484,7 +475,6 @@ func (p *Planner) executeRequest(
 	}
 
 	return docs, err
-
 }
 
 // runRequest plans how to run the request, then attempts to run the request and returns the results.
@@ -492,7 +482,6 @@ func (p *Planner) runRequest(
 	ctx context.Context,
 	query *parser.Query,
 ) ([]map[string]interface{}, error) {
-
 	plan, err := p.makePlan(query)
 
 	if err != nil {

@@ -57,7 +57,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 			},
 		},
 	}
-
 }
 
 func newTestFetcher() (*fetcher.DocumentFetcher, error) {

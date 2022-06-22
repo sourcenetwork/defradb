@@ -210,7 +210,6 @@ func (p *Peer) handleChildBlocks(
 		case <-p.ctx.Done():
 			return // jump out
 		}
-
 	}
 
 	// Clear up any children we failed to get from queued children

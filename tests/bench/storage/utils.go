@@ -33,7 +33,7 @@ func runStorageBenchGet(
 	if err != nil {
 		return err
 	}
-	defer db.Close() //nolint
+	defer db.Close() //nolint:errcheck
 
 	// backfill
 	keys, err := backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
@@ -68,7 +68,7 @@ func runStorageBenchTxnGet(
 	if err != nil {
 		return err
 	}
-	defer db.Root().Close() //nolint
+	defer db.Root().Close() //nolint:errcheck
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
@@ -108,7 +108,7 @@ func runStorageBenchTxnIterator(
 	if err != nil {
 		return err
 	}
-	defer db.Root().Close() //nolint
+	defer db.Root().Close() //nolint:errcheck
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
@@ -168,7 +168,7 @@ func runStorageBenchPut(
 	if err != nil {
 		return err
 	}
-	defer db.Close() //nolint
+	defer db.Close() //nolint:errcheck
 
 	// backfill
 	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
@@ -209,7 +209,7 @@ func runStorageBenchPutMany(
 	if err != nil {
 		return err
 	}
-	defer db.Close() //nolint
+	defer db.Close() //nolint:errcheck
 
 	// backfill
 	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
