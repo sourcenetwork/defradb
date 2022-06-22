@@ -328,6 +328,12 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 
 // This test is largely a sanity check for `TestLogWritesMessagesToLogGivenUpdatedLogPath`
 func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
+	// making it clear that we are setting the config with an invalid path
+	logConfig := Config{
+		EncoderFormat: NewEncoderFormatOption(JSON),
+		OutputPaths:   []string{"/not/a/valid/path"},
+	}
+	setConfig(logConfig)
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
