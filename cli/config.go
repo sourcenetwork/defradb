@@ -75,7 +75,7 @@ func (o BaseLoggerOptions) toLogConfig() logging.Config {
 	var encoderFormat logging.EncoderFormatOption
 	if o.EncoderFormat != nil {
 		switch *o.EncoderFormat {
-		case "json": // nolint:goconst
+		case "json": //nolint:goconst
 			encoderFormat = logging.NewEncoderFormatOption(logging.JSON)
 		case "csv":
 			encoderFormat = logging.NewEncoderFormatOption(logging.CSV)

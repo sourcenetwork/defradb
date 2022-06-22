@@ -40,7 +40,7 @@ var (
 )
 
 // versionToNamespace is a convenience for mapping between Version number and its UUID Namespace
-// nolint
+//nolint:unused,deadcode,varcheck
 var versionToNamespace = map[uint16]uuid.UUID{
 	v0: namespaceSDNDocKeyV0,
 }

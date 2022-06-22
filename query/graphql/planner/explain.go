@@ -75,7 +75,6 @@ const (
 //   ]
 // }
 func buildExplainGraph(source planNode) (map[string]interface{}, error) {
-
 	explainGraph := map[string]interface{}{}
 
 	if source == nil {
@@ -83,7 +82,6 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 	}
 
 	switch node := source.(type) {
-
 	// Walk the multiple children if it is a MultiNode.
 	// Note: MultiNode nodes are not explainable but we use them to wrap the children under them.
 	case MultiNode:
@@ -160,5 +158,4 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 	}
 
 	return explainGraph, nil
-
 }

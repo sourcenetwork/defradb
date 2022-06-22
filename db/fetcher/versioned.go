@@ -113,7 +113,6 @@ func (vf *VersionedFetcher) Init(
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
 	return vf.DocumentFetcher.Init(col, fields, reverse)
-
 }
 
 // Start serializes the correct state accoriding to the Key and CID

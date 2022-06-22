@@ -60,7 +60,6 @@ func (c *collection) DeleteWithKey(
 	ctx context.Context,
 	key client.DocKey,
 ) (*client.DeleteResult, error) {
-
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -82,7 +81,6 @@ func (c *collection) DeleteWithKeys(
 	ctx context.Context,
 	keys []client.DocKey,
 ) (*client.DeleteResult, error) {
-
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -103,7 +101,6 @@ func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter interface{},
 ) (*client.DeleteResult, error) {
-
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -117,7 +114,6 @@ func (c *collection) DeleteWithFilter(
 	}
 
 	return res, c.commitImplicitTxn(ctx, txn)
-
 }
 
 func (c *collection) deleteWithKey(
@@ -155,7 +151,6 @@ func (c *collection) deleteWithKeys(
 	txn datastore.Txn,
 	keys []client.DocKey,
 ) (*client.DeleteResult, error) {
-
 	results := &client.DeleteResult{
 		DocKeys: make([]string, 0),
 	}
@@ -194,7 +189,6 @@ func (c *collection) deleteWithFilter(
 	txn datastore.Txn,
 	filter interface{},
 ) (*client.DeleteResult, error) {
-
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)
 	if err != nil {
@@ -274,7 +268,6 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 func (c *collection) applyFullDelete(
 	ctx context.Context,
 	txn datastore.Txn, dockey core.PrimaryDataStoreKey) error {
-
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, dockey)
@@ -357,7 +350,6 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 		// (A:x) --> (B:x) --> (C:x) --> (D:x) |
 		//                                     | --> (F:d) HEAD#2->cid2
 		return nil
-
 	} else if err != nil {
 		return err
 	}
@@ -374,7 +366,6 @@ func (d dagDeleter) delete(
 	ctx context.Context,
 	targetCid cid.Cid,
 	targetBlock block.Block) error {
-
 	targetNode, err := dag.DecodeProtobuf(targetBlock.RawData())
 	if err != nil {
 		return err

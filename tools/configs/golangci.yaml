@@ -109,6 +109,8 @@ linters:
   enable:
     - deadcode
     - errcheck
+    - errorlint
+    - exportloopref
     - forbidigo
     - goconst
     - gofmt
@@ -117,30 +119,14 @@ linters:
     - govet
     - ineffassign
     - lll
+    - nolintlint
     - revive
     - staticcheck
     - structcheck
     - typecheck
     - unused
     - varcheck
-    - errorlint
-    # - exportloopref
-    # - gci
-    # - gocyclo
-    # - makezero
-    # - megacheck
-    # - nakedret
-    # - nestif
-    # - nilerr
-    # - nilnil
-    # - nlreturn
-    # - nolintlint
-    # - tagliatelle
-    # - whitespace
-    # - wrapcheck
-    # - wsl
-    # - golint # Definitely need this to never have an undocumented exported function,
-    #  once the deadcode issue is resolved.
+    - whitespace
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
@@ -318,6 +304,19 @@ linters-settings:
     tab-width: 1
 
 
+  nolintlint:
+    # Disable to ensure that all nolint directives actually have an effect.
+    allow-unused: false
+    # Disable to ensure that nolint directives don't have a leading space.
+    allow-leading-space: false
+    # Exclude following linters from requiring an explanation.
+    allow-no-explanation: []
+    # Enable to require an explanation of nonzero length after each nolint directive.
+    require-explanation: false
+    # Enable to require nolint directives to mention the specific linter being suppressed.
+    require-specific: true
+
+
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true
@@ -337,6 +336,13 @@ linters-settings:
   unused:
     # Select the Go version to target.
     go: "1.17"
+
+
+  whitespace:
+    # Enforces newlines (or comments) after every multi-line if statement.
+    multi-if: false
+    # Enforces newlines (or comments) after every multi-line function signature.
+    multi-func: false
 
 
   # The custom section can be used to define linter plugins to be loaded at runtime.

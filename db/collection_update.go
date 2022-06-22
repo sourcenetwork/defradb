@@ -220,7 +220,6 @@ func (c *collection) updateWithFilter(
 	filter interface{},
 	updater interface{},
 ) (*client.UpdateResult, error) {
-
 	patch, err := parseUpdater(updater)
 	if err != nil {
 		return nil, err

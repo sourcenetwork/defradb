@@ -74,7 +74,6 @@ func (e *QueryExecutor) ExecQuery(
 
 	planner := makePlanner(ctx, db, txn)
 	return planner.runRequest(ctx, q)
-
 }
 
 func (e *QueryExecutor) MakePlanFromParser(

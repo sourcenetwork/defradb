@@ -110,7 +110,6 @@ func (w *wrappedStore) Query(ctx context.Context, q dsq.Query) (dsq.Results, err
 // Split the query into a child query and a naive query. That way, we can make
 // the child datastore do as much work as possible.
 func (w *wrappedStore) prepareQuery(q dsq.Query) (naive, child dsq.Query) {
-
 	// First, put everything in the child query. Then, start taking things
 	// out.
 	child = q
