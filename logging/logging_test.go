@@ -586,6 +586,8 @@ func getLogLines(logPath string) ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
+
 	fileScanner := bufio.NewScanner(file)
 
 	fileScanner.Split(bufio.ScanLines)
