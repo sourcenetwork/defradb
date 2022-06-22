@@ -88,7 +88,7 @@ clean\:test:
 
 .PHONY: test
 test:
-	go test ./... -race
+	go test ./... -race -shuffle=on
 
 .PHONY: test\:clean
 test\:clean:
