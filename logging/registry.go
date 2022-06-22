@@ -18,18 +18,13 @@ var configMutex sync.RWMutex
 var cachedConfig Config
 
 var registryMutex sync.Mutex
-var registry map[string][]Logger = map[string][]Logger{}
+var registry map[string]Logger = map[string]Logger{}
 
 func register(name string, logger Logger) {
 	registryMutex.Lock()
 	defer registryMutex.Unlock()
 
-	loggers, exists := registry[name]
-	if !exists {
-		loggers = []Logger{}
-	}
-	loggers = append(loggers, logger)
-	registry[name] = loggers
+	registry[name] = logger
 }
 
 func setConfig(newConfig Config) Config {
@@ -41,11 +36,8 @@ func setConfig(newConfig Config) Config {
 }
 
 func updateLoggers(config Config) {
-	for loggerName, loggers := range registry {
+	for loggerName, logger := range registry {
 		newLoggerConfig := config.forLogger(loggerName)
-
-		for _, logger := range loggers {
-			logger.ApplyConfig(newLoggerConfig)
-		}
+		logger.ApplyConfig(newLoggerConfig)
 	}
 }
