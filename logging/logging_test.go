@@ -366,7 +366,7 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 	// making it clear that we are setting the config with an invalid path
 	logConfig := Config{
 		EncoderFormat: NewEncoderFormatOption(JSON),
-		OutputPaths:   []string{"/not/a/valid/path"},
+		OutputPaths:   []string{"/path/not/found"},
 	}
 	setConfig(logConfig)
 	for _, tc := range getLogLevelTestCase() {
