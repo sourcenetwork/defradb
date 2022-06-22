@@ -37,7 +37,7 @@ commands:
                 name: Run tests
                 command: |
                   mkdir -p /tmp/test-reports
-                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race
+                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race --shuffle=on
                 environment:
                   DEFRA_BADGER_MEMORY: true
                   DEFRA_BADGER_FILE: true
