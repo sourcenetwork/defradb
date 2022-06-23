@@ -12,20 +12,17 @@ package logging
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest/observer"
 )
 
 func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
@@ -384,33 +381,32 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
+		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
+			c.pipe = b
 		})
-
-		core, logs := observer.New(zap.NewAtomicLevelAt(zapcore.Level(tc.LogLevel)))
-		observerCore := zap.WrapCore(func(zapcore.Core) zapcore.Core {
-			return core
-		})
-		logger.WithOptions(observerCore)
 
 		logMessage := "test log message"
 
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		stdoutLogLines := logs.All()
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if tc.ExpectedLogLevel == "" {
-			assert.Len(t, stdoutLogLines, 0)
+			assert.Len(t, logLines, 0)
 		} else {
-			if len(stdoutLogLines) != 1 {
-				t.Fatalf("expecting exactly 1 log line but got %d lines", len(stdoutLogLines))
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
 			}
-			assert.Equal(t, logMessage, stdoutLogLines[0].Message)
-			assert.Equal(t, tc.ExpectedLogLevel, strings.ToUpper(stdoutLogLines[0].Level.String()))
-			assert.Equal(t, "TestLogName", stdoutLogLines[0].LoggerName)
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
 		}
 
 		clearRegistry("TestLogName")
@@ -422,33 +418,32 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
+		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{"/path/not/found"}
+			c.pipe = b
 		})
-
-		core, logs := observer.New(zap.NewAtomicLevelAt(zapcore.Level(tc.LogLevel)))
-		observerCore := zap.WrapCore(func(zapcore.Core) zapcore.Core {
-			return core
-		})
-		logger.WithOptions(observerCore)
 
 		logMessage := "test log message"
 
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		stdoutLogLines := logs.All()
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if tc.ExpectedLogLevel == "" {
-			assert.Len(t, stdoutLogLines, 0)
+			assert.Len(t, logLines, 0)
 		} else {
-			if len(stdoutLogLines) != 1 {
-				t.Fatalf("expecting exactly 1 log line but got %d lines", len(stdoutLogLines))
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
 			}
-			assert.Equal(t, logMessage, stdoutLogLines[0].Message)
-			assert.Equal(t, tc.ExpectedLogLevel, strings.ToUpper(stdoutLogLines[0].Level.String()))
-			assert.Equal(t, "TestLogName", stdoutLogLines[0].LoggerName)
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
 		}
 
 		clearRegistry("TestLogName")
@@ -742,7 +737,7 @@ func getLogger(t *testing.T, options ...Option) (Logger, string) {
 
 func getFirstOutputPath(outputPaths []string) string {
 	if len(outputPaths) == 0 {
-		return "stdout"
+		return "stderr"
 	}
 	return outputPaths[0]
 }
@@ -750,7 +745,7 @@ func getFirstOutputPath(outputPaths []string) string {
 var errloggingToConsole = errors.New("no file to open. Logging to console")
 
 func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error) {
-	if logPath == "stdout" {
+	if logPath == "stderr" {
 		return nil, errloggingToConsole
 	}
 
@@ -765,7 +760,11 @@ func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error)
 		}
 	}()
 
-	fileScanner := bufio.NewScanner(file)
+	return parseLines(file)
+}
+
+func parseLines(r io.Reader) ([]map[string]interface{}, error) {
+	fileScanner := bufio.NewScanner(r)
 
 	fileScanner.Split(bufio.ScanLines)
 

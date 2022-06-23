@@ -12,6 +12,7 @@ package logging
 
 import (
 	"context"
+	"io"
 	"os"
 )
 
@@ -89,6 +90,8 @@ type Config struct {
 	EnableCaller          EnableCallerOption
 	OutputPaths           []string
 	OverridesByLoggerName map[string]OverrideConfig
+
+	pipe io.Writer // this is used for testing purposes only
 }
 
 type OverrideConfig struct {
@@ -97,6 +100,8 @@ type OverrideConfig struct {
 	EnableStackTrace EnableStackTraceOption
 	EnableCaller     EnableCallerOption
 	OutputPaths      []string
+
+	pipe io.Writer // this is used for testing purposes only
 }
 
 func (c Config) forLogger(name string) Config {
@@ -106,6 +111,7 @@ func (c Config) forLogger(name string) Config {
 		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
+		pipe:             c.pipe,
 	}
 
 	if override, hasOverride := c.OverridesByLoggerName[name]; hasOverride {
@@ -124,6 +130,9 @@ func (c Config) forLogger(name string) Config {
 		if len(override.OutputPaths) != 0 {
 			loggerConfig.OutputPaths = override.OutputPaths
 		}
+		if override.pipe != nil {
+			loggerConfig.pipe = override.pipe
+		}
 	}
 
 	return loggerConfig
@@ -137,6 +146,7 @@ func (c Config) copy() Config {
 			EnableStackTrace: o.EnableStackTrace,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      o.OutputPaths,
+			pipe:             o.pipe,
 		}
 	}
 
@@ -147,6 +157,7 @@ func (c Config) copy() Config {
 		OutputPaths:           c.OutputPaths,
 		EnableCaller:          c.EnableCaller,
 		OverridesByLoggerName: overridesByLoggerName,
+		pipe:                  c.pipe,
 	}
 }
 
@@ -173,6 +184,10 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 		newConfig.OutputPaths = validatePaths(newConfigOptions.OutputPaths)
 	}
 
+	if newConfigOptions.pipe != nil {
+		newConfig.pipe = newConfigOptions.pipe
+	}
+
 	for k, o := range newConfigOptions.OverridesByLoggerName {
 		// We fully overwrite overrides to allow for ease of
 		// reset/removal (can provide empty to return to default)
@@ -182,6 +197,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 			EnableCaller:     o.EnableCaller,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      validatePaths(o.OutputPaths),
+			pipe:             o.pipe,
 		}
 	}
 
@@ -193,7 +209,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 func validatePaths(paths []string) []string {
 	validatedPaths := paths
 	for i := 0; i < len(validatedPaths); i++ {
-		if validatedPaths[i] == "stdout" {
+		if validatedPaths[i] == "stderr" {
 			continue
 		}
 

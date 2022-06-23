@@ -12,6 +12,7 @@ package logging
 
 import (
 	"context"
+	"os"
 	"sync"
 
 	"go.uber.org/zap"
@@ -166,6 +167,20 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	newLogger, err := defaultConfig.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
+	}
+
+	if config.pipe != nil {
+		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			cfg := zap.NewProductionEncoderConfig()
+			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator
+			cfg.EncodeTime = defaultConfig.EncoderConfig.EncodeTime
+			cfg.EncodeLevel = defaultConfig.EncoderConfig.EncodeLevel
+			return zapcore.NewCore(
+				zapcore.NewJSONEncoder(cfg),
+				zap.CombineWriteSyncers(os.Stderr, zapcore.AddSync(config.pipe)),
+				zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel)),
+			)
+		}))
 	}
 
 	return newLogger.Named(name), nil
