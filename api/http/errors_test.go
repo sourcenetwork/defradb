@@ -21,7 +21,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func CleanupEnv() {
+	env = ""
+}
+
 func TestFormatError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
 	env = "prod"
 	s := formatError(errors.New("test error"))
 	assert.Equal(t, "", s)
@@ -33,6 +38,7 @@ func TestFormatError(t *testing.T) {
 }
 
 func TestHandleErrOnBadRequest(t *testing.T) {
+	t.Cleanup(CleanupEnv)
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusBadRequest)
@@ -65,6 +71,7 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 }
 
 func TestHandleErrOnInternalServerError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusInternalServerError)
@@ -96,6 +103,7 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 }
 
 func TestHandleErrOnNotFound(t *testing.T) {
+	t.Cleanup(CleanupEnv)
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, errors.New("test error"), http.StatusNotFound)
@@ -128,6 +136,7 @@ func TestHandleErrOnNotFound(t *testing.T) {
 }
 
 func TestHandleErrOnDefault(t *testing.T) {
+	t.Cleanup(CleanupEnv)
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, errors.New("Unauthorized"), http.StatusUnauthorized)
