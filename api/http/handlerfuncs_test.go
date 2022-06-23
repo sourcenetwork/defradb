@@ -115,6 +115,8 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 }
 
 func TestDumpHandlerWithDBError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -132,6 +134,8 @@ func TestDumpHandlerWithDBError(t *testing.T) {
 }
 
 func TestExecGQLWithNilBody(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -150,6 +154,8 @@ func TestExecGQLWithNilBody(t *testing.T) {
 }
 
 func TestExecGQLWithEmptyBody(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -177,6 +183,8 @@ func (m *mockReadCloser) Read(p []byte) (n int, err error) {
 }
 
 func TestExecGQLWithMockBody(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	mockReadCloser := mockReadCloser{}
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
@@ -199,6 +207,8 @@ func TestExecGQLWithMockBody(t *testing.T) {
 }
 
 func TestExecGQLWithNoDB(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	stmt := `
 mutation {
@@ -224,6 +234,8 @@ mutation {
 }
 
 func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	// statement with JSON formatting error
 	stmt := `
 [
@@ -302,6 +314,8 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 }
 
 func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -388,6 +402,8 @@ mutation {
 }
 
 func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	mockReadCloser := mockReadCloser{}
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
@@ -410,6 +426,8 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 }
 
 func TestLoadSchemaHandlerWithoutDB(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	stmt := `
 type user {
 	name: String 
@@ -438,6 +456,8 @@ type user {
 }
 
 func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
@@ -508,6 +528,8 @@ type user {
 }
 
 func TestGetBlockHandlerWithMultihashError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -524,7 +546,10 @@ func TestGetBlockHandlerWithMultihashError(t *testing.T) {
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(t, "illegal base32 data at input byte 0", errResponse.Errors[0].Message)
 }
+
 func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	cID, err := cid.Parse("bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm")
 	if err != nil {
 		t.Fatal(err)
@@ -549,6 +574,8 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 }
 
 func TestGetBlockHandlerWithNoDB(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	errResponse := errorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
@@ -567,6 +594,8 @@ func TestGetBlockHandlerWithNoDB(t *testing.T) {
 }
 
 func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
