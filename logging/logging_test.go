@@ -251,6 +251,8 @@ func getLogLevelTestCase() []LogLevelTestCase {
 }
 
 func TestLogWritesMessagesToLog(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -286,11 +288,11 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -329,11 +331,11 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -375,11 +377,11 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, _ := getLogger(t, func(c *Config) {
@@ -413,11 +415,11 @@ func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, _ := getLogger(t, func(c *Config) {
@@ -451,11 +453,11 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, _ := getLogger(t, func(c *Config) {
@@ -492,11 +494,11 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 
 		clearRegistry("TestLogName")
 	}
-
-	clearConfig()
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -515,12 +517,11 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	}
 
 	assert.Len(t, logLines, 0)
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -547,12 +548,11 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -579,12 +579,11 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -603,12 +602,11 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	}
 
 	assert.Len(t, logLines, 0)
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -629,12 +627,11 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	}
 
 	assert.Len(t, logLines, 0)
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -663,12 +660,11 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -697,12 +693,11 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -723,9 +718,6 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	}
 
 	assert.Len(t, logLines, 0)
-
-	clearConfig()
-	clearRegistry("TestLogName")
 }
 
 type Option = func(*Config)
@@ -769,7 +761,7 @@ func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error)
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 	}()
 
