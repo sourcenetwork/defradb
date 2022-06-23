@@ -14,12 +14,18 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
@@ -277,7 +283,11 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
+
+	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
@@ -316,7 +326,11 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
+
+	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
@@ -358,42 +372,99 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
+
+	clearConfig()
 }
 
-// This test is largely a sanity check for `TestLogWritesMessagesToLogGivenUpdatedLogPath`
 func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
-	// making it clear that we are setting the config with an invalid path
-	logConfig := Config{
-		EncoderFormat: NewEncoderFormatOption(JSON),
-		OutputPaths:   []string{"/path/not/found"},
-	}
-	setConfig(logConfig)
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
-		logger, logPath := getLogger(t, func(c *Config) {
+		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
 		})
+
+		core, logs := observer.New(zap.NewAtomicLevelAt(zapcore.Level(tc.LogLevel)))
+		observerCore := zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			return core
+		})
+		logger.WithOptions(observerCore)
+
 		logMessage := "test log message"
 
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		stdoutLogLines := logs.All()
 
-		assert.Errorf(t, err, "PathError")
-		assert.Len(t, logLines, 0)
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, stdoutLogLines, 0)
+		} else {
+			if len(stdoutLogLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(stdoutLogLines))
+			}
+			assert.Equal(t, logMessage, stdoutLogLines[0].Message)
+			assert.Equal(t, tc.ExpectedLogLevel, strings.ToUpper(stdoutLogLines[0].Level.String()))
+			assert.Equal(t, "TestLogName", stdoutLogLines[0].LoggerName)
+		}
+
+		clearRegistry("TestLogName")
 	}
+
+	clearConfig()
+}
+
+func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
+	for _, tc := range getLogLevelTestCase() {
+		ctx := context.Background()
+		logger, _ := getLogger(t, func(c *Config) {
+			c.Level = NewLogLevelOption(tc.LogLevel)
+			c.OutputPaths = []string{"/path/not/found"}
+		})
+
+		core, logs := observer.New(zap.NewAtomicLevelAt(zapcore.Level(tc.LogLevel)))
+		observerCore := zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			return core
+		})
+		logger.WithOptions(observerCore)
+
+		logMessage := "test log message"
+
+		tc.LogFunc(logger, ctx, logMessage)
+		logger.Flush()
+
+		stdoutLogLines := logs.All()
+
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, stdoutLogLines, 0)
+		} else {
+			if len(stdoutLogLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(stdoutLogLines))
+			}
+			assert.Equal(t, logMessage, stdoutLogLines[0].Message)
+			assert.Equal(t, tc.ExpectedLogLevel, strings.ToUpper(stdoutLogLines[0].Level.String()))
+			assert.Equal(t, "TestLogName", stdoutLogLines[0].LoggerName)
+		}
+
+		clearRegistry("TestLogName")
+	}
+
+	clearConfig()
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
-		logger, logPath := getLogger(t, func(c *Config) {
+		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
 		})
+
+		dir := t.TempDir()
+		logPath := dir + "/log.txt"
 		SetConfig(Config{
 			OutputPaths: []string{logPath},
 		})
@@ -418,7 +489,11 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
 			assert.Equal(t, "TestLogName", logLines[0]["logger"])
 		}
+
+		clearRegistry("TestLogName")
 	}
+
+	clearConfig()
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLevel(t *testing.T) {
@@ -440,6 +515,9 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	}
 
 	assert.Len(t, logLines, 0)
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing.T) {
@@ -469,6 +547,9 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
@@ -498,6 +579,9 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
@@ -519,6 +603,9 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	}
 
 	assert.Len(t, logLines, 0)
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducingLogLevel(t *testing.T) {
@@ -542,6 +629,9 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	}
 
 	assert.Len(t, logLines, 0)
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *testing.T) {
@@ -573,6 +663,9 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLevel(t *testing.T) {
@@ -604,6 +697,9 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLevel(t *testing.T) {
@@ -627,6 +723,9 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	}
 
 	assert.Len(t, logLines, 0)
+
+	clearConfig()
+	clearRegistry("TestLogName")
 }
 
 type Option = func(*Config)
@@ -646,10 +745,23 @@ func getLogger(t *testing.T, options ...Option) (Logger, string) {
 
 	logger := MustNewLogger(name)
 	SetConfig(logConfig)
-	return logger, logPath
+	return logger, getFirstOutputPath(logConfig.OutputPaths)
 }
 
+func getFirstOutputPath(outputPaths []string) string {
+	if len(outputPaths) == 0 {
+		return "stdout"
+	}
+	return outputPaths[0]
+}
+
+var errloggingToConsole = errors.New("no file to open. Logging to console")
+
 func getLogLines(logPath string) ([]map[string]interface{}, error) {
+	if logPath == "stdout" {
+		return nil, errloggingToConsole
+	}
+
 	file, err := os.Open(logPath)
 	if err != nil {
 		return nil, err
@@ -663,7 +775,7 @@ func getLogLines(logPath string) ([]map[string]interface{}, error) {
 	logLines := []map[string]interface{}{}
 	for fileScanner.Scan() {
 		loggedLine := make(map[string]interface{})
-		err = json.Unmarshal(fileScanner.Bytes(), &loggedLine)
+		err := json.Unmarshal(fileScanner.Bytes(), &loggedLine)
 		if err != nil {
 			return nil, err
 		}
@@ -671,4 +783,18 @@ func getLogLines(logPath string) ([]map[string]interface{}, error) {
 	}
 
 	return logLines, nil
+}
+
+func clearRegistry(name string) {
+	for _, logger := range registry[name] {
+		logger.Flush()
+	}
+	registry[name] = []Logger{}
+}
+
+func clearConfig() {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+
+	cachedConfig = Config{}
 }

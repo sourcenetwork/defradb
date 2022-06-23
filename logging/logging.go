@@ -12,6 +12,8 @@ package logging
 
 import (
 	"context"
+
+	"go.uber.org/zap"
 )
 
 type KV struct {
@@ -36,6 +38,7 @@ type Logger interface {
 	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
 	Flush() error
 	ApplyConfig(config Config)
+	WithOptions(opts ...zap.Option)
 }
 
 func MustNewLogger(name string) Logger {
