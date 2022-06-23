@@ -51,7 +51,7 @@ func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceE
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +263,7 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -306,7 +306,7 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -352,7 +352,7 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -473,7 +473,7 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -509,7 +509,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -533,7 +533,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -565,7 +565,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -597,7 +597,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -623,7 +623,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -649,7 +649,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -683,7 +683,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -717,7 +717,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -757,7 +757,7 @@ func getFirstOutputPath(outputPaths []string) string {
 
 var errloggingToConsole = errors.New("no file to open. Logging to console")
 
-func getLogLines(logPath string) ([]map[string]interface{}, error) {
+func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error) {
 	if logPath == "stdout" {
 		return nil, errloggingToConsole
 	}
@@ -766,7 +766,12 @@ func getLogLines(logPath string) ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	fileScanner := bufio.NewScanner(file)
 
