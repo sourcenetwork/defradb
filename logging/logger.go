@@ -120,10 +120,6 @@ func (l *logger) ApplyConfig(config Config) {
 	l.logger = newLogger
 }
 
-func (l *logger) WithOptions(opts ...zap.Option) {
-	l.logger = l.logger.WithOptions(opts...)
-}
-
 func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	const (
 		encodingTypeConsole string = "console"
