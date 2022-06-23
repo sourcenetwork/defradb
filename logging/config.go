@@ -10,6 +10,8 @@
 
 package logging
 
+import "os"
+
 type (
 	EncoderFormat       = int8
 	EncoderFormatOption struct {
@@ -165,7 +167,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 	}
 
 	if len(newConfigOptions.OutputPaths) != 0 {
-		newConfig.OutputPaths = newConfigOptions.OutputPaths
+		newConfig.OutputPaths = validatePaths(newConfigOptions.OutputPaths)
 	}
 
 	for k, o := range newConfigOptions.OverridesByLoggerName {
@@ -176,9 +178,28 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 			EnableStackTrace: o.EnableStackTrace,
 			EnableCaller:     o.EnableCaller,
 			EncoderFormat:    o.EncoderFormat,
-			OutputPaths:      o.OutputPaths,
+			OutputPaths:      validatePaths(o.OutputPaths),
 		}
 	}
 
 	return newConfig
+}
+
+// validatePath ensure that all output paths are valid to avoid zap sync errors
+// and also to ensure that the logs are not lost.
+func validatePaths(paths []string) []string {
+	validatedPaths := paths
+	for i := 0; i < len(validatedPaths); i++ {
+		if validatedPaths[i] == "stdout" {
+			continue
+		}
+
+		if f, err := os.Create(validatedPaths[i]); os.IsNotExist(err) {
+			validatedPaths[i] = validatedPaths[len(validatedPaths)-1]
+			validatedPaths = validatedPaths[:len(validatedPaths)-1]
+		} else {
+			f.Close()
+		}
+	}
+	return validatedPaths
 }
