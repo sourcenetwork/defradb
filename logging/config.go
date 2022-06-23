@@ -10,7 +10,10 @@
 
 package logging
 
-import "os"
+import (
+	"context"
+	"os"
+)
 
 type (
 	EncoderFormat       = int8
@@ -198,7 +201,10 @@ func validatePaths(paths []string) []string {
 			validatedPaths[i] = validatedPaths[len(validatedPaths)-1]
 			validatedPaths = validatedPaths[:len(validatedPaths)-1]
 		} else {
-			f.Close()
+			err := f.Close()
+			if err != nil {
+				log.ErrorE(context.Background(), "problem closing file", err)
+			}
 		}
 	}
 	return validatedPaths

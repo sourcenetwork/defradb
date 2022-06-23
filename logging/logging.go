@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var log = MustNewLogger("defra.logging")
+
 type KV struct {
 	key   string
 	value interface{}
