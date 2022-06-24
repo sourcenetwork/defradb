@@ -450,6 +450,43 @@ func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
 	}
 }
 
+func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
+	for _, tc := range getLogLevelTestCase() {
+		ctx := context.Background()
+		b := &bytes.Buffer{}
+		logger, _ := getLogger(t, func(c *Config) {
+			c.Level = NewLogLevelOption(tc.LogLevel)
+			c.OutputPaths = []string{"stderr"}
+			c.pipe = b
+		})
+
+		logMessage := "test log message"
+
+		tc.LogFunc(logger, ctx, logMessage)
+		logger.Flush()
+
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, logLines, 0)
+		} else {
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
+		}
+
+		clearRegistry("TestLogName")
+	}
+}
+
 func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
