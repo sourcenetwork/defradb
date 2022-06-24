@@ -528,6 +528,36 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	}
 }
 
+func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
+	ctx := context.Background()
+	b := &bytes.Buffer{}
+	logger, logPath := getLogger(t, func(c *Config) {
+		c.Level = NewLogLevelOption(Info)
+		c.pipe = b
+	})
+	logMessage := "test log message"
+
+	logger.Warn(ctx, logMessage)
+	logger.Flush()
+
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
+	assert.Equal(t, logMessage, logLines[0]["msg"])
+	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "TestLogName", logLines[0]["logger"])
+	// caller is disabled by default
+	assert.NotContains(t, logLines[0], "logging_test.go")
+}
+
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLevel(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")
