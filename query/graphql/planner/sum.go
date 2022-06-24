@@ -153,7 +153,20 @@ func (n *sumNode) Source() planNode { return n.plan }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *sumNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.Conditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.Conditions
+	}
+
+	// Add the other attributes.
+	explainerMap["sourceCollection"] = n.sourceCollection
+	explainerMap["sourceProperty"] = n.sourceProperty
+
+	return explainerMap, nil
 }
 
 func (n *sumNode) Next() (bool, error) {
