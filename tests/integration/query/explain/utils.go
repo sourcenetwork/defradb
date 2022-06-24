@@ -27,6 +27,7 @@ var bookAuthorGQLSchema = (`
 	type book {
 		name: String
 		author: author
+		pages: Int
 	}
 
 	type author {
