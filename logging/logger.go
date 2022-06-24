@@ -164,7 +164,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	if config.pipe != nil {
+	if willOutputToStderr(defaultConfig.OutputPaths) && config.pipe != nil {
 		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
 			cfg := zap.NewProductionEncoderConfig()
 			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator

@@ -225,3 +225,15 @@ func validatePaths(paths []string) []string {
 	}
 	return validatedPaths
 }
+
+func willOutputToStderr(paths []string) bool {
+	if len(paths) == 0 {
+		return true
+	}
+	for _, p := range paths {
+		if p == "stderr" {
+			return true
+		}
+	}
+	return false
+}
