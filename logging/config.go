@@ -12,7 +12,9 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"io"
+	"io/fs"
 	"os"
 )
 
@@ -215,7 +217,7 @@ func validatePaths(paths []string) []string {
 			continue
 		}
 
-		if f, err := os.Create(validatedPaths[i]); os.IsNotExist(err) {
+		if f, err := os.Create(validatedPaths[i]); errors.Is(err, fs.ErrNotExist) {
 			validatedPaths[i] = validatedPaths[len(validatedPaths)-1]
 			validatedPaths = validatedPaths[:len(validatedPaths)-1]
 		} else {
