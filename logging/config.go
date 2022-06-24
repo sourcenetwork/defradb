@@ -32,6 +32,8 @@ func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 }
 
 const (
+	stderr = "stderr"
+
 	JSON EncoderFormat = iota
 	CSV
 )
@@ -209,7 +211,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 func validatePaths(paths []string) []string {
 	validatedPaths := paths
 	for i := 0; i < len(validatedPaths); i++ {
-		if validatedPaths[i] == "stderr" {
+		if validatedPaths[i] == stderr {
 			continue
 		}
 
@@ -231,7 +233,7 @@ func willOutputToStderr(paths []string) bool {
 		return true
 	}
 	for _, p := range paths {
-		if p == "stderr" {
+		if p == stderr {
 			return true
 		}
 	}

@@ -458,7 +458,7 @@ func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
 		b := &bytes.Buffer{}
 		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
-			c.OutputPaths = []string{"stderr"}
+			c.OutputPaths = []string{stderr}
 			c.pipe = b
 		})
 
@@ -774,7 +774,7 @@ func getLogger(t *testing.T, options ...Option) (Logger, string) {
 
 func getFirstOutputPath(outputPaths []string) string {
 	if len(outputPaths) == 0 {
-		return "stderr"
+		return stderr
 	}
 	return outputPaths[0]
 }
@@ -782,7 +782,7 @@ func getFirstOutputPath(outputPaths []string) string {
 var errloggingToConsole = errors.New("no file to open. Logging to console")
 
 func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error) {
-	if logPath == "stderr" {
+	if logPath == stderr {
 		return nil, errloggingToConsole
 	}
 
