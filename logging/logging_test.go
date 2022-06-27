@@ -12,9 +12,12 @@ package logging
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
@@ -45,10 +48,15 @@ func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "FATAL", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -82,10 +90,15 @@ func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceE
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "FATAL", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -117,10 +130,15 @@ func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "FATAL", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -154,10 +172,15 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 		t.Fatalf("Logger.Fatal failed to kill the process, error: %v", err)
 	}
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "FATAL", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -225,6 +248,8 @@ func getLogLevelTestCase() []LogLevelTestCase {
 }
 
 func TestLogWritesMessagesToLog(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -237,13 +262,18 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assert.Nil(t, err)
 		if tc.ExpectedLogLevel == "" {
 			assert.Len(t, logLines, 0)
 		} else {
-			assert.Len(t, logLines, 1)
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+
 			assert.Equal(t, logMessage, logLines[0]["msg"])
 			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
 			assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -252,10 +282,14 @@ func TestLogWritesMessagesToLog(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -271,13 +305,18 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assert.Nil(t, err)
 		if tc.ExpectedLogLevel == "" {
 			assert.Len(t, logLines, 0)
 		} else {
-			assert.Len(t, logLines, 1)
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+
 			assert.Equal(t, logMessage, logLines[0]["msg"])
 			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
 			assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -286,10 +325,14 @@ func TestLogWritesMessagesToLogGivenUpdatedLogLevel(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
 		logger, logPath := getLogger(t, func(c *Config) {
@@ -308,13 +351,18 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assert.Nil(t, err)
 		if tc.ExpectedLogLevel == "" {
 			assert.Len(t, logLines, 0)
 		} else {
-			assert.Len(t, logLines, 1)
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+
 			assert.Equal(t, logMessage, logLines[0]["msg"])
 			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
 			assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -323,36 +371,134 @@ func TestLogWritesMessagesToLogGivenUpdatedContextLogLevel(t *testing.T) {
 			_, hasCaller := logLines[0]["caller"]
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
+
+		clearRegistry("TestLogName")
 	}
 }
 
-// This test is largely a sanity check for `TestLogWritesMessagesToLogGivenUpdatedLogPath`
 func TestLogDoesntWriteMessagesToLogGivenNoLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
-		logger, logPath := getLogger(t, func(c *Config) {
+		b := &bytes.Buffer{}
+		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
+			c.pipe = b
 		})
+
 		logMessage := "test log message"
 
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assert.Errorf(t, err, "PathError")
-		assert.Len(t, logLines, 0)
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, logLines, 0)
+		} else {
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
+		}
+
+		clearRegistry("TestLogName")
+	}
+}
+
+func TestLogDoesntWriteMessagesToLogGivenNotFoundLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
+	for _, tc := range getLogLevelTestCase() {
+		ctx := context.Background()
+		b := &bytes.Buffer{}
+		logger, _ := getLogger(t, func(c *Config) {
+			c.Level = NewLogLevelOption(tc.LogLevel)
+			c.OutputPaths = []string{"/path/not/found"}
+			c.pipe = b
+		})
+
+		logMessage := "test log message"
+
+		tc.LogFunc(logger, ctx, logMessage)
+		logger.Flush()
+
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, logLines, 0)
+		} else {
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
+		}
+
+		clearRegistry("TestLogName")
+	}
+}
+
+func TestLogDoesntWriteMessagesToLogGivenStderrLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
+	for _, tc := range getLogLevelTestCase() {
+		ctx := context.Background()
+		b := &bytes.Buffer{}
+		logger, _ := getLogger(t, func(c *Config) {
+			c.Level = NewLogLevelOption(tc.LogLevel)
+			c.OutputPaths = []string{stderr}
+			c.pipe = b
+		})
+
+		logMessage := "test log message"
+
+		tc.LogFunc(logger, ctx, logMessage)
+		logger.Flush()
+
+		logLines, err := parseLines(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, logLines, 0)
+		} else {
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
+		}
+
+		clearRegistry("TestLogName")
 	}
 }
 
 func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for _, tc := range getLogLevelTestCase() {
 		ctx := context.Background()
-		logger, logPath := getLogger(t, func(c *Config) {
+		logger, _ := getLogger(t, func(c *Config) {
 			c.Level = NewLogLevelOption(tc.LogLevel)
 			c.OutputPaths = []string{}
 		})
+
+		dir := t.TempDir()
+		logPath := dir + "/log.txt"
 		SetConfig(Config{
 			OutputPaths: []string{logPath},
 		})
@@ -361,21 +507,60 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 		tc.LogFunc(logger, ctx, logMessage)
 		logger.Flush()
 
-		logLines, err := getLogLines(logPath)
+		logLines, err := getLogLines(t, logPath)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assert.Nil(t, err)
 		if tc.ExpectedLogLevel == "" {
 			assert.Len(t, logLines, 0)
 		} else {
-			assert.Len(t, logLines, 1)
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+			}
+
 			assert.Equal(t, logMessage, logLines[0]["msg"])
 			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
 			assert.Equal(t, "TestLogName", logLines[0]["logger"])
 		}
+
+		clearRegistry("TestLogName")
 	}
 }
 
+func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
+	ctx := context.Background()
+	b := &bytes.Buffer{}
+	logger, logPath := getLogger(t, func(c *Config) {
+		c.Level = NewLogLevelOption(Info)
+		c.pipe = b
+	})
+	logMessage := "test log message"
+
+	logger.Warn(ctx, logMessage)
+	logger.Flush()
+
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
+	assert.Equal(t, logMessage, logLines[0]["msg"])
+	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "TestLogName", logLines[0]["logger"])
+	// caller is disabled by default
+	assert.NotContains(t, logLines[0], "logging_test.go")
+}
+
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -388,13 +573,17 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
 	assert.Len(t, logLines, 0)
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -407,10 +596,15 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "WARN", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -419,6 +613,8 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 }
 
 func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -431,10 +627,15 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "WARN", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -443,6 +644,8 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -455,13 +658,17 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
 	assert.Len(t, logLines, 0)
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -476,13 +683,17 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
 	assert.Len(t, logLines, 0)
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
@@ -497,10 +708,15 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "WARN", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -509,6 +725,8 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 }
 
 func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -523,10 +741,15 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
-	assert.Len(t, logLines, 1)
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "WARN", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
@@ -535,6 +758,8 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 }
 
 func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLevel(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
@@ -549,9 +774,11 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	logger.Warn(ctx, logMessage)
 	logger.Flush()
 
-	logLines, err := getLogLines(logPath)
+	logLines, err := getLogLines(t, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err)
 	assert.Len(t, logLines, 0)
 }
 
@@ -572,22 +799,46 @@ func getLogger(t *testing.T, options ...Option) (Logger, string) {
 
 	logger := MustNewLogger(name)
 	SetConfig(logConfig)
-	return logger, logPath
+	return logger, getFirstOutputPath(logConfig.OutputPaths)
 }
 
-func getLogLines(logPath string) ([]map[string]interface{}, error) {
+func getFirstOutputPath(outputPaths []string) string {
+	if len(outputPaths) == 0 {
+		return stderr
+	}
+	return outputPaths[0]
+}
+
+var errloggingToConsole = errors.New("no file to open. Logging to console")
+
+func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error) {
+	if logPath == stderr {
+		return nil, errloggingToConsole
+	}
+
 	file, err := os.Open(logPath)
 	if err != nil {
 		return nil, err
 	}
-	fileScanner := bufio.NewScanner(file)
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	return parseLines(file)
+}
+
+func parseLines(r io.Reader) ([]map[string]interface{}, error) {
+	fileScanner := bufio.NewScanner(r)
 
 	fileScanner.Split(bufio.ScanLines)
 
 	logLines := []map[string]interface{}{}
 	for fileScanner.Scan() {
 		loggedLine := make(map[string]interface{})
-		err = json.Unmarshal(fileScanner.Bytes(), &loggedLine)
+		err := json.Unmarshal(fileScanner.Bytes(), &loggedLine)
 		if err != nil {
 			return nil, err
 		}
@@ -595,4 +846,18 @@ func getLogLines(logPath string) ([]map[string]interface{}, error) {
 	}
 
 	return logLines, nil
+}
+
+func clearRegistry(name string) {
+	for _, logger := range registry[name] {
+		logger.Flush()
+	}
+	registry[name] = []Logger{}
+}
+
+func clearConfig() {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+
+	cachedConfig = Config{}
 }

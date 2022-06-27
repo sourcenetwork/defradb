@@ -164,5 +164,19 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		return nil, err
 	}
 
+	if willOutputToStderr(defaultConfig.OutputPaths) && config.pipe != nil {
+		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			cfg := zap.NewProductionEncoderConfig()
+			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator
+			cfg.EncodeTime = defaultConfig.EncoderConfig.EncodeTime
+			cfg.EncodeLevel = defaultConfig.EncoderConfig.EncodeLevel
+			return zapcore.NewCore(
+				zapcore.NewJSONEncoder(cfg),
+				zapcore.AddSync(config.pipe),
+				zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel)),
+			)
+		}))
+	}
+
 	return newLogger.Named(name), nil
 }

@@ -14,6 +14,8 @@ import (
 	"context"
 )
 
+var log = MustNewLogger("defra.logging")
+
 type KV struct {
 	key   string
 	value interface{}
