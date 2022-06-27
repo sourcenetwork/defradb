@@ -217,6 +217,7 @@ func validatePaths(paths []string) []string {
 		}
 
 		if f, err := os.OpenFile(validatedPaths[i], os.O_CREATE|os.O_APPEND, 0666); err != nil {
+			log.ErrorE(context.Background(), "cannot use prvided path", err)
 			validatedPaths[i] = validatedPaths[len(validatedPaths)-1]
 			validatedPaths = validatedPaths[:len(validatedPaths)-1]
 		} else {
