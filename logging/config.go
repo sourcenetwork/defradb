@@ -211,7 +211,8 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 // validatePath ensure that all output paths are valid to avoid zap sync errors
 // and also to ensure that the logs are not lost.
 func validatePaths(paths []string) []string {
-	validatedPaths := paths
+	validatedPaths := make([]string, len(paths))
+	copy(validatedPaths, paths)
 	for i := 0; i < len(validatedPaths); i++ {
 		if validatedPaths[i] == stderr {
 			continue
