@@ -209,24 +209,26 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 // validatePath ensure that all output paths are valid to avoid zap sync errors
 // and also to ensure that the logs are not lost.
 func validatePaths(paths []string) []string {
-	validatedPaths := make([]string, len(paths))
-	copy(validatedPaths, paths)
-	for i := 0; i < len(validatedPaths); i++ {
-		if validatedPaths[i] == stderr {
+	validatedPaths := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if p == stderr {
+			validatedPaths = append(validatedPaths, p)
 			continue
 		}
 
-		if f, err := os.OpenFile(validatedPaths[i], os.O_CREATE|os.O_APPEND, 0666); err != nil {
-			log.ErrorE(context.Background(), "cannot use prvided path", err)
-			validatedPaths[i] = validatedPaths[len(validatedPaths)-1]
-			validatedPaths = validatedPaths[:len(validatedPaths)-1]
+		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0666); err != nil {
+			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
+
 		} else {
 			err := f.Close()
 			if err != nil {
-				log.ErrorE(context.Background(), "problem closing file", err)
+				log.Info(context.Background(), "problem closing file", NewKV("err", err))
 			}
+
+			validatedPaths = append(validatedPaths, p)
 		}
 	}
+
 	return validatedPaths
 }
 
