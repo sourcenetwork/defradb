@@ -218,7 +218,6 @@ func validatePaths(paths []string) []string {
 
 		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0666); err != nil {
 			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
-
 		} else {
 			err := f.Close()
 			if err != nil {
