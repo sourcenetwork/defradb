@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -45,7 +46,7 @@ type planNode interface {
 	Next() (bool, error)
 
 	// Values returns the value of the current doc, should only be called *after* Next().
-	Value() map[string]interface{}
+	Value() core.Doc
 
 	// Source returns the child planNode that generates the source values for this plan.
 	// If a plan has no source, nil is returned.
@@ -54,17 +55,27 @@ type planNode interface {
 	// Kind tells the name of concrete planNode type.
 	Kind() string
 
+	DocumentMap() *core.DocumentMapping
+
 	// Close terminates the planNode execution and releases its resources. After this
 	// method is called you can only safely call Kind() and Source() methods.
 	Close() error
 }
 
 type documentIterator struct {
-	currentValue map[string]interface{}
+	currentValue core.Doc
 }
 
-func (n *documentIterator) Value() map[string]interface{} {
+func (n *documentIterator) Value() core.Doc {
 	return n.currentValue
+}
+
+type docMapper struct {
+	documentMapping *core.DocumentMapping
+}
+
+func (d *docMapper) DocumentMap() *core.DocumentMapping {
+	return d.documentMapping
 }
 
 type ExecutionContext struct {
@@ -81,8 +92,7 @@ type Planner struct {
 	txn datastore.Txn
 	db  client.DB
 
-	ctx     context.Context
-	evalCtx parser.EvalContext
+	ctx context.Context
 }
 
 func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
@@ -93,7 +103,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 	}
 }
 
-func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
+func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
 	switch n := stmt.(type) {
 	case *parser.Query:
 		if len(n.Queries) > 0 {
@@ -111,26 +121,40 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		return p.newPlan(n.Selections[0])
 
 	case *parser.Select:
+		m, err := mapper.ToSelect(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+		return p.Select(m)
+	case *mapper.Select:
 		return p.Select(n)
 
 	case *parser.CommitSelect:
-		return p.CommitSelect(n)
+		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+		return p.CommitSelect(m)
 
 	case *parser.Mutation:
-		return p.newObjectMutationPlan(n)
+		m, err := mapper.ToMutation(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+		return p.newObjectMutationPlan(m)
 	}
 	return nil, fmt.Errorf("Unknown statement type %T", stmt)
 }
 
-func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
+func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
-	case parser.CreateObjects:
+	case mapper.CreateObjects:
 		return p.CreateDoc(stmt)
 
-	case parser.UpdateObjects:
+	case mapper.UpdateObjects:
 		return p.UpdateDocs(stmt)
 
-	case parser.DeleteObjects:
+	case mapper.DeleteObjects:
 		return p.DeleteDocs(stmt)
 
 	default:
@@ -141,7 +165,7 @@ func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error)
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
 // an initiated plan. The caller of makePlan is also responsible of calling Close()
 // on the plan to free it's resources.
-func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
+func (p *Planner) makePlan(stmt interface{}) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
 		return nil, err
@@ -193,6 +217,9 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
 
+	case *createNode:
+		return p.expandPlan(n.results, parentPlan)
+
 	default:
 		return nil
 	}
@@ -230,12 +257,6 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		}
 	}
 
-	// wire up the render plan
-	if plan.render != nil {
-		plan.render.plan = plan.plan
-		plan.plan = plan.render
-	}
-
 	return nil
 }
 
@@ -245,7 +266,10 @@ type aggregateNode interface {
 }
 
 func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
-	for _, aggregate := range plan.aggregates {
+	// Iterate through the aggregates backwards to ensure dependencies
+	// execute *before* any aggregate dependent on them.
+	for i := len(plan.aggregates) - 1; i >= 0; i-- {
+		aggregate := plan.aggregates[i]
 		aggregate.SetPlan(plan.plan)
 		plan.plan = aggregate
 	}
@@ -277,7 +301,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	pipe, hasPipe := p.walkAndFindPlanType(plan.plan, &pipeNode{}).(*pipeNode)
 
 	if !hasPipe {
-		newPipeNode := newPipeNode()
+		newPipeNode := newPipeNode(scanNode.DocumentMap())
 		pipe = &newPipeNode
 		pipe.source = scanNode
 	}
@@ -298,8 +322,6 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		if err != nil {
 			return err
 		}
-		// We need to remove the render so that any child records are preserved on arrival at the parent
-		childSelectNode.(*selectTopNode).render = nil
 
 		dataSource := plan.group.dataSources[i]
 		dataSource.childSource = childSelectNode
@@ -339,10 +361,13 @@ func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode
 		// replace the hard limit with a render limit to allow the full set of child records
 		// to be aggregated
 		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
-			renderLimit, err := p.RenderLimit(&parserTypes.Limit{
-				Offset: l.offset,
-				Limit:  l.limit,
-			})
+			renderLimit, err := p.RenderLimit(
+				parentPlan.documentMapping,
+				&parserTypes.Limit{
+					Offset: l.offset,
+					Limit:  l.limit,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -458,11 +483,11 @@ func (p *Planner) executeRequest(
 	}
 
 	docs := []map[string]interface{}{}
+	docMap := plan.DocumentMap()
 
 	for next {
-		if values := plan.Value(); values != nil {
-			docs = append(docs, copyMap(values))
-		}
+		copy := docMap.ToMap(plan.Value())
+		docs = append(docs, copy)
 
 		next, err = plan.Next()
 		if err != nil {
@@ -519,18 +544,4 @@ func multiErr(errorsToWrap ...error) error {
 		errs = fmt.Errorf("%s: %w", errs, err)
 	}
 	return errs
-}
-
-func copyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
-	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
-		if ok {
-			cp[k] = copyMap(vm)
-		} else {
-			cp[k] = v
-		}
-	}
-
-	return cp
 }

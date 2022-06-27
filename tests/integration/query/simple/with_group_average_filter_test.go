@@ -251,3 +251,50 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilterAndNilItem(t *testing.T) {
+	// This test checks that the appended/internal nil filter does not clash with the consumer-defined filter
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, no children, average with filter on non-rendered, unfiltered group",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_avg(_group: {field: Age, filter: {Age: {_lt: 33}}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+				"Name": "John",
+				"Age": 34
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 32
+			}`),
+				(`{
+				"Name": "John",
+				"Age": 30
+			}`),
+				(`{
+				"Name": "John"
+			}`),
+				(`{
+				"Name": "Alice",
+				"Age": 19
+			}`)},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Alice",
+				"_avg": float64(19),
+			},
+			{
+				"Name": "John",
+				"_avg": float64(31),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

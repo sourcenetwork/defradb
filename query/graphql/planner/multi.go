@@ -32,8 +32,6 @@ results in all the attached multinodes.
 type MultiNode interface {
 	planNode
 	Children() []planNode
-	AddChild(string, planNode) error
-	ReplaceChildAt(int, string, planNode) error
 }
 
 // mergeNode is a special interface for the MultiNode
@@ -76,11 +74,12 @@ type appendNode interface {
 //
 type parallelNode struct { // serialNode?
 	documentIterator
+	docMapper
 
 	p *Planner
 
-	children    []planNode
-	childFields []string
+	children     []planNode
+	childIndexes []int
 
 	multiscan *multiScanNode
 }
@@ -127,7 +126,8 @@ func (p *parallelNode) Close() error {
 // It only needs a single child plan to return true for it
 // to return true. Same with errors.
 func (p *parallelNode) Next() (bool, error) {
-	p.currentValue = make(map[string]interface{})
+	p.currentValue = p.documentMapping.NewDoc()
+
 	var orNext bool
 	for i, plan := range p.children {
 		var next bool
@@ -156,9 +156,8 @@ func (p *parallelNode) nextMerge(index int, plan mergeNode) (bool, error) {
 	}
 
 	doc := plan.Value()
-	for k, v := range doc {
-		p.currentValue[k] = v
-	}
+	copy(p.currentValue.Fields, doc.Fields)
+
 	return true, nil
 }
 
@@ -208,19 +207,20 @@ output
 */
 
 func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
-	if key, ok := p.currentValue["_key"].(string); ok {
-		// pass the doc key as a reference through the spans interface
-		spans := core.Spans{core.NewSpan(core.DataStoreKey{DocKey: key}, core.DataStoreKey{})}
-		plan.Spans(spans)
-		err := plan.Init()
-		if err != nil {
-			return false, err
-		}
-	} else {
+	key := p.currentValue.GetKey()
+	if key == "" {
 		return false, nil
 	}
 
-	results := make([]map[string]interface{}, 0)
+	// pass the doc key as a reference through the spans interface
+	spans := core.Spans{core.NewSpan(core.DataStoreKey{DocKey: key}, core.DataStoreKey{})}
+	plan.Spans(spans)
+	err := plan.Init()
+	if err != nil {
+		return false, err
+	}
+
+	results := make([]core.Doc, 0)
 	for {
 		next, err := plan.Next()
 		if err != nil {
@@ -233,7 +233,7 @@ func (p *parallelNode) nextAppend(index int, plan appendNode) (bool, error) {
 
 		results = append(results, plan.Value())
 	}
-	p.currentValue[p.childFields[index]] = results
+	p.currentValue.Fields[p.childIndexes[index]] = results
 	return true, nil
 }
 
@@ -280,20 +280,9 @@ func (p *parallelNode) Children() []planNode {
 	return p.children
 }
 
-func (p *parallelNode) AddChild(field string, node planNode) error {
+func (p *parallelNode) addChild(fieldIndex int, node planNode) {
 	p.children = append(p.children, node)
-	p.childFields = append(p.childFields, field)
-	return nil
-}
-
-func (p *parallelNode) ReplaceChildAt(i int, field string, node planNode) error {
-	if i >= len(p.children) {
-		return errors.New("Index to replace child node at doesn't exist (out of bounds)")
-	}
-
-	p.children[i] = node
-	p.childFields[i] = field
-	return nil
+	p.childIndexes = append(p.childIndexes, fieldIndex)
 }
 
 /*
@@ -388,7 +377,7 @@ Select {
 */
 
 // @todo: Document AddSubPlan method
-func (s *selectNode) addSubPlan(field string, plan planNode) error {
+func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 	src := s.source
 	switch node := src.(type) {
 	// if its a scan node, we either replace or create a multinode
@@ -397,13 +386,12 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		case mergeNode:
 			s.source = plan
 		case appendNode:
-			m := &parallelNode{p: s.p}
-			if err := m.AddChild("", src); err != nil {
-				return err
+			m := &parallelNode{
+				p:         s.p,
+				docMapper: docMapper{src.DocumentMap()},
 			}
-			if err := m.AddChild(field, plan); err != nil {
-				return err
-			}
+			m.addChild(-1, src)
+			m.addChild(fieldIndex, plan)
 			s.source = m
 		default:
 			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
@@ -417,39 +405,33 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
-		// create multinode
-		multinode := &parallelNode{
-			p:         s.p,
-			multiscan: multiscan,
-		}
 		// replace our current source internal scanNode with our new multiscanner
 		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
 			return err
 		}
-		// add our newly updated source to the multinode
-		if err := multinode.AddChild("", src); err != nil {
-			return err
+		// create multinode
+		multinode := &parallelNode{
+			p:         s.p,
+			multiscan: multiscan,
+			docMapper: docMapper{src.DocumentMap()},
 		}
+		multinode.addChild(-1, src)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
 		if err := s.p.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
-		if err := multinode.AddChild(field, plan); err != nil {
-			return err
-		}
+		multinode.addChild(fieldIndex, plan)
 		multiscan.addReader()
 		s.source = multinode
 
-	// we already have an existing MultiNode as our source
-	case MultiNode:
+	// we already have an existing parallelNode as our source
+	case *parallelNode:
 		switch plan.(type) {
 		// easy, just append, since append doest need any internal relaced scannode
 		case appendNode:
-			if err := node.AddChild(field, plan); err != nil {
-				return err
-			}
+			node.addChild(fieldIndex, plan)
 
 		// We have a internal multiscanNode on our MultiNode
 		case mergeNode:
@@ -464,9 +446,7 @@ func (s *selectNode) addSubPlan(field string, plan planNode) error {
 			}
 			multiscan.addReader()
 			// add our newly updated plan to the multinode
-			if err := node.AddChild(field, plan); err != nil {
-				return err
-			}
+			node.addChild(fieldIndex, plan)
 		default:
 			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
 		}

@@ -18,32 +18,26 @@ import (
 	"reflect"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 type countNode struct {
 	documentIterator
+	docMapper
 
 	p    *Planner
 	plan planNode
 
-	sourceProperty string
-	virtualFieldId string
-
-	filter *parser.Filter
+	virtualFieldIndex int
+	aggregateMapping  []mapper.AggregateTarget
 }
 
-func (p *Planner) Count(field *parser.Select, host *parser.Select) (*countNode, error) {
-	source, err := field.GetAggregateSource(host)
-	if err != nil {
-		return nil, err
-	}
-
+func (p *Planner) Count(field *mapper.Aggregate, host *mapper.Select) (*countNode, error) {
 	return &countNode{
-		p:              p,
-		sourceProperty: source.HostProperty,
-		virtualFieldId: field.Name,
-		filter:         field.Filter,
+		p:                 p,
+		virtualFieldIndex: field.Index,
+		aggregateMapping:  field.AggregateTargets,
+		docMapper:         docMapper{&field.DocumentMapping},
 	}, nil
 }
 
@@ -66,19 +60,26 @@ func (n *countNode) Source() planNode { return n.plan }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *countNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
 
-	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[filterLabel] = nil
-	} else {
-		explainerMap[filterLabel] = n.filter.Conditions
+	for i, source := range n.aggregateMapping {
+		explainerMap := map[string]interface{}{}
+
+		// Add the filter attribute if it exists.
+		if source.Filter == nil || source.Filter.ExternalConditions == nil {
+			explainerMap[filterLabel] = nil
+		} else {
+			explainerMap[filterLabel] = source.Filter.ExternalConditions
+		}
+
+		// Add the source property.
+		explainerMap["sourceProperty"] = source.Field.Name
+		sourceExplanations[i] = explainerMap
 	}
 
-	// Add the source property.
-	explainerMap["sourceProperty"] = n.sourceProperty
-
-	return explainerMap, nil
+	return map[string]interface{}{
+		"sources": sourceExplanations,
+	}, nil
 }
 
 func (n *countNode) Next() (bool, error) {
@@ -88,24 +89,23 @@ func (n *countNode) Next() (bool, error) {
 	}
 
 	n.currentValue = n.plan.Value()
-
 	// Can just scan for now, can be replaced later by something fancier if needed
 	var count int
-	if property, hasProperty := n.currentValue[n.sourceProperty]; hasProperty {
+	for _, source := range n.aggregateMapping {
+		property := n.currentValue.Fields[source.Index]
 		v := reflect.ValueOf(property)
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			count = v.Len()
+			length := v.Len()
 			// For now, we only support count filters internally to support averages
 			// so this is fine here now, but may need to be moved later once external
 			// count filter support is added.
-			if count > 0 && n.filter != nil {
-				docArray, isDocArray := property.([]map[string]interface{})
+			if count > 0 && source.Filter != nil {
+				docArray, isDocArray := property.([]core.Doc)
 				if isDocArray {
-					count = 0
 					for _, doc := range docArray {
-						passed, err := parser.RunFilter(doc, n.filter, n.p.evalCtx)
+						passed, err := mapper.RunFilter(doc, source.Filter)
 						if err != nil {
 							return false, err
 						}
@@ -114,11 +114,13 @@ func (n *countNode) Next() (bool, error) {
 						}
 					}
 				}
+			} else {
+				count = count + length
 			}
 		}
 	}
 
-	n.currentValue[n.virtualFieldId] = count
+	n.currentValue.Fields[n.virtualFieldIndex] = count
 	return true, nil
 }
 
