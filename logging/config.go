@@ -10,6 +10,12 @@
 
 package logging
 
+import (
+	"context"
+	"io"
+	"os"
+)
+
 type (
 	EncoderFormat       = int8
 	EncoderFormatOption struct {
@@ -26,6 +32,8 @@ func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 }
 
 const (
+	stderr = "stderr"
+
 	JSON EncoderFormat = iota
 	CSV
 )
@@ -84,6 +92,8 @@ type Config struct {
 	EnableCaller          EnableCallerOption
 	OutputPaths           []string
 	OverridesByLoggerName map[string]OverrideConfig
+
+	pipe io.Writer // this is used for testing purposes only
 }
 
 type OverrideConfig struct {
@@ -92,6 +102,8 @@ type OverrideConfig struct {
 	EnableStackTrace EnableStackTraceOption
 	EnableCaller     EnableCallerOption
 	OutputPaths      []string
+
+	pipe io.Writer // this is used for testing purposes only
 }
 
 func (c Config) forLogger(name string) Config {
@@ -101,6 +113,7 @@ func (c Config) forLogger(name string) Config {
 		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
+		pipe:             c.pipe,
 	}
 
 	if override, hasOverride := c.OverridesByLoggerName[name]; hasOverride {
@@ -119,6 +132,9 @@ func (c Config) forLogger(name string) Config {
 		if len(override.OutputPaths) != 0 {
 			loggerConfig.OutputPaths = override.OutputPaths
 		}
+		if override.pipe != nil {
+			loggerConfig.pipe = override.pipe
+		}
 	}
 
 	return loggerConfig
@@ -132,6 +148,7 @@ func (c Config) copy() Config {
 			EnableStackTrace: o.EnableStackTrace,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      o.OutputPaths,
+			pipe:             o.pipe,
 		}
 	}
 
@@ -142,6 +159,7 @@ func (c Config) copy() Config {
 		OutputPaths:           c.OutputPaths,
 		EnableCaller:          c.EnableCaller,
 		OverridesByLoggerName: overridesByLoggerName,
+		pipe:                  c.pipe,
 	}
 }
 
@@ -165,7 +183,11 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 	}
 
 	if len(newConfigOptions.OutputPaths) != 0 {
-		newConfig.OutputPaths = newConfigOptions.OutputPaths
+		newConfig.OutputPaths = validatePaths(newConfigOptions.OutputPaths)
+	}
+
+	if newConfigOptions.pipe != nil {
+		newConfig.pipe = newConfigOptions.pipe
 	}
 
 	for k, o := range newConfigOptions.OverridesByLoggerName {
@@ -176,9 +198,47 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 			EnableStackTrace: o.EnableStackTrace,
 			EnableCaller:     o.EnableCaller,
 			EncoderFormat:    o.EncoderFormat,
-			OutputPaths:      o.OutputPaths,
+			OutputPaths:      validatePaths(o.OutputPaths),
+			pipe:             o.pipe,
 		}
 	}
 
 	return newConfig
+}
+
+// validatePath ensure that all output paths are valid to avoid zap sync errors
+// and also to ensure that the logs are not lost.
+func validatePaths(paths []string) []string {
+	validatedPaths := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if p == stderr {
+			validatedPaths = append(validatedPaths, p)
+			continue
+		}
+
+		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0666); err != nil {
+			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
+		} else {
+			err := f.Close()
+			if err != nil {
+				log.Info(context.Background(), "problem closing file", NewKV("err", err))
+			}
+
+			validatedPaths = append(validatedPaths, p)
+		}
+	}
+
+	return validatedPaths
+}
+
+func willOutputToStderr(paths []string) bool {
+	if len(paths) == 0 {
+		return true
+	}
+	for _, p := range paths {
+		if p == stderr {
+			return true
+		}
+	}
+	return false
 }
