@@ -65,18 +65,16 @@ func TestExplainQuerySimple(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "1",
-									"collectionName": "users",
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"filter":         nil,
+								"collectionID":   "1",
+								"collectionName": "users",
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -110,18 +108,16 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "1",
-									"collectionName": "users",
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"filter":         nil,
+								"collectionID":   "1",
+								"collectionName": "users",
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -159,18 +155,16 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"filter":         nil,
-									"collectionID":   "1",
-									"collectionName": "users",
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"filter":         nil,
+								"collectionID":   "1",
+								"collectionName": "users",
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},

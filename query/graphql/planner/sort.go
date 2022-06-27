@@ -12,7 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // simplified planNode interface.
@@ -20,7 +20,7 @@ import (
 // in value generation and retrieval.
 type valueIterator interface {
 	Next() (bool, error)
-	Value() map[string]interface{}
+	Value() core.Doc
 	Close() error
 }
 
@@ -30,7 +30,7 @@ type sortingStrategy interface {
 	// copies data if its needed.
 	// Ideally stores inside a valuesNode
 	// rowContainer buffer.
-	Add(map[string]interface{}) error
+	Add(core.Doc) error
 	// Finish finalizes and applies the actual
 	// sorting mechanism to all the stored data.
 	Finish()
@@ -38,10 +38,12 @@ type sortingStrategy interface {
 
 // order the results
 type sortNode struct {
+	docMapper
+
 	p    *Planner
 	plan planNode
 
-	ordering []parserTypes.SortCondition
+	ordering []mapper.OrderCondition
 
 	// simplified planNode interface
 	// used for iterating through
@@ -59,17 +61,18 @@ type sortNode struct {
 
 // OrderBy creates a new sortNode which returns the underlying
 // plans values in a sorted mannor. The field to sort by, and the
-// direction of sorting is determined by the given parserTypes.OrderBy
+// direction of sorting is determined by the given mapper.OrderBy
 // object.
-func (p *Planner) OrderBy(n *parserTypes.OrderBy) (*sortNode, error) {
+func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*sortNode, error) {
 	if n == nil { // no orderby info
 		return nil, nil
 	}
 
 	return &sortNode{
-		p:        p,
-		ordering: n.Conditions,
-		needSort: true,
+		p:         p,
+		ordering:  n.Conditions,
+		needSort:  true,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
 }
 
@@ -87,7 +90,7 @@ func (n *sortNode) Start() error { return n.plan.Start() }
 
 func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
-func (n *sortNode) Value() map[string]interface{} {
+func (n *sortNode) Value() core.Doc {
 	return n.valueIter.Value()
 }
 
@@ -166,7 +169,7 @@ func newAllSortStrategy(v *valuesNode) *allSortStrategy {
 }
 
 // Add adds a new document to underlying valueNode
-func (s *allSortStrategy) Add(doc map[string]interface{}) error {
+func (s *allSortStrategy) Add(doc core.Doc) error {
 	err := s.valueNode.docs.AddDoc(doc)
 	return err
 }
@@ -182,7 +185,7 @@ func (s *allSortStrategy) Next() (bool, error) {
 }
 
 // Values returns the values of the next doc from the underliny valueNode
-func (s *allSortStrategy) Value() map[string]interface{} {
+func (s *allSortStrategy) Value() core.Doc {
 	return s.valueNode.Value()
 }
 

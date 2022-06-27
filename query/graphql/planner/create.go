@@ -16,7 +16,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // createNode is used to construct and execute
@@ -28,6 +29,8 @@ import (
 // or Select plans
 type createNode struct {
 	documentIterator
+	docMapper
+
 	p *Planner
 
 	// cache information about the original data source
@@ -41,6 +44,7 @@ type createNode struct {
 	err error
 
 	returned bool
+	results  planNode
 }
 
 func (n *createNode) Kind() string { return "createNode" }
@@ -76,21 +80,52 @@ func (n *createNode) Next() (bool, error) {
 		return false, err
 	}
 
-	currentValue, err := n.doc.ToMap()
-	if err != nil {
-		return false, err
+	currentValue := n.documentMapping.NewDoc()
+
+	currentValue.SetKey(n.doc.Key().String())
+	for i, value := range n.doc.Values() {
+		// On create the document will have no aliased fields/aggregates/etc so we can safely take
+		// the first index.
+		n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
 	}
 
 	n.returned = true
 	n.currentValue = currentValue
+
+	desc := n.collection.Description()
+	docKey := base.MakeDocKey(desc, currentValue.GetKey())
+	n.results.Spans(core.Spans{core.NewSpan(docKey, docKey.PrefixEnd())})
+
+	err := n.results.Init()
+	if err != nil {
+		return false, err
+	}
+
+	err = n.results.Start()
+	if err != nil {
+		return false, err
+	}
+
+	// get the next result based on our point lookup
+	next, err := n.results.Next()
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
+	}
+
+	n.currentValue = n.results.Value()
 	return true, nil
 }
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
 
-func (n *createNode) Close() error { return nil }
+func (n *createNode) Close() error {
+	return n.results.Close()
+}
 
-func (n *createNode) Source() planNode { return nil }
+func (n *createNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
@@ -106,25 +141,25 @@ func (n *createNode) Explain() (map[string]interface{}, error) {
 	}, nil
 }
 
-func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
+func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
+	results, err := p.Select(&parsed.Select)
+	if err != nil {
+		return nil, err
+	}
+
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		newDocStr: parsed.Data,
+		results:   results,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 	create.collection = col
-
-	// last step, create a basic Select statement
-	// from the parsed Mutation object
-	// and construct a new Select planNode
-	// which uses the new create node as its
-	// source, instead of a scan node.
-	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create, true, nil)
+	return create, nil
 }

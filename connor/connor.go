@@ -3,11 +3,13 @@ package connor
 import (
 	"fmt"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/core"
 )
 
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
-func Match(conditions, data map[string]interface{}) (bool, error) {
+func Match(conditions map[FilterKey]interface{}, data core.Doc) (bool, error) {
 	return MatchWith("$eq", conditions, data)
 }
 

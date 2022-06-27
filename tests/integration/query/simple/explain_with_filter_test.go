@@ -38,18 +38,16 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
 										},
 									},
 								},
@@ -79,18 +77,16 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
 										},
 									},
 								},
@@ -124,18 +120,16 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
 										},
 									},
 								},
@@ -173,18 +167,16 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
 										},
 									},
 								},
@@ -214,18 +206,16 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009h",
 										},
 									},
 								},
@@ -260,22 +250,20 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
 										},
 									},
 								},
@@ -314,22 +302,20 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter":         nil,
-										"spans": []dataMap{
-											{
-												"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-												"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
-											},
-											{
-												"start": "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f94",
-												"end":   "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f95",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+											"end":   "/1/bae-52b9170d-b77a-5887-b877-cbdbb99b009g",
+										},
+										{
+											"start": "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f94",
+											"end":   "/1/bae-1378ab62-e064-5af4-9ea6-49941c8d8f95",
 										},
 									},
 								},
@@ -370,22 +356,20 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"_key": dataMap{
-											"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"_key": dataMap{
+										"$eq": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -424,22 +408,20 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"Name": dataMap{
-											"$eq": "John",
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"Name": dataMap{
+										"$eq": "John",
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -473,22 +455,20 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Name": dataMap{
-												"$eq": "John",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Name": dataMap{
+											"$eq": "John",
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -517,22 +497,20 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Name": dataMap{
-												"$eq": "John",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Name": dataMap{
+											"$eq": "John",
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -562,22 +540,20 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Name": dataMap{
-												"$eq": "Bob",
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Name": dataMap{
+											"$eq": "Bob",
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -618,22 +594,20 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"Age": dataMap{
-											"$eq": int64(21),
-										},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"Age": dataMap{
+										"$eq": int64(21),
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -672,22 +646,20 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Age": dataMap{
-												"$gt": int64(20),
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Age": dataMap{
+											"$gt": int64(20),
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -721,22 +693,20 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Age": dataMap{
-												"$gt": int64(40),
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Age": dataMap{
+											"$gt": int64(40),
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -771,22 +741,20 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 				{
 					"explain": dataMap{
 						"selectTopNode": dataMap{
-							"renderNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "users",
-										"filter": dataMap{
-											"Age": dataMap{
-												"$gt": int64(20),
-											},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "1",
+									"collectionName": "users",
+									"filter": dataMap{
+										"Age": dataMap{
+											"$gt": int64(20),
 										},
-										"spans": []dataMap{
-											{
-												"start": "/1",
-												"end":   "/2",
-											},
+									},
+									"spans": []dataMap{
+										{
+											"start": "/1",
+											"end":   "/2",
 										},
 									},
 								},
@@ -835,31 +803,29 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"$and": []interface{}{
-											dataMap{
-												"Age": dataMap{
-													"$gt": int64(20),
-												},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"$and": []interface{}{
+										dataMap{
+											"Age": dataMap{
+												"$gt": int64(20),
 											},
-											dataMap{
-												"Age": dataMap{
-													"$lt": int64(50),
-												},
+										},
+										dataMap{
+											"Age": dataMap{
+												"$lt": int64(50),
 											},
 										},
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -905,31 +871,29 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"$or": []interface{}{
-											dataMap{
-												"Age": dataMap{
-													"$eq": int64(55),
-												},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"$or": []interface{}{
+										dataMap{
+											"Age": dataMap{
+												"$eq": int64(55),
 											},
-											dataMap{
-												"Age": dataMap{
-													"$eq": int64(19),
-												},
+										},
+										dataMap{
+											"Age": dataMap{
+												"$eq": int64(19),
 											},
 										},
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},
@@ -975,26 +939,24 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "users",
-									"filter": dataMap{
-										"Age": dataMap{
-											"$in": []interface{}{
-												int64(19),
-												int64(40),
-												int64(55),
-											},
+						"selectNode": dataMap{
+							"filter": nil,
+							"scanNode": dataMap{
+								"collectionID":   "1",
+								"collectionName": "users",
+								"filter": dataMap{
+									"Age": dataMap{
+										"$in": []interface{}{
+											int64(19),
+											int64(40),
+											int64(55),
 										},
 									},
-									"spans": []dataMap{
-										{
-											"start": "/1",
-											"end":   "/2",
-										},
+								},
+								"spans": []dataMap{
+									{
+										"start": "/1",
+										"end":   "/2",
 									},
 								},
 							},

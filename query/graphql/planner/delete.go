@@ -15,15 +15,17 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 type deleteNode struct {
+	docMapper
+
 	p *Planner
 
 	collection client.Collection
 
-	filter *parser.Filter
+	filter *mapper.Filter
 	ids    []string
 
 	isDeleting bool
@@ -74,7 +76,9 @@ func (n *deleteNode) Next() (bool, error) {
 
 		// Consume the deletes into our valuesNode
 		for _, resKey := range results.DocKeys {
-			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
+			doc := n.docMapper.documentMapping.NewDoc()
+			doc.SetKey(resKey)
+			err := n.deleteIter.docs.AddDoc(doc)
 			if err != nil {
 				return false, err
 			}
@@ -89,7 +93,7 @@ func (n *deleteNode) Next() (bool, error) {
 	return n.deleteIter.Next()
 }
 
-func (n *deleteNode) Value() map[string]interface{} {
+func (n *deleteNode) Value() core.Doc {
 	return n.deleteIter.Value()
 }
 
@@ -126,31 +130,37 @@ func (n *deleteNode) Explain() (map[string]interface{}, error) {
 	explainerMap[idsLabel] = n.ids
 
 	// Add the filter attribute if it exists, otherwise have it nil.
-	if n.filter == nil || n.filter.Conditions == nil {
+	if n.filter == nil || n.filter.ExternalConditions == nil {
 		explainerMap[filterLabel] = nil
 	} else {
-		explainerMap[filterLabel] = n.filter.Conditions
+		explainerMap[filterLabel] = n.filter.ExternalConditions
 	}
 
 	return explainerMap, nil
 }
 
-func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {
+func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 	delete := &deleteNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.IDs,
+		ids:        parsed.DocKeys,
 		isDeleting: true,
+		docMapper:  docMapper{&parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 
 	delete.collection = col.WithTxn(p.txn)
 
-	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, delete, true, nil)
+	// We have to clone the mutation and clear the filter before
+	// using it to create the select node, else the mutation filter
+	// will filter out the results
+	clone := parsed.CloneTo(parsed.Index).(*mapper.Mutation)
+	clone.Select.Filter = nil
+
+	return p.SelectFromSource(&clone.Select, delete, true, nil)
 }

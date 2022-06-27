@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour.
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with cid",
@@ -34,11 +32,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
-			{
-				"Name": "John",
-			},
-		},
+		ExpectedError: "Failed to propagate VersionFetcher span, invalid CID: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)

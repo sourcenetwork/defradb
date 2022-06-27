@@ -49,49 +49,26 @@ type CommitSelect struct {
 	OrderBy *parserTypes.OrderBy
 
 	Fields []Selection
-
-	Statement *ast.Field
 }
 
 func (c CommitSelect) GetRoot() parserTypes.SelectionType {
 	return parserTypes.CommitSelection
 }
 
-func (c CommitSelect) GetStatement() ast.Node {
-	return c.Statement
-}
-
-func (c CommitSelect) GetName() string {
-	return c.Name
-}
-
-func (c CommitSelect) GetAlias() string {
-	return c.Alias
-}
-
-func (c CommitSelect) GetSelections() []Selection {
-	return c.Fields
-}
-
 func (c CommitSelect) ToSelect() *Select {
 	return &Select{
-		Name:      c.Name,
-		Alias:     c.Alias,
-		Limit:     c.Limit,
-		OrderBy:   c.OrderBy,
-		Statement: c.Statement,
-		Fields:    c.Fields,
-		Root:      parserTypes.CommitSelection,
+		Alias:   c.Alias,
+		Limit:   c.Limit,
+		OrderBy: c.OrderBy,
+		Fields:  c.Fields,
+		Root:    parserTypes.CommitSelection,
 	}
 }
 
 func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	commit := &CommitSelect{
-		Statement: field,
-	}
-	commit.Name = field.Name.Value
-	if field.Alias != nil {
-		commit.Alias = field.Alias.Value
+		Name:  field.Name.Value,
+		Alias: getFieldAlias(field),
 	}
 
 	var ok bool

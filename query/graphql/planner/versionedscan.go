@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	"github.com/ipfs/go-cid"
 )
@@ -28,6 +28,7 @@ var (
 // scans an index for records
 type versionedScanNode struct {
 	documentIterator
+	docMapper
 
 	p *Planner
 
@@ -43,7 +44,7 @@ type versionedScanNode struct {
 	reverse bool
 
 	// filter data
-	filter *parser.Filter
+	filter *mapper.Filter
 
 	scanInitialized bool
 
@@ -94,15 +95,15 @@ func (n *versionedScanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.currentValue, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 		if err != nil {
 			return false, err
 		}
-		if n.currentValue == nil {
+		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.currentValue, n.filter, n.p.evalCtx)
+		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}

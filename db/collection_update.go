@@ -21,8 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 
 	cbor "github.com/fxamacker/cbor/v2"
 )
@@ -256,6 +259,8 @@ func (c *collection) updateWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
+	docMap := query.DocumentMap()
+
 	// loop while we still have results from the filter query
 	for {
 		next, nextErr := query.Next()
@@ -268,7 +273,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// Get the document, and apply the patch
-		doc := query.Value()
+		doc := docMap.ToMap(query.Value())
 		if isPatch {
 			err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
 		} else if isMerge { // else is fine here
@@ -279,7 +284,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc["_key"].(string))
+		results.DocKeys = append(results.DocKeys, doc[parserTypes.DocKeyFieldName].(string))
 		results.Count++
 	}
 
@@ -557,18 +562,21 @@ func (c *collection) makeSelectionQuery(
 	txn datastore.Txn,
 	filter interface{},
 ) (planner.Query, error) {
-	var f *parser.Filter
+	mapping := c.createMapping()
+	var f *mapper.Filter
 	var err error
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
 			return nil, errors.New("Invalid filter")
 		}
-		f, err = parser.NewFilterFromString(fval)
+		var p *parser.Filter
+		p, err = parser.NewFilterFromString(fval)
 		if err != nil {
 			return nil, err
 		}
-	case *parser.Filter:
+		f = mapper.ToFilter(p, mapping)
+	case *mapper.Filter:
 		f = fval
 	default:
 		return nil, errors.New("Invalid filter")
@@ -576,7 +584,7 @@ func (c *collection) makeSelectionQuery(
 	if filter == "" {
 		return nil, errors.New("Invalid filter")
 	}
-	slct, err := c.makeSelectLocal(f)
+	slct, err := c.makeSelectLocal(f, mapping)
 	if err != nil {
 		return nil, err
 	}
@@ -584,21 +592,49 @@ func (c *collection) makeSelectionQuery(
 	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
 }
 
-func (c *collection) makeSelectLocal(filter *parser.Filter) (*parser.Select, error) {
-	slct := &parser.Select{
-		Name:   c.Name(),
-		Filter: filter,
-		Fields: make([]parser.Selection, len(c.desc.Schema.Fields)),
+func (c *collection) makeSelectLocal(filter *mapper.Filter, mapping *core.DocumentMapping) (*mapper.Select, error) {
+	slct := &mapper.Select{
+		Targetable: mapper.Targetable{
+			Field: mapper.Field{
+				Name: c.Name(),
+			},
+			Filter: filter,
+		},
+		Fields:          make([]mapper.Requestable, len(c.desc.Schema.Fields)),
+		DocumentMapping: *mapping,
 	}
 
-	for i, fd := range c.Schema().Fields {
+	for _, fd := range c.Schema().Fields {
 		if fd.IsObject() {
 			continue
 		}
-		slct.Fields[i] = parser.Field{Name: fd.Name}
+		index := int(fd.ID)
+		slct.Fields = append(slct.Fields, &mapper.Field{
+			Index: index,
+			Name:  fd.Name,
+		})
 	}
 
 	return slct, nil
+}
+
+func (c *collection) createMapping() *core.DocumentMapping {
+	mapping := core.NewDocumentMapping()
+	mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
+	for _, fd := range c.Schema().Fields {
+		if fd.IsObject() {
+			continue
+		}
+		index := int(fd.ID)
+		mapping.Add(index, fd.Name)
+		mapping.RenderKeys = append(mapping.RenderKeys,
+			core.RenderKey{
+				Index: index,
+				Key:   fd.Name,
+			},
+		)
+	}
+	return mapping
 }
 
 // getTypeAndCollectionForPatch parses the Patch op path values

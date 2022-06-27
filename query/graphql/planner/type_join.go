@@ -14,9 +14,10 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
@@ -48,6 +49,8 @@ import (
 // root, and recursively creates a new selectNode for the
 // subType.
 type typeIndexJoin struct {
+	docMapper
+
 	p *Planner
 
 	// root        planNode
@@ -66,10 +69,11 @@ type typeIndexJoin struct {
 func (p *Planner) makeTypeIndexJoin(
 	parent *selectNode,
 	source planNode,
-	subType *parser.Select,
+	subType *mapper.Select,
 ) (*typeIndexJoin, error) {
 	typeJoin := &typeIndexJoin{
-		p: p,
+		p:         p,
+		docMapper: docMapper{parent.documentMapping},
 	}
 
 	// handle join relation strategies
@@ -117,7 +121,7 @@ func (n *typeIndexJoin) Next() (bool, error) {
 	return n.joinPlan.Next()
 }
 
-func (n *typeIndexJoin) Value() map[string]interface{} {
+func (n *typeIndexJoin) Value() core.Doc {
 	return n.joinPlan.Value()
 }
 
@@ -198,20 +202,22 @@ func (n *typeIndexJoin) Merge() bool { return true }
 //
 // The subType filter is the conditions that apply to the
 // queried sub type ie: {birthday: "June 26, 1990", ...}.
-func splitFilterByType(filter *parser.Filter, subType string) (*parser.Filter, *parser.Filter) {
+func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *mapper.Filter) {
 	if filter == nil {
 		return nil, nil
 	}
-	sub, ok := filter.Conditions[subType]
-	if !ok {
-		return filter, &parser.Filter{}
+	conditionKey := &mapper.PropertyIndex{
+		Index: subType,
 	}
 
-	// delete old filter value
-	delete(filter.Conditions, subType)
+	keyFound, sub := removeConditionIndex(conditionKey, filter.Conditions)
+	if !keyFound {
+		return filter, &mapper.Filter{}
+	}
+
 	// create new splitup filter
 	// our schema ensures that if sub exists, its of type map[string]interface{}
-	splitF := &parser.Filter{Conditions: map[string]interface{}{subType: sub}}
+	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]interface{}{conditionKey: sub}}
 	return filter, splitF
 }
 
@@ -220,6 +226,7 @@ func splitFilterByType(filter *parser.Filter, subType string) (*parser.Filter, *
 // query.
 type typeJoinOne struct {
 	documentIterator
+	docMapper
 
 	p *Planner
 
@@ -231,60 +238,54 @@ type typeJoinOne struct {
 
 	primary bool
 
-	spans core.Spans
+	spans     core.Spans
+	subSelect *mapper.Select
 }
 
 func (p *Planner) makeTypeJoinOne(
 	parent *selectNode,
 	source planNode,
-	subType *parser.Select,
+	subType *mapper.Select,
 ) (*typeJoinOne, error) {
-	//ignore recurse for now.
-	typeJoin := &typeJoinOne{
-		p:    p,
-		root: source,
+	// split filter
+	if scan, ok := source.(*scanNode); ok {
+		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
 	}
-
-	desc := parent.sourceInfo.collectionDescription
-	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := desc.GetField(subType.Name)
-	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
-	}
-
-	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
 		return nil, err
 	}
-	typeJoin.subType = selectPlan
 
-	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.subTypeFieldName, err = p.db.GetRelationshipIdField(
+	subTypeFieldName, err := p.db.GetRelationshipIdField(
 		subType.Name,
-		subTypeFieldDesc.Schema,
-		desc.Name,
+		subType.CollectionName,
+		parent.parsed.CollectionName,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// split filter
-	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, typeJoin.subTypeName)
+	// get the correct sub field schema type (collection)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	if !ok {
+		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
 	}
-	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
 
 	// determine relation direction (primary or secondary?)
 	// check if the field we're querying is the primary side of the relation
-	if subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0 {
-		typeJoin.primary = true
-	} else {
-		typeJoin.primary = false
-	}
+	isPrimary := subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0
 
-	return typeJoin, nil
+	return &typeJoinOne{
+		p:                p,
+		root:             source,
+		subSelect:        subType,
+		subTypeName:      subType.Name,
+		subTypeFieldName: subTypeFieldName,
+		subType:          selectPlan,
+		primary:          isPrimary,
+		docMapper:        docMapper{parent.documentMapping},
+	}, nil
 }
 
 func (n *typeJoinOne) Kind() string {
@@ -322,42 +323,40 @@ func (n *typeJoinOne) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *typeJoinOne) valuesSecondary(doc map[string]interface{}) map[string]interface{} {
-	docKey := doc["_key"].(string)
-	filter := map[string]interface{}{
-		n.subTypeFieldName + "_id": docKey,
+func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
+	fkIndex := &mapper.PropertyIndex{
+		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
+	}
+	filter := map[connor.FilterKey]interface{}{
+		fkIndex: doc.GetKey(),
 	}
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
-		return nil
+		return core.Doc{}
 	}
 
-	doc[n.subTypeName] = make(map[string]interface{})
+	doc.Fields[n.subSelect.Index] = n.subSelect.DocumentMapping.NewDoc()
 	next, err := n.subType.Next()
 	if !next || err != nil {
 		return doc
 	}
 
 	subdoc := n.subType.Value()
-	doc[n.subTypeName] = subdoc
+	doc.Fields[n.subSelect.Index] = subdoc
 	return doc
 }
 
-func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]interface{} {
+func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	// get the subtype doc key
-	subDocKey, ok := doc[n.subTypeName+"_id"]
-	if !ok {
-		return doc
-	}
+	subDocKey := n.docMapper.documentMapping.FirstOfName(doc, n.subTypeName+"_id")
 
 	subDocKeyStr, ok := subDocKey.(string)
 	if !ok {
 		return doc
 	}
 
-	subDocField := n.subTypeName
-	doc[subDocField] = map[string]interface{}{}
+	doc.Fields[n.subSelect.Index] = n.subSelect.DocumentMapping.NewDoc()
 
 	// create the collection key for the sub doc
 	slct := n.subType.(*selectTopNode).selectnode
@@ -391,7 +390,7 @@ func (n *typeJoinOne) valuesPrimary(doc map[string]interface{}) map[string]inter
 	}
 
 	subDoc := n.subType.Value()
-	doc[subDocField] = subDoc
+	doc.Fields[n.subSelect.Index] = subDoc
 
 	return doc
 }
@@ -408,6 +407,7 @@ func (n *typeJoinOne) Source() planNode { return n.root }
 
 type typeJoinMany struct {
 	documentIterator
+	docMapper
 
 	p *Planner
 
@@ -419,48 +419,43 @@ type typeJoinMany struct {
 	// the subtype plan to get the subtype docs
 	subType     planNode
 	subTypeName string
+
+	subSelect *mapper.Select
 }
 
 func (p *Planner) makeTypeJoinMany(
 	parent *selectNode,
 	source planNode,
-	subType *parser.Select,
+	subType *mapper.Select,
 ) (*typeJoinMany, error) {
-	//ignore recurse for now.
-	typeJoin := &typeJoinMany{
-		p:    p,
-		root: source,
+	// split filter
+	if scan, ok := source.(*scanNode); ok {
+		scan.filter, parent.filter = splitFilterByType(scan.filter, subType.Index)
 	}
-
-	desc := parent.sourceInfo.collectionDescription
-	// get the correct sub field schema type (collection)
-	subTypeFieldDesc, ok := desc.GetField(subType.Name)
-	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
-	}
-	subType.CollectionName = subTypeFieldDesc.Schema
 
 	selectPlan, err := p.SubSelect(subType)
 	if err != nil {
 		return nil, err
 	}
-	typeJoin.subType = selectPlan
-	typeJoin.subTypeName = subTypeFieldDesc.Name
-	typeJoin.rootName, err = p.db.GetRelationshipIdField(
+
+	rootName, err := p.db.GetRelationshipIdField(
 		subType.Name,
-		subTypeFieldDesc.Schema,
-		desc.Name,
+		subType.CollectionName,
+		parent.parsed.CollectionName,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// split filter
-	if scan, ok := source.(*scanNode); ok {
-		scan.filter, parent.filter = splitFilterByType(scan.filter, typeJoin.subTypeName)
-	}
-	// source.filter, parent.filter = splitFilterByType(source.filter, typeJoin.subTypeName)
-	return typeJoin, nil
+	return &typeJoinMany{
+		p:           p,
+		root:        source,
+		subSelect:   subType,
+		subTypeName: subType.Name,
+		rootName:    rootName,
+		subType:     selectPlan,
+		docMapper:   docMapper{parent.documentMapping},
+	}, nil
 }
 
 func (n *typeJoinMany) Kind() string {
@@ -494,13 +489,15 @@ func (n *typeJoinMany) Next() (bool, error) {
 	// check if theres an index
 	// if there is, scan and aggregate resuts
 	// if not, then manually scan the subtype table
-	subdocs := make([]map[string]interface{}, 0)
+	subdocs := make([]core.Doc, 0)
 	if n.index != nil {
 		// @todo: handle index for one-to-many setup
 	} else {
-		docKey := n.currentValue["_key"].(string)
-		filter := map[string]interface{}{
-			n.rootName + "_id": docKey, // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
+		fkIndex := &mapper.PropertyIndex{
+			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
+		}
+		filter := map[connor.FilterKey]interface{}{
+			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
 		err := appendFilterToScanNode(n.subType, filter)
@@ -527,7 +524,7 @@ func (n *typeJoinMany) Next() (bool, error) {
 		}
 	}
 
-	n.currentValue[n.subTypeName] = subdocs
+	n.currentValue.Fields[n.subSelect.Index] = subdocs
 	return true, nil
 }
 
@@ -541,20 +538,21 @@ func (n *typeJoinMany) Close() error {
 
 func (n *typeJoinMany) Source() planNode { return n.root }
 
-func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{}) error {
+func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]interface{}) error {
 	switch node := plan.(type) {
 	case *scanNode:
-		var err error
 		filter := node.filter
 		if filter == nil {
-			filter, err = parser.NewFilter(nil)
-			if err != nil {
-				return err
-			}
+			filter = mapper.NewFilter()
 		}
 
 		// merge filter conditions
 		for k, v := range filterCondition {
+			indexKey, isIndexKey := k.(*mapper.PropertyIndex)
+			if !isIndexKey {
+				continue
+			}
+			removeConditionIndex(indexKey, filter.Conditions)
 			filter.Conditions[k] = v
 		}
 
@@ -565,4 +563,19 @@ func appendFilterToScanNode(plan planNode, filterCondition map[string]interface{
 		return appendFilterToScanNode(node.Source(), filterCondition)
 	}
 	return nil
+}
+
+func removeConditionIndex(
+	key *mapper.PropertyIndex,
+	filterConditions map[connor.FilterKey]interface{},
+) (bool, interface{}) {
+	for targetKey, clause := range filterConditions {
+		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
+			if key.Index == indexKey.Index {
+				delete(filterConditions, targetKey)
+				return true, clause
+			}
+		}
+	}
+	return false, nil
 }
