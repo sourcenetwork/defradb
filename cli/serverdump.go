@@ -37,7 +37,7 @@ var srvDumpCmd = &cobra.Command{
 
 		var rootstore ds.Batching
 		var err error
-		if datastore == "badger" { //nolint:goconst
+		if datastore == badgerDatastoreName {
 			log.Info(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 			rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
 		} else {

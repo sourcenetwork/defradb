@@ -83,7 +83,7 @@ var startCmd = &cobra.Command{
 		var rootstore ds.Batching
 
 		var err error
-		if cfg.Datastore.Store == "badger" {
+		if cfg.Datastore.Store == badgerDatastoreName {
 			log.Info(
 				ctx,
 				"Opening badger store",

@@ -23,6 +23,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const badgerDatastoreName = "badger"
+
 var (
 	log          = logging.MustNewLogger("defra.cli")
 	cfg          = config.DefaultConfig()
