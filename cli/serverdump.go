@@ -26,7 +26,7 @@ var datastore string
 
 var srvDumpCmd = &cobra.Command{
 	Use:   "server-dump",
-	Short: "Dumps the state of the entire database (server side)",
+	Short: "Dumps the state of the entire database (server-side)",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		log.Info(ctx, "Starting DefraDB process...")

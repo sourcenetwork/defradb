@@ -256,10 +256,8 @@ func init() {
 		log.FatalE(context.Background(), "Could not bind net.p2paddress", err)
 	}
 
-	startCmd.Flags().StringVar(
-		&cfg.Net.TCPAddress,
-		"tcpaddr",
-		cfg.Net.TCPAddress,
+	startCmd.Flags().String(
+		"tcpaddr", cfg.Net.TCPAddress,
 		"listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
 	)
 	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
@@ -268,8 +266,7 @@ func init() {
 	}
 
 	startCmd.Flags().Bool(
-		"no-p2p",
-		cfg.Net.P2PDisabled,
+		"no-p2p", cfg.Net.P2PDisabled,
 		"disable the peer-to-peer network synchronization system",
 	)
 	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))

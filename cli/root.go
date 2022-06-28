@@ -62,7 +62,6 @@ For example:
 		}
 		if exists {
 			err := cfg.Load(rootDir)
-			viper.AllKeys()
 			if err != nil {
 				log.FatalE(ctx, "Could not load config file", err)
 			}
