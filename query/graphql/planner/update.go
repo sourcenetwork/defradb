@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -33,88 +32,42 @@ type updateNode struct {
 	patch string
 
 	isUpdating bool
-	updateIter *valuesNode
 
 	results planNode
 }
 
 // Next only returns once.
 func (n *updateNode) Next() (bool, error) {
-	// if err := n.collection.WithTxn(n.p.txn).Create(n.doc); err != nil {
-	// 	return false, err
-	// }
-
 	if n.isUpdating {
-		// create our result values node
-		if n.updateIter == nil {
-			vnode := n.p.newContainerValuesNode(nil)
-			n.updateIter = vnode
-		}
-
-		// apply the updates
-		// @todo: handle filter vs ID based
-		var results *client.UpdateResult
-		var err error
-		numids := len(n.ids)
-		if numids == 1 {
-			key, err2 := client.NewDocKeyFromString(n.ids[0])
-			if err2 != nil {
-				return false, err2
+		for {
+			next, err := n.results.Next()
+			if err != nil {
+				return false, err
 			}
-			results, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
-		} else if numids > 1 {
-			// todo
-			keys := make([]client.DocKey, len(n.ids))
-			for i, v := range n.ids {
-				keys[i], err = client.NewDocKeyFromString(v)
-				if err != nil {
-					return false, err
-				}
+			if !next {
+				break
 			}
-			results, err = n.collection.UpdateWithKeys(n.p.ctx, keys, n.patch)
-		} else {
-			results, err = n.collection.UpdateWithFilter(n.p.ctx, n.filter, n.patch)
-		}
 
-		if err != nil {
-			return false, err
-		}
-
-		// consume the updates into our valuesNode
-		for _, resKey := range results.DocKeys {
-			doc := n.docMapper.documentMapping.NewDoc()
-			doc.SetKey(resKey)
-			err := n.updateIter.docs.AddDoc(doc)
+			n.currentValue = n.results.Value()
+			key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+			if err != nil {
+				return false, err
+			}
+			_, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
 			if err != nil {
 				return false, err
 			}
 		}
 		n.isUpdating = false
 
-		// let's release the results dockeys slice memory
-		results.DocKeys = nil
+		// Re-init the results node, so that they can be properly yielded with the updated
+		// values, as well as any formatting (e.g. aggregates, groupings, etc)
+		err := n.results.Init()
+		if err != nil {
+			return false, err
+		}
 	}
 
-	hasNext, err := n.updateIter.Next()
-	if err != nil || !hasNext {
-		return hasNext, err
-	}
-
-	updatedDoc := n.updateIter.Value()
-	// create a new span with the updateDoc._key
-	docKeyStr := updatedDoc.GetKey()
-	desc := n.collection.Description()
-	updatedDocKeyIndex := base.MakeDocKey(desc, docKeyStr)
-	spans := core.NewSpans(core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd()))
-
-	n.results.Spans(spans)
-
-	err = n.results.Init()
-	if err != nil {
-		return false, err
-	}
-
-	// get the next result based on our point lookup
 	next, err := n.results.Next()
 	if err != nil {
 		return false, err
@@ -129,9 +82,9 @@ func (n *updateNode) Next() (bool, error) {
 
 func (n *updateNode) Kind() string { return "updateNode" }
 
-func (n *updateNode) Spans(spans core.Spans) { /* no-op */ }
+func (n *updateNode) Spans(spans core.Spans) { n.results.Spans(spans) }
 
-func (n *updateNode) Init() error { return nil }
+func (n *updateNode) Init() error { return n.results.Init() }
 
 func (n *updateNode) Start() error {
 	return n.results.Start()
@@ -187,10 +140,11 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update.collection = col.WithTxn(p.txn)
 
 	// create the results Select node
-	slctNode, err := p.Select(&parsed.Select)
+	resultsNode, err := p.Select(&parsed.Select)
 	if err != nil {
 		return nil, err
 	}
-	update.results = slctNode
+	update.results = resultsNode
+
 	return update, nil
 }
