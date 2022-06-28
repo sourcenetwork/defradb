@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package core provides commonly shared interfaces and building blocks.
+*/
 package core
 
 const DocKeyFieldIndex int = 0
@@ -78,7 +81,7 @@ type DocumentMapping struct {
 
 	// The set of fields available using this mapping.
 	//
-	// If a field-name is not in this collection, it esentially doesn't exist.
+	// If a field-name is not in this collection, it essentially doesn't exist.
 	// Collection should include fields that are not rendered to the consumer.
 	// Multiple fields may exist for any given name (for example if a property
 	// exists under different aliases/filters).
@@ -103,8 +106,7 @@ func NewDocumentMapping() *DocumentMapping {
 	}
 }
 
-// CloneWithoutRender deep copies the source mapping skipping over the
-// RenderKeys.
+// CloneWithoutRender deep copies the source mapping skipping over the RenderKeys.
 func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	result := DocumentMapping{
 		IndexesByName: make(map[string][]int, len(source.IndexesByName)),

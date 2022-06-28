@@ -93,7 +93,7 @@ func (hh *heads) Len(ctx context.Context) (int, error) {
 	return len(list), err
 }
 
-// Replace replaces a head with a new cid.
+// Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
 	log.Info(
 		ctx,
@@ -172,7 +172,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
-			return nil, 0, errors.New("error decocding height")
+			return nil, 0, errors.New("error decoding height")
 		}
 		heads = append(heads, headKey.Cid)
 		if height > maxHeight {

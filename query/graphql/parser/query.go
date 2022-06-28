@@ -98,11 +98,10 @@ func (c Field) GetRoot() parserTypes.SelectionType {
 
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
-// Requires a non-nil doc, will error if given a nil
-// doc
+// Requires a non-nil doc, will error if given a nil doc.
 func ParseQuery(doc *ast.Document) (*Query, error) {
 	if doc == nil {
-		return nil, errors.New("ParseQuery requires a non nil ast.Document")
+		return nil, errors.New("ParseQuery requires a non-nil ast.Document")
 	}
 	q := &Query{
 		Statement: doc,
@@ -128,7 +127,7 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 				}
 				q.Mutations = append(q.Mutations, mdef)
 			} else {
-				return nil, errors.New("Unkown graphql operation type")
+				return nil, errors.New("Unknown GraphQL operation type")
 			}
 		}
 	}

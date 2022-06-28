@@ -190,7 +190,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	// now lets generate the mutation types.
+	// now let's generate the mutation types.
 	mutationType := g.manager.schema.MutationType()
 	for _, t := range g.typeDefs {
 		fs, err := g.GenerateMutationInputForGQLType(t)

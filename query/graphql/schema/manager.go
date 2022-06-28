@@ -60,9 +60,8 @@ func (s *SchemaManager) Schema() *gql.Schema {
 }
 
 // ResolveTypes ensures all necessary types are defined, and
-// resolves any remaning thunks/closures defined on object
-// fields.
-// Should be called *after* all dependant types have been added
+// resolves any remaining thunks/closures defined on object fields.
+// It should be called *after* all dependent types have been added.
 func (s *SchemaManager) ResolveTypes() error {
 	// basically, this function just refreshes the
 	// schema.TypeMap, and runs the internal

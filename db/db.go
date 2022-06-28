@@ -8,6 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package db provides the implementation of the [client.DB] interface, collection operations,
+and related components.
+*/
 package db
 
 import (
@@ -34,7 +38,7 @@ import (
 var (
 	log = logging.MustNewLogger("defra.db")
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
-	// call against the supplied Document Key
+	// call against the supplied Document Key.
 	ErrDocVerification = errors.New("The document verification failed")
 
 	ErrOptionsEmpty = errors.New("Empty options configuration provided")
@@ -74,7 +78,7 @@ func WithBroadcaster(bs corenet.Broadcaster) Option {
 	}
 }
 
-// NewDB creates a new instance of the DB using the given options
+// NewDB creates a new instance of the DB using the given options.
 func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
 }
@@ -132,7 +136,7 @@ func (db *db) Root() ds.Batching {
 	return db.rootstore
 }
 
-// Blockstore returns the internal DAG store which contains IPLD blocks
+// Blockstore returns the internal DAG store which contains IPLD blocks.
 func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
@@ -142,7 +146,7 @@ func (db *db) systemstore() datastore.DSReaderWriter {
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
-// like Collection ID counters
+// like Collection ID counters.
 func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
@@ -197,8 +201,7 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 }
 
 // Close is called when we are shutting down the database.
-// This is the place for any last minute cleanup or releaseing
-// of resources (IE: Badger instance)
+// This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Closing DefraDB process...")
 	err := db.rootstore.Close()

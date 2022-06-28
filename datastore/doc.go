@@ -9,9 +9,6 @@
 // licenses/APL.txt.
 
 /*
-Package client provides public members for interacting with a Defra DB instance.
-
-Only calls made via the `DB` and `Collection` interfaces interact with the underlying datastores. Currently the only
-provided implementation of `DB` is found in the `defra/db` package and can be instantiated via the `NewDB` function.
+Package datastore provides the various datastore-related facilities.
 */
-package client
+package datastore
