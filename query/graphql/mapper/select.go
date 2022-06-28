@@ -16,7 +16,7 @@ import "github.com/sourcenetwork/defradb/core"
 //
 // It wraps child Fields belonging to this Select.
 type Select struct {
-	// Targeting infomation used to restrict or format the result.
+	// Targeting information used to restrict or format the result.
 	Targetable
 
 	// The document mapping for this select, describing how items yielded

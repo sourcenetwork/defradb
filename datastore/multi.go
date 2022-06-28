@@ -47,22 +47,22 @@ func MultiStoreFrom(rootstore DSReaderWriter) MultiStore {
 	return ms
 }
 
-// Datastore implements MultiStore
+// Datastore implements MultiStore.
 func (ms multistore) Datastore() DSReaderWriter {
 	return ms.data
 }
 
-// Headstore implements MultiStore
+// Headstore implements MultiStore.
 func (ms multistore) Headstore() DSReaderWriter {
 	return ms.head
 }
 
-// DAGstore implements MultiStore
+// DAGstore implements MultiStore.
 func (ms multistore) DAGstore() DAGStore {
 	return ms.dag
 }
 
-// Rootstore implements MultiStore
+// Rootstore implements MultiStore.
 func (ms multistore) Rootstore() DSReaderWriter {
 	return ms.root
 }

@@ -52,8 +52,7 @@ func init() {
 	}
 }
 
-// MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG
-// using MerkleClocks
+// MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
 	*baseMerkleCRDT
 	// core.ReplicatedData
@@ -61,7 +60,7 @@ type MerkleCompositeDAG struct {
 }
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a CompositeDAG CRDT
+// backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
 	datastore datastore.DSReaderWriter,
 	headstore datastore.DSReaderWriter,
@@ -87,9 +86,7 @@ func NewMerkleCompositeDAG(
 	}
 }
 
-// Set sets the values of CompositeDAG.
-// The value is always the object from the
-// mutation operations.
+// Set sets the values of CompositeDAG. The value is always the object from the mutation operations.
 func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
@@ -107,7 +104,7 @@ func (m *MerkleCompositeDAG) Set(
 	return c, m.Broadcast(ctx, nd, delta)
 }
 
-// Value is a no-op for a CompositeDAG
+// Value is a no-op for a CompositeDAG.
 func (m *MerkleCompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return m.reg.Value(ctx)
 }

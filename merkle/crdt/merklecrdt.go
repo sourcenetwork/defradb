@@ -40,10 +40,8 @@ var (
 	_ core.ReplicatedData = (*baseMerkleCRDT)(nil)
 )
 
-// The baseMerkleCRDT handles the merkle crdt overhead functions
-// that aren't CRDT specific like the mutations and state retrieval
-// functions. It handles creating and publishing the crdt DAG with
-// the help of the MerkleClock
+// baseMerkleCRDT handles the MerkleCRDT overhead functions that aren't CRDT specific like the mutations and state
+// retrieval functions. It handles creating and publishing the CRDT DAG with the help of the MerkleClock.
 type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
@@ -71,7 +69,7 @@ func (base *baseMerkleCRDT) ID() string {
 	return base.crdt.ID()
 }
 
-// Publishes the delta to state
+// Publishes the delta to state.
 func (base *baseMerkleCRDT) Publish(
 	ctx context.Context,
 	delta core.Delta,

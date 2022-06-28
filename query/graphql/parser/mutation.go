@@ -66,9 +66,8 @@ func (m Mutation) GetRoot() parserTypes.SelectionType {
 	return parserTypes.ObjectSelection
 }
 
-// ToSelect returns a basic Select object, with the same Name,
-// Alias, and Fields as the Mutation object. Used to create a
-// Select planNode for the mutation return objects
+// ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
+// the Mutation object. Used to create a Select planNode for the mutation return objects.
 func (m Mutation) ToSelect() *Select {
 	return &Select{
 		Name:    m.Schema,

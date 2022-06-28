@@ -327,7 +327,7 @@ func appendUnderlyingAggregates(
 	return aggregates
 }
 
-// appendIfNotExists attemps to match the given name and targets against existing
+// appendIfNotExists attempts to match the given name and targets against existing
 // aggregates, if a match is not found, it will append a new aggregate.
 func appendIfNotExists(
 	name string,
@@ -337,8 +337,7 @@ func appendIfNotExists(
 ) ([]*aggregateRequest, *aggregateRequest) {
 	field, exists := tryGetMatchingAggregate(name, targets, aggregates)
 	if exists {
-		// If a match is found, there is nothing to do so we return the aggregages slice
-		// unchanged.
+		// If a match is found, there is nothing to do so we return the aggregates slice unchanged.
 		return aggregates, field
 	}
 
@@ -464,8 +463,7 @@ func getCollectionName(
 	return parsed.Name, nil
 }
 
-// getTopLevelInfo returns the collection description and maps the fields directly
-// on the object.
+// getTopLevelInfo returns the collection description and maps the fields directly on the object.
 func getTopLevelInfo(
 	descriptionsRepo *DescriptionsRepo,
 	parsed *parser.Select,
@@ -542,7 +540,7 @@ func resolveInnerFilterDependencies(
 
 		if propertyMapped {
 			// Inner properties should be recursively checked here, however at the moment
-			// filters do not support quering any deeper anyway.
+			// filters do not support querying any deeper anyway.
 			// https://github.com/sourcenetwork/defradb/issues/509
 			continue
 		}
@@ -693,8 +691,8 @@ func toFilterMap(
 			return key, typedClause
 		}
 	} else {
-		// If there are mutliple properties of the same name we can just take the first as
-		// we have no other reasonable way of identifing which property they mean if multiple
+		// If there are multiple properties of the same name we can just take the first as
+		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
 		// impact this as they are added after selects.
 		index := mapping.FirstIndexOfName(sourceKey)
@@ -743,8 +741,8 @@ func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *Grou
 
 	indexes := make([]int, len(source.Fields))
 	for i, fieldName := range source.Fields {
-		// If there are mutliple properties of the same name we can just take the first as
-		// we have no other reasonable way of identifing which property they mean if multiple
+		// If there are multiple properties of the same name we can just take the first as
+		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
 		// impact this as they are added after selects.
 		key := mapping.FirstIndexOfName(fieldName)
@@ -767,8 +765,8 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 		fieldIndexes := make([]int, len(fields))
 		currentMapping := mapping
 		for i, field := range fields {
-			// If there are mutliple properties of the same name we can just take the first as
-			// we have no other reasonable way of identifing which property they mean if multiple
+			// If there are multiple properties of the same name we can just take the first as
+			// we have no other reasonable way of identifying which property they mean if multiple
 			// consumer specified requestables are available.  Aggregate dependencies should not
 			// impact this as they are added after selects.
 			fieldIndex := currentMapping.FirstIndexOfName(field)

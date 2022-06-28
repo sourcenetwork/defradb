@@ -146,7 +146,7 @@ func (g *Generator) CreateDescriptions(
 			// field associated with a related type, as
 			// its defined down below in the IsObject block.
 			if _, exists := desc.GetField(fname); exists {
-				// lets make sure its an _id field, otherwise
+				// let's make sure its an _id field, otherwise
 				// we might have an error here
 				if !strings.HasSuffix(fname, "_id") {
 					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())

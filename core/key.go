@@ -127,7 +127,7 @@ func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 }
 
 // Creates a new HeadStoreKey from a string as best as it can,
-// splitting the input using '/' as a field deliminater.  It assumes
+// splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
 // /[DocKey]/[FieldId]/[Cid]
@@ -153,7 +153,7 @@ func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 }
 
 // Returns a formatted collection key for the system data store.
-// it assumes the name of the collection is non-empty.
+// It assumes the name of the collection is non-empty.
 func NewCollectionKey(name string) CollectionKey {
 	return CollectionKey{CollectionName: name}
 }
@@ -163,7 +163,7 @@ func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 }
 
 // NewSchemaKey returns a formatted schema key for the system data store.
-// it assumes the name of the schema is non-empty.
+// It assumes the name of the schema is non-empty.
 func NewSchemaKey(name string) SchemaKey {
 	return SchemaKey{SchemaName: name}
 }

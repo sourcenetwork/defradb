@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
-// Txn is a common interface to the db.Txn struct
+// Txn is a common interface to the db.Txn struct.
 type Txn interface {
 	MultiStore
 

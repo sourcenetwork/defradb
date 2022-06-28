@@ -14,7 +14,7 @@ import (
 	gql "github.com/graphql-go/graphql"
 )
 
-// orderingEnum is an enum for the Ordering argument
+// orderingEnum is an enum for the Ordering argument.
 var orderingEnum = gql.NewEnum(gql.EnumConfig{
 	Name: "Ordering",
 	Values: gql.EnumValueConfigMap{
@@ -27,7 +27,7 @@ var orderingEnum = gql.NewEnum(gql.EnumConfig{
 	},
 })
 
-// booleanOperatorBlock filter block for boolean types
+// booleanOperatorBlock filter block for boolean types.
 var booleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "BooleanOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{
@@ -49,7 +49,7 @@ var booleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	},
 })
 
-// dateTimeOperatorBlock filter block for DateTime types
+// dateTimeOperatorBlock filter block for DateTime types.
 var dateTimeOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "DateTimeOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{
@@ -80,7 +80,7 @@ var dateTimeOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	},
 })
 
-// floatOperatorBlock filter block for Float types
+// floatOperatorBlock filter block for Float types.
 var floatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "FloatOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{
@@ -111,7 +111,7 @@ var floatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	},
 })
 
-// intOperatorBlock filter block for Int types
+// intOperatorBlock filter block for Int types.
 var intOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "IntOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{
@@ -142,7 +142,7 @@ var intOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	},
 })
 
-// stringOperatorBlock filter block for string types
+// stringOperatorBlock filter block for string types.
 var stringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "StringOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{
@@ -164,7 +164,7 @@ var stringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	},
 })
 
-// idOperatorBlock filter block for ID types
+// idOperatorBlock filter block for ID types.
 var idOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 	Name: "IDOperatorBlock",
 	Fields: gql.InputObjectConfigFieldMap{

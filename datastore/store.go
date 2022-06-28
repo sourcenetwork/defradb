@@ -21,8 +21,7 @@ var (
 	log = logging.MustNewLogger("defradb.store")
 )
 
-// MultiStore is an interface wrapper around the 3 main types of stores needed for
-// MerkleCRDTs
+// MultiStore is an interface wrapper around the 3 main types of stores needed for MerkleCRDTs.
 type MultiStore interface {
 	Rootstore() DSReaderWriter
 
@@ -45,7 +44,7 @@ type MultiStore interface {
 }
 
 // DSReaderWriter simplifies the interface that is exposed by a
-// DSReaderWriter into its subcomponents Reader and Writer.
+// DSReaderWriter into its sub-components Reader and Writer.
 // Using this simplified interface means that both DSReaderWriter
 // and ds.Txn satisfy the interface. Due to go-datastore#113 and
 // go-datastore#114 ds.Txn no longer implements DSReaderWriter

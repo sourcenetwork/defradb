@@ -8,6 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// defradb is a decentralized peer-to-peer, user-centric, privacy-focused document database.
 package main
 
 import "github.com/sourcenetwork/defradb/cli"

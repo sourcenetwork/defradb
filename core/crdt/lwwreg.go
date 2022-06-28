@@ -43,18 +43,18 @@ type LWWRegDelta struct {
 	DocKey   []byte
 }
 
-// GetPriority gets the current priority for this delta
+// GetPriority gets the current priority for this delta.
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta
+// SetPriority will set the priority for this delta.
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// Marshal encodes the delta using CBOR
-// for now lets do cbor (quick to implement)
+// Marshal encodes the delta using CBOR.
+// for now le'ts do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
@@ -74,14 +74,13 @@ func (delta *LWWRegDelta) Value() interface{} {
 	return delta.Data
 }
 
-// LWWRegister Last-Writer-Wins Register
-// a simple CRDT type that allows set/get of an
-// arbitrary data type that ensures convergence
+// LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
+// of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	baseCRDT
 }
 
-// NewLWWRegister returns a new instance of the LWWReg with the given ID
+// NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(store datastore.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, key),
@@ -171,7 +170,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 // DeltaDecode is a typed helper to extract
 // a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
+// for now let's do cbor (quick to implement)
 func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)

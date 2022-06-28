@@ -14,7 +14,7 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 )
 
-// DAGStore is the interface to the underlying BlockStore and BlockService
+// DAGStore is the interface to the underlying BlockStore and BlockService.
 type dagStore struct {
 	blockstore.Blockstore // become a Blockstore
 	store                 DSReaderWriter
@@ -22,8 +22,7 @@ type dagStore struct {
 	// bserv           blockservice.BlockService
 }
 
-// NewDAGStore creates a new DAGStore with the supplied
-// Batching datastore
+// NewDAGStore creates a new DAGStore with the supplied Batching datastore.
 func NewDAGStore(store DSReaderWriter) DAGStore {
 	dstore := &dagStore{
 		Blockstore: NewBlockstore(store),

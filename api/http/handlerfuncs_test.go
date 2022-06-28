@@ -267,7 +267,7 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "invalid character")
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "unmarshall error: invalid character ':' after array element", errResponse.Errors[0].Message)
+	assert.Equal(t, "unmarshal error: invalid character ':' after array element", errResponse.Errors[0].Message)
 }
 
 func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
