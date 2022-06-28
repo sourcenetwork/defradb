@@ -76,7 +76,7 @@ type Config struct {
 	Logging   *LoggingConfig
 }
 
-// Load into Config and handles parameters from config file, environment variables.
+// Load Config and handles parameters from config file, environment variables.
 // To use on a Config struct already loaded with default values from DefaultConfig().
 func (cfg *Config) Load(rootDirPath string) error {
 	viper.SetConfigName(defaultDefraDBConfigFileName)
@@ -101,7 +101,8 @@ func (cfg *Config) Load(rootDirPath string) error {
 	return nil
 }
 
-// Load into Config and handles parameters from defaults, environment variables, and CLI flags - not from config file.
+// LoadWithoutRootDir loads Config and handles parameters from defaults, environment variables, and CLI flags -
+// not from config file.
 // To use on a Config struct already loaded with default values from DefaultConfig().
 func (cfg *Config) LoadWithoutRootDir() error {
 	// With Viper, we use a config file to provide a basic structure and set defaults, for env. variables to load.
@@ -134,7 +135,7 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	return nil
 }
 
-// Return the default configuration.
+// DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
 	return &Config{
 		Datastore: defaultDatastoreConfig(),
@@ -174,13 +175,13 @@ type DatastoreConfig struct {
 	Badger BadgerConfig
 }
 
-// Configuration of Badger's on-disk / filesystem mode.
+// BadgerConfig configures Badger's on-disk / filesystem mode.
 type BadgerConfig struct {
 	Path string
 	*badgerds.Options
 }
 
-// Configuration of Badger's memory mode.
+// MemoryConfig configures of Badger's memory mode.
 type MemoryConfig struct {
 	Size uint64
 }
@@ -225,7 +226,7 @@ func (apicfg *APIConfig) validateBasic() error {
 	return nil
 }
 
-// Provides the API address as URL.
+// AddressToURL provides the API address as URL.
 func (apicfg *APIConfig) AddressToURL() string {
 	return fmt.Sprintf("http://%s", apicfg.Address)
 }
@@ -283,7 +284,7 @@ func (netcfg *NetConfig) validateBasic() error {
 	return nil
 }
 
-// Gives the RPC timeout as a time.Duration.
+// RPCTimeoutDuration gives the RPC timeout as a time.Duration.
 func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
@@ -292,7 +293,7 @@ func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	return d, nil
 }
 
-// Gives the RPC MaxConnectionIdle as a time.Duration.
+// RPCMaxConnectionIdleDuration gives the RPC MaxConnectionIdle as a time.Duration.
 func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
@@ -301,7 +302,7 @@ func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 	return d, nil
 }
 
-// From top-level Net config to Node-specific configuration
+// NodeConfig provides the Node-specific configuration, from the top-level Net config.
 func (cfg *Config) NodeConfig() node.NodeOpt {
 	return func(opt *node.Options) error {
 		var err error
@@ -347,7 +348,7 @@ func (logcfg *LoggingConfig) validateBasic() error {
 	return nil
 }
 
-// From top-level config to logging-specific configuration
+// GetLoggingConfig provides logging-specific configuration, from top-level Config.
 func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	var loglvl logging.LogLevel
 	switch cfg.Logging.Level {
@@ -381,7 +382,7 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	}, nil
 }
 
-// Serializes the config to a JSON string.
+// ToJSON serializes the config to a JSON string.
 func (c *Config) ToJSON() ([]byte, error) {
 	jsonbytes, err := json.Marshal(c)
 	if err != nil {
