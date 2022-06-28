@@ -62,7 +62,7 @@ func (c *collection) get(
 	// construct target key for DocKey
 	targetKey := base.MakeDocKey(*desc, key.DocKey)
 	// run the doc fetcher
-	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
+	err = df.Start(ctx, txn, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {
 		_ = df.Close()
 		return nil, err

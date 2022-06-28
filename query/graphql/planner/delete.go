@@ -143,7 +143,7 @@ func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
 	delete := &deleteNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys,
+		ids:        parsed.DocKeys.Value,
 		isDeleting: true,
 		docMapper:  docMapper{&parsed.DocumentMapping},
 	}

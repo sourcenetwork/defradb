@@ -55,7 +55,7 @@ type Mutation struct {
 	// if this mutation is on an object.
 	Schema string
 
-	IDs    []string
+	IDs    parserTypes.OptionalDocKeys
 	Filter *Filter
 	Data   string
 
@@ -165,16 +165,23 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 			mut.Filter = filter
 		} else if prop == parserTypes.Id {
 			raw := argument.Value.(*ast.StringValue)
-			mut.IDs = []string{raw.Value}
+			mut.IDs = parserTypes.OptionalDocKeys{
+				HasValue: true,
+				Value:    []string{raw.Value},
+			}
 		} else if prop == parserTypes.Ids {
 			raw := argument.Value.(*ast.ListValue)
-			mut.IDs = make([]string, len(raw.Values))
+			ids := make([]string, len(raw.Values))
 			for i, val := range raw.Values {
 				id, ok := val.(*ast.StringValue)
 				if !ok {
 					return nil, errors.New("ids argument has a non string value")
 				}
-				mut.IDs[i] = id.Value
+				ids[i] = id.Value
+			}
+			mut.IDs = parserTypes.OptionalDocKeys{
+				HasValue: true,
+				Value:    ids,
 			}
 		}
 	}

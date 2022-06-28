@@ -105,7 +105,7 @@ func (n *updateNode) Next() (bool, error) {
 	docKeyStr := updatedDoc.GetKey()
 	desc := n.collection.Description()
 	updatedDocKeyIndex := base.MakeDocKey(desc, docKeyStr)
-	spans := core.Spans{core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd())}
+	spans := core.NewSpans(core.NewSpan(updatedDocKeyIndex, updatedDocKeyIndex.PrefixEnd()))
 
 	n.results.Spans(spans)
 
@@ -173,7 +173,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys,
+		ids:        parsed.DocKeys.Value,
 		isUpdating: true,
 		patch:      parsed.Data,
 		docMapper:  docMapper{&parsed.DocumentMapping},

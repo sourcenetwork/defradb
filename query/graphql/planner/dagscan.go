@@ -81,8 +81,8 @@ func (h *headsetScanNode) Start() error {
 }
 
 func (h *headsetScanNode) initScan() error {
-	if len(h.spans) == 0 {
-		h.spans = append(h.spans, core.NewSpan(h.key, h.key.PrefixEnd()))
+	if len(h.spans.Value) == 0 {
+		h.spans = core.NewSpans(core.NewSpan(h.key, h.key.PrefixEnd()))
 	}
 
 	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans)
@@ -191,7 +191,7 @@ func (n *dagScanNode) Start() error {
 // If its a CID, set the node CID val
 // if its a DocKey, set the node Key val (headset)
 func (n *dagScanNode) Spans(spans core.Spans) {
-	if len(spans) == 0 {
+	if len(spans.Value) == 0 {
 		return
 	}
 
@@ -199,15 +199,18 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	// otherwise, try to parse as a CID
 	if n.headset != nil {
 		// make sure we have the correct field suffix
-		headSetSpans := make(core.Spans, len(spans))
-		copy(headSetSpans, spans)
-		span := headSetSpans[0].Start()
+		headSetSpans := core.Spans{
+			HasValue: spans.HasValue,
+			Value:    make([]core.Span, len(spans.Value)),
+		}
+		copy(headSetSpans.Value, spans.Value)
+		span := headSetSpans.Value[0].Start()
 		if !strings.HasSuffix(span.ToString(), n.field) {
-			headSetSpans[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
+			headSetSpans.Value[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
 		}
 		n.headset.Spans(headSetSpans)
 	} else {
-		data := spans[0].Start().ToString()
+		data := spans.Value[0].Start().ToString()
 		c, err := cid.Decode(data)
 		if err == nil {
 			n.cid = &c
