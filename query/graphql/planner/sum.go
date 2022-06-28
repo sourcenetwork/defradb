@@ -153,20 +153,34 @@ func (n *sumNode) Source() planNode { return n.plan }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *sumNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
 
-	// Add the filter attribute if it exists.
-	if n.filter == nil || n.filter.Conditions == nil {
-		explainerMap[filterLabel] = nil
-	} else {
-		explainerMap[filterLabel] = n.filter.Conditions
+	for i, source := range n.aggregateMapping {
+		explainerMap := map[string]interface{}{}
+
+		// Add the filter attribute if it exists.
+		if source.Filter == nil || source.Filter.ExternalConditions == nil {
+			explainerMap[filterLabel] = nil
+		} else {
+			explainerMap[filterLabel] = source.Filter.ExternalConditions
+		}
+
+		// Add the main field name.
+		explainerMap["fieldName"] = source.Field.Name
+
+		// Add the child field name if it exists.
+		if source.ChildTarget.HasValue {
+			explainerMap["childFieldName"] = source.ChildTarget.Name
+		} else {
+			explainerMap["childFieldName"] = nil
+		}
+
+		sourceExplanations[i] = explainerMap
 	}
 
-	// Add the other attributes.
-	explainerMap["sourceCollection"] = n.sourceCollection
-	explainerMap["sourceProperty"] = n.sourceProperty
-
-	return explainerMap, nil
+	return map[string]interface{}{
+		"sources": sourceExplanations,
+	}, nil
 }
 
 func (n *sumNode) Next() (bool, error) {
