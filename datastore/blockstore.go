@@ -41,8 +41,7 @@ import (
 // respective substores don't need to optimize or worry about Batching/Txn.
 // Hence the simplified DSReaderWriter.
 
-// ErrHashMismatch is an error returned when the hash of a block
-// is different than expected.
+// ErrHashMismatch is an error returned when the hash of a block is different than expected.
 var ErrHashMismatch = errors.New("block in storage has different hash than requested")
 
 // defradb/store.ErrNotFound => error

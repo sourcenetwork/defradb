@@ -72,7 +72,7 @@ var (
 // Future optimizations:
 // - Incremental checkpoint/snapshotting
 // - Reverse traversal (starting from the current state, and working backwards)
-// - Create a effecient memory store for in-order traversal (BTree, etc)
+// - Create a efficient memory store for in-order traversal (BTree, etc)
 //
 // Note: Should we transition this state traversal into the CRDT objects themselves, and not
 // within a new fetcher?

@@ -1,7 +1,7 @@
 # DefraDB Benchmark Suite
 This folder contains the DefraDB Benchmark Suite, its related code, sub packages, utilities, and data generators.
 
-The goal of this suite is to provide an insight to DefraDBs performance, and to provide a quantitative approach to performance analysis and comparison. As such, the benchmark results should be used soley as a relative basis, and not concrete absolute values.
+The goal of this suite is to provide an insight to DefraDBs performance, and to provide a quantitative approach to performance analysis and comparison. As such, the benchmark results should be used solely as a relative basis, and not concrete absolute values.
 
 > Database benchmarking is a notorious complex issue to provide fair evaluations, that are void of contrived examples aimed to put the database "best foot forward".
 

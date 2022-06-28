@@ -78,7 +78,7 @@ type Collection interface {
 	//
 	// Target can be a Filter statement, a single docKey, a single document,
 	// an array of docKeys, or an array of documents.
-	// It is recommened to use the respective typed versions of Update
+	// It is recommended to use the respective typed versions of Update
 	// (e.g. UpdateWithFilter or UpdateWithKey) over this function if you can.
 	//
 	// Returns an ErrInvalidUpdateTarget error if the target type is not supported.
@@ -107,7 +107,7 @@ type Collection interface {
 	// DeleteWith deletes a target document.
 	//
 	// Target can be a Filter statement, a single docKey, a single document, an array of docKeys,
-	// or an array of documents. It is recommened to use the respective typed versions of Delete
+	// or an array of documents. It is recommended to use the respective typed versions of Delete
 	// (e.g. DeleteWithFilter or DeleteWithKey) over this function if you can.
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
 	//

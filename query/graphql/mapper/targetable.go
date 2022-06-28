@@ -127,11 +127,11 @@ type Targetable struct {
 	// of documents returned.
 	Limit *Limit
 
-	// An optional grouping clause, that can be specifed to group results by property
+	// An optional grouping clause, that can be specified to group results by property
 	// value.
 	GroupBy *GroupBy
 
-	// An optional order clause, that can be specifed to order results by property
+	// An optional order clause, that can be specified to order results by property
 	// value
 	OrderBy *OrderBy
 }

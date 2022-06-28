@@ -35,7 +35,7 @@ type Filter struct {
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
-// and extracts all the filter conditions into a usable map
+// and extracts all the filter conditions into a usable map.
 func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
@@ -46,7 +46,7 @@ func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 	}, nil
 }
 
-// NewFilterFromString creates a new filter from a string
+// NewFilterFromString creates a new filter from a string.
 func NewFilterFromString(body string) (*Filter, error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"

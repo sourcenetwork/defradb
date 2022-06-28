@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+genclidocs is a tool to generate the command line interface documentation.
+*/
 package main
 
 import (

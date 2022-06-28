@@ -48,8 +48,7 @@ func init() {
 	}
 }
 
-// MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister
-// using MerkleClocks
+// MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
 	*baseMerkleCRDT
 	// core.ReplicatedData
@@ -58,7 +57,7 @@ type MerkleLWWRegister struct {
 }
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a LWWRegister CRDT
+// backed by a LWWRegister CRDT.
 func NewMerkleLWWRegister(
 	datastore datastore.DSReaderWriter,
 	headstore datastore.DSReaderWriter,
@@ -78,7 +77,7 @@ func NewMerkleLWWRegister(
 	}
 }
 
-// Set the value of the register
+// Set the value of the register.
 func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Cid, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
@@ -87,13 +86,13 @@ func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Ci
 	return c, err
 }
 
-// Value will retrieve the current value from the db
+// Value will retrieve the current value from the db.
 func (mlwwreg *MerkleLWWRegister) Value(ctx context.Context) ([]byte, error) {
 	return mlwwreg.reg.Value(ctx)
 }
 
 // Merge writes the provided delta to state using a supplied
-// merge semantic
+// merge semantic.
 func (mlwwreg *MerkleLWWRegister) Merge(ctx context.Context, other core.Delta, id string) error {
 	return mlwwreg.reg.Merge(ctx, other, id)
 }

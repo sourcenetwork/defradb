@@ -149,9 +149,8 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 	return commit, nil
 }
 
-// commitSelectBlock is a CommitSelect node intialized witout a headsetScanNode, and is
-// expected to be given a target CID in the mapper.CommitSelect object. It returns
-// a single commit if found
+// commitSelectBlock is a CommitSelect node initialized without a headsetScanNode, and is expected
+// to be given a target CID in the parser.CommitSelect object. It returns a single commit if found.
 func (p *Planner) commitSelectBlock(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan(parsed)
 	if parsed.Cid != "" {

@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// The Server struct holds the Handler for the HTTP API
+// Server struct holds the Handler for the HTTP API.
 type Server struct {
 	options serverOptions
 	http.Server
@@ -26,7 +26,7 @@ type serverOptions struct {
 	allowedOrigins []string
 }
 
-// NewServer instantiated a new server with the given http.Handler.
+// NewServer instantiates a new server with the given http.Handler.
 func NewServer(db client.DB, options ...func(*Server)) *Server {
 	svr := &Server{}
 
