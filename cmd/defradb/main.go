@@ -13,6 +13,7 @@ package main
 
 import "github.com/sourcenetwork/defradb/cli"
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func main() {
 	cli.Execute()
 }

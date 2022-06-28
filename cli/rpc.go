@@ -11,14 +11,10 @@
 package cli
 
 import (
-	"time"
+	"context"
 
 	"github.com/spf13/cobra"
-)
-
-var (
-	rpcAddr    string
-	rpcTimeout = 10 * time.Second
+	"github.com/spf13/viper"
 )
 
 // clientCmd represents the client command
@@ -42,10 +38,12 @@ func init() {
 	// is called directly, e.g.:
 	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rpcCmd.PersistentFlags().StringVar(
-		&rpcAddr,
-		"addr",
-		"0.0.0.0:9161",
-		"Specify the gRPC endpoint address",
+	rpcCmd.PersistentFlags().String(
+		"addr", cfg.Net.RPCAddress,
+		"gRPC endpoint address",
 	)
+	err := viper.BindPFlag("net.rcpaddress", rpcCmd.PersistentFlags().Lookup("addr"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind net.rpcaddress", err)
+	}
 }

@@ -18,10 +18,10 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -36,27 +36,45 @@ import (
 	"github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/textileio/go-threads/broadcast"
 )
 
 var (
-	p2pAddr  string
-	tcpAddr  string
-	dataPath string
-	peers    string
-
 	busBufferSize = 100
 )
 
-// startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a DefraDB server ",
 	Long:  `Start a new instance of DefraDB server:`,
+	// Load the root config if it exists, otherwise create it.
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
+		if err != nil {
+			log.FatalE(ctx, "Failed to get root dir", err)
+		}
+		if !exists {
+			err = config.CreateRootDirWithDefaultConfig(rootDir)
+			if err != nil {
+				log.FatalE(ctx, "Failed to create root dir", err)
+			}
+		}
+		err = cfg.Load(rootDir)
+		if err != nil {
+			log.FatalE(ctx, "Failed to load config", err)
+		}
+		loggingConfig, err := cfg.GetLoggingConfig()
+		if err != nil {
+			log.FatalE(ctx, "Failed to load logging config", err)
+		}
+		logging.SetConfig(loggingConfig)
+		log.Info(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
-		log.Info(ctx, "Starting DefraDB process...")
+		log.Info(ctx, "Starting DefraDB service...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
@@ -65,17 +83,17 @@ var startCmd = &cobra.Command{
 		var rootstore ds.Batching
 
 		var err error
-		if config.Database.Store == "badger" {
+		if cfg.Datastore.Store == "badger" {
 			log.Info(
 				ctx,
 				"Opening badger store",
-				logging.NewKV("Path", config.Database.Badger.Path),
+				logging.NewKV("Path", cfg.Datastore.Badger.Path),
 			)
 			rootstore, err = badgerds.NewDatastore(
-				config.Database.Badger.Path,
-				config.Database.Badger.Options,
+				cfg.Datastore.Badger.Path,
+				cfg.Datastore.Badger.Options,
 			)
-		} else if config.Database.Store == "memory" {
+		} else if cfg.Datastore.Store == "memory" {
 			log.Info(ctx, "Building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
@@ -89,7 +107,7 @@ var startCmd = &cobra.Command{
 
 		// check for p2p
 		var bs *broadcast.Broadcaster
-		if !config.Net.P2PDisabled {
+		if !cfg.Net.P2PDisabled {
 			bs = broadcast.NewBroadcaster(busBufferSize)
 			options = append(options, db.WithBroadcaster(bs))
 		}
@@ -101,15 +119,14 @@ var startCmd = &cobra.Command{
 
 		// init the p2p node
 		var n *node.Node
-		if !config.Net.P2PDisabled {
-			log.Info(ctx, "Starting P2P node", logging.NewKV("TCP address", config.Net.TCPAddress))
+		if !cfg.Net.P2PDisabled {
+			log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 			n, err = node.NewNode(
 				ctx,
 				db,
 				bs,
-				node.DataPath(config.Database.Badger.Path),
-				node.ListenP2PAddrStrings(config.Net.P2PAddress),
-				node.WithPubSub(true))
+				cfg.NodeConfig(),
+			)
 			if err != nil {
 				log.ErrorE(ctx, "Failed to start P2P node", err)
 				n.Close() //nolint:errcheck
@@ -118,11 +135,11 @@ var startCmd = &cobra.Command{
 			}
 
 			// parse peers and bootstrap
-			if len(peers) != 0 {
-				log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", peers))
-				addrs, err := netutils.ParsePeers(strings.Split(peers, ","))
+			if len(cfg.Net.Peers) != 0 {
+				log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
+				addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 				if err != nil {
-					log.ErrorE(ctx, "Failed to parse bootstrap peers", err)
+					log.FatalE(ctx, fmt.Sprintf("Failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 				}
 				log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 				n.Boostrap(addrs)
@@ -135,7 +152,7 @@ var startCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			MtcpAddr, err := ma.NewMultiaddr(tcpAddr)
+			MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
 			if err != nil {
 				log.FatalE(ctx, "Error parsing multi-address,", err)
 			}
@@ -144,8 +161,13 @@ var startCmd = &cobra.Command{
 				log.FatalE(ctx, "Failed to parse TCP address", err)
 			}
 
+			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
+			if err != nil {
+				log.FatalE(ctx, "Failed to parse RPC timeout duration", err)
+			}
+
 			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-				MaxConnectionIdle: 5 * time.Minute,
+				MaxConnectionIdle: rpcTimeoutDuration,
 			}))
 			tcplistener, err := gonet.Listen("tcp", addr)
 			if err != nil {
@@ -174,14 +196,14 @@ var startCmd = &cobra.Command{
 			log.Info(
 				ctx,
 				fmt.Sprintf(
-					"Providing HTTP API at http://%s%s. Use the GraphQL query endpoint at http://%s%s/graphql ",
-					config.Database.Address,
+					"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
+					cfg.API.AddressToURL(),
 					httpapi.RootPath,
-					config.Database.Address,
+					cfg.API.AddressToURL(),
 					httpapi.RootPath,
 				),
 			)
-			s := http.NewServer(db, http.WithAddress(config.Database.Address))
+			s := http.NewServer(db, http.WithAddress(cfg.API.Address))
 			if err := s.Listen(); err != nil {
 				log.ErrorE(ctx, "Failed to start HTTP API listener", err)
 				if n != nil {
@@ -204,43 +226,54 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
+	var err error
 	rootCmd.AddCommand(startCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// startCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
 	startCmd.Flags().String(
-		"store",
-		"badger",
-		"Specify the data store to use (supported: badger, memory)",
+		"peers", cfg.Net.Peers,
+		"list of peers to connect to",
 	)
-	startCmd.Flags().StringVar(&peers, "peers", "", "list of peers to connect to")
-	startCmd.Flags().StringVar(
-		&p2pAddr,
-		"p2paddr",
-		"/ip4/0.0.0.0/tcp/9171",
+	err = viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind net.peers", err)
+	}
+
+	startCmd.Flags().String(
+		"store", cfg.Datastore.Store,
+		"specify the datastore to use (supported: badger, memory)",
+	)
+	err = viper.BindPFlag("datastore.store", startCmd.Flags().Lookup("store"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind datastore.store", err)
+	}
+
+	startCmd.Flags().String(
+		"p2paddr", cfg.Net.P2PAddress,
 		"listener address for the p2p network (formatted as a libp2p MultiAddr)",
 	)
+	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind net.p2paddress", err)
+	}
+
 	startCmd.Flags().StringVar(
-		&tcpAddr,
+		&cfg.Net.TCPAddress,
 		"tcpaddr",
-		"/ip4/0.0.0.0/tcp/9161",
+		cfg.Net.TCPAddress,
 		"listener address for the tcp gRPC server (formatted as a libp2p MultiAddr)",
 	)
-	startCmd.Flags().StringVar(
-		&dataPath,
-		"data",
-		"$HOME/.defradb/data",
-		"Data path to save DB data and other related meta-data",
-	)
+	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind net.tcpaddress", err)
+	}
+
 	startCmd.Flags().Bool(
 		"no-p2p",
-		false,
-		"Turn off the peer-to-peer network synchronization system",
+		cfg.Net.P2PDisabled,
+		"disable the peer-to-peer network synchronization system",
 	)
+	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
+	if err != nil {
+		log.FatalE(context.Background(), "Could not bind net.p2pdisabled", err)
+	}
 }

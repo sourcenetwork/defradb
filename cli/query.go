@@ -15,17 +15,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-)
-
-var (
-// Commented because it is deadcode, for linter.
-// queryStr string
 )
 
 // queryCmd represents the query command
@@ -42,15 +35,6 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		logging.SetConfig(config.Logging.toLogConfig())
-
-		dbaddr := viper.GetString("database.address")
-		if dbaddr == "" {
-			log.Error(ctx, "No database URL provided")
-		}
-		if !strings.HasPrefix(dbaddr, "http") {
-			dbaddr = "http://" + dbaddr
-		}
 
 		if len(args) != 1 {
 			log.Fatal(ctx, "Needs a single query argument")
@@ -61,7 +45,7 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 			return
 		}
 
-		endpoint, err := httpapi.JoinPaths(dbaddr, httpapi.GraphQLPath)
+		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.GraphQLPath)
 		if err != nil {
 			log.ErrorE(ctx, "Join paths failed", err)
 			return
