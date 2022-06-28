@@ -261,27 +261,6 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 		},
 
 		{
-			Description: "Simple multi-key delete mutation but no ids given.",
-			Query: `mutation {
-						delete_user(ids: []) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "Error: no id(s) provided while delete mutation.",
-		},
-
-		{
 			Description: "Delete multiple documents that exist without sub selection, should give error.",
 			Query: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
