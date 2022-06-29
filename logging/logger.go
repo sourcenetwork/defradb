@@ -171,15 +171,14 @@ func (l *logger) ApplyConfig(config Config) {
 	_ = l.logger.Sync()
 	l.logger = newLogger
 
-	// clear the console logger in case we don't need it anymore
-	l.consoleLogger = nil
-
 	if !willOutputToStderr(config.OutputPaths) {
 		if config.pipe != nil { // for testing purposes only
 			l.consoleLogger = stdlog.New(config.pipe, "", 0)
-			return
+		} else {
+			l.consoleLogger = stdlog.New(os.Stderr, "", 0)
 		}
-		l.consoleLogger = stdlog.New(os.Stderr, "", 0)
+	} else {
+		l.consoleLogger = nil
 	}
 }
 
