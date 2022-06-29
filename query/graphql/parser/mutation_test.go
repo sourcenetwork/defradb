@@ -208,7 +208,7 @@ func TestMutationParse_Update_Filter(t *testing.T) {
 	assert.NotNil(t, mut.Filter)
 	assert.Equal(t, map[string]interface{}{
 		"rating": map[string]interface{}{
-			"$gt": 4.5,
+			"_gt": 4.5,
 		},
 	}, mut.Filter.Conditions)
 }

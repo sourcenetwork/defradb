@@ -2,32 +2,14 @@ package connor
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/sourcenetwork/defradb/connor/numbers"
 )
 
-func init() {
-	Register(&LessEqualOperator{})
-}
-
-// LessEqualOperator does value comparisons to determine whether one
+// le does value comparisons to determine whether one
 // value is strictly less than another.
-type LessEqualOperator struct {
-}
-
-func (o *LessEqualOperator) Name() string {
-	return "le"
-}
-
-func (o *LessEqualOperator) Evaluate(condition, data interface{}) (bool, error) {
+func le(condition, data interface{}) (bool, error) {
 	switch cn := numbers.TryUpcast(condition).(type) {
-	case string:
-		switch dn := data.(type) {
-		case string:
-			return dn <= cn, nil
-		}
-		return false, nil
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {
 		case float64:
@@ -45,12 +27,6 @@ func (o *LessEqualOperator) Evaluate(condition, data interface{}) (bool, error) 
 			return dn <= cn, nil
 		}
 
-		return false, nil
-	case time.Time:
-		switch dn := data.(type) {
-		case time.Time:
-			return !dn.After(cn), nil
-		}
 		return false, nil
 	default:
 		return false, fmt.Errorf("unknown comparison type '%#v'", condition)

@@ -247,7 +247,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 								"deleteNode": dataMap{
 									"filter": dataMap{
 										"name": dataMap{
-											"$eq": "Shahzad",
+											"_eq": "Shahzad",
 										},
 									},
 									"ids": []string(nil),
@@ -318,15 +318,15 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 							"selectNode": dataMap{
 								"deleteNode": dataMap{
 									"filter": dataMap{
-										"$and": []interface{}{
+										"_and": []interface{}{
 											dataMap{
 												"age": dataMap{
-													"$lt": int64(26),
+													"_lt": int64(26),
 												},
 											},
 											dataMap{
 												"verified": dataMap{
-													"$eq": true,
+													"_eq": true,
 												},
 											},
 										},
@@ -522,15 +522,15 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 							"selectNode": dataMap{
 								"deleteNode": dataMap{
 									"filter": dataMap{
-										"$and": []interface{}{
+										"_and": []interface{}{
 											dataMap{
 												"age": dataMap{
-													"$lt": int64(26),
+													"_lt": int64(26),
 												},
 											},
 											dataMap{
 												"verified": dataMap{
-													"$eq": true,
+													"_eq": true,
 												},
 											},
 										},
@@ -569,7 +569,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"deleteNode": dataMap{
 									"filter": dataMap{
 										"name": dataMap{
-											"$eq": "Shahzad",
+											"_eq": "Shahzad",
 										},
 									},
 									"ids": []string(nil),
