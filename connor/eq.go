@@ -7,36 +7,13 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-func init() {
-	Register(&EqualOperator{})
-}
-
-// EqualOperator is an operator which performs object equality
+// eq is an operator which performs object equality
 // tests.
-type EqualOperator struct {
-}
-
-func (o *EqualOperator) Name() string {
-	return "eq"
-}
-
-func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
+func eq(condition, data interface{}) (bool, error) {
 	switch arr := data.(type) {
-	case []interface{}:
-		for _, item := range arr {
-			m, err := MatchWith("$eq", condition, item)
-			if err != nil {
-				return false, err
-			}
-
-			if m {
-				return true, nil
-			}
-		}
-		return false, nil
 	case []core.Doc:
 		for _, item := range arr {
-			m, err := MatchWith("$eq", condition, item)
+			m, err := eq(condition, item)
 			if err != nil {
 				return false, err
 			}
@@ -54,32 +31,23 @@ func (o *EqualOperator) Evaluate(condition, data interface{}) (bool, error) {
 			return d == cn, nil
 		}
 		return false, nil
-	case int8:
-		return numbers.Equal(cn, data), nil
-	case int16:
-		return numbers.Equal(cn, data), nil
-	case int32:
-		return numbers.Equal(cn, data), nil
 	case int64:
-		return numbers.Equal(cn, data), nil
-	case float32:
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
 	case map[FilterKey]interface{}:
 		m := true
 		for prop, cond := range cn {
-			if !m {
-				// No need to evaluate after we fail
-				continue
-			}
-
-			mm, err := MatchWith(prop.GetOperatorOrDefault("$eq"), cond, prop.GetProp(data))
+			var err error
+			m, err = matchWith(prop.GetOperatorOrDefault("_eq"), cond, prop.GetProp(data))
 			if err != nil {
 				return false, err
 			}
 
-			m = m && mm
+			if !m {
+				// No need to evaluate after we fail
+				break
+			}
 		}
 
 		return m, nil

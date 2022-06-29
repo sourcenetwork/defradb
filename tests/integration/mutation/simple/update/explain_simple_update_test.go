@@ -65,7 +65,7 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 							},
 							"filter": dataMap{
 								"verified": dataMap{
-									"$eq": true,
+									"_eq": true,
 								},
 							},
 							"ids": []string(nil),
@@ -77,7 +77,7 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 										"collectionName": "user",
 										"filter": dataMap{
 											"verified": dataMap{
-												"$eq": true,
+												"_eq": true,
 											},
 										},
 										"spans": []dataMap{},
@@ -289,7 +289,7 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 						},
 						"filter": dataMap{
 							"verified": dataMap{
-								"$eq": true,
+								"_eq": true,
 							},
 						},
 						"ids": []string{
@@ -304,7 +304,7 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 									"collectionName": "user",
 									"filter": dataMap{
 										"verified": dataMap{
-											"$eq": true,
+											"_eq": true,
 										},
 									},
 									"spans": []dataMap{

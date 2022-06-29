@@ -163,9 +163,6 @@ func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(name, "_") && name != parserTypes.DocKeyFieldName {
-			name = strings.Replace(name, "_", "$", 1)
-		}
 		conditions[name] = val
 	}
 	return conditions, nil
