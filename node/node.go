@@ -62,15 +62,9 @@ func NewNode(
 	bs *broadcast.Broadcaster,
 	opts ...NodeOpt,
 ) (*Node, error) {
-	// merge all the options args together
-	var options Options
-	for _, opt := range append(opts, DefaultOpts()) {
-		if opt == nil {
-			continue
-		}
-		if err := opt(&options); err != nil {
-			return nil, err
-		}
+	options, err := NewMergedOptions(opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	fin := finalizer.NewFinalizer()
@@ -93,7 +87,9 @@ func NewNode(
 	libp2pOpts := []libp2p.Option{
 		libp2p.Peerstore(peerstore),
 		libp2p.ConnectionManager(options.ConnManager),
-		libp2p.DisableRelay(), // @todo: Possibly bind this to an Option
+	}
+	if options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
 	}
 
 	h, d, err := ipfslite.SetupLibp2p(

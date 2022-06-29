@@ -1392,7 +1392,6 @@ github.com/onsi/ginkgo v1.16.4/go.mod h1:dX+/inL/fNMqNlz0e9LfyB9TswhZpCVdJM/Z6Vv
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/ginkgo v1.16.5/go.mod h1:+E8gABHa3K6zRBolWtd+ROzc/U5bkGt0FwiG042wbpU=
 github.com/onsi/gomega v1.4.1/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
-github.com/onsi/gomega v1.4.2/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
@@ -1564,8 +1563,6 @@ github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4k
 github.com/sony/gobreaker v0.4.1/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12 h1:MELz22GoPeecJnBS5RT4i52bNY/wlpvbGW3L4lLuBTU=
-github.com/sourcenetwork/connor v1.0.3-0.20210312091030-4823d0411a12/go.mod h1:IimP/qkAJro1hXbVA8xOMDdkUeWkVw8rF40XrZq5YX0=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9 h1:2nNvu308c+V9wj2jrWErrL5gSgwhhjdW6UX4/+JT6vY=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9/go.mod h1:3Ty9EMes+aoxl8xS0CsuCGQZ4JEsOlC5yqQDLOKoBRw=
 github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220516213426-71dfac7c1b6a h1:xC1pEMFD5LekaqBof1fzvEw/EvprNz0nQv2VklIwmgA=
