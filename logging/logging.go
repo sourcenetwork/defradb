@@ -45,6 +45,13 @@ type Logger interface {
 	Fatal(ctx context.Context, message string, keyvals ...KV)
 	// FatalE logs a message and an error at fatal log level. Key-value pairs can be added.
 	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
+	FeedbackDebug(ctx context.Context, message string, keyvals ...KV)
+	FeedbackInfo(ctx context.Context, message string, keyvals ...KV)
+	FeedbackWarn(ctx context.Context, message string, keyvals ...KV)
+	FeedbackError(ctx context.Context, message string, keyvals ...KV)
+	FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV)
+	FeedbackFatal(ctx context.Context, message string, keyvals ...KV)
+	FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV)
 	// Flush flushes any buffered log entries.
 	Flush() error
 	// ApplyConfig updates the logger with a new config.
