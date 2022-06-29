@@ -163,6 +163,7 @@ func (c Config) copy() Config {
 	}
 }
 
+// Create a new Config given new config options. Each updated Config field is handled.
 func (oldConfig Config) with(newConfigOptions Config) Config {
 	newConfig := oldConfig.copy()
 

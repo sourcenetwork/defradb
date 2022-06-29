@@ -121,8 +121,8 @@ func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
 	return options, nil
 }
 
-func TestInvalidListenTCPAddrStrings(t *testing.T) {
-	opt := ListenTCPAddrStrings("/ip4/碎片整理")
+func TestInvalidListenTCPAddrString(t *testing.T) {
+	opt := ListenTCPAddrString("/ip4/碎片整理")
 	options, err := mergeOptions(opt)
 	assert.EqualError(t, err, "failed to parse multiaddr \"/ip4/碎片整理\": invalid value \"碎片整理\" for protocol ip4: failed to parse ip4 addr: 碎片整理")
 	assert.Equal(t, Options{}, options)

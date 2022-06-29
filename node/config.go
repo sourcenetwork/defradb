@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/* Node configuration, in which NodeOpt functions are applied on Options. */
+
 package node
 
 import (
@@ -23,14 +25,39 @@ type Options struct {
 	ListenAddrs       []ma.Multiaddr
 	TCPAddr           ma.Multiaddr
 	DataPath          string
-	ConnManager       cconnmgr.ConnManager
 	EnablePubSub      bool
+	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
 	GRPCDialOptions   []grpc.DialOption
+	ConnManager       cconnmgr.ConnManager
 }
 
 type NodeOpt func(*Options) error
 
+// NewMergedOptions obtains Options by applying given NodeOpts.
+func NewMergedOptions(opts ...NodeOpt) (*Options, error) {
+	var options Options
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		if err := opt(&options); err != nil {
+			return nil, err
+		}
+	}
+	return &options, nil
+}
+
+// NewConnManager gives a new ConnManager.
+func NewConnManager(low int, high int, grace time.Duration) (cconnmgr.ConnManager, error) {
+	c, err := connmgr.NewConnManager(low, high, connmgr.WithGracePeriod(grace))
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// DataPath sets the data path.
 func DataPath(path string) NodeOpt {
 	return func(opt *Options) error {
 		opt.DataPath = path
@@ -38,6 +65,7 @@ func DataPath(path string) NodeOpt {
 	}
 }
 
+// WithPubSub enables the pubsub feature.
 func WithPubSub(enable bool) NodeOpt {
 	return func(opt *Options) error {
 		opt.EnablePubSub = enable
@@ -45,7 +73,15 @@ func WithPubSub(enable bool) NodeOpt {
 	}
 }
 
-// ListenP2PAddrStrings sets the address to listen on given as strings
+// WithEnableRelay enables the relay feature.
+func WithEnableRelay(enable bool) NodeOpt {
+	return func(opt *Options) error {
+		opt.EnableRelay = enable
+		return nil
+	}
+}
+
+// ListenP2PAddrStrings sets the address to listen on given as strings.
 func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	return func(opt *Options) error {
 		for _, addrstr := range addrs {
@@ -59,50 +95,22 @@ func ListenP2PAddrStrings(addrs ...string) NodeOpt {
 	}
 }
 
-// ListenP2PAddrStrings sets the address to listen on given as strings
-func ListenTCPAddrStrings(addr string) NodeOpt {
+// ListenTCPAddrString sets the TCP address to listen on, as Multiaddr.
+func ListenTCPAddrString(addr string) NodeOpt {
 	return func(opt *Options) error {
 		a, err := ma.NewMultiaddr(addr)
 		if err != nil {
 			return err
 		}
-		opt.ListenAddrs = append(opt.ListenAddrs, a)
+		opt.TCPAddr = a
 		return nil
 	}
 }
 
-// ListenAddrs sets the address to listen on given as MultiAddr(s)
+// ListenAddrs sets the address to listen on given as MultiAddr(s).
 func ListenAddrs(addrs ...ma.Multiaddr) NodeOpt {
 	return func(opt *Options) error {
 		opt.ListenAddrs = addrs
-		return nil
-	}
-}
-
-// DefaultOpts returns a set of sane defaults for a Node
-func DefaultOpts() NodeOpt {
-	return func(opt *Options) error {
-		if opt.ListenAddrs == nil {
-			addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/9171")
-			if err != nil {
-				return err
-			}
-			opt.ListenAddrs = []ma.Multiaddr{addr}
-		}
-		if opt.TCPAddr == nil {
-			addr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/9161")
-			if err != nil {
-				return err
-			}
-			opt.TCPAddr = addr
-		}
-		if opt.ConnManager == nil {
-			var err error
-			opt.ConnManager, err = connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
-			if err != nil {
-				return err
-			}
-		}
 		return nil
 	}
 }
