@@ -34,7 +34,7 @@ type Options struct {
 
 type NodeOpt func(*Options) error
 
-// Obtain Options by applying given NodeOpts.
+// NewMergedOptions obtains Options by applying given NodeOpts.
 func NewMergedOptions(opts ...NodeOpt) (*Options, error) {
 	var options Options
 	for _, opt := range opts {

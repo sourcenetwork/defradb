@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 )
 
-// Returns the default rootdir path, which is at the user's home directory.
+// DefaultRootDir returns the default rootdir path, which is at the user's home directory.
 func DefaultRootDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -24,7 +24,7 @@ func DefaultRootDir() (string, error) {
 	return filepath.Join(home, defaultDefraDBRootDir), nil
 }
 
-// Returns rootdir path and whether it exists as directory, considering the env. variable and CLI flag.
+// GetRootDir returns rootdir path and whether it exists as directory, considering the env. variable and CLI flag.
 func GetRootDir(rootDir string) (string, bool, error) {
 	var err error
 	var path string
@@ -48,7 +48,7 @@ func GetRootDir(rootDir string) (string, bool, error) {
 	return path, exists, nil
 }
 
-// Creates a rootdir with default configuration.
+// CreateRootDirWithDefaultConfig creates a rootdir with default configuration.
 func CreateRootDirWithDefaultConfig(rootDir string) error {
 	err := os.MkdirAll(rootDir, defaultDirPerm)
 	if err != nil {

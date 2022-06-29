@@ -39,7 +39,7 @@ func (cfg *Config) WriteConfigFileToRootDir(rootDir string) error {
 	return cfg.writeConfigFile(path)
 }
 
-// Must reflect Config in content and configuration.
+// defaultConfigTemplate must reflect Config in content and configuration.
 // All parameters must be represented here, to support Viper's automatic environment variable handling.
 const defaultConfigTemplate = `# DefraDB configuration (YAML)
 
