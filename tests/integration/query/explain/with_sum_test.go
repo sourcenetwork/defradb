@@ -198,7 +198,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 									"childFieldName": "pages",
 									"filter": dataMap{
 										"name": dataMap{
-											"$eq": "To my dear readers",
+											"_eq": "To my dear readers",
 										},
 									},
 								},
@@ -231,7 +231,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 													"collectionName": "article",
 													"filter": dataMap{
 														"name": dataMap{
-															"$eq": "To my dear readers",
+															"_eq": "To my dear readers",
 														},
 													},
 													"spans": []dataMap{
