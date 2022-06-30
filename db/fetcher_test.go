@@ -333,9 +333,9 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	// create a span for our document we wish to find
 	docKey := base.MakeCollectionKey(desc).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
-	spans := core.Spans{
+	spans := core.NewSpans(
 		core.NewSpan(docKey, docKey.PrefixEnd()),
-	}
+	)
 
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {

@@ -45,15 +45,26 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -92,16 +103,31 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+								"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-										"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+											},
+											{
+												"end":   "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393f",
+												"start": "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -150,16 +176,31 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+								"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-										"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+											},
+											{
+												"end":   "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393f",
+												"start": "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -192,15 +233,26 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-8ca944fd-260e-5a44-b88f-326d9faca811",
+												"start": "/1/bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -242,17 +294,32 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
-									"filter": dataMap{
-										"name": dataMap{
-											"_eq": "Shahzad",
+						"deleteNode": dataMap{
+							"filter": dataMap{
+								"name": dataMap{
+									"_eq": "Shahzad",
+								},
+							},
+							"ids": []string(nil),
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter": dataMap{
+											"name": dataMap{
+												"_eq": "Shahzad",
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/2",
+												"start": "/1",
+											},
 										},
 									},
-									"ids": []string(nil),
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -314,26 +381,50 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
-									"filter": dataMap{
-										"_and": []interface{}{
-											dataMap{
-												"age": dataMap{
-													"_lt": int64(26),
+						"deleteNode": dataMap{
+							"filter": dataMap{
+								"_and": []interface{}{
+									dataMap{
+										"age": dataMap{
+											"_lt": int64(26),
+										},
+									},
+									dataMap{
+										"verified": dataMap{
+											"_eq": true,
+										},
+									},
+								},
+							},
+							"ids": []string(nil),
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter": dataMap{
+											"_and": []interface{}{
+												dataMap{
+													"age": dataMap{
+														"_lt": int64(26),
+													},
 												},
-											},
-											dataMap{
-												"verified": dataMap{
-													"_eq": true,
+												dataMap{
+													"verified": dataMap{
+														"_eq": true,
+													},
 												},
 											},
 										},
+										"spans": []dataMap{
+											{
+												"end":   "/2",
+												"start": "/1",
+											},
+										},
 									},
-									"ids": []string(nil),
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -390,13 +481,24 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
-									"filter": dataMap{},
-									"ids":    []string(nil),
+						"deleteNode": dataMap{
+							"filter": dataMap{},
+							"ids":    []string(nil),
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         dataMap{},
+										"spans": []dataMap{
+											{
+												"end":   "/2",
+												"start": "/1",
+											},
+										},
+									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -437,15 +539,26 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507f",
+												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -468,16 +581,31 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
+								"bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
-										"bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a06",
+												"start": "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
+											},
+											{
+												"end":   "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a04",
+												"start": "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -518,29 +646,57 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
-									"filter": dataMap{
-										"_and": []interface{}{
-											dataMap{
-												"age": dataMap{
-													"_lt": int64(26),
+						"deleteNode": dataMap{
+							"filter": dataMap{
+								"_and": []interface{}{
+									dataMap{
+										"age": dataMap{
+											"_lt": int64(26),
+										},
+									},
+									dataMap{
+										"verified": dataMap{
+											"_eq": true,
+										},
+									},
+								},
+							},
+							"ids": []string{
+								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+								"test",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter": dataMap{
+											"_and": []interface{}{
+												dataMap{
+													"age": dataMap{
+														"_lt": int64(26),
+													},
 												},
-											},
-											dataMap{
-												"verified": dataMap{
-													"_eq": true,
+												dataMap{
+													"verified": dataMap{
+														"_eq": true,
+													},
 												},
 											},
 										},
-									},
-									"ids": []string{
-										"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-										"test",
+										"spans": []dataMap{
+											{
+												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+											},
+											{
+												"end":   "/1/tesu",
+												"start": "/1/test",
+											},
+										},
 									},
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -564,17 +720,32 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
-									"filter": dataMap{
-										"name": dataMap{
-											"_eq": "Shahzad",
+						"deleteNode": dataMap{
+							"filter": dataMap{
+								"name": dataMap{
+									"_eq": "Shahzad",
+								},
+							},
+							"ids": []string(nil),
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter": dataMap{
+											"name": dataMap{
+												"_eq": "Shahzad",
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/2",
+												"start": "/1",
+											},
 										},
 									},
-									"ids": []string(nil),
 								},
-								"filter": nil,
 							},
 						},
 					},
@@ -607,13 +778,19 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids":    []string{},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids":    []string{},
+									"scanNode": dataMap{
+										"collectionID":   "1",
+										"collectionName": "user",
+										"filter":         nil,
+										"spans":          []dataMap{},
+									},
 								},
-								"filter": nil,
 							},
 						},
 					},

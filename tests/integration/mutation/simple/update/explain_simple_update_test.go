@@ -80,7 +80,12 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 												"_eq": true,
 											},
 										},
-										"spans": []dataMap{},
+										"spans": []dataMap{
+											{
+												"end":   "/2",
+												"start": "/1",
+											},
+										},
 									},
 								},
 							},

@@ -123,3 +123,25 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with empty DocKeys arg",
+		Query: `query {
+						users(dockeys: []) {
+							Name
+							Age
+						}
+					}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+					"Name": "John",
+					"Age": 21
+				}`)},
+		},
+		Results: []map[string]interface{}{},
+	}
+
+	executeTestCase(t, test)
+}

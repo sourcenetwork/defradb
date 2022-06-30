@@ -94,7 +94,7 @@ func (n *createNode) Next() (bool, error) {
 
 	desc := n.collection.Description()
 	docKey := base.MakeDocKey(desc, currentValue.GetKey())
-	n.results.Spans(core.Spans{core.NewSpan(docKey, docKey.PrefixEnd())})
+	n.results.Spans(core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
 
 	err := n.results.Init()
 	if err != nil {

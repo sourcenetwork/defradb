@@ -154,7 +154,17 @@ func isAdjacent(this DataStoreKey, other DataStoreKey) bool {
 }
 
 // Spans is a collection of individual spans.
-type Spans []Span
+type Spans struct {
+	HasValue bool
+	Value    []Span
+}
+
+func NewSpans(spans ...Span) Spans {
+	return Spans{
+		HasValue: true,
+		Value:    spans,
+	}
+}
 
 // KeyValue is a KV store response containing the resulting core.Key and byte array value.
 type KeyValue struct {
@@ -171,12 +181,12 @@ type HeadKeyValue struct {
 // a unique set in ascending order, where overlapping spans are merged into a single span.
 // Will handle spans with keys of different lengths, where one might be a prefix of another.
 // Adjacent spans will also be merged.
-func (spans Spans) MergeAscending() Spans {
+func MergeAscending(spans []Span) []Span {
 	if len(spans) <= 1 {
 		return spans
 	}
 
-	uniqueSpans := Spans{}
+	uniqueSpans := []Span{}
 
 	for _, span := range spans {
 		uniqueSpanFound := false
@@ -187,7 +197,7 @@ func (spans Spans) MergeAscending() Spans {
 			switch span.Compare(uniqueSpan) {
 			case Before:
 				// Shift all remaining unique spans one place to the right
-				newArray := make(Spans, len(uniqueSpans)+1)
+				newArray := make([]Span, len(uniqueSpans)+1)
 				for j := len(uniqueSpans); j > i; j-- {
 					newArray[j] = uniqueSpans[i]
 				}
@@ -208,7 +218,7 @@ func (spans Spans) MergeAscending() Spans {
 				uniqueSpanFound = true
 				i++
 			case StartBeforeEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().ToString())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(span.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -218,7 +228,7 @@ func (spans Spans) MergeAscending() Spans {
 				// Do nothing, span is contained within an existing unique-span
 				i = len(uniqueSpans)
 			case StartEqualEndAfter, StartWithinEndAfter, StartEqualToEndEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().ToString())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(uniqueSpan.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -238,7 +248,7 @@ func (spans Spans) MergeAscending() Spans {
 
 // Removes any items from the collection (given index onwards) who's end key is smaller
 // than the given value. The returned collection will be a different instance.
-func (spans Spans) removeBefore(startIndex int, end string) Spans {
+func removeBefore(spans []Span, startIndex int, end string) []Span {
 	indexOfLastMatchingItem := -1
 	for i := startIndex; i < len(spans); i++ {
 		if spans[i].End().ToString() <= end {
@@ -251,7 +261,7 @@ func (spans Spans) removeBefore(startIndex int, end string) Spans {
 	}
 
 	numberOfItemsToRemove := indexOfLastMatchingItem - startIndex
-	result := make(Spans, len(spans)-numberOfItemsToRemove)
+	result := make([]Span, len(spans)-numberOfItemsToRemove)
 	// Add the items preceding the removed items
 	for i := 0; i < startIndex; i++ {
 		result[i] = spans[i]

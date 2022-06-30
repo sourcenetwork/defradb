@@ -72,13 +72,24 @@ func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T
 			Results: []dataMap{
 				{
 					"explain": dataMap{
-						"selectTopNode": dataMap{
-							"selectNode": dataMap{
-								"filter": nil,
-								"deleteNode": dataMap{
+						"deleteNode": dataMap{
+							"filter": nil,
+							"ids": []string{
+								"bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+							},
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
 									"filter": nil,
-									"ids": []string{
-										"bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+									"scanNode": dataMap{
+										"collectionID":   "2",
+										"collectionName": "author",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"end":   "/2/bae-2f80f359-535d-508e-ba58-088a309ce3c4",
+												"start": "/2/bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+											},
+										},
 									},
 								},
 							},

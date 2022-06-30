@@ -56,7 +56,7 @@ type Select struct {
 	// the user.
 	Alias string
 
-	DocKeys []string
+	DocKeys parserTypes.OptionalDocKeys
 	CID     string
 
 	// QueryType indicates what kind of query this is
@@ -221,14 +221,20 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			slct.Filter = filter
 		} else if prop == parserTypes.DocKey { // parse single dockey query field
 			val := astValue.(*ast.StringValue)
-			slct.DocKeys = []string{val.Value}
+			slct.DocKeys = parserTypes.OptionalDocKeys{
+				HasValue: true,
+				Value:    []string{val.Value},
+			}
 		} else if prop == parserTypes.DocKeys {
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
-			slct.DocKeys = docKeys
+			slct.DocKeys = parserTypes.OptionalDocKeys{
+				HasValue: true,
+				Value:    docKeys,
+			}
 		} else if prop == parserTypes.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
 			slct.CID = val.Value
@@ -274,7 +280,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 		}
 
-		if len(slct.DocKeys) != 0 && len(slct.CID) != 0 {
+		if len(slct.DocKeys.Value) != 0 && len(slct.CID) != 0 {
 			slct.QueryType = parserTypes.VersionedScanQuery
 		} else {
 			slct.QueryType = parserTypes.ScanQuery

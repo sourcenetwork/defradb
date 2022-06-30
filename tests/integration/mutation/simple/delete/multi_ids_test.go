@@ -70,10 +70,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 			},
 			Results: []map[string]interface{}{
 				{
-					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+					"_key": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 				},
 				{
-					"_key": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 				},
 			},
 			ExpectedError: "",
@@ -104,10 +104,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 			},
 			Results: []map[string]interface{}{
 				{
-					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 				},
 				{
-					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 				},
 			},
 			ExpectedError: "",
@@ -147,10 +147,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 			},
 			Results: []map[string]interface{}{
 				{
-					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 				},
 				{
-					"AliasKey": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+					"AliasKey": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 				},
 			},
 			ExpectedError: "",
@@ -162,125 +162,111 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 	}
 }
 
+func TestDeleteWithEmptyIdsSet(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using ids, empty ids set.",
+		Query: `mutation {
+					delete_user(ids: []) {
+						_key
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.48,
+					"verified": true
+				}`),
+			},
+		},
+		Results: []map[string]interface{}{},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithSingleUnknownIds(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using ids, single unknown item.",
+		Query: `mutation {
+					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
+						_key
+					}
+				}`,
+		Results: []map[string]interface{}{},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithMultipleUnknownIds(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using ids, multiple unknown items.",
+		Query: `mutation {
+					delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+						_key
+					}
+				}`,
+		Results: []map[string]interface{}{},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithUnknownAndKnownIds(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using ids, known and unknown items.",
+		Query: `mutation {
+					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+						_key
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.48,
+					"verified": true
+				}`),
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+			},
+		},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithKnownIdsAndEmptyFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using ids and filter, known id and empty filter.",
+		Query: `mutation {
+					delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"], filter: {}) {
+						_key
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.48,
+					"verified": true
+				}`),
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+			},
+		},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
 func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
-		{
-			Description: "Deletion of one document using a list when it doesn't exist, in a non-empty collection.",
-			Query: `mutation {
-						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Simple multi-key delete mutation while no documents exist.",
-			Query: `mutation {
-						delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
-							_key
-						}
-					}`,
-			Docs:          map[int][]string{},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Simple multi-key delete mutation while one document doesn't exist.",
-			Query: `mutation {
-						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Simple multi-key delete used with filter.",
-			Query: `mutation {
-						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"], filter: {}) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "Error: can't use filter and id / ids together.",
-		},
-
-		{
-			Description: "Simple multi-key delete mutation but no ids given.",
-			Query: `mutation {
-						delete_user(ids: []) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "Error: no id(s) provided while delete mutation.",
-		},
-
-		{
-			Description: "Simple multi-key delete mutation but no ids given.",
-			Query: `mutation {
-						delete_user(ids: []) {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "Error: no id(s) provided while delete mutation.",
-		},
-
 		{
 			Description: "Delete multiple documents that exist without sub selection, should give error.",
 			Query: `mutation {
