@@ -112,29 +112,26 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 			"DocumentFetcher cannot be started without an initialized document object",
 		)
 	}
-	//@todo: Handle fields Description
-	// check spans
-	numspans := len(spans)
-	var uniqueSpans core.Spans
-	if numspans == 0 { // no specified spans so create a prefix scan key for the entire collection
+
+	if !spans.HasValue { // no specified spans so create a prefix scan key for the entire collection
 		start := base.MakeCollectionKey(*df.col).WithValueFlag()
-		uniqueSpans = core.Spans{core.NewSpan(start, start.PrefixEnd())}
+		df.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	} else {
-		valueSpans := make(core.Spans, len(spans))
-		for i, span := range spans {
+		valueSpans := make([]core.Span, len(spans.Value))
+		for i, span := range spans.Value {
 			// We can only handle value keys, so here we ensure we only read value keys
 			valueSpans[i] = core.NewSpan(span.Start().WithValueFlag(), span.End().WithValueFlag())
 		}
 
-		uniqueSpans = valueSpans.MergeAscending()
+		spans := core.MergeAscending(valueSpans)
 		if df.reverse {
-			for i, j := 0, len(uniqueSpans)-1; i < j; i, j = i+1, j-1 {
-				uniqueSpans[i], uniqueSpans[j] = uniqueSpans[j], uniqueSpans[i]
+			for i, j := 0, len(spans)-1; i < j; i, j = i+1, j-1 {
+				spans[i], spans[j] = spans[j], spans[i]
 			}
 		}
+		df.spans = core.NewSpans(spans...)
 	}
 
-	df.spans = uniqueSpans
 	df.curSpanIndex = -1
 	df.txn = txn
 
@@ -150,7 +147,7 @@ func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans c
 
 func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 	nextSpanIndex := df.curSpanIndex + 1
-	if nextSpanIndex >= len(df.spans) {
+	if nextSpanIndex >= len(df.spans.Value) {
 		return false, nil
 	}
 
@@ -171,7 +168,7 @@ func (df *DocumentFetcher) startNextSpan(ctx context.Context) (bool, error) {
 		}
 	}
 
-	span := df.spans[nextSpanIndex]
+	span := df.spans.Value[nextSpanIndex]
 	df.kvResultsIter, err = df.kvIter.IteratePrefix(ctx, span.Start().ToDS(), span.End().ToDS())
 	if err != nil {
 		return false, err

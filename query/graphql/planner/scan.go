@@ -63,9 +63,9 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
-	if len(n.spans) == 0 {
+	if !n.spans.HasValue {
 		start := base.MakeCollectionKey(n.desc)
-		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
+		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
 
 	err := n.fetcher.Start(n.p.ctx, n.p.txn, n.spans)
@@ -81,6 +81,10 @@ func (n *scanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
+	if n.spans.HasValue && len(n.spans.Value) == 0 {
+		return false, nil
+	}
+
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
@@ -116,7 +120,7 @@ func (n *scanNode) Source() planNode { return nil }
 // explainSpans explains the spans attribute.
 func (n *scanNode) explainSpans() []map[string]interface{} {
 	spansExplainer := []map[string]interface{}{}
-	for _, span := range n.spans {
+	for _, span := range n.spans.Value {
 		spanExplainer := map[string]interface{}{
 			"start": span.Start().ToString(),
 			"end":   span.End().ToString(),

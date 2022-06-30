@@ -109,41 +109,45 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	}
 }
 
+func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using id, unknown id and empt collection.",
+		Query: `mutation {
+					delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
+						_key
+					}
+				}`,
+		Docs:    map[int][]string{},
+		Results: []map[string]interface{}{},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithUnknownId(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Deletion of using id, unknown id.",
+		Query: `mutation {
+					delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
+						_key
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				(`{
+					"name": "Shahzad",
+					"age":  26,
+					"points": 48.5,
+					"verified": true
+				}`),
+			},
+		},
+		Results: []map[string]interface{}{},
+	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
 func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
-		{
-			Description: "Simple delete mutation while no document exists.",
-			Query: `mutation {
-						delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
-							_key
-						}
-					}`,
-			Docs:          map[int][]string{},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
-		{
-			Description: "Deletion of a document that doesn't exist in non-empty collection.",
-			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
-							_key
-						}
-					}`,
-			Docs: map[int][]string{
-				0: {
-					(`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`),
-				},
-			},
-			Results:       []map[string]interface{}{},
-			ExpectedError: "No document for the given key exists",
-		},
-
 		{
 			Description: "Deletion of a document without sub selection, should give error.",
 			Query: `mutation {

@@ -47,23 +47,23 @@ type HeadFetcher struct {
 }
 
 func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
-	numspans := len(spans)
+	numspans := len(spans.Value)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")
 	} else if numspans > 1 {
 		// if we have multiple spans, we need to sort them by their start position
 		// so we can do a single iterative sweep
-		sort.Slice(spans, func(i, j int) bool {
+		sort.Slice(spans.Value, func(i, j int) bool {
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().ToString(), spans[j].Start().ToString()) < 0)
+			return (strings.Compare(spans.Value[i].Start().ToString(), spans.Value[j].Start().ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 
 	q := dsq.Query{
-		Prefix: hf.spans[0].Start().ToString(),
+		Prefix: hf.spans.Value[0].Start().ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 

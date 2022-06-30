@@ -220,6 +220,9 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case *createNode:
 		return p.expandPlan(n.results, parentPlan)
 
+	case *deleteNode:
+		return p.expandPlan(n.source, parentPlan)
+
 	default:
 		return nil
 	}

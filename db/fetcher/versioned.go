@@ -121,14 +121,14 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
 
-	if len(spans) != 1 {
+	if len(spans.Value) != 1 {
 		return errors.New("spans must contain only a single entry")
 	}
 
 	// For the VersionedFetcher, the spans needs to be in the format
 	// Span{Start: DocKey, End: CID}
-	dk := spans[0].Start()
-	cidRaw := spans[0].End()
+	dk := spans.Value[0].Start()
+	cidRaw := spans.Value[0].End()
 	if dk.DocKey == "" {
 		return errors.New("spans missing start DocKey")
 	} else if cidRaw.DocKey == "" { // todo: dont abuse DataStoreKey/Span like this!
@@ -167,7 +167,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 		return fmt.Errorf("Failed seeking state to %v: %w", c, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
+	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
@@ -195,7 +195,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
+	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
 // seekTo seeks to the given CID version by steping through the CRDT
@@ -441,5 +441,5 @@ func (vf *VersionedFetcher) Close() error {
 
 func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
 	// Todo: Dont abuse DataStoreKey for version cid!
-	return core.Spans{core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()})}
+	return core.NewSpans(core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()}))
 }

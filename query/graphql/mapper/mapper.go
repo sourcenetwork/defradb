@@ -619,7 +619,7 @@ func ToMutation(ctx context.Context, txn datastore.Txn, parsed *parser.Mutation)
 func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
 		Field:   toField(index, parsed),
-		DocKeys: parsed.DocKeys,
+		DocKeys: OptionalDocKeys(parsed.DocKeys),
 		Filter:  ToFilter(parsed.Filter, docMap),
 		Limit:   toLimit(parsed.Limit),
 		GroupBy: toGroupBy(parsed.GroupBy, docMap),

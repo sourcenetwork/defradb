@@ -363,8 +363,8 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	desc := slct.sourceInfo.collectionDescription
 	subKeyIndexKey := base.MakeDocKey(desc, subDocKeyStr)
 
-	n.spans = core.Spans{} // reset span
-	n.spans = append(n.spans, core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd()))
+	// reset span
+	n.spans = core.NewSpans(core.NewSpan(subKeyIndexKey, subKeyIndexKey.PrefixEnd()))
 
 	// do a point lookup with the new span (index key)
 	n.subType.Spans(n.spans)

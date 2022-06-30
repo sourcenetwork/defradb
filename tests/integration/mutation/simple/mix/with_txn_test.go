@@ -79,7 +79,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 						_key
 					}
 				}`,
-				ExpectedError: "No document for the given key exists",
+				Results: []map[string]interface{}{},
 			},
 			{
 				TransactionId: 0,
