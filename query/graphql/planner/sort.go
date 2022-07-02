@@ -101,9 +101,27 @@ func (n *sortNode) Explain() (map[string]interface{}, error) {
 	orderings := []map[string]interface{}{}
 
 	for _, element := range n.ordering {
+		// Skip all empty elements.
+		if element.IsEmpty() {
+			continue
+		}
+
+		// Build the list containing the corresponding names of all the indexes.
+		fieldNames := []string{}
+		for _, fieldIndex := range element.FieldIndexes {
+			// Try to find the name of this index.
+			fieldName, err := n.documentMapping.FindNameFromIndex(fieldIndex)
+			if err != nil {
+				return nil, err
+			}
+
+			fieldNames = append(fieldNames, fieldName)
+		}
+
+		// Put it all together for this order element.
 		orderings = append(orderings,
 			map[string]interface{}{
-				"field":     element.Field,
+				"fields":    fieldNames,
 				"direction": string(element.Direction),
 			},
 		)

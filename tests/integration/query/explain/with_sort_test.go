@@ -116,26 +116,26 @@ func TestExplainQuerySimpleSort(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"sortNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"filter":         nil,
-										"collectionID":   "3",
-										"collectionName": "author",
-										"spans": []dataMap{
-											{
-												"start": "/3",
-												"end":   "/4",
-											},
+						"sortNode": dataMap{
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"filter":         nil,
+									"collectionID":   "3",
+									"collectionName": "author",
+									"spans": []dataMap{
+										{
+											"start": "/3",
+											"end":   "/4",
 										},
 									},
 								},
-								"orderings": []dataMap{
-									{
-										"direction": "ASC",
-										"field":     "age",
+							},
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"age",
 									},
 								},
 							},
@@ -252,57 +252,61 @@ func TestExplainQuerySortAscendingOnParentAndDescendingOnChild(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"renderNode": dataMap{
-							"sortNode": dataMap{
-								"orderings": []dataMap{
-									{
-										"direction": "ASC",
-										"field":     "name",
-									},
-									{
-										"direction": "ASC",
-										"field":     "age",
+						"sortNode": dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"name",
 									},
 								},
-								"selectNode": dataMap{
-									"filter": nil,
-									"typeIndexJoin": dataMap{
-										"joinType": "typeJoinMany",
-										"rootName": "author",
-										"root": dataMap{
-											"scanNode": dataMap{
-												"collectionID":   "3",
-												"collectionName": "author",
-												"filter":         nil,
-												"spans": []dataMap{
-													{
-														"start": "/3",
-														"end":   "/4",
-													},
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"age",
+									},
+								},
+							},
+							"selectNode": dataMap{
+								"filter": nil,
+								"typeIndexJoin": dataMap{
+									"joinType": "typeJoinMany",
+									"rootName": "author",
+									"root": dataMap{
+										"scanNode": dataMap{
+											"collectionID":   "3",
+											"collectionName": "author",
+											"filter":         nil,
+											"spans": []dataMap{
+												{
+													"start": "/3",
+													"end":   "/4",
 												},
 											},
 										},
-										"subTypeName": "articles",
-										"subType": dataMap{
-											"selectTopNode": dataMap{
-												"sortNode": dataMap{
-													"orderings": []dataMap{
-														{
-															"direction": "DESC",
-															"field":     "name",
+									},
+									"subTypeName": "articles",
+									"subType": dataMap{
+										"selectTopNode": dataMap{
+											"sortNode": dataMap{
+												"orderings": []dataMap{
+													{
+														"direction": "DESC",
+														"fields": []string{
+															"name",
 														},
 													},
-													"selectNode": dataMap{
-														"filter": nil,
-														"scanNode": dataMap{
-															"collectionID":   "1",
-															"collectionName": "article",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/1",
-																	"end":   "/2",
-																},
+												},
+												"selectNode": dataMap{
+													"filter": nil,
+													"scanNode": dataMap{
+														"collectionID":   "1",
+														"collectionName": "article",
+														"filter":         nil,
+														"spans": []dataMap{
+															{
+																"start": "/1",
+																"end":   "/2",
 															},
 														},
 													},
