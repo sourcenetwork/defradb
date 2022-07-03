@@ -5,11 +5,11 @@ MAKEFLAGS+=--no-print-directory
 endif
 
 default:
-	go run cmd/defradb/main.go
+	CGO_ENABLED=0 go run cmd/defradb/main.go
 
 .PHONY: install
 install:
-	go install ./cmd/defradb
+	CGO_ENABLED=0 go install ./cmd/defradb
 
 .PHONY: build
 build:
