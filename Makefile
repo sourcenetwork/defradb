@@ -13,7 +13,7 @@ install:
 
 .PHONY: build
 build:
-	go build -o build/defradb cmd/defradb/main.go
+	CGO_ENABLED=0 go build -o build/defradb cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
