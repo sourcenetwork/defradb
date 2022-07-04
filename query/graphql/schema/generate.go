@@ -528,10 +528,26 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 				return err
 			}
 		}
+
+		obj := g.genCountBaseArgInputs(t)
+		numBaseArgs[obj.Name()] = obj
+		err = g.manager.schema.AppendType(obj)
+		if err != nil {
+			return err
+		}
+
+		objs = g.genCountInlineArrayInputs(t)
+		for _, obj := range objs {
+			numBaseArgs[obj.Name()] = obj
+			err := g.manager.schema.AppendType(obj)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, t := range g.typeDefs {
-		countField, err := g.genCountFieldConfig(t)
+		countField, err := g.genCountFieldConfig(t, numBaseArgs)
 		if err != nil {
 			return err
 		}
@@ -553,7 +569,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 	return nil
 }
 
-func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
+func (g *Generator) genCountFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
 	childTypesByFieldName := map[string]*gql.InputObject{}
 	caser := cases.Title(language.Und)
 
@@ -562,21 +578,19 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if _, isList := field.Type.(*gql.List); !isList {
 			continue
 		}
-		countableObject := gql.NewInputObject(gql.InputObjectConfig{
-			Name: fmt.Sprintf("%s%s%s", obj.Name(), caser.String(field.Name), "CountInputObj"),
-			Fields: gql.InputObjectConfigFieldMap{
-				"_": &gql.InputObjectFieldConfig{
-					Type:        gql.Int,
-					Description: "Placeholder - empty object not permitted, but will have fields shortly",
-				},
-			},
-		})
+
+		inputObjectName := genTypeName(field.Type, "CountInputObj")
+		countableObject, isSubTypeCountableCollection := numBaseArgs[inputObjectName]
+		if !isSubTypeCountableCollection {
+			inputObjectName = genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name))
+			var isSubTypeCountableInlineArray bool
+			countableObject, isSubTypeCountableInlineArray = numBaseArgs[inputObjectName]
+			if !isSubTypeCountableInlineArray {
+				continue
+			}
+		}
 
 		childTypesByFieldName[field.Name] = countableObject
-		err := g.manager.schema.AppendType(countableObject)
-		if err != nil {
-			return gql.Field{}, err
-		}
 	}
 
 	field := gql.Field{
@@ -702,6 +716,52 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
 	caser := cases.Title(language.Und)
 	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "NumericInlineArraySelector")
+}
+
+func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
+	countableObject := gql.NewInputObject(gql.InputObjectConfig{
+		Name: genTypeName(obj, "CountInputObj"),
+		Fields: gql.InputObjectConfigFieldMap{
+			"_": &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "Placeholder - empty object not permitted, but will have fields shortly",
+			},
+		},
+	})
+
+	return countableObject
+}
+
+func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObject {
+	objects := []*gql.InputObject{}
+	caser := cases.Title(language.Und)
+	for _, field := range obj.Fields() {
+		// we can only act on list items
+		_, isList := field.Type.(*gql.List)
+		if !isList {
+			continue
+		}
+
+		// If it is an inline scalar array then we require an empty
+		//  object as an argument due to the lack of union input types
+		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
+			Name: genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name)),
+			Fields: gql.InputObjectConfigFieldMap{
+				"_": &gql.InputObjectFieldConfig{
+					Type:        gql.Int,
+					Description: "Placeholder - empty object not permitted, but will have fields shortly",
+				},
+			},
+		})
+
+		objects = append(objects, selectorObject)
+	}
+	return objects
+}
+
+func genNumericInlineArrayCountName(hostName string, fieldName string) string {
+	caser := cases.Title(language.Und)
+	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "InlineArrayCountInput")
 }
 
 // Generates the base (numeric-only) aggregate input object-type for the give gql object,
