@@ -382,60 +382,115 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// Add Following Test Post Bug-Fix (https://github.com/sourcenetwork/defradb/issues/584).
-//func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
-//	test := testUtils.QueryTestCase{
-//		Description: "Explain Query Where The Parent Is Ordered By It's Child.",
-//
-//		Query: `query @explain {
-//			author(
-//				order: {
-//					articles: {name: ASC}
-//				}
-//			) {
-//				name
-//				articles {
-//				    name
-//				}
-//			}
-//		}`,
-//
-//		Docs: map[int][]string{
-//			// articles
-//			0: {
-//				`{
-//					"name": "After Guantánamo, Another Injustice",
-//					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-//				}`,
-//				`{
-//					"name": "To my dear readers",
-//					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-//				}`,
-//				`{
-//					"name": "Twinklestar's Favourite Xmas Cookie",
-//					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-//				}`,
-//			},
-//
-//			// authors
-//			2: {
-//				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-//				`{
-//					"name": "John Grisham",
-//					"age": 65,
-//					"verified": true
-//				}`,
-//				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-//				`{
-//					"name": "Cornelia Funke",
-//					"age": 62,
-//					"verified": false
-//				}`,
-//			},
-//		},
-//
-//		Results: []dataMap{},
-//	}
-//
-//	executeTestCase(t, test)
-//}
+func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Explain Query Where The Parent Is Ordered By It's Child.",
+
+		Query: `query @explain {
+			author(
+				order: {
+					articles: {name: ASC}
+				}
+			) {
+				articles {
+				    name
+				}
+			}
+		}`,
+
+		Docs: map[int][]string{
+			// articles
+			0: {
+				`{
+					"name": "After Guantánamo, Another Injustice",
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+				`{
+					"name": "To my dear readers",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+				`{
+					"name": "Twinklestar's Favourite Xmas Cookie",
+					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
+				}`,
+			},
+
+			// authors
+			2: {
+				// _key: bae-41598f0c-19bc-5da6-813b-e80f14a10df3
+				`{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+				// _key: bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
+				`{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+		},
+
+		Results: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"sortNode": dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "ASC",
+									"fields": []string{
+										"articles",
+										"name",
+									},
+								},
+							},
+							"selectNode": dataMap{
+								"filter": nil,
+								"typeIndexJoin": dataMap{
+									"joinType": "typeJoinMany",
+									"rootName": "author",
+									"root": dataMap{
+										"scanNode": dataMap{
+											"collectionID":   "3",
+											"collectionName": "author",
+											"filter":         nil,
+											"spans": []dataMap{
+												{
+													"start": "/3",
+													"end":   "/4",
+												},
+											},
+										},
+									},
+									"subTypeName": "articles",
+									"subType": dataMap{
+										"selectTopNode": dataMap{
+											"selectNode": dataMap{
+												"filter": nil,
+												"scanNode": dataMap{
+													"collectionID":   "1",
+													"collectionName": "article",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"start": "/1",
+															"end":   "/2",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -13,8 +13,6 @@ Package core provides commonly shared interfaces and building blocks.
 */
 package core
 
-import "fmt"
-
 const DocKeyFieldIndex int = 0
 
 type DocFields []interface{}
@@ -225,17 +223,26 @@ func (m *DocumentMapping) SetChildAt(index int, childMapping DocumentMapping) {
 	m.ChildMappings = newMappings
 }
 
-// FindNameFromIndex returns the corresponding name of the given index.
+// TryToFindNameFromIndex returns the corresponding name of the given index.
 //
-// Will return error if the index is not found.
-func (mapping *DocumentMapping) FindNameFromIndex(targetIndex int) (string, error) {
+// Additionally, will also return true if the index was found, and false otherwise.
+func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
+	// Try to find the name of this index in the IndexesByName.
 	for name, indexes := range mapping.IndexesByName {
 		for _, index := range indexes {
 			if index == targetIndex {
-				return name, nil
+				return name, true
 			}
 		}
 	}
 
-	return "", fmt.Errorf("No corresponding name was found for index=%d", targetIndex)
+	// Try to find the name of this index in the ChildMappings.
+	for _, childMapping := range mapping.ChildMappings {
+		name, found := childMapping.TryToFindNameFromIndex(targetIndex)
+		if found {
+			return name, true
+		}
+	}
+
+	return "", false
 }

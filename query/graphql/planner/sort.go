@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
@@ -110,9 +112,9 @@ func (n *sortNode) Explain() (map[string]interface{}, error) {
 		fieldNames := []string{}
 		for _, fieldIndex := range element.FieldIndexes {
 			// Try to find the name of this index.
-			fieldName, err := n.documentMapping.FindNameFromIndex(fieldIndex)
-			if err != nil {
-				return nil, err
+			fieldName, found := n.documentMapping.TryToFindNameFromIndex(fieldIndex)
+			if !found {
+				return nil, fmt.Errorf("No corresponding name was found for index=%d", fieldIndex)
 			}
 
 			fieldNames = append(fieldNames, fieldName)
