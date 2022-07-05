@@ -258,7 +258,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 				slct.Limit = &parserTypes.Limit{}
 			}
 			slct.Limit.Offset = i
-		} else if prop == parserTypes.OrderClause { // parse sort (order by)
+		} else if prop == parserTypes.OrderClause { // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
