@@ -50,7 +50,7 @@ type selectTopNode struct {
 	docMapper
 
 	group      *groupNode
-	sort       *orderNode
+	order      *orderNode
 	limit      planNode
 	aggregates []aggregateNode
 
@@ -361,7 +361,7 @@ func (p *Planner) SelectFromSource(
 	}
 	s.filter = parsed.Filter
 	limit := parsed.Limit
-	sort := parsed.OrderBy
+	order := parsed.OrderBy
 	groupBy := parsed.GroupBy
 
 	if providedSourceInfo != nil {
@@ -392,7 +392,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	sortPlan, err := p.OrderBy(parsed, sort)
+	orderPlan, err := p.OrderBy(parsed, order)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +400,7 @@ func (p *Planner) SelectFromSource(
 	top := &selectTopNode{
 		selectnode: s,
 		limit:      limitPlan,
-		sort:       sortPlan,
+		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
 		docMapper:  docMapper{&parsed.DocumentMapping},
@@ -417,7 +417,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 	limit := parsed.Limit
-	sort := parsed.OrderBy
+	order := parsed.OrderBy
 	groupBy := parsed.GroupBy
 
 	aggregates, err := s.initSource()
@@ -435,7 +435,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		return nil, err
 	}
 
-	sortPlan, err := p.OrderBy(parsed, sort)
+	orderPlan, err := p.OrderBy(parsed, order)
 	if err != nil {
 		return nil, err
 	}
@@ -443,7 +443,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 	top := &selectTopNode{
 		selectnode: s,
 		limit:      limitPlan,
-		sort:       sortPlan,
+		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
 		docMapper:  docMapper{&parsed.DocumentMapping},
