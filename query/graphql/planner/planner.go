@@ -455,7 +455,7 @@ func (p *Planner) explainRequest(
 
 	explainGraph, err := buildExplainGraph(plan)
 	if err != nil {
-		return nil, err
+		return nil, multiErr(err, plan.Close())
 	}
 
 	topExplainGraph := []map[string]interface{}{

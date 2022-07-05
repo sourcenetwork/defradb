@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
@@ -54,6 +56,7 @@ type sortNode struct {
 	// that sorts, then provides the values
 	// sorted
 	sortStrategy sortingStrategy
+
 	// indicates if our underlying sortStrategy is still
 	// consuming and sorting data.
 	needSort bool
@@ -97,7 +100,38 @@ func (n *sortNode) Value() core.Doc {
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *sortNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	orderings := []map[string]interface{}{}
+
+	for _, element := range n.ordering {
+		// Skip all empty elements.
+		if element.IsEmpty() {
+			continue
+		}
+
+		// Build the list containing the corresponding names of all the indexes.
+		fieldNames := []string{}
+		for _, fieldIndex := range element.FieldIndexes {
+			// Try to find the name of this index.
+			fieldName, found := n.documentMapping.TryToFindNameFromIndex(fieldIndex)
+			if !found {
+				return nil, fmt.Errorf("No corresponding name was found for index=%d", fieldIndex)
+			}
+
+			fieldNames = append(fieldNames, fieldName)
+		}
+
+		// Put it all together for this order element.
+		orderings = append(orderings,
+			map[string]interface{}{
+				"fields":    fieldNames,
+				"direction": string(element.Direction),
+			},
+		)
+	}
+
+	return map[string]interface{}{
+		"orderings": orderings,
+	}, nil
 }
 
 func (n *sortNode) Next() (bool, error) {
@@ -124,9 +158,6 @@ func (n *sortNode) Next() (bool, error) {
 		if err := n.sortStrategy.Add(n.plan.Value()); err != nil {
 			return false, err
 		}
-
-		// finalize, assign valueIter = sortStrategy
-		// break
 	}
 
 	next, err := n.valueIter.Next()
