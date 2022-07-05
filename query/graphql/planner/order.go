@@ -80,7 +80,7 @@ func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*orderNode,
 }
 
 func (n *orderNode) Kind() string {
-	return "sortNode"
+	return "orderNode"
 }
 
 func (n *orderNode) Init() error {

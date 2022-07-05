@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSort(t *testing.T) {
+func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by string, and child sort ascending",
+		Description: "Simple query with group by string, and child order ascending",
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
@@ -80,9 +80,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSort(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSortDescending(t *testing.T) {
+func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by string, and child sort descending",
+		Description: "Simple query with group by string, and child order descending",
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
@@ -144,9 +144,9 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupSortDescending(t *t
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupSort(t *testing.T) {
+func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by string, and child sort ascending",
+		Description: "Simple query with group by string, and child order ascending",
 		Query: `query {
 					users(groupBy: [Name], order: {Name: DESC}) {
 						Name
@@ -208,9 +208,9 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupS
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerSortDescending(t *testing.T) {
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child sort desc",
+		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name
@@ -307,11 +307,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerSortDescendin
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerSortDescending(
+func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenInnerOrderDescending(
 	t *testing.T,
 ) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child sort desc",
+		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Query: `query {
 					users(groupBy: [Name]) {
 						Name

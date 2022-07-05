@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToOneWithChildBooleanSortDescending(t *testing.T) {
+func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "One-to-one relation query with simple sort by sub type",
+		Description: "One-to-one relation query with simple order by sub type",
 		Query: `query {
 			book(order: {author: {verified: DESC}}) {
 				name
