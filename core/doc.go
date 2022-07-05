@@ -222,3 +222,27 @@ func (m *DocumentMapping) SetChildAt(index int, childMapping DocumentMapping) {
 	newMappings[index] = childMapping
 	m.ChildMappings = newMappings
 }
+
+// TryToFindNameFromIndex returns the corresponding name of the given index.
+//
+// Additionally, will also return true if the index was found, and false otherwise.
+func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
+	// Try to find the name of this index in the IndexesByName.
+	for name, indexes := range mapping.IndexesByName {
+		for _, index := range indexes {
+			if index == targetIndex {
+				return name, true
+			}
+		}
+	}
+
+	// Try to find the name of this index in the ChildMappings.
+	for _, childMapping := range mapping.ChildMappings {
+		name, found := childMapping.TryToFindNameFromIndex(targetIndex)
+		if found {
+			return name, true
+		}
+	}
+
+	return "", false
+}
