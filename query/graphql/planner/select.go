@@ -50,7 +50,7 @@ type selectTopNode struct {
 	docMapper
 
 	group      *groupNode
-	sort       *sortNode
+	sort       *orderNode
 	limit      planNode
 	aggregates []aggregateNode
 

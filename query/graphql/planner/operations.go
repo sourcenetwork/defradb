@@ -28,7 +28,7 @@ var (
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*selectNode)(nil)
 	_ planNode = (*selectTopNode)(nil)
-	_ planNode = (*sortNode)(nil)
+	_ planNode = (*orderNode)(nil)
 	_ planNode = (*sumNode)(nil)
 	_ planNode = (*typeIndexJoin)(nil)
 	_ planNode = (*typeJoinMany)(nil)

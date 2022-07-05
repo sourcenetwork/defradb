@@ -39,7 +39,7 @@ type sortingStrategy interface {
 }
 
 // order the results
-type sortNode struct {
+type orderNode struct {
 	docMapper
 
 	p    *Planner
@@ -66,12 +66,12 @@ type sortNode struct {
 // plans values in a sorted mannor. The field to sort by, and the
 // direction of sorting is determined by the given mapper.OrderBy
 // object.
-func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*sortNode, error) {
+func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*orderNode, error) {
 	if n == nil { // no orderby info
 		return nil, nil
 	}
 
-	return &sortNode{
+	return &orderNode{
 		p:         p,
 		ordering:  n.Conditions,
 		needSort:  true,
@@ -79,27 +79,27 @@ func (p *Planner) OrderBy(parsed *mapper.Select, n *mapper.OrderBy) (*sortNode, 
 	}, nil
 }
 
-func (n *sortNode) Kind() string {
+func (n *orderNode) Kind() string {
 	return "sortNode"
 }
 
-func (n *sortNode) Init() error {
+func (n *orderNode) Init() error {
 	// reset stateful data
 	n.needSort = true
 	n.sortStrategy = nil
 	return n.plan.Init()
 }
-func (n *sortNode) Start() error { return n.plan.Start() }
+func (n *orderNode) Start() error { return n.plan.Start() }
 
-func (n *sortNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *orderNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 
-func (n *sortNode) Value() core.Doc {
+func (n *orderNode) Value() core.Doc {
 	return n.valueIter.Value()
 }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sortNode) Explain() (map[string]interface{}, error) {
+func (n *orderNode) Explain() (map[string]interface{}, error) {
 	orderings := []map[string]interface{}{}
 
 	for _, element := range n.ordering {
@@ -134,7 +134,7 @@ func (n *sortNode) Explain() (map[string]interface{}, error) {
 	}, nil
 }
 
-func (n *sortNode) Next() (bool, error) {
+func (n *orderNode) Next() (bool, error) {
 	for n.needSort {
 		// make sure our sortStrategy is initialized
 		if n.sortStrategy == nil {
@@ -167,7 +167,7 @@ func (n *sortNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *sortNode) Close() error {
+func (n *orderNode) Close() error {
 	err := n.plan.Close()
 	if err != nil {
 		return err
@@ -183,7 +183,7 @@ func (n *sortNode) Close() error {
 	return nil
 }
 
-func (n *sortNode) Source() planNode { return n.plan }
+func (n *orderNode) Source() planNode { return n.plan }
 
 // allSortStrategy is the simplest sort strategy available.
 // it consumes all the data into the underlying valueNode
