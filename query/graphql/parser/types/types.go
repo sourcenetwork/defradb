@@ -16,23 +16,23 @@ package types
 import "github.com/graphql-go/graphql/language/ast"
 
 type (
-	SortDirection string
+	OrderDirection string
 
 	SelectionType int
 
 	// Enum for different types of read Select queries
 	SelectQueryType int
 
-	SortCondition struct {
+	OrderCondition struct {
 		// field may be a compound field statement
-		// since the sort statement allows sorting on
+		// since the order statement allows ordering on
 		// sub objects.
 		//
-		// Given the statement: {sort: {author: {birthday: DESC}}}
+		// Given the statement: {order: {author: {birthday: DESC}}}
 		// The field value would be "author.birthday"
 		// and the direction would be "DESC"
 		Field     string
-		Direction SortDirection
+		Direction OrderDirection
 	}
 
 	GroupBy struct {
@@ -40,7 +40,7 @@ type (
 	}
 
 	OrderBy struct {
-		Conditions []SortCondition
+		Conditions []OrderCondition
 		Statement  *ast.ObjectValue
 	}
 
@@ -87,8 +87,8 @@ const (
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
 
-	ASC  = SortDirection("ASC")
-	DESC = SortDirection("DESC")
+	ASC  = OrderDirection("ASC")
+	DESC = OrderDirection("DESC")
 )
 
 const (
@@ -103,7 +103,7 @@ const (
 )
 
 var (
-	NameToSortDirection = map[string]SortDirection{
+	NameToOrderDirection = map[string]OrderDirection{
 		string(ASC):  ASC,
 		string(DESC): DESC,
 	}
