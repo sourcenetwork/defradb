@@ -254,7 +254,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 			case parserTypes.CountFieldName:
 				plan, aggregateError = n.p.Count(f, parsed)
 			case parserTypes.SumFieldName:
-				plan, aggregateError = n.p.Sum(&n.sourceInfo, f, parsed)
+				plan, aggregateError = n.p.Sum(f, parsed)
 			case parserTypes.AverageFieldName:
 				plan, aggregateError = n.p.Average(f)
 			}
