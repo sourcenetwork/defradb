@@ -16,7 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// ===============================[ allCommits tests ]===============================
 func TestExplainAllCommitsDagScan(t *testing.T) {
 	test := testUtils.QueryTestCase{
 
@@ -169,7 +168,6 @@ func TestExplainAllCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// ===============================[ allCommits tests ]===============================
 func TestExplainLatestCommitsDagScan(t *testing.T) {
 	test := testUtils.QueryTestCase{
 
@@ -326,7 +324,6 @@ func TestExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// ===============================[ commit test ]===============================
 func TestExplainOneCommitDagScan(t *testing.T) {
 	test := testUtils.QueryTestCase{
 
