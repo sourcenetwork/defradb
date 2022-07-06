@@ -580,6 +580,8 @@ func getFeedbackLogLevelTestCase() []LogLevelTestCase {
 }
 
 func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
+	defer clearConfig()
+	defer clearRegistry("TestLogName")
 	for i, tc := range getFeedbackLogLevelTestCase() {
 		ctx := context.Background()
 		b := &bytes.Buffer{}
@@ -616,6 +618,8 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 		}
 
 		assert.Equal(t, logMessage+"\n", b.String())
+
+		clearRegistry("TestLogName")
 	}
 }
 
