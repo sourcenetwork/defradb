@@ -248,9 +248,9 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	p.expandAggregatePlans(plan)
 
 	// if order
-	if plan.sort != nil {
-		plan.sort.plan = plan.plan
-		plan.plan = plan.sort
+	if plan.order != nil {
+		plan.order.plan = plan.plan
+		plan.plan = plan.order
 	}
 
 	if plan.limit != nil {

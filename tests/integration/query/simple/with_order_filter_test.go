@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithNumericGreaterThanFilterAndNumericSortDescending(t *testing.T) {
+func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with sort & filter",
+		Description: "Simple query with order & filter",
 		Query: `query {
 					users(filter: {Age: {_gt: 30}}, order: {Age: DESC}) {
 						Name

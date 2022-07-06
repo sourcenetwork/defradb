@@ -17,7 +17,7 @@ import (
 // DocumentContainer is a specialized buffer to store potentially
 // thousands of document value maps. Its used by the Planner system
 // to store documents that need to have logic applied to all of them.
-// For example, in the sortNode and future groupNode. The Document
+// For example, in the orderNode and future groupNode. The Document
 // Container acts as an array, so you can append, index, and get the
 // length of all the documents inside.
 // Close() is called if you want to free all the memory associated

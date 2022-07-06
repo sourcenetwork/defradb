@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToTwoManyWithSort(t *testing.T) {
+func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
-			Description: "One-to-many relation query from one side, sort in opposite directions on children",
+			Description: "One-to-many relation query from one side, order in opposite directions on children",
 			Query: `query {
 						author {
 							name

@@ -49,7 +49,7 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"sortNode": dataMap{
+						"orderNode": dataMap{
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -115,7 +115,7 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"sortNode": dataMap{
+						"orderNode": dataMap{
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -226,7 +226,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 								"subTypeName": "articles",
 								"subType": dataMap{
 									"selectTopNode": dataMap{
-										"sortNode": dataMap{
+										"orderNode": dataMap{
 											"orderings": []dataMap{
 												{
 													"direction": "DESC",
@@ -314,7 +314,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"sortNode": dataMap{
+						"orderNode": dataMap{
 							"orderings": []dataMap{
 								{
 									"direction": "ASC",
@@ -344,7 +344,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 									"subTypeName": "articles",
 									"subType": dataMap{
 										"selectTopNode": dataMap{
-											"sortNode": dataMap{
+											"orderNode": dataMap{
 												"orderings": []dataMap{
 													{
 														"direction": "DESC",
@@ -436,7 +436,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"sortNode": dataMap{
+						"orderNode": dataMap{
 							"orderings": []dataMap{
 								{
 									"direction": "ASC",

@@ -69,23 +69,23 @@ type parseFn func(*ast.ObjectValue) (interface{}, error)
 // ParseConditionsInOrder is similar to ParseConditions, except instead
 // of returning a map[string]interface{}, we return a []interface{}. This
 // is to maintain the ordering info of the statements within the ObjectValue.
-// This function is mostly used by the Sort parser, which needs to parse
+// This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.SortCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]parserTypes.SortCondition); ok {
+	if v, ok := cond.([]parserTypes.OrderCondition); ok {
 		return v, nil
 	}
 	return nil, errors.New("Failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
-	conditions := make([]parserTypes.SortCondition, 0)
+	conditions := make([]parserTypes.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -97,20 +97,20 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 		}
 
 		switch v := val.(type) {
-		case string: // base direction parsed (hopefully, check NameToSortDirection)
-			dir, ok := parserTypes.NameToSortDirection[v]
+		case string: // base direction parsed (hopefully, check NameToOrderDirection)
+			dir, ok := parserTypes.NameToOrderDirection[v]
 			if !ok {
-				return nil, errors.New("Invalid sort direction string")
+				return nil, errors.New("Invalid order direction string")
 			}
-			conditions = append(conditions, parserTypes.SortCondition{
+			conditions = append(conditions, parserTypes.OrderCondition{
 				Field:     name,
 				Direction: dir,
 			})
 
-		case []parserTypes.SortCondition: // flatten and incorporate the parsed slice into our current one
+		case []parserTypes.OrderCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
-				// Eg. sort: {author: {name: ASC, birthday: DESC}}
+				// Eg. order: {author: {name: ASC, birthday: DESC}}
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].
 				// etc.
@@ -125,18 +125,6 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 
 	return conditions, nil
 }
-
-// func flattenSortDirectionSlice(namespace string, slice []interface{}) []interface{} {
-// 	res := make([]interface{}, 0)
-// 	for _, v := range slice {
-// 		switch n := v.(type) {
-// 		case []interface{}:
-// 			res = append(res, flatten(namespace, n)...)
-// 		default:
-// 			res = append(res, n)
-// 		}
-// 	}
-// }
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.

@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithNumericSortAscending(t *testing.T) {
+func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with basic sort ASC",
+		Description: "Simple query with basic order ASC",
 		Query: `query {
 					users(order: {Age: ASC}) {
 						Name
@@ -67,9 +67,9 @@ func TestQuerySimpleWithNumericSortAscending(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithNumericSortDescending(t *testing.T) {
+func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with basic sort DESC",
+		Description: "Simple query with basic order DESC",
 		Query: `query {
 					users(order: {Age: DESC}) {
 						Name
@@ -118,9 +118,9 @@ func TestQuerySimpleWithNumericSortDescending(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithNumericSortDescendingAndBooleanSortAscending(t *testing.T) {
+func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query with compound sort",
+		Description: "Simple query with compound order",
 		Query: `query {
 					users(order: {Age: DESC, Verified: ASC}) {
 						Name
