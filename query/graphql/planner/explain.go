@@ -31,7 +31,7 @@ var (
 	_ explainablePlanNode = (*commitSelectNode)(nil)
 	_ explainablePlanNode = (*countNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)
-	_ explainablePlanNode = (*sortNode)(nil)
+	_ explainablePlanNode = (*orderNode)(nil)
 	_ explainablePlanNode = (*sumNode)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
 )
