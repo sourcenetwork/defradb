@@ -182,6 +182,15 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
+		case *gql.Scalar:
+			if _, isAggregate := parserTypes.Aggregates[def.Name]; isAggregate {
+				for name, aggregateTarget := range def.Args {
+					expandedField := &gql.InputObjectFieldConfig{
+						Type: g.manager.schema.TypeMap()[name+"FilterArg"],
+					}
+					aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(parserTypes.FilterClause, expandedField)
+				}
+			}
 		}
 	}
 
@@ -510,17 +519,21 @@ func getRelationshipName(
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
 	numBaseArgs := make(map[string]*gql.InputObject)
+	topLevelCountInputs := map[string]*gql.InputObject{}
+	topLevelNumericAggInputs := map[string]*gql.InputObject{}
+
 	for _, t := range g.typeDefs {
 		numArg := g.genNumericAggregateBaseArgInputs(t)
 		numBaseArgs[numArg.Name()] = numArg
+		topLevelNumericAggInputs[t.Name()] = numArg
 		// All base types need to be appended to the schema before calling genSumFieldConfig
 		err := g.manager.schema.AppendType(numArg)
 		if err != nil {
 			return err
 		}
 
-		objs := g.genNumericInlineArraySelectorObject(t)
-		for _, obj := range objs {
+		numericInlineArrayInputs := g.genNumericInlineArraySelectorObject(t)
+		for _, obj := range numericInlineArrayInputs {
 			numBaseArgs[obj.Name()] = obj
 			err := g.manager.schema.AppendType(obj)
 			if err != nil {
@@ -530,13 +543,14 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 		obj := g.genCountBaseArgInputs(t)
 		numBaseArgs[obj.Name()] = obj
+		topLevelCountInputs[t.Name()] = obj
 		err = g.manager.schema.AppendType(obj)
 		if err != nil {
 			return err
 		}
 
-		objs = g.genCountInlineArrayInputs(t)
-		for _, obj := range objs {
+		countableInlineArrayInputs := g.genCountInlineArrayInputs(t)
+		for _, obj := range countableInlineArrayInputs {
 			numBaseArgs[obj.Name()] = obj
 			err := g.manager.schema.AppendType(obj)
 			if err != nil {
@@ -565,7 +579,51 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		t.AddFieldConfig(averageField.Name, &averageField)
 	}
 
+	queryType := g.manager.schema.QueryType()
+
+	topLevelCountField := genTopLevelCount(topLevelCountInputs)
+	queryType.AddFieldConfig(topLevelCountField.Name, topLevelCountField)
+
+	for _, topLevelAgg := range genTopLevelNumericAggregates(topLevelNumericAggInputs) {
+		queryType.AddFieldConfig(topLevelAgg.Name, topLevelAgg)
+	}
+
 	return nil
+}
+
+func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Field {
+	topLevelCountField := gql.Field{
+		Name: parserTypes.CountFieldName,
+		Type: gql.Int,
+		Args: gql.FieldConfigArgument{},
+	}
+
+	for name, inputObject := range topLevelCountInputs {
+		topLevelCountField.Args[name] = schemaTypes.NewArgConfig(inputObject)
+	}
+
+	return &topLevelCountField
+}
+
+func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.InputObject) []*gql.Field {
+	topLevelSumField := gql.Field{
+		Name: parserTypes.SumFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{},
+	}
+
+	topLevelAverageField := gql.Field{
+		Name: parserTypes.AverageFieldName,
+		Type: gql.Float,
+		Args: gql.FieldConfigArgument{},
+	}
+
+	for name, inputObject := range topLevelNumericAggInputs {
+		topLevelSumField.Args[name] = schemaTypes.NewArgConfig(inputObject)
+		topLevelAverageField.Args[name] = schemaTypes.NewArgConfig(inputObject)
+	}
+
+	return []*gql.Field{&topLevelSumField, &topLevelAverageField}
 }
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {

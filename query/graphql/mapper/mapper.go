@@ -365,6 +365,24 @@ func getRequestables(
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	// If this parser.Select is itself an aggregate, we need to append the
+	// relevent info here as if it was a field of its own (due to a quirk of
+	// the parser package).
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		index := mapping.GetNextIndex()
+		aggregateReq, err := getAggregateRequests(index, parsed)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+			Index: index,
+			Key:   parsed.Alias,
+		})
+		mapping.Add(index, parsed.Name)
+		aggregates = append(aggregates, &aggregateReq)
+	}
+
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
 		case *parser.Field:
@@ -449,6 +467,11 @@ func getCollectionName(
 	parsed *parser.Select,
 	parentCollectionName string,
 ) (string, error) {
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		// This string is not used or referenced, its value is only there to aid debugging
+		return "_topLevel", nil
+	}
+
 	if parsed.Name == parserTypes.GroupFieldName {
 		return parentCollectionName, nil
 	} else if parsed.Root == parserTypes.CommitSelection {
@@ -479,6 +502,12 @@ func getTopLevelInfo(
 	collectionName string,
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
+
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		// If this is a (top-level) aggregate, then it will have no collection
+		// description, and no top-level fields, so we return an empty mapping only
+		return mapping, &client.CollectionDescription{}, nil
+	}
 
 	if parsed.Root != parserTypes.CommitSelection {
 		mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
