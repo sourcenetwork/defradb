@@ -93,7 +93,7 @@ func toSelect(
 		Targetable:      toTargetable(thisIndex, parsed, mapping),
 		DocumentMapping: *mapping,
 		Cid:             parsed.CID,
-		CollectionName:  desc.Name,
+		CollectionName:  collectionName,
 		Fields:          fields,
 	}, nil
 }
