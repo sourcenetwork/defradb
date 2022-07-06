@@ -177,8 +177,8 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	// queries := query.Fields()
 	// only apply to generated query fields, and only once
 	for _, def := range generatedQueryFields {
-		t := def.Type
-		if obj, ok := t.(*gql.List); ok {
+		switch obj := def.Type.(type) {
+		case *gql.List:
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
