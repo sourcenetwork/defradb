@@ -361,7 +361,7 @@ func (p *Planner) SelectFromSource(
 	}
 	s.filter = parsed.Filter
 	limit := parsed.Limit
-	order := parsed.OrderBy
+	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
 
 	if providedSourceInfo != nil {
@@ -392,7 +392,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	orderPlan, err := p.OrderBy(parsed, order)
+	orderPlan, err := p.OrderBy(parsed, orderBy)
 	if err != nil {
 		return nil, err
 	}
