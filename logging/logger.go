@@ -12,6 +12,8 @@ package logging
 
 import (
 	"context"
+	stdlog "log"
+	"os"
 	"sync"
 
 	"go.uber.org/zap"
@@ -19,9 +21,10 @@ import (
 )
 
 type logger struct {
-	name     string
-	logger   *zap.Logger
-	syncLock sync.RWMutex
+	name          string
+	logger        *zap.Logger
+	consoleLogger *stdlog.Logger
+	syncLock      sync.RWMutex
 }
 
 var _ Logger = (*logger)(nil)
@@ -93,6 +96,55 @@ func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals 
 	l.logger.Fatal(message, toZapFields(kvs)...)
 }
 
+func (l *logger) FeedbackDebug(ctx context.Context, message string, keyvals ...KV) {
+	l.Debug(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackInfo(ctx context.Context, message string, keyvals ...KV) {
+	l.Info(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackWarn(ctx context.Context, message string, keyvals ...KV) {
+	l.Warn(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackError(ctx context.Context, message string, keyvals ...KV) {
+	l.Error(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV) {
+	l.ErrorE(ctx, message, err, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackFatal(ctx context.Context, message string, keyvals ...KV) {
+	l.Fatal(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV) {
+	l.FatalE(ctx, message, err, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
 func (l *logger) Flush() error {
 	return l.logger.Sync()
 }
@@ -118,6 +170,16 @@ func (l *logger) ApplyConfig(config Config) {
 	// We need sync the old log before swapping it out
 	_ = l.logger.Sync()
 	l.logger = newLogger
+
+	if !willOutputToStderr(config.OutputPaths) {
+		if config.pipe != nil { // for testing purposes only
+			l.consoleLogger = stdlog.New(config.pipe, "", 0)
+		} else {
+			l.consoleLogger = stdlog.New(os.Stderr, "", 0)
+		}
+	} else {
+		l.consoleLogger = nil
+	}
 }
 
 func buildZapLogger(name string, config Config) (*zap.Logger, error) {

@@ -528,6 +528,97 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	}
 }
 
+func logFeedbackDebug(l Logger, c context.Context, m string) { l.FeedbackDebug(c, m) }
+func logFeedbackInfo(l Logger, c context.Context, m string)  { l.FeedbackInfo(c, m) }
+func logFeedbackWarn(l Logger, c context.Context, m string)  { l.FeedbackWarn(c, m) }
+func logFeedbackError(l Logger, c context.Context, m string) { l.FeedbackError(c, m) }
+func logFeedbackErrorE(l Logger, c context.Context, m string) {
+	l.FeedbackErrorE(c, m, fmt.Errorf("test error"))
+}
+
+func getFeedbackLogLevelTestCase() []LogLevelTestCase {
+	return []LogLevelTestCase{
+		{Debug, logFeedbackDebug, "DEBUG", false, false, true},
+		{Debug, logFeedbackDebug, "DEBUG", false, false, false},
+		{Debug, logFeedbackInfo, "INFO", false, false, false},
+		{Debug, logFeedbackWarn, "WARN", false, false, false},
+		{Debug, logFeedbackError, "ERROR", false, false, false},
+		{Debug, logFeedbackError, "ERROR", true, true, false},
+		{Debug, logFeedbackErrorE, "ERROR", false, false, false},
+		{Debug, logFeedbackErrorE, "ERROR", true, true, false},
+		{Info, logFeedbackDebug, "", false, false, false},
+		{Info, logFeedbackInfo, "INFO", false, false, true},
+		{Info, logFeedbackInfo, "INFO", false, false, false},
+		{Info, logFeedbackWarn, "WARN", false, false, false},
+		{Info, logFeedbackError, "ERROR", false, false, false},
+		{Info, logFeedbackError, "ERROR", true, true, false},
+		{Info, logFeedbackErrorE, "ERROR", false, false, false},
+		{Info, logFeedbackErrorE, "ERROR", true, true, false},
+		{Warn, logFeedbackDebug, "", false, false, false},
+		{Warn, logFeedbackInfo, "", false, false, false},
+		{Warn, logFeedbackWarn, "WARN", false, false, true},
+		{Warn, logFeedbackWarn, "WARN", false, false, false},
+		{Warn, logFeedbackError, "ERROR", false, false, false},
+		{Warn, logFeedbackError, "ERROR", true, true, false},
+		{Warn, logFeedbackErrorE, "ERROR", false, false, false},
+		{Warn, logFeedbackErrorE, "ERROR", true, true, false},
+		{Error, logFeedbackDebug, "", false, false, false},
+		{Error, logFeedbackInfo, "", false, false, false},
+		{Error, logFeedbackWarn, "", false, false, false},
+		{Error, logFeedbackError, "ERROR", false, false, true},
+		{Error, logFeedbackError, "ERROR", false, false, false},
+		{Error, logFeedbackError, "ERROR", true, true, false},
+		{Error, logFeedbackErrorE, "ERROR", false, false, false},
+		{Error, logFeedbackErrorE, "ERROR", true, true, false},
+		{Fatal, logFeedbackDebug, "", false, false, true},
+		{Fatal, logFeedbackDebug, "", false, false, false},
+		{Fatal, logFeedbackInfo, "", false, false, false},
+		{Fatal, logFeedbackWarn, "", false, false, false},
+		{Fatal, logFeedbackError, "", false, false, false},
+		{Fatal, logFeedbackErrorE, "", false, false, false},
+	}
+}
+
+func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
+	for i, tc := range getFeedbackLogLevelTestCase() {
+		ctx := context.Background()
+		b := &bytes.Buffer{}
+		logger, logPath := getLogger(t, func(c *Config) {
+			c.Level = NewLogLevelOption(tc.LogLevel)
+			c.EnableStackTrace = NewEnableStackTraceOption(tc.WithStackTrace)
+			c.EnableCaller = NewEnableCallerOption(tc.WithCaller)
+			c.pipe = b
+		})
+		logMessage := "test log message"
+
+		tc.LogFunc(logger, ctx, logMessage)
+		logger.Flush()
+
+		logLines, err := getLogLines(t, logPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tc.ExpectedLogLevel == "" {
+			assert.Len(t, logLines, 0)
+		} else {
+			if len(logLines) != 1 {
+				t.Fatalf("expecting exactly 1 log line but got %d lines for tc %d", len(logLines), i)
+			}
+
+			assert.Equal(t, logMessage, logLines[0]["msg"])
+			assert.Equal(t, tc.ExpectedLogLevel, logLines[0]["level"])
+			assert.Equal(t, "TestLogName", logLines[0]["logger"])
+			_, hasStackTrace := logLines[0]["stacktrace"]
+			assert.Equal(t, tc.ExpectStackTrace, hasStackTrace)
+			_, hasCaller := logLines[0]["caller"]
+			assert.Equal(t, tc.WithCaller, hasCaller)
+		}
+
+		assert.Equal(t, logMessage+"\n", b.String())
+	}
+}
+
 func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	defer clearConfig()
 	defer clearRegistry("TestLogName")

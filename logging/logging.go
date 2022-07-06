@@ -45,6 +45,20 @@ type Logger interface {
 	Fatal(ctx context.Context, message string, keyvals ...KV)
 	// FatalE logs a message and an error at fatal log level. Key-value pairs can be added.
 	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
+	// FeedbackDebug calls Debug and sends the message to stderr if logs are sent to a file.
+	FeedbackDebug(ctx context.Context, message string, keyvals ...KV)
+	// FeedbackInfo calls Info and sends the message to stderr if logs are sent to a file.
+	FeedbackInfo(ctx context.Context, message string, keyvals ...KV)
+	// FeedbackWarn calls Warn and sends the message to stderr if logs are sent to a file.
+	FeedbackWarn(ctx context.Context, message string, keyvals ...KV)
+	// FeedbackError calls Error and sends the message to stderr if logs are sent to a file.
+	FeedbackError(ctx context.Context, message string, keyvals ...KV)
+	// FeedbackErrorE calls ErrorE and sends the message to stderr if logs are sent to a file.
+	FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV)
+	// FeedbackFatal calls Fatal and sends the message to stderr if logs are sent to a file.
+	FeedbackFatal(ctx context.Context, message string, keyvals ...KV)
+	// FeedbackFatalE calls FatalE and sends the message to stderr if logs are sent to a file.
+	FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV)
 	// Flush flushes any buffered log entries.
 	Flush() error
 	// ApplyConfig updates the logger with a new config.
