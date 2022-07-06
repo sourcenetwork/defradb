@@ -390,24 +390,12 @@ func getRequestables(
 			// aggregates have been requested and their targets here, before finalizing
 			// their evaluation later.
 			if _, isAggregate := parserTypes.Aggregates[f.Name]; isAggregate {
-				aggregateTargets, err := getAggregateSources(f)
+				aggregateRequest, err := getAggregateRequests(index, f)
 				if err != nil {
 					return nil, nil, err
 				}
 
-				if len(aggregateTargets) == 0 {
-					return nil, nil, fmt.Errorf(
-						"Aggregate must be provided with a property to aggregate.",
-					)
-				}
-
-				aggregates = append(aggregates, &aggregateRequest{
-					field: Field{
-						Index: index,
-						Name:  f.Name,
-					},
-					targets: aggregateTargets,
-				})
+				aggregates = append(aggregates, &aggregateRequest)
 			} else {
 				innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
 				if err != nil {
@@ -431,6 +419,27 @@ func getRequestables(
 		}
 	}
 	return
+}
+
+func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest, error) {
+	aggregateTargets, err := getAggregateSources(aggregate)
+	if err != nil {
+		return aggregateRequest{}, err
+	}
+
+	if len(aggregateTargets) == 0 {
+		return aggregateRequest{}, fmt.Errorf(
+			"Aggregate must be provided with a property to aggregate.",
+		)
+	}
+
+	return aggregateRequest{
+		field: Field{
+			Index: index,
+			Name:  aggregate.Name,
+		},
+		targets: aggregateTargets,
+	}, nil
 }
 
 // getCollectionName returns the name of the parsed collection.  This may be empty
