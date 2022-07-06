@@ -265,7 +265,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			}
 		case *gql.Scalar:
 			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
-				g.createExpandedFieldAggregate(obj, def, t)
+				g.createExpandedFieldAggregate(obj, def)
 			}
 			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
@@ -279,7 +279,6 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 func (g *Generator) createExpandedFieldAggregate(
 	obj *gql.Object,
 	f *gql.FieldDefinition,
-	t gql.Type,
 ) {
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
