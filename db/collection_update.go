@@ -370,7 +370,11 @@ func (c *collection) applyMerge(
 		}
 
 		val := client.NewCBORValue(fd.Typ, cval)
-		fieldKey := c.getFieldKey(key, mfield)
+		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
+		if !fieldExists {
+			return client.ErrFieldNotExist
+		}
+
 		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 		if err != nil {
 			return err

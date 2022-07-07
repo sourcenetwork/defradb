@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
@@ -582,9 +583,17 @@ func (c *collection) save(
 	links := make([]core.DAGLink, 0)
 	merge := make(map[string]interface{})
 	for k, v := range doc.Fields() {
-		val, _ := doc.GetValueWithField(v)
+		val, err := doc.GetValueWithField(v)
+		if err != nil {
+			return cid.Undef, err
+		}
+
 		if val.IsDirty() {
-			fieldKey := c.getFieldKey(primaryKey, k)
+			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
+			if !fieldExists {
+				return cid.Undef, client.ErrFieldNotExist
+			}
+
 			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
@@ -863,24 +872,28 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 	}
 }
 
-func (c *collection) getFieldKey(key core.PrimaryDataStoreKey, fieldName string) core.DataStoreKey {
+func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
+	fieldId, hasField := c.tryGetSchemaFieldID(fieldName)
+	if !hasField {
+		return core.DataStoreKey{}, false
+	}
+
 	return core.DataStoreKey{
 		CollectionId: key.CollectionId,
 		DocKey:       key.DocKey,
-		FieldId:      fmt.Sprint(c.getSchemaFieldID(fieldName)),
-	}
+		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
+	}, true
 }
 
-// getSchemaFieldID returns the FieldID of the given fieldName.
-// It assumes a schema exists for the collection, and that the
-// field exists in the schema.
-func (c *collection) getSchemaFieldID(fieldName string) uint32 {
+// tryGetSchemaFieldID returns the FieldID of the given fieldName.
+// Will return false if the field is not found.
+func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 	for _, field := range c.desc.Schema.Fields {
 		if field.Name == fieldName {
-			return uint32(field.ID)
+			return uint32(field.ID), true
 		}
 	}
-	return uint32(0)
+	return uint32(0), false
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.
