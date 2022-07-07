@@ -80,7 +80,7 @@ The --reinitialize flag replaces a configuration file with a default one.`,
 					log.FeedbackInfo(
 						ctx,
 						fmt.Sprintf(
-							"configuration file already exists at %v. Consider using --reinitialize",
+							"Configuration file already exists at %v. Consider using --reinitialize",
 							configFilePath,
 						),
 					)
