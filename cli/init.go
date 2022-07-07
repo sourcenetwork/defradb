@@ -32,10 +32,10 @@ It covers three possible situations:
 */
 var initCmd = &cobra.Command{
 	Use:   "init [rootdir]",
-	Short: "Initialize DefraDB's root directory and config file",
-	Long: `
-Initialize a directory for DefraDB's configuration and data at the given path.
-The --reinitialize flag replaces a config file with a default one.`,
+	Short: "Initialize DefraDB's root directory and configuration file",
+	Long: `Initialize a directory for DefraDB's configuration and data at the given path.
+
+The --reinitialize flag replaces a configuration file with a default one.`,
 	// Load a default configuration, considering env. variables and CLI flags.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()
@@ -69,25 +69,28 @@ The --reinitialize flag replaces a config file with a default one.`,
 				if reinitialize {
 					err = os.Remove(configFilePath)
 					if err != nil {
-						return fmt.Errorf("failed to remove config file: %w", err)
+						return fmt.Errorf("failed to remove configuration file: %w", err)
 					}
 					err = cfg.WriteConfigFileToRootDir(rootDir)
 					if err != nil {
-						return fmt.Errorf("failed to create config file: %w", err)
+						return fmt.Errorf("failed to create configuration file: %w", err)
 					}
-					log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized config file at %v", configFilePath))
+					log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
 				} else {
 					log.FeedbackInfo(
 						ctx,
-						fmt.Sprintf("Config file already exists at %v. Consider using --reinitialize", configFilePath),
+						fmt.Sprintf(
+							"configuration file already exists at %v. Consider using --reinitialize",
+							configFilePath,
+						),
 					)
 				}
 			} else {
 				err = cfg.WriteConfigFileToRootDir(rootDir)
 				if err != nil {
-					return fmt.Errorf("failed to create config file: %w", err)
+					return fmt.Errorf("failed to create configuration file: %w", err)
 				}
-				log.FeedbackInfo(ctx, fmt.Sprintf("Initialized config file at %v", configFilePath))
+				log.FeedbackInfo(ctx, fmt.Sprintf("Initialized configuration file at %v", configFilePath))
 			}
 		} else {
 			err = config.CreateRootDirWithDefaultConfig(rootDir)
@@ -105,6 +108,6 @@ func init() {
 
 	initCmd.Flags().BoolVar(
 		&reinitialize, "reinitialize", false,
-		"reinitialize the config file",
+		"reinitialize the configuration file",
 	)
 }
