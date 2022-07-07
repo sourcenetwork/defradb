@@ -479,13 +479,13 @@ func setupDatabase(
 	}
 
 	// insert docs
-	for cid, docs := range test.Docs {
+	for collectionIndex, docs := range test.Docs {
 		for i, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}
-			err = collections[cid].Save(ctx, doc)
+			err = collections[collectionIndex].Save(ctx, doc)
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}
@@ -498,7 +498,7 @@ func setupDatabase(
 					if assertError(t, test.Description, err, test.ExpectedError) {
 						return
 					}
-					err = collections[cid].Save(ctx, doc)
+					err = collections[collectionIndex].Save(ctx, doc)
 					if assertError(t, test.Description, err, test.ExpectedError) {
 						return
 					}
