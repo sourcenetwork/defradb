@@ -480,7 +480,7 @@ func setupDatabase(
 
 	// insert docs
 	for collectionIndex, docs := range test.Docs {
-		for i, docStr := range docs {
+		for documentIndex, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
@@ -491,7 +491,7 @@ func setupDatabase(
 			}
 
 			// check for updates
-			updates, ok := test.Updates[i]
+			updates, ok := test.Updates[documentIndex]
 			if ok {
 				for _, u := range updates {
 					err = doc.SetWithJSON([]byte(u))
