@@ -91,9 +91,9 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNod                 (explainable but no-attributes)
+		// ----> selectTopNode                (explainable but no-attributes)
 		//    ----> countNode                 (explainable)
-		//        ----> selectNod e           (explainable)
+		//        ----> selectNode            (explainable)
 		//             ----> typeIndexJoin    (explainable)
 		//                 ----> typeJoinMany (non-explainable)
 		//                     ----> scanNode (explainable)
