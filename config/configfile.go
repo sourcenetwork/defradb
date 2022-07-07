@@ -16,8 +16,8 @@ import (
 )
 
 const (
+	DefaultDefraDBConfigFileName = "config.yaml"
 	configType                   = "yaml"
-	defaultDefraDBConfigFileName = "config.yaml"
 	defaultDirPerm               = 0o700
 	defaultConfigFilePerm        = 0o644
 )
@@ -35,7 +35,7 @@ func (cfg *Config) writeConfigFile(path string) error {
 
 // WriteConfigFile writes a config file in a given root directory.
 func (cfg *Config) WriteConfigFileToRootDir(rootDir string) error {
-	path := fmt.Sprintf("%v/%v", rootDir, defaultDefraDBConfigFileName)
+	path := fmt.Sprintf("%v/%v", rootDir, DefaultDefraDBConfigFileName)
 	return cfg.writeConfigFile(path)
 }
 

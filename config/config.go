@@ -79,7 +79,7 @@ type Config struct {
 // Load Config and handles parameters from config file, environment variables.
 // To use on a Config struct already loaded with default values from DefaultConfig().
 func (cfg *Config) Load(rootDirPath string) error {
-	viper.SetConfigName(defaultDefraDBConfigFileName)
+	viper.SetConfigName(DefaultDefraDBConfigFileName)
 	viper.SetConfigType(configType)
 	viper.AddConfigPath(rootDirPath)
 	if err := viper.ReadInConfig(); err != nil {

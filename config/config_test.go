@@ -183,7 +183,7 @@ func TestLoadNonExistingConfigFile(t *testing.T) {
 func TestLoadInvalidConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	dir := t.TempDir()
-	ioutil.WriteFile(filepath.Join(dir, defaultDefraDBConfigFileName), []byte("{"), 0644)
+	ioutil.WriteFile(filepath.Join(dir, DefaultDefraDBConfigFileName), []byte("{"), 0644)
 
 	err := cfg.Load(dir)
 
