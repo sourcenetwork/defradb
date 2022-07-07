@@ -610,7 +610,9 @@ func assertQueryResults(
 		assert.Equal(t, expectedResults, resultantData)
 	}
 	for i, result := range resultantData {
-		assert.Equal(t, expectedResults[i], result, description)
+		if len(expectedResults) > i {
+			assert.Equal(t, expectedResults[i], result, description)
+		}
 	}
 
 	return false
