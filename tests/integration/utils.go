@@ -77,7 +77,7 @@ type QueryTestCase struct {
 
 	// updates is a map from document index, to a list
 	// of changes in strinigied JSON format
-	Updates map[int][]string
+	Updates map[int]map[int][]string
 	Results []map[string]interface{}
 	// The expected content of an expected error
 	ExpectedError string
@@ -479,28 +479,31 @@ func setupDatabase(
 	}
 
 	// insert docs
-	for cid, docs := range test.Docs {
-		for i, docStr := range docs {
+	for collectionIndex, docs := range test.Docs {
+		collectionUpdates, hasCollectionUpdates := test.Updates[collectionIndex]
+		for documentIndex, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}
-			err = collections[cid].Save(ctx, doc)
+			err = collections[collectionIndex].Save(ctx, doc)
 			if assertError(t, test.Description, err, test.ExpectedError) {
 				return
 			}
 
-			// check for updates
-			updates, ok := test.Updates[i]
-			if ok {
-				for _, u := range updates {
-					err = doc.SetWithJSON([]byte(u))
-					if assertError(t, test.Description, err, test.ExpectedError) {
-						return
-					}
-					err = collections[cid].Save(ctx, doc)
-					if assertError(t, test.Description, err, test.ExpectedError) {
-						return
+			if hasCollectionUpdates {
+				documentUpdates, hasDocumentUpdates := collectionUpdates[documentIndex]
+
+				if hasDocumentUpdates {
+					for _, u := range documentUpdates {
+						err = doc.SetWithJSON([]byte(u))
+						if assertError(t, test.Description, err, test.ExpectedError) {
+							return
+						}
+						err = collections[collectionIndex].Save(ctx, doc)
+						if assertError(t, test.Description, err, test.ExpectedError) {
+							return
+						}
 					}
 				}
 			}

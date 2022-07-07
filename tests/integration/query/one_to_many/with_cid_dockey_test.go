@@ -143,10 +143,13 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 				"verified": true
 			}`)},
 		},
-		Updates: map[int][]string{
-			0: {
-				// update to change age to 22 on document 0, collection 1
-				`{"age": 22}`,
+		Updates: map[int]map[int][]string{
+			1: {
+				0: {
+					`{
+						"age": 22
+					}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
@@ -194,10 +197,13 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 				"verified": true
 			}`)},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0, collection 0
-				`{"rating": 4.5}`,
+				0: {
+					`{
+						"rating": 4.5
+					}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
@@ -245,10 +251,13 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 				"verified": true
 			}`)},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0, collection 0
-				`{"rating": 4.5}`,
+				0: {
+					`{
+						"rating": 4.5
+					}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{

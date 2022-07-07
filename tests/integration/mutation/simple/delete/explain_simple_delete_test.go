@@ -163,13 +163,15 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 				},
 			},
 
-			Updates: map[int][]string{
+			Updates: map[int]map[int][]string{
 				0: {
-					(`{
-										"age":  27,
-										"points": 48.2,
-										"verified": false
-							}`),
+					0: {
+						`{
+							"age":  27,
+							"points": 48.2,
+							"verified": false
+						}`,
+					},
 				},
 			},
 
