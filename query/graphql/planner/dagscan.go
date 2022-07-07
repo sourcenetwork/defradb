@@ -226,7 +226,23 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *dagScanNode) Explain() (map[string]interface{}, error) {
-	// explain the spans attribute.
+	explainerMap := map[string]interface{}{}
+
+	// Add the field attribute to the explaination if it exists.
+	if len(n.field) != 0 {
+		explainerMap["field"] = n.field
+	} else {
+		explainerMap["field"] = nil
+	}
+
+	// Add the cid attribute to the explaination if it exists.
+	if n.cid != nil && n.cid.Defined() {
+		explainerMap["cid"] = n.cid.Bytes()
+	} else {
+		explainerMap["cid"] = nil
+	}
+
+	// Build the explaination of the spans attribute.
 	spansExplainer := []map[string]interface{}{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.headset != nil && n.headset.spans.HasValue {
@@ -240,10 +256,10 @@ func (n *dagScanNode) Explain() (map[string]interface{}, error) {
 			)
 		}
 	}
+	// Add the built spans attribute, if it was valid.
+	explainerMap[spansLabel] = spansExplainer
 
-	return map[string]interface{}{
-		spansLabel: spansExplainer,
-	}, nil
+	return explainerMap, nil
 }
 
 func (n *dagScanNode) Next() (bool, error) {
