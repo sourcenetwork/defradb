@@ -121,10 +121,13 @@ func TestQueryAllCommitsWithDockeyAndUpdate(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0
-				(`{"Age": 22}`),
+				0: {
+					`{
+						"Age": 22
+					}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
@@ -165,10 +168,13 @@ func TestQueryAllCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0
-				(`{"Age": 22}`),
+				0: {
+					`{
+						"Age": 22
+					}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{

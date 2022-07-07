@@ -147,12 +147,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`),
 				},
 			},
-			Updates: map[int][]string{
-				0: {
-					`{
-						"name": "Teiva Harsanyiiiiiiiiii",
-						"age": 49
-					}`,
+			Updates: map[int]map[int][]string{
+				1: {
+					0: {
+						`{
+							"name": "Teiva Harsanyiiiiiiiiii",
+							"age": 49
+						}`,
+					},
 				},
 			},
 			Results: []map[string]interface{}{
