@@ -117,12 +117,14 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0
-				`{"Age": 22}`,
-				// then update it again to change age to 23 on document 0
-				`{"Age": 23}`,
+				0: {
+					// update to change age to 22 on document 0
+					`{"Age": 22}`,
+					// then update it again to change age to 23 on document 0
+					`{"Age": 23}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
@@ -156,12 +158,14 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0
-				`{"Age": 22}`,
-				// then update it again to change age to 23 on document 0
-				`{"Age": 23}`,
+				0: {
+					// update to change age to 22 on document 0
+					`{"Age": 22}`,
+					// then update it again to change age to 23 on document 0
+					`{"Age": 23}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
@@ -195,12 +199,14 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int][]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				// update to change age to 22 on document 0
-				`{"Age": 22}`,
-				// then update it again to change age to 23 on document 0
-				`{"Age": 23}`,
+				0: {
+					// update to change age to 22 on document 0
+					`{"Age": 22}`,
+					// then update it again to change age to 23 on document 0
+					`{"Age": 23}`,
+				},
 			},
 		},
 		Results: []map[string]interface{}{
