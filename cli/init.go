@@ -33,7 +33,9 @@ It covers three possible situations:
 var initCmd = &cobra.Command{
 	Use:   "init [rootdir]",
 	Short: "Initialize DefraDB's root directory and config file",
-	Long:  `Initialize a directory for DefraDB's configuration and data at the given path.`,
+	Long: `
+Initialize a directory for DefraDB's configuration and data at the given path.
+The --reinitialize flag replaces a config file with a default one.`,
 	// Load a default configuration, considering env. variables and CLI flags.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()
@@ -75,12 +77,10 @@ var initCmd = &cobra.Command{
 					}
 					log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized config file at %v", configFilePath))
 				} else {
-					// TBD
 					log.FeedbackInfo(
 						ctx,
-						fmt.Sprintf("Config file already exists at %v. Consider using --reinitialize", rootDir),
+						fmt.Sprintf("Config file already exists at %v. Consider using --reinitialize", configFilePath),
 					)
-					return err
 				}
 			} else {
 				err = cfg.WriteConfigFileToRootDir(rootDir)
