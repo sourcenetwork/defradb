@@ -78,6 +78,9 @@ type QueryTestCase struct {
 	// updates is a map from document index, to a list
 	// of changes in strinigied JSON format
 	Updates map[int]map[int][]string
+
+	UpdateFuncs map[int]func(client.Collection) error
+
 	Results []map[string]interface{}
 	// The expected content of an expected error
 	ExpectedError string
@@ -338,6 +341,23 @@ func ExecuteQueryTestCase(
 		for i, tq := range test.TransactionalQueries {
 			if tq.ExpectedError != "" && !erroredQueries[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
+			}
+		}
+
+		collections := []client.Collection{}
+		for _, collectionName := range collectionNames {
+			col, err := dbi.db.GetCollectionByName(ctx, collectionName)
+			if assertError(t, test.Description, err, test.ExpectedError) {
+				return
+			}
+			collections = append(collections, col)
+		}
+
+		for collectionIndex, f := range test.UpdateFuncs {
+			collection := collections[collectionIndex]
+			err := f(collection)
+			if assertError(t, test.Description, err, test.ExpectedError) {
+				return
 			}
 		}
 
