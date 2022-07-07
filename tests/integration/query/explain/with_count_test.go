@@ -91,9 +91,9 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 			},
 		},
 
-		// ----> selectTopNode                    (explainable but no-attributes)
-		//    ----> countNode                (explainable)
-		//        ----> selectNode           (explainable)
+		// ----> selectTopNod                 (explainable but no-attributes)
+		//    ----> countNode                 (explainable)
+		//        ----> selectNod e           (explainable)
 		//             ----> typeIndexJoin    (explainable)
 		//                 ----> typeJoinMany (non-explainable)
 		//                     ----> scanNode (explainable)
@@ -104,8 +104,8 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 						"countNode": dataMap{
 							"sources": []dataMap{
 								{
-									"filter":         nil,
-									"sourceProperty": "books",
+									"filter":    nil,
+									"fieldName": "books",
 								},
 							},
 							"selectNode": dataMap{
