@@ -53,7 +53,7 @@ func TestWritesConfigFile(t *testing.T) {
 	dir := t.TempDir()
 	err := cfg.WriteConfigFileToRootDir(dir)
 	assert.NoError(t, err)
-	path := dir + "/" + defaultDefraDBConfigFileName
+	path := dir + "/" + DefaultDefraDBConfigFileName
 	_, err = os.Stat(path)
 	assert.Nil(t, err)
 }
