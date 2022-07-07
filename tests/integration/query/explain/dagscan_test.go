@@ -55,6 +55,8 @@ func TestExplainAllCommitsDagScan(t *testing.T) {
 							"filter": nil,
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
+									"cid":   nil,
+									"field": "1",
 									"spans": []dataMap{
 										{
 											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
@@ -112,6 +114,8 @@ func TestExplainAllCommitsDagScanWithoutField(t *testing.T) {
 							"filter": nil,
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
+									"cid":   nil,
+									"field": "C",
 									"spans": []dataMap{
 										{
 											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
@@ -208,6 +212,8 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 							"filter": nil,
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
+									"cid":   nil,
+									"field": "1",
 									"spans": []dataMap{
 										{
 											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
@@ -266,6 +272,8 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 							"filter": nil,
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
+									"cid":   nil,
+									"field": "C",
 									"spans": []dataMap{
 										{
 											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
@@ -363,6 +371,45 @@ func TestExplainOneCommitDagScan(t *testing.T) {
 							"filter": nil,
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
+									"cid": []uint8{
+										0x01,
+										0x70,
+										0x12,
+										0x20,
+										0x98,
+										0x96,
+										0xeb,
+										0xf9,
+										0xa1,
+										0x8f,
+										0xd0,
+										0xb4,
+										0xae,
+										0x2a,
+										0x30,
+										0x23,
+										0x92,
+										0x00,
+										0x7c,
+										0x82,
+										0x80,
+										0x00,
+										0x88,
+										0xd6,
+										0x65,
+										0xfa,
+										0xdd,
+										0xf4,
+										0x80,
+										0xfa,
+										0xe1,
+										0xa7,
+										0x44,
+										0x09,
+										0xea,
+										0xdd,
+									},
+									"field": nil,
 									"spans": []dataMap{},
 								},
 							},
