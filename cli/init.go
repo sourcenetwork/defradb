@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/sourcenetwork/defradb/config"
@@ -21,53 +22,84 @@ import (
 
 var reinitialize bool
 
+/*
+initCmd provides the `init` command.
+
+It covers three possible situations:
+- root dir doesn't exist
+- root dir exists and doesn't contain a config file
+- root dir exists and contains a config file
+*/
 var initCmd = &cobra.Command{
 	Use:   "init [rootdir]",
-	Short: "Initialize DefraDB's root directory",
-	Long:  `Initialize a directory for DefraDB's configuration and data at the given path.`,
+	Short: "Initialize DefraDB's root directory and configuration file",
+	Long: `Initialize a directory for DefraDB's configuration and data at the given path.
+
+The --reinitialize flag replaces a configuration file with a default one.`,
 	// Load a default configuration, considering env. variables and CLI flags.
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()
 		if err != nil {
-			log.FatalE(context.Background(), "Failed to load config", err)
+			return fmt.Errorf("failed to load configuration: %w", err)
 		}
 		loggingConfig, err := cfg.GetLoggingConfig()
 		if err != nil {
-			log.FatalE(context.Background(), "Failed to get logging config", err)
+			return fmt.Errorf("failed to load logging configuration: %w", err)
 		}
 		logging.SetConfig(loggingConfig)
+		return nil
 	},
 	Args: cobra.RangeArgs(0, 1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		if len(args) > 0 {
-			rootDirParam = args[0]
+		rootDirPath := ""
+		if len(args) == 1 {
+			rootDirPath = args[0]
 		}
-		rootDir, exists, err := config.GetRootDir(rootDirParam)
+		rootDir, rootDirExists, err := config.GetRootDir(rootDirPath)
 		if err != nil {
-			log.FatalE(ctx, "Failed to get root dir", err)
+			return fmt.Errorf("failed to get root dir: %w", err)
 		}
-		if exists {
-			if reinitialize {
-				log.Info(ctx, "Reinitializing root directory", logging.NewKV("path", rootDir))
-				err := os.RemoveAll(rootDir)
-				if err != nil {
-					log.FatalE(ctx, "Failed to delete root directory", err)
-				}
-				err = config.CreateRootDirWithDefaultConfig(rootDir)
-				if err != nil {
-					log.FatalE(ctx, "Failed to create root directory", err)
+		if rootDirExists {
+			// we assume the config file is using its default path in the rootdir
+			configFilePath := fmt.Sprintf("%v/%v", rootDir, config.DefaultDefraDBConfigFileName)
+			info, err := os.Stat(configFilePath)
+			configFileExists := (err == nil && !info.IsDir())
+			if configFileExists {
+				if reinitialize {
+					err = os.Remove(configFilePath)
+					if err != nil {
+						return fmt.Errorf("failed to remove configuration file: %w", err)
+					}
+					err = cfg.WriteConfigFileToRootDir(rootDir)
+					if err != nil {
+						return fmt.Errorf("failed to create configuration file: %w", err)
+					}
+					log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
+				} else {
+					log.FeedbackInfo(
+						ctx,
+						fmt.Sprintf(
+							"Configuration file already exists at %v. Consider using --reinitialize",
+							configFilePath,
+						),
+					)
 				}
 			} else {
-				log.Warn(ctx, "Root directory already exists. Consider using --reinitialize", logging.NewKV("path", rootDir))
+				err = cfg.WriteConfigFileToRootDir(rootDir)
+				if err != nil {
+					return fmt.Errorf("failed to create configuration file: %w", err)
+				}
+				log.FeedbackInfo(ctx, fmt.Sprintf("Initialized configuration file at %v", configFilePath))
 			}
 		} else {
 			err = config.CreateRootDirWithDefaultConfig(rootDir)
 			if err != nil {
-				log.FatalE(ctx, "Failed to create root directory", err)
+				return fmt.Errorf("failed to create root dir: %w", err)
 			}
-			log.Info(ctx, "Created DefraDB directory", logging.NewKV("path", rootDir))
+			log.FeedbackInfo(ctx, fmt.Sprintf("Created DefraDB root directory at %v", rootDir))
 		}
+		return nil
 	},
 }
 
@@ -76,6 +108,6 @@ func init() {
 
 	initCmd.Flags().BoolVar(
 		&reinitialize, "reinitialize", false,
-		"reinitialize the root directory",
+		"reinitialize the configuration file",
 	)
 }
