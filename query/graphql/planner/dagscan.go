@@ -151,11 +151,6 @@ type dagScanNode struct {
 
 	headset *headsetScanNode
 	parsed  *mapper.CommitSelect
-
-	// previousScanNode planNode
-	// linksScanNode    planNode
-
-	// block blocks.Block
 }
 
 func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
@@ -178,6 +173,7 @@ func (n *dagScanNode) Init() error {
 	}
 	return nil
 }
+
 func (n *dagScanNode) Start() error {
 	if n.headset != nil {
 		return n.headset.Start()
@@ -230,7 +226,24 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
 func (n *dagScanNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	// explain the spans attribute.
+	spansExplainer := []map[string]interface{}{}
+	// Note: n.headset is `nil` for single commit selection query, so must check for it.
+	if n.headset != nil && n.headset.spans.HasValue {
+		for _, span := range n.headset.spans.Value {
+			spansExplainer = append(
+				spansExplainer,
+				map[string]interface{}{
+					"start": span.Start().ToString(),
+					"end":   span.End().ToString(),
+				},
+			)
+		}
+	}
+
+	return map[string]interface{}{
+		spansLabel: spansExplainer,
+	}, nil
 }
 
 func (n *dagScanNode) Next() (bool, error) {
