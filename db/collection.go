@@ -630,6 +630,7 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
+	fmt.Println("Update: dockey:", primaryKey, primaryKey.ToDataStoreKey(), primaryKey.ToDataStoreKey().ToDS())
 	headCID, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,

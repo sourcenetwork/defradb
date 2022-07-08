@@ -395,6 +395,7 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
+	fmt.Println("Update: dockey:", key, key.ToDataStoreKey(), key.ToDataStoreKey().ToDS())
 	if _, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
