@@ -38,7 +38,10 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
-		inputIsPipe := stdinIsPipe()
+		inputIsPipe, err := stdinIsPipe()
+		if err != nil {
+			return err
+		}
 
 		if len(args) > 1 {
 			return fmt.Errorf("too many arguments")

@@ -41,7 +41,10 @@ Example: add from stdin:
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var schema string
-		inputIsPipe := stdinIsPipe()
+		inputIsPipe, err := stdinIsPipe()
+		if err != nil {
+			return err
+		}
 
 		if len(args) > 1 {
 			return fmt.Errorf("too many arguments")

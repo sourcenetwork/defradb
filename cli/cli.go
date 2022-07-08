@@ -19,9 +19,9 @@ import (
 	"strings"
 )
 
-func stdinIsPipe() bool {
-	fileInfo, _ := os.Stdin.Stat()
-	return fileInfo.Mode()&os.ModeCharDevice == 0
+func stdinIsPipe() (bool, error) {
+	fileInfo, err := os.Stdin.Stat()
+	return fileInfo.Mode()&os.ModeCharDevice == 0, err
 }
 
 func readStdin() (string, error) {
