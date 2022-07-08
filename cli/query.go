@@ -38,7 +38,7 @@ with the database more conveniently.
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var query string
-		inputIsPipe, err := stdinIsPipe()
+		inputIsPipe, err := isStdinPipe()
 		if err != nil {
 			return err
 		}

@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func stdinIsPipe() (bool, error) {
+func isStdinPipe() (bool, error) {
 	fileInfo, err := os.Stdin.Stat()
 	return fileInfo.Mode()&os.ModeCharDevice == 0, err
 }

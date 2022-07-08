@@ -41,7 +41,7 @@ Example: add from stdin:
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var schema string
-		inputIsPipe, err := stdinIsPipe()
+		inputIsPipe, err := isStdinPipe()
 		if err != nil {
 			return err
 		}
