@@ -34,7 +34,7 @@ var bookAuthorPublisherGQLSchema = (`
 	type publisher {
 		name: String
 		address: String
-		favouritePageNumbers: [Int]
+		favouritePageNumbers: [Int!]
 		published: [book]
 	}
 `)

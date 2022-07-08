@@ -19,10 +19,10 @@ import (
 var userCollectionGQLSchema = (`
 	type users {
 		Name: String
-		LikedIndexes: [Boolean]
-		FavouriteIntegers: [Int]
-		FavouriteFloats: [Float]
-		PreferredStrings: [String]
+		LikedIndexes: [Boolean!]
+		FavouriteIntegers: [Int!]
+		FavouriteFloats: [Float!]
+		PreferredStrings: [String!]
 	}
 `)
 
