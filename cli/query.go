@@ -11,44 +11,75 @@
 package cli
 
 import (
-	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
+
+	httpapi "github.com/sourcenetwork/defradb/api/http"
 )
 
-// queryCmd represents the query command
 var queryCmd = &cobra.Command{
-	Use:   "query",
-	Short: "Send a GraphQL query",
-	Long: `Use this command if you wish to send a formatted GraphQL
-query to the database. It's advised to use a proper GraphQL client
-to interact with the database, the reccomended approach is with a
-local GraphiQL application (https://github.com/graphql/graphiql).
+	Use:   "query [query]",
+	Short: "Send a DefraDB GraphQL query",
+	Long: `Send a DefraDB GraphQL query to the database.
 
-To learn more about the DefraDB GraphQL Query Language, you may use
-the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
-		`,
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
+A query can be sent as a single argument. Example command:
+  defradb client query 'query { ... }'
 
-		if len(args) != 1 {
-			log.Fatal(ctx, "Needs a single query argument")
+Or it can be sent via stdin by using the '-' special syntax. Example command:
+  cat query.graphql | defradb client query -
+
+A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
+with the database more conveniently.
+
+To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var query string
+		inputIsPipe, err := isStdinPipe()
+		if err != nil {
+			return err
 		}
-		query := args[0]
+
+		if len(args) > 1 {
+			return fmt.Errorf("too many arguments")
+		}
+
+		if inputIsPipe && (len(args) == 0 || args[0] != "-") {
+			log.FeedbackInfo(
+				cmd.Context(),
+				"Run 'defradb client query -' to read from stdin. Example: 'cat my.graphql | defradb client query -').",
+			)
+			return nil
+		} else if len(args) == 0 {
+			err := cmd.Help()
+			if err != nil {
+				return fmt.Errorf("failed to print help: %w", err)
+			}
+			return nil
+		} else if args[0] == "-" {
+			stdin, err := readStdin()
+			if err != nil {
+				return fmt.Errorf("failed to read stdin: %w", err)
+			}
+			if len(stdin) == 0 {
+				return fmt.Errorf("no query in stdin provided")
+			} else {
+				query = stdin
+			}
+		} else {
+			query = args[0]
+		}
+
 		if query == "" {
-			log.Error(ctx, "Missing query")
-			return
+			return fmt.Errorf("query cannot be empty")
 		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.GraphQLPath)
 		if err != nil {
-			log.ErrorE(ctx, "Join paths failed", err)
-			return
+			return fmt.Errorf("joining paths failed: %w", err)
 		}
 
 		p := url.Values{}
@@ -57,37 +88,30 @@ the additional documentation found at: https://hackmd.io/@source/BksQY6Qfw.
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to send query: %w", err)
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "Response body closing failed: ", err)
+				log.ErrorE(cmd.Context(), "response body closing failed: ", err)
 			}
 		}()
 
 		buf, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		log.Info(ctx, "", logging.NewKV("Response", string(buf)))
+		indentedResult, err := indentJSON(buf)
+		if err != nil {
+			return fmt.Errorf("failed to pretty print result: %w", err)
+		}
+		log.FeedbackInfo(cmd.Context(), indentedResult)
+		return nil
 	},
 }
 
 func init() {
 	clientCmd.AddCommand(queryCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// queryCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// queryCmd.Flags().StringVar(&queryStr, "query", "", "Query to run on the database")
 }
