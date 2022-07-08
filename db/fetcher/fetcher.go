@@ -201,10 +201,10 @@ func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
 
 // nextKey gets the next kv. It sets both kv and kvEnd internally.
 // It returns true if the current doc is completed
-func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error) {
+func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err error) {
 	// get the next kv from nextKV()
 	for {
-		docDone, df.kv, err = df.nextKV()
+		spanDone, df.kv, err = df.nextKV()
 		// handle any internal errors
 		if err != nil {
 			return false, err
@@ -213,10 +213,10 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (docDone bool, err error
 		if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
 			// We can only ready value values, if we escape the collection's value keys
 			// then we must be done and can stop reading
-			docDone = true
+			spanDone = true
 		}
 
-		df.kvEnd = docDone
+		df.kvEnd = spanDone
 		if df.kvEnd {
 			hasNextSpan, err := df.startNextSpan(ctx)
 			if err != nil {
