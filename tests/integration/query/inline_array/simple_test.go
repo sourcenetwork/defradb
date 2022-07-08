@@ -94,6 +94,28 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 func TestQueryInlineArrayWithIntegers(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
+			Description: "Simple inline array with no filter, default integer array",
+			Query: `query {
+						users {
+							Name
+							FavouriteIntegers
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					`{
+						"Name": "John"
+					}`,
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name":              "John",
+					"FavouriteIntegers": nil,
+				},
+			},
+		},
+		{
 			Description: "Simple inline array with no filter, nil integer array",
 			Query: `query {
 						users {

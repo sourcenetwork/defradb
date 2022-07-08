@@ -121,3 +121,61 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with some default-value fields",
+		Query: `query {
+					users {
+						Name
+						Email
+						Age
+						HeightM
+						Verified
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":     "John",
+				"Email":    nil,
+				"Age":      nil,
+				"HeightM":  nil,
+				"Verified": nil,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// This test documents undesirable behaviour and should be altered
+// with https://github.com/sourcenetwork/defradb/issues/610.
+// A document with nil fields should be returned.
+func TestQuerySimpleWithDefaultValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with default-value fields",
+		Query: `query {
+					users {
+						Name
+						Age
+						HeightM
+						Verified
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{ }`,
+			},
+		},
+		Results: []map[string]interface{}{},
+	}
+
+	executeTestCase(t, test)
+}
