@@ -166,20 +166,20 @@ func (n *sumNode) Explain() (map[string]interface{}, error) {
 		}
 
 		// Add the main field name.
-		explainerMap["fieldName"] = source.Field.Name
+		explainerMap[fieldNameLabel] = source.Field.Name
 
 		// Add the child field name if it exists.
 		if source.ChildTarget.HasValue {
-			explainerMap["childFieldName"] = source.ChildTarget.Name
+			explainerMap[childFieldNameLabel] = source.ChildTarget.Name
 		} else {
-			explainerMap["childFieldName"] = nil
+			explainerMap[childFieldNameLabel] = nil
 		}
 
 		sourceExplanations[i] = explainerMap
 	}
 
 	return map[string]interface{}{
-		"sources": sourceExplanations,
+		sourcesLabel: sourceExplanations,
 	}, nil
 }
 

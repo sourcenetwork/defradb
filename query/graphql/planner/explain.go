@@ -37,11 +37,14 @@ var (
 )
 
 const (
+	childFieldNameLabel = "childFieldName"
 	collectionIDLabel   = "collectionID"
 	collectionNameLabel = "collectionName"
 	dataLabel           = "data"
+	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
 	idsLabel            = "ids"
+	sourcesLabel        = "sources"
 	spansLabel          = "spans"
 )
 

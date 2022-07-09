@@ -73,13 +73,13 @@ func (n *countNode) Explain() (map[string]interface{}, error) {
 		}
 
 		// Add the main field name.
-		explainerMap["fieldName"] = source.Field.Name
+		explainerMap[fieldNameLabel] = source.Field.Name
 
 		sourceExplanations[i] = explainerMap
 	}
 
 	return map[string]interface{}{
-		"sources": sourceExplanations,
+		sourcesLabel: sourceExplanations,
 	}, nil
 }
 
