@@ -72,13 +72,14 @@ func (n *countNode) Explain() (map[string]interface{}, error) {
 			explainerMap[filterLabel] = source.Filter.ExternalConditions
 		}
 
-		// Add the source property.
-		explainerMap["sourceProperty"] = source.Field.Name
+		// Add the main field name.
+		explainerMap[fieldNameLabel] = source.Field.Name
+
 		sourceExplanations[i] = explainerMap
 	}
 
 	return map[string]interface{}{
-		"sources": sourceExplanations,
+		sourcesLabel: sourceExplanations,
 	}, nil
 }
 
