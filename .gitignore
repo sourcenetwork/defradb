@@ -6,3 +6,6 @@ tests/bench/*.log
 tests/bench/*.svg
 .vscode
 coverage.out
+cmd/defradb/defradb
+cmd/genclidocs/genclidocs
+cmd/genmanpages/genmanpages
