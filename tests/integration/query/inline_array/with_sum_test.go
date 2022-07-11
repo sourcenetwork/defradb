@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithsWithSumAndNullArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of nil integer array",
 		Query: `query {
@@ -43,7 +43,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndNullArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithSumAndEmptyArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of empty integer array",
 		Query: `query {
@@ -70,7 +70,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndEmptyArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithSumAndPopulatedArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of integer array",
 		Query: `query {
@@ -97,7 +97,7 @@ func TestQueryInlineIntegerArrayWithsWithSumAndPopulatedArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithSumAndNullArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of nil float array",
 		Query: `query {
@@ -124,7 +124,7 @@ func TestQueryInlineFloatArrayWithsWithSumAndNullArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithSumAndEmptyArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of empty float array",
 		Query: `query {
@@ -151,7 +151,7 @@ func TestQueryInlineFloatArrayWithsWithSumAndEmptyArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithSumAndPopulatedArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of float array",
 		Query: `query {

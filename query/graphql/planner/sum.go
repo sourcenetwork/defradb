@@ -223,10 +223,24 @@ func (n *sumNode) Next() (bool, error) {
 			}
 		case []int64:
 			for _, childItem := range childCollection {
+				passed, err := mapper.RunFilter(childItem, source.Filter)
+				if err != nil {
+					return false, err
+				}
+				if !passed {
+					continue
+				}
 				sum += float64(childItem)
 			}
 		case []float64:
 			for _, childItem := range childCollection {
+				passed, err := mapper.RunFilter(childItem, source.Filter)
+				if err != nil {
+					return false, err
+				}
+				if !passed {
+					continue
+				}
 				sum += childItem
 			}
 		}

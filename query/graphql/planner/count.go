@@ -101,9 +101,53 @@ func (n *countNode) Next() (bool, error) {
 			length := v.Len()
 
 			if source.Filter != nil {
-				docArray, isDocArray := property.([]core.Doc)
-				if isDocArray {
-					for _, doc := range docArray {
+				switch array := property.(type) {
+				case []core.Doc:
+					for _, doc := range array {
+						passed, err := mapper.RunFilter(doc, source.Filter)
+						if err != nil {
+							return false, err
+						}
+						if passed {
+							count += 1
+						}
+					}
+
+				case []bool:
+					for _, doc := range array {
+						passed, err := mapper.RunFilter(doc, source.Filter)
+						if err != nil {
+							return false, err
+						}
+						if passed {
+							count += 1
+						}
+					}
+
+				case []int64:
+					for _, doc := range array {
+						passed, err := mapper.RunFilter(doc, source.Filter)
+						if err != nil {
+							return false, err
+						}
+						if passed {
+							count += 1
+						}
+					}
+
+				case []float64:
+					for _, doc := range array {
+						passed, err := mapper.RunFilter(doc, source.Filter)
+						if err != nil {
+							return false, err
+						}
+						if passed {
+							count += 1
+						}
+					}
+
+				case []string:
+					for _, doc := range array {
 						passed, err := mapper.RunFilter(doc, source.Filter)
 						if err != nil {
 							return false, err

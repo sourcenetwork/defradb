@@ -146,11 +146,15 @@ func defaultTypes() []gql.Type {
 
 		// Filter scalar blocks
 		booleanOperatorBlock,
+		notNullBooleanOperatorBlock,
 		dateTimeOperatorBlock,
 		floatOperatorBlock,
+		notNullFloatOperatorBlock,
 		idOperatorBlock,
 		intOperatorBlock,
+		notNullIntOperatorBlock,
 		stringOperatorBlock,
+		notNullstringOperatorBlock,
 
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
