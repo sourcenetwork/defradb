@@ -29,7 +29,7 @@ var bookAuthorGQLSchema = (`
 		name: String
 		author: author
 		pages: Int
-		chapterPages: [Int]
+		chapterPages: [Int!]
 	}
 
 	type author {

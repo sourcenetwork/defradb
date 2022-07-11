@@ -60,6 +60,12 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 		},
 	}
 
+	if testUtils.IsDetectingDbChanges() {
+		// The `assert.Panics` call will falsely fail if this test is executed during
+		// a detect changes test run
+		t.Skip()
+	}
+
 	assert.Panics(t, func() {
 		executeTestCase(t, test)
 	})
