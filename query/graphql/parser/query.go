@@ -208,7 +208,8 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 
 	// parse arguments
 	for _, argument := range field.Arguments {
-		prop, astValue := getArgumentKeyValue(field, argument)
+		prop := argument.Name.Value
+		astValue := argument.Value
 
 		// parse filter
 		if prop == parserTypes.FilterClause {
@@ -300,22 +301,6 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 	}
 
 	return slct, err
-}
-
-// getArgumentKeyValue returns the relevant arguement name and value for the given field-argument
-// Note: this function will likely need some rework when adding more aggregate options (e.g. limit)
-func getArgumentKeyValue(field *ast.Field, argument *ast.Argument) (string, ast.Value) {
-	if _, isAggregate := parserTypes.Aggregates[field.Name.Value]; isAggregate {
-		switch innerProps := argument.Value.(type) {
-		case *ast.ObjectValue:
-			for _, innerV := range innerProps.Fields {
-				if innerV.Name.Value == parserTypes.FilterClause {
-					return parserTypes.FilterClause, innerV.Value
-				}
-			}
-		}
-	}
-	return argument.Name.Value, argument.Value
 }
 
 func getFieldAlias(field *ast.Field) string {

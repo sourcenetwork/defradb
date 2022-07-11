@@ -125,6 +125,14 @@ func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if _, isAgg := parserTypes.Aggregates[n.Name]; isAgg {
+			// If this Select is an aggregate, then it must be a top-level
+			// aggregate and we need to resolve it within the context of a
+			// top-level node.
+			return p.Top(m)
+		}
+
 		return p.Select(m)
 	case *mapper.Select:
 		return p.Select(n)
@@ -222,6 +230,23 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 
 	case *deleteNode:
 		return p.expandPlan(n.source, parentPlan)
+
+	case *topLevelNode:
+		for _, child := range n.children {
+			switch c := child.(type) {
+			case *selectTopNode:
+				// We only care about expanding the child source here, it is assumed that the parent source
+				// is expanded elsewhere/already
+				err := p.expandPlan(child, parentPlan)
+				if err != nil {
+					return err
+				}
+			case aggregateNode:
+				// top-level aggregates use the top-level node as a source
+				c.SetPlan(n)
+			}
+		}
+		return nil
 
 	default:
 		return nil

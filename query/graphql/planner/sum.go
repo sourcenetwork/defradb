@@ -33,13 +33,12 @@ type sumNode struct {
 }
 
 func (p *Planner) Sum(
-	sourceInfo *sourceInfo,
 	field *mapper.Aggregate,
 	parent *mapper.Select,
 ) (*sumNode, error) {
 	isFloat := false
 	for _, target := range field.AggregateTargets {
-		isTargetFloat, err := p.isValueFloat(&sourceInfo.collectionDescription, parent, &target)
+		isTargetFloat, err := p.isValueFloat(parent, &target)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +60,6 @@ func (p *Planner) Sum(
 
 // Returns true if the value to be summed is a float, otherwise false.
 func (p *Planner) isValueFloat(
-	parentDescription *client.CollectionDescription,
 	parent *mapper.Select,
 	source *mapper.AggregateTarget,
 ) (bool, error) {
@@ -72,7 +70,11 @@ func (p *Planner) isValueFloat(
 	}
 
 	if !source.ChildTarget.HasValue {
-		// If path length is one - we are summing an inline array
+		parentDescription, err := p.getCollectionDesc(parent.CollectionName)
+		if err != nil {
+			return false, err
+		}
+
 		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
 		if !fieldDescriptionFound {
 			return false, fmt.Errorf(
@@ -95,11 +97,6 @@ func (p *Planner) isValueFloat(
 		return false, fmt.Errorf("Expected child select but none was found")
 	}
 
-	childCollectionDescription, err := p.getCollectionDesc(child.CollectionName)
-	if err != nil {
-		return false, err
-	}
-
 	if _, isAggregate := parserTypes.Aggregates[source.ChildTarget.Name]; isAggregate {
 		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
 		// the root field in order to determine the value type.  This is recursive to allow handling
@@ -108,7 +105,6 @@ func (p *Planner) isValueFloat(
 
 		for _, aggregateTarget := range sourceField.AggregateTargets {
 			isFloat, err := p.isValueFloat(
-				&childCollectionDescription,
 				child,
 				&aggregateTarget,
 			)
@@ -122,6 +118,11 @@ func (p *Planner) isValueFloat(
 			}
 		}
 		return false, nil
+	}
+
+	childCollectionDescription, err := p.getCollectionDesc(child.CollectionName)
+	if err != nil {
+		return false, err
 	}
 
 	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
