@@ -100,7 +100,7 @@ func (n *countNode) Next() (bool, error) {
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 			length := v.Len()
 
-			if count > 0 && source.Filter != nil {
+			if source.Filter != nil {
 				docArray, isDocArray := property.([]core.Doc)
 				if isDocArray {
 					for _, doc := range docArray {
