@@ -103,7 +103,6 @@ func (n *orderNode) Explain() (map[string]interface{}, error) {
 	orderings := []map[string]interface{}{}
 
 	for _, element := range n.ordering {
-
 		// Build the list containing the corresponding names of all the indexes.
 		fieldNames := []string{}
 		for _, fieldIndex := range element.FieldIndexes {
