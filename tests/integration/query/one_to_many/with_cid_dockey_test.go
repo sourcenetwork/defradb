@@ -25,7 +25,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
 		Query: `query {
 					book (
-							cid: "bafybeihtn2xjbjjqxeqp2uhwhvk3tmjfkaf2qtfqh5w5q3ews7ax2dc75a",
+							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
 						) {
 						name
