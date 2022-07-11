@@ -42,7 +42,11 @@ client\:add-schema:
 
 .PHONY: deps\:lint
 deps\:lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+.PHONY: deps\:test
+deps\:test:
+	go install gotest.tools/gotestsum@latest
 
 .PHONY: deps\:coverage
 deps\:coverage:
@@ -51,10 +55,6 @@ deps\:coverage:
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
-
-.PHONY: deps\:golines
-deps\:golines:
-	go install github.com/segmentio/golines@latest
 
 .PHONY: deps\:chglog
 deps\:chglog:
@@ -70,8 +70,8 @@ deps\:ci:
 
 .PHONY: deps
 deps:
-	@$(MAKE) deps:lint && $(MAKE) deps:coverage && $(MAKE) deps:bench && $(MAKE) deps:golines && \
-	$(MAKE) deps:chglog && $(MAKE) deps:modules && $(MAKE) deps:ci
+	@$(MAKE) deps:lint && $(MAKE) deps:coverage && $(MAKE) deps:bench && $(MAKE) deps:chglog && \
+	$(MAKE) deps:modules && $(MAKE) deps:ci && $(MAKE) deps:test
 
 .PHONY: tidy
 tidy:
@@ -88,7 +88,19 @@ clean\:test:
 
 .PHONY: test
 test:
+	gotestsum --format pkgname -- ./... -race -shuffle=on
+
+.PHONY: test\:go
+test\:go:
 	go test ./... -race -shuffle=on
+
+.PHONY: test\:verbose
+test\:verbose:
+	gotestsum --format testname --junitfile /tmp/defradb-dev/test.xml -- ./... -race -shuffle=on
+
+.PHONY: test\:watch
+test\:watch:
+	gotestsum --watch -- ./...
 
 .PHONY: test\:clean
 test\:clean:
@@ -110,12 +122,13 @@ test\:coverage-full:
 	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
 
 # Usage: make test:coverage-html path="{pathToPackage}"
-.PHONY: test\:coverage-html
+# Example: make test:coverage-html path="./api/..."
+# .PHONY: test\:coverage-html
 test\:coverage-html:
 ifeq ($(path),)
-	go test ./... -v -race -coverprofile=coverage.out
+	gotestsum -- ./... -v -race -shuffle=on -coverprofile=coverage.out
 else 
-	go test $(path) -v -race -coverprofile=coverage.out
+	gotestsum -- $(path) -v -race -shuffle=on -coverprofile=coverage.out
 endif
 	go tool cover -html=coverage.out
 	rm ./coverage.out
@@ -123,12 +136,12 @@ endif
 # This only covers how much of the package is tested by itself (unit test).
 .PHONY: test\:coverage-quick
 test\:coverage-quick:
-	go test ./... -race -coverprofile=coverage-quick.txt -covermode=atomic
+	gotestsum -- ./... -race -shuffle=on -coverprofile=coverage-quick.txt -covermode=atomic
 	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
 
 .PHONY: test\:changes
 test\:changes:
-	env DEFRA_DETECT_DATABASE_CHANGES=true go test ./... -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum --junitfile /tmp/defradb-dev/changes.xml -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:

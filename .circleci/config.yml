@@ -36,8 +36,7 @@ commands:
             - run:
                 name: Run tests
                 command: |
-                  mkdir -p /tmp/test-reports
-                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race -shuffle=on
+                  make test:verbose
                 environment:
                   DEFRA_BADGER_MEMORY: true
                   DEFRA_BADGER_FILE: true
@@ -48,15 +47,14 @@ commands:
             not: << parameters.no_change_detection >>
           steps:
             - run:
-                name: Run tests and detect
+                name: Run tests with change detection
                 command: |
-                  mkdir -p /tmp/test-reports
-                  gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -p 1
+                  make test:changes
                 environment:
                   DEFRA_DETECT_DATABASE_CHANGES: true
 
       - store_test_results:
-          path: /tmp/test-reports
+          path: "/tmp/defradb-dev"
 
 
 #============================================================================================================[ JOBS ]
