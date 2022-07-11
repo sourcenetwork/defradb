@@ -21,6 +21,7 @@ type dataMap = map[string]interface{}
 var userCollectionGQLSchema = (`
 	type users {
 		Name: String
+		Email: String
 		Age: Int
 		HeightM: Float
 		Verified: Boolean
