@@ -417,7 +417,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 	limit := parsed.Limit
-	order := parsed.OrderBy
+	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
 
 	aggregates, err := s.initSource()
@@ -435,7 +435,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		return nil, err
 	}
 
-	orderPlan, err := p.OrderBy(parsed, order)
+	orderPlan, err := p.OrderBy(parsed, orderBy)
 	if err != nil {
 		return nil, err
 	}
