@@ -62,12 +62,16 @@ var (
 
 func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 	const (
-		typeID      string = "ID"
-		typeBoolean string = "Boolean"
-		typeInt     string = "Int"
-		typeFloat   string = "Float"
-		typeDate    string = "Date"
-		typeString  string = "String"
+		typeID             string = "ID"
+		typeBoolean        string = "Boolean"
+		typeNotNullBoolean string = "Boolean!"
+		typeInt            string = "Int"
+		typeNotNullInt     string = "Int!"
+		typeFloat          string = "Float"
+		typeNotNullFloat   string = "Float!"
+		typeDate           string = "Date"
+		typeString         string = "String"
+		typeNotNullString  string = "String!"
 	)
 
 	switch v := t.(type) {
@@ -89,15 +93,15 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 	case *gql.Object:
 		return client.FieldKind_FOREIGN_OBJECT
 	case *gql.List:
-		if scalar, isScalar := v.OfType.(*gql.Scalar); isScalar {
-			switch scalar.Name() {
-			case typeBoolean:
+		if notNull, isNotNull := v.OfType.(*gql.NonNull); isNotNull {
+			switch notNull.Name() {
+			case typeNotNullBoolean:
 				return client.FieldKind_BOOL_ARRAY
-			case typeInt:
+			case typeNotNullInt:
 				return client.FieldKind_INT_ARRAY
-			case typeFloat:
+			case typeNotNullFloat:
 				return client.FieldKind_FLOAT_ARRAY
-			case typeString:
+			case typeNotNullString:
 				return client.FieldKind_STRING_ARRAY
 			}
 		}

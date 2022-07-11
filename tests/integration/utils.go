@@ -164,6 +164,10 @@ func init() {
 	}
 }
 
+func IsDetectingDbChanges() bool {
+	return detectDbChanges
+}
+
 func NewBadgerMemoryDB(ctx context.Context) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)

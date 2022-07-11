@@ -603,7 +603,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*g
 		}
 
 		var inputObjectName string
-		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
 			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
@@ -642,7 +642,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[strin
 		}
 
 		var inputObjectName string
-		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
 			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
@@ -680,7 +680,7 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			continue
 		}
 
-		if listType.OfType == gql.Float || listType.OfType == gql.Int {
+		if isNumericArray(listType) {
 			// If it is an inline scalar array then we require an empty
 			//  object as an argument due to the lack of union input types
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
@@ -726,7 +726,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 
 				if list, isList := field.Type.(*gql.List); isList {
 					hasSumableFields = true
-					if list.OfType == gql.Float || list.OfType == gql.Int {
+					if isNumericArray(list) {
 						fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					} else {
 						// If it is a related list, we need to add count in here so that we can sum it
@@ -1145,6 +1145,14 @@ func (g *Generator) Reset() {
 
 func genTypeName(obj gql.Type, name string) string {
 	return fmt.Sprintf("%s%s", obj.Name(), name)
+}
+
+// isNumericArray returns true if the given list is a list of numerical values.
+func isNumericArray(list *gql.List) bool {
+	// We have to compare the names here, as the gql lib we use
+	// does not have an easier way to compare non-nullable types
+	return list.OfType.Name() == gql.NewNonNull(gql.Float).Name() ||
+		list.OfType.Name() == gql.NewNonNull(gql.Int).Name()
 }
 
 /* Example
