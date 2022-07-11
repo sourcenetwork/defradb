@@ -93,7 +93,7 @@ func toSelect(
 		Targetable:      toTargetable(thisIndex, parsed, mapping),
 		DocumentMapping: *mapping,
 		Cid:             parsed.CID,
-		CollectionName:  desc.Name,
+		CollectionName:  collectionName,
 		Fields:          fields,
 	}, nil
 }
@@ -365,6 +365,24 @@ func getRequestables(
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	// If this parser.Select is itself an aggregate, we need to append the
+	// relevent info here as if it was a field of its own (due to a quirk of
+	// the parser package).
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		index := mapping.GetNextIndex()
+		aggregateReq, err := getAggregateRequests(index, parsed)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+			Index: index,
+			Key:   parsed.Alias,
+		})
+		mapping.Add(index, parsed.Name)
+		aggregates = append(aggregates, &aggregateReq)
+	}
+
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
 		case *parser.Field:
@@ -390,24 +408,12 @@ func getRequestables(
 			// aggregates have been requested and their targets here, before finalizing
 			// their evaluation later.
 			if _, isAggregate := parserTypes.Aggregates[f.Name]; isAggregate {
-				aggregateTargets, err := getAggregateSources(f)
+				aggregateRequest, err := getAggregateRequests(index, f)
 				if err != nil {
 					return nil, nil, err
 				}
 
-				if len(aggregateTargets) == 0 {
-					return nil, nil, fmt.Errorf(
-						"Aggregate must be provided with a property to aggregate.",
-					)
-				}
-
-				aggregates = append(aggregates, &aggregateRequest{
-					field: Field{
-						Index: index,
-						Name:  f.Name,
-					},
-					targets: aggregateTargets,
-				})
+				aggregates = append(aggregates, &aggregateRequest)
 			} else {
 				innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
 				if err != nil {
@@ -433,6 +439,27 @@ func getRequestables(
 	return
 }
 
+func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest, error) {
+	aggregateTargets, err := getAggregateSources(aggregate)
+	if err != nil {
+		return aggregateRequest{}, err
+	}
+
+	if len(aggregateTargets) == 0 {
+		return aggregateRequest{}, fmt.Errorf(
+			"Aggregate must be provided with a property to aggregate.",
+		)
+	}
+
+	return aggregateRequest{
+		field: Field{
+			Index: index,
+			Name:  aggregate.Name,
+		},
+		targets: aggregateTargets,
+	}, nil
+}
+
 // getCollectionName returns the name of the parsed collection.  This may be empty
 // if this is a commit request.
 func getCollectionName(
@@ -440,6 +467,11 @@ func getCollectionName(
 	parsed *parser.Select,
 	parentCollectionName string,
 ) (string, error) {
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		// This string is not used or referenced, its value is only there to aid debugging
+		return "_topLevel", nil
+	}
+
 	if parsed.Name == parserTypes.GroupFieldName {
 		return parentCollectionName, nil
 	} else if parsed.Root == parserTypes.CommitSelection {
@@ -470,6 +502,12 @@ func getTopLevelInfo(
 	collectionName string,
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
+
+	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+		// If this is a (top-level) aggregate, then it will have no collection
+		// description, and no top-level fields, so we return an empty mapping only
+		return mapping, &client.CollectionDescription{}, nil
+	}
 
 	if parsed.Root != parserTypes.CommitSelection {
 		mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)

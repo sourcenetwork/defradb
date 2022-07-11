@@ -30,6 +30,7 @@ var (
 	_ planNode = (*selectTopNode)(nil)
 	_ planNode = (*orderNode)(nil)
 	_ planNode = (*sumNode)(nil)
+	_ planNode = (*topLevelNode)(nil)
 	_ planNode = (*typeIndexJoin)(nil)
 	_ planNode = (*typeJoinMany)(nil)
 	_ planNode = (*typeJoinOne)(nil)
