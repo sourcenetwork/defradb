@@ -828,7 +828,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 
 // RunFilter runs the given filter expression
 // using the document, and evaluates.
-func RunFilter(doc core.Doc, filter *Filter) (bool, error) {
+func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 	if filter == nil {
 		return true, nil
 	}
