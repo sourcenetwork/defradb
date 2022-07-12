@@ -21,18 +21,20 @@ type explainablePlanNode interface {
 
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
 var (
-	_ explainablePlanNode = (*createNode)(nil)
-	_ explainablePlanNode = (*deleteNode)(nil)
-	_ explainablePlanNode = (*scanNode)(nil)
-	_ explainablePlanNode = (*selectNode)(nil)
-	_ explainablePlanNode = (*selectTopNode)(nil)
-	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*averageNode)(nil)
 	_ explainablePlanNode = (*commitSelectNode)(nil)
 	_ explainablePlanNode = (*countNode)(nil)
+	_ explainablePlanNode = (*createNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)
+	_ explainablePlanNode = (*deleteNode)(nil)
+	_ explainablePlanNode = (*hardLimitNode)(nil)
 	_ explainablePlanNode = (*orderNode)(nil)
+	_ explainablePlanNode = (*renderLimitNode)(nil)
+	_ explainablePlanNode = (*scanNode)(nil)
+	_ explainablePlanNode = (*selectNode)(nil)
+	_ explainablePlanNode = (*selectTopNode)(nil)
 	_ explainablePlanNode = (*sumNode)(nil)
+	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
 )
 
@@ -44,6 +46,8 @@ const (
 	fieldNameLabel      = "fieldName"
 	filterLabel         = "filter"
 	idsLabel            = "ids"
+	limitLabel          = "limit"
+	offsetLabel         = "offset"
 	sourcesLabel        = "sources"
 	spansLabel          = "spans"
 )

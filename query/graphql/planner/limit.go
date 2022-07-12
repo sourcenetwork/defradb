@@ -81,6 +81,13 @@ func (n *hardLimitNode) Next() (bool, error) {
 
 func (n *hardLimitNode) Source() planNode { return n.plan }
 
+func (n *hardLimitNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		limitLabel:  n.limit,
+		offsetLabel: n.offset,
+	}, nil
+}
+
 // limit the results, flagging any records outside the bounds of limit/offset with
 // with a 'hidden' flag blocking rendering.  Used if consumers of the results require
 // the full dataset.
@@ -139,3 +146,10 @@ func (n *renderLimitNode) Next() (bool, error) {
 }
 
 func (n *renderLimitNode) Source() planNode { return n.plan }
+
+func (n *renderLimitNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		limitLabel:  n.limit,
+		offsetLabel: n.offset,
+	}, nil
+}
