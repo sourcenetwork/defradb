@@ -798,27 +798,27 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 	}
 
 	conditions := make([]OrderCondition, len(source.Conditions))
-	for _, condition := range source.Conditions {
+	for conditionIndex, condition := range source.Conditions {
 		fields := strings.Split(condition.Field, ".")
 		fieldIndexes := make([]int, len(fields))
 		currentMapping := mapping
-		for i, field := range fields {
+		for fieldIndex, field := range fields {
 			// If there are multiple properties of the same name we can just take the first as
 			// we have no other reasonable way of identifying which property they mean if multiple
 			// consumer specified requestables are available.  Aggregate dependencies should not
 			// impact this as they are added after selects.
-			fieldIndex := currentMapping.FirstIndexOfName(field)
-			fieldIndexes[i] = fieldIndex
-			if i != len(fields)-1 {
+			firstFieldIndex := currentMapping.FirstIndexOfName(field)
+			fieldIndexes[fieldIndex] = firstFieldIndex
+			if fieldIndex != len(fields)-1 {
 				// no need to do this for the last (and will panic)
-				currentMapping = &currentMapping.ChildMappings[fieldIndex]
+				currentMapping = &currentMapping.ChildMappings[firstFieldIndex]
 			}
 		}
 
-		conditions = append(conditions, OrderCondition{
+		conditions[conditionIndex] = OrderCondition{
 			FieldIndexes: fieldIndexes,
 			Direction:    SortDirection(condition.Direction),
-		})
+		}
 	}
 
 	return &OrderBy{
