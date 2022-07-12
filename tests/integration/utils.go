@@ -19,6 +19,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -43,6 +44,19 @@ const (
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
 	documentationDirectoryName = "data_format_changes"
 )
+
+// The integration tests open many files. This increases the limits on the number of open files of
+// the process to fix this issue. This is done by default in Go 1.19.
+func init() {
+	var lim syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &lim); err == nil && lim.Cur != lim.Max {
+		lim.Cur = lim.Max
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &lim)
+		if err != nil {
+			log.ErrorE(context.Background(), "error setting rlimit", err)
+		}
+	}
+}
 
 var (
 	log            = logging.MustNewLogger("defra.tests.integration")
