@@ -106,13 +106,6 @@ type OrderCondition struct {
 	Direction SortDirection
 }
 
-func (oc OrderCondition) IsEmpty() bool {
-	if oc.Direction == "" && len(oc.FieldIndexes) == 0 {
-		return true
-	}
-	return false
-}
-
 type OrderBy struct {
 	Conditions []OrderCondition
 }
