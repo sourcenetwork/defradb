@@ -98,8 +98,6 @@ func (n *countNode) Next() (bool, error) {
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			length := v.Len()
-
 			if source.Filter != nil {
 				switch array := property.(type) {
 				case []core.Doc:
@@ -158,7 +156,7 @@ func (n *countNode) Next() (bool, error) {
 					}
 				}
 			} else {
-				count = count + length
+				count = count + v.Len()
 			}
 		}
 	}
