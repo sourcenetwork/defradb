@@ -11,66 +11,69 @@
 package cli
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/spf13/cobra"
 )
 
-// pingCmd represents the ping command
 var pingCmd = &cobra.Command{
 	Use:   "ping",
 	Short: "Ping defradb to test an API connection",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-
-		log.Info(ctx, "Sending ping...")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		stdout, err := os.Stdout.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat stdout: %w", err)
+		}
+		if !isFileInfoPipe(stdout) {
+			log.FeedbackInfo(cmd.Context(), "Sending ping...")
+		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PingPath)
 		if err != nil {
-			log.ErrorE(ctx, "Join paths failed", err)
-			return
+			return fmt.Errorf("failed to join endpoint: %w", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to send ping: %w", err)
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "Response body closing failed", err)
+				log.ErrorE(cmd.Context(), "Response body closing failed", err)
 			}
 		}()
 
-		buf, err := io.ReadAll(res.Body)
+		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to read response body: %w", err)
 		}
-		if string(buf) == "pong" {
-			log.Info(ctx, "Success!")
+
+		if isFileInfoPipe(stdout) {
+			cmd.Println(string(response))
 		} else {
-			log.ErrorE(ctx, "Unexpected result", fmt.Errorf(string(buf)))
+			type pingResponse struct {
+				Data struct {
+					Response string `json:"response"`
+				} `json:"data"`
+			}
+			r := pingResponse{}
+			err = json.Unmarshal(response, &r)
+			if err != nil {
+				return fmt.Errorf("parsing of response failed: %w", err)
+			}
+			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}
+		return nil
 	},
 }
 
 func init() {
 	clientCmd.AddCommand(pingCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// pingCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// pingCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

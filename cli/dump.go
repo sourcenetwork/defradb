@@ -11,7 +11,7 @@
 package cli
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,55 +20,50 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// dumpCmd represents the dump command
 var dumpCmd = &cobra.Command{
 	Use:   "dump",
-	Short: "Dumps the state of the entire database (server side)",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
+	Short: "Dumps the state of the entire database (server-side)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		log.FeedbackInfo(cmd.Context(), "Requesting the database to dump its state, server-side...")
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.DumpPath)
 		if err != nil {
-			log.ErrorE(ctx, "Join paths failed", err)
-			return
+			return fmt.Errorf("failed to join endpoint: %w", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed dump request: %w", err)
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "Response body closing failed", err)
+				log.ErrorE(cmd.Context(), "Response body closing failed", err)
 			}
 		}()
 
-		buf, err := io.ReadAll(res.Body)
+		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to read response body: %w", err)
 		}
-		if string(buf) == "ok" {
-			log.Info(ctx, "Success!")
-		} else {
-			log.ErrorE(ctx, "Unexpected result: ", fmt.Errorf(string(buf)))
+
+		// dumpResponse follows structure of HTTP API's response
+		type dumpResponse struct {
+			Data struct {
+				Response string `json:"response"`
+			} `json:"data"`
 		}
+		r := dumpResponse{}
+		err = json.Unmarshal(response, &r)
+		if err != nil {
+			return fmt.Errorf("failed parsing of response: %w", err)
+		}
+		log.FeedbackInfo(cmd.Context(), r.Data.Response)
+		return nil
 	},
 }
 
 func init() {
 	clientCmd.AddCommand(dumpCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// dumpCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// dumpCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

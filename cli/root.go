@@ -31,12 +31,13 @@ var (
 var RootCmd = rootCmd
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		log.FatalE(context.Background(), "Execution of root command failed", err)
+	ctx := context.Background()
+	err := rootCmd.ExecuteContext(ctx)
+	if err != nil {
+		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
 	}
 }
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "defradb",
 	Short: "DefraDB Edge Database",
@@ -144,4 +145,5 @@ func init() {
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind api.address", err)
 	}
+	rootCmd.SilenceErrors = true
 }

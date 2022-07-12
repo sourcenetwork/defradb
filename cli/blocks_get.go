@@ -11,65 +11,71 @@
 package cli
 
 import (
-	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 )
 
-// getCmd represents the get command
 var getCmd = &cobra.Command{
-	Use:   "get",
-	Short: "Get a block by its CID from the blockstore",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-
+	Use:   "get [CID]",
+	Short: "Get a block by its CID from the blockstore.",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
-			log.Fatal(ctx, "Needs a single CID")
+			return fmt.Errorf("get requires a CID argument")
 		}
 		cid := args[0]
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.BlocksPath, cid)
 		if err != nil {
-			log.ErrorE(ctx, "Join paths failed", err)
-			return
+			return fmt.Errorf("failed to join endpoint: %w", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to send get request: %w", err)
 		}
 
 		defer func() {
 			err = res.Body.Close()
 			if err != nil {
-				log.ErrorE(ctx, "Response body closing failed", err)
+				log.ErrorE(cmd.Context(), "Response body closing failed", err)
 			}
 		}()
 
-		buf, err := io.ReadAll(res.Body)
+		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.ErrorE(ctx, "Request failed", err)
-			return
+			return fmt.Errorf("failed to read response body: %w", err)
 		}
-		log.Debug(ctx, "", logging.NewKV("Block", string(buf)))
+
+		stdout, err := os.Stdout.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat stdout: %w", err)
+		}
+		if isFileInfoPipe(stdout) {
+			cmd.Println(string(response))
+		} else {
+			graphlErr, err := hasGraphQLErrors(response)
+			if err != nil {
+				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+			}
+			indentedResult, err := indentJSON(response)
+			if err != nil {
+				return fmt.Errorf("failed to pretty print response: %w", err)
+			}
+			if graphlErr {
+				log.FeedbackError(cmd.Context(), indentedResult)
+			} else {
+				log.FeedbackInfo(cmd.Context(), indentedResult)
+			}
+		}
+		return nil
 	},
 }
 
 func init() {
 	blocksCmd.AddCommand(getCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
