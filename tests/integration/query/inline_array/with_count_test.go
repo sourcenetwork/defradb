@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, count of nil integer array",
 		Query: `query {
@@ -43,7 +43,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndNullArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, count of empty integer array",
 		Query: `query {
@@ -70,7 +70,7 @@ func TestQueryInlineIntegerArrayWithsWithCountAndEmptyArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithCountAndPopulatedArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, count of integer array",
 		Query: `query {

@@ -134,12 +134,15 @@ func resolveAggregates(
 				fieldDesc, isField := desc.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
 					// If the hostExternalName matches a non-object field
-					// we can just take it as a field-requestable as only
-					// objects are targetable-requestables.
+					// we don't have to search for it and can just construct the
+					// targeting info here.
 					hasHost = true
-					host = &Field{
-						Index: int(fieldDesc.ID),
-						Name:  target.hostExternalName,
+					host = &Targetable{
+						Field: Field{
+							Index: int(fieldDesc.ID),
+							Name:  target.hostExternalName,
+						},
+						Filter: ToFilter(target.filter, mapping),
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
@@ -828,7 +831,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 
 // RunFilter runs the given filter expression
 // using the document, and evaluates.
-func RunFilter(doc core.Doc, filter *Filter) (bool, error) {
+func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 	if filter == nil {
 		return true, nil
 	}

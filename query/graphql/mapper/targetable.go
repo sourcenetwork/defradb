@@ -151,3 +151,7 @@ func (t *Targetable) cloneTo(index int) *Targetable {
 		OrderBy: t.OrderBy,
 	}
 }
+
+func (t *Targetable) AsTargetable() (*Targetable, bool) {
+	return t, true
+}
