@@ -291,15 +291,28 @@ func (g *Generator) createExpandedFieldAggregate(
 ) {
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
-		var targetType string
+		var filterTypeName string
 		if target == parserTypes.GroupFieldName {
-			targetType = obj.Name()
+			filterTypeName = obj.Name() + "FilterArg"
 		} else {
-			targetType = obj.Fields()[target].Type.Name()
+			filterType := obj.Fields()[target].Type
+			if list, isList := filterType.(*gql.List); isList && gql.IsLeafType(list.OfType) {
+				// If it is a list of leaf types - the filter is just the set of OperatorBlocks
+				// that are supported by this type - there can be no field selections.
+				if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
+					// GQL does not support '!' in type names, and so we have to manipulate the
+					// underlying name like this if it is a nullable type.
+					filterTypeName = fmt.Sprintf("NotNull%sOperatorBlock", notNull.OfType.Name())
+				} else {
+					filterTypeName = genTypeName(list.OfType, "OperatorBlock")
+				}
+			} else {
+				filterTypeName = filterType.Name() + "FilterArg"
+			}
 		}
 
 		expandedField := &gql.InputObjectFieldConfig{
-			Type: g.manager.schema.TypeMap()[targetType+"FilterArg"],
+			Type: g.manager.schema.TypeMap()[filterTypeName],
 		}
 		aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 	}

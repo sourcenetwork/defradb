@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithsWithAverageAndNullArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of nil integer array",
 		Query: `query {
@@ -43,7 +43,7 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndNullArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithAverageAndEmptyArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of empty integer array",
 		Query: `query {
@@ -70,7 +70,7 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndEmptyArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithAverageAndZeroArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of zero integer array",
 		Query: `query {
@@ -97,7 +97,7 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndZeroArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineIntegerArrayWithsWithAverageAndPopulatedArray(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of populated integer array",
 		Query: `query {
@@ -124,7 +124,7 @@ func TestQueryInlineIntegerArrayWithsWithAverageAndPopulatedArray(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithAverageAndNullArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of nil float array",
 		Query: `query {
@@ -151,7 +151,7 @@ func TestQueryInlineFloatArrayWithsWithAverageAndNullArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithAverageAndEmptyArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of empty float array",
 		Query: `query {
@@ -178,7 +178,7 @@ func TestQueryInlineFloatArrayWithsWithAverageAndEmptyArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithAverageAndZeroArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of zero float array",
 		Query: `query {
@@ -205,7 +205,7 @@ func TestQueryInlineFloatArrayWithsWithAverageAndZeroArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineFloatArrayWithsWithAverageAndPopulatedArray(t *testing.T) {
+func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, average of populated float array",
 		Query: `query {
