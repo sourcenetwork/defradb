@@ -294,8 +294,7 @@ func ExecuteQueryTestCase(
 	assert.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
-		// We log with level warn to highlight this item
-		log.Warn(ctx, test.Description, logging.NewKV("Database", dbi.name))
+		log.Info(ctx, test.Description, logging.NewKV("Database", dbi.name))
 
 		if detectDbChanges {
 			if setupOnly {
@@ -639,8 +638,7 @@ func assertQueryResults(
 	}
 	resultantData := result.Data.([]map[string]interface{})
 
-	// We log with level warn to highlight this item
-	log.Warn(ctx, "", logging.NewKV("QueryResults", result.Data))
+	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
