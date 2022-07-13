@@ -13,7 +13,7 @@ package update
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
 var userCollectionGQLSchema = (`
@@ -25,6 +25,6 @@ var userCollectionGQLSchema = (`
 	}
 `)
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+func executeTestCase(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, test)
 }

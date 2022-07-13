@@ -15,11 +15,11 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSaveErrorsGivenUnknownField(t *testing.T) {
+func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
@@ -43,25 +43,20 @@ func TestSaveErrorsGivenUnknownField(t *testing.T) {
 		assert.Fail(t, err.Error())
 	}
 
-	test := testUtils.QueryTestCase{
-		Description: "Simple query with no filter",
-		Query: `query {
-					users {
-						_key
-						Name
-						Age
-					}
+	test := testUtils.TestCase{
+		Docs: map[string][]string{
+			"users": {
+				`{
+					"Name": "John",
+					"Age": 21
 				}`,
-		Docs: map[int][]string{
-			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+			},
 		},
-		UpdateFuncs: map[int]func(client.Collection) error{
-			0: func(c client.Collection) error {
-				return c.Save(context.Background(), doc)
+		CollectionCalls: map[string][]func(client.Collection) error{
+			"users": []func(c client.Collection) error{
+				func(c client.Collection) error {
+					return c.Save(context.Background(), doc)
+				},
 			},
 		},
 		ExpectedError: "The given field does not exist",
