@@ -540,7 +540,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		numBaseArgs[numArg.Name()] = numArg
 		topLevelNumericAggInputs[t.Name()] = numArg
 		// All base types need to be appended to the schema before calling genSumFieldConfig
-		err := g.manager.schema.AppendType(numArg)
+		err := g.appendIfNotExists(numArg)
 		if err != nil {
 			return err
 		}
@@ -548,7 +548,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		numericInlineArrayInputs := g.genNumericInlineArraySelectorObject(t)
 		for _, obj := range numericInlineArrayInputs {
 			numBaseArgs[obj.Name()] = obj
-			err := g.manager.schema.AppendType(obj)
+			err = g.appendIfNotExists(obj)
 			if err != nil {
 				return err
 			}
@@ -557,7 +557,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		obj := g.genCountBaseArgInputs(t)
 		numBaseArgs[obj.Name()] = obj
 		topLevelCountInputs[t.Name()] = obj
-		err = g.manager.schema.AppendType(obj)
+		err = g.appendIfNotExists(obj)
 		if err != nil {
 			return err
 		}
@@ -565,7 +565,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		countableInlineArrayInputs := g.genCountInlineArrayInputs(t)
 		for _, obj := range countableInlineArrayInputs {
 			numBaseArgs[obj.Name()] = obj
-			err := g.manager.schema.AppendType(obj)
+			err = g.appendIfNotExists(obj)
 			if err != nil {
 				return err
 			}
@@ -1264,6 +1264,16 @@ func (g *Generator) genTypeQueryableFieldList(
 	}
 
 	return field
+}
+
+func (g *Generator) appendIfNotExists(obj gql.Type) error {
+	if _, typeExists := g.manager.schema.TypeMap()[obj.Name()]; !typeExists {
+		err := g.manager.schema.AppendType(obj)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Reset the stateful data within a Generator.
