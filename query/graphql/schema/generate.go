@@ -444,20 +444,22 @@ func (g *Generator) buildTypesFromAST(
 
 					case *gql.List:
 						ltype := subobj.OfType
-						// register the relation
-						relName, err := getRelationshipName(field, objconf, ltype)
-						if err != nil {
-							return nil, err
-						}
+						if !gql.IsLeafType(ltype) {
+							// We don't want to do this for inline-arrays (IsLeafType)
+							relName, err := getRelationshipName(field, objconf, ltype)
+							if err != nil {
+								return nil, err
+							}
 
-						_, err = g.manager.Relations.RegisterSingle(
-							relName,
-							ltype.Name(),
-							fType.Name,
-							client.Relation_Type_MANY,
-						)
-						if err != nil {
-							log.ErrorE(ctx, "Error while registering single relation", err)
+							_, err = g.manager.Relations.RegisterSingle(
+								relName,
+								ltype.Name(),
+								fType.Name,
+								client.Relation_Type_MANY,
+							)
+							if err != nil {
+								log.ErrorE(ctx, "Error while registering single relation", err)
+							}
 						}
 					}
 
