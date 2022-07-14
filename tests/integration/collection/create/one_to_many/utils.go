@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package create
 
 import (
 	"testing"
@@ -16,15 +16,21 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-var userCollectionGQLSchema = (`
-	type users {
+var schema = (`
+	type book {
+		Name: String
+		Rating: Float
+		Author: author
+	}
+
+	type author {
 		Name: String
 		Age: Int
-		HeightM: Float
 		Verified: Boolean
+		Published: [book]
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, test)
+	testUtils.ExecuteQueryTestCase(t, schema, test)
 }
