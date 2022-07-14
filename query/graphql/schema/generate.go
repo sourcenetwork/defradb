@@ -132,9 +132,13 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	generatedFilterBaseArgs := make([]*gql.InputObject, len(g.typeDefs))
-	for i, t := range g.typeDefs {
-		generatedFilterBaseArgs[i] = g.genTypeFilterBaseArgInput(t)
+	generatedFilterBaseArgs := []*gql.InputObject{}
+	for _, t := range g.typeDefs {
+		generatedFilterBaseArg, hasFilter := g.tryGenTypeFilterBaseArgInput(t)
+		if !hasFilter {
+			continue
+		}
+		generatedFilterBaseArgs = append(generatedFilterBaseArgs, generatedFilterBaseArg)
 	}
 
 	for _, t := range generatedFilterBaseArgs {
@@ -1108,7 +1112,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 // input {Type.Name}FilterBaseArg { ... }
-func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject {
+func (g *Generator) tryGenTypeFilterBaseArgInput(obj *gql.Object) (*gql.InputObject, bool) {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterBaseArg"),
 	}
@@ -1124,8 +1128,12 @@ func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject 
 		}
 	}
 
+	if len(fields) == 0 {
+		return nil, false
+	}
+
 	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
+	return gql.NewInputObject(inputCfg), true
 }
 
 // query spec - sec N
