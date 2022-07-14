@@ -35,8 +35,6 @@ type Logger interface {
 	Debug(ctx context.Context, message string, keyvals ...KV)
 	// Info logs a message at info log level. Key-value pairs can be added.
 	Info(ctx context.Context, message string, keyvals ...KV)
-	// Warn logs a message at warn log level. Key-value pairs can be added.
-	Warn(ctx context.Context, message string, keyvals ...KV)
 	// Error logs a message at error log level. Key-value pairs can be added.
 	Error(ctx context.Context, message string, keyvals ...KV)
 	// ErrorErr logs a message and an error at error log level. Key-value pairs can be added.
@@ -45,12 +43,11 @@ type Logger interface {
 	Fatal(ctx context.Context, message string, keyvals ...KV)
 	// FatalE logs a message and an error at fatal log level. Key-value pairs can be added.
 	FatalE(ctx context.Context, message string, err error, keyvals ...KV)
-	// FeedbackDebug calls Debug and sends the message to stderr if logs are sent to a file.
-	FeedbackDebug(ctx context.Context, message string, keyvals ...KV)
+
+	// Feedback prefixed method ensure that messsages reach a user in case the logs are sent to a file.
+
 	// FeedbackInfo calls Info and sends the message to stderr if logs are sent to a file.
 	FeedbackInfo(ctx context.Context, message string, keyvals ...KV)
-	// FeedbackWarn calls Warn and sends the message to stderr if logs are sent to a file.
-	FeedbackWarn(ctx context.Context, message string, keyvals ...KV)
 	// FeedbackError calls Error and sends the message to stderr if logs are sent to a file.
 	FeedbackError(ctx context.Context, message string, keyvals ...KV)
 	// FeedbackErrorE calls ErrorE and sends the message to stderr if logs are sent to a file.
@@ -59,6 +56,7 @@ type Logger interface {
 	FeedbackFatal(ctx context.Context, message string, keyvals ...KV)
 	// FeedbackFatalE calls FatalE and sends the message to stderr if logs are sent to a file.
 	FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV)
+
 	// Flush flushes any buffered log entries.
 	Flush() error
 	// ApplyConfig updates the logger with a new config.

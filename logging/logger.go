@@ -55,13 +55,6 @@ func (l *logger) Info(ctx context.Context, message string, keyvals ...KV) {
 	l.logger.Info(message, toZapFields(keyvals)...)
 }
 
-func (l *logger) Warn(ctx context.Context, message string, keyvals ...KV) {
-	l.syncLock.RLock()
-	defer l.syncLock.RUnlock()
-
-	l.logger.Warn(message, toZapFields(keyvals)...)
-}
-
 func (l *logger) Error(ctx context.Context, message string, keyvals ...KV) {
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
@@ -96,22 +89,8 @@ func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals 
 	l.logger.Fatal(message, toZapFields(kvs)...)
 }
 
-func (l *logger) FeedbackDebug(ctx context.Context, message string, keyvals ...KV) {
-	l.Debug(ctx, message, keyvals...)
-	if l.consoleLogger != nil {
-		l.consoleLogger.Println(message)
-	}
-}
-
 func (l *logger) FeedbackInfo(ctx context.Context, message string, keyvals ...KV) {
 	l.Info(ctx, message, keyvals...)
-	if l.consoleLogger != nil {
-		l.consoleLogger.Println(message)
-	}
-}
-
-func (l *logger) FeedbackWarn(ctx context.Context, message string, keyvals ...KV) {
-	l.Warn(ctx, message, keyvals...)
 	if l.consoleLogger != nil {
 		l.consoleLogger.Println(message)
 	}
