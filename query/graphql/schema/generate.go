@@ -1082,9 +1082,13 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 					continue
 				}
 				// scalars (leafs)
-				if gql.IsLeafType(field.Type) { // only Scalars, and enums
+				if gql.IsLeafType(field.Type) {
+					operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
+					if !isFilterable {
+						continue
+					}
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "OperatorBlock")],
+						Type: operatorType,
 					}
 				} else { // objects (relations)
 					fields[field.Name] = &gql.InputObjectFieldConfig{
@@ -1112,9 +1116,10 @@ func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject 
 	// generate basic filter operator blocks for all the Leaf types
 	// (scalars + enums)
 	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
+		operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
+		if isFilterable {
 			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"],
+				Type: operatorType,
 			}
 		}
 	}
