@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package update
+package create
 
 import (
 	"context"
@@ -19,23 +19,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
+func TestCreateSaveErrorsGivenValueInRelationField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-					"Name": "John",
-					"Age": 21
-				}`,
-		),
-	)
-	if err != nil {
-		assert.Fail(t, err.Error())
-	}
-
-	err = doc.SetWithJSON(
-		[]byte(
-			`{
-				"FieldDoesNotExist": 21
+				"Name": "Painted House",
+				"Author": "ValueDoesntMatter"
 			}`,
 		),
 	)
@@ -44,16 +33,8 @@ func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
 	}
 
 	test := testUtils.TestCase{
-		Docs: map[string][]string{
-			"users": {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"users": []func(c client.Collection) error{
+			"book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},
