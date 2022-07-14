@@ -531,13 +531,11 @@ func getRelationshipName(
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
-	numBaseArgs := make(map[string]*gql.InputObject)
 	topLevelCountInputs := map[string]*gql.InputObject{}
 	topLevelNumericAggInputs := map[string]*gql.InputObject{}
 
 	for _, t := range g.typeDefs {
 		numArg := g.genNumericAggregateBaseArgInputs(t)
-		numBaseArgs[numArg.Name()] = numArg
 		topLevelNumericAggInputs[t.Name()] = numArg
 		// All base types need to be appended to the schema before calling genSumFieldConfig
 		err := g.appendIfNotExists(numArg)
@@ -547,7 +545,6 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 		numericInlineArrayInputs := g.genNumericInlineArraySelectorObject(t)
 		for _, obj := range numericInlineArrayInputs {
-			numBaseArgs[obj.Name()] = obj
 			err = g.appendIfNotExists(obj)
 			if err != nil {
 				return err
@@ -555,7 +552,6 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 		}
 
 		obj := g.genCountBaseArgInputs(t)
-		numBaseArgs[obj.Name()] = obj
 		topLevelCountInputs[t.Name()] = obj
 		err = g.appendIfNotExists(obj)
 		if err != nil {
@@ -564,7 +560,6 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 		countableInlineArrayInputs := g.genCountInlineArrayInputs(t)
 		for _, obj := range countableInlineArrayInputs {
-			numBaseArgs[obj.Name()] = obj
 			err = g.appendIfNotExists(obj)
 			if err != nil {
 				return err
@@ -573,19 +568,19 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 	}
 
 	for _, t := range g.typeDefs {
-		countField, err := g.genCountFieldConfig(t, numBaseArgs)
+		countField, err := g.genCountFieldConfig(t)
 		if err != nil {
 			return err
 		}
 		t.AddFieldConfig(countField.Name, &countField)
 
-		sumField, err := g.genSumFieldConfig(t, numBaseArgs)
+		sumField, err := g.genSumFieldConfig(t)
 		if err != nil {
 			return err
 		}
 		t.AddFieldConfig(sumField.Name, &sumField)
 
-		averageField, err := g.genAverageFieldConfig(t, numBaseArgs)
+		averageField, err := g.genAverageFieldConfig(t)
 		if err != nil {
 			return err
 		}
@@ -639,8 +634,8 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 	return []*gql.Field{&topLevelSumField, &topLevelAverageField}
 }
 
-func (g *Generator) genCountFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
-	childTypesByFieldName := map[string]*gql.InputObject{}
+func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
+	childTypesByFieldName := map[string]gql.Type{}
 	caser := cases.Title(language.Und)
 
 	for _, field := range obj.Fields() {
@@ -650,11 +645,11 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object, numBaseArgs map[string]
 		}
 
 		inputObjectName := genTypeName(field.Type, "CountInputObj")
-		countableObject, isSubTypeCountableCollection := numBaseArgs[inputObjectName]
+		countableObject, isSubTypeCountableCollection := g.manager.schema.TypeMap()[inputObjectName]
 		if !isSubTypeCountableCollection {
 			inputObjectName = genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name))
 			var isSubTypeCountableInlineArray bool
-			countableObject, isSubTypeCountableInlineArray = numBaseArgs[inputObjectName]
+			countableObject, isSubTypeCountableInlineArray = g.manager.schema.TypeMap()[inputObjectName]
 			if !isSubTypeCountableInlineArray {
 				continue
 			}
@@ -676,8 +671,8 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object, numBaseArgs map[string]
 	return field, nil
 }
 
-func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
-	childTypesByFieldName := map[string]*gql.InputObject{}
+func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
+	childTypesByFieldName := map[string]gql.Type{}
 
 	for _, field := range obj.Fields() {
 		// we can only sum list items
@@ -693,7 +688,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*g
 			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
 		}
 
-		subSumType, isSubTypeSumable := numBaseArgs[inputObjectName]
+		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
 		// If the item is not in the type map, it must contain no summable
 		//  fields (e.g. no Int/Floats)
 		if !isSubTypeSumable {
@@ -715,8 +710,8 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object, numBaseArgs map[string]*g
 	return field, nil
 }
 
-func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[string]*gql.InputObject) (gql.Field, error) {
-	childTypesByFieldName := map[string]*gql.InputObject{}
+func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
+	childTypesByFieldName := map[string]gql.Type{}
 
 	for _, field := range obj.Fields() {
 		// we can only sum list items
@@ -732,7 +727,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object, numBaseArgs map[strin
 			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
 		}
 
-		subAverageType, isSubTypeAveragable := numBaseArgs[inputObjectName]
+		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
 		// If the item is not in the type map, it must contain no averagable
 		//  fields (e.g. no Int/Floats)
 		if !isSubTypeAveragable {

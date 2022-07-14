@@ -144,7 +144,7 @@ var (
 	})
 )
 
-func NewArgConfig(t gql.Input) *gql.ArgumentConfig {
+func NewArgConfig(t gql.Type) *gql.ArgumentConfig {
 	return &gql.ArgumentConfig{
 		Type: t,
 	}
