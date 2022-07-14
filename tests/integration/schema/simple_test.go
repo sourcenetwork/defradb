@@ -61,6 +61,33 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 	ExecuteQueryTestCase(t, test)
 }
 
+func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
+	test := QueryTestCase{
+		Schema: []string{
+			`
+				type users {}
+			`,
+			`
+				type books {}
+			`,
+		},
+		IntrospectionQuery: `
+			query IntrospectionQuery {
+				__type (name: "books") {
+					name
+				}
+			}
+		`,
+		ExpectedData: map[string]interface{}{
+			"__type": map[string]interface{}{
+				"name": "books",
+			},
+		},
+	}
+
+	ExecuteQueryTestCase(t, test)
+}
+
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	test := QueryTestCase{
 		Schema: []string{
