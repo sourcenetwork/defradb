@@ -200,7 +200,6 @@ type LogLevelTestCase struct {
 
 func logDebug(l Logger, c context.Context, m string)  { l.Debug(c, m) }
 func logInfo(l Logger, c context.Context, m string)   { l.Info(c, m) }
-func logWarn(l Logger, c context.Context, m string)   { l.Warn(c, m) }
 func logError(l Logger, c context.Context, m string)  { l.Error(c, m) }
 func logErrorE(l Logger, c context.Context, m string) { l.ErrorE(c, m, fmt.Errorf("test error")) }
 
@@ -209,7 +208,6 @@ func getLogLevelTestCase() []LogLevelTestCase {
 		{Debug, logDebug, "DEBUG", false, false, true},
 		{Debug, logDebug, "DEBUG", false, false, false},
 		{Debug, logInfo, "INFO", false, false, false},
-		{Debug, logWarn, "WARN", false, false, false},
 		{Debug, logError, "ERROR", false, false, false},
 		{Debug, logError, "ERROR", true, true, false},
 		{Debug, logErrorE, "ERROR", false, false, false},
@@ -217,22 +215,18 @@ func getLogLevelTestCase() []LogLevelTestCase {
 		{Info, logDebug, "", false, false, false},
 		{Info, logInfo, "INFO", false, false, true},
 		{Info, logInfo, "INFO", false, false, false},
-		{Info, logWarn, "WARN", false, false, false},
 		{Info, logError, "ERROR", false, false, false},
 		{Info, logError, "ERROR", true, true, false},
 		{Info, logErrorE, "ERROR", false, false, false},
 		{Info, logErrorE, "ERROR", true, true, false},
 		{Warn, logDebug, "", false, false, false},
 		{Warn, logInfo, "", false, false, false},
-		{Warn, logWarn, "WARN", false, false, true},
-		{Warn, logWarn, "WARN", false, false, false},
 		{Warn, logError, "ERROR", false, false, false},
 		{Warn, logError, "ERROR", true, true, false},
 		{Warn, logErrorE, "ERROR", false, false, false},
 		{Warn, logErrorE, "ERROR", true, true, false},
 		{Error, logDebug, "", false, false, false},
 		{Error, logInfo, "", false, false, false},
-		{Error, logWarn, "", false, false, false},
 		{Error, logError, "ERROR", false, false, true},
 		{Error, logError, "ERROR", false, false, false},
 		{Error, logError, "ERROR", true, true, false},
@@ -241,7 +235,6 @@ func getLogLevelTestCase() []LogLevelTestCase {
 		{Fatal, logDebug, "", false, false, true},
 		{Fatal, logDebug, "", false, false, false},
 		{Fatal, logInfo, "", false, false, false},
-		{Fatal, logWarn, "", false, false, false},
 		{Fatal, logError, "", false, false, false},
 		{Fatal, logErrorE, "", false, false, false},
 	}
@@ -528,9 +521,7 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 	}
 }
 
-func logFeedbackDebug(l Logger, c context.Context, m string) { l.FeedbackDebug(c, m) }
 func logFeedbackInfo(l Logger, c context.Context, m string)  { l.FeedbackInfo(c, m) }
-func logFeedbackWarn(l Logger, c context.Context, m string)  { l.FeedbackWarn(c, m) }
 func logFeedbackError(l Logger, c context.Context, m string) { l.FeedbackError(c, m) }
 func logFeedbackErrorE(l Logger, c context.Context, m string) {
 	l.FeedbackErrorE(c, m, fmt.Errorf("test error"))
@@ -538,42 +529,29 @@ func logFeedbackErrorE(l Logger, c context.Context, m string) {
 
 func getFeedbackLogLevelTestCase() []LogLevelTestCase {
 	return []LogLevelTestCase{
-		{Debug, logFeedbackDebug, "DEBUG", false, false, true},
-		{Debug, logFeedbackDebug, "DEBUG", false, false, false},
 		{Debug, logFeedbackInfo, "INFO", false, false, false},
-		{Debug, logFeedbackWarn, "WARN", false, false, false},
 		{Debug, logFeedbackError, "ERROR", false, false, false},
 		{Debug, logFeedbackError, "ERROR", true, true, false},
 		{Debug, logFeedbackErrorE, "ERROR", false, false, false},
 		{Debug, logFeedbackErrorE, "ERROR", true, true, false},
-		{Info, logFeedbackDebug, "", false, false, false},
 		{Info, logFeedbackInfo, "INFO", false, false, true},
 		{Info, logFeedbackInfo, "INFO", false, false, false},
-		{Info, logFeedbackWarn, "WARN", false, false, false},
 		{Info, logFeedbackError, "ERROR", false, false, false},
 		{Info, logFeedbackError, "ERROR", true, true, false},
 		{Info, logFeedbackErrorE, "ERROR", false, false, false},
 		{Info, logFeedbackErrorE, "ERROR", true, true, false},
-		{Warn, logFeedbackDebug, "", false, false, false},
 		{Warn, logFeedbackInfo, "", false, false, false},
-		{Warn, logFeedbackWarn, "WARN", false, false, true},
-		{Warn, logFeedbackWarn, "WARN", false, false, false},
 		{Warn, logFeedbackError, "ERROR", false, false, false},
 		{Warn, logFeedbackError, "ERROR", true, true, false},
 		{Warn, logFeedbackErrorE, "ERROR", false, false, false},
 		{Warn, logFeedbackErrorE, "ERROR", true, true, false},
-		{Error, logFeedbackDebug, "", false, false, false},
 		{Error, logFeedbackInfo, "", false, false, false},
-		{Error, logFeedbackWarn, "", false, false, false},
 		{Error, logFeedbackError, "ERROR", false, false, true},
 		{Error, logFeedbackError, "ERROR", false, false, false},
 		{Error, logFeedbackError, "ERROR", true, true, false},
 		{Error, logFeedbackErrorE, "ERROR", false, false, false},
 		{Error, logFeedbackErrorE, "ERROR", true, true, false},
-		{Fatal, logFeedbackDebug, "", false, false, true},
-		{Fatal, logFeedbackDebug, "", false, false, false},
 		{Fatal, logFeedbackInfo, "", false, false, false},
-		{Fatal, logFeedbackWarn, "", false, false, false},
 		{Fatal, logFeedbackError, "", false, false, false},
 		{Fatal, logFeedbackErrorE, "", false, false, false},
 	}
@@ -634,7 +612,7 @@ func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -647,7 +625,7 @@ func TestLogWritesMessagesToLogGivenPipeWithValidPath(t *testing.T) {
 	}
 
 	assert.Equal(t, logMessage, logLines[0]["msg"])
-	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
@@ -665,7 +643,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -688,7 +666,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -701,7 +679,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	}
 
 	assert.Equal(t, logMessage, logLines[0]["msg"])
-	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
@@ -719,7 +697,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -732,7 +710,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	}
 
 	assert.Equal(t, logMessage, logLines[0]["msg"])
-	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
@@ -750,7 +728,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -775,7 +753,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -800,7 +778,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -813,7 +791,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 	}
 
 	assert.Equal(t, logMessage, logLines[0]["msg"])
-	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
@@ -833,7 +811,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)
@@ -846,7 +824,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 	}
 
 	assert.Equal(t, logMessage, logLines[0]["msg"])
-	assert.Equal(t, "WARN", logLines[0]["level"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
@@ -866,7 +844,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	})
 	logMessage := "test log message"
 
-	logger.Warn(ctx, logMessage)
+	logger.Info(ctx, logMessage)
 	logger.Flush()
 
 	logLines, err := getLogLines(t, logPath)

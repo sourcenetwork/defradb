@@ -82,7 +82,7 @@ net:
   RPCMaxConnectionIdle: {{ .Net.RPCMaxConnectionIdle }}
 
 logging:
-  # Log level. Options are debug, info, warn, error, fatal
+  # Log level. Options are debug, info, error, fatal
   level: {{ .Logging.Level }}
   # Include stacktrace in error and fatal logs
   stacktrace: {{ .Logging.Stacktrace }}

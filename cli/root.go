@@ -93,7 +93,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String(
 		"loglevel", cfg.Logging.Level,
-		"log level to use. Options are debug, info, warn, error, fatal",
+		"log level to use. Options are debug, info, error, fatal",
 	)
 	err = viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {

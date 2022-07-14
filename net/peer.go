@@ -167,7 +167,7 @@ func (p *Peer) Close() error {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	if p.bus == nil {
-		log.Warn(p.ctx, "Tried to start internal broadcaster with none defined")
+		log.Info(p.ctx, "Tried to start internal broadcaster with none defined")
 		return
 	}
 
@@ -187,7 +187,7 @@ func (p *Peer) handleBroadcastLoop() {
 			} else if msg.Priority > 1 {
 				err = p.handleDocUpdateLog(msg)
 			} else {
-				log.Warn(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", msg.Cid))
+				log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", msg.Cid))
 			}
 
 			if err != nil {
@@ -462,7 +462,7 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	select {
 	case <-timer.C:
 		server.Stop()
-		log.Warn(ctx, "Peer gRPC server was shutdown ungracefully")
+		log.Info(ctx, "Peer gRPC server was shutdown ungracefully")
 	case <-stopped:
 		timer.Stop()
 	}
