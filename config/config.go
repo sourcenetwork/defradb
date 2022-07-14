@@ -356,8 +356,6 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 		loglvl = logging.Debug
 	case "info":
 		loglvl = logging.Info
-	case "warn":
-		loglvl = logging.Warn
 	case "error":
 		loglvl = logging.Error
 	case "fatal":
