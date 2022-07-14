@@ -18,7 +18,6 @@ import (
 	corenet "github.com/sourcenetwork/defradb/core/net"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/sourcenetwork/defradb/logging"
 )
@@ -87,11 +86,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 		return nil // just skip if we dont have a broadcaster set
 	}
 
-	parts := ds.NewKey(base.crdt.ID()).List()
-	if len(parts) < 3 {
-		return fmt.Errorf("Invalid dockey for MerkleCRDT")
-	}
-	dockey := parts[2]
+	dockey := core.NewDataStoreKey(base.crdt.ID()).DocKey
 
 	c := nd.Cid()
 	netdelta, ok := delta.(core.NetDelta)
