@@ -144,12 +144,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	for _, t := range generatedFilterBaseArgs {
 		err := g.appendIfNotExists(t)
 		if err != nil {
-			// Todo: better error handle
-			log.ErrorE(
-				ctx,
-				"Failed to append type while generating query type defs from an AST",
-				err,
-			)
+			return nil, err
 		}
 	}
 
