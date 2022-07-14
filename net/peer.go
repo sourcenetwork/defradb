@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -201,6 +202,7 @@ func (p *Peer) RegisterNewDocument(
 	ctx context.Context,
 	dockey client.DocKey,
 	c cid.Cid,
+	nd ipld.Node,
 	schemaID string,
 ) error {
 	log.Debug(
@@ -208,12 +210,6 @@ func (p *Peer) RegisterNewDocument(
 		"Registering a new document for our peer node",
 		logging.NewKV("DocKey", dockey.String()),
 	)
-
-	block, err := p.db.Blockstore().Get(ctx, c)
-	if err != nil {
-		log.ErrorE(p.ctx, "Failed to get document CID", err)
-		return err
-	}
 
 	// register topic
 	if err := p.server.addPubSubTopic(dockey.String()); err != nil {
@@ -232,7 +228,7 @@ func (p *Peer) RegisterNewDocument(
 		Cid:      &pb.ProtoCid{Cid: c},
 		SchemaID: []byte(schemaID),
 		Log: &pb.Document_Log{
-			Block: block.RawData(),
+			Block: nd.RawData(),
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -397,7 +393,7 @@ func (p *Peer) handleDocCreateLog(lg core.Log) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, lg)
 
-	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.SchemaID)
+	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.Block, lg.SchemaID)
 }
 
 func (p *Peer) handleDocUpdateLog(lg core.Log) error {
