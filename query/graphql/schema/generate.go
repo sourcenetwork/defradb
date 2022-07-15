@@ -315,10 +315,13 @@ func (g *Generator) createExpandedFieldAggregate(
 			}
 		}
 
-		expandedField := &gql.InputObjectFieldConfig{
-			Type: g.manager.schema.TypeMap()[filterTypeName],
+		if filterType, canHaveFilter := g.manager.schema.TypeMap()[filterTypeName]; canHaveFilter {
+			// Sometimes a filter is not permitted, for example when aggregating `_version`
+			expandedField := &gql.InputObjectFieldConfig{
+				Type: filterType,
+			}
+			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
-		aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 	}
 }
 
