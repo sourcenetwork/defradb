@@ -24,7 +24,7 @@ import (
 var pingCmd = &cobra.Command{
 	Use:   "ping",
 	Short: "Ping defradb to test an API connection",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
 			return fmt.Errorf("failed to stat stdout: %w", err)
@@ -44,9 +44,8 @@ var pingCmd = &cobra.Command{
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "Response body closing failed", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
@@ -70,7 +69,7 @@ var pingCmd = &cobra.Command{
 			}
 			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}
-		return nil
+		return err
 	},
 }
 

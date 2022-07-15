@@ -37,7 +37,7 @@ A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be u
 with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		var query string
 
 		fi, err := os.Stdin.Stat()
@@ -94,9 +94,8 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "response body closing failed: ", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
@@ -127,7 +126,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				log.FeedbackInfo(cmd.Context(), indentedResult)
 			}
 		}
-		return nil
+		return err
 	},
 }
 

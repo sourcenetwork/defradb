@@ -23,7 +23,7 @@ import (
 var getCmd = &cobra.Command{
 	Use:   "get [CID]",
 	Short: "Get a block by its CID from the blockstore.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		if len(args) != 1 {
 			return fmt.Errorf("get requires a CID argument")
 		}
@@ -40,9 +40,8 @@ var getCmd = &cobra.Command{
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "Response body closing failed", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
@@ -72,7 +71,7 @@ var getCmd = &cobra.Command{
 				log.FeedbackInfo(cmd.Context(), indentedResult)
 			}
 		}
-		return nil
+		return err
 	},
 }
 

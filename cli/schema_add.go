@@ -40,7 +40,7 @@ Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		var schema string
 		fi, err := os.Stdin.Stat()
 		if err != nil {
@@ -99,9 +99,8 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "response body closing failed", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
@@ -141,7 +140,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				log.FeedbackInfo(cmd.Context(), r.Data.Result)
 			}
 		}
-		return nil
+		return err
 	},
 }
 

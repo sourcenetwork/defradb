@@ -23,7 +23,7 @@ import (
 var dumpCmd = &cobra.Command{
 	Use:   "dump",
 	Short: "Dumps the state of the entire database (server-side)",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		log.FeedbackInfo(cmd.Context(), "Requesting the database to dump its state, server-side...")
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.DumpPath)
@@ -37,9 +37,8 @@ var dumpCmd = &cobra.Command{
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "Response body closing failed", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
@@ -60,7 +59,7 @@ var dumpCmd = &cobra.Command{
 			return fmt.Errorf("failed parsing of response: %w", err)
 		}
 		log.FeedbackInfo(cmd.Context(), r.Data.Response)
-		return nil
+		return err
 	},
 }
 
