@@ -57,7 +57,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 							map[string]interface{}{
 								"name": "FavouriteIntegers",
 								"type": map[string]interface{}{
-									"name": "usersFavouriteintegersInlineArrayCountInput",
+									"name": "users__FavouriteIntegers__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -77,7 +77,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersCountInputObj",
+									"name": "users__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -97,7 +97,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 							map[string]interface{}{
 								"name": "_version",
 								"type": map[string]interface{}{
-									"name": "users_VersionInlineArrayCountInput",
+									"name": "users___version__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -159,7 +159,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 							map[string]interface{}{
 								"name": "FavouriteFloats",
 								"type": map[string]interface{}{
-									"name": "usersFavouritefloatsNumericInlineArraySelector",
+									"name": "users__FavouriteFloats__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -179,7 +179,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersNumericAggregateBaseArg",
+									"name": "users__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "field",
@@ -247,7 +247,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 							map[string]interface{}{
 								"name": "FavouriteIntegers",
 								"type": map[string]interface{}{
-									"name": "usersFavouriteintegersNumericInlineArraySelector",
+									"name": "users__FavouriteIntegers__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -267,7 +267,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersNumericAggregateBaseArg",
+									"name": "users__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "field",

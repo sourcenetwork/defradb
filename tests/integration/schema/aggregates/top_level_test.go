@@ -56,7 +56,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 								map[string]interface{}{
 									"name": "users",
 									"type": map[string]interface{}{
-										"name": "usersCountInputObj",
+										"name": "users__CountSelector",
 										"inputFields": []interface{}{
 											map[string]interface{}{
 												"name": "_",
@@ -124,7 +124,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 								map[string]interface{}{
 									"name": "users",
 									"type": map[string]interface{}{
-										"name": "usersNumericAggregateBaseArg",
+										"name": "users__NumericSelector",
 										"inputFields": []interface{}{
 											map[string]interface{}{
 												"name": "field",
@@ -192,7 +192,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 								map[string]interface{}{
 									"name": "users",
 									"type": map[string]interface{}{
-										"name": "usersNumericAggregateBaseArg",
+										"name": "users__NumericSelector",
 										"inputFields": []interface{}{
 											map[string]interface{}{
 												"name": "field",

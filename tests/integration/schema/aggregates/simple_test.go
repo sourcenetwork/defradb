@@ -55,7 +55,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersCountInputObj",
+									"name": "users__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -75,7 +75,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 							map[string]interface{}{
 								"name": "_version",
 								"type": map[string]interface{}{
-									"name": "users_VersionInlineArrayCountInput",
+									"name": "users___version__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "_",
@@ -135,7 +135,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersNumericAggregateBaseArg",
+									"name": "users__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "field",
@@ -201,7 +201,7 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 							map[string]interface{}{
 								"name": "_group",
 								"type": map[string]interface{}{
-									"name": "usersNumericAggregateBaseArg",
+									"name": "users__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "field",

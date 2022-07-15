@@ -18,9 +18,6 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/source"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 
@@ -640,7 +637,6 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	childTypesByFieldName := map[string]gql.Type{}
-	caser := cases.Title(language.Und)
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
@@ -648,10 +644,10 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 			continue
 		}
 
-		inputObjectName := genTypeName(field.Type, "CountInputObj")
+		inputObjectName := genObjectCountName(field.Type.Name())
 		countableObject, isSubTypeCountableCollection := g.manager.schema.TypeMap()[inputObjectName]
 		if !isSubTypeCountableCollection {
-			inputObjectName = genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name))
+			inputObjectName = genNumericInlineArrayCountName(obj.Name(), field.Name)
 			var isSubTypeCountableInlineArray bool
 			countableObject, isSubTypeCountableInlineArray = g.manager.schema.TypeMap()[inputObjectName]
 			if !isSubTypeCountableInlineArray {
@@ -689,7 +685,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
+			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
 		}
 
 		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
@@ -728,7 +724,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
+			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
 		}
 
 		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
@@ -755,7 +751,6 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.InputObject {
 	objects := []*gql.InputObject{}
-	caser := cases.Title(language.Und)
 	for _, field := range obj.Fields() {
 		// we can only act on list items
 		listType, isList := field.Type.(*gql.List)
@@ -767,7 +762,7 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			// If it is an inline scalar array then we require an empty
 			//  object as an argument due to the lack of union input types
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
-				Name: genNumericInlineArraySelectorName(obj.Name(), caser.String(field.Name)),
+				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
 					"_": &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
@@ -782,14 +777,17 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 	return objects
 }
 
+func genNumericObjectSelectorName(hostName string) string {
+	return fmt.Sprintf("%s__%s", hostName, "NumericSelector")
+}
+
 func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
-	caser := cases.Title(language.Und)
-	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "NumericInlineArraySelector")
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "NumericSelector")
 }
 
 func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
-		Name: genTypeName(obj, "CountInputObj"),
+		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
 			"_": &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
@@ -803,7 +801,6 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 
 func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObject {
 	objects := []*gql.InputObject{}
-	caser := cases.Title(language.Und)
 	for _, field := range obj.Fields() {
 		// we can only act on list items
 		_, isList := field.Type.(*gql.List)
@@ -814,7 +811,7 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 		// If it is an inline scalar array then we require an empty
 		//  object as an argument due to the lack of union input types
 		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
-			Name: genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name)),
+			Name: genNumericInlineArrayCountName(obj.Name(), field.Name),
 			Fields: gql.InputObjectConfigFieldMap{
 				"_": &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
@@ -829,8 +826,11 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 }
 
 func genNumericInlineArrayCountName(hostName string, fieldName string) string {
-	caser := cases.Title(language.Und)
-	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "InlineArrayCountInput")
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "CountSelector")
+}
+
+func genObjectCountName(hostName string) string {
+	return fmt.Sprintf("%s__%s", hostName, "CountSelector")
 }
 
 // Generates the base (numeric-only) aggregate input object-type for the give gql object,
@@ -887,10 +887,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 	}
 
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name: genTypeName(
-			obj,
-			"NumericAggregateBaseArg",
-		),
+		Name:   genNumericObjectSelectorName(obj.Name()),
 		Fields: fieldThunk,
 	})
 }
