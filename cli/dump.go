@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/spf13/cobra"
@@ -24,7 +25,13 @@ var dumpCmd = &cobra.Command{
 	Use:   "dump",
 	Short: "Dumps the state of the entire database (server-side)",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		log.FeedbackInfo(cmd.Context(), "Requesting the database to dump its state, server-side...")
+		stdout, err := os.Stdout.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat stdout: %w", err)
+		}
+		if !isFileInfoPipe(stdout) {
+			log.FeedbackInfo(cmd.Context(), "Requesting the database to dump its state, server-side...")
+		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.DumpPath)
 		if err != nil {
@@ -47,18 +54,22 @@ var dumpCmd = &cobra.Command{
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		// dumpResponse follows structure of HTTP API's response
-		type dumpResponse struct {
-			Data struct {
-				Response string `json:"response"`
-			} `json:"data"`
+		if isFileInfoPipe(stdout) {
+			cmd.Println(string(response))
+		} else {
+			// dumpResponse follows structure of HTTP API's response
+			type dumpResponse struct {
+				Data struct {
+					Response string `json:"response"`
+				} `json:"data"`
+			}
+			r := dumpResponse{}
+			err = json.Unmarshal(response, &r)
+			if err != nil {
+				return fmt.Errorf("failed parsing of response: %w", err)
+			}
+			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}
-		r := dumpResponse{}
-		err = json.Unmarshal(response, &r)
-		if err != nil {
-			return fmt.Errorf("failed parsing of response: %w", err)
-		}
-		log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		return err
 	},
 }
