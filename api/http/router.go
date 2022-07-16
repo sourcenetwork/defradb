@@ -21,14 +21,16 @@ import (
 )
 
 const (
-	version string = "/api/v0"
+	// Version is the current version of the HTTP API.
+	Version            = "v0"
+	versionPath string = "/version/" + Version
 
-	RootPath       string = version + ""
-	PingPath       string = version + "/ping"
-	DumpPath       string = version + "/debug/dump"
-	BlocksPath     string = version + "/blocks"
-	GraphQLPath    string = version + "/graphql"
-	SchemaLoadPath string = version + "/schema/load"
+	RootPath       string = versionPath + ""
+	PingPath       string = versionPath + "/ping"
+	DumpPath       string = versionPath + "/debug/dump"
+	BlocksPath     string = versionPath + "/blocks"
+	GraphQLPath    string = versionPath + "/graphql"
+	SchemaLoadPath string = versionPath + "/schema/load"
 )
 
 var schemeError = errors.New("base must start with the http or https scheme")

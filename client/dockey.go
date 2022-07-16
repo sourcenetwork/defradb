@@ -11,7 +11,6 @@
 package client
 
 import (
-	// "github.com/google/uuid"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -22,28 +21,20 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// Key Versions
+// DocKey versions.
 const (
-	v0 = 0x01
+	V0 = 0x01
 )
 
-var validVersions = map[uint16]bool{
-	v0: true,
+// ValidVersions is a map of DocKey versions and their current validity.
+var ValidVersions = map[uint16]bool{
+	V0: true,
 }
 
 var (
-	// NamespaceSDNDocKeyV0 reserved domain namespace for Source Data Network (SDN)
-	// Design a more appropriate system for future proofing doc key versions, ensuring
-	// backwards compatability. RE: CID
-	// *At the moment this is an random uuidV4
-	namespaceSDNDocKeyV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
+	// SDNNamespaceV0 is a reserved domain namespace for Source Data Network (SDN).
+	SDNNamespaceV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 )
-
-// versionToNamespace is a convenience for mapping between Version number and its UUID Namespace
-//nolint:unused,deadcode,varcheck
-var versionToNamespace = map[uint16]uuid.UUID{
-	v0: namespaceSDNDocKeyV0,
-}
 
 // DocKey is the root key identifier for documents in DefraDB
 type DocKey struct {
@@ -52,12 +43,11 @@ type DocKey struct {
 	cid     cid.Cid
 }
 
-// NewDocKeyV0 creates a new doc key identified by the root data CID, peer ID, and
-// namespaced by the versionNS.
+// NewDocKeyV0 creates a new dockey identified by the root data CID, peer ID, and namespaced by the versionNS.
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
-		version: v0,
-		uuid:    uuid.NewV5(namespaceSDNDocKeyV0, dataCID.String()),
+		version: V0,
+		uuid:    uuid.NewV5(SDNNamespaceV0, dataCID.String()),
 		cid:     dataCID,
 	}
 }
@@ -77,7 +67,7 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 	if err != nil {
 		return DocKey{}, err
 	}
-	if _, ok := validVersions[uint16(version)]; !ok {
+	if _, ok := ValidVersions[uint16(version)]; !ok {
 		return DocKey{}, errors.New("Invalid DocKey version")
 	}
 
