@@ -27,6 +27,7 @@ var (
 	_ explainablePlanNode = (*createNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)
 	_ explainablePlanNode = (*deleteNode)(nil)
+	_ explainablePlanNode = (*groupNode)(nil)
 	_ explainablePlanNode = (*hardLimitNode)(nil)
 	_ explainablePlanNode = (*orderNode)(nil)
 	_ explainablePlanNode = (*renderLimitNode)(nil)

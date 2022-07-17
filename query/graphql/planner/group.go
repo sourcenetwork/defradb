@@ -169,3 +169,9 @@ func (n *groupNode) Next() (bool, error) {
 
 	return false, nil
 }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *groupNode) Explain() (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
