@@ -29,7 +29,7 @@ type groupNode struct {
 
 	// The fields to group by - this must be an ordered collection and
 	// will include any parent group-by fields (if any)
-	groupByFieldIndexes []int
+	groupByFields []mapper.Field
 
 	// The data sources that this node will draw data from.
 	dataSources []*dataSource
@@ -61,17 +61,17 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		if childSelect.GroupBy != nil {
 			// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
 			// groups will only group on the fields they explicitly reference
-			childSelect.GroupBy.FieldIndexes = append(childSelect.GroupBy.FieldIndexes, n.FieldIndexes...)
+			childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
 		}
 		dataSources = append(dataSources, newDataSource(childSelect.Index))
 	}
 
 	groupNodeObj := groupNode{
-		p:                   p,
-		childSelects:        childSelects,
-		groupByFieldIndexes: n.FieldIndexes,
-		dataSources:         dataSources,
-		docMapper:           docMapper{&parsed.DocumentMapping},
+		p:             p,
+		childSelects:  childSelects,
+		groupByFields: n.Fields,
+		dataSources:   dataSources,
+		docMapper:     docMapper{&parsed.DocumentMapping},
 	}
 	return &groupNodeObj, nil
 }
@@ -127,7 +127,7 @@ func (n *groupNode) Source() planNode { return n.dataSources[0].Source() }
 
 func (n *groupNode) Next() (bool, error) {
 	if n.values == nil {
-		values, err := join(n.dataSources, n.groupByFieldIndexes, n.documentMapping)
+		values, err := join(n.dataSources, n.groupByFields, n.documentMapping)
 		if err != nil {
 			return false, err
 		}

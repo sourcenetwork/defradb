@@ -84,7 +84,7 @@ type Limit struct {
 // GroupBy represents a grouping instruction on a query.
 type GroupBy struct {
 	// The indexes of fields by which documents should be grouped. Ordered.
-	FieldIndexes []int
+	Fields []Field
 }
 
 type SortDirection string
