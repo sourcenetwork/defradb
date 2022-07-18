@@ -21,7 +21,6 @@ import (
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -47,31 +46,9 @@ var startCmd = &cobra.Command{
 	Short: "Start a DefraDB node",
 	Long:  "Start a new instance of DefraDB node.",
 	// Load the root config if it exists, otherwise create it.
-	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		rootDir, exists, err := config.GetRootDir(rootDirParam)
-		if err != nil {
-			return fmt.Errorf("failed to get root dir: %w", err)
-		}
-		if !exists {
-			err = config.CreateRootDirWithDefaultConfig(rootDir)
-			if err != nil {
-				return fmt.Errorf("failed to create root dir: %w", err)
-			}
-		}
-		err = cfg.Load(rootDir)
-		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
-		}
-		loggingConfig, err := cfg.GetLoggingConfig()
-		if err != nil {
-			return fmt.Errorf("failed to get logging config: %w", err)
-		}
-		logging.SetConfig(loggingConfig)
-		log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		log.Info(cmd.Context(), "Starting DefraDB service...")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		log.Info(ctx, "Starting DefraDB service...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)

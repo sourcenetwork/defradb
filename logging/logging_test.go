@@ -637,7 +637,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForAnotherLoggerReducingLogLev
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
-		c.OverridesByLoggerName = map[string]OverrideConfig{
+		c.OverridesByLoggerName = map[string]Config{
 			"not this logger": {Level: NewLogLevelOption(Info)},
 		}
 	})
@@ -660,7 +660,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerReducingLogLevel(t *testing
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Fatal)
-		c.OverridesByLoggerName = map[string]OverrideConfig{
+		c.OverridesByLoggerName = map[string]Config{
 			"TestLogName": {Level: NewLogLevelOption(Info)},
 		}
 	})
@@ -691,7 +691,7 @@ func TestLogWritesMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *testing.
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
-		c.OverridesByLoggerName = map[string]OverrideConfig{
+		c.OverridesByLoggerName = map[string]Config{
 			"not this logger": {Level: NewLogLevelOption(Fatal)},
 		}
 	})
@@ -722,7 +722,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideForLoggerRaisingLogLevel(t *te
 	ctx := context.Background()
 	logger, logPath := getLogger(t, func(c *Config) {
 		c.Level = NewLogLevelOption(Info)
-		c.OverridesByLoggerName = map[string]OverrideConfig{
+		c.OverridesByLoggerName = map[string]Config{
 			"TestLogName": {Level: NewLogLevelOption(Fatal)},
 		}
 	})
@@ -747,7 +747,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForAnotherLoggerReducin
 		c.Level = NewLogLevelOption(Fatal)
 	})
 	SetConfig(Config{
-		OverridesByLoggerName: map[string]OverrideConfig{
+		OverridesByLoggerName: map[string]Config{
 			"not this logger": {Level: NewLogLevelOption(Info)},
 		},
 	})
@@ -772,7 +772,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForLoggerReducingLogLevel(t *
 		c.Level = NewLogLevelOption(Fatal)
 	})
 	SetConfig(Config{
-		OverridesByLoggerName: map[string]OverrideConfig{
+		OverridesByLoggerName: map[string]Config{
 			"TestLogName": {Level: NewLogLevelOption(Info)},
 		},
 	})
@@ -805,7 +805,7 @@ func TestLogWritesMessagesToLogGivenOverrideUpdatedForAnotherLoggerRaisingLogLev
 		c.Level = NewLogLevelOption(Info)
 	})
 	SetConfig(Config{
-		OverridesByLoggerName: map[string]OverrideConfig{
+		OverridesByLoggerName: map[string]Config{
 			"not this logger": {Level: NewLogLevelOption(Fatal)},
 		},
 	})
@@ -838,7 +838,7 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 		c.Level = NewLogLevelOption(Info)
 	})
 	SetConfig(Config{
-		OverridesByLoggerName: map[string]OverrideConfig{
+		OverridesByLoggerName: map[string]Config{
 			"TestLogName": {Level: NewLogLevelOption(Fatal)},
 		},
 	})

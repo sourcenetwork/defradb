@@ -105,7 +105,7 @@ type Config struct {
 	EnableCaller          EnableCallerOption
 	DisableColor          DisableColorOption
 	OutputPaths           []string
-	OverridesByLoggerName map[string]OverrideConfig
+	OverridesByLoggerName map[string]Config
 
 	pipe io.Writer // this is used for testing purposes only
 }
@@ -160,9 +160,9 @@ func (c Config) forLogger(name string) Config {
 }
 
 func (c Config) copy() Config {
-	overridesByLoggerName := make(map[string]OverrideConfig, len(c.OverridesByLoggerName))
+	overridesByLoggerName := make(map[string]Config, len(c.OverridesByLoggerName))
 	for k, o := range c.OverridesByLoggerName {
-		overridesByLoggerName[k] = OverrideConfig{
+		overridesByLoggerName[k] = Config{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
 			EncoderFormat:    o.EncoderFormat,
@@ -220,7 +220,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 	for k, o := range newConfigOptions.OverridesByLoggerName {
 		// We fully overwrite overrides to allow for ease of
 		// reset/removal (can provide empty to return to default)
-		newConfig.OverridesByLoggerName[k] = OverrideConfig{
+		newConfig.OverridesByLoggerName[k] = Config{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
 			EnableCaller:     o.EnableCaller,
