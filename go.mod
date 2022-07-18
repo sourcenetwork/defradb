@@ -50,8 +50,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/iancoleman/strcase v0.2.0
-	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.13.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/text v0.3.7
 )
@@ -178,6 +176,7 @@ require (
 	github.com/multiformats/go-multicodec v0.4.1 // indirect
 	github.com/multiformats/go-multistream v0.3.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
@@ -227,7 +226,7 @@ require (
 
 replace (
 	// SourceNetwork fork og graphql-go
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220509213405-bc95f52e34d9
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220715142118-2451189331c1
 
 	// dev branch for ipfslite until merged
 	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220516213426-71dfac7c1b6a

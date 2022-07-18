@@ -36,6 +36,16 @@ type QueryTestCase struct {
 	// The data expected to be returned from the introspection query.
 	ExpectedData map[string]interface{}
 
+	// If [ExpectedData] is nil and this is populated, the test framework will assert
+	// that the value given exists in the actual results.
+	//
+	// If this contains nested maps it only requires the last (i.e. non-map) value to
+	// be present along the given path.  If an array/slice is present in this chain,
+	// it will assert that the items in the expected-array have exact matches in the
+	// corresponding result-array (inner maps are not traversed beyond the array,
+	// the full array-item must match exactly).
+	ContainsData map[string]interface{}
+
 	// Any error expected to be returned by database calls.
 	//
 	// This includes AddSchema and Introspection calls.
@@ -88,16 +98,54 @@ func assertSchemaResults(
 	}
 	resultantData := result.Data.(map[string]interface{})
 
-	assert.Equal(t, len(testCase.ExpectedData), len(resultantData))
-	if len(testCase.ExpectedData) == 0 {
+	if len(testCase.ExpectedData) == 0 && len(testCase.ContainsData) == 0 {
 		assert.Equal(t, testCase.ExpectedData, resultantData)
 	}
 
-	for k, result := range resultantData {
-		assert.Equal(t, testCase.ExpectedData[k], result)
+	if len(testCase.ExpectedData) == 0 && len(testCase.ContainsData) > 0 {
+		assertContains(t, testCase.ContainsData, resultantData)
+	} else {
+		assert.Equal(t, len(testCase.ExpectedData), len(resultantData))
+
+		for k, result := range resultantData {
+			assert.Equal(t, testCase.ExpectedData[k], result)
+		}
 	}
 
 	return false
+}
+
+// Asserts that the `actual` contains the given `contains` value according to the logic
+// described on the [QueryTestCase.ContainsData] property.
+func assertContains(t *testing.T, contains map[string]interface{}, actual map[string]interface{}) {
+	for k, expected := range contains {
+		innerActual := actual[k]
+		if innerExpected, innerIsMap := expected.(map[string]interface{}); innerIsMap {
+			if innerActual == nil {
+				assert.Equal(t, innerExpected, innerActual)
+			} else if innerActualMap, isMap := innerActual.(map[string]interface{}); isMap {
+				// If the inner is another map then we continue down the chain
+				assertContains(t, innerExpected, innerActualMap)
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, innerExpected, innerActual)
+			}
+		} else if innerExpected, innerIsArray := expected.([]interface{}); innerIsArray {
+			if actualArray, isActualArray := innerActual.([]interface{}); isActualArray {
+				// If the inner is an array/slice, then assert that each expected item is present
+				// in the actual.  Note how the actual may contain additional items - this should
+				// not result in a test failure.
+				for _, innerExpectedItem := range innerExpected {
+					assert.Contains(t, actualArray, innerExpectedItem)
+				}
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, expected, innerActual)
+			}
+		} else {
+			assert.Equal(t, expected, innerActual)
+		}
+	}
 }
 
 func assertError(t *testing.T, err error, expectedError string) bool {

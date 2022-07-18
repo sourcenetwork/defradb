@@ -973,9 +973,11 @@ func runTestConfigForGenTypeFilterSuite(t *testing.T, g *Generator, obj *gql.Obj
 	for _, field := range obj.Fields() {
 		if !gql.IsLeafType(field.Type) {
 			unwrappedFieldType := unwrapType(field.Type)
-			base := g.genTypeFilterBaseArgInput(unwrappedFieldType.(*gql.Object))
-			err := g.manager.schema.AppendType(base)
-			assert.NoError(t, err, "Failed to generate sub object base arg input types")
+			base, hasBase := g.tryGenTypeFilterBaseArgInput(unwrappedFieldType.(*gql.Object))
+			if hasBase {
+				err := g.manager.schema.AppendType(base)
+				assert.NoError(t, err, "Failed to generate sub object base arg input types")
+			}
 		}
 	}
 	err := g.manager.schema.AppendType(filterInput)
