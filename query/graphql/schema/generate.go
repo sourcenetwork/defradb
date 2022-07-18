@@ -18,9 +18,6 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/source"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 
@@ -132,20 +129,19 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	generatedFilterBaseArgs := make([]*gql.InputObject, len(g.typeDefs))
-	for i, t := range g.typeDefs {
-		generatedFilterBaseArgs[i] = g.genTypeFilterBaseArgInput(t)
+	generatedFilterBaseArgs := []*gql.InputObject{}
+	for _, t := range g.typeDefs {
+		generatedFilterBaseArg, hasFilter := g.tryGenTypeFilterBaseArgInput(t)
+		if !hasFilter {
+			continue
+		}
+		generatedFilterBaseArgs = append(generatedFilterBaseArgs, generatedFilterBaseArg)
 	}
 
 	for _, t := range generatedFilterBaseArgs {
-		err := g.manager.schema.AppendType(t)
+		err := g.appendIfNotExists(t)
 		if err != nil {
-			// Todo: better error handle
-			log.ErrorE(
-				ctx,
-				"Failed to append type while generating query type defs from an AST",
-				err,
-			)
+			return nil, err
 		}
 	}
 
@@ -311,10 +307,13 @@ func (g *Generator) createExpandedFieldAggregate(
 			}
 		}
 
-		expandedField := &gql.InputObjectFieldConfig{
-			Type: g.manager.schema.TypeMap()[filterTypeName],
+		if filterType, canHaveFilter := g.manager.schema.TypeMap()[filterTypeName]; canHaveFilter {
+			// Sometimes a filter is not permitted, for example when aggregating `_version`
+			expandedField := &gql.InputObjectFieldConfig{
+				Type: filterType,
+			}
+			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
-		aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 	}
 }
 
@@ -444,20 +443,22 @@ func (g *Generator) buildTypesFromAST(
 
 					case *gql.List:
 						ltype := subobj.OfType
-						// register the relation
-						relName, err := getRelationshipName(field, objconf, ltype)
-						if err != nil {
-							return nil, err
-						}
+						if !gql.IsLeafType(ltype) {
+							// We don't want to do this for inline-arrays (IsLeafType)
+							relName, err := getRelationshipName(field, objconf, ltype)
+							if err != nil {
+								return nil, err
+							}
 
-						_, err = g.manager.Relations.RegisterSingle(
-							relName,
-							ltype.Name(),
-							fType.Name,
-							client.Relation_Type_MANY,
-						)
-						if err != nil {
-							log.ErrorE(ctx, "Error while registering single relation", err)
+							_, err = g.manager.Relations.RegisterSingle(
+								relName,
+								ltype.Name(),
+								fType.Name,
+								client.Relation_Type_MANY,
+							)
+							if err != nil {
+								log.ErrorE(ctx, "Error while registering single relation", err)
+							}
 						}
 					}
 
@@ -636,7 +637,6 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 
 func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	childTypesByFieldName := map[string]gql.Type{}
-	caser := cases.Title(language.Und)
 
 	for _, field := range obj.Fields() {
 		// Only lists can be counted
@@ -644,10 +644,10 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 			continue
 		}
 
-		inputObjectName := genTypeName(field.Type, "CountInputObj")
+		inputObjectName := genObjectCountName(field.Type.Name())
 		countableObject, isSubTypeCountableCollection := g.manager.schema.TypeMap()[inputObjectName]
 		if !isSubTypeCountableCollection {
-			inputObjectName = genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name))
+			inputObjectName = genNumericInlineArrayCountName(obj.Name(), field.Name)
 			var isSubTypeCountableInlineArray bool
 			countableObject, isSubTypeCountableInlineArray = g.manager.schema.TypeMap()[inputObjectName]
 			if !isSubTypeCountableInlineArray {
@@ -685,7 +685,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
+			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
 		}
 
 		subSumType, isSubTypeSumable := g.manager.schema.TypeMap()[inputObjectName]
@@ -724,7 +724,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 		if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
-			inputObjectName = genTypeName(field.Type, "NumericAggregateBaseArg")
+			inputObjectName = genNumericObjectSelectorName(field.Type.Name())
 		}
 
 		subAverageType, isSubTypeAveragable := g.manager.schema.TypeMap()[inputObjectName]
@@ -751,7 +751,6 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.InputObject {
 	objects := []*gql.InputObject{}
-	caser := cases.Title(language.Und)
 	for _, field := range obj.Fields() {
 		// we can only act on list items
 		listType, isList := field.Type.(*gql.List)
@@ -763,7 +762,7 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			// If it is an inline scalar array then we require an empty
 			//  object as an argument due to the lack of union input types
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
-				Name: genNumericInlineArraySelectorName(obj.Name(), caser.String(field.Name)),
+				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
 					"_": &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
@@ -778,14 +777,17 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 	return objects
 }
 
+func genNumericObjectSelectorName(hostName string) string {
+	return fmt.Sprintf("%s__%s", hostName, "NumericSelector")
+}
+
 func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
-	caser := cases.Title(language.Und)
-	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "NumericInlineArraySelector")
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "NumericSelector")
 }
 
 func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
-		Name: genTypeName(obj, "CountInputObj"),
+		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
 			"_": &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
@@ -799,7 +801,6 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 
 func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObject {
 	objects := []*gql.InputObject{}
-	caser := cases.Title(language.Und)
 	for _, field := range obj.Fields() {
 		// we can only act on list items
 		_, isList := field.Type.(*gql.List)
@@ -810,7 +811,7 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 		// If it is an inline scalar array then we require an empty
 		//  object as an argument due to the lack of union input types
 		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
-			Name: genNumericInlineArrayCountName(obj.Name(), caser.String(field.Name)),
+			Name: genNumericInlineArrayCountName(obj.Name(), field.Name),
 			Fields: gql.InputObjectConfigFieldMap{
 				"_": &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
@@ -825,8 +826,11 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 }
 
 func genNumericInlineArrayCountName(hostName string, fieldName string) string {
-	caser := cases.Title(language.Und)
-	return fmt.Sprintf("%s%s%s", hostName, caser.String(fieldName), "InlineArrayCountInput")
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "CountSelector")
+}
+
+func genObjectCountName(hostName string) string {
+	return fmt.Sprintf("%s__%s", hostName, "CountSelector")
 }
 
 // Generates the base (numeric-only) aggregate input object-type for the give gql object,
@@ -883,10 +887,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 	}
 
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name: genTypeName(
-			obj,
-			"NumericAggregateBaseArg",
-		),
+		Name:   genNumericObjectSelectorName(obj.Name()),
 		Fields: fieldThunk,
 	})
 }
@@ -1080,9 +1081,13 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 					continue
 				}
 				// scalars (leafs)
-				if gql.IsLeafType(field.Type) { // only Scalars, and enums
+				if gql.IsLeafType(field.Type) {
+					operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
+					if !isFilterable {
+						continue
+					}
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "OperatorBlock")],
+						Type: operatorType,
 					}
 				} else { // objects (relations)
 					fields[field.Name] = &gql.InputObjectFieldConfig{
@@ -1102,7 +1107,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 }
 
 // input {Type.Name}FilterBaseArg { ... }
-func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject {
+func (g *Generator) tryGenTypeFilterBaseArgInput(obj *gql.Object) (*gql.InputObject, bool) {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "FilterBaseArg"),
 	}
@@ -1110,15 +1115,20 @@ func (g *Generator) genTypeFilterBaseArgInput(obj *gql.Object) *gql.InputObject 
 	// generate basic filter operator blocks for all the Leaf types
 	// (scalars + enums)
 	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
+		operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
+		if isFilterable {
 			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"],
+				Type: operatorType,
 			}
 		}
 	}
 
+	if len(fields) == 0 {
+		return nil, false
+	}
+
 	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
+	return gql.NewInputObject(inputCfg), true
 }
 
 // query spec - sec N
