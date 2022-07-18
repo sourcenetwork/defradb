@@ -28,17 +28,17 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -71,17 +71,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -127,17 +127,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -176,17 +176,17 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -227,17 +227,17 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -270,24 +270,24 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 34
-			}`,
+					"Name": "John",
+					"Age": 34
+				}`,
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "John",
-				"Age": 30
-			}`,
+					"Name": "John",
+					"Age": 30
+				}`,
 				`{
-				"Name": "John"
-			}`,
+					"Name": "John"
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

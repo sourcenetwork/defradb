@@ -33,18 +33,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "John",
-				"Age": 38
-			}`,
+					"Name": "John",
+					"Age": 38
+				}`,
 				// It is important to test negative values here, due to the auto-typing of numbers
 				`{
-				"Name": "Alice",
-				"Age": -19
-			}`,
+					"Name": "Alice",
+					"Age": -19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

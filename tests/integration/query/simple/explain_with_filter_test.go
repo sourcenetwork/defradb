@@ -29,9 +29,9 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-					"Name": "John",
-					"Age": 21
-				}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 
@@ -62,17 +62,17 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (key by DocKey arg), no results",
 			Query: `query @explain {
-										users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
-											Name
-											Age
-										}
-									}`,
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-									"Name": "John",
-									"Age": 21
-								}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -102,21 +102,21 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (key by DocKey arg), partial results",
 			Query: `query @explain {
-										users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-											Name
-											Age
-										}
-									}`,
+						users(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-									"Name": "John",
-									"Age": 21
-									}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 					`{
-										"Name": "Bob",
-										"Age": 32
-									}`,
+						"Name": "Bob",
+						"Age": 32
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -162,9 +162,9 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-					"Name": "John",
-					"Age": 21
-				}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -194,17 +194,17 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (single key by DocKeys arg), no results",
 			Query: `query @explain {
-								users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
-									Name
-									Age
-								}
-							}`,
+						users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-							"Name": "John",
-							"Age": 21
-						}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -234,21 +234,24 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (duplicate key by DocKeys arg), partial results",
 			Query: `query @explain {
-										users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"]) {
-											Name
-											Age
-										}
-									}`,
+						users(dockeys: [
+							"bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+							"bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+						]) {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-							"Name": "John",
-							"Age": 21
-							}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 					`{
-							"Name": "Bob",
-							"Age": 32
-							}`,
+						"Name": "Bob",
+						"Age": 32
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -282,25 +285,28 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (multiple key by DocKeys arg), partial results",
 			Query: `query @explain {
-										users(dockeys: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009f", "bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"]) {
-											Name
-											Age
-										}
-									}`,
+						users(dockeys: [
+							"bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+							"bae-1378ab62-e064-5af4-9ea6-49941c8d8f94"
+						]) {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-								"Name": "John",
-								"Age": 21
-							}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 					`{
-								"Name": "Bob",
-								"Age": 32
-							}`,
+						"Name": "Bob",
+						"Age": 32
+					}`,
 					`{
-								"Name": "Jim",
-								"Age": 27
-							}`,
+						"Name": "Jim",
+						"Age": 27
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -349,13 +355,13 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
+					"Name": "John",
+					"Age": 21
 				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 			},
 		},
 		Results: []dataMap{
@@ -401,13 +407,13 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
+					"Name": "John",
+					"Age": 21
 				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 			},
 		},
 
@@ -454,9 +460,9 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-					"Name": "John",
-					"Age": 21
-				}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -490,16 +496,16 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 		{
 			Description: "Explain query with basic filter and selection (diff from filter)",
 			Query: `query @explain {
-										users(filter: {Name: {_eq: "John"}}) {
-											Age
-										}
-									}`,
+						users(filter: {Name: {_eq: "John"}}) {
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-									"Name": "John",
-									"Age": 21
-								}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -533,17 +539,17 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 		{
 			Description: "Explain query with basic filter(name), no results",
 			Query: `query @explain {
-										users(filter: {Name: {_eq: "Bob"}}) {
-											Name
-											Age
-										}
-									}`,
+						users(filter: {Name: {_eq: "Bob"}}) {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-									"Name": "John",
-									"Age": 21
-								}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -592,13 +598,13 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
+					"Name": "John",
+					"Age": 21
 				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 			},
 		},
 		Results: []dataMap{
@@ -645,13 +651,13 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-					"Name": "John",
-					"Age": 21
+						"Name": "John",
+						"Age": 21
 					}`,
 					`{
-					"Name": "Bob",
-					"Age": 19
-				}`,
+						"Name": "Bob",
+						"Age": 19
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -685,21 +691,21 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 		{
 			Description: "Explain query with basic filter(age), no results",
 			Query: `query @explain {
-								users(filter: {Age: {_gt: 40}}) {
-									Name
-									Age
-								}
-							}`,
+						users(filter: {Age: {_gt: 40}}) {
+							Name
+							Age
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-							"Name": "John",
-							"Age": 21
-						}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 					`{
-							"Name": "Bob",
-							"Age": 32
-						}`,
+						"Name": "Bob",
+						"Age": 32
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -733,22 +739,22 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 		{
 			Description: "Explain query with basic filter(age), and aliased, multiple results",
 			Query: `query @explain {
-								users(filter: {Age: {_gt: 20}}) {
-									Name
-									Alias: Age
-									_key
-								}
-							}`,
+						users(filter: {Age: {_gt: 20}}) {
+							Name
+							Alias: Age
+							_key
+						}
+					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
-							"Name": "John",
-							"Age": 21
-						}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 					`{
-							"Name": "Bob",
-							"Age": 32
-						}`,
+						"Name": "Bob",
+						"Age": 32
+					}`,
 				},
 			},
 			Results: []dataMap{
@@ -797,21 +803,21 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55
-			}`,
+					"Name": "Carlo",
+					"Age": 55
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []dataMap{
@@ -866,21 +872,21 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55
-			}`,
+					"Name": "Carlo",
+					"Age": 55
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []dataMap{
@@ -935,21 +941,21 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55
-			}`,
+					"Name": "Carlo",
+					"Age": 55
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []dataMap{

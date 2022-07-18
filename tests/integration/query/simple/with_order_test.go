@@ -28,21 +28,21 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55
-			}`,
+					"Name": "Carlo",
+					"Age": 55
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -80,21 +80,21 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55
-			}`,
+					"Name": "Carlo",
+					"Age": 55
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -133,25 +133,25 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21,
-				"Verified": true
-			}`,
+					"Name": "John",
+					"Age": 21,
+					"Verified": true
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 21,
-				"Verified": false
-			}`,
+					"Name": "Bob",
+					"Age": 21,
+					"Verified": false
+				}`,
 				`{
-				"Name": "Carlo",
-				"Age": 55,
-				"Verified": true
-			}`,
+					"Name": "Carlo",
+					"Age": 55,
+					"Verified": true
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19,
-				"Verified": false
-			}`,
+					"Name": "Alice",
+					"Age": 19,
+					"Verified": false
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

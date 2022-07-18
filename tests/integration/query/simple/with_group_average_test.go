@@ -400,35 +400,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"HeightM": 1.82,
-				"Age": 25,
-				"Verified": true
-			}`,
+					"Name": "John",
+					"HeightM": 1.82,
+					"Age": 25,
+					"Verified": true
+				}`,
 				`{
-				"Name": "John",
-				"HeightM": 1.61,
-				"Age": 32,
-				"Verified": true
-			}`,
+					"Name": "John",
+					"HeightM": 1.61,
+					"Age": 32,
+					"Verified": true
+				}`,
 				`{
-				"Name": "John",
-				"HeightM": 2.22,
-				"Age": 34,
-				"Verified": false
-			}`,
+					"Name": "John",
+					"HeightM": 2.22,
+					"Age": 34,
+					"Verified": false
+				}`,
 				`{
-				"Name": "Carlo",
-				"HeightM": 1.74,
-				"Age": 55,
-				"Verified": true
-			}`,
+					"Name": "Carlo",
+					"HeightM": 1.74,
+					"Age": 55,
+					"Verified": true
+				}`,
 				`{
-				"Name": "Alice",
-				"HeightM": 2.04,
-				"Age": 19,
-				"Verified": false
-			}`,
+					"Name": "Alice",
+					"HeightM": 2.04,
+					"Age": 19,
+					"Verified": false
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

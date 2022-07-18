@@ -48,15 +48,15 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 				//books
 				0: { // bae-9217906d-e8c5-533d-8520-71c754590844
 					`{
-					"name": "Painted House",
-					"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`,
+						"name": "Painted House",
+						"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+					}`,
 				},
 				//authors
 				1: { // bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 					`{
-					"name": "John Grisham"
-				}`,
+						"name": "John Grisham"
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -82,15 +82,15 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 				//books
 				0: { // bae-9217906d-e8c5-533d-8520-71c754590844
 					`{
-					"name": "Painted House",
-					"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`,
+						"name": "Painted House",
+						"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
+					}`,
 				},
 				//authors
 				1: { // bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 					`{
-					"name": "John Grisham"
-				}`,
+						"name": "John Grisham"
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{

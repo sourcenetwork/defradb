@@ -29,9 +29,9 @@ func TestQuerySimple(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -58,9 +58,9 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 21
-			}`,
+					"Name": "John",
+					"Age": 21
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

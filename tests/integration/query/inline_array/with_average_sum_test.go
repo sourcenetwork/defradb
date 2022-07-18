@@ -33,9 +33,9 @@ func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"FavouriteIntegers": [-1, 0, 9, 0]
-			}`,
+					"Name": "John",
+					"FavouriteIntegers": [-1, 0, 9, 0]
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

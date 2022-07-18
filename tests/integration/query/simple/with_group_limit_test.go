@@ -30,17 +30,17 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -83,17 +83,17 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -146,17 +146,17 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -191,21 +191,21 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 		Docs: map[int][]string{
 			0: {
 				`{
-				"Name": "John",
-				"Age": 32
-			}`,
+					"Name": "John",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Bob",
-				"Age": 32
-			}`,
+					"Name": "Bob",
+					"Age": 32
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 19
-			}`,
+					"Name": "Alice",
+					"Age": 19
+				}`,
 				`{
-				"Name": "Alice",
-				"Age": 42
-			}`,
+					"Name": "Alice",
+					"Age": 42
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
