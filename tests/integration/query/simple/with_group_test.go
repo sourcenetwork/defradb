@@ -26,22 +26,22 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Bob",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -72,22 +72,22 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Bob",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -136,22 +136,22 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 25
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -203,31 +203,31 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 25,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 32,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 34,
 				"Verified": false
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -300,31 +300,31 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 25,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 32,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 34,
 				"Verified": false
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -386,31 +386,31 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 25,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 32,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 34,
 				"Verified": false
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{

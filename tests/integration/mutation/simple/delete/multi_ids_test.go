@@ -29,12 +29,12 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -54,18 +54,18 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -88,18 +88,18 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -122,18 +122,18 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Updates: map[int]map[int][]string{
@@ -174,12 +174,12 @@ func TestDeleteWithEmptyIdsSet(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 					"name": "Shahzad",
 					"age":  26,
 					"points": 48.48,
 					"verified": true
-				}`),
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{},
@@ -223,12 +223,12 @@ func TestDeleteWithUnknownAndKnownIds(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 					"name": "Shahzad",
 					"age":  26,
 					"points": 48.48,
 					"verified": true
-				}`),
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -250,12 +250,12 @@ func TestDeleteWithKnownIdsAndEmptyFilter(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 					"name": "Shahzad",
 					"age":  26,
 					"points": 48.48,
 					"verified": true
-				}`),
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{
@@ -276,18 +276,18 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results:       []map[string]interface{}{},
@@ -302,18 +302,18 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results:       []map[string]interface{}{},

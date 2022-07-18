@@ -29,12 +29,12 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -54,12 +54,12 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -78,12 +78,12 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Updates: map[int]map[int][]string{
@@ -135,12 +135,12 @@ func TestDeleteWithUnknownId(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 					"name": "Shahzad",
 					"age":  26,
 					"points": 48.5,
 					"verified": true
-				}`),
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{},
@@ -157,12 +157,12 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results:       []map[string]interface{}{},
@@ -177,12 +177,12 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.5,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 			Results:       []map[string]interface{}{},

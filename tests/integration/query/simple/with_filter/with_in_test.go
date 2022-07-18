@@ -27,22 +27,22 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 21
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Bob",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{

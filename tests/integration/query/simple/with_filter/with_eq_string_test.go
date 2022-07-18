@@ -27,14 +27,14 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 21
-				}`),
-				(`{
+				}`,
+				`{
 				"Name": "Bob",
 				"Age": 32
-			}`)},
+			}`},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -58,14 +58,14 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 					"Name": "John",
 					"Age": 21
-					}`),
-					(`{
+					}`,
+					`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -82,14 +82,14 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 					"Name": "John",
 					"Age": 21
-					}`),
-					(`{
+					}`,
+					`{
 					"Name": "Bob",
 					"Age": 32
-				}`)},
+				}`},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -107,10 +107,10 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 					"Name": "John",
 					"Age": 21
-				}`)},
+				}`},
 			},
 			Results: []map[string]interface{}{},
 		},
