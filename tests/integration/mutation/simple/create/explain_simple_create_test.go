@@ -77,10 +77,11 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27
-			}`)},
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 		},
 
 		Results: []dataMap{

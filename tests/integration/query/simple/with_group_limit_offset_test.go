@@ -29,18 +29,19 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -74,18 +75,19 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffse
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

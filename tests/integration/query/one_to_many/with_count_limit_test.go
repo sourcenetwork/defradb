@@ -31,36 +31,36 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 		Docs: map[int][]string{
 			//books
 			0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-				(`{
+				`{
 					"name": "Painted House",
 					"rating": 4.9,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`),
-				(`{
+				}`,
+				`{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
 					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`),
-				(`{
+					}`,
+				`{
 					"name": "Theif Lord",
 					"rating": 4.8,
 					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`),
+				}`,
 			},
 			//authors
 			1: {
 				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				(`{
+				`{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
-				}`),
+				}`,
 				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				(`{
+				`{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false
-				}`),
+				}`,
 			},
 		},
 		Results: []map[string]interface{}{

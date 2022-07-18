@@ -102,25 +102,25 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 			// books
 			1: {
 				`{
-                     "name": "Painted House",
-                     "author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-                     "pages": 22
-                 }`,
+					"name": "Painted House",
+					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
+					"pages": 22
+				}`,
 				`{
-                     "name": "A Time for Mercy",
-                     "author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
-                     "pages": 178
-                 }`,
+					"name": "A Time for Mercy",
+					"author_id": "bae-25fafcc7-f251-58c1-9495-ead73e676fb8",
+					"pages": 178
+				}`,
 				`{
-                     "name": "Theif Lord",
-                     "author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-                     "pages": 321
-                 }`,
+					"name": "Theif Lord",
+					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
+					"pages": 321
+				 }`,
 				`{
-                     "name": "Incomplete book",
-                     "author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
-                     "pages": 79
-                 }`,
+					"name": "Incomplete book",
+					"author_id": "bae-3dddb519-3612-5e43-86e5-49d6295d4f84",
+					"pages": 79
+				}`,
 			},
 
 			// authors

@@ -27,18 +27,19 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -69,18 +70,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -124,18 +126,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -172,18 +175,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -218,18 +222,19 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDiffere
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 32
-			}`),
-				(`{
-				"Name": "Alice",
-				"Age": 19
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

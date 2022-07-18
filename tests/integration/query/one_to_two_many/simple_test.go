@@ -36,39 +36,39 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 			Docs: map[int][]string{
 				//books
 				0: {
-					(`{
+					`{
 						"name": "Painted House",
 						"rating": 4.9,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Theif Lord",
 						"rating": 4.8,
 						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`),
+					}`,
 				},
 				//authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					(`{
+					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
-					}`),
+					}`,
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					(`{
+					`{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -125,39 +125,39 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 			Docs: map[int][]string{
 				//books
 				0: { // bae-fd541c25-229e-5280-b44b-e5c2af3e374d
-					(`{
+					`{
 						"name": "Painted House",
 						"rating": 4.9,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Theif Lord",
 						"rating": 4.8,
 						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-					}`),
+					}`,
 				},
 				//authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					(`{
+					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
-					}`),
+					}`,
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					(`{
+					`{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -231,54 +231,54 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 			Docs: map[int][]string{
 				//books
 				0: {
-					(`{
+					`{
 						"name": "Painted House",
 						"rating": 4.9,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"price_id": "bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Theif Lord",
 						"rating": 4.8,
 						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`),
+					}`,
 				},
 				//authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					(`{
+					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
-					}`),
+					}`,
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					(`{
+					`{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
-					}`),
+					}`,
 				},
 				2: {
 					// bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd
-					(`{
+					`{
 						"currency": "GBP",
 						"value": 12.99
-					}`),
+					}`,
 					// bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179
-					(`{
+					`{
 						"currency": "SEK",
 						"value": 129
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{
@@ -350,54 +350,54 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 			Docs: map[int][]string{
 				//books
 				0: {
-					(`{
+					`{
 						"name": "Painted House",
 						"rating": 4.9,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
 						"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"reviewedBy_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"price_id": "bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179"
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Theif Lord",
 						"rating": 4.8,
 						"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04",
 						"reviewedBy_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
 						"price_id": "bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd"
-					}`),
+					}`,
 				},
 				//authors
 				1: {
 					// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-					(`{
+					`{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
-					}`),
+					}`,
 					// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-					(`{
+					`{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
-					}`),
+					}`,
 				},
 				2: {
 					// bae-fcc7a01d-6855-5e7a-abdd-261a46dcb9bd
-					(`{
+					`{
 						"currency": "GBP",
 						"value": 12.99
-					}`),
+					}`,
 					// bae-d64a5165-1e77-5a67-95f2-6b1ff14b2179
-					(`{
+					`{
 						"currency": "SEK",
 						"value": 129
-					}`),
+					}`,
 				},
 			},
 			Results: []map[string]interface{}{

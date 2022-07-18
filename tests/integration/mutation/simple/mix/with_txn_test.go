@@ -122,10 +122,11 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 		Description: "Update followed by read in same transaction",
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27
-			}`)},
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{
@@ -171,10 +172,11 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 		Description: "Update followed by read in different transaction",
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27
-			}`)},
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{
@@ -224,10 +226,11 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 		Description: "Update by two different transactions",
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27
-			}`)},
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 		},
 		TransactionalQueries: []testUtils.TransactionQuery{
 			{

@@ -51,10 +51,11 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27
-			}`)},
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
 		},
 		ExpectedError: "A document with the given key already exists",
 	}

@@ -33,12 +33,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -85,18 +85,18 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "John",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -148,18 +148,18 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "John",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -223,12 +223,12 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.5,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.5,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -284,12 +284,12 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -347,36 +347,36 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  25,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  6,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  1,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "John",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  25,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  6,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  1,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -447,36 +447,36 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  25,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  6,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "Shahzad",
-								"age":  1,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "John",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  25,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  6,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "Shahzad",
+						"age":  1,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -529,12 +529,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -636,12 +636,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -768,12 +768,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
@@ -811,18 +811,18 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Docs: map[int][]string{
 				0: {
-					(`{
-								"name": "Shahzad",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
-					(`{
-								"name": "John",
-								"age":  26,
-								"points": 48.48,
-								"verified": true
-							}`),
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
+					`{
+						"name": "John",
+						"age":  26,
+						"points": 48.48,
+						"verified": true
+					}`,
 				},
 			},
 
