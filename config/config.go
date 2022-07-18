@@ -334,6 +334,16 @@ type LoggingConfig struct {
 	Color      bool
 }
 
+type NamedLoggingConfig struct {
+	LoggingConfig
+	Name string
+}
+
+type TopLevelLoggingConfig struct {
+	LoggingConfig
+	NamedOverrides []NamedLoggingConfig
+}
+
 func defaultLoggingConfig() *LoggingConfig {
 	return &LoggingConfig{
 		Level:      "info",
