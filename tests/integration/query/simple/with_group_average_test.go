@@ -27,10 +27,11 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 32
-			}`)},
+			}`,
+			},
 		},
 		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
@@ -64,19 +65,20 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverage(
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 32
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 38
-			}`),
+			}`,
 				// It is important to test negative values here, due to the auto-typing of numbers
-				(`{
+				`{
 				"Name": "Alice",
 				"Age": -19
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -104,18 +106,19 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilAverage(t *t
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 32
-			}`),
+			}`,
 				// Age is undefined here and must be ignored
-				(`{
+				`{
 				"Name": "John"
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -147,31 +150,32 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"Age": 25,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 32,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"Age": 34,
 				"Verified": false
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"Age": 55,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -225,17 +229,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatAvera
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"HeightM": 1.82
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"HeightM": 1.89
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice"
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -263,18 +268,19 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatAverage(t 
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"HeightM": 1.82
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"HeightM": 1.89
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"HeightM": 2.04
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -306,31 +312,32 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 				"Name": "John",
 				"HeightM": 1.82,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"HeightM": 1.61,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "John",
 				"HeightM": 2.22,
 				"Verified": false
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Carlo",
 				"HeightM": 1.74,
 				"Verified": true
-			}`),
-				(`{
+			}`,
+				`{
 				"Name": "Alice",
 				"HeightM": 2.04,
 				"Verified": false
-			}`)},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -392,36 +399,37 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"HeightM": 1.82,
-				"Age": 25,
-				"Verified": true
-			}`),
-				(`{
-				"Name": "John",
-				"HeightM": 1.61,
-				"Age": 32,
-				"Verified": true
-			}`),
-				(`{
-				"Name": "John",
-				"HeightM": 2.22,
-				"Age": 34,
-				"Verified": false
-			}`),
-				(`{
-				"Name": "Carlo",
-				"HeightM": 1.74,
-				"Age": 55,
-				"Verified": true
-			}`),
-				(`{
-				"Name": "Alice",
-				"HeightM": 2.04,
-				"Age": 19,
-				"Verified": false
-			}`)},
+				`{
+					"Name": "John",
+					"HeightM": 1.82,
+					"Age": 25,
+					"Verified": true
+				}`,
+				`{
+					"Name": "John",
+					"HeightM": 1.61,
+					"Age": 32,
+					"Verified": true
+				}`,
+				`{
+					"Name": "John",
+					"HeightM": 2.22,
+					"Age": 34,
+					"Verified": false
+				}`,
+				`{
+					"Name": "Carlo",
+					"HeightM": 1.74,
+					"Age": 55,
+					"Verified": true
+				}`,
+				`{
+					"Name": "Alice",
+					"HeightM": 2.04,
+					"Age": 19,
+					"Verified": false
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

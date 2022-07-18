@@ -28,17 +28,19 @@ func TestQueryComplexWithSumOnInlineAndManyToMany(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
+				`{
 					"name": "The Coffee Table Book",
 					"rating": 4.9,
 					"publisher_id": "bae-09468fb6-b7c6-57df-898e-8de473d114b3"
-				}`)},
+				}`,
+			},
 			2: {
-				(`{
+				`{
 					"name": "Pendant Publishing",
 					"address": "600 Madison Ave., New York, New York",
 					"favouritePageNumbers": [-1, 2, -1, 1, 0]
-				}`)},
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

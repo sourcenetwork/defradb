@@ -31,10 +31,11 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 
 		Results: []dataMap{},
@@ -56,10 +57,11 @@ func TestExplainQuerySimple(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -99,10 +101,11 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -142,14 +145,15 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"Age": 21
-			}`),
-				(`{
-				"Name": "Bob",
-				"Age": 27
-			}`)},
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 27
+				}`,
+			},
 		},
 		Results: []dataMap{
 			{

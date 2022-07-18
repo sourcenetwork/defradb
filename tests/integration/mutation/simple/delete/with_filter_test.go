@@ -31,12 +31,12 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -59,36 +59,36 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  25,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  6,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  1,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -126,36 +126,36 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  25,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  6,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  1,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -185,36 +185,36 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  25,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  6,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "Shahzad",
 						"age":  1,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -258,12 +258,12 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -297,18 +297,18 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 
@@ -327,18 +327,18 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "Shahzad",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
-					(`{
+					}`,
+					`{
 						"name": "John",
 						"age":  26,
 						"points": 48.48,
 						"verified": true
-					}`),
+					}`,
 				},
 			},
 

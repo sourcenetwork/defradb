@@ -27,10 +27,11 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"FavouriteIntegers": null
-			}`)},
+				`{
+					"Name": "John",
+					"FavouriteIntegers": null
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -54,10 +55,11 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"FavouriteIntegers": []
-			}`)},
+				`{
+					"Name": "John",
+					"FavouriteIntegers": []
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -81,10 +83,11 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "Shahzad",
-				"FavouriteIntegers": [-1, 2, -1, 1, 0]
-			}`)},
+				`{
+					"Name": "Shahzad",
+					"FavouriteIntegers": [-1, 2, -1, 1, 0]
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -108,10 +111,11 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"FavouriteFloats": null
-			}`)},
+				`{
+					"Name": "John",
+					"FavouriteFloats": null
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -135,10 +139,11 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"FavouriteFloats": []
-			}`)},
+				`{
+					"Name": "John",
+					"FavouriteFloats": []
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -162,10 +167,11 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"Name": "John",
-				"FavouriteFloats": [3.1425, 0.00000000001, 10]
-			}`)},
+				`{
+					"Name": "John",
+					"FavouriteFloats": [3.1425, 0.00000000001, 10]
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

@@ -23,9 +23,9 @@ func TestUpdateSaveErrorsGivenUnknownField(t *testing.T) {
 	doc, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-					"Name": "John",
-					"Age": 21
-				}`,
+				"Name": "John",
+				"Age": 21
+			}`,
 		),
 	)
 	if err != nil {

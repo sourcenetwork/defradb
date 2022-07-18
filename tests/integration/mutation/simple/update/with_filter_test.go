@@ -30,12 +30,13 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
+					`{
 						"name": "John",
 						"age": 27,
 						"verified": true,
 						"points": 42.1
-					}`)},
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -56,18 +57,19 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"name": "John",
-					"age": 27,
-					"verified": true,
-					"points": 42.1
-				}`),
-					(`{
-					"name": "Bob",
-					"age": 39,
-					"verified": false,
-					"points": 66.6
-				}`)},
+					`{
+						"name": "John",
+						"age": 27,
+						"verified": true,
+						"points": 42.1
+					}`,
+					`{
+						"name": "Bob",
+						"age": 39,
+						"verified": false,
+						"points": 66.6
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -88,18 +90,19 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"name": "John",
-					"age": 27,
-					"verified": true,
-					"points": 42.1
-				}`),
-					(`{
-					"name": "Bob",
-					"age": 39,
-					"verified": true,
-					"points": 66.6
-				}`)},
+					`{
+						"name": "John",
+						"age": 27,
+						"verified": true,
+						"points": 42.1
+					}`,
+					`{
+						"name": "Bob",
+						"age": 39,
+						"verified": true,
+						"points": 66.6
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -133,18 +136,19 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27,
-				"verified": true,
-				"points": 42.1
-			}`),
-				(`{
-				"name": "Bob",
-				"age": 39,
-				"verified": false,
-				"points": 66.6
-			}`)},
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+				`{
+					"name": "Bob",
+					"age": 39,
+					"verified": false,
+					"points": 66.6
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -175,18 +179,19 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 				}`,
 		Docs: map[int][]string{
 			0: {
-				(`{
-				"name": "John",
-				"age": 27,
-				"verified": true,
-				"points": 42.1
-			}`),
-				(`{
-				"name": "Bob",
-				"age": 39,
-				"verified": false,
-				"points": 66.6
-			}`)},
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+				`{
+					"name": "Bob",
+					"age": 39,
+					"verified": false,
+					"points": 66.6
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

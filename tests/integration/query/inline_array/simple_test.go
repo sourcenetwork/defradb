@@ -28,10 +28,11 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"LikedIndexes": null
-				}`)},
+					`{
+						"Name": "John",
+						"LikedIndexes": null
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -50,10 +51,11 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"LikedIndexes": []
-				}`)},
+					`{
+						"Name": "John",
+						"LikedIndexes": []
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -72,10 +74,11 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"LikedIndexes": [true, true, false, true]
-				}`)},
+					`{
+						"Name": "John",
+						"LikedIndexes": [true, true, false, true]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -125,10 +128,11 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteIntegers": null
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteIntegers": null
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -147,10 +151,11 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteIntegers": []
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteIntegers": []
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -169,10 +174,11 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteIntegers": [1, 2, 3, 5, 8]
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteIntegers": [1, 2, 3, 5, 8]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -191,10 +197,11 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "Andy",
-					"FavouriteIntegers": [-1, -2, -3, -5, -8]
-				}`)},
+					`{
+						"Name": "Andy",
+						"FavouriteIntegers": [-1, -2, -3, -5, -8]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -213,10 +220,11 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "Shahzad",
-					"FavouriteIntegers": [-1, 2, -1, 1, 0]
-				}`)},
+					`{
+						"Name": "Shahzad",
+						"FavouriteIntegers": [-1, 2, -1, 1, 0]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -244,10 +252,11 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteFloats": null
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteFloats": null
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -266,10 +275,11 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteFloats": []
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteFloats": []
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -288,10 +298,11 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"FavouriteFloats": [3.1425, 0.00000000001, 10]
-				}`)},
+					`{
+						"Name": "John",
+						"FavouriteFloats": [3.1425, 0.00000000001, 10]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -319,10 +330,11 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"PreferredStrings": null
-				}`)},
+					`{
+						"Name": "John",
+						"PreferredStrings": null
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -341,10 +353,11 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"PreferredStrings": []
-				}`)},
+					`{
+						"Name": "John",
+						"PreferredStrings": []
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -363,10 +376,11 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 			Docs: map[int][]string{
 				0: {
-					(`{
-					"Name": "John",
-					"PreferredStrings": ["", "the previous", "the first", "empty string"]
-				}`)},
+					`{
+						"Name": "John",
+						"PreferredStrings": ["", "the previous", "the first", "empty string"]
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
