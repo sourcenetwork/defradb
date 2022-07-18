@@ -38,7 +38,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -80,7 +81,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -135,7 +137,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -183,7 +186,8 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -233,7 +237,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -282,7 +287,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

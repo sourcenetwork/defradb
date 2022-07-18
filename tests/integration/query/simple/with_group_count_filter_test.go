@@ -38,7 +38,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -80,7 +81,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -135,7 +137,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -183,7 +186,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -229,7 +233,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDiffe
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

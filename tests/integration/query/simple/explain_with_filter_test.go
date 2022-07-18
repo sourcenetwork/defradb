@@ -31,7 +31,8 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 					`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+				},
 			},
 
 			Results: []dataMap{
@@ -71,7 +72,8 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 					`{
 									"Name": "John",
 									"Age": 21
-								}`},
+								}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -114,7 +116,8 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 					`{
 										"Name": "Bob",
 										"Age": 32
-									}`},
+									}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -161,7 +164,8 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -200,7 +204,8 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 							"Name": "John",
 							"Age": 21
-						}`},
+						}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -350,7 +355,8 @@ func TestExplainQuerySimpleWithKeyFilterBlock(t *testing.T) {
 				`{
 				"Name": "Bob",
 				"Age": 32
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -401,7 +407,8 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 				`{
 				"Name": "Bob",
 				"Age": 32
-			}`},
+			}`,
+			},
 		},
 
 		Results: []dataMap{
@@ -449,7 +456,8 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -491,7 +499,8 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					`{
 									"Name": "John",
 									"Age": 21
-								}`},
+								}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -534,7 +543,8 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					`{
 									"Name": "John",
 									"Age": 21
-								}`},
+								}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -588,7 +598,8 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 				`{
 				"Name": "Bob",
 				"Age": 32
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -640,7 +651,8 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					`{
 					"Name": "Bob",
 					"Age": 19
-				}`},
+				}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -687,7 +699,8 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					`{
 							"Name": "Bob",
 							"Age": 32
-						}`},
+						}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -735,7 +748,8 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 					`{
 							"Name": "Bob",
 							"Age": 32
-						}`},
+						}`,
+				},
 			},
 			Results: []dataMap{
 				{
@@ -797,7 +811,8 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -865,7 +880,8 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -933,7 +949,8 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{

@@ -41,7 +41,8 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -87,7 +88,8 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -151,7 +153,8 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -227,7 +230,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -324,7 +328,8 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -410,7 +415,8 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

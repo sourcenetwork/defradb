@@ -38,7 +38,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -80,7 +81,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -135,7 +137,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -183,7 +186,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -229,7 +233,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDiffere
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

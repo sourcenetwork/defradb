@@ -30,7 +30,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 				`{
 				"Name": "John",
 				"Age": 32
-			}`},
+			}`,
+			},
 		},
 		ExpectedError: "Aggregate must be provided with a property to aggregate.",
 	}
@@ -76,7 +77,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 				`{
 				"Name": "Alice",
 				"Age": -19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -115,7 +117,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -171,7 +174,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 				"Name": "Alice",
 				"Age": 19,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -235,7 +239,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 			}`,
 				`{
 				"Name": "Alice"
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -274,7 +279,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 				`{
 				"Name": "Alice",
 				"HeightM": 2.04
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -330,7 +336,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 				"Name": "Alice",
 				"HeightM": 2.04,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -421,7 +428,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 				"HeightM": 2.04,
 				"Age": 19,
 				"Verified": false
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

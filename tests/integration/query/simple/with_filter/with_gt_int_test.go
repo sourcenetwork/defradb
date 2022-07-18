@@ -35,7 +35,8 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					`{
 					"Name": "Bob",
 					"Age": 19
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -61,7 +62,8 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					`{
 					"Name": "Bob",
 					"Age": 32
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -82,7 +84,8 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					`{
 					"Name": "Bob",
 					"Age": 32
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{

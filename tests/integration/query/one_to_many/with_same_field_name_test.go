@@ -50,12 +50,14 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 					`{
 					"name": "Painted House",
 					"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`},
+				}`,
+				},
 				//authors
 				1: { // bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 					`{
 					"name": "John Grisham"
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -82,12 +84,14 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 					`{
 					"name": "Painted House",
 					"relationship1_id": "bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed"
-				}`},
+				}`,
+				},
 				//authors
 				1: { // bae-2edb7fdd-cad7-5ad4-9c7d-6920245a96ed
 					`{
 					"name": "John Grisham"
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{

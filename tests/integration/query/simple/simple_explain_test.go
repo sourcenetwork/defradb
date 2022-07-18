@@ -34,7 +34,8 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 				`{
 				"Name": "John",
 				"Age": 21
-			}`},
+			}`,
+			},
 		},
 
 		Results: []dataMap{},
@@ -59,7 +60,8 @@ func TestExplainQuerySimple(t *testing.T) {
 				`{
 				"Name": "John",
 				"Age": 21
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -102,7 +104,8 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 				`{
 				"Name": "John",
 				"Age": 21
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{
@@ -149,7 +152,8 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 				`{
 				"Name": "Bob",
 				"Age": 27
-			}`},
+			}`,
+			},
 		},
 		Results: []dataMap{
 			{

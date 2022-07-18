@@ -31,7 +31,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -53,7 +54,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+				},
 			},
 			Results: []map[string]interface{}{},
 		},
@@ -74,7 +76,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 						"Name": "Bob",
 						"Age": 32
-					}`},
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -104,7 +107,8 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					`{
 						"Name": "Jim",
 						"Age": 27
-					}`},
+					}`,
+				},
 			},
 			Results: []map[string]interface{}{
 				{
@@ -138,7 +142,8 @@ func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
 				`{
 					"Name": "John",
 					"Age": 21
-				}`},
+				}`,
+			},
 		},
 		Results: []map[string]interface{}{},
 	}

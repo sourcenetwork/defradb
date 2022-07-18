@@ -34,7 +34,8 @@ func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {
 				`{
 				"Name": "Bob",
 				"Age": 32
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

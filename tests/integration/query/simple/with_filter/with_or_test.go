@@ -42,7 +42,8 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 				`{
 				"Name": "Alice",
 				"Age": 19
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{

@@ -35,7 +35,8 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 				`{
 				"name": "Painted House",
 				"rating": 4.9
-			}`},
+			}`,
+			},
 			//authors
 			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				`{
@@ -43,7 +44,8 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 				"age": 65,
 				"verified": true,
 				"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -79,7 +81,8 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 				`{
 				"name": "Painted House",
 				"rating": 4.9
-			}`},
+			}`,
+			},
 			//authors
 			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				`{
@@ -87,7 +90,8 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 				"age": 65,
 				"verified": true,
 				"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
@@ -123,7 +127,8 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 				`{
 				"name": "Painted House",
 				"rating": 4.9
-			}`},
+			}`,
+			},
 			//authors
 			1: { // bae-41598f0c-19bc-5da6-813b-e80f14a10df3
 				`{
@@ -131,7 +136,8 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 				"age": 65,
 				"verified": true,
 				"published_id": "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
-			}`},
+			}`,
+			},
 		},
 		Results: []map[string]interface{}{
 			{
