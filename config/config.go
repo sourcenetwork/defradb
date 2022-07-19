@@ -73,7 +73,7 @@ type Config struct {
 	Datastore *DatastoreConfig
 	API       *APIConfig
 	Net       *NetConfig
-	Logging   *LoggingConfig
+	Log       *LogConfig
 }
 
 // Load Config and handles parameters from config file, environment variables.
@@ -141,7 +141,7 @@ func DefaultConfig() *Config {
 		Datastore: defaultDatastoreConfig(),
 		API:       defaultAPIConfig(),
 		Net:       defaultNetConfig(),
-		Logging:   defaultLoggingConfig(),
+		Log:       defaultLogConfig(),
 	}
 }
 
@@ -155,8 +155,8 @@ func (cfg *Config) validateBasic() error {
 	if err := cfg.Net.validateBasic(); err != nil {
 		return fmt.Errorf("failed to validate Net config: %w", err)
 	}
-	if err := cfg.Logging.validateBasic(); err != nil {
-		return fmt.Errorf("failed to validate Logging config: %w", err)
+	if err := cfg.Log.validateBasic(); err != nil {
+		return fmt.Errorf("failed to validate Log config: %w", err)
 	}
 	return nil
 }
@@ -325,8 +325,8 @@ func (cfg *Config) NodeConfig() node.NodeOpt {
 	}
 }
 
-// LoggingConfig configures output and logger.
-type LoggingConfig struct {
+// LogConfig configures output and logger.
+type LogConfig struct {
 	Level      string
 	Stacktrace bool
 	Format     string
@@ -334,8 +334,8 @@ type LoggingConfig struct {
 	Color      bool
 }
 
-func defaultLoggingConfig() *LoggingConfig {
-	return &LoggingConfig{
+func defaultLogConfig() *LogConfig {
+	return &LogConfig{
 		Level:      "info",
 		Stacktrace: false,
 		Format:     "csv",
@@ -344,14 +344,14 @@ func defaultLoggingConfig() *LoggingConfig {
 	}
 }
 
-func (logcfg *LoggingConfig) validateBasic() error {
+func (logcfg *LogConfig) validateBasic() error {
 	return nil
 }
 
 // GetLoggingConfig provides logging-specific configuration, from top-level Config.
 func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	var loglvl logging.LogLevel
-	switch cfg.Logging.Level {
+	switch cfg.Log.Level {
 	case "debug":
 		loglvl = logging.Debug
 	case "info":
@@ -361,22 +361,22 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	case "fatal":
 		loglvl = logging.Fatal
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Logging.Level)
+		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Log.Level)
 	}
 	var encfmt logging.EncoderFormat
-	switch cfg.Logging.Format {
+	switch cfg.Log.Format {
 	case "json":
 		encfmt = logging.JSON
 	case "csv":
 		encfmt = logging.CSV
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Logging.Format)
+		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Log.Format)
 	}
 	return logging.Config{
 		Level:            logging.NewLogLevelOption(loglvl),
-		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Logging.Stacktrace),
+		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Log.Stacktrace),
 		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
-		OutputPaths:      []string{cfg.Logging.OutputPath},
+		OutputPaths:      []string{cfg.Log.OutputPath},
 	}, nil
 }
 

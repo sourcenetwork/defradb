@@ -93,48 +93,48 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().String(
-		"loglevel", cfg.Logging.Level,
+		"loglevel", cfg.Log.Level,
 		"log level to use. Options are debug, info, error, fatal",
 	)
-	err = viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("loglevel"))
+	err = viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
+		log.FatalE(context.Background(), "Could not bind log.loglevel", err)
 	}
 
 	rootCmd.PersistentFlags().String(
-		"logoutput", cfg.Logging.OutputPath,
+		"logoutput", cfg.Log.OutputPath,
 		"log output path",
 	)
-	err = viper.BindPFlag("logging.output", rootCmd.PersistentFlags().Lookup("logoutput"))
+	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.output", err)
+		log.FatalE(context.Background(), "Could not bind log.outputpath", err)
 	}
 
 	rootCmd.PersistentFlags().String(
-		"logformat", cfg.Logging.Format,
+		"logformat", cfg.Log.Format,
 		"log format to use. Options are text, json",
 	)
-	err = viper.BindPFlag("logging.format", rootCmd.PersistentFlags().Lookup("logformat"))
+	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.format", err)
+		log.FatalE(context.Background(), "Could not bind log.format", err)
 	}
 
 	rootCmd.PersistentFlags().Bool(
-		"logtrace", cfg.Logging.Stacktrace,
+		"logtrace", cfg.Log.Stacktrace,
 		"include stacktrace in error and fatal logs",
 	)
-	err = viper.BindPFlag("logging.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
+	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.stacktrace", err)
+		log.FatalE(context.Background(), "Could not bind log.stacktrace", err)
 	}
 
 	rootCmd.PersistentFlags().Bool(
-		"logcolor", cfg.Logging.Color,
+		"logcolor", cfg.Log.Color,
 		"enable colored output",
 	)
-	err = viper.BindPFlag("logging.color", rootCmd.PersistentFlags().Lookup("logcolor"))
+	err = viper.BindPFlag("log.color", rootCmd.PersistentFlags().Lookup("logcolor"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.color", err)
+		log.FatalE(context.Background(), "Could not bind log.color", err)
 	}
 
 	rootCmd.PersistentFlags().String(

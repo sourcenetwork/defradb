@@ -147,9 +147,9 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "90s", cfg.Net.RPCTimeout)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
-	assert.Equal(t, "info", cfg.Logging.Level)
-	assert.Equal(t, false, cfg.Logging.Stacktrace)
-	assert.Equal(t, "json", cfg.Logging.Format)
+	assert.Equal(t, "info", cfg.Log.Level)
+	assert.Equal(t, false, cfg.Log.Stacktrace)
+	assert.Equal(t, "json", cfg.Log.Format)
 }
 
 func TestGetRootDirExists(t *testing.T) {
@@ -275,10 +275,10 @@ func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 
 func TestGetLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Logging.Level = "debug"
-	cfg.Logging.Format = "json"
-	cfg.Logging.Stacktrace = true
-	cfg.Logging.OutputPath = "stdout"
+	cfg.Log.Level = "debug"
+	cfg.Log.Format = "json"
+	cfg.Log.Stacktrace = true
+	cfg.Log.OutputPath = "stdout"
 
 	loggingConfig, err := cfg.GetLoggingConfig()
 
@@ -291,8 +291,8 @@ func TestGetLoggingConfig(t *testing.T) {
 
 func TestInvalidGetLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Logging.Level = "546578"
-	cfg.Logging.Format = "*&)*&"
+	cfg.Log.Level = "546578"
+	cfg.Log.Format = "*&)*&"
 
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.GetLoggingConfig()
