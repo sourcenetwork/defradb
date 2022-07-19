@@ -72,7 +72,7 @@ func (dv *defraVersion) String() string {
 	// short commit hash
 	var commitHash strings.Builder
 	for i, r := range dv.Commit {
-		if i > commitHashLength {
+		if i >= commitHashLength {
 			break
 		}
 		commitHash.WriteRune(r)
