@@ -140,7 +140,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				log.FeedbackInfo(cmd.Context(), r.Data.Result)
 			}
 		}
-		return err
+		return nil
 	},
 }
 

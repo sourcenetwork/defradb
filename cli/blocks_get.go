@@ -71,7 +71,7 @@ var getCmd = &cobra.Command{
 				log.FeedbackInfo(cmd.Context(), indentedResult)
 			}
 		}
-		return err
+		return nil
 	},
 }
 

@@ -70,7 +70,7 @@ var dumpCmd = &cobra.Command{
 			}
 			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}
-		return err
+		return nil
 	},
 }
 

@@ -126,7 +126,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				log.FeedbackInfo(cmd.Context(), indentedResult)
 			}
 		}
-		return err
+		return nil
 	},
 }
 
