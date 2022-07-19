@@ -15,6 +15,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -36,9 +37,10 @@ A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be u
 with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		var query string
-		inputIsPipe, err := isStdinPipe()
+
+		fi, err := os.Stdin.Stat()
 		if err != nil {
 			return err
 		}
@@ -47,7 +49,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			return fmt.Errorf("too many arguments")
 		}
 
-		if inputIsPipe && (len(args) == 0 || args[0] != "-") {
+		if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
 			log.FeedbackInfo(
 				cmd.Context(),
 				"Run 'defradb client query -' to read from stdin. Example: 'cat my.graphql | defradb client query -').",
@@ -88,26 +90,42 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed to send query: %w", err)
+			return fmt.Errorf("failed query: %w", err)
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "response body closing failed: ", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
-		buf, err := io.ReadAll(res.Body)
+		response, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		indentedResult, err := indentJSON(buf)
+		fi, err = os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to pretty print result: %w", err)
+			return fmt.Errorf("failed to stat stdout: %w", err)
 		}
-		log.FeedbackInfo(cmd.Context(), indentedResult)
+
+		if isFileInfoPipe(fi) {
+			cmd.Println(string(response))
+		} else {
+			graphlErr, err := hasGraphQLErrors(response)
+			if err != nil {
+				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+			}
+			indentedResult, err := indentJSON(response)
+			if err != nil {
+				return fmt.Errorf("failed to pretty print result: %w", err)
+			}
+			if graphlErr {
+				log.FeedbackError(cmd.Context(), indentedResult)
+			} else {
+				log.FeedbackInfo(cmd.Context(), indentedResult)
+			}
+		}
 		return nil
 	},
 }
