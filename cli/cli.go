@@ -22,9 +22,8 @@ import (
 	"strings"
 )
 
-func isStdinPipe() (bool, error) {
-	fileInfo, err := os.Stdin.Stat()
-	return fileInfo.Mode()&os.ModeCharDevice == 0, err
+func isFileInfoPipe(fi os.FileInfo) bool {
+	return fi.Mode()&os.ModeNamedPipe != 0
 }
 
 func readStdin() (string, error) {
@@ -43,4 +42,21 @@ func indentJSON(b []byte) (string, error) {
 	var indentedJSON bytes.Buffer
 	err := json.Indent(&indentedJSON, b, "", "  ")
 	return indentedJSON.String(), err
+}
+
+type graphqlErrors struct {
+	Errors interface{} `json:"errors"`
+}
+
+func hasGraphQLErrors(buf []byte) (bool, error) {
+	errs := graphqlErrors{}
+	err := json.Unmarshal(buf, &errs)
+	if err != nil {
+		return false, fmt.Errorf("couldn't parse GraphQL response %w", err)
+	}
+	if errs.Errors != nil {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }

@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,9 +40,9 @@ Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		var schema string
-		inputIsPipe, err := isStdinPipe()
+		fi, err := os.Stdin.Stat()
 		if err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				return fmt.Errorf("failed to read schema file: %w", err)
 			}
 			schema = string(buf)
-		} else if inputIsPipe && (len(args) == 0 || args[0] != "-") {
+		} else if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
 			log.FeedbackInfo(
 				cmd.Context(),
 				"Run 'defradb client schema add -' to read from stdin."+
@@ -98,22 +99,47 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		}
 
 		defer func() {
-			err = res.Body.Close()
-			if err != nil {
-				log.ErrorE(cmd.Context(), "response body closing failed", err)
+			if e := res.Body.Close(); e != nil {
+				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
 			}
 		}()
 
-		result, err := io.ReadAll(res.Body)
+		response, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		indentedResult, err := indentJSON(result)
+		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to pretty print result: %w", err)
+			return fmt.Errorf("failed to stat stdout: %w", err)
 		}
-		log.FeedbackInfo(cmd.Context(), indentedResult)
+		if isFileInfoPipe(stdout) {
+			cmd.Println(string(response))
+		} else {
+			graphlErr, err := hasGraphQLErrors(response)
+			if err != nil {
+				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+			}
+			if graphlErr {
+				indentedResult, err := indentJSON(response)
+				if err != nil {
+					return fmt.Errorf("failed to pretty print result: %w", err)
+				}
+				log.FeedbackError(cmd.Context(), indentedResult)
+			} else {
+				type schemaResponse struct {
+					Data struct {
+						Result string `json:"result"`
+					} `json:"data"`
+				}
+				r := schemaResponse{}
+				err = json.Unmarshal(response, &r)
+				if err != nil {
+					return fmt.Errorf("failed to unmarshal response: %w", err)
+				}
+				log.FeedbackInfo(cmd.Context(), r.Data.Result)
+			}
+		}
 		return nil
 	},
 }
