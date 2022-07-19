@@ -32,6 +32,8 @@ type span struct {
 	end   DataStoreKey
 }
 
+var _ Span = span{}
+
 func NewSpan(start, end DataStoreKey) Span {
 	return span{
 		start: start,
