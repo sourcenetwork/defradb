@@ -57,7 +57,12 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	db.PrintDump(req.Context())
+
+	err = db.PrintDump(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
 
 	sendJSON(
 		req.Context(),
