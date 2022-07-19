@@ -34,9 +34,9 @@ var envVarsDifferentThanDefault = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "90s",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
-	"DEFRA_LOGGING_LEVEL":         "info",
-	"DEFRA_LOGGING_STACKTRACE":    "false",
-	"DEFRA_LOGGING_FORMAT":        "json",
+	"DEFRA_LOG_LEVEL":             "info",
+	"DEFRA_LOG_STACKTRACE":        "false",
+	"DEFRA_LOG_FORMAT":            "json",
 }
 
 var envVarsInvalid = map[string]string{
@@ -49,9 +49,9 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "^=+()&**()*(&))",
 	"DEFRA_NET_PUBSUB":            "^=+()&**()*(&))",
 	"DEFRA_NET_RELAY":             "^=+()&**()*(&))",
-	"DEFRA_LOGGING_LEVEL":         "^=+()&**()*(&))",
-	"DEFRA_LOGGING_STACKTRACE":    "^=+()&**()*(&))",
-	"DEFRA_LOGGING_FORMAT":        "^=+()&**()*(&))",
+	"DEFRA_LOG_LEVEL":             "^=+()&**()*(&))",
+	"DEFRA_LOG_STACKTRACE":        "^=+()&**()*(&))",
+	"DEFRA_LOG_FORMAT":            "^=+()&**()*(&))",
 }
 
 func FixtureEnvVars(envVars map[string]string) {
