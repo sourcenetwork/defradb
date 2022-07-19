@@ -33,9 +33,9 @@ var (
 	GitBranch     string
 )
 
-// DefraVersion is the current version of DefraDB, its build information, and versions of components.
+// defraVersion is the current version of DefraDB, its build information, and versions of components.
 // It is serializable to JSON.
-type DefraVersion struct {
+type defraVersion struct {
 	Release    string `json:"release"`
 	Commit     string `json:"commit"`
 	CommitDate string `json:"commitdate"`
@@ -48,8 +48,8 @@ type DefraVersion struct {
 }
 
 // NewDefraVersion returns a DefraVersion with normalized values.
-func NewDefraVersion() (DefraVersion, error) {
-	dv := DefraVersion{
+func NewDefraVersion() (defraVersion, error) {
+	dv := defraVersion{
 		GoInfo:         strings.Replace(GoInfo, "go version go", "", 1),
 		Release:        GitTag,
 		Commit:         GitCommit,
@@ -68,7 +68,7 @@ func NewDefraVersion() (DefraVersion, error) {
 	return dv, nil
 }
 
-func (dv *DefraVersion) String() string {
+func (dv *defraVersion) String() string {
 	// short commit hash
 	var commitHash strings.Builder
 	for i, r := range dv.Commit {
