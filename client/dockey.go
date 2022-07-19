@@ -23,12 +23,12 @@ import (
 
 // DocKey versions.
 const (
-	V0 = 0x01
+	DocKeyV0 = 0x01
 )
 
-// ValidVersions is a map of DocKey versions and their current validity.
-var ValidVersions = map[uint16]bool{
-	V0: true,
+// ValidDocKeyVersions is a map of DocKey versions and their current validity.
+var ValidDocKeyVersions = map[uint16]bool{
+	DocKeyV0: true,
 }
 
 var (
@@ -46,7 +46,7 @@ type DocKey struct {
 // NewDocKeyV0 creates a new dockey identified by the root data CID, peer ID, and namespaced by the versionNS.
 func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	return DocKey{
-		version: V0,
+		version: DocKeyV0,
 		uuid:    uuid.NewV5(SDNNamespaceV0, dataCID.String()),
 		cid:     dataCID,
 	}
@@ -67,7 +67,7 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 	if err != nil {
 		return DocKey{}, err
 	}
-	if _, ok := ValidVersions[uint16(version)]; !ok {
+	if _, ok := ValidDocKeyVersions[uint16(version)]; !ok {
 		return DocKey{}, errors.New("Invalid DocKey version")
 	}
 

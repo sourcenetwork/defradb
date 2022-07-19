@@ -22,7 +22,7 @@ import (
 
 const (
 	// Version is the current version of the HTTP API.
-	Version            = "v0"
+	Version     string = "v0"
 	versionPath string = "/version/" + Version
 
 	RootPath       string = versionPath + ""
