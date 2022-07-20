@@ -4,7 +4,7 @@
 <img height="120px" src="docs/DefraDB_Full-v2-cropped.png">
 </p>
 
-*DefraDB* is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called DQL. Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It's built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
+DefraDB is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called DQL. Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It is built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
 
 Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9tj62bewenu) and documentation on [docs.source.network](https://docs.source.network/).
 
@@ -16,23 +16,22 @@ DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for
 
 ## Install
 
-Install `defradb` by downloading the pre-compiled binaries available on the releases page, or building it yourself using a local [Go toolchain](https://golang.org/) and the following instructions:
+Install `defradb` by [downloading pre-compiled binaries](https://github.com/sourcenetwork/defradb/releases), or building it locally using the [Go toolchain](https://golang.org/):
 ```
 git clone git@github.com:sourcenetwork/defradb.git
 make install
 ```
 
-
-It is recommended to additionally to be able to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download it](https://www.electronjs.org/apps/graphiql).
+It is recommended to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download it](https://www.electronjs.org/apps/graphiql).
 
 
 ## Start
 
 `defradb start` spins up a node. Keep it running to perform the following examples.
 
-You can test your connection to the node using `defradb client ping`.
+Verify you are properly connected to the node using `defradb client ping`.
 
-By default, `~/.defradb/` is used as configuration and data directory, and it provides a GraphQL endpoint at http://localhost:9181/api/v0/graphql.
+By default, `~/.defradb/` is the configuration and data directory, and a GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql.
 
 Connect a GraphQL client (e.g. GraphiQL) to the endpoint to conveniently obtain introspection and perform requests (`query`, `mutation`).
 
@@ -56,7 +55,7 @@ Then add it to the database:
 defradb client schema add -f users.gql
 ```
 
-Adding a schema will create a collection??? and generate the typed GraphQL endpoints for querying and mutation.
+Adding a schema will generate the typed GraphQL endpoints for querying and mutation.
 
 Find more examples of schema type definitions in the [examples/schema](examples/schema) folder.
 
@@ -72,13 +71,13 @@ mutation {
 }
 ```
 
-Submitting a request can be done via a GraphQL client, or using:
+Submit a request via a GraphQL client, or using:
 
 ```
 defradb client query 'text of query'
 ```
 
-This will respond with:
+It will respond:
 ```json
 {
   "data": [
@@ -105,6 +104,7 @@ query {
   }
 }
 ```
+
 This query obtains *all* users, and return the fields `_key, age, name, points`. GraphQL queries only ever return the exact fields you request, there's no `*` selector like with SQL.
 
 We can further filter our results by adding a `filter` argument to the query.
@@ -118,12 +118,13 @@ query {
   }
 }
 ```
-This will only return user documents which have a value for the points field *Greater Than or Equal to ( _ge )* `50`.
+
+This will only return user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
 
 
 ## Obtain document commits
 
-Internally, DefraDB uses MerkleCRDTs to store data. MerkleCRDTs convert all mutations and updates a document has into a graph of changes; similar to Git. The graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all nodes are content-identifiable with, and each node references its parents CIDs.
+Internally, data is handled by MerkleCRDTs, which convert all mutations and updates a document has into a graph of changes; similar to Git. The graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all nodes are content-identifiable with, and each node references its parents CIDs.
 
 To get the most recent commit in the MerkleDAG for a document with a DocKey of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`, submit the following query:
 ```gql
@@ -140,7 +141,7 @@ query {
 }
 ```
 
-This returns a structure similar to the following, which contains the update payload that caused this new commit (delta), and any subgraph commits it references.
+It returns a structure similar to the following, which contains the update payload that caused this new commit (delta), and any subgraph commits it references.
 ```json
 {
   "data": [
@@ -171,7 +172,7 @@ This returns a structure similar to the following, which contains the update pay
 }
 ```
 
-To obtain a specific commit by its CID:
+Obtain a specific commit by its CID:
 ```gql
 query {
   commit(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
