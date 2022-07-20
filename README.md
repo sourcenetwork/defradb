@@ -16,8 +16,8 @@ DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for
 
 ## Install
 
-Install `defradb` by [downloading pre-compiled binaries](https://github.com/sourcenetwork/defradb/releases), or building it locally using the [Go toolchain](https://golang.org/):
-```
+Install `defradb` by [downloading an executable binary](https://github.com/sourcenetwork/defradb/releases), or building it locally using the [Go toolchain](https://golang.org/):
+```sh
 git clone git@github.com:sourcenetwork/defradb.git
 make install
 ```
@@ -57,7 +57,7 @@ defradb client schema add -f users.gql
 
 Adding a schema will generate the typed GraphQL endpoints for querying and mutation.
 
-Find more examples of schema type definitions in the [examples/schema](examples/schema) folder.
+Find more examples of schema type definitions in the [examples/schema/](examples/schema/) folder.
 
 
 ## Create a document instance
@@ -211,7 +211,7 @@ Pubsub nodes *passively* synchronize data between nodes by broadcasting Document
 Replicator nodes *actively* push changes from a specific collection *to* the target peer.
 
 
-### Pubsub Example
+### Pubsub example
 
 Pubsub peers can be specified on the command line using the `--peers` flag which accepts a comma-separated list of peer [MultiAddress](https://docs.libp2p.io/concepts/addressing/). For example, a node at `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress  `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
@@ -240,7 +240,7 @@ Unpacking this:
 This will startup two nodes and connect them via pubsub networking.
 
 
-### Replicator Example
+### Replicator example
 
 Replicator nodes are initially established in one direction by default, so a *nodeA* actively replicates to *nodeB* but not vice-versa. However, nodes will always broadcast their updates over the document specific pubsub topic so while *nodeB* doesn't replicate directly to *nodeA*, it will *passively*.
 
@@ -259,16 +259,14 @@ defradb start --rootdir ~/.defradb-nodeB --p2paddr /ip4/0.0.0.0/tcp/9172 --url l
 
 Notice we *do not* specify the `--peers` option as we will manually define a replicator after startup via the `rpc` client command.
 
-On *nodeB*, in another terminal, run:
+On *nodeB*, in another terminal, run to add a schema:
 ```
-defradb client schema add -f <your_schema.gql> # Add a collection with a schema
+defradb client schema add -f <your_schema.gql>
 ```
 
-On *nodeA*, run:
+On *nodeA*, run add the same schema and set *nodeB* as target replicator peer:
 ```
-# Add the same collection as nodeB
 defradb client schema add -f <your_schema.gql>
-# Set nodeB as our target replicator peer
 defradb rpc add-replicator <collection_name> <nodeB_peer_address>
 ```
 
@@ -281,6 +279,7 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 
 
 ## Contributors
+
 - John-Alan Simmons ([@jsimnz](https://github.com/jsimnz))
 - Andrew Sisley ([@AndrewSisley](https://github.com/AndrewSisley))
 - Shahzad Lone ([@shahzadlone](https://github.com/shahzadlone))
