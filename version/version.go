@@ -78,3 +78,24 @@ func (dv *defraVersion) String() string {
 		dv.GoInfo,
 	)
 }
+
+func (dv *defraVersion) StringFull() string {
+	var commitHash string
+	if len(dv.Commit) >= commitHashMaxLength {
+		commitHash = dv.Commit[:commitHashMaxLength]
+	}
+	return fmt.Sprintf(
+		`defradb %s (%s %s)
+* HTTP API: %s
+* P2P multicodec: %s
+* DocKey versions: %s
+* Go: %s`,
+		dv.Release,
+		commitHash,
+		dv.CommitDate,
+		dv.VersionHTTPAPI,
+		dv.NetProtocol,
+		dv.DocKeyVersions,
+		dv.GoInfo,
+	)
+}

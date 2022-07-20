@@ -19,6 +19,7 @@ import (
 )
 
 var format string
+var full bool
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -41,7 +42,11 @@ var versionCmd = &cobra.Command{
 			}
 			cmd.Println(buf.String())
 		default:
-			cmd.Println(dv.String())
+			if full {
+				cmd.Println(dv.StringFull())
+			} else {
+				cmd.Println(dv.String())
+			}
 		}
 		return nil
 	},
@@ -49,5 +54,6 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	versionCmd.Flags().StringVarP(&format, "format", "f", "", "version format. Options are text, json")
+	versionCmd.Flags().BoolVarP(&full, "full", "", false, "display full version information")
 	rootCmd.AddCommand(versionCmd)
 }
