@@ -66,28 +66,15 @@ func NewDefraVersion() (defraVersion, error) {
 }
 
 func (dv *defraVersion) String() string {
-	// shorten commit hash
-	var commitHash strings.Builder
-	for i, r := range dv.Commit {
-		if i >= commitHashMaxLength {
-			break
-		}
-		commitHash.WriteRune(r)
+	var commitHash string
+	if len(dv.Commit) >= commitHashMaxLength {
+		commitHash = dv.Commit[:commitHashMaxLength]
 	}
 	return fmt.Sprintf(
-		`defradb %s (%s %s)
-
-Further version information:
-- HTTP API: %s
-- P2P multicodec: %s
-- DocKey versions: %s
-- Go: %s`,
+		`defradb %s (%s %s) built with Go %s`,
 		dv.Release,
-		commitHash.String(),
+		commitHash,
 		dv.CommitDate,
-		dv.VersionHTTPAPI,
-		dv.NetProtocol,
-		dv.DocKeyVersions,
 		dv.GoInfo,
 	)
 }
