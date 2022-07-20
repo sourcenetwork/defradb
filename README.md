@@ -4,131 +4,35 @@
 <img height="120px" src="docs/DefraDB_Full-v2-cropped.png">
 </p>
 
-#
-The DefraDB is a Peer-to-Peer Edge Database, with the interface of a NoSQL Document Store. DefraDB's data model is backed by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) for a multi write-master architecture. It is the core data storage system for the [Source](https://source.network/) Ecosystem, built with [IPFS](https://ipfs.io/) technologies like [IPLD](https://docs.ipld.io/) and [LibP2P](https://libp2p.io/) and featuring Semantic web3 properties. You can read the [Technical Overview here](https://docsend.com/view/mczj7ic4i3kqpq7s).
+*DefraDB* is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called DQL. Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It's built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
 
-Table of Contents
-=================
+Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9tj62bewenu) and documentation on [docs.source.network](https://docs.source.network/).
 
-* [Early Access](#early-access)
-* [Installation](#installation)
-	* [Build](#build)
-* [Getting Started](#getting-started)
-	* [Add a Schema type](#add-a-schema-type)
-	* [Create a Document Instance](#create-a-document-instance)
-	* [Query our documents](#query-our-documents)
-	* [Interact with Document Commits](#interact-with-document-commits)
-* [Query Documentation](#query-documenation)
-* [CLI Documentation](#cli-documentation)
-* [Next Steps](#next-steps)
-* [Licensing](#licensing)
-* [Contributors](#contributors)
-* [Further Reading](#futher-reading)
-	* [Technical Specification Doc](#technical-specification-doc)
-	* [Design Doc](#design-doc)
 
 ## Early Access
 
 DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for production deployments. Please reach out to the team at [Source](https://source.network/) by emailing [hello@source.network](mailto:hello@source.network) for support with your use-case and deployment.
 
-## Installation
 
-To install a DefraDB node, you can download the pre-compiled binaries available on the releases page, or you can compile it yourself if you have a local [Go Toolchain](https://golang.org/) installed.
+## Getting started
 
-### Build
+### Install
 
-Build dependencies:
+Install `defradb` by downloading the pre-compiled binaries available on the releases page, or building it yourself using a local [Go toolchain](https://golang.org/) and the following instructions:
 ```
-make deps
-
-```
-Run using Make:
-```
-make
-```
-
-Install using Make:
-```
+git clone git@github.com:sourcenetwork/defradb.git
 make install
 ```
 
-Build the binary inside the `build/` folder:
-```
-make build
-```
 
-Build and Start DefraDB:
-```
-make start
-```
+It is recommended to additionally to be able to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download it](https://www.electronjs.org/apps/graphiql).
 
-Install Manually:
-```
-go install github.com/sourcenetwork/defradb/cli/defradb
-```
 
-Build and Install Manually:
-```
-git clone git@github.com:sourcenetwork/defradb.git
-cd defradb/cli/defradb
-go install
-```
+### Start and query
 
-### Test
+`defradb start` spins up a node. By default, `~/.defradb/` is used as configuration and data directory, and the database listens on 
 
-Run the tests:
-```
-make test
-```
-
-Run the benchmark tests:
-```
-make test:bench
-```
-
-### Lint
-
-Run the linter (make sure to have had run `make deps` before or have `golangci-lint` installed):
-```
-make lint
-```
-
-Find all occurrences where the linter errors are explicitly being suppressed (need to resolve these):
-```
-make lint:todo
-```
-
-List all enabled and disabled linters:
-```
-make lint:list
-```
-
-## Getting Started
-
-To get started with DefraDB, make sure you have the `defradb` cli installed locally, or access to a remote node.
-
-Additionally, you most likely want to use a native GraphQL client, like GraphiQL, which can be downloaded as an Electron App [here](https://www.electronjs.org/apps/graphiql).
-
-Setup a local DefraDB node with:
-```
-make start
-```
-
-OR by manually building and then running:
-
-```
-defradb start
-```
-
-This will start a node with the default settings (running at http://localhost:9181), and create a configuration file at $HOME/.defra/config.yaml. Where $HOME is your operating system user home directory.
-
-Currently, DefraDB supports two storage engines; [BadgerDB](https://github.com/dgraph-io/badger), and an In-Memory store. By default, it uses BadgerDB, as it provides disk-backed persistent storage, unlike the In-Memory store. You can specify which engine to use with the `--store` option for the `start` command, or by editing the local config file.
-
-If you are using BadgerDB, and you encounter the following error:
-```
-Failed to initiate database:Map log file. Path=.defradb/data/000000.vlog. Error=exec format error
-```
-It means terminal client doesn't support Mmap'ed files. This is common with older version of Ubuntu on Windows va WSL. Unfortunately, BadgerDB uses Mmap to interact with the filesystem, so you will need to use a terminal client which supports it.
+`defrab` 
 
 Once your local environment is setup, you can test your connection with:
 ```
