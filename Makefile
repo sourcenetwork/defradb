@@ -12,18 +12,16 @@ else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
 VERSION_GITCOMMITDATE=$(shell git show -s --format=%cs HEAD)
-VERSION_GITBRANCH=$(shell git symbolic-ref -q --short HEAD)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
-VERSION_GITTAG=dev-$(shell git symbolic-ref -q --short HEAD)
+VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
-VERSION_GITTAG=$(shell git describe --tags)
+VERSION_GITRELEASE=$(shell git describe --tags)
 endif
 BUILD_FLAGS=-ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GoInfo=$(VERSION_GOINFO)'\
--X 'github.com/sourcenetwork/defradb/version.GitTag=$(VERSION_GITTAG)'\
+-X 'github.com/sourcenetwork/defradb/version.GitRelease=$(VERSION_GITRELEASE)'\
 -X 'github.com/sourcenetwork/defradb/version.GitCommit=$(VERSION_GITCOMMIT)'\
--X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'\
--X 'github.com/sourcenetwork/defradb/version.GitBranch=$(VERSION_GITBRANCH)'"
+-X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'"
 endif
 
 default:

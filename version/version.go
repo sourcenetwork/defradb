@@ -22,15 +22,14 @@ import (
 	"github.com/sourcenetwork/defradb/core/net"
 )
 
-const commitHashLength = 8
+const commitHashMaxLength = 8
 
-// Git info from build system.
+// Git info from build system. Public to be determined via the Makefile.
 var (
 	GoInfo        string
-	GitTag        string
+	GitRelease    string
 	GitCommit     string
 	GitCommitDate string
-	GitBranch     string
 )
 
 // defraVersion is the current version of DefraDB, its build information, and versions of components.
@@ -39,7 +38,6 @@ type defraVersion struct {
 	Release    string `json:"release"`
 	Commit     string `json:"commit"`
 	CommitDate string `json:"commitdate"`
-	Branch     string `json:"branch"`
 	GoInfo     string `json:"go"`
 
 	VersionHTTPAPI string `json:"httpapi"`
@@ -47,14 +45,13 @@ type defraVersion struct {
 	NetProtocol    string `json:"netprotocol"`
 }
 
-// NewDefraVersion returns a DefraVersion with normalized values.
+// NewDefraVersion returns a defraVersion with normalized values.
 func NewDefraVersion() (defraVersion, error) {
 	dv := defraVersion{
 		GoInfo:         strings.Replace(GoInfo, "go version go", "", 1),
-		Release:        GitTag,
+		Release:        GitRelease,
 		Commit:         GitCommit,
 		CommitDate:     GitCommitDate,
-		Branch:         GitBranch,
 		VersionHTTPAPI: http.Version,
 		NetProtocol:    string(net.Protocol),
 	}
@@ -69,20 +66,22 @@ func NewDefraVersion() (defraVersion, error) {
 }
 
 func (dv *defraVersion) String() string {
-	// short commit hash
+	// shorten commit hash
 	var commitHash strings.Builder
 	for i, r := range dv.Commit {
-		if i >= commitHashLength {
+		if i >= commitHashMaxLength {
 			break
 		}
 		commitHash.WriteRune(r)
 	}
 	return fmt.Sprintf(
 		`defradb %s (%s %s)
-http api: %s
-net protocol: %s
-dockey versions: %s
-go: %s`,
+
+Further version information:
+- HTTP API: %s
+- P2P multicodec: %s
+- DocKey versions: %s
+- Go: %s`,
 		dv.Release,
 		commitHash.String(),
 		dv.CommitDate,
