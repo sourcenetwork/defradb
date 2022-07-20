@@ -15,29 +15,26 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
+// DefraDB's p2p protocol information (https://docs.libp2p.io/concepts/protocols/).
+
 const (
-	// Name is the protocol slug.
+	// Name is the protocol slug, the codename representing it.
 	Name = "defra"
-
-	// @TODO: Register code with Multicodec https://github.com/multiformats/multicodec.
-	// 961 is arbitrary at the moment
-	// Code is the protocol code.
-	Code = 961
-
+	// Code is DefraDB's multicodec code.
+	Code = 961 // arbitrary
 	// Version is the current protocol version.
 	Version = "0.0.1"
-	// Protocol is the threads protocol tag.
+	// Protocol is the complete libp2p protocol tag.
 	Protocol protocol.ID = "/" + Name + "/" + Version
 )
 
-var addrProtocol = ma.Protocol{
-	Name:  Name,
-	Code:  Code,
-	VCode: ma.CodeToVarint(Code),
-	// Size:  ma.LengthPrefixedVarSize,
-}
-
 func init() {
+	var addrProtocol = ma.Protocol{
+		Name:  Name,
+		Code:  Code,
+		VCode: ma.CodeToVarint(Code),
+		// Size:  ma.LengthPrefixedVarSize,
+	}
 	if err := ma.AddProtocol(addrProtocol); err != nil {
 		panic(err)
 	}

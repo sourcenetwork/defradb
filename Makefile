@@ -1,19 +1,39 @@
+# Make DefraDB!
 # For compatibility, prerequisites are instead explicit calls to make.
 
 ifndef VERBOSE
 MAKEFLAGS+=--no-print-directory
 endif
 
+# Provide info from git to the version package using linker flags.
+ifeq (, $(shell which git))
+$(error "No git in $(PATH), version information won't be included")
+else
+VERSION_GOINFO=$(shell go version)
+VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
+VERSION_GITCOMMITDATE=$(shell git show -s --format=%cs HEAD)
+ifneq ($(shell git symbolic-ref -q --short HEAD),master)
+VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
+else
+VERSION_GITRELEASE=$(shell git describe --tags)
+endif
+BUILD_FLAGS=-ldflags "\
+-X 'github.com/sourcenetwork/defradb/version.GoInfo=$(VERSION_GOINFO)'\
+-X 'github.com/sourcenetwork/defradb/version.GitRelease=$(VERSION_GITRELEASE)'\
+-X 'github.com/sourcenetwork/defradb/version.GitCommit=$(VERSION_GITCOMMIT)'\
+-X 'github.com/sourcenetwork/defradb/version.GitCommitDate=$(VERSION_GITCOMMITDATE)'"
+endif
+
 default:
-	go run cmd/defradb/main.go
+	@go run $(BUILD_FLAGS) cmd/defradb/main.go
 
 .PHONY: install
 install:
-	go install ./cmd/defradb
+	@go install $(BUILD_FLAGS) ./cmd/defradb
 
 .PHONY: build
 build:
-	go build -o build/defradb cmd/defradb/main.go
+	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"

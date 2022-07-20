@@ -11,79 +11,49 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
-	"strings"
 
-	"github.com/fatih/color"
+	"github.com/sourcenetwork/defradb/version"
 	"github.com/spf13/cobra"
 )
 
-type versionInfo struct {
-	Tag    string `json:"tag"`
-	Commit string `json:"commit"`
-	Date   string `json:"date"`
-}
-
-func (v versionInfo) FullVersion() string {
-	return fmt.Sprintf(`DefraDB's Version Information:
-  *  version tag  : %s
-  *  build commit : %s
-  *  release date : %s`,
-		color.BlueString(DefraVersion.Tag),
-		color.GreenString(DefraVersion.Commit),
-		color.YellowString(DefraVersion.Date),
-	)
-}
-
-func (v versionInfo) JsonVersion() (string, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
-var DefraVersion = versionInfo{
-	Tag:    "0.2.1",
-	Commit: "e4328e0",
-	Date:   "2022-03-07T00:12:07Z",
-}
-
 var format string
+var full bool
 
-// versionCmd represents the command that will output the cli version
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Version",
+	Short: "Display the version number of DefraDB and its components",
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		switch strings.ToLower(format) {
-
-		case "short":
-			fmt.Println(DefraVersion.Tag) //nolint:forbidigo
-
+		dv, err := version.NewDefraVersion()
+		if err != nil {
+			return err
+		}
+		switch format {
 		case "json":
-			jVersion, err := DefraVersion.JsonVersion()
+			var buf bytes.Buffer
+			dvj, err := json.Marshal(dv)
 			if err != nil {
 				return err
 			}
-			fmt.Println(jVersion) //nolint:forbidigo
-
+			err = json.Indent(&buf, dvj, "", "    ")
+			if err != nil {
+				return err
+			}
+			cmd.Println(buf.String())
 		default:
-			fmt.Println(DefraVersion.FullVersion()) //nolint:forbidigo
-
+			if full {
+				cmd.Println(dv.StringFull())
+			} else {
+				cmd.Println(dv.String())
+			}
 		}
 		return nil
 	},
 }
 
-func initVersionFormatFlag(cmd *cobra.Command) {
-	fs := cmd.Flags()
-	fs.SortFlags = false
-	fs.StringVarP(&format, "format", "f", "", "The version's format can be one of: 'short', 'json'")
-}
-
 func init() {
-	initVersionFormatFlag(versionCmd)
+	versionCmd.Flags().StringVarP(&format, "format", "f", "", "version format. Options are text, json")
+	versionCmd.Flags().BoolVarP(&full, "full", "", false, "display full version information")
 	rootCmd.AddCommand(versionCmd)
 }

@@ -5,7 +5,7 @@ FROM docker.io/golang:1.17 AS BUILD
 
 WORKDIR /app
 
-COPY go.mod go.sum Makefile ./
+COPY go.mod go.sum Makefile .git ./
 RUN make deps:modules
 COPY . .
 RUN make build
