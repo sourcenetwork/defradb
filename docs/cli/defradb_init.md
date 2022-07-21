@@ -5,8 +5,6 @@ Initialize DefraDB's root directory and configuration file
 ### Synopsis
 
 Initialize a directory for configuration and data at the given path.
-	
-The --reinitialize flag replaces a configuration file with a default one.
 
 ```
 defradb init [rootdir] [flags]

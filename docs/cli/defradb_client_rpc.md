@@ -1,11 +1,10 @@
 ## defradb client rpc
 
-Interact with a running DefraDB gRPC server
+Interact with a DefraDB gRPC server
 
 ### Synopsis
 
-Interact with a running DefraDB gRPC server as a client.
-This command allows you to add replicators and more.
+Interact with a DefraDB gRPC server as a client.
 
 ### Options
 
