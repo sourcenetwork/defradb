@@ -67,7 +67,7 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 				logging.SetConfig(loggingConfig)
 				log.Info(
 					cmd.Context(),
-					"Using default configuration. To create DefraDB's config and data directory, use defradb init."
+					"Using default configuration. To create DefraDB's config and data directory, use defradb init.",
 				)
 			}
 			return nil
