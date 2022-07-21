@@ -44,7 +44,7 @@ func genRootManPages(dir string) {
 	if err != nil {
 		log.FatalE(ctx, "Failed to create directory", err, logging.NewKV("dir", dir))
 	}
-	err = doc.GenManTree(cli.RootCmd, header, dir)
+	err = doc.GenManTree(cli.MakeRootCommand(), header, dir)
 	if err != nil {
 		log.FatalE(ctx, "Failed generation of man pages", err)
 	}
