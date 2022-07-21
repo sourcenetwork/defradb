@@ -18,7 +18,13 @@ func MakeSchemaCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "schema",
 		Short: "Interact with the schema system of a running DefraDB instance",
-		Long:  `Make changes, updates, migrations, or look for existing schema types to a DefraDB node.`,
+		Long:  `Make changes, updates, or look for existing schema types to a DefraDB node.`,
+		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
+			return nil
+		},
 	}
 
 	return cmd

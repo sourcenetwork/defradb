@@ -30,7 +30,7 @@ func MakeSchemaAddCommand() *cobra.Command {
 		Short: "Add a new schema type to DefraDB",
 		Long: `Add a new schema type to DefraDB.
 
-Example: add as an argument string:
+Example: add from an argument string:
 	defradb client schema add 'type Foo { ... }'
 
 Example: add from file:

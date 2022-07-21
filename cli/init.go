@@ -22,7 +22,7 @@ import (
 var reinitialize bool
 
 /*
-The `init` command initializes the cnfiguration file and root directory..
+The `init` command initializes the configuration file and root directory..
 
 It covers three possible situations:
 - root dir doesn't exist
@@ -33,7 +33,7 @@ func MakeInitCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "init [rootdir]",
 		Short: "Initialize DefraDB's root directory and configuration file",
-		Long: `Initialize a directory for DefraDB's configuration and data at the given path.
+		Long: `Initialize a directory for configuration and data at the given path.
 	
 The --reinitialize flag replaces a configuration file with a default one.`,
 		// Load a default configuration, considering env. variables and CLI flags.

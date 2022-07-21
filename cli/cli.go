@@ -46,27 +46,27 @@ func Execute() {
 // It leverages that each MakeCommand func exits early in case of error, for simplicity.
 func MakeCommandTree() *cobra.Command {
 	rootCmd := MakeRootCommand()
-	clientCmd := MakeClientCommand()
 	rpcCmd := MakeRPCCommand()
 	blocksCmd := MakeBlocksCommand()
 	schemaCmd := MakeSchemaCommand()
+	clientCmd := MakeClientCommand()
+	rpcCmd.AddCommand(
+		MakeAddReplicatorCommand(),
+	)
 	blocksCmd.AddCommand(
 		MakeBlocksGetCommand(),
 	)
 	schemaCmd.AddCommand(
-		MakeSchemaCommand(),
-	)
-	rpcCmd.AddCommand(
-		MakeAddReplicatorCommand(),
+		MakeSchemaAddCommand(),
 	)
 	clientCmd.AddCommand(
 		MakeDumpCommand(),
 		MakePingCommand(),
-		MakeSchemaCommand(),
 		MakeBlocksCommand(),
 		MakeQueryCommand(),
 		schemaCmd,
 		rpcCmd,
+		blocksCmd,
 	)
 	rootCmd.AddCommand(
 		clientCmd,
