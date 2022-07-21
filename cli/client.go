@@ -18,7 +18,7 @@ var clientCmd = &cobra.Command{
 	Use:   "client",
 	Short: "Interact with a running DefraDB node as a client",
 	Long: `Interact with a running DefraDB node as a client.
-It allows to execute queries, add schema types, and run debug routines.`,
+Execute queries, add schema types, and run debug routines.`,
 }
 
 func init() {

@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 	Short: "DefraDB Edge Database",
 	Long: `DefraDB is the edge database to power the user-centric future.
 
-Use it to start a database node, query a local or remote node, and much more.
+Start a database node, query a local or remote node, and much more.
 
 DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
 See https://docs.source.network/BSLv0.2.txt for more information.

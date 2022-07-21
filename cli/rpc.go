@@ -19,9 +19,8 @@ import (
 
 var rpcCmd = &cobra.Command{
 	Use:   "rpc",
-	Short: "Interact with a running DefraDB gRPC server",
-	Long: `Interact with a running DefraDB gRPC server as a client.
-This command allows you to add replicators and more.`,
+	Short: "Interact with a DefraDB gRPC server",
+	Long:  `Interact with a DefraDB gRPC server as a client.`,
 }
 
 func init() {
