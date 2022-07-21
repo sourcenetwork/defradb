@@ -14,12 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeClientCommand() *cobra.Command {
+func MakeSchemaCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "client",
-		Short: "Interact with a running DefraDB node as a client",
-		Long: `Interact with a running DefraDB node as a client.
-This command allows you to execute queries, add schema types, and run debug routines.`,
+		Use:   "schema",
+		Short: "Interact with the schema system of a running DefraDB instance",
+		Long:  `Make changes, updates, migrations, or look for existing schema types to a DefraDB node.`,
 	}
 
 	return cmd

@@ -17,33 +17,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-// clientCmd represents the client command
-var rpcCmd = &cobra.Command{
-	Use:   "rpc",
-	Short: "Interact with a running DefraDB gRPC server",
-	Long: `Interact with a running DefraDB gRPC server as a client.
-	This command allows you to add replicators and more.`,
-}
+func MakeRPCCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "rpc",
+		Short: "Interact with a running DefraDB gRPC server",
+		Long: `Interact with a running DefraDB gRPC server as a client.
+This command allows you to add replicators and more.`,
+	}
 
-func init() {
-	clientCmd.AddCommand(rpcCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// clientCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	rpcCmd.PersistentFlags().String(
+	cmd.PersistentFlags().String(
 		"addr", cfg.Net.RPCAddress,
 		"gRPC endpoint address",
 	)
-	err := viper.BindPFlag("net.rcpaddress", rpcCmd.PersistentFlags().Lookup("addr"))
+	err := viper.BindPFlag("net.rcpaddress", cmd.PersistentFlags().Lookup("addr"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind net.rpcaddress", err)
 	}
+
+	return cmd
 }

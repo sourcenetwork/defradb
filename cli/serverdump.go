@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -22,45 +23,57 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var datastore string
+func MakeServerDumpCmd() *cobra.Command {
+	var datastore string
+	cmd := &cobra.Command{
+		Use:   "server-dump",
+		Short: "Dumps the state of the entire database (server-side)",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			ctx := context.Background()
+			log.Info(ctx, "Starting DefraDB process...")
 
-var srvDumpCmd = &cobra.Command{
-	Use:   "server-dump",
-	Short: "Dumps the state of the entire database (server-side)",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		log.Info(ctx, "Starting DefraDB process...")
+			// setup signal handlers
+			signalCh := make(chan os.Signal, 1)
+			signal.Notify(signalCh, os.Interrupt)
 
-		// setup signal handlers
-		signalCh := make(chan os.Signal, 1)
-		signal.Notify(signalCh, os.Interrupt)
+			var rootstore ds.Batching
+			var err error
+			if datastore == badgerDatastoreName {
+				info, err := os.Stat(cfg.Datastore.Badger.Path)
+				exists := (err == nil && info.IsDir())
+				if !exists {
+					return fmt.Errorf(
+						"Badger store does not exist at %s. Try with an existing directory",
+						cfg.Datastore.Badger.Path,
+					)
+				}
+				log.Info(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
+				rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
+				if err != nil {
+					return fmt.Errorf("could not open badger datastore: %w", err)
+				}
+			} else {
+				return fmt.Errorf("server-side dump is only supported for the Badger datastore")
+			}
+			if err != nil {
+				return fmt.Errorf("failed to initialize datastore: %w", err)
+			}
 
-		var rootstore ds.Batching
-		var err error
-		if datastore == badgerDatastoreName {
-			log.Info(ctx, "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
-			rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
-		} else {
-			log.Fatal(ctx, "Server-side dump is only supported for the Badger datastore")
-		}
-		if err != nil {
-			log.FatalE(ctx, "Failed to initialize datastore", err)
-		}
+			db, err := db.NewDB(ctx, rootstore)
+			if err != nil {
+				return fmt.Errorf("failed to initialize database: %w", err)
+			}
 
-		db, err := db.NewDB(ctx, rootstore)
-		if err != nil {
-			log.FatalE(ctx, "Failed to initialize database", err)
-		}
+			log.Info(ctx, "Dumping DB state...")
+			db.PrintDump(ctx)
+			return nil
+		},
+	}
 
-		log.Info(ctx, "Dumping DB state...")
-		db.PrintDump(ctx)
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(srvDumpCmd)
-	srvDumpCmd.Flags().StringVar(
+	cmd.Flags().StringVar(
 		&datastore, "store", cfg.Datastore.Store,
 		"datastore to use. Options are badger, memory",
 	)
+
+	return cmd
 }

@@ -16,11 +16,67 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/logging"
+	"github.com/spf13/cobra"
 )
+
+const badgerDatastoreName = "badger"
+
+var log = logging.MustNewLogger("defra.cli")
+
+var RootCmd *cobra.Command
+
+func init() {
+	RootCmd = MakeRootCommand()
+}
+
+func Execute() {
+	ctx := context.Background()
+	assembleCommandTree(RootCmd)
+	err := RootCmd.ExecuteContext(ctx)
+	if err != nil {
+		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
+	}
+}
+
+func assembleCommandTree(cmd *cobra.Command) *cobra.Command {
+	clientCmd := MakeClientCommand()
+	rpcCmd := MakeRPCCommand()
+	blocksCmd := MakeBlocksCommand()
+	schemaCmd := MakeSchemaCommand()
+	blocksCmd.AddCommand(
+		MakeBlocksGetCommand(),
+	)
+	schemaCmd.AddCommand(
+		MakeSchemaCommand(),
+	)
+	rpcCmd.AddCommand(
+		MakeAddReplicatorCommand(),
+	)
+	clientCmd.AddCommand(
+		MakeDumpCommand(),
+		MakePingCommand(),
+		MakeSchemaCommand(),
+		MakeBlocksCommand(),
+		MakeQueryCommand(),
+		schemaCmd,
+		rpcCmd,
+	)
+	cmd.AddCommand(
+		clientCmd,
+		MakeStartCommand(),
+		MakeServerDumpCmd(),
+		MakeVersionCommand(),
+		MakeInitCommand(),
+	)
+	return cmd
+}
 
 func isFileInfoPipe(fi os.FileInfo) bool {
 	return fi.Mode()&os.ModeNamedPipe != 0

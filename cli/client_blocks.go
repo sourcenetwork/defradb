@@ -14,12 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeClientCommand() *cobra.Command {
+func MakeBlocksCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "client",
-		Short: "Interact with a running DefraDB node as a client",
-		Long: `Interact with a running DefraDB node as a client.
-This command allows you to execute queries, add schema types, and run debug routines.`,
+		Use:   "blocks",
+		Short: "Interact with the db blockstore",
 	}
 
 	return cmd
