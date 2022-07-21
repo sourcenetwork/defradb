@@ -20,90 +20,74 @@ import (
 	"github.com/spf13/viper"
 )
 
-const badgerDatastoreName = "badger"
-
-var (
-	log          = logging.MustNewLogger("defra.cli")
-	cfg          = config.DefaultConfig()
-	rootDirParam string
-)
-
-var RootCmd = rootCmd
-
-func Execute() {
-	ctx := context.Background()
-	err := rootCmd.ExecuteContext(ctx)
-	if err != nil {
-		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
-	}
-}
+var rootDirParam string
 
 var rootCmd = &cobra.Command{
 	Use:   "defradb",
 	Short: "DefraDB Edge Database",
 	Long: `DefraDB is the edge database to power the user-centric future.
-This CLI is the main reference implementation of DefraDB. Use it to start
-a new database process, query a local or remote instance, and much more.
 
-For example:
+Use it to start a database node, query a local or remote node, and much more.
 
-# Start a new database instance
-> defradb start `,
+DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
+See https://docs.source.network/BSLv0.2.txt for more information.
+`,
 	// Runs on subcommands before their Run function, to handle configuration and top-level flags.
 	// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 	// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
-			log.FatalE(ctx, "Could not get rootdir", err)
+			return fmt.Errorf("failed to get root dir: %w", err)
 		}
 		if exists {
 			err := cfg.Load(rootDir)
 			if err != nil {
-				log.FatalE(ctx, "Could not load config file", err)
+				return fmt.Errorf("failed to load config: %w", err)
 			}
 			loggingConfig, err := cfg.GetLoggingConfig()
 			if err != nil {
-				log.FatalE(ctx, "Could not get logging config", err)
+				return fmt.Errorf("failed to get logging config: %w", err)
 			}
 			logging.SetConfig(loggingConfig)
-			log.Debug(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+			log.Debug(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		} else {
 			err := cfg.LoadWithoutRootDir()
 			if err != nil {
-				log.FatalE(ctx, "Could not load config file", err)
+				return fmt.Errorf("failed to load config: %w", err)
 			}
 			loggingConfig, err := cfg.GetLoggingConfig()
 			if err != nil {
-				log.FatalE(ctx, "Could not get logging config", err)
+				return fmt.Errorf("failed to get logging config: %w", err)
 			}
 			logging.SetConfig(loggingConfig)
-			log.Info(ctx, "Using default configuration. To create DefraDB's directory, use defradb init.")
+			log.Info(
+				cmd.Context(),
+				"Using default configuration. To create DefraDB's config and data directory, use defradb init.",
+			)
 		}
+		return nil
 	},
 }
 
 func init() {
-	var err error
-
 	rootCmd.PersistentFlags().StringVar(
 		&rootDirParam, "rootdir", "",
-		"directory for data and configuration to use (default \"$HOME/.defradb\")",
+		"Directory for data and configuration to use (default \"$HOME/.defradb\")",
 	)
 
 	rootCmd.PersistentFlags().String(
 		"loglevel", cfg.Log.Level,
-		"log level to use. Options are debug, info, error, fatal",
+		"Log level to use. Options are debug, info, error, fatal",
 	)
-	err = viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
+	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.loglevel", err)
 	}
 
 	rootCmd.PersistentFlags().String(
 		"logoutput", cfg.Log.OutputPath,
-		"log output path",
+		"Log output path",
 	)
 	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
@@ -112,7 +96,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String(
 		"logformat", cfg.Log.Format,
-		"log format to use. Options are text, json",
+		"Log format to use. Options are text, json",
 	)
 	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
@@ -121,7 +105,7 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool(
 		"logtrace", cfg.Log.Stacktrace,
-		"include stacktrace in error and fatal logs",
+		"Include stacktrace in error and fatal logs",
 	)
 	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
@@ -130,7 +114,7 @@ func init() {
 
 	rootCmd.PersistentFlags().Bool(
 		"logcolor", cfg.Log.Color,
-		"enable colored output",
+		"Enable colored output",
 	)
 	err = viper.BindPFlag("log.color", rootCmd.PersistentFlags().Lookup("logcolor"))
 	if err != nil {
@@ -145,5 +129,4 @@ func init() {
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind api.address", err)
 	}
-	rootCmd.SilenceErrors = true
 }

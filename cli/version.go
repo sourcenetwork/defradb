@@ -23,7 +23,7 @@ var full bool
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Display the version number of DefraDB and its components",
+	Short: "Display the version information of DefraDB and its components",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		dv, err := version.NewDefraVersion()
 		if err != nil {
@@ -53,7 +53,7 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
-	versionCmd.Flags().StringVarP(&format, "format", "f", "", "version format. Options are text, json")
-	versionCmd.Flags().BoolVarP(&full, "full", "", false, "display full version information")
+	versionCmd.Flags().StringVarP(&format, "format", "f", "", "Version output format. Options are text, json")
+	versionCmd.Flags().BoolVarP(&full, "full", "", false, "Display the full version information")
 	rootCmd.AddCommand(versionCmd)
 }
