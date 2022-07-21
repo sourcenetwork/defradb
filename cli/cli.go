@@ -30,27 +30,22 @@ const badgerDatastoreName = "badger"
 
 var log = logging.MustNewLogger("defra.cli")
 
-var RootCmd *cobra.Command
-
-func init() {
-	RootCmd = MakeRootCommand()
-}
-
 func Execute() {
 	ctx := context.Background()
-	assembleCommandTree(RootCmd)
+	rootCmd := MakeCommandTree()
 	// Silence cobra's default output to control usage and error display.
-	RootCmd.SilenceErrors = true
-	RootCmd.SilenceUsage = true
-	err := RootCmd.ExecuteContext(ctx)
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
 	}
 }
 
-// assembleCommandTree assembles the command tree for the CLI.
-// It leverages MakeCommand funcs that exit early in case of error, for simplicity.
-func assembleCommandTree(cmd *cobra.Command) *cobra.Command {
+// MakeCommandTree returns the root command with its tree of subcommands.
+// It leverages that each MakeCommand func exits early in case of error, for simplicity.
+func MakeCommandTree() *cobra.Command {
+	rootCmd := MakeRootCommand()
 	clientCmd := MakeClientCommand()
 	rpcCmd := MakeRPCCommand()
 	blocksCmd := MakeBlocksCommand()
@@ -73,14 +68,14 @@ func assembleCommandTree(cmd *cobra.Command) *cobra.Command {
 		schemaCmd,
 		rpcCmd,
 	)
-	cmd.AddCommand(
+	rootCmd.AddCommand(
 		clientCmd,
 		MakeStartCommand(),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(),
 		MakeInitCommand(),
 	)
-	return cmd
+	return rootCmd
 }
 
 func isFileInfoPipe(fi os.FileInfo) bool {

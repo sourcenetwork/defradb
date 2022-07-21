@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.FatalE(context.Background(), "Creating the filesystem path failed", err)
 	}
-	err = doc.GenMarkdownTree(cli.RootCmd, *path)
+	err = doc.GenMarkdownTree(cli.MakeCommandTree(), *path)
 	if err != nil {
 		log.FatalE(context.Background(), "Generating cmd docs failed", err)
 	}
