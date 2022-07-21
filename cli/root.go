@@ -39,8 +39,7 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 		// Runs on subcommands before their Run function, to handle configuration and top-level flags.
 		// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 		// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			ctx := context.Background()
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			rootDir, exists, err := config.GetRootDir(rootDirParam)
 			if err != nil {
 				return fmt.Errorf("failed to get root dir: %w", err)
@@ -55,7 +54,7 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 					return fmt.Errorf("failed to get logging config: %w", err)
 				}
 				logging.SetConfig(loggingConfig)
-				log.Debug(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+				log.Debug(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 			} else {
 				err := cfg.LoadWithoutRootDir()
 				if err != nil {
@@ -66,7 +65,7 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 					return fmt.Errorf("failed to get logging config: %w", err)
 				}
 				logging.SetConfig(loggingConfig)
-				log.Info(ctx, "Using default configuration. To create DefraDB's directory, use defradb init.")
+				log.Info(cmd.Context(), "Using default configuration. To create DefraDB's directory, use defradb init.")
 			}
 			return nil
 		},
@@ -130,7 +129,5 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind api.address", err)
 	}
-
-	cmd.SilenceErrors = true
 	return cmd
 }

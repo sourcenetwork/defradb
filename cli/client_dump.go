@@ -24,7 +24,7 @@ import (
 func MakeDumpCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "dump",
-		Short: "Dump the contents of a database",
+		Short: "Dump the contents of a database node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {

@@ -39,12 +39,17 @@ func init() {
 func Execute() {
 	ctx := context.Background()
 	assembleCommandTree(RootCmd)
+	// Silence cobra's default output to control usage and error display.
+	RootCmd.SilenceErrors = true
+	RootCmd.SilenceUsage = true
 	err := RootCmd.ExecuteContext(ctx)
 	if err != nil {
 		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
 	}
 }
 
+// assembleCommandTree assembles the command tree for the CLI.
+// It leverages MakeCommand funcs that exit early in case of error, for simplicity.
 func assembleCommandTree(cmd *cobra.Command) *cobra.Command {
 	clientCmd := MakeClientCommand()
 	rpcCmd := MakeRPCCommand()

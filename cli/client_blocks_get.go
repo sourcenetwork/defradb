@@ -26,6 +26,9 @@ func MakeBlocksGetCommand() *cobra.Command {
 		Short: "Get a block by its CID from the blockstore.",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if len(args) != 1 {
+				if err = cmd.Usage(); err != nil {
+					return err
+				}
 				return fmt.Errorf("get requires a CID argument")
 			}
 			cid := args[0]

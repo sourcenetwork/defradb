@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -36,8 +35,7 @@ func MakeInitCommand() *cobra.Command {
 		Short: "Initialize DefraDB's root directory and configuration file",
 		Long: `Initialize a directory for DefraDB's configuration and data at the given path.
 	
-	The --reinitialize flag replaces a configuration file with a default one.`,
-		Args: cobra.RangeArgs(0, 1),
+The --reinitialize flag replaces a configuration file with a default one.`,
 		// Load a default configuration, considering env. variables and CLI flags.
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			err := cfg.LoadWithoutRootDir()
@@ -51,11 +49,15 @@ func MakeInitCommand() *cobra.Command {
 			logging.SetConfig(loggingConfig)
 			return nil
 		},
-		RunE: func(_ *cobra.Command, args []string) error {
-			ctx := context.Background()
+		RunE: func(cmd *cobra.Command, args []string) error {
 			rootDirPath := ""
 			if len(args) == 1 {
 				rootDirPath = args[0]
+			} else if len(args) > 1 {
+				if err := cmd.Usage(); err != nil {
+					return err
+				}
+				return fmt.Errorf("init command requires zero or one rootdir argument")
 			}
 			rootDir, rootDirExists, err := config.GetRootDir(rootDirPath)
 			if err != nil {
@@ -76,10 +78,10 @@ func MakeInitCommand() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to create configuration file: %w", err)
 						}
-						log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
+						log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
 					} else {
-						log.FeedbackInfo(
-							ctx,
+						log.FeedbackError(
+							cmd.Context(),
 							fmt.Sprintf(
 								"Configuration file already exists at %v. Consider using --reinitialize",
 								configFilePath,
@@ -91,14 +93,14 @@ func MakeInitCommand() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to create configuration file: %w", err)
 					}
-					log.FeedbackInfo(ctx, fmt.Sprintf("Initialized configuration file at %v", configFilePath))
+					log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Initialized configuration file at %v", configFilePath))
 				}
 			} else {
 				err = config.CreateRootDirWithDefaultConfig(rootDir)
 				if err != nil {
 					return fmt.Errorf("failed to create root dir: %w", err)
 				}
-				log.FeedbackInfo(ctx, fmt.Sprintf("Created DefraDB root directory at %v", rootDir))
+				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Created DefraDB root directory at %v", rootDir))
 			}
 			return nil
 		},

@@ -25,14 +25,17 @@ import (
 
 func MakeAddReplicatorCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "addreplicator",
-		Short: "Add a new replicator <collection> <peer>",
+		Use:   "addreplicator <collection> <peer>",
+		Short: "Add a new replicator",
 		Long: `Use this command if you wish to add a new target replicator
 for the p2p data sync system.`,
-		Args: cobra.ExactArgs(2),
-		RunE: func(_ *cobra.Command, args []string) error {
-			ctx := context.Background()
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 2 {
+				if err := cmd.Usage(); err != nil {
+					return err
+				}
+				return fmt.Errorf("must specify two arguments: collection and peer")
+			}
 			collection := args[0]
 			peerAddr, err := ma.NewMultiaddr(args[1])
 			if err != nil {
@@ -40,7 +43,7 @@ for the p2p data sync system.`,
 			}
 
 			log.Info(
-				ctx,
+				cmd.Context(),
 				"Adding replicator for collection",
 				logging.NewKV("PeerAddress", peerAddr),
 				logging.NewKV("Collection", collection),
@@ -56,7 +59,8 @@ for the p2p data sync system.`,
 			if err != nil {
 				return fmt.Errorf("failed to parse RPC timeout duration: %w", err)
 			}
-			ctx, cancel := context.WithTimeout(ctx, rpcTimeoutDuration)
+
+			ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
 			defer cancel()
 
 			pid, err := client.AddReplicator(ctx, collection, peerAddr)

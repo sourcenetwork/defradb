@@ -24,7 +24,7 @@ var full bool
 func MakeVersionCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "version",
-		Short: "Display the version number of DefraDB and its components",
+		Short: "Display the version information of DefraDB and its components",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			dv, err := version.NewDefraVersion()
 			if err != nil {

@@ -47,6 +47,9 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			}
 
 			if len(args) > 1 {
+				if err = cmd.Usage(); err != nil {
+					return err
+				}
 				return fmt.Errorf("too many arguments")
 			}
 

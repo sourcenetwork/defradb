@@ -24,7 +24,7 @@ import (
 func MakePingCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "ping",
-		Short: "Ping defradb to test an API connection",
+		Short: "Ping to test connection to a node",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
 			stdout, err := os.Stdout.Stat()
 			if err != nil {

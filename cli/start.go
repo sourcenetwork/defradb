@@ -40,17 +40,15 @@ import (
 	"github.com/textileio/go-threads/broadcast"
 )
 
+const busBufferSize = 100
+
 func MakeStartCommand() *cobra.Command {
-	var (
-		busBufferSize = 100
-	)
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node ",
 		Long:  `Start a new instance of DefraDB node:`,
 		// Load the root config if it exists, otherwise create it.
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			ctx := context.Background()
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			rootDir, exists, err := config.GetRootDir(rootDirParam)
 			if err != nil {
 				return fmt.Errorf("failed to get root dir: %w", err)
@@ -70,12 +68,11 @@ func MakeStartCommand() *cobra.Command {
 				return fmt.Errorf("failed to get logging config: %w", err)
 			}
 			logging.SetConfig(loggingConfig)
-			log.Info(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+			log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			ctx := context.Background()
-			log.Info(ctx, "Starting DefraDB service...")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			log.Info(cmd.Context(), "Starting DefraDB service...")
 
 			// setup signal handlers
 			signalCh := make(chan os.Signal, 1)
@@ -86,7 +83,7 @@ func MakeStartCommand() *cobra.Command {
 			var err error
 			if cfg.Datastore.Store == badgerDatastoreName {
 				log.Info(
-					ctx,
+					cmd.Context(),
 					"Opening badger store",
 					logging.NewKV("Path", cfg.Datastore.Badger.Path),
 				)
@@ -95,7 +92,7 @@ func MakeStartCommand() *cobra.Command {
 					cfg.Datastore.Badger.Options,
 				)
 			} else if cfg.Datastore.Store == "memory" {
-				log.Info(ctx, "Building new memory store")
+				log.Info(cmd.Context(), "Building new memory store")
 				opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 				rootstore, err = badgerds.NewDatastore("", &opts)
 			}
@@ -113,7 +110,7 @@ func MakeStartCommand() *cobra.Command {
 				options = append(options, db.WithBroadcaster(bs))
 			}
 
-			db, err := db.NewDB(ctx, rootstore, options...)
+			db, err := db.NewDB(cmd.Context(), rootstore, options...)
 			if err != nil {
 				return fmt.Errorf("failed to create database: %w", err)
 			}
@@ -121,35 +118,35 @@ func MakeStartCommand() *cobra.Command {
 			// init the p2p node
 			var n *node.Node
 			if !cfg.Net.P2PDisabled {
-				log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+				log.Info(cmd.Context(), "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 				n, err = node.NewNode(
-					ctx,
+					cmd.Context(),
 					db,
 					bs,
 					cfg.NodeConfig(),
 				)
 				if err != nil {
-					log.ErrorE(ctx, "Failed to start P2P node", err)
+					log.ErrorE(cmd.Context(), "Failed to start P2P node", err)
 					n.Close() //nolint:errcheck
-					db.Close(ctx)
+					db.Close(cmd.Context())
 					os.Exit(1)
 				}
 
 				// parse peers and bootstrap
 				if len(cfg.Net.Peers) != 0 {
-					log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
+					log.Debug(cmd.Context(), "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
 					addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 					if err != nil {
 						return fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
 					}
-					log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+					log.Debug(cmd.Context(), "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 					n.Boostrap(addrs)
 				}
 
 				if err := n.Start(); err != nil {
-					log.ErrorE(ctx, "Failed to start P2P listeners", err)
+					log.ErrorE(cmd.Context(), "Failed to start P2P listeners", err)
 					n.Close() //nolint:errcheck
-					db.Close(ctx)
+					db.Close(cmd.Context())
 					os.Exit(1)
 				}
 
@@ -178,10 +175,10 @@ func MakeStartCommand() *cobra.Command {
 				netService := netapi.NewService(n.Peer)
 
 				go func() {
-					log.Info(ctx, "Started RPC server", logging.NewKV("Address", addr))
+					log.Info(cmd.Context(), "Started RPC server", logging.NewKV("Address", addr))
 					netpb.RegisterServiceServer(server, netService)
 					if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-						log.FatalE(ctx, "failed to start RPC server", err)
+						log.FatalE(cmd.Context(), "failed to start RPC server", err)
 					}
 				}()
 			}
@@ -189,7 +186,7 @@ func MakeStartCommand() *cobra.Command {
 			// run the server listener in a separate goroutine
 			go func() {
 				log.Info(
-					ctx,
+					cmd.Context(),
 					fmt.Sprintf(
 						"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
 						cfg.API.AddressToURL(),
@@ -200,22 +197,22 @@ func MakeStartCommand() *cobra.Command {
 				)
 				s := http.NewServer(db, http.WithAddress(cfg.API.Address))
 				if err := s.Listen(); err != nil {
-					log.ErrorE(ctx, "Failed to start HTTP API listener", err)
+					log.ErrorE(cmd.Context(), "Failed to start HTTP API listener", err)
 					if n != nil {
 						n.Close() //nolint:errcheck
 					}
-					db.Close(ctx)
+					db.Close(cmd.Context())
 					os.Exit(1)
 				}
 			}()
 
 			// wait for shutdown signal
 			<-signalCh
-			log.Info(ctx, "Received interrupt; closing database...")
+			log.Info(cmd.Context(), "Received interrupt; closing database...")
 			if n != nil {
 				n.Close() //nolint:errcheck
 			}
-			db.Close(ctx)
+			db.Close(cmd.Context())
 			os.Exit(0)
 			return nil
 		},
@@ -227,7 +224,6 @@ func MakeStartCommand() *cobra.Command {
 	)
 	err := viper.BindPFlag("net.peers", cmd.Flags().Lookup("peers"))
 	if err != nil {
-		// TBD handle error by the top "command builder" ?
 		log.FatalE(context.Background(), "Could not bind net.peers", err)
 	}
 

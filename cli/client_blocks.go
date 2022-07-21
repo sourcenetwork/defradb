@@ -17,7 +17,7 @@ import (
 func MakeBlocksCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "blocks",
-		Short: "Interact with the db blockstore",
+		Short: "Interact with the database's blockstore",
 	}
 
 	return cmd
