@@ -71,6 +71,11 @@ type EnableCallerOption struct {
 	HasValue     bool
 }
 
+type DisableColorOption struct {
+	DisableColor bool
+	HasValue     bool
+}
+
 func NewEnableStackTraceOption(enable bool) EnableStackTraceOption {
 	return EnableStackTraceOption{
 		EnableStackTrace: enable,
@@ -85,11 +90,19 @@ func NewEnableCallerOption(enable bool) EnableCallerOption {
 	}
 }
 
+func NewDisableColorOption(disable bool) DisableColorOption {
+	return DisableColorOption{
+		DisableColor: disable,
+		HasValue:     true,
+	}
+}
+
 type Config struct {
 	Level                 LogLevelOption
 	EncoderFormat         EncoderFormatOption
 	EnableStackTrace      EnableStackTraceOption
 	EnableCaller          EnableCallerOption
+	DisableColor          DisableColorOption
 	OutputPaths           []string
 	OverridesByLoggerName map[string]OverrideConfig
 
@@ -101,6 +114,7 @@ type OverrideConfig struct {
 	EncoderFormat    EncoderFormatOption
 	EnableStackTrace EnableStackTraceOption
 	EnableCaller     EnableCallerOption
+	DisableColor     DisableColorOption
 	OutputPaths      []string
 
 	pipe io.Writer // this is used for testing purposes only
@@ -110,6 +124,7 @@ func (c Config) forLogger(name string) Config {
 	loggerConfig := Config{
 		Level:            c.Level,
 		EnableStackTrace: c.EnableStackTrace,
+		DisableColor:     c.DisableColor,
 		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
@@ -125,6 +140,9 @@ func (c Config) forLogger(name string) Config {
 		}
 		if override.EnableCaller.HasValue {
 			loggerConfig.EnableCaller = override.EnableCaller
+		}
+		if override.DisableColor.HasValue {
+			loggerConfig.DisableColor = override.DisableColor
 		}
 		if override.EncoderFormat.HasValue {
 			loggerConfig.EncoderFormat = override.EncoderFormat
@@ -147,6 +165,8 @@ func (c Config) copy() Config {
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
 			EncoderFormat:    o.EncoderFormat,
+			EnableCaller:     o.EnableCaller,
+			DisableColor:     o.DisableColor,
 			OutputPaths:      o.OutputPaths,
 			pipe:             o.pipe,
 		}
@@ -158,6 +178,7 @@ func (c Config) copy() Config {
 		EncoderFormat:         c.EncoderFormat,
 		OutputPaths:           c.OutputPaths,
 		EnableCaller:          c.EnableCaller,
+		DisableColor:          c.DisableColor,
 		OverridesByLoggerName: overridesByLoggerName,
 		pipe:                  c.pipe,
 	}
@@ -179,6 +200,10 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 		newConfig.EnableCaller = newConfigOptions.EnableCaller
 	}
 
+	if newConfigOptions.DisableColor.HasValue {
+		newConfig.DisableColor = newConfigOptions.DisableColor
+	}
+
 	if newConfigOptions.EncoderFormat.HasValue {
 		newConfig.EncoderFormat = newConfigOptions.EncoderFormat
 	}
@@ -198,6 +223,7 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
 			EnableCaller:     o.EnableCaller,
+			DisableColor:     o.DisableColor,
 			EncoderFormat:    o.EncoderFormat,
 			OutputPaths:      validatePaths(o.OutputPaths),
 			pipe:             o.pipe,

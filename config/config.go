@@ -94,7 +94,7 @@ func (cfg *Config) Load(rootDirPath string) error {
 		return err
 	}
 	cfg.handleParams(rootDirPath)
-	err := cfg.validateBasic()
+	err := cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (cfg *Config) LoadWithoutRootDir() error {
 		log.FatalE(context.Background(), "Could not get home directory", err)
 	}
 	cfg.handleParams(rootDir)
-	err = cfg.validateBasic()
+	err = cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -145,17 +145,17 @@ func DefaultConfig() *Config {
 	}
 }
 
-func (cfg *Config) validateBasic() error {
-	if err := cfg.Datastore.validateBasic(); err != nil {
+func (cfg *Config) validate() error {
+	if err := cfg.Datastore.validate(); err != nil {
 		return fmt.Errorf("failed to validate Datastore config: %w", err)
 	}
-	if err := cfg.API.validateBasic(); err != nil {
+	if err := cfg.API.validate(); err != nil {
 		return fmt.Errorf("failed to validate API config: %w", err)
 	}
-	if err := cfg.Net.validateBasic(); err != nil {
+	if err := cfg.Net.validate(); err != nil {
 		return fmt.Errorf("failed to validate Net config: %w", err)
 	}
-	if err := cfg.Log.validateBasic(); err != nil {
+	if err := cfg.Log.validate(); err != nil {
 		return fmt.Errorf("failed to validate Log config: %w", err)
 	}
 	return nil
@@ -195,7 +195,7 @@ func defaultDatastoreConfig() *DatastoreConfig {
 	}
 }
 
-func (dbcfg DatastoreConfig) validateBasic() error {
+func (dbcfg DatastoreConfig) validate() error {
 	switch dbcfg.Store {
 	case "badger", "memory":
 	default:
@@ -215,7 +215,7 @@ func defaultAPIConfig() *APIConfig {
 	}
 }
 
-func (apicfg *APIConfig) validateBasic() error {
+func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return fmt.Errorf("no database URL provided")
 	}
@@ -258,7 +258,7 @@ func defaultNetConfig() *NetConfig {
 	}
 }
 
-func (netcfg *NetConfig) validateBasic() error {
+func (netcfg *NetConfig) validate() error {
 	_, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
 		return fmt.Errorf("invalid RPC timeout: %s", netcfg.RPCTimeout)
@@ -270,6 +270,10 @@ func (netcfg *NetConfig) validateBasic() error {
 	_, err = ma.NewMultiaddr(netcfg.P2PAddress)
 	if err != nil {
 		return fmt.Errorf("invalid P2P address: %s", netcfg.P2PAddress)
+	}
+	_, err = net.ResolveTCPAddr("tcp", netcfg.RPCAddress)
+	if err != nil {
+		return fmt.Errorf("invalid RPC address: %w", err)
 	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
@@ -331,20 +335,27 @@ type LogConfig struct {
 	Stacktrace bool
 	Format     string
 	OutputPath string // logging actually supports multiple output paths, but here only one is supported
-	Color      bool
+	Caller     bool
+	NoColor    bool
 }
 
 func defaultLogConfig() *LogConfig {
 	return &LogConfig{
 		Level:      "info",
 		Stacktrace: false,
-		Format:     "csv",
+		Format:     "text",
 		OutputPath: "stderr",
-		Color:      false,
+		Caller:     false,
+		NoColor:    false,
 	}
 }
 
-func (logcfg *LogConfig) validateBasic() error {
+func (logcfg *LogConfig) validate() error {
+	switch logcfg.Level {
+	case "debug", "info", "error", "fatal":
+	default:
+		return fmt.Errorf("invalid log level: %s", logcfg.Level)
+	}
 	return nil
 }
 
@@ -369,12 +380,16 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 		encfmt = logging.JSON
 	case "csv":
 		encfmt = logging.CSV
+	case "text":
+		encfmt = logging.CSV
 	default:
 		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Log.Format)
 	}
 	return logging.Config{
 		Level:            logging.NewLogLevelOption(loglvl),
 		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Log.Stacktrace),
+		EnableCaller:     logging.NewEnableCallerOption(cfg.Log.Caller),
+		DisableColor:     logging.NewDisableColorOption(cfg.Log.NoColor),
 		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:      []string{cfg.Log.OutputPath},
 	}, nil

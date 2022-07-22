@@ -90,6 +90,8 @@ log:
   format: {{ .Log.Format }}
   # Where the log output is written to
   output: {{ .Log.OutputPath }}
-  # Color the log output
-  color: {{ .Log.Color }}
+  # Disable colored log output
+  nocolor: {{ .Log.NoColor }}
+  # Caller location in log output
+  caller: {{ .Log.Caller }}
 `

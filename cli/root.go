@@ -109,12 +109,12 @@ func init() {
 	}
 
 	rootCmd.PersistentFlags().Bool(
-		"logcolor", cfg.Log.Color,
-		"Enable colored output",
+		"lognocolor", cfg.Log.NoColor,
+		"Disable colored log output",
 	)
-	err = viper.BindPFlag("log.color", rootCmd.PersistentFlags().Lookup("logcolor"))
+	err = viper.BindPFlag("log.nocolor", rootCmd.PersistentFlags().Lookup("lognocolor"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.color", err)
+		log.FatalE(context.Background(), "Could not bind log.nocolor", err)
 	}
 
 	rootCmd.PersistentFlags().String(
