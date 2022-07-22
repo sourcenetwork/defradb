@@ -24,7 +24,7 @@ import (
 
 var datastore string
 
-var serverdumpCmd = &cobra.Command{
+var serverDumpCmd = &cobra.Command{
 	Use:   "server-dump",
 	Short: "Dumps the state of the entire database",
 	RunE: func(cmd *cobra.Command, _ []string) error {
@@ -66,8 +66,8 @@ var serverdumpCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(serverdumpCmd)
-	serverdumpCmd.Flags().StringVar(
+	rootCmd.AddCommand(serverDumpCmd)
+	serverDumpCmd.Flags().StringVar(
 		&datastore, "store", cfg.Datastore.Store,
 		"Datastore to use. Options are badger, memory",
 	)

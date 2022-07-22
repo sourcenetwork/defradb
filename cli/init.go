@@ -32,7 +32,7 @@ It covers three possible situations:
 var initCmd = &cobra.Command{
 	Use:   "init [rootdir]",
 	Short: "Initialize DefraDB's root directory and configuration file",
-	Long:  `Initialize a directory for configuration and data at the given path.`,
+	Long:  "Initialize a directory for configuration and data at the given path.",
 	// Load a default configuration, considering env. variables and CLI flags.
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()

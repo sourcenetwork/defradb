@@ -44,8 +44,8 @@ const busBufferSize = 100
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start a DefraDB node ",
-	Long:  `Start a new instance of DefraDB node:`,
+	Short: "Start a DefraDB node",
+	Long:  "Start a new instance of DefraDB node.",
 	// Load the root config if it exists, otherwise create it.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		rootDir, exists, err := config.GetRootDir(rootDirParam)
@@ -128,7 +128,7 @@ var startCmd = &cobra.Command{
 				log.ErrorE(cmd.Context(), "Failed to start P2P node", err)
 				n.Close() //nolint:errcheck
 				db.Close(cmd.Context())
-				os.Exit(1)
+				return err
 			}
 
 			// parse peers and bootstrap
@@ -146,7 +146,7 @@ var startCmd = &cobra.Command{
 				log.ErrorE(cmd.Context(), "Failed to start P2P listeners", err)
 				n.Close() //nolint:errcheck
 				db.Close(cmd.Context())
-				os.Exit(1)
+				return err
 			}
 
 			MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
