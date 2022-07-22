@@ -431,11 +431,19 @@ func (g *Generator) buildTypesFromAST(
 							return nil, err
 						}
 
+						// set the primary relation bit on the relation type if the directive exists on the
+						// field
+						isPrimary := (findDirective(field, "primary") != nil)
+						reltype := client.Relation_Type_ONE
+						if isPrimary {
+							reltype |= client.Relation_Type_Primary
+						}
+
 						_, err = g.manager.Relations.RegisterSingle(
 							relName,
 							ttype.Name(),
 							fType.Name,
-							client.Relation_Type_ONE,
+							reltype,
 						)
 						if err != nil {
 							log.ErrorE(ctx, "Error while registering single relation", err)
@@ -509,7 +517,7 @@ func getRelationshipName(
 	hostName gql.ObjectConfig,
 	targetName gql.Type,
 ) (string, error) {
-	// search for a user-defined name, and return it if found
+	// search for a @relation directive name, and return it if found
 	for _, directive := range field.Directives {
 		if directive.Name.Value == "relation" {
 			for _, argument := range directive.Arguments {
@@ -1298,6 +1306,16 @@ func isNumericArray(list *gql.List) bool {
 	// does not have an easier way to compare non-nullable types
 	return list.OfType.Name() == gql.NewNonNull(gql.Float).Name() ||
 		list.OfType.Name() == gql.NewNonNull(gql.Int).Name()
+}
+
+// find a given directive
+func findDirective(field *ast.FieldDefinition, directiveName string) *ast.Directive {
+	for _, directive := range field.Directives {
+		if directive.Name.Value == directiveName {
+			return directive
+		}
+	}
+	return nil
 }
 
 /* Example
