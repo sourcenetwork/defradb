@@ -1,3 +1,163 @@
+
+<a name="v0.3.0"></a>
+## [v0.3.0](https://github.com/sourcenetwork/defradb/compare/v0.2.1...v0.3.0)
+
+> 2022-07-TBD
+
+### Fix
+
+* Change `$eq` to `_eq` in the failing test. ([#576](https://github.com/sourcenetwork/defradb/issues/576))
+
+### Build
+
+* Ban extra elses ([#366](https://github.com/sourcenetwork/defradb/issues/366))
+
+### Features
+
+* Add support for aggregate filters on inline arrays ([#622](https://github.com/sourcenetwork/defradb/issues/622))
+* Add explainable renderLimitNode & hardLimitNode attributes. ([#614](https://github.com/sourcenetwork/defradb/issues/614))
+* Add support for top level aggregates ([#594](https://github.com/sourcenetwork/defradb/issues/594))
+* Update `countNode` explanation to be consistent. ([#600](https://github.com/sourcenetwork/defradb/issues/600))
+* Add support for stdin as input in CLI ([#608](https://github.com/sourcenetwork/defradb/issues/608))
+* Explain `cid` & `field` attributes for `dagScanNode` ([#598](https://github.com/sourcenetwork/defradb/issues/598))
+* Add ability to explain `dagScanNode` attribute(s). ([#560](https://github.com/sourcenetwork/defradb/issues/560))
+* Add the ability to send user feedback to the console even when logging to file. ([#568](https://github.com/sourcenetwork/defradb/issues/568))
+* Add ability to explain `sortNode` attribute(s). ([#558](https://github.com/sourcenetwork/defradb/issues/558))
+* Add ability to explain `sumNode` attribute(s). ([#559](https://github.com/sourcenetwork/defradb/issues/559))
+* Introduce top-level config package ([#389](https://github.com/sourcenetwork/defradb/issues/389))
+* Add ability to explain `updateNode` attributes. ([#514](https://github.com/sourcenetwork/defradb/issues/514))
+* Add `typeIndexJoin` explainable attributes. ([#499](https://github.com/sourcenetwork/defradb/issues/499))
+* Add support to explain `countNode` attributes. ([#504](https://github.com/sourcenetwork/defradb/issues/504))
+* Add CORS capability to HTTP API ([#467](https://github.com/sourcenetwork/defradb/issues/467))
+* Add explaination of spans for `scanNode`. ([#492](https://github.com/sourcenetwork/defradb/issues/492))
+* Add ability to Explain the response plan. ([#385](https://github.com/sourcenetwork/defradb/issues/385))
+* Add aggregate filter support for groups only ([#426](https://github.com/sourcenetwork/defradb/issues/426))
+* Configurable caller option in logger ([#416](https://github.com/sourcenetwork/defradb/issues/416))
+* Add Average aggregate support ([#383](https://github.com/sourcenetwork/defradb/issues/383))
+* Allow summation of aggregates ([#341](https://github.com/sourcenetwork/defradb/issues/341))
+* Add ability to check DefraDB CLI version. ([#339](https://github.com/sourcenetwork/defradb/issues/339))
+
+### Fixes
+
+* Consider `--logoutput` CLI flag properly ([#645](https://github.com/sourcenetwork/defradb/issues/645))
+* Handle errors and responses in CLI `client` commands ([#579](https://github.com/sourcenetwork/defradb/issues/579))
+* Rename aggregate gql types ([#638](https://github.com/sourcenetwork/defradb/issues/638))
+* Error when attempting to insert value into relationship field ([#632](https://github.com/sourcenetwork/defradb/issues/632))
+* Allow adding of new schema to database ([#635](https://github.com/sourcenetwork/defradb/issues/635))
+* Correctly parse dockey in broadcast log event. ([#631](https://github.com/sourcenetwork/defradb/issues/631))
+* Increase system's open files limit in integration tests ([#627](https://github.com/sourcenetwork/defradb/issues/627))
+* Avoid populating `order.ordering` with empties. ([#618](https://github.com/sourcenetwork/defradb/issues/618))
+* Change to supporting of non-null inline arrays ([#609](https://github.com/sourcenetwork/defradb/issues/609))
+* Assert fields exist in collection before saving to them ([#604](https://github.com/sourcenetwork/defradb/issues/604))
+* CLI `init` command to reinitialize only config file ([#603](https://github.com/sourcenetwork/defradb/issues/603))
+* Add config and registry clearing to TestLogWritesMessagesToFeedbackLog ([#596](https://github.com/sourcenetwork/defradb/issues/596))
+* Resolve failing HTTP API tests via cleanup ([#557](https://github.com/sourcenetwork/defradb/issues/557))
+* Ensure Makefile compatibility with macOS ([#527](https://github.com/sourcenetwork/defradb/issues/527))
+* Separate out iotas in their own blocks. ([#464](https://github.com/sourcenetwork/defradb/issues/464))
+* Use x/cases for titling instead of strings to handle deprecation ([#457](https://github.com/sourcenetwork/defradb/issues/457))
+* Handle limit and offset in sub groups ([#440](https://github.com/sourcenetwork/defradb/issues/440))
+* Issue preventing DB from restarting with no records ([#437](https://github.com/sourcenetwork/defradb/issues/437))
+* log serving HTTP API before goroutine blocks ([#358](https://github.com/sourcenetwork/defradb/issues/358))
+
+### Tooling
+
+* Use `gotestsum` over `go test` ([#619](https://github.com/sourcenetwork/defradb/issues/619))
+* Update Github pull request template ([#524](https://github.com/sourcenetwork/defradb/issues/524))
+* Fix the cross-build script ([#460](https://github.com/sourcenetwork/defradb/issues/460))
+* Add test coverage html output ([#466](https://github.com/sourcenetwork/defradb/issues/466))
+* Add linter rule for `goconst`. ([#398](https://github.com/sourcenetwork/defradb/issues/398))
+* Add github PR template. ([#394](https://github.com/sourcenetwork/defradb/issues/394))
+* Disable auto-fixing linter issues by default ([#429](https://github.com/sourcenetwork/defradb/issues/429))
+* Fix linting of empty `else` code blocks ([#402](https://github.com/sourcenetwork/defradb/issues/402))
+* Add the `gofmt` linter rule. ([#405](https://github.com/sourcenetwork/defradb/issues/405))
+* Cleanup linter config file ([#400](https://github.com/sourcenetwork/defradb/issues/400))
+* Add linter rule for copyright headers ([#360](https://github.com/sourcenetwork/defradb/issues/360))
+* Organize our config files and tooling. ([#336](https://github.com/sourcenetwork/defradb/issues/336))
+* Limit line length to 100 characters (linter check) ([#224](https://github.com/sourcenetwork/defradb/issues/224))
+* Ignore db/tests folder and the bench marks. ([#280](https://github.com/sourcenetwork/defradb/issues/280))
+
+### Documentation
+
+* Improve code documentation ([#533](https://github.com/sourcenetwork/defradb/issues/533))
+* Add CONTRIBUTING.md ([#531](https://github.com/sourcenetwork/defradb/issues/531))
+* Add package level docs for logging lib ([#338](https://github.com/sourcenetwork/defradb/issues/338))
+
+### Refactoring
+
+* Add top-level `version` package ([#583](https://github.com/sourcenetwork/defradb/issues/583))
+* Remove extra log levels ([#634](https://github.com/sourcenetwork/defradb/issues/634))
+* Change `sortNode` to `orderNode`. ([#591](https://github.com/sourcenetwork/defradb/issues/591))
+* Rework update and delete node to remove secondary planner ([#571](https://github.com/sourcenetwork/defradb/issues/571))
+* Trim imported connor package  ([#530](https://github.com/sourcenetwork/defradb/issues/530))
+* Internal doc restructure ([#471](https://github.com/sourcenetwork/defradb/issues/471))
+* Copy-paste connor fork into repo ([#567](https://github.com/sourcenetwork/defradb/issues/567))
+* Add safety to the tests, add ability to catch stderr logs and add output path validation ([#552](https://github.com/sourcenetwork/defradb/issues/552))
+* Change handler functions implementation and response formatting ([#498](https://github.com/sourcenetwork/defradb/issues/498))
+* Improve the HTTP API implementation ([#382](https://github.com/sourcenetwork/defradb/issues/382))
+* Use new logger in net/api ([#420](https://github.com/sourcenetwork/defradb/issues/420))
+* Rename NewCidV1_SHA2_256 to mixedCaps ([#415](https://github.com/sourcenetwork/defradb/issues/415))
+* Remove utils package ([#397](https://github.com/sourcenetwork/defradb/issues/397))
+* Rework planNode Next and Value(s) function  ([#374](https://github.com/sourcenetwork/defradb/issues/374))
+* Restructure aggregate query syntax ([#373](https://github.com/sourcenetwork/defradb/issues/373))
+* Remove dead code from client package and document remaining ([#356](https://github.com/sourcenetwork/defradb/issues/356))
+* Restructure datastore keys ([#316](https://github.com/sourcenetwork/defradb/issues/316))
+* Add commits lost during github outage ([#303](https://github.com/sourcenetwork/defradb/issues/303))
+* Move public members out of core and base packages ([#295](https://github.com/sourcenetwork/defradb/issues/295))
+* Make db stuff internal/private ([#291](https://github.com/sourcenetwork/defradb/issues/291))
+* Rework client.DB to ensure interface contains only public types ([#277](https://github.com/sourcenetwork/defradb/issues/277))
+* Remove GetPrimaryIndexDocKey from collection interface ([#279](https://github.com/sourcenetwork/defradb/issues/279))
+*  Remove DataStoreKey from (public) dockey struct ([#278](https://github.com/sourcenetwork/defradb/issues/278))
+* Renormalize to ensure consistent file line termination. ([#226](https://github.com/sourcenetwork/defradb/issues/226))
+* Strongly typed key refactor ([#17](https://github.com/sourcenetwork/defradb/issues/17))
+
+### Testing
+
+* Fix formatting of tests with no extra brackets ([#643](https://github.com/sourcenetwork/defradb/issues/643))
+* Add tests for `averageNode` explain. ([#639](https://github.com/sourcenetwork/defradb/issues/639))
+* Add schema integration tests ([#628](https://github.com/sourcenetwork/defradb/issues/628))
+* Add tests for default properties ([#611](https://github.com/sourcenetwork/defradb/issues/611))
+* Specify which collection to update in test framework ([#601](https://github.com/sourcenetwork/defradb/issues/601))
+* Add tests for grouping by undefined value ([#543](https://github.com/sourcenetwork/defradb/issues/543))
+* Add test for querying undefined field ([#544](https://github.com/sourcenetwork/defradb/issues/544))
+* Expand commit query tests ([#541](https://github.com/sourcenetwork/defradb/issues/541))
+* Add cid (time-travel) query tests ([#539](https://github.com/sourcenetwork/defradb/issues/539))
+* Restructure and expand filter tests ([#512](https://github.com/sourcenetwork/defradb/issues/512))
+* Basic unit testing of `node` package ([#503](https://github.com/sourcenetwork/defradb/issues/503))
+* Test filter in filter tests ([#473](https://github.com/sourcenetwork/defradb/issues/473))
+* Add test for deletion of records in a relationship ([#329](https://github.com/sourcenetwork/defradb/issues/329))
+* Benchmark transaction iteration ([#289](https://github.com/sourcenetwork/defradb/issues/289))
+
+### Continuous integration
+
+* Fix circleci cache permission errors. ([#371](https://github.com/sourcenetwork/defradb/issues/371))
+* Fix change-detection to not fail when new tests are added. ([#333](https://github.com/sourcenetwork/defradb/issues/333))
+* Update golang-ci linter and explicit go-setup to use v1.17 ([#331](https://github.com/sourcenetwork/defradb/issues/331))
+* Comment the benchmarking result comparison to the PR ([#305](https://github.com/sourcenetwork/defradb/issues/305))
+* Add benchmark performance comparisons ([#232](https://github.com/sourcenetwork/defradb/issues/232))
+* Add caching / storing of bench report on default branch ([#290](https://github.com/sourcenetwork/defradb/issues/290))
+* Ensure full-benchmarks are ran on a PR-merge. ([#282](https://github.com/sourcenetwork/defradb/issues/282))
+* Add ability to control benchmarks by PR labels. ([#267](https://github.com/sourcenetwork/defradb/issues/267))
+
+### Chore
+
+* Update gitignore to include `cmd` folders ([#617](https://github.com/sourcenetwork/defradb/issues/617))
+* Enable random execution order of tests ([#554](https://github.com/sourcenetwork/defradb/issues/554))
+* Enable linters exportloopref, nolintlint, whitespace ([#535](https://github.com/sourcenetwork/defradb/issues/535))
+* Add utility for generation of man pages ([#493](https://github.com/sourcenetwork/defradb/issues/493))
+* Add Dockerfile ([#517](https://github.com/sourcenetwork/defradb/issues/517))
+* Enable errorlint linter ([#520](https://github.com/sourcenetwork/defradb/issues/520))
+* Binaries in`cmd` folder, examples in `examples` folder ([#501](https://github.com/sourcenetwork/defradb/issues/501))
+* Improve log outputs ([#506](https://github.com/sourcenetwork/defradb/issues/506))
+* Move testing to top-level `tests` folder ([#446](https://github.com/sourcenetwork/defradb/issues/446))
+* Update dependencies ([#450](https://github.com/sourcenetwork/defradb/issues/450))
+* Update go-ipfs-blockstore and ipfs-lite ([#436](https://github.com/sourcenetwork/defradb/issues/436))
+* Update libp2p dependency to v0.19 ([#424](https://github.com/sourcenetwork/defradb/issues/424))
+* Update ioutil package to io / os packages. ([#376](https://github.com/sourcenetwork/defradb/issues/376))
+* git ignore vscode ([#343](https://github.com/sourcenetwork/defradb/issues/343))
+* Updated README.md contributors section ([#292](https://github.com/sourcenetwork/defradb/issues/292))
+* Update changelog v0.2.1 ([#252](https://github.com/sourcenetwork/defradb/issues/252))
+
+
 <a name="v0.2.1"></a>
 ## [v0.2.1](https://github.com/sourcenetwork/defradb/compare/v0.2.0...v0.2.1)
 
