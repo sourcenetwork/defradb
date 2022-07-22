@@ -14,7 +14,11 @@ import (
 	gql "github.com/graphql-go/graphql"
 )
 
-const ExplainLabel string = "explain"
+const (
+	ExplainLabel  string = "explain"
+	PrimaryLabel  string = "primary"
+	RelationLabel string = "relation"
+)
 
 var (
 
@@ -117,9 +121,7 @@ var (
 	}
 
 	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
-
 		Name: ExplainLabel,
-
 		Args: gql.FieldConfigArgument{
 			"simple": &gql.ArgumentConfig{
 				Type:         gql.Boolean,
@@ -140,6 +142,31 @@ var (
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
+		},
+	})
+
+	// PrimaryDirective @primary is used to indicate the primary
+	// side of a one-to-one relationship.
+	PrimaryDirective = gql.NewDirective(gql.DirectiveConfig{
+		Name: PrimaryLabel,
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+
+	// RelationDirective @relation is used to explicitly define
+	// the attributes of a relationship, specifically, the name
+	// if you don't want to use the default generated relationship
+	// name.
+	RelationDirective = gql.NewDirective(gql.DirectiveConfig{
+		Name: RelationLabel,
+		Args: gql.FieldConfigArgument{
+			"name": &gql.ArgumentConfig{
+				Type: gql.String,
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 )
