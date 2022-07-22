@@ -51,7 +51,7 @@ type user {
 ```
 
 Then add it to the database:
-```
+```shell
 defradb client schema add -f users.gql
 ```
 
@@ -73,7 +73,7 @@ mutation {
 
 Submit a request via a GraphQL client, or using:
 
-```
+```shell
 defradb client query 'insert query here'
 ```
 
@@ -246,20 +246,32 @@ Replicator peering is established in one direction. For example, a *nodeA* can b
 
 Let's go through an example of *nodeA* actively replicating to *nodeB*:
 
-Start *nodeA* **and** define a collection. We will use it as leader.
-```
+Start *nodeA*:
+```shell
 defradb start
-TBD
 ```
 
-Start *nodeB* as follower.
+In another terminal, add this example schema to it:
+```shell
+defradb client schema add '
+  type user {
+    name: String 
+    age: Int 
+    verified: Boolean 
+    points: Float
+  }
+'
 ```
+
+
+Start *nodeB*, that will be receiving updates.
+```shell
 defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
 ```
 
 Notice how we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
 
-On *nodeB*, in another terminal, add an example schema:
+In another terminal, add the example schema to *nodeB*, then set *nodeB* as target replicator peer:
 ```shell
 defradb client schema add --url localhost:9182 '
   type user {
@@ -271,20 +283,12 @@ defradb client schema add --url localhost:9182 '
 '
 ```
 
-On *nodeA*, add the same schema and set *nodeB* as target replicator peer:
-```
-defradb client schema add '
-  type user {
-    name: String 
-    age: Int 
-    verified: Boolean 
-    points: Float
-  }
-'
-defradb client rpc add-replicator --addr 0.0.0.0:9162 user <nodeB_peer_address>
+Set *nodeA* to actively replicate the "user" collection to *nodeB*:
+```shell
+defradb client rpc addreplicator "user" /p2p/<peerID_of_nodeB>
 ```
 
-With this, as we add documents to *nodeA*, they will be actively pushed to *nodeB*, and when we make changes to *nodeB* they will be passively published back to *nodeA*.
+As we add or update documents in the "user" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
 
 
 ## Licensing
