@@ -74,7 +74,7 @@ mutation {
 Submit a request via a GraphQL client, or using:
 
 ```
-defradb client query 'text of query'
+defradb client query 'insert query here'
 ```
 
 It will respond:
@@ -119,14 +119,14 @@ query {
 }
 ```
 
-This will only return user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
+This will return only user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
 
 
 ## Obtain document commits
 
 Internally, data is handled by MerkleCRDTs, which convert all mutations and updates a document has into a graph of changes; similar to Git. The graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all nodes are content-identifiable with, and each node references its parents CIDs.
 
-To get the most recent commit in the MerkleDAG for a document with a DocKey of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`, submit the following query:
+To get the most recent commit in the MerkleDAG for a document with a DocKey of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`, submit:
 ```gql
 query {
   latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
@@ -198,79 +198,93 @@ You will discover about filtering, ordering, limiting, relationships, variables,
 
 
 ## Peer-to-peer data synchronization
-DefraDB uses a P2P networking model allowing nodes to exchange, synchronize, and replicate documents and commits. It uses a combination of gossip based pub-sub network, a shared Distributed Hash Table, and server-to-server gRPC communications, powered by [libP2P](https://libp2p.io/).
+DefraDB uses P2P networking for nodes to exchange, synchronize, and replicate documents and commits.
 
 When starting a node for the first time, a key pair is generated and stored it in its "root folder" (commonly `~/.defradb/`).
 
 Each node has a unique `Peer ID` generated based on the public key, which is printed to the console during startup. This ID allows other nodes to connect to it.
 
-There are two types of peer-to-be relationships nodes support: pubsub peering and replicator peering.
+There are two types of peer-to-be relationships nodes support: **pubsub** peering and **replicator** peering.
 
-Pubsub nodes *passively* synchronize data between nodes by broadcasting Document Commit updates over the pubsub channel with the document `DocKey` as the topic. This requires nodes to already be listening on this pubsub channel to receive updates. This is used when two nodes *already* have a shared document, and want to keep both their changes in sync with one another.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting Document Commit updates with the document `DocKey` as the topic. Nodes need to already be listening on the pubsub channel to receive updates. This is for when two nodes *already* have a shared document and want to keep both their changes in sync with one another.
 
-Replicator nodes *actively* push changes from a specific collection *to* the target peer.
+Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
 
 ### Pubsub example
 
-Pubsub peers can be specified on the command line using the `--peers` flag which accepts a comma-separated list of peer [MultiAddress](https://docs.libp2p.io/concepts/addressing/). For example, a node at `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress  `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
+Pubsub peers can be specified on the command line using the `--peers` flag which accepts a comma-separated list of peer [multiaddress](https://docs.libp2p.io/concepts/addressing/). For example, a node at `192.168.1.12` listening on 9000 with Peer ID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress  `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
-An example of two nodes (*nodeA* and *nodeB*) connecting with each other over the pubsub network on the same machine:
+Let's go through an example of two nodes (*nodeA* and *nodeB*) connecting with each other over pubsub, on the same machine.
 
-On *nodeA*, start with defaults:
+Start *nodeA* with a default configuration:
 ```
 defradb start
 ```
 
-Obtain the Peer ID from its console output. For this example we assume its `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally you will have a different one.
+Obtain the Peer ID from its console output. In this example, we assume `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`, but locally it will be different.
 
-
-For *nodeB*, we provide further configuration: TBD
+For *nodeB*, we provide the following configuration:
 ```
-defradb start --rootdir ~/.defradb-nodeB --p2paddr /ip4/0.0.0.0/tcp/9172 --url localhost:9182 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162 --peers /ip4/0.0.0.0/tcp/9171/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B
 ```
 
-Unpacking this:
+About the flags:
 
 - `--rootdir` specifies the root dir (config and data) to use
-- `--p2paddr` is the multiaddress to listen on for the p2p network (default is port 9171) TBD
 - `--url` is the address to listen on for the client HTTP and GraphQL API
-- `--peers`  is a comma-separated list of peer multiaddresses. Here will use the address of *nodeA*.
+- `--p2paddr` is the multiaddress for the p2p networking to listen on
+- `--tcpaddr` is the multiaddress for the gRPC server to listen on
+- `--peers` is a comma-separated list of peer multiaddresses
 
-This will startup two nodes and connect them via pubsub networking.
+This starts two nodes and connect them via pubsub networking.
 
 
 ### Replicator example
 
-Replicator nodes are initially established in one direction by default, so a *nodeA* actively replicates to *nodeB* but not vice-versa. However, nodes will always broadcast their updates over the document specific pubsub topic so while *nodeB* doesn't replicate directly to *nodeA*, it will *passively*.
+Replicator peering is established in one direction. For example, a *nodeA* can be given a *nodeB* to actively send updates to, but *nodeB* won't send updates in return. However, nodes broadcast updates of documents over document-specific pubsub topics, therefore *nodeB* while it won't replicate directly to *nodeA*, it will *passively*.
 
+Let's go through an example of *nodeA* actively replicating to *nodeB*:
 
-An example of *nodeA* replicating to *nodeB*.
-
-Let's start *nodeA* **and** define a collection. We will use it as leader.
+Start *nodeA* **and** define a collection. We will use it as leader.
 ```
 defradb start
+TBD
 ```
 
-Let's start *nodeB* as follower.
+Start *nodeB* as follower.
 ```
-defradb start --rootdir ~/.defradb-nodeB --p2paddr /ip4/0.0.0.0/tcp/9172 --url localhost:9182
-```
-
-Notice we *do not* specify the `--peers` option as we will manually define a replicator after startup via the `rpc` client command.
-
-On *nodeB*, in another terminal, run to add a schema:
-```
-defradb client schema add -f <your_schema.gql>
+defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
 ```
 
-On *nodeA*, run add the same schema and set *nodeB* as target replicator peer:
-```
-defradb client schema add -f <your_schema.gql>
-defradb rpc add-replicator <collection_name> <nodeB_peer_address>
+Notice how we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
+
+On *nodeB*, in another terminal, add an example schema:
+```shell
+defradb client schema add --url localhost:9182 '
+  type user {
+    name: String 
+    age: Int 
+    verified: Boolean 
+    points: Float
+  }
+'
 ```
 
-Now if we add documents to *nodeA*, they will be *actively* pushed to *nodeB*, and if we make changes to *nodeB* they will be *passively* published back to *nodeA*.
+On *nodeA*, add the same schema and set *nodeB* as target replicator peer:
+```
+defradb client schema add '
+  type user {
+    name: String 
+    age: Int 
+    verified: Boolean 
+    points: Float
+  }
+'
+defradb client rpc add-replicator --addr 0.0.0.0:9162 user <nodeB_peer_address>
+```
+
+With this, as we add documents to *nodeA*, they will be actively pushed to *nodeB*, and when we make changes to *nodeB* they will be passively published back to *nodeA*.
 
 
 ## Licensing
