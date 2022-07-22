@@ -53,7 +53,7 @@ func TestCLILogsToStderrGivenNamedLogLevel(t *testing.T) {
 		},
 	)
 
-	assert.Len(t, logLines, 1)
+	assert.Len(t, logLines, 2)
 }
 
 func captureLogLines(t *testing.T, directory string, predicate func()) []string {

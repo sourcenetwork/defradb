@@ -73,7 +73,7 @@ type Config struct {
 	Datastore *DatastoreConfig
 	API       *APIConfig
 	Net       *NetConfig
-	Logging   *LoggingConfig
+	Logging   *TopLevelLoggingConfig
 }
 
 // Load Config and handles parameters from config file, environment variables.
@@ -141,7 +141,7 @@ func DefaultConfig() *Config {
 		Datastore: defaultDatastoreConfig(),
 		API:       defaultAPIConfig(),
 		Net:       defaultNetConfig(),
-		Logging:   defaultLoggingConfig(),
+		Logging:   defaultTopLevelLoggingConfig(),
 	}
 }
 
@@ -341,7 +341,7 @@ type NamedLoggingConfig struct {
 
 type TopLevelLoggingConfig struct {
 	LoggingConfig
-	NamedOverrides []NamedLoggingConfig
+	NamedOverrides map[string]NamedLoggingConfig
 }
 
 func defaultLoggingConfig() *LoggingConfig {
@@ -351,6 +351,13 @@ func defaultLoggingConfig() *LoggingConfig {
 		Format:     "csv",
 		OutputPath: "stderr",
 		Color:      false,
+	}
+}
+
+func defaultTopLevelLoggingConfig() *TopLevelLoggingConfig {
+	return &TopLevelLoggingConfig{
+		LoggingConfig:  *defaultLoggingConfig(),
+		NamedOverrides: map[string]NamedLoggingConfig{},
 	}
 }
 
