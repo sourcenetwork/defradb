@@ -242,7 +242,271 @@ func TestSingleSimpleType(t *testing.T) {
 			},
 		},
 		{
+			description: "Multiple simple types",
+			sdl: `
+			type user {
+				name: String
+				age: Int
+				verified: Boolean
+			}
+
+			type author {
+				name: String
+				publisher: String
+				rating: Float
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "user",
+					Schema: client.SchemaDescription{
+						Name: "user",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "verified",
+								Kind: client.FieldKind_BOOL,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "publisher",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
 			description: "Multiple types with relations (one-to-one)",
+			sdl: `
+			type book {
+				name: String
+				rating: Float
+				author: author @relation(name:"book_authors")
+			}
+
+			type author {
+				name: String
+				age: Int
+				published: book @relation(name:"book_authors")
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "book",
+					Schema: client.SchemaDescription{
+						Name: "book",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "author",
+								RelationName: "book_authors",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "author",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							},
+							{
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name:         "published",
+								RelationName: "book_authors",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "book",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+							},
+							{
+								Name:         "published_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
+			description: "Multiple types with relations (one-to-one) with directive",
+			sdl: `
+			type book {
+				name: String
+				rating: Float
+				author: author @primary
+			}
+
+			type author {
+				name: String
+				age: Int
+				published: book
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "book",
+					Schema: client.SchemaDescription{
+						Name: "book",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "author",
+								RelationName: "author_book",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "author",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+							},
+							{
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name:         "published",
+								RelationName: "author_book",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "book",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							},
+							{
+								Name:         "published_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
+			description: "Multiple types with relations (one-to-many)",
 			sdl: `
 			type book {
 				name: String
