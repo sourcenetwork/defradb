@@ -20,7 +20,7 @@ import (
 var rpcCmd = &cobra.Command{
 	Use:   "rpc",
 	Short: "Interact with a DefraDB gRPC server",
-	Long:  "Interact with a DefraDB gRPC server as a client.",
+	Long:  "Interact with a DefraDB gRPC server.",
 }
 
 func init() {

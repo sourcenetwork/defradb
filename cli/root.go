@@ -61,10 +61,6 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 				return fmt.Errorf("failed to get logging config: %w", err)
 			}
 			logging.SetConfig(loggingConfig)
-			log.Info(
-				cmd.Context(),
-				"Using default configuration. To create DefraDB's config and data directory, use defradb init.",
-			)
 		}
 		return nil
 	},

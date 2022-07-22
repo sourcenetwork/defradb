@@ -31,13 +31,13 @@ var addCmd = &cobra.Command{
 	Long: `Add a new schema type to DefraDB.
 
 Example: add from an argument string:
-defradb client schema add 'type Foo { ... }'
+  defradb client schema add 'type Foo { ... }'
 
 Example: add from file:
-defradb client schema add -f schema.graphql
+  defradb client schema add -f schema.graphql
 
 Example: add from stdin:
-cat schema.graphql | defradb client schema add -
+  cat schema.graphql | defradb client schema add -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
