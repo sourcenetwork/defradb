@@ -46,7 +46,8 @@ for the p2p data sync system.`,
 			"Adding replicator for collection",
 			logging.NewKV("PeerAddress", peerAddr),
 			logging.NewKV("Collection", collection),
-			logging.NewKV("RPCAddress", cfg.Net.RPCAddress))
+			logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
+		)
 
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))

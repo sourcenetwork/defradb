@@ -28,7 +28,7 @@ func init() {
 		"addr", cfg.Net.RPCAddress,
 		"gRPC endpoint address",
 	)
-	err := viper.BindPFlag("net.rcpaddress", rpcCmd.PersistentFlags().Lookup("addr"))
+	err := viper.BindPFlag("net.rpcaddress", rpcCmd.PersistentFlags().Lookup("addr"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind net.rpcaddress", err)
 	}
