@@ -34,9 +34,19 @@ var envVarsDifferentThanDefault = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "90s",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
+<<<<<<< HEAD
 	"DEFRA_LOG_LEVEL":             "info",
 	"DEFRA_LOG_STACKTRACE":        "false",
 	"DEFRA_LOG_FORMAT":            "json",
+||||||| parent of 5538451 (Support named logger config overrides)
+	"DEFRA_LOGGING_LEVEL":         "info",
+	"DEFRA_LOGGING_STACKTRACE":    "false",
+	"DEFRA_LOGGING_FORMAT":        "json",
+=======
+	"DEFRA_LOGGING_LEVEL":         "error",
+	"DEFRA_LOGGING_STACKTRACE":    "false",
+	"DEFRA_LOGGING_FORMAT":        "json",
+>>>>>>> 5538451 (Support named logger config overrides)
 }
 
 var envVarsInvalid = map[string]string{
@@ -147,9 +157,19 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "90s", cfg.Net.RPCTimeout)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
+<<<<<<< HEAD
 	assert.Equal(t, "info", cfg.Log.Level)
 	assert.Equal(t, false, cfg.Log.Stacktrace)
 	assert.Equal(t, "json", cfg.Log.Format)
+||||||| parent of 5538451 (Support named logger config overrides)
+	assert.Equal(t, "info", cfg.Logging.Level)
+	assert.Equal(t, false, cfg.Logging.Stacktrace)
+	assert.Equal(t, "json", cfg.Logging.Format)
+=======
+	assert.Equal(t, "error", cfg.Logging.Level)
+	assert.Equal(t, false, cfg.Logging.Stacktrace)
+	assert.Equal(t, "json", cfg.Logging.Format)
+>>>>>>> 5538451 (Support named logger config overrides)
 }
 
 func TestGetRootDirExists(t *testing.T) {

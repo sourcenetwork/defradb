@@ -325,6 +325,7 @@ func (cfg *Config) NodeConfig() node.NodeOpt {
 	}
 }
 
+<<<<<<< HEAD
 // LogConfig configures output and logger.
 type LogConfig struct {
 	Level      string
@@ -332,8 +333,32 @@ type LogConfig struct {
 	Format     string
 	OutputPath string // logging actually supports multiple output paths, but here only one is supported
 	Color      bool
+||||||| parent of 5538451 (Support named logger config overrides)
+// LoggingConfig configures output and logger.
+type LoggingConfig struct {
+	Level      string
+	Stacktrace bool
+	Format     string
+	OutputPath string // logging actually supports multiple output paths, but here only one is supported
+	Color      bool
+=======
+// LoggingConfig configures output and logger.
+type LoggingConfig struct {
+	Level          string
+	Stacktrace     bool
+	Format         string
+	OutputPath     string // logging actually supports multiple output paths, but here only one is supported
+	Color          bool
+	NamedOverrides map[string]*NamedLoggingConfig
 }
 
+type NamedLoggingConfig struct {
+	LoggingConfig
+	Name string
+>>>>>>> 5538451 (Support named logger config overrides)
+}
+
+<<<<<<< HEAD
 func defaultLogConfig() *LogConfig {
 	return &LogConfig{
 		Level:      "info",
@@ -341,6 +366,24 @@ func defaultLogConfig() *LogConfig {
 		Format:     "csv",
 		OutputPath: "stderr",
 		Color:      false,
+||||||| parent of 5538451 (Support named logger config overrides)
+func defaultLoggingConfig() *LoggingConfig {
+	return &LoggingConfig{
+		Level:      "info",
+		Stacktrace: false,
+		Format:     "csv",
+		OutputPath: "stderr",
+		Color:      false,
+=======
+func defaultLoggingConfig() *LoggingConfig {
+	return &LoggingConfig{
+		Level:          "info",
+		Stacktrace:     false,
+		Format:         "csv",
+		OutputPath:     "stderr",
+		Color:          false,
+		NamedOverrides: map[string]*NamedLoggingConfig{},
+>>>>>>> 5538451 (Support named logger config overrides)
 	}
 }
 
@@ -348,10 +391,15 @@ func (logcfg *LogConfig) validateBasic() error {
 	return nil
 }
 
-// GetLoggingConfig provides logging-specific configuration, from top-level Config.
-func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
+func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	var loglvl logging.LogLevel
+<<<<<<< HEAD
 	switch cfg.Log.Level {
+||||||| parent of 5538451 (Support named logger config overrides)
+	switch cfg.Logging.Level {
+=======
+	switch logcfg.Level {
+>>>>>>> 5538451 (Support named logger config overrides)
 	case "debug":
 		loglvl = logging.Debug
 	case "info":
@@ -361,23 +409,92 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	case "fatal":
 		loglvl = logging.Fatal
 	default:
+<<<<<<< HEAD
 		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Log.Level)
+||||||| parent of 5538451 (Support named logger config overrides)
+		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Logging.Level)
+=======
+		return logging.Config{}, fmt.Errorf("invalid log level: %s", logcfg.Level)
+>>>>>>> 5538451 (Support named logger config overrides)
 	}
 	var encfmt logging.EncoderFormat
+<<<<<<< HEAD
 	switch cfg.Log.Format {
+||||||| parent of 5538451 (Support named logger config overrides)
+	switch cfg.Logging.Format {
+=======
+	switch logcfg.Format {
+>>>>>>> 5538451 (Support named logger config overrides)
 	case "json":
 		encfmt = logging.JSON
 	case "csv":
 		encfmt = logging.CSV
 	default:
+<<<<<<< HEAD
 		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Log.Format)
+||||||| parent of 5538451 (Support named logger config overrides)
+		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Logging.Format)
+=======
+		return logging.Config{}, fmt.Errorf("invalid log format: %s", logcfg.Format)
+	}
+	// handle named overrides
+	overrides := make(map[string]logging.Config)
+	for name, cfg := range logcfg.NamedOverrides {
+		c, err := cfg.ToLoggerConfig()
+		if err != nil {
+			return logging.Config{}, fmt.Errorf("couldn't convert override config: %w", err)
+		}
+		overrides[name] = c
+>>>>>>> 5538451 (Support named logger config overrides)
 	}
 	return logging.Config{
+<<<<<<< HEAD
 		Level:            logging.NewLogLevelOption(loglvl),
 		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Log.Stacktrace),
 		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:      []string{cfg.Log.OutputPath},
+||||||| parent of 5538451 (Support named logger config overrides)
+		Level:            logging.NewLogLevelOption(loglvl),
+		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Logging.Stacktrace),
+		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
+		OutputPaths:      []string{cfg.Logging.OutputPath},
+=======
+		Level:                 logging.NewLogLevelOption(loglvl),
+		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
+		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
+		OutputPaths:           []string{logcfg.OutputPath},
+		OverridesByLoggerName: overrides,
+>>>>>>> 5538451 (Support named logger config overrides)
 	}, nil
+}
+
+// this is a copy that doesn't deep copy the NamedOverrides map
+// copy is handled by runtime "pass-by-value"
+func (logcfg LoggingConfig) copy() LoggingConfig {
+	logcfg.NamedOverrides = make(map[string]*NamedLoggingConfig)
+	return logcfg
+}
+
+func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
+	if name == "" {
+		return nil, fmt.Errorf("provided name can't be empty for named config")
+	}
+	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
+		return namedCfg, nil
+	}
+	// create default and save to overrides
+	namedCfg := &NamedLoggingConfig{
+		Name:          name,
+		LoggingConfig: logcfg.copy(),
+	}
+	logcfg.NamedOverrides[name] = namedCfg
+
+	return namedCfg, nil
+}
+
+// GetLoggingConfig provides logging-specific configuration, from top-level Config.
+func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
+	return cfg.Logging.ToLoggerConfig()
 }
 
 // ToJSON serializes the config to a JSON string.

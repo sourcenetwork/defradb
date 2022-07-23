@@ -21,7 +21,6 @@ import (
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -47,6 +46,7 @@ var startCmd = &cobra.Command{
 	Short: "Start a DefraDB node",
 	Long:  "Start a new instance of DefraDB node.",
 	// Load the root config if it exists, otherwise create it.
+<<<<<<< HEAD
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
@@ -72,6 +72,38 @@ var startCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		log.Info(cmd.Context(), "Starting DefraDB service...")
+||||||| parent of 5538451 (Support named logger config overrides)
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
+		if err != nil {
+			log.FatalE(ctx, "Failed to get root dir", err)
+		}
+		if !exists {
+			err = config.CreateRootDirWithDefaultConfig(rootDir)
+			if err != nil {
+				log.FatalE(ctx, "Failed to create root dir", err)
+			}
+		}
+		err = cfg.Load(rootDir)
+		if err != nil {
+			log.FatalE(ctx, "Failed to load config", err)
+		}
+		loggingConfig, err := cfg.GetLoggingConfig()
+		if err != nil {
+			log.FatalE(ctx, "Failed to load logging config", err)
+		}
+		logging.SetConfig(loggingConfig)
+		log.Info(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		log.Info(ctx, "Starting DefraDB service...")
+=======
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		log.Info(ctx, "Starting DefraDB service...")
+>>>>>>> 5538451 (Support named logger config overrides)
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
