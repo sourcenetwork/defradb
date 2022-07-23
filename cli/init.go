@@ -16,7 +16,6 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -42,11 +41,12 @@ The --reinitialize flag replaces a configuration file with a default one.`,
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		loggingConfig, err := cfg.GetLoggingConfig()
-		if err != nil {
-			return fmt.Errorf("failed to load logging configuration: %w", err)
-		}
-		logging.SetConfig(loggingConfig)
+
+		// parse loglevel overrides
+		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
+		// binding the flags / EnvVars to the struct
+		parseAndConfigLog(cmd.Context(), cfg.Logging, cmd)
+
 		return nil
 	},
 	Args: cobra.RangeArgs(0, 1),

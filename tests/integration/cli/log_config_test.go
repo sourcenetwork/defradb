@@ -14,6 +14,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -24,39 +25,44 @@ import (
 )
 
 const (
-	stderrPath     = "stderr"
-	testLoggerName = "testLogger"
+	stderrPath  = "stderr"
+	testLogger1 = "testLogger1"
+	testLogger2 = "testLogger2"
+	testLogger3 = "testLogger3"
 )
 
 var (
-	log = logging.MustNewLogger(testLoggerName)
+	log1 = logging.MustNewLogger(testLogger1)
+	log2 = logging.MustNewLogger(testLogger2)
+	log3 = logging.MustNewLogger(testLogger3)
 )
 
 // todo - add test asserting that logger logs to file by default
 
 func TestCLILogsToStderrGivenNamedLogLevel(t *testing.T) {
-	directory := t.TempDir()
 	ctx := context.Background()
-
 	logLines := captureLogLines(
 		t,
-		directory,
 		func() {
-			// Explicitly set the test logger output to stderr
-			//os.Args = append(os.Args, "--loggers")
-			//os.Args = append(os.Args, "name="+testLoggerName+",level=stderr")
-
-			cli.Execute()
-
-			log.Error(ctx, "message")
-			log.Flush()
+			// set the log levels
+			os.Args = append(os.Args, "--loglevel")
+			// general: error
+			// testLogger1: debug
+			// testLogger2: info
+			os.Args = append(os.Args, fmt.Sprintf("%s,%s=debug,%s=info", "error", testLogger1, testLogger2))
+		},
+		func() {
+			log1.Error(ctx, "error")
+			log1.Debug(ctx, "debug")
+			log2.Info(ctx, "info")
+			log3.Debug(ctx, "info")
 		},
 	)
 
-	assert.Len(t, logLines, 2)
+	assert.Len(t, logLines, 3)
 }
 
-func captureLogLines(t *testing.T, directory string, predicate func()) []string {
+func captureLogLines(t *testing.T, setup func(), predicate func()) []string {
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatal(err)
@@ -67,15 +73,19 @@ func captureLogLines(t *testing.T, directory string, predicate func()) []string 
 		os.Stderr = stderr
 	}()
 
-	os.Args = append(os.Args, "init")
-	// Set the db root directory to the given temp dir
-	os.Args = append(os.Args, directory)
+	directory := t.TempDir()
+
 	// Set the default logger output path to a file in the temp dir
 	// so that production logs don't polute and confuse the tests
-	os.Args = append(os.Args, "--logoutput")
-	os.Args = append(os.Args, directory+"/log.txt")
+	os.Args = append(os.Args, "--logoutput", directory+"/log.txt")
+	os.Args = append(os.Args, "init", directory)
 
+	setup()
+	cli.Execute()
 	predicate()
+	log1.Flush()
+	log2.Flush()
+	log3.Flush()
 
 	w.Close()
 	var buf bytes.Buffer
