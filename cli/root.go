@@ -73,12 +73,9 @@ For example:
 		}
 
 		// parse loglevel overrides
-		levels, err := cmd.Flags().GetString("loglevel")
-		if err != nil {
-			log.FatalE(ctx, "Could not load loglevels flag", err)
-		}
-		log.Fatal(ctx, levels)
-		parseAndConfigureLogLevels(ctx, cfg, levels)
+		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
+		// binding the flags / EnvVars to the struct
+		parseAndConfigureLogLevels(ctx, cfg, cfg.Logging.Level)
 
 		if defaultConfig {
 			log.Info(ctx, "Using default configuration")
