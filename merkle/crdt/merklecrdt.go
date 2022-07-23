@@ -13,6 +13,7 @@ package crdt
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
@@ -109,7 +110,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 			Block:    nd,
 			Priority: netdelta.GetPriority(),
 		}
-		if err := base.broadcaster.Send(lg); err != nil {
+		if err := base.broadcaster.SendWithTimeout(lg, time.Second); err != nil {
 			log.ErrorE(
 				ctx,
 				"Failed to broadcast MerkleCRDT update",

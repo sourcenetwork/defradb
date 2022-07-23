@@ -180,14 +180,14 @@ func IsDetectingDbChanges() bool {
 	return detectDbChanges
 }
 
-func NewBadgerMemoryDB(ctx context.Context) (databaseInfo, error) {
+func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore)
+	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return databaseInfo{}, err
 	}

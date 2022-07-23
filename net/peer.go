@@ -62,6 +62,8 @@ type Peer struct {
 	jobQueue chan *dagJob
 	sendJobs chan *dagJob
 
+	syncComplete chan int
+
 	// outstanding log request currently being processed
 	queuedChildren *cidSafeSet
 
@@ -101,6 +103,7 @@ func NewPeer(
 		cancel:         cancel,
 		jobQueue:       make(chan *dagJob, numWorkers),
 		sendJobs:       make(chan *dagJob),
+		syncComplete:   make(chan int),
 		replicators:    make(map[string]map[peer.ID]struct{}),
 		queuedChildren: newCidSafeSet(),
 	}
@@ -446,6 +449,10 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 			}(pid)
 		}
 	}
+}
+
+func (p *Peer) SyncCompleted() chan int {
+	return p.syncComplete
 }
 
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {

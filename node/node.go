@@ -18,14 +18,17 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
@@ -33,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 	"github.com/textileio/go-threads/broadcast"
+	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
@@ -51,6 +55,9 @@ type Node struct {
 	host     host.Host
 	pubsub   *pubsub.PubSub
 	litepeer *ipfslite.Peer
+
+	peerEvent chan event.EvtPeerConnectednessChanged
+	grpc      *grpc.Server
 
 	ctx context.Context
 }
@@ -145,17 +152,65 @@ func NewNode(
 	}
 
 	return &Node{
-		Peer:     peer,
-		host:     h,
-		pubsub:   ps,
-		DB:       db,
-		litepeer: lite,
-		ctx:      ctx,
+		peerEvent: make(chan event.EvtPeerConnectednessChanged),
+		Peer:      peer,
+		host:      h,
+		pubsub:    ps,
+		DB:        db,
+		litepeer:  lite,
+		ctx:       ctx,
 	}, nil
 }
 
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	n.litepeer.Bootstrap(addrs)
+}
+
+func (n *Node) PeerID() peer.ID {
+	return n.host.ID()
+}
+
+func (n *Node) SubsribeToPeerConnectionEvents() {
+	go func() {
+		sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
+		if err != nil {
+			log.Info(context.Background(), fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err))
+		}
+		for e := range sub.Out() {
+			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+		}
+	}()
+}
+
+func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.peerEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(10 * time.Second):
+			return fmt.Errorf("waiting for peer connection timed out")
+		}
+	}
+}
+
+// CheckGRPC waits for the GRPC server to be active or stopped.
+func (n *Node) SetGRPC(s *grpc.Server) {
+	n.grpc = s
+}
+
+// CheckGRPC waits for the GRPC server to be active.
+func (n *Node) CheckGRPC() {
+	for n.grpc.GetServiceInfo()["api.pb.Service"].Methods == nil {
+		continue
+	}
+}
+
+// CheckGRPC waits for the GRPC server to be active or stopped.
+func (n *Node) GRPCShutdown() {
+	n.grpc.GracefulStop()
 }
 
 // replace with proper keystore
