@@ -81,13 +81,13 @@ net:
   # Amount of time after which an idle RPC connection would be closed
   RPCMaxConnectionIdle: {{ .Net.RPCMaxConnectionIdle }}
 
-log:
+logging:
   # Log level. Options are debug, info, error, fatal
-  level: {{ .Log.Level }}
+  level: {{ .Logging.Level }}
   # Include stacktrace in error and fatal logs
-  stacktrace: {{ .Log.Stacktrace }}
+  stacktrace: {{ .Logging.Stacktrace }}
   # Supported log formats are json, csv
-  format: {{ .Log.Format }}
+  format: {{ .Logging.Format }}
   # Where the log output is written to
   output: {{ .Log.OutputPath }}
   # Disable colored log output

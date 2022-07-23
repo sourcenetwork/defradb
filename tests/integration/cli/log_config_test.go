@@ -45,10 +45,10 @@ func TestCLILogsToStderrGivenNamedLogLevel(t *testing.T) {
 		t,
 		func() {
 			// set the log levels
-			os.Args = append(os.Args, "--loglevel")
 			// general: error
 			// testLogger1: debug
 			// testLogger2: info
+			os.Args = append(os.Args, "--loglevel")
 			os.Args = append(os.Args, fmt.Sprintf("%s,%s=debug,%s=info", "error", testLogger1, testLogger2))
 		},
 		func() {
@@ -77,7 +77,7 @@ func captureLogLines(t *testing.T, setup func(), predicate func()) []string {
 
 	// Set the default logger output path to a file in the temp dir
 	// so that production logs don't polute and confuse the tests
-	os.Args = append(os.Args, "--logoutput", directory+"/log.txt")
+	// os.Args = append(os.Args, "--logoutput", directory+"/log.txt")
 	os.Args = append(os.Args, "init", directory)
 
 	setup()

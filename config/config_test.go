@@ -35,7 +35,7 @@ var envVarsDifferentThanDefault = map[string]string{
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
 	"DEFRA_LOGGING_LEVEL":         "error",
-	"DEFRA_LOGGING_STACKTRACE":    "false",
+	"DEFRA_LOGGING_STACKTRACE":    "true",
 	"DEFRA_LOGGING_FORMAT":        "json",
 }
 
@@ -49,9 +49,9 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "^=+()&**()*(&))",
 	"DEFRA_NET_PUBSUB":            "^=+()&**()*(&))",
 	"DEFRA_NET_RELAY":             "^=+()&**()*(&))",
-	"DEFRA_LOG_LEVEL":             "^=+()&**()*(&))",
-	"DEFRA_LOG_STACKTRACE":        "^=+()&**()*(&))",
-	"DEFRA_LOG_FORMAT":            "^=+()&**()*(&))",
+	"DEFRA_LOGGING_LEVEL":         "^=+()&**()*(&))",
+	"DEFRA_LOGGING_STACKTRACE":    "^=+()&**()*(&))",
+	"DEFRA_LOGGING_FORMAT":        "^=+()&**()*(&))",
 }
 
 func FixtureEnvVars(envVars map[string]string) {
@@ -148,7 +148,7 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
 	assert.Equal(t, "error", cfg.Logging.Level)
-	assert.Equal(t, false, cfg.Logging.Stacktrace)
+	assert.Equal(t, true, cfg.Logging.Stacktrace)
 	assert.Equal(t, "json", cfg.Logging.Format)
 }
 
