@@ -179,7 +179,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 	if err != nil {
 		log.FatalE(ctx, "can't get logger flag", err)
 	}
-	fmt.Println("")
+
 	if loggerKVs != "" {
 		parseAndConfigLogAllParams(ctx, cfg, loggerKVs)
 	}

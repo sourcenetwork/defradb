@@ -367,7 +367,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	case "fatal":
 		loglvl = logging.Fatal
 	default:
-		panic(fmt.Errorf("invalid log level: %s", logcfg.Level))
+		return logging.Config{}, fmt.Errorf("invalid log level: %s", logcfg.Level)
 	}
 	var encfmt logging.EncoderFormat
 	switch logcfg.Format {
