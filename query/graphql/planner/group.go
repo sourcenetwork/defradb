@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
@@ -29,7 +31,7 @@ type groupNode struct {
 
 	// The fields to group by - this must be an ordered collection and
 	// will include any parent group-by fields (if any)
-	groupByFieldIndexes []int
+	groupByFields []mapper.Field
 
 	// The data sources that this node will draw data from.
 	dataSources []*dataSource
@@ -61,17 +63,17 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		if childSelect.GroupBy != nil {
 			// group by fields have to be propagated downwards to ensure correct sub-grouping, otherwise child
 			// groups will only group on the fields they explicitly reference
-			childSelect.GroupBy.FieldIndexes = append(childSelect.GroupBy.FieldIndexes, n.FieldIndexes...)
+			childSelect.GroupBy.Fields = append(childSelect.GroupBy.Fields, n.Fields...)
 		}
 		dataSources = append(dataSources, newDataSource(childSelect.Index))
 	}
 
 	groupNodeObj := groupNode{
-		p:                   p,
-		childSelects:        childSelects,
-		groupByFieldIndexes: n.FieldIndexes,
-		dataSources:         dataSources,
-		docMapper:           docMapper{&parsed.DocumentMapping},
+		p:             p,
+		childSelects:  childSelects,
+		groupByFields: n.Fields,
+		dataSources:   dataSources,
+		docMapper:     docMapper{&parsed.DocumentMapping},
 	}
 	return &groupNodeObj, nil
 }
@@ -127,7 +129,7 @@ func (n *groupNode) Source() planNode { return n.dataSources[0].Source() }
 
 func (n *groupNode) Next() (bool, error) {
 	if n.values == nil {
-		values, err := join(n.dataSources, n.groupByFieldIndexes, n.documentMapping)
+		values, err := join(n.dataSources, n.groupByFields, n.documentMapping)
 		if err != nil {
 			return false, err
 		}
@@ -168,4 +170,111 @@ func (n *groupNode) Next() (bool, error) {
 	}
 
 	return false, nil
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *groupNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Get the parent level groupBy attribute(s).
+	groupByFields := []string{}
+	for _, field := range n.groupByFields {
+		groupByFields = append(
+			groupByFields,
+			field.Name,
+		)
+	}
+	explainerMap["groupByFields"] = groupByFields
+
+	// Get the inner group (child) selection attribute(s).
+	if len(n.childSelects) == 0 {
+		explainerMap["childSelects"] = nil
+	} else {
+		childSelects := make([]map[string]interface{}, 0, len(n.childSelects))
+		for _, child := range n.childSelects {
+			if child == nil {
+				continue
+			}
+
+			childExplainGraph := map[string]interface{}{}
+
+			childExplainGraph[collectionNameLabel] = child.CollectionName
+
+			c := child.Targetable
+
+			// Get targetable attribute(s) of this child.
+
+			if c.DocKeys.HasValue {
+				childExplainGraph["docKeys"] = c.DocKeys.Value
+			} else {
+				childExplainGraph["docKeys"] = nil
+			}
+
+			if c.Filter == nil || c.Filter.ExternalConditions == nil {
+				childExplainGraph[filterLabel] = nil
+			} else {
+				childExplainGraph[filterLabel] = c.Filter.ExternalConditions
+			}
+
+			if c.Limit != nil {
+				childExplainGraph[limitLabel] = map[string]interface{}{
+					limitLabel:  c.Limit.Limit,
+					offsetLabel: c.Limit.Offset,
+				}
+			} else {
+				childExplainGraph[limitLabel] = nil
+			}
+
+			if c.OrderBy != nil {
+				innerOrderings := []map[string]interface{}{}
+				for _, condition := range c.OrderBy.Conditions {
+					orderFieldNames := []string{}
+
+					for _, orderFieldIndex := range condition.FieldIndexes {
+						// Try to find the name of this index.
+						fieldName, found := n.documentMapping.TryToFindNameFromIndex(orderFieldIndex)
+						if !found {
+							return nil, fmt.Errorf(
+								"No order field name (for grouping) was found for index =%d",
+								orderFieldIndex,
+							)
+						}
+
+						orderFieldNames = append(orderFieldNames, fieldName)
+					}
+					// Put it all together for this order element.
+					innerOrderings = append(innerOrderings,
+						map[string]interface{}{
+							"fields":    orderFieldNames,
+							"direction": string(condition.Direction),
+						},
+					)
+				}
+
+				childExplainGraph["orderBy"] = innerOrderings
+			} else {
+				childExplainGraph["orderBy"] = nil
+			}
+
+			if c.GroupBy != nil {
+				innerGroupByFields := []string{}
+				for _, fieldOfChildGroupBy := range c.GroupBy.Fields {
+					innerGroupByFields = append(
+						innerGroupByFields,
+						fieldOfChildGroupBy.Name,
+					)
+				}
+				childExplainGraph["groupBy"] = innerGroupByFields
+			} else {
+				childExplainGraph["groupBy"] = nil
+			}
+
+			childSelects = append(childSelects, childExplainGraph)
+		}
+
+		explainerMap["childSelects"] = childSelects
+	}
+
+	return explainerMap, nil
 }

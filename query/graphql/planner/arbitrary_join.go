@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // A data-source that may yield child items, parent items, or both depending on configuration
@@ -111,7 +112,7 @@ func (n *dataSource) Source() planNode {
 }
 
 func (source *dataSource) mergeParent(
-	keyIndexes []int,
+	keyFields []mapper.Field,
 	destination *orderedMap,
 	childIndexes []int,
 ) (bool, error) {
@@ -132,7 +133,7 @@ func (source *dataSource) mergeParent(
 	}
 
 	value := source.parentSource.Value()
-	key := generateKey(value, keyIndexes)
+	key := generateKey(value, keyFields)
 
 	destination.mergeParent(key, childIndexes, value)
 
@@ -140,7 +141,7 @@ func (source *dataSource) mergeParent(
 }
 
 func (source *dataSource) appendChild(
-	keyIndexes []int,
+	keyFields []mapper.Field,
 	valuesByKey *orderedMap,
 	mapping *core.DocumentMapping,
 ) (bool, error) {
@@ -165,14 +166,18 @@ func (source *dataSource) appendChild(
 	// the same order - we need to treat it as a new item, regenerating the key and potentially caching
 	// it without yet receiving the parent-level details
 	value := source.childSource.Value()
-	key := generateKey(value, keyIndexes)
+	key := generateKey(value, keyFields)
 
 	valuesByKey.appendChild(key, source.childIndex, value, mapping)
 
 	return true, nil
 }
 
-func join(sources []*dataSource, keyIndexes []int, mapping *core.DocumentMapping) (*orderedMap, error) {
+func join(
+	sources []*dataSource,
+	keyFields []mapper.Field,
+	mapping *core.DocumentMapping,
+) (*orderedMap, error) {
 	result := orderedMap{
 		values:       []core.Doc{},
 		indexesByKey: map[string]int{},
@@ -190,14 +195,14 @@ func join(sources []*dataSource, keyIndexes []int, mapping *core.DocumentMapping
 
 		for hasNextParent || hasNextChild {
 			if hasNextParent {
-				hasNextParent, err = source.mergeParent(keyIndexes, &result, childIndexes)
+				hasNextParent, err = source.mergeParent(keyFields, &result, childIndexes)
 				if err != nil {
 					return nil, err
 				}
 			}
 
 			if hasNextChild {
-				hasNextChild, err = source.appendChild(keyIndexes, &result, mapping)
+				hasNextChild, err = source.appendChild(keyFields, &result, mapping)
 				if err != nil {
 					return nil, err
 				}
@@ -208,11 +213,11 @@ func join(sources []*dataSource, keyIndexes []int, mapping *core.DocumentMapping
 	return &result, nil
 }
 
-func generateKey(doc core.Doc, keyIndexes []int) string {
+func generateKey(doc core.Doc, keyFields []mapper.Field) string {
 	keyBuilder := strings.Builder{}
-	for _, keyField := range keyIndexes {
-		keyBuilder.WriteString(fmt.Sprint(keyField))
-		keyBuilder.WriteString(fmt.Sprintf("_%v_", doc.Fields[keyField]))
+	for _, keyField := range keyFields {
+		keyBuilder.WriteString(fmt.Sprint(keyField.Index))
+		keyBuilder.WriteString(fmt.Sprintf("_%v_", doc.Fields[keyField.Index]))
 	}
 	return keyBuilder.String()
 }
