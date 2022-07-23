@@ -66,6 +66,10 @@ var log = logging.MustNewLogger("defra.config")
 const (
 	DefraEnvPrefix        = "DEFRA"
 	defaultDefraDBRootDir = ".defradb"
+	logLevelDebug         = "debug"
+	logLevelInfo          = "info"
+	logLevelError         = "error"
+	logLevelFatal         = "fatal"
 )
 
 // Config is DefraDB's main configuration struct, embedding component-specific config structs.
@@ -341,7 +345,7 @@ type LogConfig struct {
 
 func defaultLogConfig() *LogConfig {
 	return &LogConfig{
-		Level:      "info",
+		Level:      logLevelInfo,
 		Stacktrace: false,
 		Format:     "text",
 		OutputPath: "stderr",
@@ -352,7 +356,7 @@ func defaultLogConfig() *LogConfig {
 
 func (logcfg *LogConfig) validate() error {
 	switch logcfg.Level {
-	case "debug", "info", "error", "fatal":
+	case logLevelDebug, logLevelInfo, logLevelError, logLevelFatal:
 	default:
 		return fmt.Errorf("invalid log level: %s", logcfg.Level)
 	}
@@ -363,13 +367,13 @@ func (logcfg *LogConfig) validate() error {
 func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	var loglvl logging.LogLevel
 	switch cfg.Log.Level {
-	case "debug":
+	case logLevelDebug:
 		loglvl = logging.Debug
-	case "info":
+	case logLevelInfo:
 		loglvl = logging.Info
-	case "error":
+	case logLevelError:
 		loglvl = logging.Error
-	case "fatal":
+	case logLevelFatal:
 		loglvl = logging.Fatal
 	default:
 		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Log.Level)
