@@ -451,6 +451,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 	}
 }
 
+// SyncCompleted return a channel that tracks when a peer syncronization completes
 func (p *Peer) SyncCompleted() chan int {
 	return p.syncComplete
 }

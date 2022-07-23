@@ -166,15 +166,20 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	n.litepeer.Bootstrap(addrs)
 }
 
+// PeerID returns the node's peer ID.
 func (n *Node) PeerID() peer.ID {
 	return n.host.ID()
 }
 
+// SubsribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
 func (n *Node) SubsribeToPeerConnectionEvents() {
 	go func() {
 		sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
 		if err != nil {
-			log.Info(context.Background(), fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err))
+			log.Info(
+				context.Background(),
+				fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
+			)
 		}
 		for e := range sub.Out() {
 			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
@@ -182,6 +187,7 @@ func (n *Node) SubsribeToPeerConnectionEvents() {
 	}()
 }
 
+// WaitForPeerConnectionEvent listens to the event channel for a connection event from a given peer.
 func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 	for {
 		select {
@@ -196,7 +202,7 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 	}
 }
 
-// CheckGRPC waits for the GRPC server to be active or stopped.
+// SetGRPC sets the GRPC server on the node.
 func (n *Node) SetGRPC(s *grpc.Server) {
 	n.grpc = s
 }
@@ -208,7 +214,7 @@ func (n *Node) CheckGRPC() {
 	}
 }
 
-// CheckGRPC waits for the GRPC server to be active or stopped.
+// GRPCShutdown sends a greaceful stop signal to the grpc server.
 func (n *Node) GRPCShutdown() {
 	n.grpc.GracefulStop()
 }
