@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/logging"
@@ -57,28 +58,33 @@ For example:
 		if err != nil {
 			log.FatalE(ctx, "Could not get rootdir", err)
 		}
+		defaultConfig := false
 		if exists {
 			err := cfg.Load(rootDir)
 			if err != nil {
 				log.FatalE(ctx, "Could not load config file", err)
 			}
-			loggingConfig, err := cfg.GetLoggingConfig()
-			if err != nil {
-				log.FatalE(ctx, "Could not get logging config", err)
-			}
-			logging.SetConfig(loggingConfig)
-			log.Debug(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		} else {
 			err := cfg.LoadWithoutRootDir()
 			if err != nil {
 				log.FatalE(ctx, "Could not load config file", err)
 			}
-			loggingConfig, err := cfg.GetLoggingConfig()
-			if err != nil {
-				log.FatalE(ctx, "Could not get logging config", err)
-			}
-			logging.SetConfig(loggingConfig)
-			log.Info(ctx, "Using default configuration. To create DefraDB's directory, use defradb init.")
+			defaultConfig = true
+		}
+
+		// parse loglevel overrides
+		levels, err := cmd.Flags().GetString("loglevel")
+		if err != nil {
+			log.FatalE(ctx, "Could not load loglevels flag", err)
+		}
+		log.Fatal(ctx, levels)
+		parseAndConfigureLogLevels(ctx, cfg, levels)
+
+		if defaultConfig {
+			log.Info(ctx, "Using default configuration")
+		} else {
+			log.Debug(ctx, fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+
 		}
 	},
 }
@@ -99,6 +105,11 @@ func init() {
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
 	}
+
+	// rootCmd.PersistentFlags().String(
+	// 	"logger", "",
+	// 	"named logger parameter override. usage: --logger <name>,level=<level>,output=<output>,etc...",
+	// )
 
 	rootCmd.PersistentFlags().String(
 		"logoutput", cfg.Logging.OutputPath,
@@ -143,5 +154,47 @@ func init() {
 	err = viper.BindPFlag("api.address", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind api.address", err)
+	}
+}
+
+// parses and then configures the given config.Config logging subconfig.
+// we use log.Fatal instead of returning an error because we can't gurantee
+// atomic updates, its either everything is properly set, or we Fatal()
+func parseAndConfigureLogLevels(ctx context.Context, cfg *config.Config, loglevels string) {
+	// config loggers at the end
+	defer func() {
+		loggingConfig, err := cfg.GetLoggingConfig()
+		if err != nil {
+			log.FatalE(ctx, "Could not get logging config", err)
+		}
+		logging.SetConfig(loggingConfig)
+	}()
+
+	if loglevels == "" {
+		return //nothing todo
+	}
+
+	// check if a CSV is provided
+	// if its not a CSV, then just do the regular binding to the config
+	parsedLvls := strings.Split(loglevels, ",")
+	cfg.Logging.Level = parsedLvls[0]
+	if len(parsedLvls) == 1 {
+		return //nothing more todo
+	}
+
+	// verify KV format (<default>,<name>=<level>,...)
+	// skip the first as that will be set above
+	for _, kv := range parsedLvls[1:] {
+		parsedKV := strings.Split(kv, "=")
+		if len(parsedKV) != 2 {
+			log.Fatal(ctx, "level was not provided as <key>=<value> pair", logging.NewKV("pair", kv))
+		}
+
+		logcfg, err := cfg.Logging.GetOrCreateNamedLogger(parsedKV[0])
+		if err != nil {
+			log.FatalE(ctx, "could not get named logger config", err)
+		}
+
+		logcfg.Level = parsedKV[1]
 	}
 }

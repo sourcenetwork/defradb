@@ -332,7 +332,7 @@ type LoggingConfig struct {
 	Format         string
 	OutputPath     string // logging actually supports multiple output paths, but here only one is supported
 	Color          bool
-	NamedOverrides map[string]NamedLoggingConfig
+	NamedOverrides map[string]*NamedLoggingConfig
 }
 
 type NamedLoggingConfig struct {
@@ -347,7 +347,7 @@ func defaultLoggingConfig() *LoggingConfig {
 		Format:         "csv",
 		OutputPath:     "stderr",
 		Color:          false,
-		NamedOverrides: map[string]NamedLoggingConfig{},
+		NamedOverrides: map[string]*NamedLoggingConfig{},
 	}
 }
 
@@ -394,6 +394,30 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 		OutputPaths:           []string{logcfg.OutputPath},
 		OverridesByLoggerName: overrides,
 	}, nil
+}
+
+// this is a copy that doesn't deep copy the NamedOverrides map
+// copy is handled by runtime "pass-by-value"
+func (logcfg LoggingConfig) copy() LoggingConfig {
+	logcfg.NamedOverrides = make(map[string]*NamedLoggingConfig)
+	return logcfg
+}
+
+func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
+	if name == "" {
+		return nil, fmt.Errorf("provided name can't be empty for named config")
+	}
+	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
+		return namedCfg, nil
+	}
+	// create default and save to overrides
+	namedCfg := &NamedLoggingConfig{
+		Name:          name,
+		LoggingConfig: logcfg.copy(),
+	}
+	logcfg.NamedOverrides[name] = namedCfg
+
+	return namedCfg, nil
 }
 
 // GetLoggingConfig provides logging-specific configuration, from top-level Config.
