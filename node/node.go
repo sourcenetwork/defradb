@@ -207,13 +207,6 @@ func (n *Node) SetGRPC(s *grpc.Server) {
 	n.grpc = s
 }
 
-// CheckGRPC waits for the GRPC server to be active.
-func (n *Node) CheckGRPC() {
-	for n.grpc.GetServiceInfo()["api.pb.Service"].Methods == nil {
-		continue
-	}
-}
-
 // GRPCShutdown sends a greaceful stop signal to the grpc server.
 func (n *Node) GRPCShutdown() {
 	n.grpc.GracefulStop()

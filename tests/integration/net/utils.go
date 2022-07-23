@@ -172,9 +172,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		}
 	}()
 
-	// wait for grpc service to be online
-	n.CheckGRPC()
-
 	return n, dockeys, nil
 }
 
