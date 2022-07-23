@@ -780,18 +780,22 @@ func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *Grou
 		return nil
 	}
 
-	indexes := make([]int, len(source.Fields))
+	fields := make([]Field, len(source.Fields))
 	for i, fieldName := range source.Fields {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
 		// impact this as they are added after selects.
 		key := mapping.FirstIndexOfName(fieldName)
-		indexes[i] = key
+
+		fields[i] = Field{
+			Index: key,
+			Name:  fieldName,
+		}
 	}
 
 	return &GroupBy{
-		FieldIndexes: indexes,
+		Fields: fields,
 	}
 }
 
