@@ -28,10 +28,10 @@ var queryCmd = &cobra.Command{
 	Long: `Send a DefraDB GraphQL query to the database.
 
 A query can be sent as a single argument. Example command:
-  defradb client query 'query { ... }'
+defradb client query 'query { ... }'
 
 Or it can be sent via stdin by using the '-' special syntax. Example command:
-  cat query.graphql | defradb client query -
+cat query.graphql | defradb client query -
 
 A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
 with the database more conveniently.
@@ -46,6 +46,9 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		}
 
 		if len(args) > 1 {
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
 			return fmt.Errorf("too many arguments")
 		}
 

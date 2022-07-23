@@ -16,11 +16,33 @@ package cli
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/logging"
 )
+
+const badgerDatastoreName = "badger"
+
+var log = logging.MustNewLogger("defra.cli")
+
+var cfg = config.DefaultConfig()
+var RootCmd = rootCmd
+
+func Execute() {
+	ctx := context.Background()
+	err := rootCmd.ExecuteContext(ctx)
+	// Silence cobra's default output to control usage and error display.
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+	if err != nil {
+		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
+	}
+}
 
 func isFileInfoPipe(fi os.FileInfo) bool {
 	return fi.Mode()&os.ModeNamedPipe != 0

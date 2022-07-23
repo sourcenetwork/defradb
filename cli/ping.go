@@ -23,8 +23,8 @@ import (
 
 var pingCmd = &cobra.Command{
 	Use:   "ping",
-	Short: "Ping defradb to test an API connection",
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
+	Short: "Ping to test connection to a node",
+	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
 			return fmt.Errorf("failed to stat stdout: %w", err)

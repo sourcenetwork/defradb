@@ -30,7 +30,7 @@ var addCmd = &cobra.Command{
 	Short: "Add a new schema type to DefraDB",
 	Long: `Add a new schema type to DefraDB.
 
-Example: add as an argument string:
+Example: add from an argument string:
   defradb client schema add 'type Foo { ... }'
 
 Example: add from file:
@@ -48,6 +48,9 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		}
 
 		if len(args) > 1 {
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
 			return fmt.Errorf("too many arguments")
 		}
 
@@ -146,5 +149,5 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 
 func init() {
 	schemaCmd.AddCommand(addCmd)
-	addCmd.Flags().StringVarP(&schemaFile, "file", "f", "", "file to load a schema from")
+	addCmd.Flags().StringVarP(&schemaFile, "file", "f", "", "File to load a schema from")
 }

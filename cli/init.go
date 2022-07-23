@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -23,7 +22,7 @@ import (
 var reinitialize bool
 
 /*
-initCmd provides the `init` command.
+The `init` command initializes the configuration file and root directory..
 
 It covers three possible situations:
 - root dir doesn't exist
@@ -33,11 +32,9 @@ It covers three possible situations:
 var initCmd = &cobra.Command{
 	Use:   "init [rootdir]",
 	Short: "Initialize DefraDB's root directory and configuration file",
-	Long: `Initialize a directory for DefraDB's configuration and data at the given path.
-
-The --reinitialize flag replaces a configuration file with a default one.`,
+	Long:  "Initialize a directory for configuration and data at the given path.",
 	// Load a default configuration, considering env. variables and CLI flags.
-	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
@@ -49,12 +46,15 @@ The --reinitialize flag replaces a configuration file with a default one.`,
 		logging.SetConfig(loggingConfig)
 		return nil
 	},
-	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
 		rootDirPath := ""
 		if len(args) == 1 {
 			rootDirPath = args[0]
+		} else if len(args) > 1 {
+			if err := cmd.Usage(); err != nil {
+				return err
+			}
+			return fmt.Errorf("init command requires one rootdir argument, or no argument")
 		}
 		rootDir, rootDirExists, err := config.GetRootDir(rootDirPath)
 		if err != nil {
@@ -75,10 +75,10 @@ The --reinitialize flag replaces a configuration file with a default one.`,
 					if err != nil {
 						return fmt.Errorf("failed to create configuration file: %w", err)
 					}
-					log.FeedbackInfo(ctx, fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
+					log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Reinitialized configuration file at %v", configFilePath))
 				} else {
-					log.FeedbackInfo(
-						ctx,
+					log.FeedbackError(
+						cmd.Context(),
 						fmt.Sprintf(
 							"Configuration file already exists at %v. Consider using --reinitialize",
 							configFilePath,
@@ -90,14 +90,14 @@ The --reinitialize flag replaces a configuration file with a default one.`,
 				if err != nil {
 					return fmt.Errorf("failed to create configuration file: %w", err)
 				}
-				log.FeedbackInfo(ctx, fmt.Sprintf("Initialized configuration file at %v", configFilePath))
+				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Initialized configuration file at %v", configFilePath))
 			}
 		} else {
 			err = config.CreateRootDirWithDefaultConfig(rootDir)
 			if err != nil {
 				return fmt.Errorf("failed to create root dir: %w", err)
 			}
-			log.FeedbackInfo(ctx, fmt.Sprintf("Created DefraDB root directory at %v", rootDir))
+			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Created DefraDB root directory at %v", rootDir))
 		}
 		return nil
 	},
@@ -108,6 +108,6 @@ func init() {
 
 	initCmd.Flags().BoolVar(
 		&reinitialize, "reinitialize", false,
-		"reinitialize the configuration file",
+		"Reinitialize the configuration file",
 	)
 }
