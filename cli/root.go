@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/config"
@@ -75,7 +76,7 @@ For example:
 		// parse loglevel overrides
 		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
 		// binding the flags / EnvVars to the struct
-		parseAndConfigureLogLevels(ctx, cfg, cfg.Logging.Level)
+		parseAndConfigLog(ctx, cfg.Logging)
 
 		if defaultConfig {
 			log.Info(ctx, "Using default configuration")
@@ -157,41 +158,90 @@ func init() {
 // parses and then configures the given config.Config logging subconfig.
 // we use log.Fatal instead of returning an error because we can't gurantee
 // atomic updates, its either everything is properly set, or we Fatal()
-func parseAndConfigureLogLevels(ctx context.Context, cfg *config.Config, loglevels string) {
-	// config loggers at the end
+func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig) {
+	// apply logger configuration at the end
+	// once everything has been processed.
 	defer func() {
-		loggingConfig, err := cfg.GetLoggingConfig()
+		loggingConfig, err := cfg.ToLoggerConfig()
 		if err != nil {
 			log.FatalE(ctx, "Could not get logging config", err)
 		}
 		logging.SetConfig(loggingConfig)
 	}()
 
-	if loglevels == "" {
+	parseAndConfigLogStringParam(ctx, cfg, cfg.Level, func(l *config.LoggingConfig, v string) {
+		l.Level = v
+	})
+}
+
+func parseAndConfigLogStringParam(ctx context.Context, cfg *config.LoggingConfig, kvs string, paramFn logParamSetterStringFn) {
+	if kvs == "" {
 		return //nothing todo
 	}
 
 	// check if a CSV is provided
 	// if its not a CSV, then just do the regular binding to the config
-	parsedLvls := strings.Split(loglevels, ",")
-	cfg.Logging.Level = parsedLvls[0]
-	if len(parsedLvls) == 1 {
+	parsed := strings.Split(kvs, ",")
+	paramFn(cfg, parsed[0])
+	if len(parsed) == 1 {
 		return //nothing more todo
 	}
 
 	// verify KV format (<default>,<name>=<level>,...)
 	// skip the first as that will be set above
-	for _, kv := range parsedLvls[1:] {
+	for _, kv := range parsed[1:] {
 		parsedKV := strings.Split(kv, "=")
 		if len(parsedKV) != 2 {
 			log.Fatal(ctx, "level was not provided as <key>=<value> pair", logging.NewKV("pair", kv))
 		}
 
-		logcfg, err := cfg.Logging.GetOrCreateNamedLogger(parsedKV[0])
+		logcfg, err := cfg.GetOrCreateNamedLogger(parsedKV[0])
 		if err != nil {
 			log.FatalE(ctx, "could not get named logger config", err)
 		}
 
-		logcfg.Level = parsedKV[1]
+		paramFn(&logcfg.LoggingConfig, parsedKV[1])
 	}
 }
+
+func parseAndConfigLogBoolParam(ctx context.Context, cfg *config.LoggingConfig, kvs string, paramFn logParamSetterBoolFn) {
+	if kvs == "" {
+		return //nothing todo
+	}
+
+	// check if a CSV is provided
+	// if its not a CSV, then just do the regular binding to the config
+	parsed := strings.Split(kvs, ",")
+	boolValue, err := strconv.ParseBool(parsed[0])
+	if err != nil {
+		log.FatalE(ctx, "couldn't parse kv bool", err)
+	}
+	paramFn(cfg, boolValue)
+	if len(parsed) == 1 {
+		return //nothing more todo
+	}
+
+	// verify KV format (<default>,<name>=<level>,...)
+	// skip the first as that will be set above
+	for _, kv := range parsed[1:] {
+		parsedKV := strings.Split(kv, "=")
+		if len(parsedKV) != 2 {
+			log.Fatal(ctx, "field was not provided as <key>=<value> pair", logging.NewKV("pair", kv))
+		}
+
+		logcfg, err := cfg.GetOrCreateNamedLogger(parsedKV[0])
+		if err != nil {
+			log.FatalE(ctx, "could not get named logger config", err)
+		}
+
+		boolValue, err := strconv.ParseBool(parsedKV[1])
+		if err != nil {
+			log.FatalE(ctx, "couldn't parse kv bool", err)
+		}
+		paramFn(&logcfg.LoggingConfig, boolValue)
+	}
+}
+
+type logParamSetterStringFn func(*config.LoggingConfig, string)
+
+type logParamSetterBoolFn func(*config.LoggingConfig, bool)
