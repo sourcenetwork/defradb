@@ -23,8 +23,8 @@ import (
 
 var dumpCmd = &cobra.Command{
 	Use:   "dump",
-	Short: "Dumps the state of the entire database (server-side)",
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
+	Short: "Dump the contents of a database node-side",
+	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
 			return fmt.Errorf("failed to stat stdout: %w", err)
