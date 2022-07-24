@@ -110,17 +110,6 @@ type Config struct {
 	pipe io.Writer // this is used for testing purposes only
 }
 
-type OverrideConfig struct {
-	Level            LogLevelOption
-	EncoderFormat    EncoderFormatOption
-	EnableStackTrace EnableStackTraceOption
-	EnableCaller     EnableCallerOption
-	DisableColor     DisableColorOption
-	OutputPaths      []string
-
-	pipe io.Writer // this is used for testing purposes only
-}
-
 func (c Config) forLogger(name string) Config {
 	loggerConfig := Config{
 		Level:            c.Level,

@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	stderrPath  = "stderr"
 	testLogger1 = "testLogger1"
 	testLogger2 = "testLogger2"
 	testLogger3 = "testLogger3"

@@ -216,7 +216,11 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 	}
 }
 
-func parseAndConfigLogStringParam(ctx context.Context, cfg *config.LoggingConfig, kvs string, paramSetterFn logParamSetterStringFn) {
+func parseAndConfigLogStringParam(
+	ctx context.Context,
+	cfg *config.LoggingConfig,
+	kvs string,
+	paramSetterFn logParamSetterStringFn) {
 	if kvs == "" {
 		return //nothing todo
 	}
@@ -249,7 +253,8 @@ func parseAndConfigLogStringParam(ctx context.Context, cfg *config.LoggingConfig
 //
 // LEAVE FOR NOW - IMPLEMENTING SOON - PLEASE IGNORE FOR NOW
 //
-// func parseAndConfigLogBoolParam(ctx context.Context, cfg *config.LoggingConfig, kvs string, paramFn logParamSetterBoolFn) {
+// func parseAndConfigLogBoolParam(
+//	 	ctx context.Context, cfg *config.LoggingConfig, kvs string, paramFn logParamSetterBoolFn) {
 // 	if kvs == "" {
 // 		return //nothing todo
 // 	}
