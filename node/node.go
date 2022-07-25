@@ -46,6 +46,8 @@ var (
 	log = logging.MustNewLogger("defra.node")
 )
 
+const evtWaitTimeout = 10 * time.Second
+
 type Node struct {
 	// embed the DB interface into the node
 	client.DB
@@ -240,7 +242,7 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 				continue
 			}
 			return nil
-		case <-time.After(10 * time.Second):
+		case <-time.After(evtWaitTimeout):
 			return fmt.Errorf("waiting for peer connection timed out")
 		}
 	}
@@ -255,7 +257,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 				continue
 			}
 			return nil
-		case <-time.After(10 * time.Second):
+		case <-time.After(evtWaitTimeout):
 			return fmt.Errorf("waiting for pushlog timed out")
 		}
 	}
@@ -270,7 +272,7 @@ func (n *Node) WaitForPushLogEvent(id peer.ID) error {
 				continue
 			}
 			return nil
-		case <-time.After(10 * time.Second):
+		case <-time.After(evtWaitTimeout):
 			return fmt.Errorf("waiting for pushlog timed out")
 		}
 	}
