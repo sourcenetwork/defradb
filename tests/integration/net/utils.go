@@ -319,5 +319,7 @@ func newPort() int {
 		return newPort()
 	}
 
+	usedPorts[p] = true
+
 	return p
 }
