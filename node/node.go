@@ -164,9 +164,9 @@ func NewNode(
 		ctx:          ctx,
 	}
 
-	n.subsribeToPeerConnectionEvents()
-	n.subsribeToPubSubEvents()
-	n.subsribeToPushLogEvents()
+	n.subscribeToPeerConnectionEvents()
+	n.subscribeToPubSubEvents()
+	n.subscribeToPushLogEvents()
 
 	return n, nil
 }
@@ -180,8 +180,8 @@ func (n *Node) PeerID() peer.ID {
 	return n.host.ID()
 }
 
-// SubsribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
-func (n *Node) subsribeToPeerConnectionEvents() {
+// subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
+func (n *Node) subscribeToPeerConnectionEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
 	if err != nil {
 		log.Info(
@@ -196,8 +196,8 @@ func (n *Node) subsribeToPeerConnectionEvents() {
 	}()
 }
 
-// SubsribeToPubSubEvents subscribes the node to the event bus for a pubsub.
-func (n *Node) subsribeToPubSubEvents() {
+// subscribeToPubSubEvents subscribes the node to the event bus for a pubsub.
+func (n *Node) subscribeToPubSubEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
 	if err != nil {
 		log.Info(
@@ -212,8 +212,8 @@ func (n *Node) subsribeToPubSubEvents() {
 	}()
 }
 
-// SubsribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
-func (n *Node) subsribeToPushLogEvents() {
+// subscribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
+func (n *Node) subscribeToPushLogEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(net.EvtReceivedPushLog))
 	if err != nil {
 		log.Info(
