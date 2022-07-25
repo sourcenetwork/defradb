@@ -77,11 +77,11 @@ func FixtureDefaultConfigFile(t *testing.T) string {
 
 func TestConfigValidateBasic(t *testing.T) {
 	cfg := DefaultConfig()
-	assert.NoError(t, cfg.validateBasic())
+	assert.NoError(t, cfg.validate())
 	// Borked configuration gives out error
 	cfg.API.Address = "*%(*&"
 
-	err := cfg.validateBasic()
+	err := cfg.validate()
 
 	assert.Error(t, err)
 }
