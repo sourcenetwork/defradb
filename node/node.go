@@ -258,7 +258,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for pushlog timed out")
+			return fmt.Errorf("waiting for pubsub timed out")
 		}
 	}
 }
