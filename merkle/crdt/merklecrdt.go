@@ -27,7 +27,7 @@ var (
 	log = logging.MustNewLogger("defra.merklecrdt")
 )
 
-const boadcasterTimeout = time.Second
+const broadcasterTimeout = time.Second
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
@@ -112,7 +112,7 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 			Block:    nd,
 			Priority: netdelta.GetPriority(),
 		}
-		if err := base.broadcaster.SendWithTimeout(lg, boadcasterTimeout); err != nil {
+		if err := base.broadcaster.SendWithTimeout(lg, broadcasterTimeout); err != nil {
 			log.ErrorE(
 				ctx,
 				"Failed to broadcast MerkleCRDT update",
