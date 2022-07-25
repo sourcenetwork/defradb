@@ -36,7 +36,6 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 	"github.com/textileio/go-threads/broadcast"
-	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
@@ -57,7 +56,6 @@ type Node struct {
 	litepeer *ipfslite.Peer
 
 	peerEvent chan event.EvtPeerConnectednessChanged
-	grpc      *grpc.Server
 
 	ctx context.Context
 }
@@ -200,16 +198,6 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			return fmt.Errorf("waiting for peer connection timed out")
 		}
 	}
-}
-
-// SetGRPC sets the GRPC server on the node.
-func (n *Node) SetGRPC(s *grpc.Server) {
-	n.grpc = s
-}
-
-// GRPCShutdown sends a greaceful stop signal to the grpc server.
-func (n *Node) GRPCShutdown() {
-	n.grpc.GracefulStop()
 }
 
 // replace with proper keystore

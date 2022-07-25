@@ -12,28 +12,20 @@ package net
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
-	gonet "net"
 	"strings"
 	"testing"
 
-	ma "github.com/multiformats/go-multiaddr"
 	coreClient "github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
-	netapi "github.com/sourcenetwork/defradb/net/api"
-	netpb "github.com/sourcenetwork/defradb/net/api/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/assert"
 	"github.com/textileio/go-threads/broadcast"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 )
 
 var (
@@ -113,6 +105,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	}
 
 	n.SubsribeToPeerConnectionEvents()
+	n.CheckSyncIsComnpleted()
 
 	// parse peers and bootstrap
 	if len(cfg.Net.Peers) != 0 {
@@ -130,47 +123,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		db.Close(ctx)
 		return nil, nil, fmt.Errorf("unable to start P2P listeners: %w", err)
 	}
-
-	MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing multi-address: %w", err)
-	}
-
-	addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing TCP address: %w", err)
-	}
-
-	tcplistener, err := gonet.Listen("tcp", addr)
-	if err != nil {
-		t.Fatal(
-			"Failed to listen to TCP address",
-			err,
-			logging.NewKV("Address", addr),
-		)
-	}
-
-	rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-	if err != nil {
-		return nil, nil, fmt.Errorf("parsing RPC timeout: %w", err)
-	}
-
-	server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-		MaxConnectionIdle: rpcTimeoutDuration,
-	}))
-
-	n.SetGRPC(server)
-
-	netService := netapi.NewService(n.Peer)
-
-	go func() {
-		log.Info(ctx, "Started RPC server", logging.NewKV("Address", addr))
-		netpb.RegisterServiceServer(server, netService)
-		if err := server.Serve(tcplistener); err != nil &&
-			!errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(ctx, "Server error", err)
-		}
-	}()
 
 	return n, dockeys, nil
 }
@@ -338,7 +290,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		if err := n.Close(); err != nil {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err))
 		}
-		n.GRPCShutdown()
 	}
 }
 

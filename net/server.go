@@ -177,10 +177,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
 	}
 
-	// in gorouting to make certain we don't block
-	go func() {
-		s.peer.syncComplete <- 1
-	}()
+	if s.peer.checkSyncCompleted {
+		// in gorouting to make certain we don't block
+		go func() {
+			s.peer.syncComplete <- struct{}{}
+		}()
+	}
 
 	return &pb.PushLogReply{}, nil
 }
