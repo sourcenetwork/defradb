@@ -18,15 +18,19 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -42,6 +46,8 @@ var (
 	log = logging.MustNewLogger("defra.node")
 )
 
+const evtWaitTimeout = 10 * time.Second
+
 type Node struct {
 	// embed the DB interface into the node
 	client.DB
@@ -51,6 +57,15 @@ type Node struct {
 	host     host.Host
 	pubsub   *pubsub.PubSub
 	litepeer *ipfslite.Peer
+
+	// receives an event when the status of a peer connection changes.
+	peerEvent chan event.EvtPeerConnectednessChanged
+
+	// receives an event when a pubsub topic is added.
+	pubSubEvent chan net.EvtPubSub
+
+	// receives an event when a pushLog request has been processed.
+	pushLogEvent chan net.EvtReceivedPushLog
 
 	ctx context.Context
 }
@@ -144,18 +159,128 @@ func NewNode(
 		return nil, fin.Cleanup(err)
 	}
 
-	return &Node{
-		Peer:     peer,
-		host:     h,
-		pubsub:   ps,
-		DB:       db,
-		litepeer: lite,
-		ctx:      ctx,
-	}, nil
+	n := &Node{
+		pubSubEvent:  make(chan net.EvtPubSub),
+		pushLogEvent: make(chan net.EvtReceivedPushLog),
+		peerEvent:    make(chan event.EvtPeerConnectednessChanged),
+		Peer:         peer,
+		host:         h,
+		pubsub:       ps,
+		DB:           db,
+		litepeer:     lite,
+		ctx:          ctx,
+	}
+
+	n.subscribeToPeerConnectionEvents()
+	n.subscribeToPubSubEvents()
+	n.subscribeToPushLogEvents()
+
+	return n, nil
 }
 
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	n.litepeer.Bootstrap(addrs)
+}
+
+// PeerID returns the node's peer ID.
+func (n *Node) PeerID() peer.ID {
+	return n.host.ID()
+}
+
+// subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
+func (n *Node) subscribeToPeerConnectionEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+		}
+	}()
+}
+
+// subscribeToPubSubEvents subscribes the node to the event bus for a pubsub.
+func (n *Node) subscribeToPubSubEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.pubSubEvent <- e.(net.EvtPubSub)
+		}
+	}()
+}
+
+// subscribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
+func (n *Node) subscribeToPushLogEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(net.EvtReceivedPushLog))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to push log event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+		}
+	}()
+}
+
+// WaitForPeerConnectionEvent listens to the event channel for a connection event from a given peer.
+func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
+	if n.host.Network().Connectedness(id) == network.Connected {
+		return nil
+	}
+	for {
+		select {
+		case evt := <-n.peerEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for peer connection timed out")
+		}
+	}
+}
+
+// WaitForPubSubEvent listens to the event channel for pub sub event from a given peer.
+func (n *Node) WaitForPubSubEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pubSubEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for pubsub timed out")
+		}
+	}
+}
+
+// WaitForPushLogEvent listens to the event channel for a push log event from a given peer.
+func (n *Node) WaitForPushLogEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pushLogEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for pushlog timed out")
+		}
+	}
 }
 
 // replace with proper keystore

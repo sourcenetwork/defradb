@@ -325,7 +325,6 @@ func (c *collection) getAllDocKeysChan(
 			default:
 				// noop, just continue on the with the for loop
 			}
-
 			if res.Error != nil {
 				resCh <- client.DocKeysResult{
 					Err: res.Error,
@@ -334,7 +333,7 @@ func (c *collection) getAllDocKeysChan(
 			}
 
 			// now we have a doc key
-			rawDocKey := ds.NewKey(res.Key).Type()
+			rawDocKey := ds.NewKey(res.Key).BaseNamespace()
 			key, err := client.NewDocKeyFromString(rawDocKey)
 			if err != nil {
 				resCh <- client.DocKeysResult{

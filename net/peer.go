@@ -159,6 +159,18 @@ func (p *Peer) Close() error {
 	stopGRPCServer(p.ctx, p.p2pRPC)
 	// stopGRPCServer(p.tcpRPC)
 
+	// close event emitters
+	if p.server.pubSubEmitter != nil {
+		if err := p.server.pubSubEmitter.Close(); err != nil {
+			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err))
+		}
+	}
+	if p.server.pushLogEmitter != nil {
+		if err := p.server.pushLogEmitter.Close(); err != nil {
+			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err))
+		}
+	}
+
 	p.bus.Discard()
 	p.cancel()
 	return nil
@@ -462,4 +474,12 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
+}
+
+type EvtReceivedPushLog struct {
+	Peer peer.ID
+}
+
+type EvtPubSub struct {
+	Peer peer.ID
 }
