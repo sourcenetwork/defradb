@@ -232,7 +232,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 	// update and sync peers
 	for n, updateMap := range test.Updates {
-		if n > len(nodes) {
+		if n >= len(nodes) {
 			log.Info(ctx, "cannot update a node that hasn't been started. Skipping to next node")
 			continue
 		}
@@ -264,7 +264,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			if n2 == n {
 				continue
 			}
-			if n2 > len(nodes) {
+			if n2 >= len(nodes) {
 				log.Info(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
 				continue
 			}
