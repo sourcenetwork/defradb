@@ -58,8 +58,13 @@ type Node struct {
 	pubsub   *pubsub.PubSub
 	litepeer *ipfslite.Peer
 
-	peerEvent    chan event.EvtPeerConnectednessChanged
-	pubSubEvent  chan net.EvtPubSub
+	// receives an event when the status of a peer connection changes.
+	peerEvent chan event.EvtPeerConnectednessChanged
+
+	// receives an event when a pubsub topic is added.
+	pubSubEvent chan net.EvtPubSub
+
+	// receives an event when a pushLog request has been processed.
 	pushLogEvent chan net.EvtReceivedPushLog
 
 	ctx context.Context
