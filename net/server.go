@@ -196,7 +196,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			Peer: pid,
 		})
 		if err != nil {
-			log.Debug(ctx, "could not emit push log event", logging.NewKV("Error", err))
+			// logging instead of returning an error because the event bus should
+			// not break the PushLog execution.
+			log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err))
 		}
 	}
 
