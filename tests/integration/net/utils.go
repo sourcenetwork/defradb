@@ -49,8 +49,6 @@ const (
 )
 
 type P2PTestCase struct {
-	Description string
-
 	// Configuration parameters for each peer
 	NodeConfig []*config.Config
 
@@ -58,7 +56,7 @@ type P2PTestCase struct {
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodePeers map[int][]int
 
-	Seeds []string
+	SeedDocuments []string
 
 	// node/dockey/values
 	Updates map[int]map[int][]string
@@ -204,7 +202,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
 		}
-		n, d, err := setupDefraNode(t, cfg, test.Seeds)
+		n, d, err := setupDefraNode(t, cfg, test.SeedDocuments)
 		if err != nil {
 			t.Fatal(err)
 		}

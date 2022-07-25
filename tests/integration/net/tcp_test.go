@@ -16,9 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 )
 
+// TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
 func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 	test := P2PTestCase{
-		Description: "Document syncing between two nodes with a single update per node",
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
 			randomNetworkingConfig(),
@@ -28,7 +28,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				0,
 			},
 		},
-		Seeds: []string{
+		SeedDocuments: []string{
 			`{
 				"Name": "John",
 				"Age": 21
@@ -67,9 +67,9 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+// TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
 func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 	test := P2PTestCase{
-		Description: "Document syncing between two nodes with multiple updates per node",
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
 			randomNetworkingConfig(),
@@ -79,7 +79,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				0,
 			},
 		},
-		Seeds: []string{
+		SeedDocuments: []string{
 			`{
 				"Name": "John",
 				"Age": 21
