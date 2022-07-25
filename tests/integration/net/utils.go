@@ -247,7 +247,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					p.WaitForPushLogEvent(nodes[n].PeerID())
+					err := p.WaitForPushLogEvent(nodes[n].PeerID())
+					if err != nil {
+						t.Fatal(err)
+					}
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}

@@ -187,9 +187,12 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 	}()
 
-	em.Emit(EvtReceivedPushLog{
+	err = em.Emit(EvtReceivedPushLog{
 		Peer: pid,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("could not emit event: %w", err)
+	}
 
 	return &pb.PushLogReply{}, nil
 }
