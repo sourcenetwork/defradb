@@ -19,6 +19,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	format "github.com/ipfs/go-ipld-format"
+	"github.com/libp2p/go-libp2p-core/event"
 	libpeer "github.com/libp2p/go-libp2p-core/peer"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
@@ -45,6 +46,9 @@ type server struct {
 	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
+
+	pubSubEmitter  event.Emitter
+	pushLogEmitter event.Emitter
 }
 
 // newServer creates a new network server that handle/directs RPC requests to the
@@ -91,6 +95,16 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 			}
 		}
 		log.Debug(p.ctx, "Finished registering all DocKey pubsub topics", logging.NewKV("Count", i))
+	}
+
+	var err error
+	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
+	if err != nil {
+		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err))
+	}
+	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
+	if err != nil {
+		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err))
 	}
 
 	return s, nil
@@ -175,6 +189,17 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		session.Wait()
 	} else {
 		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+	}
+
+	if s.pushLogEmitter != nil {
+		err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
+			Peer: pid,
+		})
+		if err != nil {
+			// logging instead of returning an error because the event bus should
+			// not break the PushLog execution.
+			log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err))
+		}
 	}
 
 	return &pb.PushLogReply{}, nil
@@ -303,7 +328,17 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		"Received new pubsub event",
 		logging.NewKV("SenderId", from),
 		logging.NewKV("Topic", topic),
+		logging.NewKV("Message", string(msg)),
 	)
+
+	if s.pubSubEmitter != nil {
+		err := s.pubSubEmitter.Emit(EvtPubSub{
+			Peer: from,
+		})
+		if err != nil {
+			log.Info(s.peer.ctx, "could not emit pubsub event", logging.NewKV("Error", err))
+		}
+	}
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {
