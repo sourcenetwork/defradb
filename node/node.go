@@ -171,14 +171,14 @@ func (n *Node) PeerID() peer.ID {
 
 // SubsribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
 func (n *Node) SubsribeToPeerConnectionEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
+	if err != nil {
+		log.Info(
+			context.Background(),
+			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
+		)
+	}
 	go func() {
-		sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
-		if err != nil {
-			log.Info(
-				context.Background(),
-				fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
-			)
-		}
 		for e := range sub.Out() {
 			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
 		}
