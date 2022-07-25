@@ -18,7 +18,7 @@ import (
 	"sync"
 	"testing"
 
-	coreClient "github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
@@ -67,7 +67,7 @@ type P2PTestCase struct {
 	Results map[int]map[int]map[string]interface{}
 }
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []coreClient.DocKey, error) {
+func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
 	ctx := context.Background()
 	var err error
 
@@ -85,7 +85,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	}
 
 	// seed the database with a set of documents
-	dockeys := []coreClient.DocKey{}
+	dockeys := []client.DocKey{}
 	for _, document := range seeds {
 		dockey, err := seedDocument(ctx, db, document)
 		if err != nil {
@@ -129,30 +129,30 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	return n, dockeys, nil
 }
 
-func seedSchema(ctx context.Context, db coreClient.DB) error {
+func seedSchema(ctx context.Context, db client.DB) error {
 	return db.AddSchema(ctx, userCollectionGQLSchema)
 }
 
-func seedDocument(ctx context.Context, db coreClient.DB, document string) (coreClient.DocKey, error) {
+func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
-		return coreClient.DocKey{}, err
+		return client.DocKey{}, err
 	}
 
-	doc, err := coreClient.NewDocFromJSON([]byte(document))
+	doc, err := client.NewDocFromJSON([]byte(document))
 	if err != nil {
-		return coreClient.DocKey{}, err
+		return client.DocKey{}, err
 	}
 
 	err = col.Save(ctx, doc)
 	if err != nil {
-		return coreClient.DocKey{}, err
+		return client.DocKey{}, err
 	}
 
 	return doc.Key(), nil
 }
 
-func updateDocument(ctx context.Context, db coreClient.DB, dockey coreClient.DocKey, update string) error {
+func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func updateDocument(ctx context.Context, db coreClient.DB, dockey coreClient.Doc
 	return col.Save(ctx, doc)
 }
 
-func getDocument(ctx context.Context, db coreClient.DB, dockey coreClient.DocKey) (*coreClient.Document, error) {
+func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*client.Document, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func getDocument(ctx context.Context, db coreClient.DB, dockey coreClient.DocKey
 func executeTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
-	dockeys := []coreClient.DocKey{}
+	dockeys := []client.DocKey{}
 	nodes := []*node.Node{}
 
 	for i, cfg := range test.NodeConfig {
