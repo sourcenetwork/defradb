@@ -320,7 +320,25 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		"Received new pubsub event",
 		logging.NewKV("SenderId", from),
 		logging.NewKV("Topic", topic),
+		logging.NewKV("Message", string(msg)),
 	)
+
+	em, err := s.peer.host.EventBus().Emitter(new(EvtPubSub))
+	if err != nil {
+		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err))
+	}
+	defer func() {
+		if err := em.Close(); err != nil {
+			log.Info(s.peer.ctx, "Could not close event emitter", logging.NewKV("Error", err))
+		}
+	}()
+
+	err = em.Emit(EvtPubSub{
+		Peer: from,
+	})
+	if err != nil {
+		log.Info(s.peer.ctx, "could not emit event", logging.NewKV("Error", err))
+	}
 }
 
 func (s *server) listAllDocKeys() (<-chan client.DocKeysResult, error) {

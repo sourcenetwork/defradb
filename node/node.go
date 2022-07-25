@@ -57,6 +57,7 @@ type Node struct {
 	litepeer *ipfslite.Peer
 
 	peerEvent    chan event.EvtPeerConnectednessChanged
+	pubSubEvent  chan net.EvtPubSub
 	pushLogEvent chan net.EvtReceivedPushLog
 
 	ctx context.Context
@@ -152,6 +153,7 @@ func NewNode(
 	}
 
 	n := &Node{
+		pubSubEvent:  make(chan net.EvtPubSub),
 		pushLogEvent: make(chan net.EvtReceivedPushLog),
 		peerEvent:    make(chan event.EvtPeerConnectednessChanged),
 		Peer:         peer,
@@ -163,6 +165,7 @@ func NewNode(
 	}
 
 	n.subsribeToPeerConnectionEvents()
+	n.subsribeToPubSubEvents()
 	n.subsribeToPushLogEvents()
 
 	return n, nil
@@ -189,6 +192,22 @@ func (n *Node) subsribeToPeerConnectionEvents() {
 	go func() {
 		for e := range sub.Out() {
 			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+		}
+	}()
+}
+
+// SubsribeToPubSubEvents subscribes the node to the event bus for a pubsub.
+func (n *Node) subsribeToPubSubEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
+	if err != nil {
+		log.Info(
+			context.Background(),
+			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.pubSubEvent <- e.(net.EvtPubSub)
 		}
 	}()
 }
@@ -223,6 +242,21 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			return nil
 		case <-time.After(10 * time.Second):
 			return fmt.Errorf("waiting for peer connection timed out")
+		}
+	}
+}
+
+// WaitForPubSubEvent listens to the event channel for pub sub event from a given peer.
+func (n *Node) WaitForPubSubEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pubSubEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(10 * time.Second):
+			return fmt.Errorf("waiting for pushlog timed out")
 		}
 	}
 }

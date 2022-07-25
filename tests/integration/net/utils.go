@@ -219,7 +219,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				continue
 			}
 			log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
-			err := n.WaitForPeerConnectionEvent(p.PeerID())
+			err := n.WaitForPubSubEvent(p.PeerID())
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -467,3 +467,7 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 type EvtReceivedPushLog struct {
 	Peer peer.ID
 }
+
+type EvtPubSub struct {
+	Peer peer.ID
+}
