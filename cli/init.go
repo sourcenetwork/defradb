@@ -39,12 +39,9 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
 
-		// parse loglevel overrides
-		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
+		// parse loglevel overrides.
 		// binding the flags / EnvVars to the struct
-		parseAndConfigLog(cmd.Context(), cfg.Logging, cmd)
-
-		return nil
+		return parseAndConfigLog(cmd.Context(), cfg.Log, cmd)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rootDirPath := ""

@@ -45,7 +45,6 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a DefraDB node",
 	Long:  "Start a new instance of DefraDB node.",
-	// Load the root config if it exists, otherwise create it.
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		log.Info(ctx, "Starting DefraDB service...")

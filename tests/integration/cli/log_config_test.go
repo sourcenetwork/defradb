@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package inline_array
+package cli
 
 import (
 	"bufio"
@@ -35,8 +35,6 @@ var (
 	log2 = logging.MustNewLogger(testLogger2)
 	log3 = logging.MustNewLogger(testLogger3)
 )
-
-// todo - add test asserting that logger logs to file by default
 
 func TestCLILogsToStderrGivenNamedLogLevel(t *testing.T) {
 	ctx := context.Background()

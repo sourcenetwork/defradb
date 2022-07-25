@@ -34,9 +34,9 @@ var envVarsDifferentThanDefault = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "90s",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
-	"DEFRA_LOGGING_LEVEL":         "error",
-	"DEFRA_LOGGING_STACKTRACE":    "true",
-	"DEFRA_LOGGING_FORMAT":        "json",
+	"DEFRA_LOG_LEVEL":             "error",
+	"DEFRA_LOG_STACKTRACE":        "true",
+	"DEFRA_LOG_FORMAT":            "json",
 }
 
 var envVarsInvalid = map[string]string{
@@ -49,9 +49,9 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "^=+()&**()*(&))",
 	"DEFRA_NET_PUBSUB":            "^=+()&**()*(&))",
 	"DEFRA_NET_RELAY":             "^=+()&**()*(&))",
-	"DEFRA_LOGGING_LEVEL":         "^=+()&**()*(&))",
-	"DEFRA_LOGGING_STACKTRACE":    "^=+()&**()*(&))",
-	"DEFRA_LOGGING_FORMAT":        "^=+()&**()*(&))",
+	"DEFRA_LOG_LEVEL":             "^=+()&**()*(&))",
+	"DEFRA_LOG_STACKTRACE":        "^=+()&**()*(&))",
+	"DEFRA_LOG_FORMAT":            "^=+()&**()*(&))",
 }
 
 func FixtureEnvVars(envVars map[string]string) {
@@ -147,9 +147,9 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "90s", cfg.Net.RPCTimeout)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
-	assert.Equal(t, "error", cfg.Logging.Level)
-	assert.Equal(t, true, cfg.Logging.Stacktrace)
-	assert.Equal(t, "json", cfg.Logging.Format)
+	assert.Equal(t, "error", cfg.Log.Level)
+	assert.Equal(t, true, cfg.Log.Stacktrace)
+	assert.Equal(t, "json", cfg.Log.Format)
 }
 
 func TestGetRootDirExists(t *testing.T) {
@@ -275,10 +275,10 @@ func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 
 func TestGetLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Logging.Level = "debug"
-	cfg.Logging.Format = "json"
-	cfg.Logging.Stacktrace = true
-	cfg.Logging.OutputPath = "stdout"
+	cfg.Log.Level = "debug"
+	cfg.Log.Format = "json"
+	cfg.Log.Stacktrace = true
+	cfg.Log.OutputPath = "stdout"
 
 	loggingConfig, err := cfg.GetLoggingConfig()
 
@@ -291,8 +291,8 @@ func TestGetLoggingConfig(t *testing.T) {
 
 func TestInvalidGetLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.Logging.Level = "546578"
-	cfg.Logging.Format = "*&)*&"
+	cfg.Log.Level = "546578"
+	cfg.Log.Format = "*&)*&"
 
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.GetLoggingConfig()

@@ -77,7 +77,7 @@ type Config struct {
 	Datastore *DatastoreConfig
 	API       *APIConfig
 	Net       *NetConfig
-	Logging   *LoggingConfig
+	Log       *LoggingConfig
 }
 
 // Load Config and handles parameters from config file, environment variables.
@@ -145,7 +145,7 @@ func DefaultConfig() *Config {
 		Datastore: defaultDatastoreConfig(),
 		API:       defaultAPIConfig(),
 		Net:       defaultNetConfig(),
-		Logging:   defaultLoggingConfig(),
+		Log:       defaultLogConfig(),
 	}
 }
 
@@ -438,7 +438,7 @@ func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingC
 
 // GetLoggingConfig provides logging-specific configuration, from top-level Config.
 func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
-	return cfg.Logging.ToLoggerConfig()
+	return cfg.Log.ToLoggerConfig()
 }
 
 // ToJSON serializes the config to a JSON string.
