@@ -29,21 +29,24 @@ import (
 )
 
 var (
-	busBufferSize = 100
-	log           = logging.MustNewLogger("defra.test.net")
+	log = logging.MustNewLogger("defra.test.net")
 )
 
-const userCollectionGQLSchema = `
-	type users {
-		Name: String
-		Email: String
-		Age: Int 
-		HeightM: Float
-		Verified: Boolean
-	}
-`
+const (
+	busBufferSize = 100
 
-const userCollection = "users"
+	userCollectionGQLSchema = `
+		type users {
+			Name: String
+			Email: String
+			Age: Int 
+			HeightM: Float
+			Verified: Boolean
+		}
+	`
+
+	userCollection = "users"
+)
 
 type P2PTestCase struct {
 	Description string
