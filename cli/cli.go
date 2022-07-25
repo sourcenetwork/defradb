@@ -156,7 +156,7 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 				return fmt.Errorf("couldn't parse kv bool: %w", err)
 			}
 			logcfg.Stacktrace = boolValue
-		case "color": // bool
+		case "nocolor": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
 				return fmt.Errorf("couldn't parse kv bool: %w", err)
