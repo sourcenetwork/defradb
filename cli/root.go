@@ -92,7 +92,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String(
 		"logformat", cfg.Log.Format,
-		"Log format to use. Options are text, json",
+		"Log format to use. Options are csv, json",
 	)
 	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {

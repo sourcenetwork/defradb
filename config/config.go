@@ -347,7 +347,7 @@ func defaultLogConfig() *LogConfig {
 	return &LogConfig{
 		Level:      logLevelInfo,
 		Stacktrace: false,
-		Format:     "text",
+		Format:     "csv",
 		OutputPath: "stderr",
 		Caller:     false,
 		NoColor:    false,
@@ -383,8 +383,6 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	case "json":
 		encfmt = logging.JSON
 	case "csv":
-		encfmt = logging.CSV
-	case "text":
 		encfmt = logging.CSV
 	default:
 		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Log.Format)
