@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"testing"
 
 	coreClient "github.com/sourcenetwork/defradb/client"
@@ -30,6 +31,9 @@ import (
 
 var (
 	log = logging.MustNewLogger("defra.test.net")
+
+	usedPorts    = make(map[int]bool)
+	portSyncLock sync.Mutex
 )
 
 const (
@@ -295,11 +299,25 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 }
 
 func randomNetworkingConfig() *config.Config {
-	p2pPort := rand.Intn(999) + 9000
-	tcpPort := rand.Intn(999) + 9000
+	p2pPort := newPort()
+	tcpPort := newPort()
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort)
 	cfg.Net.RPCAddress = fmt.Sprintf("0.0.0.0:%d", tcpPort)
 	cfg.Net.TCPAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", tcpPort)
 	return cfg
+}
+
+// newPort returns a port number between 9000 and 9999 and ensures
+// it hasn't already been used by the test suite.
+func newPort() int {
+	portSyncLock.Lock()
+	defer portSyncLock.Unlock()
+
+	p := rand.Intn(999) + 9000
+	if usedPorts[p] {
+		return newPort()
+	}
+
+	return p
 }
