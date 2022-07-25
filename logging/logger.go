@@ -182,6 +182,10 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		defaultConfig.DisableStacktrace = !config.EnableStackTrace.EnableStackTrace
 	}
 
+	if config.DisableColor.HasValue && config.DisableColor.DisableColor {
+		defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	}
+
 	if config.EnableCaller.HasValue {
 		defaultConfig.DisableCaller = !config.EnableCaller.EnableCaller
 	}
