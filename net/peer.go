@@ -62,9 +62,6 @@ type Peer struct {
 	jobQueue chan *dagJob
 	sendJobs chan *dagJob
 
-	checkSyncCompleted bool
-	syncComplete       chan struct{}
-
 	// outstanding log request currently being processed
 	queuedChildren *cidSafeSet
 
@@ -104,7 +101,6 @@ func NewPeer(
 		cancel:         cancel,
 		jobQueue:       make(chan *dagJob, numWorkers),
 		sendJobs:       make(chan *dagJob),
-		syncComplete:   make(chan struct{}),
 		replicators:    make(map[string]map[peer.ID]struct{}),
 		queuedChildren: newCidSafeSet(),
 	}
@@ -452,16 +448,6 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 	}
 }
 
-// SyncCompleted return a channel that tracks when a peer syncronization completes
-func (p *Peer) SyncCompleted() chan struct{} {
-	return p.syncComplete
-}
-
-// CheckSyncIsComnpleted set a bool flag on the Peer that will allow a channel to send a sync-sompleted signal.
-func (p *Peer) CheckSyncIsComnpleted() {
-	p.checkSyncCompleted = true
-}
-
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	stopped := make(chan struct{})
 	go func() {
@@ -476,4 +462,8 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	case <-stopped:
 		timer.Stop()
 	}
+}
+
+type EvtReceivedPushLog struct {
+	Peer peer.ID
 }

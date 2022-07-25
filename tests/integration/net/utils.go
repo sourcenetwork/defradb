@@ -104,9 +104,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		return nil, nil, fmt.Errorf("failed to start P2P node: %w", err)
 	}
 
-	n.SubsribeToPeerConnectionEvents()
-	n.CheckSyncIsComnpleted()
-
 	// parse peers and bootstrap
 	if len(cfg.Net.Peers) != 0 {
 		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
@@ -250,7 +247,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					<-p.SyncCompleted()
+					p.WaitForPushLogEvent(nodes[n].PeerID())
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}

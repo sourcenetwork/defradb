@@ -177,12 +177,19 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
 	}
 
-	if s.peer.checkSyncCompleted {
-		// in gorouting to make certain we don't block
-		go func() {
-			s.peer.syncComplete <- struct{}{}
-		}()
+	em, err := s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
+	if err != nil {
+		return nil, fmt.Errorf("could not create event emitter: %w", err)
 	}
+	defer func() {
+		if err := em.Close(); err != nil {
+			log.Info(ctx, "Could not close event emitter", logging.NewKV("Error", err))
+		}
+	}()
+
+	em.Emit(EvtReceivedPushLog{
+		Peer: pid,
+	})
 
 	return &pb.PushLogReply{}, nil
 }
