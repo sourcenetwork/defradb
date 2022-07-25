@@ -30,6 +30,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -187,6 +188,9 @@ func (n *Node) SubsribeToPeerConnectionEvents() {
 
 // WaitForPeerConnectionEvent listens to the event channel for a connection event from a given peer.
 func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
+	if n.host.Network().Connectedness(id) == network.Connected {
+		return nil
+	}
 	for {
 		select {
 		case evt := <-n.peerEvent:
