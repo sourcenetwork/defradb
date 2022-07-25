@@ -102,8 +102,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		cfg.NodeConfig(),
 	)
 	if err != nil {
-		n.Close() //nolint:errcheck
-		db.Close(ctx)
 		return nil, nil, fmt.Errorf("failed to start P2P node: %w", err)
 	}
 
@@ -119,8 +117,10 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	}
 
 	if err := n.Start(); err != nil {
-		n.Close() //nolint:errcheck
-		db.Close(ctx)
+		closeErr := n.Close()
+		if closeErr != nil {
+			return nil, nil, fmt.Errorf("unable to start P2P listeners: %v: problem closing node: %w", err, closeErr)
+		}
 		return nil, nil, fmt.Errorf("unable to start P2P listeners: %w", err)
 	}
 
