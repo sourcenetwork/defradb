@@ -185,7 +185,7 @@ func (n *Node) subsribeToPeerConnectionEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
 	if err != nil {
 		log.Info(
-			context.Background(),
+			n.ctx,
 			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
 		)
 	}
@@ -201,7 +201,7 @@ func (n *Node) subsribeToPubSubEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
 	if err != nil {
 		log.Info(
-			context.Background(),
+			n.ctx,
 			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
 		)
 	}
@@ -217,7 +217,7 @@ func (n *Node) subsribeToPushLogEvents() {
 	sub, err := n.host.EventBus().Subscribe(new(net.EvtReceivedPushLog))
 	if err != nil {
 		log.Info(
-			context.Background(),
+			n.ctx,
 			fmt.Sprintf("failed to subscribe to push log event: %v", err),
 		)
 	}
