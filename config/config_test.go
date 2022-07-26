@@ -34,8 +34,8 @@ var envVarsDifferentThanDefault = map[string]string{
 	"DEFRA_NET_RPCTIMEOUT":        "90s",
 	"DEFRA_NET_PUBSUB":            "false",
 	"DEFRA_NET_RELAY":             "false",
-	"DEFRA_LOG_LEVEL":             "info",
-	"DEFRA_LOG_STACKTRACE":        "false",
+	"DEFRA_LOG_LEVEL":             "error",
+	"DEFRA_LOG_STACKTRACE":        "true",
 	"DEFRA_LOG_FORMAT":            "json",
 }
 
@@ -147,8 +147,8 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "90s", cfg.Net.RPCTimeout)
 	assert.Equal(t, false, cfg.Net.PubSubEnabled)
 	assert.Equal(t, false, cfg.Net.RelayEnabled)
-	assert.Equal(t, "info", cfg.Log.Level)
-	assert.Equal(t, false, cfg.Log.Stacktrace)
+	assert.Equal(t, "error", cfg.Log.Level)
+	assert.Equal(t, true, cfg.Log.Stacktrace)
 	assert.Equal(t, "json", cfg.Log.Format)
 }
 

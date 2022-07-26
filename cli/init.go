@@ -15,7 +15,6 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -34,17 +33,15 @@ var initCmd = &cobra.Command{
 	Short: "Initialize DefraDB's root directory and configuration file",
 	Long:  "Initialize a directory for configuration and data at the given path.",
 	// Load a default configuration, considering env. variables and CLI flags.
-	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		err := cfg.LoadWithoutRootDir()
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		loggingConfig, err := cfg.GetLoggingConfig()
-		if err != nil {
-			return fmt.Errorf("failed to load logging configuration: %w", err)
-		}
-		logging.SetConfig(loggingConfig)
-		return nil
+
+		// parse loglevel overrides.
+		// binding the flags / EnvVars to the struct
+		return parseAndConfigLog(cmd.Context(), cfg.Log, cmd)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rootDirPath := ""

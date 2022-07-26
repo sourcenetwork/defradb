@@ -62,16 +62,17 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
-		loggingConfig, err := cfg.GetLoggingConfig()
-		if err != nil {
-			return fmt.Errorf("failed to get logging config: %w", err)
+
+		// parse loglevel overrides
+		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
+			return err
 		}
-		logging.SetConfig(loggingConfig)
 		log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		return nil
 	},
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		log.Info(cmd.Context(), "Starting DefraDB service...")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		log.Info(ctx, "Starting DefraDB service...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)

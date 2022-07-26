@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,27 +39,32 @@ See https://docs.source.network/BSLv0.2.txt for more information.
 		if err != nil {
 			return fmt.Errorf("failed to get root dir: %w", err)
 		}
+		defaultConfig := false
 		if exists {
 			err := cfg.Load(rootDir)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
-			loggingConfig, err := cfg.GetLoggingConfig()
-			if err != nil {
-				return fmt.Errorf("failed to get logging config: %w", err)
-			}
-			logging.SetConfig(loggingConfig)
-			log.Debug(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		} else {
 			err := cfg.LoadWithoutRootDir()
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
-			loggingConfig, err := cfg.GetLoggingConfig()
-			if err != nil {
-				return fmt.Errorf("failed to get logging config: %w", err)
-			}
-			logging.SetConfig(loggingConfig)
+			defaultConfig = true
+		}
+
+		// parse loglevel overrides
+		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
+		// binding the flags / EnvVars to the struct
+		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
+			return err
+		}
+
+		if defaultConfig {
+			log.Info(cmd.Context(), "Using default configuration")
+		} else {
+			log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+
 		}
 		return nil
 	},
@@ -76,16 +80,21 @@ func init() {
 		"loglevel", cfg.Log.Level,
 		"Log level to use. Options are debug, info, error, fatal",
 	)
-	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
+	err := viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.loglevel", err)
+		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
 	}
+
+	rootCmd.PersistentFlags().String(
+		"logger", "",
+		"Named logger parameter override. usage: --logger <name>,level=<level>,output=<output>,...",
+	)
 
 	rootCmd.PersistentFlags().String(
 		"logoutput", cfg.Log.OutputPath,
 		"Log output path",
 	)
-	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
+	err = viper.BindPFlag("logging.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.outputpath", err)
 	}
@@ -94,7 +103,7 @@ func init() {
 		"logformat", cfg.Log.Format,
 		"Log format to use. Options are csv, json",
 	)
-	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
+	err = viper.BindPFlag("logging.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.format", err)
 	}
@@ -103,7 +112,7 @@ func init() {
 		"logtrace", cfg.Log.Stacktrace,
 		"Include stacktrace in error and fatal logs",
 	)
-	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
+	err = viper.BindPFlag("logging.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.stacktrace", err)
 	}
