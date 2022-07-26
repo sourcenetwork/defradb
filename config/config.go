@@ -77,7 +77,7 @@ type Config struct {
 	Datastore *DatastoreConfig
 	API       *APIConfig
 	Net       *NetConfig
-	Log       *LogConfig
+	Log       *LoggingConfig
 }
 
 // Load Config and handles parameters from config file, environment variables.
@@ -334,27 +334,34 @@ func (cfg *Config) NodeConfig() node.NodeOpt {
 }
 
 // LogConfig configures output and logger.
-type LogConfig struct {
-	Level      string
-	Stacktrace bool
-	Format     string
-	OutputPath string // logging actually supports multiple output paths, but here only one is supported
-	Caller     bool
-	NoColor    bool
+type LoggingConfig struct {
+	Level          string
+	Stacktrace     bool
+	Format         string
+	OutputPath     string // logging actually supports multiple output paths, but here only one is supported
+	Caller         bool
+	NoColor        bool
+	NamedOverrides map[string]*NamedLoggingConfig
 }
 
-func defaultLogConfig() *LogConfig {
-	return &LogConfig{
-		Level:      logLevelInfo,
-		Stacktrace: false,
-		Format:     "csv",
-		OutputPath: "stderr",
-		Caller:     false,
-		NoColor:    false,
+type NamedLoggingConfig struct {
+	LoggingConfig
+	Name string
+}
+
+func defaultLogConfig() *LoggingConfig {
+	return &LoggingConfig{
+		Level:          logLevelInfo,
+		Stacktrace:     false,
+		Format:         "csv",
+		OutputPath:     "stderr",
+		Caller:         false,
+		NoColor:        false,
+		NamedOverrides: make(map[string]*NamedLoggingConfig),
 	}
 }
 
-func (logcfg *LogConfig) validate() error {
+func (logcfg *LoggingConfig) validate() error {
 	switch logcfg.Level {
 	case logLevelDebug, logLevelInfo, logLevelError, logLevelFatal:
 	default:
@@ -363,10 +370,9 @@ func (logcfg *LogConfig) validate() error {
 	return nil
 }
 
-// GetLoggingConfig provides logging-specific configuration, from top-level Config.
-func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
+func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	var loglvl logging.LogLevel
-	switch cfg.Log.Level {
+	switch logcfg.Level {
 	case logLevelDebug:
 		loglvl = logging.Debug
 	case logLevelInfo:
@@ -376,25 +382,63 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 	case logLevelFatal:
 		loglvl = logging.Fatal
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log level: %s", cfg.Log.Level)
+		return logging.Config{}, fmt.Errorf("invalid log level: %s", logcfg.Level)
 	}
 	var encfmt logging.EncoderFormat
-	switch cfg.Log.Format {
+	switch logcfg.Format {
 	case "json":
 		encfmt = logging.JSON
 	case "csv":
 		encfmt = logging.CSV
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log format: %s", cfg.Log.Format)
+		return logging.Config{}, fmt.Errorf("invalid log format: %s", logcfg.Format)
+	}
+	// handle named overrides
+	overrides := make(map[string]logging.Config)
+	for name, cfg := range logcfg.NamedOverrides {
+		c, err := cfg.ToLoggerConfig()
+		if err != nil {
+			return logging.Config{}, fmt.Errorf("couldn't convert override config: %w", err)
+		}
+		overrides[name] = c
 	}
 	return logging.Config{
-		Level:            logging.NewLogLevelOption(loglvl),
-		EnableStackTrace: logging.NewEnableStackTraceOption(cfg.Log.Stacktrace),
-		EnableCaller:     logging.NewEnableCallerOption(cfg.Log.Caller),
-		DisableColor:     logging.NewDisableColorOption(cfg.Log.NoColor),
-		EncoderFormat:    logging.NewEncoderFormatOption(encfmt),
-		OutputPaths:      []string{cfg.Log.OutputPath},
+		Level:                 logging.NewLogLevelOption(loglvl),
+		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
+		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
+		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
+		OutputPaths:           []string{logcfg.OutputPath},
+		OverridesByLoggerName: overrides,
 	}, nil
+}
+
+// this is a copy that doesn't deep copy the NamedOverrides map
+// copy is handled by runtime "pass-by-value"
+func (logcfg LoggingConfig) copy() LoggingConfig {
+	logcfg.NamedOverrides = make(map[string]*NamedLoggingConfig)
+	return logcfg
+}
+
+func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
+	if name == "" {
+		return nil, fmt.Errorf("provided name can't be empty for named config")
+	}
+	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
+		return namedCfg, nil
+	}
+	// create default and save to overrides
+	namedCfg := &NamedLoggingConfig{
+		Name:          name,
+		LoggingConfig: logcfg.copy(),
+	}
+	logcfg.NamedOverrides[name] = namedCfg
+
+	return namedCfg, nil
+}
+
+// GetLoggingConfig provides logging-specific configuration, from top-level Config.
+func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
+	return cfg.Log.ToLoggerConfig()
 }
 
 // ToJSON serializes the config to a JSON string.
