@@ -314,11 +314,10 @@ func newPort() int {
 	portSyncLock.Lock()
 	defer portSyncLock.Unlock()
 
-	p := rand.Intn(999) + 9000
-	if usedPorts[p] {
-		return newPort()
+	p := rand.Intn(1000) + 9000
+	for usedPorts[p] {
+		p = rand.Intn(1000) + 9000
 	}
-
 	usedPorts[p] = true
 
 	return p
