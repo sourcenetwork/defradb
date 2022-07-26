@@ -35,6 +35,8 @@ var RootCmd = rootCmd
 
 func Execute() {
 	ctx := context.Background()
+	// Silence cobra's default output to control usage and error display.
+	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
