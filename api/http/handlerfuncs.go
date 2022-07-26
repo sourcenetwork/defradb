@@ -12,6 +12,7 @@ package http
 
 import (
 	"io"
+	"mime"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -73,7 +74,13 @@ type gqlRequest struct {
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query().Get("query")
 	if query == "" {
-		switch req.Header.Get("Content-Type") {
+		contentType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
+		if err != nil && err.Error() != "mime: no media type" {
+			handleErr(req.Context(), rw, err, http.StatusBadRequest)
+			return
+		}
+
+		switch contentType {
 		case contentTypeJSON:
 			gqlReq := gqlRequest{}
 
