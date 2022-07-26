@@ -74,6 +74,7 @@ type gqlRequest struct {
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query().Get("query")
 	if query == "" {
+		// extract the media type from the content-type header
 		contentType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 		if err != nil && err.Error() != "mime: no media type" {
 			handleErr(req.Context(), rw, err, http.StatusBadRequest)
