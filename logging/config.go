@@ -259,12 +259,12 @@ func validatePaths(paths []string) []string {
 	return validatedPaths
 }
 
-func willOutputToStderr(paths []string) bool {
+func willOutputToStderrOrStdout(paths []string) bool {
 	if len(paths) == 0 {
 		return true
 	}
 	for _, p := range paths {
-		if p == stderr {
+		if p == stderr || p == stdout {
 			return true
 		}
 	}

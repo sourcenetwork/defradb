@@ -150,7 +150,7 @@ func (l *logger) ApplyConfig(config Config) {
 	_ = l.logger.Sync()
 	l.logger = newLogger
 
-	if !willOutputToStderr(config.OutputPaths) {
+	if !willOutputToStderrOrStdout(config.OutputPaths) {
 		if config.pipe != nil { // for testing purposes only
 			l.consoleLogger = stdlog.New(config.pipe, "", 0)
 		} else {
@@ -209,7 +209,7 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	if willOutputToStderr(defaultConfig.OutputPaths) && config.pipe != nil {
+	if willOutputToStderrOrStdout(defaultConfig.OutputPaths) && config.pipe != nil {
 		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
 			cfg := zap.NewProductionEncoderConfig()
 			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator
