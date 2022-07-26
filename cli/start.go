@@ -21,6 +21,7 @@ import (
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	netapi "github.com/sourcenetwork/defradb/net/api"
@@ -45,6 +46,32 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a DefraDB node",
 	Long:  "Start a new instance of DefraDB node.",
+	// Load the root config if it exists, otherwise create it.
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		rootDir, exists, err := config.GetRootDir(rootDirParam)
+		if err != nil {
+			return fmt.Errorf("failed to get root dir: %w", err)
+		}
+		if !exists {
+			err = config.CreateRootDirWithDefaultConfig(rootDir)
+			if err != nil {
+				return fmt.Errorf("failed to create root dir: %w", err)
+			}
+		}
+		err = cfg.Load(rootDir)
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		// parse loglevel overrides
+		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
+		// binding the flags / EnvVars to the struct
+		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
+			return err
+		}
+		log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 		log.Info(ctx, "Starting DefraDB service...")
