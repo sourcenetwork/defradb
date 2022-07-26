@@ -64,8 +64,6 @@ var startCmd = &cobra.Command{
 		}
 
 		// parse loglevel overrides
-		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
-		// binding the flags / EnvVars to the struct
 		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
 			return err
 		}
