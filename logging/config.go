@@ -33,6 +33,7 @@ func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 
 const (
 	stderr = "stderr"
+	stdout = "stdout"
 
 	JSON EncoderFormat = iota
 	CSV
@@ -238,12 +239,12 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 func validatePaths(paths []string) []string {
 	validatedPaths := make([]string, 0, len(paths))
 	for _, p := range paths {
-		if p == stderr {
+		if p == stderr || p == stdout {
 			validatedPaths = append(validatedPaths, p)
 			continue
 		}
 
-		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0666); err != nil {
+		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0644); err != nil {
 			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
 		} else {
 			err := f.Close()
@@ -258,12 +259,12 @@ func validatePaths(paths []string) []string {
 	return validatedPaths
 }
 
-func willOutputToStderr(paths []string) bool {
+func willOutputToStderrOrStdout(paths []string) bool {
 	if len(paths) == 0 {
 		return true
 	}
 	for _, p := range paths {
-		if p == stderr {
+		if p == stderr || p == stdout {
 			return true
 		}
 	}
