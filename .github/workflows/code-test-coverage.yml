@@ -19,14 +19,14 @@ jobs:
           check-latest: true
 
       - name: Generate full test coverage report using go-acc
-        run: make test:coverage-full
+        run: make test:coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          files: ./coverage-full.txt
+          files: ./coverage.txt
           flags: defra-tests
           name: codecov-umbrella
           verbose: true
