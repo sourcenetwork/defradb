@@ -47,11 +47,6 @@ start:
 	@$(MAKE) build
 	./build/defradb start
 
-.PHONY: dev\:start
-dev\:start:
-	@$(MAKE) build
-	DEFRA_ENV=dev ./build/defradb start
-
 .PHONY: client\:dump
 client\:dump:
 	./build/defradb client dump
@@ -84,14 +79,19 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
-.PHONY: deps\:ci
-deps\:ci:
-	curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=${HOME}/bin bash
-
 .PHONY: deps
 deps:
-	@$(MAKE) deps:lint && $(MAKE) deps:coverage && $(MAKE) deps:bench && $(MAKE) deps:chglog && \
-	$(MAKE) deps:modules && $(MAKE) deps:ci && $(MAKE) deps:test
+	@$(MAKE) deps:modules && \
+	$(MAKE) deps:bench && \
+	$(MAKE) deps:chglog && \
+	$(MAKE) deps:coverage && \
+	$(MAKE) deps:lint && \
+	$(MAKE) deps:test
+
+.PHONY: dev\:start
+dev\:start:
+	@$(MAKE) build
+	DEFRA_ENV=dev ./build/defradb start
 
 .PHONY: tidy
 tidy:
@@ -114,9 +114,13 @@ test:
 test\:go:
 	go test ./... -race -shuffle=on
 
+.PHONY: test\:names
+test\:names:
+	gotestsum --format testname -- ./... -race -shuffle=on
+
 .PHONY: test\:verbose
 test\:verbose:
-	gotestsum --format testname --junitfile /tmp/defradb-dev/test.xml -- ./... -race -shuffle=on
+	gotestsum --format standard-verbose -- ./... -race -shuffle=on
 
 .PHONY: test\:watch
 test\:watch:
@@ -160,7 +164,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum --junitfile /tmp/defradb-dev/changes.xml -- ./... -shuffle=on -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:
