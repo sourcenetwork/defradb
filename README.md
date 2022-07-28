@@ -22,62 +22,65 @@ git clone git@github.com:sourcenetwork/defradb.git
 make install
 ```
 
-It is recommended to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download it](https://www.electronjs.org/apps/graphiql).
+We assume here that the binary is on your `PATH`, usually by installing via the Go toolchain and having the binary folder of the `GOPATH` on `PATH`. That is: `export PATH=$PATH:$(go env GOPATH)/bin`.
+
+We recommend to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://www.electronjs.org/apps/graphiql).
 
 
 ## Start
 
-`defradb start` spins up a node. Keep it running to perform the following examples.
+Start a node by executing `defradb start`. Keep the node running going through the following examples.
 
-Verify you are properly connected to the node using `defradb client ping`.
+Verify connection to the node works using `defradb client ping`.
 
-By default, `~/.defradb/` is the configuration and data directory, and a GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql.
 
-Connect a GraphQL client (e.g. GraphiQL) to the endpoint to conveniently obtain introspection and perform requests (`query`, `mutation`).
+## Configuration
+
+In the examples, we use a default configuration. This allows the `client` command to interact with the locally running node.  
+
+`~/.defradb/` is the default location for DefraDB's configuration and data directory.
+
+By default, the GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql. It can be used with a GraphQL client (e.g. GraphiQL)  to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
 
 ## Add a schema type
 
 Schemas are used to structure documents using a type system.
 
-In the following examples we'll be using the following `user` schema type. Write it to the `users.gql` local file in GraphQL SDL format:
-```gql
-type user {
-	name: String 
-	age: Int 
-	verified: Boolean 
-	points: Float
-}
-```
+In the following examples we'll be using a simple `User` schema type.
 
-Then add it to the database:
+Add it to the database:
 ```shell
-defradb client schema add -f users.gql
+defradb client schema add '
+  type User {
+    name: String 
+    age: Int 
+    verified: Boolean 
+    points: Float
+  }
+'
 ```
 
-Adding a schema will generate the typed GraphQL endpoints for querying and mutation.
+By adding a schema, DefraDB generates the typed GraphQL endpoints for querying, mutation, introspection.
 
 Find more examples of schema type definitions in the [examples/schema/](examples/schema/) folder.
 
 
 ## Create a document instance
 
-To create an instance of a user type, submit the following request:
-```gql
-mutation {
-    create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
-        _key
-    }
-}
-```
-
-Submit a request via a GraphQL client, or using:
-
+Submit a mutation request to create an instance of the `User` type:
 ```shell
-defradb client query 'insert query here'
+defradb client query '
+  mutation {
+      create_User(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+          _key
+      }
+  }
+'
 ```
 
-It will respond:
+
+Expected response:
 ```json
 {
   "data": [
@@ -88,35 +91,39 @@ It will respond:
 }
 ```
 
-The "_key" field is a unique identifier added to each and every document in a DefraDB node. It uses a combination of [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier) and [CIDs](https://docs.ipfs.io/concepts/content-addressing/).
+The document key, `_key`, is a unique identifier added to each document in a DefraDB node. It is generated with a combination of [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier) and [CIDs](https://docs.ipfs.io/concepts/content-addressing/).
 
 
 ## Query documents
 
-Once we have populated our local node with data, we can query that data. 
-```gql
-query {
-  user {
-    _key
-    age
-    name
-    points
+Once we have populated our local node with data, we can query that data:
+```shell
+defradb client query '
+  query {
+    User {
+      _key
+      age
+      name
+      points
+    }
   }
-}
+'
 ```
 
-This query obtains *all* users, and return the fields `_key, age, name, points`. GraphQL queries only ever return the exact fields you request, there's no `*` selector like with SQL.
+The query obtains *all* users and returns their fields `_key, age, name, points`. GraphQL queries only ever return the exact fields you request, there's no `*` selector like with SQL.
 
 We can further filter our results by adding a `filter` argument to the query.
-```gql
-query {
-  user(filter: {points: {_ge: 50}}) {
-    _key
-    age
-    name
-    points
+```shell
+defradb client query '
+  query {
+    User(filter: {points: {_ge: 50}}) {
+      _key
+      age
+      name
+      points
+    }
   }
-}
+'
 ```
 
 This will return only user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
@@ -124,21 +131,23 @@ This will return only user documents which have a value for the `points` field *
 
 ## Obtain document commits
 
-Internally, data is handled by MerkleCRDTs, which convert all mutations and updates a document has into a graph of changes; similar to Git. The graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all nodes are content-identifiable with, and each node references its parents CIDs.
+Internally, data is handled by MerkleCRDTs, which convert all mutations and updates a document has into a graph of changes; similar to Git. The graph is a [MerkleDAG](https://docs.ipfs.io/concepts/merkle-dag/), which means all graph nodes are content-identifiable, and each graph node references its parents' content identifiers (CIDs).
 
-To get the most recent commit in the MerkleDAG for a document with a DocKey of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`, submit:
-```gql
-query {
-  latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
-    cid
-    delta
-    height
-    links {
+To get the most recent commit in the MerkleDAG for a document with a document key of `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`:
+```shell
+defradb client query '
+  query {
+    latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
-      name
+      delta
+      height
+      links {
+        cid
+        name
+      }
     }
   }
-}
+'
 ```
 
 It returns a structure similar to the following, which contains the update payload that caused this new commit (delta), and any subgraph commits it references.
@@ -172,41 +181,43 @@ It returns a structure similar to the following, which contains the update paylo
 }
 ```
 
-Obtain a specific commit by its CID:
+Obtain a specific commit by its content identifier (CID):
 ```gql
-query {
-  commit(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
-    cid
-    delta
-    height
-    links {
+defradb client query '
+  query {
+    commit(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
       cid
-      name
+      delta
+      height
+      links {
+        cid
+        name
+      }
     }
   }
-}
+'
 ```
 
-Here, you can see we use the CID from the previous query to further explore the related nodes in the MerkleDAG.
+Here, you can see the CID from the previous query being used to further explore the related nodes in the MerkleDAG.
 
 
 ## Query language documentation
 
 Read the full DefraDB Query Language documentation on [docs.source.network](https://docs.source.network/query-specification/query-language-overview).
 
-You will discover about filtering, ordering, limiting, relationships, variables, aggregate functions, and further useful features.
+Doing so, you will discover about filtering, ordering, limiting, relationships, variables, aggregate functions, and further useful features.
 
 
 ## Peer-to-peer data synchronization
-DefraDB uses P2P networking for nodes to exchange, synchronize, and replicate documents and commits.
+DefraDB uses peer-to-peer networking for nodes to exchange, synchronize, and replicate documents and commits.
 
-When starting a node for the first time, a key pair is generated and stored it in its "root folder" (commonly `~/.defradb/`).
+When starting a node for the first time, a key pair is generated and stored in its "root directory" (commonly `~/.defradb/`).
 
-Each node has a unique `Peer ID` generated based on the public key, which is printed to the console during startup. This ID allows other nodes to connect to it.
+Each node has a unique `Peer ID` generated from its public key. This ID allows other nodes to connect to it.
 
 There are two types of peer-to-be relationships nodes support: **pubsub** peering and **replicator** peering.
 
-Pubsub peering *passively* synchronizes data between nodes by broadcasting Document Commit updates with the document `DocKey` as the topic. Nodes need to already be listening on the pubsub channel to receive updates. This is for when two nodes *already* have a shared document and want to keep both their changes in sync with one another.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting Document Commit updates with the document key (`DocKey`) as the topic. Nodes need to already be listening on the pubsub channel to receive updates. This is for when two nodes *already* have a shared document and want to keep both their changes in sync with one another.
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
@@ -254,41 +265,36 @@ defradb start
 In another terminal, add this example schema to it:
 ```shell
 defradb client schema add '
-  type user {
-    name: String 
-    age: Int 
-    verified: Boolean 
-    points: Float
+  type Article {
+    content: String
+    published: Boolean
   }
 '
 ```
 
-
-Start *nodeB*, that will be receiving updates.
+Start *nodeB*, that will be receiving updates:
 ```shell
 defradb start --rootdir ~/.defradb-nodeB --url localhost:9182 --p2paddr /ip4/0.0.0.0/tcp/9172 --tcpaddr /ip4/0.0.0.0/tcp/9162
 ```
 
 Notice how we *do not* specify `--peers` as we will manually define a replicator after startup via the `rpc` client command.
 
-In another terminal, add the example schema to *nodeB*, then set *nodeB* as target replicator peer:
+In another terminal, add the same schema to *nodeB*:
 ```shell
 defradb client schema add --url localhost:9182 '
-  type user {
-    name: String 
-    age: Int 
-    verified: Boolean 
-    points: Float
+  type Article {
+    content: String
+    published: Boolean
   }
 '
 ```
 
-Set *nodeA* to actively replicate the "user" collection to *nodeB*:
+Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
 ```shell
-defradb client rpc addreplicator "user" /p2p/<peerID_of_nodeB>
+defradb client rpc addreplicator "Article" /p2p/<peerID_of_nodeB>
 ```
 
-As we add or update documents in the "user" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
+As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
 
 
 ## Licensing
