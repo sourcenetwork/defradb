@@ -1,9 +1,11 @@
-name: Code Test Coverage
+name: Code Test Coverage Workflow
 
 on: [push]
 
 jobs:
   code-test-coverage:
+    name: Code test coverage job
+
     runs-on: ubuntu-latest
 
     steps:
