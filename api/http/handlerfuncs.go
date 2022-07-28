@@ -12,6 +12,7 @@ package http
 
 import (
 	"io"
+	"mime"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -73,7 +74,18 @@ type gqlRequest struct {
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query().Get("query")
 	if query == "" {
-		switch req.Header.Get("Content-Type") {
+		// extract the media type from the content-type header
+		contentType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
+		// mime.ParseMediaType will return an error (mime: no media type)
+		// if there is no media type set (i.e. application/json).
+		// This however is not a failing condition as not setting the content-type header
+		// should still make for a valid request and hit our default switch case.
+		if err != nil && err.Error() != "mime: no media type" {
+			handleErr(req.Context(), rw, err, http.StatusBadRequest)
+			return
+		}
+
+		switch contentType {
 		case contentTypeJSON:
 			gqlReq := gqlRequest{}
 

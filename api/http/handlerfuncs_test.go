@@ -206,6 +206,34 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	assert.Equal(t, "error reading", errResponse.Errors[0].Message)
 }
 
+func TestExecGQLWithInvalidContentType(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
+	errResponse := errorResponse{}
+	stmt := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
+
+	buf := bytes.NewBuffer([]byte(stmt))
+	testRequest(testOptions{
+		Testing:        t,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf,
+		ExpectedStatus: 400,
+		Headers:        map[string]string{"Content-Type": contentTypeJSON + "; this-is-wrong"},
+		ResponseData:   &errResponse,
+	})
+
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "mime: invalid media parameter")
+	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "mime: invalid media parameter", errResponse.Errors[0].Message)
+}
+
 func TestExecGQLWithNoDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
@@ -306,6 +334,49 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 		Path:           GraphQLPath,
 		Body:           buf,
 		Headers:        map[string]string{"Content-Type": contentTypeJSON},
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+	})
+
+	assert.Contains(t, users[0].Key, "bae-")
+}
+
+func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
+	ctx := context.Background()
+	defra := testNewInMemoryDB(t, ctx)
+
+	// load schema
+	testLoadSchema(t, ctx, defra)
+
+	// add document
+	stmt := `
+{
+	"query": "mutation {
+		create_user(
+			data: \"{
+				\\\"age\\\": 31,
+				\\\"verified\\\": true,
+				\\\"points\\\": 90,
+				\\\"name\\\": \\\"Bob\\\"
+			}\"
+		) {_key}
+	}"
+}`
+	// remote line returns and tabulation from formatted statement
+	stmt = strings.ReplaceAll(strings.ReplaceAll(stmt, "\t", ""), "\n", "")
+
+	buf := bytes.NewBuffer([]byte(stmt))
+	users := []testUser{}
+	resp := dataResponse{
+		Data: &users,
+	}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf,
+		Headers:        map[string]string{"Content-Type": contentTypeJSON + "; charset=utf8"},
 		ExpectedStatus: 200,
 		ResponseData:   &resp,
 	})
