@@ -17,15 +17,31 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/bxcodec/faker"
+	"github.com/cip8/autoname"
 )
 
 var (
+	// A map of names => schema groups.
+	//
+	// The order of types is *very* important, as it
+	// needs to follow the dependancy order of related types.
+	// Since they will be inserted in order.
 	registeredFixtures = map[string][]interface{}{
-		"user_simple": {User{}},
+		"user_simple":           {User{}},
+		"book_publisher_author": {Book{}, Author{}, Publisher{}},
 	}
 )
+
+func init() {
+	faker.AddProvider("title", titleGenerator)
+}
+
+func titleGenerator(v reflect.Value) (interface{}, error) {
+	return strings.Title(autoname.Generate(" ")), nil
+}
 
 type Generator struct {
 	ctx context.Context
@@ -61,7 +77,9 @@ func (g Generator) TypeName(index int) string {
 // GenerateFixtureDocs uses the faker fixture system to
 // randomly generate a new set of documents matching the defined
 // struct types within the context.
-func (g Generator) GenerateDocs() ([]string, error) {
+//
+// withRelated is an optional bool that will
+func (g Generator) GenerateDocs(withRelated ...bool) ([]string, error) {
 	results := make([]string, len(g.types))
 	for i, t := range g.types {
 		val := reflect.New(reflect.TypeOf(t)).Interface()
@@ -80,6 +98,10 @@ func (g Generator) GenerateDocs() ([]string, error) {
 	}
 
 	return results, nil
+}
+
+func generateDoc(doc interface{}) error {
+	return nil
 }
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
@@ -108,4 +130,8 @@ func ExtractGQLFromType(t interface{}) (string, error) {
 	fmt.Fprint(&buf, "}")
 
 	return buf.String(), nil
+}
+
+func getGQLType(typ string) string {
+	return gTypeToGQLType[typ]
 }

@@ -26,3 +26,59 @@ type User struct {
 	Points   float32 `faker:"amount"`
 	Verified bool
 }
+
+// #2
+type Book struct {
+	Name        string     `faker:"title"`
+	Rating      float32    `faker:"amount"`
+	Author      *Author    `fixture:"one-to-one"`
+	Publisher   *Publisher `fixture:"one-to-many"`
+	PublisherId string
+}
+
+// #3
+type Author struct {
+	Name     string `faker:"name"`
+	Age      int
+	Verified bool
+	Wrote    *Book `fixture:"one-to-one,primary,0.8"`
+	WorteId  string
+}
+
+// #1
+type Publisher struct {
+	Name                 string `faker:"title"`
+	PhoneNumber          string `faker:"phone_number"`
+	FavouritePageNumbers []int
+
+	// Fixture Data:
+	// Rate: 50%
+	// Min:1
+	// Max:10
+	Published []*Book `fixture:"one-to-many,0.5,1,10"`
+}
+
+/*
+
+type book {
+    name: String
+    rating: Float
+    author: author
+    publisher: publisher
+}
+
+type author {
+    name: String
+    age: Int
+    verified: Boolean
+    wrote: book @primary
+}
+
+type publisher {
+    name: String
+    address: String
+    favouritePageNumbers: [Int!]
+    published: [book]
+}
+
+*/
