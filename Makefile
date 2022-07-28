@@ -134,30 +134,29 @@ test\:bench:
 test\:bench-short:
 	@$(MAKE) -C ./tests/bench/ bench:short
 
-# This also takes integration tests into account.
-.PHONY: test\:coverage-full
-test\:coverage-full:
+# Using go-acc to ensure integration tests are included.
+# Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
+# Example: `make test:coverage path="./api/..."`
+.PHONY: test\:coverage
+test\:coverage:
 	@$(MAKE) deps:coverage
-	go-acc ./... --output=coverage-full.txt --covermode=atomic
-	go tool cover -func coverage-full.txt | grep total | awk '{print $$3}'
-
-# Usage: make test:coverage-html path="{pathToPackage}"
-# Example: make test:coverage-html path="./api/..."
-# .PHONY: test\:coverage-html
-test\:coverage-html:
 ifeq ($(path),)
-	gotestsum -- ./... -v -race -shuffle=on -coverprofile=coverage.out
-else 
-	gotestsum -- $(path) -v -race -shuffle=on -coverprofile=coverage.out
+	go-acc ./... --output=coverage.txt --covermode=atomic -- -coverpkg=./...
+	@echo "Show coverage information for each function in ./..."
+else
+	go-acc $(path) --output=coverage.txt --covermode=atomic -- -coverpkg=$(path)
+	@echo "Show coverage information for each function in" path=$(path)
 endif
-	go tool cover -html=coverage.out
-	rm ./coverage.out
+	go tool cover -func coverage.txt | grep total | awk '{print $$3}'
 
-# This only covers how much of the package is tested by itself (unit test).
-.PHONY: test\:coverage-quick
-test\:coverage-quick:
-	gotestsum -- ./... -race -shuffle=on -coverprofile=coverage-quick.txt -covermode=atomic
-	go tool cover -func coverage-quick.txt | grep total | awk '{print $$3}'
+# Usage: `make test:coverage-html` or `make test:coverage-html path="{pathToPackage}"`
+# Example: `make test:coverage-html path="./api/..."`
+.PHONY: test\:coverage-html
+test\:coverage-html:
+	@$(MAKE) test:coverage path=$(path)
+	@echo "Generate coverage information in HTML"
+	go tool cover -html=coverage.txt
+	rm ./coverage.txt
 
 .PHONY: test\:changes
 test\:changes:

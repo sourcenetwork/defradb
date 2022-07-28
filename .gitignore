@@ -1,11 +1,8 @@
-build/*
-cover.out
-coverage-full.txt
-coverage-quick.txt
-tests/bench/*.log
-tests/bench/*.svg
 .vscode
-coverage.out
+build/*
 cmd/defradb/defradb
 cmd/genclidocs/genclidocs
 cmd/genmanpages/genmanpages
+coverage.txt
+tests/bench/*.log
+tests/bench/*.svg
