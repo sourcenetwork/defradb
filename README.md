@@ -4,7 +4,7 @@
 <img height="120px" src="docs/DefraDB_Full-v2-cropped.png">
 </p>
 
-DefraDB is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called DQL. Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It is built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
+DefraDB is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called [DQL](https://docs.source.network/query-specification/query-language-overview). Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It is built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
 
 Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9tj62bewenu) and documentation on [docs.source.network](https://docs.source.network/).
 
@@ -19,10 +19,11 @@ DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for
 Install `defradb` by [downloading an executable binary](https://github.com/sourcenetwork/defradb/releases), or building it locally using the [Go toolchain](https://golang.org/):
 ```sh
 git clone git@github.com:sourcenetwork/defradb.git
+cd ./defradb
 make install
 ```
 
-We assume here that the binary is on your `PATH`, usually by installing via the Go toolchain and having the binary folder of the `GOPATH` on `PATH`. That is: `export PATH=$PATH:$(go env GOPATH)/bin`.
+We assume here that `defradb` is included in your `PATH`, by installing using the Go toolchain and having Go's executables included in `PATH`. That is: `export PATH=$PATH:$(go env GOPATH)/bin`.
 
 We recommend to play around with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://www.electronjs.org/apps/graphiql).
 
@@ -31,7 +32,7 @@ We recommend to play around with queries using a native GraphQL client. GraphiQL
 
 Start a node by executing `defradb start`. Keep the node running going through the following examples.
 
-Verify connection to the node works using `defradb client ping`.
+Verify connection to the node works, by executing `defradb client ping` in another terminal.
 
 
 ## Configuration
