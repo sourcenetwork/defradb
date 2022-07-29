@@ -53,11 +53,13 @@ Verify connection to the node works, by executing `defradb client ping` in anoth
 
 ## Configuration
 
-In the examples, we use a default configuration. This allows the `client` command to interact with the locally running node.  
+In this document, we use the default configuration, which has the following behavior:
 
-`~/.defradb/` is the default location for DefraDB's configuration and data directory.
+- `~/.defradb/` is DefraDB's configuration and data directory
+- `client` command interacts with the locally running node
+- the GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
 
-By default, the GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql. It can be used with a GraphQL client (e.g. GraphiQL)  to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
+The GraphQL endpoint can be used with a GraphQL client (e.g. GraphiQL) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
 
 ## Add a schema type
