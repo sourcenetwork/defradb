@@ -362,11 +362,6 @@ func defaultLogConfig() *LoggingConfig {
 }
 
 func (logcfg *LoggingConfig) validate() error {
-	switch logcfg.Level {
-	case logLevelDebug, logLevelInfo, logLevelError, logLevelFatal:
-	default:
-		return fmt.Errorf("invalid log level: %s", logcfg.Level)
-	}
 	return nil
 }
 
