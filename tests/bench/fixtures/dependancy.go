@@ -6,12 +6,6 @@ import (
 	"strings"
 )
 
-const (
-	oneToOne   = "one-to-one"
-	oneToMany  = "one-to-many"
-	fixtureTag = "fixture"
-)
-
 // return dependants of a type
 //
 // one-to-one: A->B | A (primary) depends on B (secondary)
@@ -21,6 +15,7 @@ func dependants(val reflect.Type) ([]string, error) {
 
 	for i := 0; i < val.NumField(); i++ {
 		f := val.Field(i)
+		fmt.Printf("%s field %s => %s\n", val.Name(), f.Name, f.Type.Name())
 		if !isRelationDependantField(f) {
 			continue
 		}
@@ -34,7 +29,7 @@ func dependants(val reflect.Type) ([]string, error) {
 
 		tags := strings.Split(tag, ",")
 		switch tags[0] {
-		case oneToOne:
+		case string(oneToOne):
 			// the second entry in the tags comma seperated list
 			// has to be primary or empty
 			if len(tags) < 2 || tags[1] != "primary" {
@@ -45,7 +40,7 @@ func dependants(val reflect.Type) ([]string, error) {
 
 			// primary, dependancy
 			deps = append(deps, f.Type.Elem().Name())
-		case oneToMany:
+		case string(oneToMany):
 			deps = append(deps, f.Type.Elem().Name())
 
 		default:
@@ -75,4 +70,13 @@ func isRelationDependantField(field reflect.StructField) bool {
 			return false
 		}
 	}
+}
+
+func isStructPointer(t reflect.Type) bool {
+	return (t.Kind() == reflect.Pointer &&
+		t.Elem().Kind() == reflect.Struct)
+}
+
+func isSliceStructPointer(t reflect.Type) bool {
+	return (t.Kind() == reflect.Slice && isStructPointer(t.Elem()))
 }

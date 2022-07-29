@@ -17,10 +17,21 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/bxcodec/faker"
 	"github.com/cip8/autoname"
+)
+
+type ID string
+
+type relation string
+
+const (
+	oneToOne   = relation("one-to-one")
+	oneToMany  = relation("one-to-many")
+	fixtureTag = "fixture"
 )
 
 var (
@@ -124,7 +135,56 @@ func ExtractGQLFromType(t interface{}) (string, error) {
 		f := tt.Field(i)
 		fname := f.Name
 		ftype := f.Type.Name()
-		gqlType := gTypeToGQLType[ftype]
+		// process scalars, objects, slices of objects,
+		// skip foreignKey (ID) fields
+		var gqlType string
+		if ftype == "ID" {
+			continue
+		} else if isStructPointer(f.Type) {
+			// object
+			gqlType = f.Type.Elem().Name()
+			// check tag
+			ft, err := getFixtureTag(f)
+			if err != nil {
+				return "", fmt.Errorf("bad fixture tag for %s: %w", fname, err)
+			}
+
+			if ft.rel == oneToOne {
+				// explicitly seperate from the above if condition
+				// so as to not trigger the else case if its not
+				// a primary one-to-one
+				if ft.isPrimary {
+					gqlType = gqlType + " @primary"
+				}
+			} else if ft.rel == oneToMany {
+				// one side of one-to-many
+				// noop - seperated to cleanly handle the else case
+				// without this branch
+			} else {
+				// err
+				return "", fmt.Errorf("invalid relation type for object")
+			}
+		} else if isSliceStructPointer(f.Type) {
+			// object slice
+			fmt.Print("IS STRUCT POINTER:", f)
+			gqlType = fmt.Sprintf("[%s]", f.Type.Elem().Elem().Name())
+			// check tag
+			ft, err := getFixtureTag(f)
+			if err != nil {
+				return "", fmt.Errorf("bad fixture tag for %s: %w", fname, err)
+			}
+
+			if ft.rel != oneToMany {
+				return "", fmt.Errorf("slice of objects must be a one-to-many relationship")
+			}
+		} else if f.Type.Kind() == reflect.Slice {
+			// scalar slice
+			gqlType = gTypeToGQLType[f.Type.Elem().Name()]
+			gqlType = fmt.Sprintf("[%s]", gqlType)
+		} else {
+			// scalar
+			gqlType = gTypeToGQLType[ftype]
+		}
 		fmt.Fprintf(&buf, "\t%s: %s\n", fname, gqlType)
 	}
 	fmt.Fprint(&buf, "}")
@@ -132,6 +192,90 @@ func ExtractGQLFromType(t interface{}) (string, error) {
 	return buf.String(), nil
 }
 
-func getGQLType(typ string) string {
-	return gTypeToGQLType[typ]
+// func getGQLType(typ string) string {
+// 	return gTypeToGQLType[typ]
+// }
+
+func getFixtureTag(f reflect.StructField) (tag, error) {
+	fixtureTagStr := f.Tag.Get(fixtureTag)
+	if fixtureTagStr == "" {
+		return tag{}, fmt.Errorf("missing fixture tag")
+	}
+
+	return parseTag(fixtureTagStr)
+}
+
+// Fixture Tag
+//
+// format: fixture:"<relation>[,primary],<fill_rate>[,min_objects][,max-objects]"
+// < _ > indicates required
+// [ _ ] indicates optional (depending on relation)
+type tag struct {
+	rel        relation
+	isPrimary  bool
+	fillRate   float64
+	minObjects int64
+	maxObjects int64
+}
+
+func parseTag(t string) (tag, error) {
+	if t == "" {
+		return tag{}, fmt.Errorf("empty fixture tag")
+	}
+
+	tg := tag{}
+	parts := strings.Split(t, ",")
+	remainderIndex := 1
+	switch parts[0] {
+	case string(oneToOne):
+		tg.rel = oneToOne
+		// check for primary
+		if len(parts) > 1 && parts[1] == "primary" {
+			tg.isPrimary = true
+			remainderIndex = 2
+			// required to have fill rate (remainderIndex + 3)
+			if len(parts) < remainderIndex+1 {
+				return tag{}, fmt.Errorf("missing required fixture args")
+			}
+		}
+
+	case string(oneToMany):
+		tg.rel = oneToMany
+	default:
+		return tag{}, fmt.Errorf("invalid relation for fixture tag: %s", parts[0])
+	}
+
+	// parse remaining values
+	// fillrate, minObjects, maxObjects
+	i := 0
+	var err error
+	for j, v := range parts[remainderIndex:] {
+		switch i {
+		case 0: //fill
+			tg.fillRate, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				return tag{}, fmt.Errorf("invalid fill rate %s: %w", v, err)
+			}
+
+			// fill rate between 0-1.0
+			if tg.fillRate > 1.0 || 0 > tg.fillRate {
+				return tag{}, fmt.Errorf("invalid fill rate, outside 0-1.0 range: %v", tg.fillRate)
+			}
+		case 1: //min
+			tg.minObjects, err = strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return tag{}, fmt.Errorf("invalid minObject value %s: %w", v, err)
+			}
+		case 2: //max
+			tg.maxObjects, err = strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return tag{}, fmt.Errorf("invalid maxObject value %s: %w", v, err)
+			}
+		default:
+			return tag{}, fmt.Errorf("unknown tag parameter %s at index %v", v, j)
+		}
+		i++
+	}
+
+	return tg, nil
 }

@@ -8,13 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type tUser struct {
+	Name     string `faker:"name"`
+	Age      int
+	Points   float32 `faker:"amount"`
+	Verified bool
+}
+
 // #2
 type tBook struct {
 	Name        string      `faker:"title"`
 	Rating      float32     `faker:"amount"`
 	Author      *tAuthor    `fixture:"one-to-one"`
 	Publisher   *tPublisher `fixture:"one-to-many"`
-	PublisherId string
+	PublisherId ID
 }
 
 // #3
@@ -23,7 +30,7 @@ type tAuthor struct {
 	Age      int
 	Verified bool
 	Wrote    *tBook `fixture:"one-to-one,primary,0.8"`
-	WorteId  string
+	WorteId  ID
 }
 
 // #1
@@ -36,7 +43,7 @@ type tPublisher struct {
 	// Rate: 50%
 	// Min:1
 	// Max:10
-	Published []*Book `fixture:"one-to-many,0.5,1,10"`
+	Published []*tBook `fixture:"one-to-many,0.5,1,10"`
 }
 
 func TestDependantsOneToOneSecondaryWithOneToManyPrimary(t *testing.T) {

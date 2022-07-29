@@ -17,6 +17,7 @@ var (
 		"float64": "Float",
 		"float32": "Float",
 		"bool":    "Boolean",
+		"ID":      "ID",
 	}
 )
 
@@ -31,9 +32,9 @@ type User struct {
 type Book struct {
 	Name        string     `faker:"title"`
 	Rating      float32    `faker:"amount"`
-	Author      *Author    `fixture:"one-to-one"`
-	Publisher   *Publisher `fixture:"one-to-many"`
-	PublisherId string
+	Author      *Author    `fixture:"one-to-one" faker:"-"`
+	Publisher   *Publisher `fixture:"one-to-many" faker:"-"`
+	PublisherId ID         `faker:"-"`
 }
 
 // #3
@@ -41,8 +42,8 @@ type Author struct {
 	Name     string `faker:"name"`
 	Age      int
 	Verified bool
-	Wrote    *Book `fixture:"one-to-one,primary,0.8"`
-	WorteId  string
+	Wrote    *Book `fixture:"one-to-one,primary,0.8" faker:"-"`
+	WorteId  ID
 }
 
 // #1
@@ -55,7 +56,7 @@ type Publisher struct {
 	// Rate: 50%
 	// Min:1
 	// Max:10
-	Published []*Book `fixture:"one-to-many,0.5,1,10"`
+	Published []*Book `fixture:"one-to-many,0.5,1,10" faker:"-"`
 }
 
 /*
