@@ -52,7 +52,8 @@ func TestCLILogsToStderrGivenNamedLogLevel(t *testing.T) {
 			log1.Error(ctx, "error")
 			log1.Debug(ctx, "debug")
 			log2.Info(ctx, "info")
-			log3.Debug(ctx, "info") // wont print, as logger3 will use global level defined above as 'error'
+			log3.Debug(ctx, "debug") // wont print, as logger3 will use global level defined above as 'error'
+			log3.Info(ctx, "info")   // wont print, as logger3 will use global level defined above as 'error'
 		},
 	)
 
