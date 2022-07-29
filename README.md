@@ -9,6 +9,22 @@ DefraDB is a peer-to-peer edge document database redefining promises of data own
 Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9tj62bewenu) and documentation on [docs.source.network](https://docs.source.network/).
 
 
+## Table of Contents
+
+* [Early Access](#early-access)
+* [Install](#install)
+* [Start](#start)
+* [Configuration](#configuration)
+* [Add a schema type](#add-a-schema-type)
+* [Create a document instance](#create-a-document-instance)
+* [Query documents](#query-documents)
+* [Obtain document commits](#obtain-document-commits)
+* [Query language documentation](#query-language-documentation)
+* [Peer\-to\-peer data synchronization](#peer-to-peer-data-synchronization)
+* [Licensing](#licensing)
+* [Contributors](#contributors)
+
+
 ## Early Access
 
 DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for production deployments. Please email the [Source](https://source.network/) team at [hello@source.network](mailto:hello@source.network) for support with your use-case and deployment.
