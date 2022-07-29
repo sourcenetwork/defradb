@@ -15,7 +15,6 @@ func dependants(val reflect.Type) ([]string, error) {
 
 	for i := 0; i < val.NumField(); i++ {
 		f := val.Field(i)
-		fmt.Printf("%s field %s => %s\n", val.Name(), f.Name, f.Type.Name())
 		if !isRelationDependantField(f) {
 			continue
 		}

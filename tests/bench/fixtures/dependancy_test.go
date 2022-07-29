@@ -93,8 +93,12 @@ func TestDependantsGraph(t *testing.T) {
 	resolvedGraph, err := resolveGraph(basicGraph)
 	require.NoError(t, err)
 
+	fmt.Println("--- ORDER ---")
 	for _, n := range resolvedGraph {
 		fmt.Println(n.name)
 	}
+
+	fmt.Println("--- GRAPH ---")
+	displayGraph(resolvedGraph)
 
 }
