@@ -403,6 +403,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
 		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:           []string{logcfg.OutputPath},
+		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
 	}, nil
 }
