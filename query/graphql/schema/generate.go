@@ -445,7 +445,7 @@ func (g *Generator) buildTypesFromAST(
 							relType,
 						)
 						if err != nil {
-							log.ErrorE(ctx, "Error while registering single relation", err)
+							log.ErrorE(ctx, "Error while registering single relation for object", err)
 						}
 
 					case *gql.List:
@@ -464,7 +464,7 @@ func (g *Generator) buildTypesFromAST(
 								client.Relation_Type_MANY,
 							)
 							if err != nil {
-								log.ErrorE(ctx, "Error while registering single relation", err)
+								log.ErrorE(ctx, "Error while registering single relation for list", err)
 							}
 						}
 					}
