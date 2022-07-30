@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 Start a database node, query a local or remote node, and much more.
 
 DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
-See https://docs.source.network/BSLv0.2.txt for more information.
+See https://docs.source.network/BSL.txt for more information.
 `,
 	// Runs on subcommands before their Run function, to handle configuration and top-level flags.
 	// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
