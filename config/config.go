@@ -362,11 +362,6 @@ func defaultLogConfig() *LoggingConfig {
 }
 
 func (logcfg *LoggingConfig) validate() error {
-	switch logcfg.Level {
-	case logLevelDebug, logLevelInfo, logLevelError, logLevelFatal:
-	default:
-		return fmt.Errorf("invalid log level: %s", logcfg.Level)
-	}
 	return nil
 }
 
@@ -408,6 +403,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
 		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:           []string{logcfg.OutputPath},
+		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
 	}, nil
 }

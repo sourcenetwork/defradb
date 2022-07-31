@@ -80,7 +80,7 @@ func init() {
 		"loglevel", cfg.Log.Level,
 		"Log level to use. Options are debug, info, error, fatal",
 	)
-	err := viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("loglevel"))
+	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
 	}
@@ -94,7 +94,7 @@ func init() {
 		"logoutput", cfg.Log.OutputPath,
 		"Log output path",
 	)
-	err = viper.BindPFlag("logging.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
+	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.outputpath", err)
 	}
@@ -103,7 +103,7 @@ func init() {
 		"logformat", cfg.Log.Format,
 		"Log format to use. Options are csv, json",
 	)
-	err = viper.BindPFlag("logging.format", rootCmd.PersistentFlags().Lookup("logformat"))
+	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.format", err)
 	}
@@ -112,7 +112,7 @@ func init() {
 		"logtrace", cfg.Log.Stacktrace,
 		"Include stacktrace in error and fatal logs",
 	)
-	err = viper.BindPFlag("logging.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
+	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
 		log.FatalE(context.Background(), "Could not bind log.stacktrace", err)
 	}
