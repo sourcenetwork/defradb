@@ -150,8 +150,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	// for each built type
-	// 		generate query inputs
+	// for each built type generate query inputs
 	queryType := g.manager.schema.QueryType()
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
@@ -175,7 +174,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	for _, def := range generatedQueryFields {
 		switch obj := def.Type.(type) {
 		case *gql.List:
-			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
+			if err := g.expandInputArgument(ctx, obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
 		case *gql.Scalar:
@@ -216,7 +215,10 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	return defs, nil
 }
 
-func (g *Generator) expandInputArgument(obj *gql.Object) error {
+func (g *Generator) expandInputArgument(
+	ctx context.Context,
+	obj *gql.Object,
+) error {
 	fields := obj.Fields()
 	for f, def := range fields {
 		// ignore reserved fields, execpt the Group field (as that requires typing), and aggregates
@@ -236,7 +238,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			g.expandedFields[fieldKey] = true
 
 			// make sure all the sub fields are expanded first
-			if err := g.expandInputArgument(t); err != nil {
+			if err := g.expandInputArgument(ctx, t); err != nil {
 				return err
 			}
 
@@ -246,8 +248,6 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				return err
 			}
 
-			// obj.AddFieldConfig(f, expandedField)
-			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
 
 		case *gql.List: // new field object with arguments (list)
@@ -258,7 +258,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			g.expandedFields[fieldKey] = true
 
 			if listObjType, ok := listType.(*gql.Object); ok {
-				if err := g.expandInputArgument(listObjType); err != nil {
+				if err := g.expandInputArgument(ctx, listObjType); err != nil {
 					return err
 				}
 
@@ -270,7 +270,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			}
 		case *gql.Scalar:
 			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
-				g.createExpandedFieldAggregate(obj, def)
+				g.createExpandedFieldAggregate(ctx, obj, def)
 			}
 			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
@@ -282,6 +282,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 }
 
 func (g *Generator) createExpandedFieldAggregate(
+	ctx context.Context,
 	obj *gql.Object,
 	f *gql.FieldDefinition,
 ) {
@@ -291,19 +292,22 @@ func (g *Generator) createExpandedFieldAggregate(
 		if target == parserTypes.GroupFieldName {
 			filterTypeName = obj.Name() + "FilterArg"
 		} else {
-			filterType := obj.Fields()[target].Type
-			if list, isList := filterType.(*gql.List); isList && gql.IsLeafType(list.OfType) {
-				// If it is a list of leaf types - the filter is just the set of OperatorBlocks
-				// that are supported by this type - there can be no field selections.
-				if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
-					// GQL does not support '!' in type names, and so we have to manipulate the
-					// underlying name like this if it is a nullable type.
-					filterTypeName = fmt.Sprintf("NotNull%sOperatorBlock", notNull.OfType.Name())
+			if targeted := obj.Fields()[target]; targeted != nil {
+				if list, isList := targeted.Type.(*gql.List); isList && gql.IsLeafType(list.OfType) {
+					// If it is a list of leaf types - the filter is just the set of OperatorBlocks
+					// that are supported by this type - there can be no field selections.
+					if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
+						// GQL does not support '!' in type names, and so we have to manipulate the
+						// underlying name like this if it is a nullable type.
+						filterTypeName = fmt.Sprintf("NotNull%sOperatorBlock", notNull.OfType.Name())
+					} else {
+						filterTypeName = genTypeName(list.OfType, "OperatorBlock")
+					}
 				} else {
-					filterTypeName = genTypeName(list.OfType, "OperatorBlock")
+					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				filterTypeName = filterType.Name() + "FilterArg"
+				log.Error(ctx, "Target=["+target+"] not found in fields of "+obj.Name())
 			}
 		}
 
@@ -1192,13 +1196,18 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
 					continue
 				}
+				typeMap := g.manager.schema.TypeMap()
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()["Ordering"],
+						Type: typeMap["Ordering"],
 					}
 				} else { // sub objects
+					configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
+					if !isOrderable {
+						continue
+					}
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "OrderArg")],
+						Type: configType,
 					}
 				}
 			}
@@ -1229,7 +1238,7 @@ func (g *Generator) genTypeQueryableFieldList(
 	if err := g.manager.schema.AppendType(config.filter); err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to append runtime schema",
+			"Failed to append runtime schema with filter",
 			err,
 			logging.NewKV("SchemaItem", config.filter),
 		)
@@ -1238,7 +1247,7 @@ func (g *Generator) genTypeQueryableFieldList(
 	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to append runtime schema",
+			"Failed to append runtime schema with groupBy",
 			err,
 			logging.NewKV("SchemaItem", config.groupBy),
 		)
@@ -1247,7 +1256,7 @@ func (g *Generator) genTypeQueryableFieldList(
 	if err := g.manager.schema.AppendType(config.having); err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to append runtime schema",
+			"Failed to append runtime schema with having",
 			err,
 			logging.NewKV("SchemaItem", config.having),
 		)
@@ -1256,7 +1265,7 @@ func (g *Generator) genTypeQueryableFieldList(
 	if err := g.manager.schema.AppendType(config.order); err != nil {
 		log.ErrorE(
 			ctx,
-			"Failed to append runtime schema",
+			"Failed to append runtime schema with order",
 			err,
 			logging.NewKV("SchemaItem", config.order),
 		)
