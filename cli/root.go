@@ -87,7 +87,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringArray(
 		"logger", []string{},
-		"Named logger parameter override. Usage: --logger <name>,level=<level>,output=<output>,...",
+		"Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...",
 	)
 
 	rootCmd.PersistentFlags().String(
