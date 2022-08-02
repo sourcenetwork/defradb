@@ -59,7 +59,7 @@ func (n *hardLimitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *hardLimitNode) Next() (bool, error) {
 	// check if we're passed the limit
-	if n.rowIndex-n.offset >= n.limit {
+	if n.limit != 0 && n.rowIndex-n.offset >= n.limit {
 		return false, nil
 	}
 
@@ -139,7 +139,7 @@ func (n *renderLimitNode) Next() (bool, error) {
 	n.currentValue = n.plan.Value()
 
 	n.rowIndex++
-	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
+	if (n.limit != 0 && n.rowIndex-n.offset > n.limit) || n.rowIndex <= n.offset {
 		n.currentValue.Hidden = true
 	}
 	return true, nil

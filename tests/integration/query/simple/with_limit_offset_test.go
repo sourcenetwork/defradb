@@ -165,3 +165,86 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQuerySimpleWithOffset(t *testing.T) {
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "Simple query with basic offset",
+			Query: `query {
+						users(offset: 1) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					`{
+						"Name": "John",
+						"Age": 21
+					}`,
+					`{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+			},
+		},
+		{
+			Description: "Simple query with basic offset, more rows",
+			Query: `query {
+						users(offset: 2) {
+							Name
+							Age
+						}
+					}`,
+			Docs: map[int][]string{
+				0: {
+					`{
+						"Name": "John",
+						"Age": 21
+					}`,
+					`{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+					`{
+						"Name": "Carlo",
+						"Age": 55
+					}`,
+					`{
+						"Name": "Alice",
+						"Age": 19
+					}`,
+					`{
+						"Name": "Melynda",
+						"Age": 30
+					}`,
+				},
+			},
+			Results: []map[string]interface{}{
+				{
+					"Name": "Alice",
+					"Age":  uint64(19),
+				},
+				{
+					"Name": "John",
+					"Age":  uint64(21),
+				},
+				{
+					"Name": "Carlo",
+					"Age":  uint64(55),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
+}
