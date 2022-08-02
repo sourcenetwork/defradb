@@ -82,15 +82,10 @@ func (n *hardLimitNode) Next() (bool, error) {
 func (n *hardLimitNode) Source() planNode { return n.plan }
 
 func (n *hardLimitNode) Explain() (map[string]interface{}, error) {
-	exp := map[string]interface{}{
+	return map[string]interface{}{
+		limitLabel:  n.limit,
 		offsetLabel: n.offset,
-	}
-
-	if n.limit != 0 {
-		exp[limitLabel] = n.limit
-	}
-
-	return exp, nil
+	}, nil
 }
 
 // limit the results, flagging any records outside the bounds of limit/offset with
@@ -153,13 +148,8 @@ func (n *renderLimitNode) Next() (bool, error) {
 func (n *renderLimitNode) Source() planNode { return n.plan }
 
 func (n *renderLimitNode) Explain() (map[string]interface{}, error) {
-	exp := map[string]interface{}{
+	return map[string]interface{}{
+		limitLabel:  n.limit,
 		offsetLabel: n.offset,
-	}
-
-	if n.limit != 0 {
-		exp[limitLabel] = n.limit
-	}
-
-	return exp, nil
+	}, nil
 }

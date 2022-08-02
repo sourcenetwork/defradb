@@ -138,6 +138,7 @@ func TestExplainQueryWithOnlyOffsetSpecified(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"hardLimitNode": dataMap{
+							"limit":  int64(0),
 							"offset": int64(2),
 							"selectNode": dataMap{
 								"filter": nil,
@@ -527,6 +528,7 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 								"subType": dataMap{
 									"selectTopNode": dataMap{
 										"hardLimitNode": dataMap{
+											"limit":  int64(0),
 											"offset": int64(2),
 											"selectNode": dataMap{
 												"filter": nil,
