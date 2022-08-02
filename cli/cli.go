@@ -97,7 +97,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 		return err
 	}
 
-	// handle --logger <name>,<field>=<value>,...
+	// handle --logger <name>,<field>=<value>,... --logger <name2>,<field>=<value>,..
 	loggerKVs, err := cmd.Flags().GetStringArray("logger")
 	if err != nil {
 		return fmt.Errorf("can't get logger flag: %w", err)
