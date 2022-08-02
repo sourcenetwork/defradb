@@ -85,9 +85,9 @@ func init() {
 		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
 	}
 
-	rootCmd.PersistentFlags().String(
-		"logger", "",
-		"Named logger parameter override. usage: --logger <name>,level=<level>,output=<output>,...",
+	rootCmd.PersistentFlags().StringArray(
+		"logger", []string{},
+		"Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...",
 	)
 
 	rootCmd.PersistentFlags().String(

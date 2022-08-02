@@ -97,17 +97,18 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 		return err
 	}
 
-	// handle --logger <name>,<field>=<value>,...
-	loggerKVs, err := cmd.Flags().GetString("logger")
+	// handle --logger <name>,<field>=<value>,... --logger <name2>,<field>=<value>,..
+	loggerKVs, err := cmd.Flags().GetStringArray("logger")
 	if err != nil {
 		return fmt.Errorf("can't get logger flag: %w", err)
 	}
 
-	if loggerKVs != "" {
-		if err := parseAndConfigLogAllParams(ctx, cfg, loggerKVs); err != nil {
+	for _, kvs := range loggerKVs {
+		if err := parseAndConfigLogAllParams(ctx, cfg, kvs); err != nil {
 			return err
 		}
 	}
+
 	loggingConfig, err := cfg.ToLoggerConfig()
 	if err != nil {
 		return fmt.Errorf("could not get logging config: %w", err)
@@ -119,13 +120,12 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 
 func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, kvs string) error {
 	if kvs == "" {
-		return nil //nothing todo
+		return nil
 	}
 
-	// check if a CSV is provided
 	parsed := strings.Split(kvs, ",")
 	if len(parsed) <= 1 {
-		log.Fatal(ctx, "invalid --logger format, must be a csv")
+		return fmt.Errorf("logger was not provided as comma-separated pairs of <name>=<value>: %s", kvs)
 	}
 	name := parsed[0]
 
