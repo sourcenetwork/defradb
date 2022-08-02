@@ -59,7 +59,7 @@ func (n *hardLimitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *hardLimitNode) Next() (bool, error) {
 	// check if we're passed the limit
-	if n.rowIndex-n.offset >= n.limit {
+	if n.limit != 0 && n.rowIndex-n.offset >= n.limit {
 		return false, nil
 	}
 
@@ -82,10 +82,16 @@ func (n *hardLimitNode) Next() (bool, error) {
 func (n *hardLimitNode) Source() planNode { return n.plan }
 
 func (n *hardLimitNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{
+	exp := map[string]interface{}{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,
-	}, nil
+	}
+
+	if n.limit == 0 {
+		exp[limitLabel] = nil
+	}
+
+	return exp, nil
 }
 
 // limit the results, flagging any records outside the bounds of limit/offset with
@@ -139,7 +145,7 @@ func (n *renderLimitNode) Next() (bool, error) {
 	n.currentValue = n.plan.Value()
 
 	n.rowIndex++
-	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
+	if (n.limit != 0 && n.rowIndex-n.offset > n.limit) || n.rowIndex <= n.offset {
 		n.currentValue.Hidden = true
 	}
 	return true, nil
@@ -148,8 +154,14 @@ func (n *renderLimitNode) Next() (bool, error) {
 func (n *renderLimitNode) Source() planNode { return n.plan }
 
 func (n *renderLimitNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{
+	exp := map[string]interface{}{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,
-	}, nil
+	}
+
+	if n.limit == 0 {
+		exp[limitLabel] = nil
+	}
+
+	return exp, nil
 }
