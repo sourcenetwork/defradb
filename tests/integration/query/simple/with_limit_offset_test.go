@@ -169,7 +169,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 func TestQuerySimpleWithOffset(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
-			Description: "Simple query with basic offset",
+			Description: "Simple query with offset only",
 			Query: `query {
 						users(offset: 1) {
 							Name
@@ -196,7 +196,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic offset, more rows",
+			Description: "Simple query with offset only, more rows",
 			Query: `query {
 						users(offset: 2) {
 							Name
