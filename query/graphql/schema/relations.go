@@ -96,9 +96,12 @@ func (rm *RelationManager) Exists(name string) bool {
 
 // RegisterSingle is used if you only know a single side of the relation
 // at a time. It allows you to iteratively, across two calls, build the relation.
-// It will fail if you call it again on a relation that has been registered AND finalized
+// If the relation exists and is finalized, then nothing is done. Returns true
+// if nothing is done or the relation is successfully registered.
 func (rm *RelationManager) RegisterSingle(
-	name, schemaType, schemaField string,
+	name string,
+	schemaType string,
+	schemaField string,
 	relType client.RelationType,
 ) (bool, error) {
 	if name == "" {
@@ -117,20 +120,21 @@ func (rm *RelationManager) RegisterSingle(
 
 	rel, ok := rm.relations[name]
 	if !ok {
-		rel = &Relation{
+		// If a relation doesn't exist then make one.
+		rm.relations[name] = &Relation{
 			name:        name,
 			relType:     rt,
 			types:       []client.RelationType{relType},
 			schemaTypes: []string{schemaType},
 			fields:      []string{schemaField},
 		}
-	} else if rel.finalized {
-		return false, errors.New("Cannot update a relation that is already finalized")
-	} else {
-		// relation exists, and is not finalized
+		return true, nil
+	}
 
-		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many
-		// one
+	if !rel.finalized {
+		// If a  relation exists, and is not finalized, then finalizing it.
+
+		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many.
 		if rel.relType.IsSet(client.Relation_Type_ONE) {
 			if relType.IsSet(client.Relation_Type_ONE) { // One-to-One
 				rel.relType = client.Relation_Type_ONEONE
@@ -148,12 +152,14 @@ func (rm *RelationManager) RegisterSingle(
 		rel.types = append(rel.types, relType)
 		rel.schemaTypes = append(rel.schemaTypes, schemaType)
 		rel.fields = append(rel.fields, schemaField)
+
+		// Try finalizing the relation.
 		if err := rel.finalize(); err != nil {
 			return false, err
 		}
+		rm.relations[name] = rel
 	}
 
-	rm.relations[name] = rel
 	return true, nil
 }
 
