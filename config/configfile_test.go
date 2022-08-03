@@ -64,3 +64,41 @@ func TestWritesConfigFileErroneousPath(t *testing.T) {
 	err := cfg.WriteConfigFileToRootDir(dir + "////*&^^(*8769876////bar")
 	assert.Error(t, err)
 }
+
+func TestReadConfigFileForLogger(t *testing.T) {
+	dir := t.TempDir()
+
+	cfg := DefaultConfig()
+	cfg.Log.Caller = true
+	cfg.Log.Format = "json"
+	cfg.Log.Level = logLevelDebug
+	cfg.Log.NoColor = true
+	cfg.Log.OutputPath = dir + "/log.txt"
+	cfg.Log.Stacktrace = true
+
+	err := cfg.WriteConfigFileToRootDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := dir + "/" + DefaultDefraDBConfigFileName
+
+	_, err = os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfgFromFile := DefaultConfig()
+
+	err = cfgFromFile.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, cfg.Log.Caller, cfgFromFile.Log.Caller)
+	assert.Equal(t, cfg.Log.Format, cfgFromFile.Log.Format)
+	assert.Equal(t, cfg.Log.Level, cfgFromFile.Log.Level)
+	assert.Equal(t, cfg.Log.NoColor, cfgFromFile.Log.NoColor)
+	assert.Equal(t, cfg.Log.OutputPath, cfgFromFile.Log.OutputPath)
+	assert.Equal(t, cfg.Log.Stacktrace, cfgFromFile.Log.Stacktrace)
+}
