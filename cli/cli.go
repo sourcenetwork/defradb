@@ -149,7 +149,7 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 		case "format": // string
 			logcfg.Format = parsedKV[1]
 		case "output": // string
-			logcfg.OutputPath = parsedKV[1]
+			logcfg.Output = parsedKV[1]
 		case "stacktrace": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {

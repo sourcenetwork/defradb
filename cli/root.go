@@ -91,7 +91,7 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().String(
-		"logoutput", cfg.Log.OutputPath,
+		"logoutput", cfg.Log.Output,
 		"Log output path",
 	)
 	err = viper.BindPFlag("log.output", rootCmd.PersistentFlags().Lookup("logoutput"))
