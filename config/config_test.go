@@ -278,7 +278,7 @@ func TestGetLoggingConfig(t *testing.T) {
 	cfg.Log.Level = "debug"
 	cfg.Log.Format = "json"
 	cfg.Log.Stacktrace = true
-	cfg.Log.OutputPath = "stdout"
+	cfg.Log.Output = "stdout"
 
 	loggingConfig, err := cfg.GetLoggingConfig()
 

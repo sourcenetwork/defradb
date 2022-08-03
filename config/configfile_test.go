@@ -73,7 +73,7 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	cfg.Log.Format = "json"
 	cfg.Log.Level = logLevelDebug
 	cfg.Log.NoColor = true
-	cfg.Log.OutputPath = dir + "/log.txt"
+	cfg.Log.Output = dir + "/log.txt"
 	cfg.Log.Stacktrace = true
 
 	err := cfg.WriteConfigFileToRootDir(dir)
@@ -99,6 +99,6 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	assert.Equal(t, cfg.Log.Format, cfgFromFile.Log.Format)
 	assert.Equal(t, cfg.Log.Level, cfgFromFile.Log.Level)
 	assert.Equal(t, cfg.Log.NoColor, cfgFromFile.Log.NoColor)
-	assert.Equal(t, cfg.Log.OutputPath, cfgFromFile.Log.OutputPath)
+	assert.Equal(t, cfg.Log.Output, cfgFromFile.Log.Output)
 	assert.Equal(t, cfg.Log.Stacktrace, cfgFromFile.Log.Stacktrace)
 }

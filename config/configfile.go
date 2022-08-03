@@ -89,7 +89,7 @@ log:
   # Supported log formats are json, csv
   format: {{ .Log.Format }}
   # Where the log output is written to
-  outputpath: {{ .Log.OutputPath }}
+  output: {{ .Log.Output }}
   # Disable colored log output
   nocolor: {{ .Log.NoColor }}
   # Caller location in log output

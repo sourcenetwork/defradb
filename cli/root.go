@@ -94,9 +94,9 @@ func init() {
 		"logoutput", cfg.Log.OutputPath,
 		"Log output path",
 	)
-	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
+	err = viper.BindPFlag("log.output", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind log.outputpath", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.output", err)
 	}
 
 	rootCmd.PersistentFlags().String(
