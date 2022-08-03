@@ -11,17 +11,17 @@ func TestGraph(t *testing.T) {
 	//
 	// A working dependency graph
 	//
-	nodeA := NewNode("A")
-	nodeB := NewNode("B")
-	nodeC := NewNode("C", "A")
-	nodeD := NewNode("D", "B")
-	nodeE := NewNode("E", "C", "D")
-	nodeF := NewNode("F", "A", "B")
-	nodeG := NewNode("G", "E", "F")
-	nodeH := NewNode("H", "G")
-	nodeI := NewNode("I", "A")
-	nodeJ := NewNode("J", "B")
-	nodeK := NewNode("K")
+	nodeA := NewNode("A", nil)
+	nodeB := NewNode("B", nil)
+	nodeC := NewNode("C", nil, NewNode("A", nil))
+	nodeD := NewNode("D", nil, NewNode("B", nil))
+	nodeE := NewNode("E", nil, NewNode("C", nil), NewNode("D", nil))
+	nodeF := NewNode("F", nil, NewNode("A", nil), NewNode("B", nil))
+	nodeG := NewNode("G", nil, NewNode("E", nil), NewNode("F", nil))
+	nodeH := NewNode("H", nil, NewNode("G", nil))
+	nodeI := NewNode("I", nil, NewNode("A", nil))
+	nodeJ := NewNode("J", nil, NewNode("B", nil))
+	nodeK := NewNode("K", nil)
 
 	var workingGraph Graph
 	workingGraph = append(workingGraph, nodeA, nodeB, nodeC, nodeD, nodeE, nodeF, nodeG, nodeH, nodeI, nodeJ, nodeK)
@@ -42,17 +42,17 @@ func TestBrokenGraph(t *testing.T) {
 	//
 	// A broken dependency graph with circular dependency
 	//
-	nodeA := NewNode("A", "I")
-	nodeB := NewNode("B")
-	nodeC := NewNode("C", "A")
-	nodeD := NewNode("D", "B")
-	nodeE := NewNode("E", "C", "D")
-	nodeF := NewNode("F", "A", "B")
-	nodeG := NewNode("G", "E", "F")
-	nodeH := NewNode("H", "G")
-	nodeI := NewNode("I", "A") // <-- circular
-	nodeJ := NewNode("J", "B")
-	nodeK := NewNode("K")
+	nodeA := NewNode("A", nil, NewNode("I", nil))
+	nodeB := NewNode("B", nil)
+	nodeC := NewNode("C", nil, NewNode("A", nil))
+	nodeD := NewNode("D", nil, NewNode("B", nil))
+	nodeE := NewNode("E", nil, NewNode("C", nil), NewNode("D", nil))
+	nodeF := NewNode("F", nil, NewNode("A", nil), NewNode("B", nil))
+	nodeG := NewNode("G", nil, NewNode("E", nil), NewNode("F", nil))
+	nodeH := NewNode("H", nil, NewNode("G", nil))
+	nodeI := NewNode("I", nil, NewNode("A", nil))
+	nodeJ := NewNode("J", nil, NewNode("B", nil))
+	nodeK := NewNode("K", nil)
 
 	var brokenGraph Graph
 	brokenGraph = append(brokenGraph, nodeA, nodeB, nodeC, nodeD, nodeE, nodeF, nodeG, nodeH, nodeI, nodeJ, nodeK)

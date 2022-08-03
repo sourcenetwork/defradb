@@ -3,47 +3,46 @@ package fixtures
 import (
 	"fmt"
 	"reflect"
-	"strings"
 )
 
 // return dependants of a type
 //
 // one-to-one: A->B | A (primary) depends on B (secondary)
 // one-to-many: A->[]B | A (one) depends on []B (many)
-func dependants(val reflect.Type) ([]string, error) {
-	deps := make([]string, 0)
+func dependants(val reflect.Type) ([]*Node, error) {
+	deps := make([]*Node, 0)
 
 	for i := 0; i < val.NumField(); i++ {
 		f := val.Field(i)
-		if !isRelationDependantField(f) {
+		if !isRelationDependantField(f.Type) {
 			continue
 		}
 
 		// get fixture tag
 		// if its empty, skip
 		tag := f.Tag.Get(fixtureTag)
-		if tag == "" {
-			return []string{}, fmt.Errorf("field %s is missing 'fixture' tag", f.Name)
+		tg, err := parseTag(tag)
+		if err != nil {
+			return nil, err
 		}
 
-		tags := strings.Split(tag, ",")
-		switch tags[0] {
-		case string(oneToOne):
+		switch tg.rel {
+		case oneToOne:
 			// the second entry in the tags comma seperated list
 			// has to be primary or empty
-			if len(tags) < 2 || tags[1] != "primary" {
+			if !tg.isPrimary {
 				// secondary, no dependancy
 				// next field
 				continue
 			}
 
 			// primary, dependancy
-			deps = append(deps, f.Type.Elem().Name())
-		case string(oneToMany):
-			deps = append(deps, f.Type.Elem().Name())
+			deps = append(deps, NewNode(f.Type.Elem().Name(), f.Type.Elem()))
+		case oneToMany:
+			deps = append(deps, NewNode(f.Type.Elem().Name(), f.Type.Elem()))
 
 		default:
-			return []string{}, fmt.Errorf("invalid 'fixture' tag format, missing relation type: %s", tag)
+			return nil, fmt.Errorf("invalid 'fixture' tag format, missing relation type: %s", tag)
 		}
 	}
 
@@ -57,18 +56,8 @@ func dependants(val reflect.Type) ([]string, error) {
 // 1) It is a pointer to a struct
 // or
 // 2) It is a slice of struct pointers
-func isRelationDependantField(field reflect.StructField) bool {
-	t := field.Type
-	for {
-		switch t.Kind() {
-		case reflect.Struct:
-			return true
-		case reflect.Pointer:
-			t = t.Elem()
-		default:
-			return false
-		}
-	}
+func isRelationDependantField(field reflect.Type) bool {
+	return isStructPointer(field) || isSliceStructPointer(field)
 }
 
 func isStructPointer(t reflect.Type) bool {

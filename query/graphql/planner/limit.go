@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"math"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -34,9 +36,13 @@ func (p *Planner) HardLimit(parsed *mapper.Select, n *mapper.Limit) (*hardLimitN
 	if n == nil {
 		return nil, nil // nothing to do
 	}
+	limit := int64(math.MaxInt64)
+	if n.Limit > 0 {
+		limit = n.Limit
+	}
 	return &hardLimitNode{
 		p:         p,
-		limit:     n.Limit,
+		limit:     limit,
 		offset:    n.Offset,
 		rowIndex:  0,
 		docMapper: docMapper{&parsed.DocumentMapping},
@@ -109,9 +115,13 @@ func (p *Planner) RenderLimit(docMap *core.DocumentMapping, n *parserTypes.Limit
 	if n == nil {
 		return nil, nil // nothing to do
 	}
+	limit := int64(math.MaxInt64)
+	if n.Limit > 0 {
+		limit = n.Limit
+	}
 	return &renderLimitNode{
 		p:         p,
-		limit:     n.Limit,
+		limit:     limit,
 		offset:    n.Offset,
 		rowIndex:  0,
 		docMapper: docMapper{docMap},

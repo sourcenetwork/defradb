@@ -59,14 +59,80 @@ type Generator struct {
 
 	schema string
 	types  []interface{}
+	tags   []tag
+
+	// an array of ratios.
+	ratios []float64
 }
 
-func ForSchema(ctx context.Context, schemaName string) Generator {
-	return Generator{
+func ForSchema(ctx context.Context, schemaName string) (Generator, error) {
+	types := registeredFixtures[schemaName]
+	g := Generator{
 		ctx:    ctx,
 		schema: schemaName,
-		types:  registeredFixtures[schemaName],
 	}
+
+	// dependancy graph for related types
+	var depGraph Graph
+	for _, t := range types {
+		v := reflect.TypeOf(t)
+		deps, err := dependants(v)
+		if err != nil {
+			return g, fmt.Errorf("couldn't get dependants for %s: %w", v.Name(), err)
+		}
+		depGraph = append(depGraph, NewNode(v.Name(), t, deps...))
+	}
+
+	var err error
+	depGraph, err = resolveGraph(depGraph)
+	if err != nil {
+		return g, fmt.Errorf("dependancy graph resolution: %w", err)
+	}
+
+	// reorder types array based on dependancy graph
+	depTypes := make([]interface{}, len(types))
+	for i, t := range types {
+		for _, n := range depGraph {
+			typeName := reflect.TypeOf(t).Name()
+			if typeName == n.name {
+				depTypes[i] = t
+				break
+			}
+		}
+	}
+
+	// compute ratios
+	for i, t := range depTypes {
+		typeOf := reflect.TypeOf(t)
+		for j := 0; j < typeOf.NumField(); j++ {
+			f := typeOf.Field(j)
+
+			// if we have a related type, we need to
+			if isStructPointer(f.Type) || isSliceStructPointer(f.Type) {
+				fixtureTagStr, ok := f.Tag.Lookup(fixtureTag)
+				if !ok {
+					return g, fmt.Errorf("missing fixture tag for field %d", j)
+				}
+
+				tg, err := parseTag(fixtureTagStr)
+				if err != nil {
+					return g, err
+				}
+				g.tags[i] = tg
+
+				// start with average. Todo: min/max
+				// r, err := tg.avgRatio()
+				// if err != nil {
+				// 	return g, fmt.Errorf("average ratio for %s: %w", f.Type.Name(), err)
+				// }
+
+			}
+		}
+	}
+
+	g.types = depTypes
+
+	return g, nil
 }
 
 // Types returns the defined types for this fixture set
@@ -83,6 +149,21 @@ func (g Generator) Type(index int) interface{} {
 // in the fixture set
 func (g Generator) TypeName(index int) string {
 	return reflect.TypeOf(g.types[index]).Name()
+}
+
+// HasRelatedTypes returns if any of the types defined
+// in the generator are related to one another
+func (g Generator) HasRelatedTypes() bool {
+	for _, t := range g.types {
+		typeOf := reflect.TypeOf(t)
+		for i := 0; i < typeOf.NumField(); i++ {
+			f := typeOf.Field(i)
+			if isStructPointer(f.Type) || isSliceStructPointer(f.Type) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GenerateFixtureDocs uses the faker fixture system to
@@ -223,7 +304,10 @@ func parseTag(t string) (tag, error) {
 		return tag{}, fmt.Errorf("empty fixture tag")
 	}
 
-	tg := tag{}
+	tg := tag{
+		minObjects: 1, // default is 1 not 0
+		maxObjects: 1, // default is 1 not 0
+	}
 	parts := strings.Split(t, ",")
 	remainderIndex := 1
 	switch parts[0] {
@@ -278,4 +362,17 @@ func parseTag(t string) (tag, error) {
 	}
 
 	return tg, nil
+}
+
+func (t tag) avgRatio() (ratio, error) {
+	avg := float64(t.maxObjects+t.minObjects) / float64(2)
+	return newRatio(1, avg/t.fillRate)
+}
+
+func (t tag) minRatio() (ratio, error) {
+	return newRatio(1, float64(t.minObjects)/t.fillRate)
+}
+
+func (t tag) maxRatio() (ratio, error) {
+	return newRatio(1, float64(t.maxObjects)/t.fillRate)
 }

@@ -19,9 +19,9 @@ type tUser struct {
 type tBook struct {
 	Name        string      `faker:"title"`
 	Rating      float32     `faker:"amount"`
-	Author      *tAuthor    `fixture:"one-to-one"`
-	Publisher   *tPublisher `fixture:"one-to-many"`
-	PublisherId ID
+	Author      *tAuthor    `fixture:"one-to-one" faker:"-"`
+	Publisher   *tPublisher `fixture:"one-to-many" faker:"-"`
+	PublisherId ID          `faker:"-"`
 }
 
 // #3
@@ -29,8 +29,8 @@ type tAuthor struct {
 	Name     string `faker:"name"`
 	Age      int
 	Verified bool
-	Wrote    *tBook `fixture:"one-to-one,primary,0.8"`
-	WorteId  ID
+	Wrote    *tBook `fixture:"one-to-one,primary,0.8" faker:"-"`
+	WorteId  ID     `faker:"-"`
 }
 
 // #1
@@ -43,7 +43,7 @@ type tPublisher struct {
 	// Rate: 50%
 	// Min:1
 	// Max:10
-	Published []*tBook `fixture:"one-to-many,0.5,1,10"`
+	Published []*tBook `fixture:"one-to-many,0.5,1,10" faker:"-"`
 }
 
 func TestDependantsOneToOneSecondaryWithOneToManyPrimary(t *testing.T) {
@@ -87,11 +87,13 @@ func TestDependantsGraph(t *testing.T) {
 		require.NoError(t, err)
 
 		name := typ.Name()
-		basicGraph = append(basicGraph, NewNode(name, deps...))
+		basicGraph = append(basicGraph, NewNode(name, v, deps...))
 	}
 
 	resolvedGraph, err := resolveGraph(basicGraph)
 	require.NoError(t, err)
+
+	require.Equal(t, []string{"tPublisher", "tBook", "tAuthor"}, resolvedGraph.toStrings())
 
 	fmt.Println("--- ORDER ---")
 	for _, n := range resolvedGraph {

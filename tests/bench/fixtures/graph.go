@@ -28,6 +28,7 @@ package fixtures
 
 import (
 	"fmt"
+	"strings"
 
 	mapset "github.com/deckarep/golang-set"
 )
@@ -37,14 +38,19 @@ type Node struct {
 	// Name of the node
 	name string
 
+	typ interface{}
+
 	// Dependencies of the node
-	deps []string
+	deps []*Node
+
+	tag tag
 }
 
 // NewNode creates a new node
-func NewNode(name string, deps ...string) *Node {
+func NewNode(name string, typ interface{}, deps ...*Node) *Node {
 	n := &Node{
 		name: name,
+		typ:  typ,
 		deps: deps,
 	}
 
@@ -67,7 +73,7 @@ func resolveGraph(graph Graph) (Graph, error) {
 
 		dependencySet := mapset.NewSet()
 		for _, dep := range node.deps {
-			dependencySet.Add(dep)
+			dependencySet.Add(dep.name)
 		}
 		nodeDependencies[node.name] = dependencySet
 	}
@@ -112,19 +118,27 @@ func resolveGraph(graph Graph) (Graph, error) {
 	return resolved, nil
 }
 
-// func (g Graph) String() string {
-// 	return strings.Join(g.toStrings(), ",")
+// func (g Graph) index(name string) bool {
+
 // }
 
-// func (g Graph) toStrings() []string {
-// 	for _, node := range
-// }
+func (g Graph) String() string {
+	return strings.Join(g.toStrings(), ",")
+}
+
+func (g Graph) toStrings() []string {
+	s := make([]string, len(g))
+	for i, node := range g {
+		s[i] = node.name
+	}
+	return s
+}
 
 // Displays the dependency graph
 func displayGraph(graph Graph) {
 	for _, node := range graph {
 		for _, dep := range node.deps {
-			fmt.Printf("%s -> %s\n", node.name, dep)
+			fmt.Printf("%s -> %s\n", node.name, dep.name)
 		}
 	}
 }
