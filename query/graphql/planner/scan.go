@@ -11,64 +11,61 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // scans an index for records
 type scanNode struct {
-	p     *Planner
-	desc  base.CollectionDescription
-	index *base.IndexDescription
+	documentIterator
+	docMapper
 
-	fields []*base.FieldDescription
-	doc    map[string]interface{}
+	p    *Planner
+	desc client.CollectionDescription
+
+	fields []*client.FieldDescription
 	docKey []byte
-
-	// Commenting out because unused code (structcheck) according to linter.
-	// // map between fieldID and index in fields
-	// fieldIdxMap map[base.FieldID]int
-	// isSecondaryIndex bool
 
 	spans   core.Spans
 	reverse bool
 
-	// rowIndex int64
-
-	// filter data
-	filter *parser.Filter
+	filter *mapper.Filter
 
 	scanInitialized bool
 
 	fetcher fetcher.Fetcher
 }
 
+func (n *scanNode) Kind() string {
+	return "scanNode"
+}
+
 func (n *scanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, n.index, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()
 }
 
-func (n *scanNode) initCollection(desc base.CollectionDescription) error {
+func (n *scanNode) initCollection(desc client.CollectionDescription) error {
 	n.desc = desc
-	n.index = &desc.Indexes[0]
 	return nil
 }
 
 // Start starts the internal logic of the scanner
 // like the DocumentFetcher, and more.
 func (n *scanNode) Start() error {
-	return nil // noop
+	return nil // no op
 }
 
 func (n *scanNode) initScan() error {
-	if len(n.spans) == 0 {
-		start := base.MakeIndexPrefixKey(&n.desc, n.index)
-		n.spans = append(n.spans, core.NewSpan(start, start.PrefixEnd()))
+	if !n.spans.HasValue {
+		start := base.MakeCollectionKey(n.desc)
+		n.spans = core.NewSpans(core.NewSpan(start, start.PrefixEnd()))
 	}
 
 	err := n.fetcher.Start(n.p.ctx, n.p.txn, n.spans)
@@ -84,18 +81,23 @@ func (n *scanNode) initScan() error {
 // Returns true, if there is a result,
 // and false otherwise.
 func (n *scanNode) Next() (bool, error) {
+	if n.spans.HasValue && len(n.spans.Value) == 0 {
+		return false, nil
+	}
+
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 		if err != nil {
 			return false, err
 		}
-		if n.doc == nil {
+
+		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}
@@ -109,28 +111,64 @@ func (n *scanNode) Spans(spans core.Spans) {
 	n.spans = spans
 }
 
-// Values returns the most recent result from Next()
-func (n *scanNode) Values() map[string]interface{} {
-	return n.doc
-}
-
 func (n *scanNode) Close() error {
 	return n.fetcher.Close()
 }
 
 func (n *scanNode) Source() planNode { return nil }
 
+// explainSpans explains the spans attribute.
+func (n *scanNode) explainSpans() []map[string]interface{} {
+	spansExplainer := []map[string]interface{}{}
+	for _, span := range n.spans.Value {
+		spanExplainer := map[string]interface{}{
+			"start": span.Start().ToString(),
+			"end":   span.End().ToString(),
+		}
+
+		spansExplainer = append(spansExplainer, spanExplainer)
+	}
+
+	return spansExplainer
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *scanNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.ExternalConditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.ExternalConditions
+	}
+
+	// Add the collection attributes.
+	explainerMap[collectionNameLabel] = n.desc.Name
+	explainerMap[collectionIDLabel] = n.desc.IDString()
+
+	// Add the spans attribute.
+	explainerMap[spansLabel] = n.explainSpans()
+
+	return explainerMap, nil
+}
+
 // Merge implements mergeNode
 func (n *scanNode) Merge() bool { return true }
 
-func (p *Planner) Scan(versioned bool) *scanNode {
+func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
 	var f fetcher.Fetcher
-	if versioned {
+	if parsed.Cid != "" {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)
 	}
-	return &scanNode{p: p, fetcher: f}
+	return &scanNode{
+		p:         p,
+		fetcher:   f,
+		docMapper: docMapper{&parsed.DocumentMapping},
+	}
 }
 
 // multiScanNode is a buffered scanNode that has
@@ -143,7 +181,9 @@ func (p *Planner) Scan(versioned bool) *scanNode {
 // we call Next() on the underlying scanNode only
 // once every 2 Next() calls on the multiScan
 type multiScanNode struct {
-	*scanNode
+	docMapper
+
+	scanNode   *scanNode
 	numReaders int
 	numCalls   int
 
@@ -151,12 +191,12 @@ type multiScanNode struct {
 	lastErr  error
 }
 
-func (n *multiScanNode) addReader() {
-	n.numReaders++
+func (n *multiScanNode) Init() error {
+	return n.scanNode.Init()
 }
 
-func (n *multiScanNode) Source() planNode {
-	return n.scanNode
+func (n *multiScanNode) Start() error {
+	return n.scanNode.Start()
 }
 
 // Next only calls Next() on the underlying
@@ -176,9 +216,26 @@ func (n *multiScanNode) Next() (bool, error) {
 	return n.lastBool, n.lastErr
 }
 
-/*
-multiscan := p.MultiScan(scan)
-multiscan.Register(typeJoin1)
-multiscan.Register(typeJoin2)
-multiscan.Register(commitScan)
-*/
+func (n *multiScanNode) Value() core.Doc {
+	return n.scanNode.documentIterator.Value()
+}
+
+func (n *multiScanNode) Spans(spans core.Spans) {
+	n.scanNode.Spans(spans)
+}
+
+func (n *multiScanNode) Source() planNode {
+	return n.scanNode
+}
+
+func (n *multiScanNode) Kind() string {
+	return "multiScanNode"
+}
+
+func (n *multiScanNode) Close() error {
+	return n.scanNode.Close()
+}
+
+func (n *multiScanNode) addReader() {
+	n.numReaders++
+}

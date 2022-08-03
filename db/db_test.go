@@ -14,27 +14,26 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
-	badgerds "github.com/sourcenetwork/defradb/datastores/badger/v3"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/stretchr/testify/assert"
 )
 
-func newMemoryDB(ctx context.Context) (*DB, error) {
+func newMemoryDB(ctx context.Context) (*db, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
 		return nil, err
 	}
-	return NewDB(ctx, rootstore)
+	return newDB(ctx, rootstore)
 }
 
 func TestNewDB(t *testing.T) {
@@ -61,7 +60,7 @@ func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = db.CreateCollection(ctx, base.CollectionDescription{
+	_, err = db.CreateCollection(ctx, client.CollectionDescription{
 		Name: "test",
 	})
 
@@ -81,7 +80,7 @@ func TestDBSaveSimpleDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -123,7 +122,7 @@ func TestDBUpdateDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -173,7 +172,7 @@ func TestDBUpdateNonExistingDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -196,7 +195,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
@@ -208,7 +207,7 @@ func TestDBUpdateExistingDocument(t *testing.T) {
 		"Age": 31
 	}`)
 
-	doc, err = document.NewFromJSON(testJSONObj)
+	doc, err = client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Update(ctx, doc)
@@ -239,13 +238,13 @@ func TestDBGetDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	doc, err = col.Get(ctx, key)
 	assert.NoError(t, err)
@@ -259,7 +258,11 @@ func TestDBGetDocument(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "John", name)
-	assert.Equal(t, uint64(21), age) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
+	assert.Equal(
+		t,
+		uint64(21),
+		age,
+	) // note: uint is used here, because the CBOR implementation converts all positive ints to uint64
 	assert.Equal(t, 154.1, weight)
 }
 
@@ -270,10 +273,10 @@ func TestDBGetNotFoundDocument(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	_, err = col.Get(ctx, key)
-	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 }
 
 func TestDBDeleteDocument(t *testing.T) {
@@ -289,13 +292,13 @@ func TestDBDeleteDocument(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	deleted, err := col.Delete(ctx, key)
 	assert.NoError(t, err)
@@ -309,10 +312,10 @@ func TestDBDeleteNotFoundDocument(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	key, err := key.NewFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
+	key, err := client.NewDocKeyFromString("bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d")
 	assert.NoError(t, err)
 	deleted, err := col.Delete(ctx, key)
-	assert.EqualError(t, err, ErrDocumentNotFound.Error())
+	assert.EqualError(t, err, client.ErrDocumentNotFound.Error())
 	assert.False(t, deleted)
 }
 
@@ -329,20 +332,29 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		"Weight": 154.1
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	clk := clock.NewMerkleClock(db.Headstore(), nil, "bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d/Name", nil)
+	clk := clock.NewMerkleClock(
+		db.multistore.Headstore(),
+		nil,
+		core.HeadStoreKey{}.WithDocKey(
+			"bae-09cd7539-9b86-5661-90f6-14fbf6c1a14d",
+		).WithFieldId(
+			"Name",
+		),
+		nil,
+	)
 	heads := clk.(*clock.MerkleClock).Heads()
 	cids, _, err := heads.List(ctx)
 	assert.NoError(t, err)
 
 	reg := corecrdt.LWWRegister{}
 	for _, c := range cids {
-		b, errGet := db.DAGstore().Get(ctx, c)
+		b, errGet := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, errGet)
 
 		nd, errDecode := dag.DecodeProtobuf(b.RawData())
@@ -361,7 +373,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 		"Age": 31
 	}`)
 
-	doc, err = document.NewFromJSON(testJSONObj)
+	doc, err = client.NewDocFromJSON(testJSONObj)
 	assert.NoError(t, err)
 
 	err = col.Update(ctx, doc)
@@ -372,7 +384,7 @@ func TestDocumentMerkleDAG(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, c := range cids {
-		b, err := db.DAGstore().Get(ctx, c)
+		b, err := db.Blockstore().Get(ctx, c)
 		assert.NoError(t, err)
 
 		nd, err := dag.DecodeProtobuf(b.RawData())
@@ -399,7 +411,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 		"Age": 21
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return
@@ -417,7 +429,7 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	assert.Equal(t, "John", name)
 	assert.Equal(t, int64(21), age)
 
-	db.printDebugDB(ctx)
+	db.PrintDump(ctx)
 }
 
 func TestDBUpdateDocWithFilter(t *testing.T) {
@@ -432,7 +444,7 @@ func TestDBUpdateDocWithFilter(t *testing.T) {
 		"Age": 21
 	}`)
 
-	doc, err := document.NewFromJSON(testJSONObj)
+	doc, err := client.NewDocFromJSON(testJSONObj)
 	if err != nil {
 		t.Error(err)
 		return

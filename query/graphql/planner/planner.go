@@ -17,63 +17,66 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
 	log = logging.MustNewLogger("defra.query.planner")
 )
 
-// planNode is an interface all nodes in the plan tree need to implement
+// planNode is an interface all nodes in the plan tree need to implement.
 type planNode interface {
-	// Initializes or Re-Initializes an existing planNode
-	// Often called internally by Start()
+	// Initializes or Re-Initializes an existing planNode, often called internally by Start().
 	Init() error
 
-	// Starts any internal logic or processes
-	// required by the plan node.
+	// Starts any internal logic or processes required by the planNode. Should be called *after* Init().
 	Start() error
 
-	// Next processes the next result doc from
-	// the query. Can only be called *after*
-	// Start(). Can't be called again if any
-	// previous call returns false.
-	Next() (bool, error)
-
-	// Spans sets the planNodes target
-	// spans. This is primarily only used
-	// for a scanNode, but based on the tree
-	// structure, may need to be propagated
-	// Eg. From a selectNode -> scanNode.
+	// Spans sets the planNodes target spans. This is primarily only used for a scanNode,
+	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// returns the value of the current doc
-	// processed by the executor
-	Values() map[string]interface{}
+	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Can't be called again if any previous call returns false.
+	Next() (bool, error)
 
-	// Source returns the child planNode that
-	// generates the source values for this plan.
-	// If a plan has no source, return nil
+	// Values returns the value of the current doc, should only be called *after* Next().
+	Value() core.Doc
+
+	// Source returns the child planNode that generates the source values for this plan.
+	// If a plan has no source, nil is returned.
 	Source() planNode
 
-	// Close terminates the planNode execution releases its resources.
+	// Kind tells the name of concrete planNode type.
+	Kind() string
+
+	DocumentMap() *core.DocumentMapping
+
+	// Close terminates the planNode execution and releases its resources. After this
+	// method is called you can only safely call Kind() and Source() methods.
 	Close() error
 }
 
-// basic plan Node that implements the planNode interface
-// can be added to any struct to turn it into a planNode
-type baseNode struct { //nolint:unused
-	plan planNode
+type documentIterator struct {
+	currentValue core.Doc
 }
 
-func (n *baseNode) Init() error                    { return n.plan.Init() }   //nolint:unused
-func (n *baseNode) Start() error                   { return n.plan.Start() }  //nolint:unused
-func (n *baseNode) Next() (bool, error)            { return n.plan.Next() }   //nolint:unused
-func (n *baseNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }    //nolint:unused
-func (n *baseNode) Values() map[string]interface{} { return n.plan.Values() } //nolint:unused
-func (n *baseNode) Close() error                   { return n.plan.Close() }  //nolint:unused
-func (n *baseNode) Source() planNode               { return n.plan }          //nolint:unused
+func (n *documentIterator) Value() core.Doc {
+	return n.currentValue
+}
+
+type docMapper struct {
+	documentMapping *core.DocumentMapping
+}
+
+func (d *docMapper) DocumentMap() *core.DocumentMapping {
+	return d.documentMapping
+}
 
 type ExecutionContext struct {
 	context.Context
@@ -83,27 +86,16 @@ type PlanContext struct {
 	context.Context
 }
 
-type Statement struct {
-	// Commenting out because unused code (structcheck) according to linter.
-	// requestString   string
-	// requestDocument *ast.Document parser.Statement -> parser.Query - >
-	// requestQuery    parser.Query
-}
-
 // Planner combines session state and database state to
 // produce a query plan, which is run by the execution context.
 type Planner struct {
-	txn core.Txn
+	txn datastore.Txn
 	db  client.DB
 
-	ctx     context.Context
-	evalCtx parser.EvalContext
-
-	// isFinalized bool
-
+	ctx context.Context
 }
 
-func makePlanner(ctx context.Context, db client.DB, txn core.Txn) *Planner {
+func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
@@ -111,7 +103,7 @@ func makePlanner(ctx context.Context, db client.DB, txn core.Txn) *Planner {
 	}
 }
 
-func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
+func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
 	switch n := stmt.(type) {
 	case *parser.Query:
 		if len(n.Queries) > 0 {
@@ -121,36 +113,67 @@ func (p *Planner) newPlan(stmt parser.Statement) (planNode, error) {
 		} else {
 			return nil, fmt.Errorf("Query is missing query or mutation statements")
 		}
+
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
 			return nil, fmt.Errorf("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
+
 	case *parser.Select:
+		m, err := mapper.ToSelect(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, isAgg := parserTypes.Aggregates[n.Name]; isAgg {
+			// If this Select is an aggregate, then it must be a top-level
+			// aggregate and we need to resolve it within the context of a
+			// top-level node.
+			return p.Top(m)
+		}
+
+		return p.Select(m)
+	case *mapper.Select:
 		return p.Select(n)
+
 	case *parser.CommitSelect:
-		return p.CommitSelect(n)
+		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+		return p.CommitSelect(m)
+
 	case *parser.Mutation:
-		return p.newObjectMutationPlan(n)
+		m, err := mapper.ToMutation(p.ctx, p.txn, n)
+		if err != nil {
+			return nil, err
+		}
+		return p.newObjectMutationPlan(m)
 	}
-	return nil, fmt.Errorf("unknown statement type %T", stmt)
+	return nil, fmt.Errorf("Unknown statement type %T", stmt)
 }
 
-func (p *Planner) newObjectMutationPlan(stmt *parser.Mutation) (planNode, error) {
+func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
 	switch stmt.Type {
-	case parser.CreateObjects:
+	case mapper.CreateObjects:
 		return p.CreateDoc(stmt)
-	case parser.UpdateObjects:
-		return p.UpdateDocs(stmt)
-	case parser.DeleteObjects:
-		return p.DeleteDocs(stmt)
-	default:
-		return nil, fmt.Errorf("unknown mutation action %T", stmt.Type)
-	}
 
+	case mapper.UpdateObjects:
+		return p.UpdateDocs(stmt)
+
+	case mapper.DeleteObjects:
+		return p.DeleteDocs(stmt)
+
+	default:
+		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
+	}
 }
 
-func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
+// makePlan creates a new plan from the parsed data, optimizes the plan and returns
+// an initiated plan. The caller of makePlan is also responsible of calling Close()
+// on the plan to free it's resources.
+func (p *Planner) makePlan(stmt interface{}) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
 		return nil, err
@@ -165,43 +188,78 @@ func (p *Planner) makePlan(stmt parser.Statement) (planNode, error) {
 	return plan, err
 }
 
-// plan optimization. Includes plan expansion and wiring
+// optimizePlan optimizes the plan using plan expansion and wiring.
 func (p *Planner) optimizePlan(plan planNode) error {
 	err := p.expandPlan(plan, nil)
 	return err
 }
 
-// full plan graph expansion and optimization
+// expandPlan does a full plan graph expansion and other optimizations.
 func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	switch n := plan.(type) {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
+
 	case *commitSelectTopNode:
 		return p.expandPlan(n.plan, parentPlan)
+
 	case *selectNode:
 		return p.expandPlan(n.source, parentPlan)
+
 	case *typeIndexJoin:
 		return p.expandTypeIndexJoinPlan(n, parentPlan)
+
 	case *groupNode:
-		// We only care about expanding the child source here, it is assumed that the parent source
-		// is expanded elsewhere/already
-		return p.expandPlan(n.dataSource.childSource, parentPlan)
+		for _, dataSource := range n.dataSources {
+			// We only care about expanding the child source here, it is assumed that the parent source
+			// is expanded elsewhere/already
+			err := p.expandPlan(dataSource.childSource, parentPlan)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	case MultiNode:
 		return p.expandMultiNode(n, parentPlan)
+
 	case *updateNode:
 		return p.expandPlan(n.results, parentPlan)
+
+	case *createNode:
+		return p.expandPlan(n.results, parentPlan)
+
+	case *deleteNode:
+		return p.expandPlan(n.source, parentPlan)
+
+	case *topLevelNode:
+		for _, child := range n.children {
+			switch c := child.(type) {
+			case *selectTopNode:
+				// We only care about expanding the child source here, it is assumed that the parent source
+				// is expanded elsewhere/already
+				err := p.expandPlan(child, parentPlan)
+				if err != nil {
+					return err
+				}
+			case aggregateNode:
+				// top-level aggregates use the top-level node as a source
+				c.SetPlan(n)
+			}
+		}
+		return nil
+
 	default:
 		return nil
 	}
 }
 
 func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selectTopNode) error {
-	if err := p.expandPlan(plan.source, plan); err != nil {
+	if err := p.expandPlan(plan.selectnode, plan); err != nil {
 		return err
 	}
 
 	// wire up source to plan
-	plan.plan = plan.source
+	plan.plan = plan.selectnode
 
 	// if group
 	if plan.group != nil {
@@ -215,9 +273,9 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	p.expandAggregatePlans(plan)
 
 	// if order
-	if plan.sort != nil {
-		plan.sort.plan = plan.plan
-		plan.plan = plan.sort
+	if plan.order != nil {
+		plan.order.plan = plan.plan
+		plan.plan = plan.order
 	}
 
 	if plan.limit != nil {
@@ -225,12 +283,6 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		if err != nil {
 			return err
 		}
-	}
-
-	// wire up the render plan
-	if plan.render != nil {
-		plan.render.plan = plan.plan
-		plan.plan = plan.render
 	}
 
 	return nil
@@ -242,7 +294,10 @@ type aggregateNode interface {
 }
 
 func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
-	for _, aggregate := range plan.aggregates {
+	// Iterate through the aggregates backwards to ensure dependencies
+	// execute *before* any aggregate dependent on them.
+	for i := len(plan.aggregates) - 1; i >= 0; i-- {
+		aggregate := plan.aggregates[i]
 		aggregate.SetPlan(plan.plan)
 		plan.plan = aggregate
 	}
@@ -268,38 +323,52 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
-	var childSource planNode
 	// Find the first scan node in the plan, we assume that it will be for the correct collection
 	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
 	// Check for any existing pipe nodes in the plan, we should use it if there is one
 	pipe, hasPipe := p.walkAndFindPlanType(plan.plan, &pipeNode{}).(*pipeNode)
 
 	if !hasPipe {
-		newPipeNode := newPipeNode()
+		newPipeNode := newPipeNode(scanNode.DocumentMap())
 		pipe = &newPipeNode
 		pipe.source = scanNode
 	}
 
-	if plan.group.childSelect != nil {
-		childSelectNode, err := p.SelectFromSource(plan.group.childSelect, pipe, false, &plan.source.(*selectNode).sourceInfo)
+	if len(plan.group.childSelects) == 0 {
+		dataSource := plan.group.dataSources[0]
+		dataSource.parentSource = plan.plan
+		dataSource.pipeNode = pipe
+	}
+
+	for i, childSelect := range plan.group.childSelects {
+		childSelectNode, err := p.SelectFromSource(
+			childSelect,
+			pipe,
+			false,
+			&plan.selectnode.sourceInfo,
+		)
 		if err != nil {
 			return err
 		}
-		// We need to remove the render so that any child records are preserved on arrival at the parent
-		childSelectNode.(*selectTopNode).render = nil
 
-		childSource = childSelectNode
+		dataSource := plan.group.dataSources[i]
+		dataSource.childSource = childSelectNode
+		dataSource.parentSource = plan.plan
+		dataSource.pipeNode = pipe
 	}
-
-	plan.group.dataSource.childSource = childSource
-	plan.group.dataSource.parentSource = plan.plan
-	plan.group.dataSource.pipeNode = pipe
 
 	if err := p.walkAndReplacePlan(plan.group, scanNode, pipe); err != nil {
 		return err
 	}
 
-	return p.expandPlan(childSource, plan)
+	for _, dataSource := range plan.group.dataSources {
+		err := p.expandPlan(dataSource.childSource, plan)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {
@@ -309,14 +378,24 @@ func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode
 			return nil
 		}
 
+		// Limits get more complicated with groups and have to be handled internally, so we ensure
+		// any limit plan is disabled here
+		if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
+			plan.limit = nil
+			return nil
+		}
+
 		// if this is a child node, and the parent select has an aggregate then we need to
 		// replace the hard limit with a render limit to allow the full set of child records
 		// to be aggregated
 		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
-			renderLimit, err := p.RenderLimit(&parser.Limit{
-				Offset: l.offset,
-				Limit:  l.limit,
-			})
+			renderLimit, err := p.RenderLimit(
+				parentPlan.documentMapping,
+				&parserTypes.Limit{
+					Offset: l.offset,
+					Limit:  l.limit,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -389,69 +468,108 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 	return src
 }
 
-func (p *Planner) queryDocs(ctx context.Context, query *parser.Query) ([]map[string]interface{}, error) {
+// explainRequest walks through the plan graph, and outputs the concrete planNodes that should
+//  be executed, maintaing their order in the plan graph (does not actually execute them).
+func (p *Planner) explainRequest(
+	ctx context.Context,
+	plan planNode,
+) ([]map[string]interface{}, error) {
+	if plan == nil {
+		return nil, fmt.Errorf("Can't explain request of a nil plan.")
+	}
+
+	explainGraph, err := buildExplainGraph(plan)
+	if err != nil {
+		return nil, multiErr(err, plan.Close())
+	}
+
+	topExplainGraph := []map[string]interface{}{
+		{
+			parserTypes.ExplainLabel: explainGraph,
+		},
+	}
+
+	return topExplainGraph, plan.Close()
+}
+
+// executeRequest executes the plan graph that represents the request that was made.
+func (p *Planner) executeRequest(
+	ctx context.Context,
+	plan planNode,
+) ([]map[string]interface{}, error) {
+	if plan == nil {
+		return nil, fmt.Errorf("Can't execute request of a nil plan.")
+	}
+
+	if err := plan.Start(); err != nil {
+		return nil, multiErr(err, plan.Close())
+	}
+
+	next, err := plan.Next()
+	if err != nil {
+		return nil, multiErr(err, plan.Close())
+	}
+
+	docs := []map[string]interface{}{}
+	docMap := plan.DocumentMap()
+
+	for next {
+		copy := docMap.ToMap(plan.Value())
+		docs = append(docs, copy)
+
+		next, err = plan.Next()
+		if err != nil {
+			return nil, multiErr(err, plan.Close())
+		}
+	}
+
+	if err = plan.Close(); err != nil {
+		return nil, err
+	}
+
+	return docs, err
+}
+
+// runRequest plans how to run the request, then attempts to run the request and returns the results.
+func (p *Planner) runRequest(
+	ctx context.Context,
+	query *parser.Query,
+) ([]map[string]interface{}, error) {
 	plan, err := p.makePlan(query)
+
 	if err != nil {
 		return nil, err
 	}
 
-	if err = plan.Start(); err != nil {
-		if err2 := (plan.Close()); err2 != nil {
-			log.ErrorE(ctx, "Error closing plan node", err2)
-		}
-		return nil, err
+	isAnExplainRequest :=
+		(len(query.Queries) > 0 && query.Queries[0].IsExplain) ||
+			(len(query.Mutations) > 0 && query.Mutations[0].IsExplain)
+
+	if isAnExplainRequest {
+		return p.explainRequest(ctx, plan)
 	}
 
-	var next bool
-	if next, err = plan.Next(); err != nil {
-		if err2 := (plan.Close()); err2 != nil {
-			log.ErrorE(ctx, "Error closing plan node", err2)
-		}
-		return nil, err
-	}
-
-	if !next {
-		return []map[string]interface{}{}, nil
-	}
-
-	var docs []map[string]interface{}
-	for {
-		if values := plan.Values(); values != nil {
-			copy := copyMap(values)
-			docs = append(docs, copy)
-		}
-
-		next, err = plan.Next()
-		if err != nil {
-			if err2 := (plan.Close()); err2 != nil {
-				log.ErrorE(ctx, "Error closing plan node", err2)
-			}
-			return nil, err
-		}
-
-		if !next {
-			break
-		}
-	}
-
-	err = plan.Close()
-	return docs, err
+	// This won't execute if it's an explain request.
+	return p.executeRequest(ctx, plan)
 }
 
+// MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
 	return p.makePlan(query)
 }
 
-func copyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
-	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
-		if ok {
-			cp[k] = copyMap(vm)
-		} else {
-			cp[k] = v
+// multiErr wraps all the non-nil errors and returns the wrapped error result.
+func multiErr(errorsToWrap ...error) error {
+	var errs error
+	for _, err := range errorsToWrap {
+		if err == nil {
+			continue
 		}
+		if errs == nil {
+			errs = fmt.Errorf("%w", err)
+			continue
+		}
+		errs = fmt.Errorf("%s: %w", errs, err)
 	}
-
-	return cp
+	return errs
 }

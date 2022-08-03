@@ -13,7 +13,7 @@ package clock
 // CRDTs are composed of two structures, the payload and a clock. The
 // payload is the actual CRDT data which abides by the merge semantics.
 // The clock is a mechanism to provide a casual ordering of events, so
-// we can determine which event proceeded eachother and apply the
+// we can determine which event proceeded each other and apply the
 // various merge strategies.
 //
 // MerkleCRDTs are similar, they contain a CRDT payload, but instead

@@ -13,23 +13,23 @@ package db
 import (
 	"context"
 	"encoding/binary"
-
 	"errors"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/core"
 )
 
 type sequence struct {
-	db  *DB
-	key ds.Key
+	db  *db
+	key core.SequenceKey
 	val uint64
 }
 
-func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
+func (db *db) getSequence(ctx context.Context, key string) (*sequence, error) {
 	if key == "" {
 		return nil, errors.New("key cannot be empty")
 	}
-	seqKey := ds.NewKey("/seq").ChildString(key)
+	seqKey := core.NewSequenceKey(key)
 	seq := &sequence{
 		db:  db,
 		key: seqKey,
@@ -37,7 +37,7 @@ func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 	}
 
 	_, err := seq.get(ctx)
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		err = seq.update(ctx)
 		if err != nil {
 			return nil, err
@@ -50,7 +50,7 @@ func (db *DB) getSequence(ctx context.Context, key string) (*sequence, error) {
 }
 
 func (seq *sequence) get(ctx context.Context) (uint64, error) {
-	val, err := seq.db.Systemstore().Get(ctx, seq.key)
+	val, err := seq.db.systemstore().Get(ctx, seq.key.ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +62,7 @@ func (seq *sequence) get(ctx context.Context) (uint64, error) {
 func (seq *sequence) update(ctx context.Context) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := seq.db.Systemstore().Put(ctx, seq.key, buf[:]); err != nil {
+	if err := seq.db.systemstore().Put(ctx, seq.key.ToDS(), buf[:]); err != nil {
 		return err
 	}
 

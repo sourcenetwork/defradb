@@ -17,11 +17,10 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
@@ -34,7 +33,7 @@ type BlockFetcher struct {
 type HeadFetcher struct {
 
 	// Commented because this code is not used yet according to the linter.
-	// txn   core.Txn
+	// txn   datastore.Txn
 
 	// key core.Key
 	// curSpanIndex int
@@ -42,29 +41,29 @@ type HeadFetcher struct {
 	spans core.Spans
 	cid   *cid.Cid
 
-	kv     *core.KeyValue
+	kv     *core.HeadKeyValue
 	kvIter dsq.Results
 	kvEnd  bool
 }
 
-func (hf *HeadFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
-	numspans := len(spans)
+func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+	numspans := len(spans.Value)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")
 	} else if numspans > 1 {
 		// if we have multiple spans, we need to sort them by their start position
 		// so we can do a single iterative sweep
-		sort.Slice(spans, func(i, j int) bool {
+		sort.Slice(spans.Value, func(i, j int) bool {
 			// compare by strings if i < j.
 			// apply the '!= df.reverse' to reverse the sort
 			// if we need to
-			return (strings.Compare(spans[i].Start().String(), spans[j].Start().String()) < 0)
+			return (strings.Compare(spans.Value[i].Start().ToString(), spans.Value[j].Start().ToString()) < 0)
 		})
 	}
 	hf.spans = spans
 
 	q := dsq.Query{
-		Prefix: hf.spans[0].Start().String(),
+		Prefix: hf.spans.Value[0].Start().ToString(),
 		Orders: []dsq.Order{dsq.OrderByKey{}},
 	}
 
@@ -94,12 +93,11 @@ func (hf *HeadFetcher) nextKey() (bool, error) {
 	hf.kvEnd = done
 	if hf.kvEnd {
 		return true, nil
-
 	}
 	return false, nil
 }
 
-func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
+func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.HeadKeyValue, err error) {
 	res, available := hf.kvIter.NextSync()
 	if !available {
 		return true, nil, nil
@@ -108,24 +106,19 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.KeyValue, err error) {
 		return true, nil, err
 	}
 
-	kv = &core.KeyValue{
-		Key:   core.NewKey(res.Key),
+	headStoreKey, err := core.NewHeadStoreKey(res.Key)
+	if err != nil {
+		return true, nil, err
+	}
+	kv = &core.HeadKeyValue{
+		Key:   headStoreKey,
 		Value: res.Value,
 	}
 	return false, kv, nil
 }
 
-func (hf *HeadFetcher) processKV(kv *core.KeyValue) error {
-	// convert Value from KV value to cid.Cid
-	headKey := ds.NewKey(strings.TrimPrefix(kv.Key.String(), hf.spans[0].Start().String()))
-
-	hash, err := dshelp.DsKeyToMultihash(headKey)
-	if err != nil {
-		return err
-	}
-	headCid := cid.NewCidV1(cid.Raw, hash)
-	hf.cid = &headCid
-	return nil
+func (hf *HeadFetcher) processKV(kv *core.HeadKeyValue) {
+	hf.cid = &kv.Key.Cid
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
@@ -137,9 +130,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, errors.New("Failed to get head, fetcher hasn't been initialized or started")
 	}
 
-	if err := hf.processKV(hf.kv); err != nil {
-		return nil, err
-	}
+	hf.processKV(hf.kv)
 
 	_, err := hf.nextKey()
 	if err != nil {
@@ -184,7 +175,7 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
-			return nil, 0, errors.New("error decocding height")
+			return nil, 0, errors.New("error decoding height")
 		}
 		heads = append(heads, headCid)
 		if height > maxHeight {

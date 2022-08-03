@@ -1,0 +1,20 @@
+type book {
+    name: String
+    rating: Float
+    author: author
+    publisher: publisher
+}
+
+type author {
+    name: String
+    age: Int
+    verified: Boolean
+    wrote: book @primary
+}
+
+type publisher {
+    name: String
+    address: String
+    favouritePageNumbers: [Int!]
+    published: [book]
+}

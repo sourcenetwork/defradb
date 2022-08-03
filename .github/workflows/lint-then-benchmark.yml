@@ -1,6 +1,5 @@
 name: Lint and then Benchmark
 
-
 on:
   pull_request:
 
@@ -11,39 +10,45 @@ on:
       - master
       - develop
 
-
 ## These are the permissions for the lint check job.
 permissions:
   # Allow read access to pull request (Required for the `only-new-issues` option.)
   pull-requests: read
   contents: read
 
+env:
+  # This is the default benchmark type which if no labels are specified will be used.
+  DEFAULT_BENCHMARK_TYPE: SHORT
 
 jobs:
-
-
   # ========================================================= Step-1: Run the lint check.
   golangci:
     name: Lint Check
     strategy:
       matrix:
-        go-version: [1.17.5]
         os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Check out code into the directory
-        uses: actions/checkout@v2
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.17"
+          check-latest: true
 
       - name: Run the golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
 
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
           #  version is what will always be used.
-          version: v1.43
+          version: latest
 
           # Optional: working directory, useful for monorepos or if we wanted to run this
           #  on a non-root directory.
@@ -54,8 +59,8 @@ jobs:
           #  indicating that the linter ran successfully (weather or not linter errors
           #  exist or not doesn't matter). But the good think is that the annotations
           #  will still show up. I think this can be useful if we don't want the pipeline
-          #  to stop just because we had some linter errors. 
-          args: --issues-exit-code=1 --config .golangci.sourceinc.yaml
+          #  to stop just because we had some linter errors.
+          args: --issues-exit-code=1 --config tools/configs/golangci.yaml
 
           # Optional: we can set the below to `true` if we only want to see newly
           #  introduced linter errors, however I found that in practive that option is a
@@ -66,18 +71,62 @@ jobs:
           #  always have a clean lint state.
           only-new-issues: false
 
+  # =================== Step-2: Decide what type of benchmarks to run based on label(s).
+  # This job acts like a switch to simplify our ci control flow later on.
+  decide-benchmark-type:
+    name: Decide which benchmarks to run based on flags
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
 
-  # ================== Step-2: Start the runner and get it registered as a github runner.
+    runs-on: ${{ matrix.os }}
+
+    outputs:
+      # Is either 'NONE', 'FULL', or 'SHORT'.
+      benchmark-type: ${{ steps.set-benchmark-type.outputs.type }}
+
+    needs:
+      - golangci # only run if the linter check passed.
+
+    steps:
+      - name: Check for full benchmark label
+        if: contains(github.event.pull_request.labels.*.name, 'action/full-benchmark')
+        run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
+
+      - name: Check for label that skips the benchmark or non-develop branch
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref != 'develop' ||
+          contains(github.event.pull_request.labels.*.name, 'action/no-benchmark')
+        run: echo "DEFAULT_BENCHMARK_TYPE=NONE" >> ${GITHUB_ENV}
+
+      - name: Run full benchmarks if merged PR (push event) on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        run: echo "DEFAULT_BENCHMARK_TYPE=FULL" >> ${GITHUB_ENV}
+
+      - name: Set the output to be the benchmark type
+        id: set-benchmark-type
+        run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
+
+  # ================== Step-3: Start the runner and get it registered as a github runner.
   start-runner:
     name: Start self-hosted EC2 runner
-    needs: golangci # only run if the linter check passed
+
+    needs:
+      - golangci # only run if the linter check passed.
+      - decide-benchmark-type # type of benchmark to run.
+
+    if: needs.decide-benchmark-type.outputs.benchmark-type != 'NONE'
+
     runs-on: ubuntu-latest
+
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
 
     steps:
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -102,13 +151,17 @@ jobs:
           ##     {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
           ##   ]
 
-
-  # ============================Step-3: Run the benchmarks on the runner we just started.
+  # =========================== Step-4: Run the benchmarks on the runner we just started.
   benchmark-ec2-runner:
     name: Run the benchmarks on the started EC2 runner
+
     needs:
       - golangci # only run if the linter check passed.
-      - start-runner # required to start the main job when the runner is ready
+      - decide-benchmark-type # type of benchmark to run.
+      - start-runner # required to start the main job when the runner is ready.
+
+    if: needs.decide-benchmark-type.outputs.benchmark-type != 'NONE'
+
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
 
     env:
@@ -118,27 +171,117 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Start Running the bechmarks
-        run: make test:bench
+      - name: Run the full bechmarking suite
+        if: needs.decide-benchmark-type.outputs.benchmark-type == 'FULL'
+        run: make test:bench -s | tee current.txt
 
+      - name: Run only the shorter benchmarks
+        if: needs.decide-benchmark-type.outputs.benchmark-type == 'SHORT'
+        run: make test:bench-short -s | tee current.txt
 
-  # =============================== Step-4: Stop the runner once the benchmarks have ran.
+      # ------------- Upload Report - If pushed on develop branch
+
+      - name: Prepare artifact for uploading for a push on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        run: cp current.txt bench-artifact-${{ github.sha }}.txt
+
+      - name: Upload artifact for push event on develop
+        if: |
+          github.event_name == 'push' &&
+          github.ref_name == 'develop'
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench-artifact-${{ github.sha }}
+          path: bench-artifact-${{ github.sha }}.txt
+          retention-days: 90
+
+      # ------------- Download & Compare - If PR going into develop
+
+      # To find the latest commit on remote develop branch we essentially
+      #  just need to do the following:
+      # >> git fetch origin develop > /dev/null 2>&1 \
+      #    && git rev-parse origin/develop
+      # However I wanted to ensure that we get the latest commit on develop
+      #  that has a passing `lint-then-benchmark.yml` workflow as well. To
+      #  ensure that the artifact was successfully uploaded of the latest
+      #  commit that is available on develop. Hence the use of this action.
+      - name: Find the last successfull commit's sha on remote of develop
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: nrwl/last-successful-commit-action@v1
+        id: last_successful_upload_on_develop
+        with:
+          branch: develop
+          workflow_id: lint-then-benchmark.yml
+          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+
+      - name: Download the latest benchmark artifact on develop
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+          workflow: lint-then-benchmark.yml
+          branch: develop
+          name: bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}
+          repo: ${{ github.repository }}
+          check_artifacts: false
+          search_artifacts: false
+
+      - name: Prepare benchmark reports for comparisons
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        run: >
+          make deps:bench &&
+          cp bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}.txt develop.txt &&
+          sed -i '/^pkg: /s/^pkg:\ .*\/bench\//pkg:\ /g' develop.txt &&
+          sed -i '/^pkg: /s/^pkg:\ .*\/bench\//pkg:\ /g' current.txt
+
+      - name: Run the benchmark comparisons
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        run: >
+          ${GOPATH}/bin/benchstat -html -alpha 1.1 develop.txt current.txt | sed -n "/<body>/,/<\/body>/p" > comparison.html &&
+          ./tools/scripts/pretty-benchstat-html.sh comparison.html > pretty-comparison.md
+
+      - name: Comment Benchmark Results on PR
+        if: |
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'develop'
+        uses: machine-learning-apps/pr-comment@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_SCOPE_PAT }}
+        with:
+          path: pretty-comparison.md
+
+  # =============================== Step-5: Stop the runner once the benchmarks have ran.
   stop-runner:
     name: Stop self-hosted EC2 runner
+
     needs:
       - golangci # only run if the linter check passed.
-      - start-runner # required to get output from the start-runner job
-      - benchmark-ec2-runner # required to wait when the main job is done
-    runs-on: ubuntu-latest
+      - decide-benchmark-type # type of benchmark to run.
+      - start-runner # required to get output from the start-runner job.
+      - benchmark-ec2-runner # required to wait when the main job is done.
 
     # Stop the runner even if an error happened in the previous jobs. Also ensure that
     #  if the EC2 runner was actually started, only then we stop it.
-    if: ${{ always() && (needs.start-runner.result == 'success') }} 
+    if: |
+      always() &&
+      needs.start-runner.result == 'success' &&
+      needs.decide-benchmark-type.outputs.benchmark-type != 'NONE'
+
+    runs-on: ubuntu-latest
 
     steps:
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:

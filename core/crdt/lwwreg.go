@@ -19,9 +19,10 @@ import (
 
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
@@ -42,18 +43,18 @@ type LWWRegDelta struct {
 	DocKey   []byte
 }
 
-// GetPriority gets the current priority for this delta
+// GetPriority gets the current priority for this delta.
 func (delta *LWWRegDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta
+// SetPriority will set the priority for this delta.
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// Marshal encodes the delta using CBOR
-// for now lets do cbor (quick to implement)
+// Marshal encodes the delta using CBOR.
+// for now le'ts do cbor (quick to implement)
 func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
@@ -73,19 +74,16 @@ func (delta *LWWRegDelta) Value() interface{} {
 	return delta.Data
 }
 
-// LWWRegister Last-Writer-Wins Register
-// a simple CRDT type that allows set/get of an
-// arbitrary data type that ensures convergence
+// LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
+// of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	baseCRDT
-	key string
 }
 
-// NewLWWRegister returns a new instance of the LWWReg with the given ID
-func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWWRegister {
+// NewLWWRegister returns a new instance of the LWWReg with the given ID.
+func NewLWWRegister(store datastore.DSReaderWriter, key core.DataStoreKey) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, namespace),
-		key:      key,
+		baseCRDT: newBaseCRDT(store, key),
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -96,8 +94,8 @@ func NewLWWRegister(store core.DSReaderWriter, namespace ds.Key, key string) LWW
 // Value gets the current register value
 // RETURN STATE
 func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
-	valueK := reg.valueKey(reg.key)
-	buf, err := reg.store.Get(ctx, valueK)
+	valueK := reg.key.WithValueFlag()
+	buf, err := reg.store.Get(ctx, valueK.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +110,12 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
 		Data:   value,
-		DocKey: []byte(reg.key),
+		DocKey: reg.key.Bytes(),
 	}
 }
 
 func (reg LWWRegister) ID() string {
-	return reg.key
+	return reg.key.ToString()
 }
 
 // RETURN DELTA
@@ -150,19 +148,19 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	valueK := reg.valueKey(reg.key)
+	valueK := reg.key.WithValueFlag()
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, _ := reg.store.Get(ctx, valueK)
+		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
 		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
 	}
 
 	// prepend the value byte array with a single byte indicator for the CRDT Type.
-	buf := append([]byte{byte(core.LWW_REGISTER)}, val...)
-	err = reg.store.Put(ctx, valueK, buf)
+	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
+	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
 		return fmt.Errorf("Failed to store new value : %w", err)
 	}
@@ -172,7 +170,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 
 // DeltaDecode is a typed helper to extract
 // a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
+// for now let's do cbor (quick to implement)
 func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)

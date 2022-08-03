@@ -1,0 +1,6 @@
+type address {
+    street: String
+    number: Int
+    city: String
+    country: String
+}

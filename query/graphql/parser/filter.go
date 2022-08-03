@@ -11,21 +11,17 @@
 package parser
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/SierraSoftworks/connor"
 	"github.com/graphql-go/graphql/language/ast"
+
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
-
-type EvalContext struct {
-	context.Context
-}
 
 // Filter contains the parsed condition map to be
 // run by the Filter Evaluator.
@@ -34,27 +30,23 @@ type EvalContext struct {
 type Filter struct {
 	// parsed filter conditions
 	Conditions map[string]interface{}
-
-	// raw graphql statement
-	Statement *ast.ObjectValue
 }
 
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
-// and extracts all the filter conditions into a usable map
+// and extracts all the filter conditions into a usable map.
 func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
 		return nil, err
 	}
 	return &Filter{
-		Statement:  stmt,
 		Conditions: conditions,
 	}, nil
 }
 
-// NewFilterFromString creates a new filter from a string
+// NewFilterFromString creates a new filter from a string.
 func NewFilterFromString(body string) (*Filter, error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
@@ -77,23 +69,23 @@ type parseFn func(*ast.ObjectValue) (interface{}, error)
 // ParseConditionsInOrder is similar to ParseConditions, except instead
 // of returning a map[string]interface{}, we return a []interface{}. This
 // is to maintain the ordering info of the statements within the ObjectValue.
-// This function is mostly used by the Sort parser, which needs to parse
+// This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]SortCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]SortCondition); ok {
+	if v, ok := cond.([]parserTypes.OrderCondition); ok {
 		return v, nil
 	}
 	return nil, errors.New("Failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
-	conditions := make([]SortCondition, 0)
+	conditions := make([]parserTypes.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -105,20 +97,20 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 		}
 
 		switch v := val.(type) {
-		case string: // base direction parsed (hopefully, check NameToSortDirection)
-			dir, ok := NameToSortDirection[v]
+		case string: // base direction parsed (hopefully, check NameToOrderDirection)
+			dir, ok := parserTypes.NameToOrderDirection[v]
 			if !ok {
-				return nil, errors.New("Invalid sort direction string")
+				return nil, errors.New("Invalid order direction string")
 			}
-			conditions = append(conditions, SortCondition{
+			conditions = append(conditions, parserTypes.OrderCondition{
 				Field:     name,
 				Direction: dir,
 			})
 
-		case []SortCondition: // flatten and incorporate the parsed slice into our current one
+		case []parserTypes.OrderCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
-				// Eg. sort: {author: {name: ASC, birthday: DESC}}
+				// Eg. order: {author: {name: ASC, birthday: DESC}}
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].
 				// etc.
@@ -133,18 +125,6 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 
 	return conditions, nil
 }
-
-// func flattenSortDirectionSlice(namespace string, slice []interface{}) []interface{} {
-// 	res := make([]interface{}, 0)
-// 	for _, v := range slice {
-// 		switch n := v.(type) {
-// 		case []interface{}:
-// 			res = append(res, flatten(namespace, n)...)
-// 		default:
-// 			res = append(res, n)
-// 		}
-// 	}
-// }
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.
@@ -170,9 +150,6 @@ func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 		val, err := parseVal(field.Value, parseConditions)
 		if err != nil {
 			return nil, err
-		}
-		if strings.HasPrefix(name, "_") && name != "_key" {
-			name = strings.Replace(name, "_", "$", 1)
 		}
 		conditions[name] = val
 	}
@@ -220,16 +197,6 @@ func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
 	}
 
 	return nil, errors.New("Failed to parse condition value from query filter statement")
-}
-
-// RunFilter runs the given filter expression
-// using the document, and evaluates.
-func RunFilter(doc map[string]interface{}, filter *Filter, ctx EvalContext) (bool, error) {
-	if filter == nil {
-		return true, nil
-	}
-
-	return connor.Match(filter.Conditions, doc)
 }
 
 /*

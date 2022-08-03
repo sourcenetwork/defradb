@@ -16,44 +16,42 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sort"
-	"strings"
 
 	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	dshelp "github.com/ipfs/go-ipfs-ds-help"
 )
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
-	store     core.DSReaderWriter
-	namespace ds.Key
+	store     datastore.DSReaderWriter
+	namespace core.HeadStoreKey
 }
 
-// NewHeadSet
-func NewHeadSet(store core.DSReaderWriter, namespace ds.Key) *heads {
+func NewHeadSet(store datastore.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return newHeadset(store, namespace)
 }
 
-func newHeadset(store core.DSReaderWriter, namespace ds.Key) *heads {
+func newHeadset(store datastore.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,
 	}
 }
 
-func (hh *heads) key(c cid.Cid) ds.Key {
+func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
 	// /<namespace>/<cid>
-	return hh.namespace.Child(dshelp.MultihashToDsKey(c.Hash()))
+	return hh.namespace.WithCid(c)
 }
 
 func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(ctx, hh.key(c))
+	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -70,12 +68,12 @@ func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height ui
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(ctx, hh.key(c), buf[0:n])
+	return store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
 
 func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
-	err := store.Delete(ctx, hh.key(c))
-	if err == ds.ErrNotFound {
+	err := store.Delete(ctx, hh.key(c).ToDS())
+	if errors.Is(err, ds.ErrNotFound) {
 		return nil
 	}
 	return err
@@ -84,7 +82,7 @@ func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
 	height, err := hh.load(ctx, c)
-	if err == ds.ErrNotFound {
+	if errors.Is(err, ds.ErrNotFound) {
 		return false, 0, nil
 	}
 	return err == nil, height, err
@@ -95,13 +93,13 @@ func (hh *heads) Len(ctx context.Context) (int, error) {
 	return len(list), err
 }
 
-// Replace replaces a head with a new cid.
+// Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
 	log.Info(
 		ctx,
 		"Replacing DAG head",
 		logging.NewKV("Old", h),
-		logging.NewKV("Cid", c),
+		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 	var store ds.Write = hh.store
 	var err error
@@ -134,8 +132,8 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 }
 
 func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
-	log.Info(ctx, "Adding new DAG head",
-		logging.NewKV("Cid", c),
+	log.Debug(ctx, "Adding new DAG head",
+		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 	return hh.write(ctx, hh.store, c, height)
 }
@@ -144,7 +142,7 @@ func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	q := query.Query{
-		Prefix:   hh.namespace.String(),
+		Prefix:   hh.namespace.ToString(),
 		KeysOnly: false,
 	}
 
@@ -166,17 +164,17 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		if r.Error != nil {
 			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
 		}
-		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		hash, err := dshelp.DsKeyToMultihash(headKey)
+
+		headKey, err := core.NewHeadStoreKey(r.Key)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
+			return nil, 0, err
 		}
-		headCid := cid.NewCidV1(cid.Raw, hash)
+
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
-			return nil, 0, errors.New("error decocding height")
+			return nil, 0, errors.New("error decoding height")
 		}
-		heads = append(heads, headCid)
+		heads = append(heads, headKey.Cid)
 		if height > maxHeight {
 			maxHeight = height
 		}

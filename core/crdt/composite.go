@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
-	ds "github.com/ipfs/go-datastore"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
@@ -37,12 +37,12 @@ type CompositeDAGDelta struct {
 	SubDAGs  []core.DAGLink
 }
 
-// GetPriority gets the current priority for this delta
+// GetPriority gets the current priority for this delta.
 func (delta *CompositeDAGDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta
+// SetPriority will set the priority for this delta.
 func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
@@ -81,7 +81,12 @@ type CompositeDAG struct {
 	schemaID string
 }
 
-func NewCompositeDAG(store core.DSReaderWriter, schemaID string, namespace ds.Key, key string) CompositeDAG {
+func NewCompositeDAG(
+	store datastore.DSReaderWriter,
+	schemaID string,
+	namespace core.Key,
+	key string,
+) CompositeDAG {
 	return CompositeDAG{
 		key:      key,
 		schemaID: schemaID,
@@ -125,7 +130,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 
 // DeltaDecode is a typed helper to extract
 // a LWWRegDelta from a ipld.Node
-// for now lets do cbor (quick to implement)
+// for now let's do cbor (quick to implement)
 func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)

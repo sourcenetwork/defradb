@@ -12,6 +12,8 @@ package logging
 
 import (
 	"context"
+	stdlog "log"
+	"os"
 	"sync"
 
 	"go.uber.org/zap"
@@ -19,9 +21,10 @@ import (
 )
 
 type logger struct {
-	name     string
-	logger   *zap.Logger
-	syncLock sync.RWMutex
+	name          string
+	logger        *zap.Logger
+	consoleLogger *stdlog.Logger
+	syncLock      sync.RWMutex
 }
 
 var _ Logger = (*logger)(nil)
@@ -50,13 +53,6 @@ func (l *logger) Info(ctx context.Context, message string, keyvals ...KV) {
 	defer l.syncLock.RUnlock()
 
 	l.logger.Info(message, toZapFields(keyvals)...)
-}
-
-func (l *logger) Warn(ctx context.Context, message string, keyvals ...KV) {
-	l.syncLock.RLock()
-	defer l.syncLock.RUnlock()
-
-	l.logger.Warn(message, toZapFields(keyvals)...)
 }
 
 func (l *logger) Error(ctx context.Context, message string, keyvals ...KV) {
@@ -93,6 +89,41 @@ func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals 
 	l.logger.Fatal(message, toZapFields(kvs)...)
 }
 
+func (l *logger) FeedbackInfo(ctx context.Context, message string, keyvals ...KV) {
+	l.Info(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackError(ctx context.Context, message string, keyvals ...KV) {
+	l.Error(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackErrorE(ctx context.Context, message string, err error, keyvals ...KV) {
+	l.ErrorE(ctx, message, err, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackFatal(ctx context.Context, message string, keyvals ...KV) {
+	l.Fatal(ctx, message, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
+func (l *logger) FeedbackFatalE(ctx context.Context, message string, err error, keyvals ...KV) {
+	l.FatalE(ctx, message, err, keyvals...)
+	if l.consoleLogger != nil {
+		l.consoleLogger.Println(message)
+	}
+}
+
 func (l *logger) Flush() error {
 	return l.logger.Sync()
 }
@@ -118,15 +149,30 @@ func (l *logger) ApplyConfig(config Config) {
 	// We need sync the old log before swapping it out
 	_ = l.logger.Sync()
 	l.logger = newLogger
+
+	if !willOutputToStderrOrStdout(config.OutputPaths) {
+		if config.pipe != nil { // for testing purposes only
+			l.consoleLogger = stdlog.New(config.pipe, "", 0)
+		} else {
+			l.consoleLogger = stdlog.New(os.Stderr, "", 0)
+		}
+	} else {
+		l.consoleLogger = nil
+	}
 }
 
 func buildZapLogger(name string, config Config) (*zap.Logger, error) {
+	const (
+		encodingTypeConsole string = "console"
+		encodingTypeJSON    string = "json"
+	)
 	defaultConfig := zap.NewProductionConfig()
-	defaultConfig.Encoding = "console"
+	defaultConfig.Encoding = encodingTypeConsole
 	defaultConfig.EncoderConfig.ConsoleSeparator = ", "
 	defaultConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	defaultConfig.DisableStacktrace = true
+	defaultConfig.DisableCaller = true
 
 	if config.Level.HasValue {
 		defaultConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel))
@@ -136,12 +182,20 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 		defaultConfig.DisableStacktrace = !config.EnableStackTrace.EnableStackTrace
 	}
 
+	if config.DisableColor.HasValue && config.DisableColor.DisableColor {
+		defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	}
+
+	if config.EnableCaller.HasValue {
+		defaultConfig.DisableCaller = !config.EnableCaller.EnableCaller
+	}
+
 	if config.EncoderFormat.HasValue {
 		if config.EncoderFormat.EncoderFormat == JSON {
-			defaultConfig.Encoding = "json"
+			defaultConfig.Encoding = encodingTypeJSON
 			defaultConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 		} else if config.EncoderFormat.EncoderFormat == CSV {
-			defaultConfig.Encoding = "console"
+			defaultConfig.Encoding = encodingTypeConsole
 		}
 	}
 
@@ -153,6 +207,20 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	newLogger, err := defaultConfig.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
+	}
+
+	if willOutputToStderrOrStdout(defaultConfig.OutputPaths) && config.pipe != nil {
+		newLogger = newLogger.WithOptions(zap.WrapCore(func(zapcore.Core) zapcore.Core {
+			cfg := zap.NewProductionEncoderConfig()
+			cfg.ConsoleSeparator = defaultConfig.EncoderConfig.ConsoleSeparator
+			cfg.EncodeTime = defaultConfig.EncoderConfig.EncodeTime
+			cfg.EncodeLevel = defaultConfig.EncoderConfig.EncodeLevel
+			return zapcore.NewCore(
+				zapcore.NewJSONEncoder(cfg),
+				zapcore.AddSync(config.pipe),
+				zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel)),
+			)
+		}))
 	}
 
 	return newLogger.Named(name), nil

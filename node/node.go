@@ -8,20 +8,29 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package node is responsible for interfacing a given DefraDB instance with a networked peer instance
+and GRPC server.
+
+Basically it combines db/DB, net/Peer, and net/Server into a single Node object.
+*/
 package node
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -33,18 +42,11 @@ import (
 	"github.com/sourcenetwork/defradb/net"
 )
 
-/*
-
-Package node is responsible for interfacing a given DefraDB instance with
-a networked peer instance and GRPC server.
-
-Basically it combines db/DB, net/Peer, and net/Server into a single Node
-object.
-*/
-
 var (
 	log = logging.MustNewLogger("defra.node")
 )
+
+const evtWaitTimeout = 10 * time.Second
 
 type Node struct {
 	// embed the DB interface into the node
@@ -56,20 +58,28 @@ type Node struct {
 	pubsub   *pubsub.PubSub
 	litepeer *ipfslite.Peer
 
+	// receives an event when the status of a peer connection changes.
+	peerEvent chan event.EvtPeerConnectednessChanged
+
+	// receives an event when a pubsub topic is added.
+	pubSubEvent chan net.EvtPubSub
+
+	// receives an event when a pushLog request has been processed.
+	pushLogEvent chan net.EvtReceivedPushLog
+
 	ctx context.Context
 }
 
-// NewNode creates a new network node instance of DefraDB, wired into Libp2p
-func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts ...NodeOpt) (*Node, error) {
-	// merge all the options args together
-	var options Options
-	for _, opt := range append(opts, DefaultOpts()) {
-		if opt == nil {
-			continue
-		}
-		if err := opt(&options); err != nil {
-			return nil, err
-		}
+// NewNode creates a new network node instance of DefraDB, wired into libp2p.
+func NewNode(
+	ctx context.Context,
+	db client.DB,
+	bs *broadcast.Broadcaster,
+	opts ...NodeOpt,
+) (*Node, error) {
+	options, err := NewMergedOptions(opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	fin := finalizer.NewFinalizer()
@@ -92,7 +102,9 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 	libp2pOpts := []libp2p.Option{
 		libp2p.Peerstore(peerstore),
 		libp2p.ConnectionManager(options.ConnManager),
-		libp2p.DisableRelay(), // @todo: Possibly bind this to an Option
+	}
+	if options.EnableRelay {
+		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
 	}
 
 	h, d, err := ipfslite.SetupLibp2p(
@@ -103,12 +115,17 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		rootstore,
 		libp2pOpts...,
 	)
-	log.Info(ctx, "Created LibP2P host", logging.NewKV("PeerId", h.ID()), logging.NewKV("Address", options.ListenAddrs))
+	log.Info(
+		ctx,
+		"Created LibP2P host",
+		logging.NewKV("PeerId", h.ID()),
+		logging.NewKV("Address", options.ListenAddrs),
+	)
 	if err != nil {
 		return nil, fin.Cleanup(err)
 	}
 
-	bstore := db.DAGstore()
+	bstore := db.Blockstore()
 	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
 	if err != nil {
 		return nil, fin.Cleanup(err)
@@ -142,18 +159,128 @@ func NewNode(ctx context.Context, db client.DB, bs *broadcast.Broadcaster, opts 
 		return nil, fin.Cleanup(err)
 	}
 
-	return &Node{
-		Peer:     peer,
-		host:     h,
-		pubsub:   ps,
-		DB:       db,
-		litepeer: lite,
-		ctx:      ctx,
-	}, nil
+	n := &Node{
+		pubSubEvent:  make(chan net.EvtPubSub),
+		pushLogEvent: make(chan net.EvtReceivedPushLog),
+		peerEvent:    make(chan event.EvtPeerConnectednessChanged),
+		Peer:         peer,
+		host:         h,
+		pubsub:       ps,
+		DB:           db,
+		litepeer:     lite,
+		ctx:          ctx,
+	}
+
+	n.subscribeToPeerConnectionEvents()
+	n.subscribeToPubSubEvents()
+	n.subscribeToPushLogEvents()
+
+	return n, nil
 }
 
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	n.litepeer.Bootstrap(addrs)
+}
+
+// PeerID returns the node's peer ID.
+func (n *Node) PeerID() peer.ID {
+	return n.host.ID()
+}
+
+// subscribeToPeerConnectionEvents subscribes the node to the event bus for a peer connection change.
+func (n *Node) subscribeToPeerConnectionEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(event.EvtPeerConnectednessChanged))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to peer connectedness changed event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.peerEvent <- e.(event.EvtPeerConnectednessChanged)
+		}
+	}()
+}
+
+// subscribeToPubSubEvents subscribes the node to the event bus for a pubsub.
+func (n *Node) subscribeToPubSubEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(net.EvtPubSub))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to pubsub event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.pubSubEvent <- e.(net.EvtPubSub)
+		}
+	}()
+}
+
+// subscribeToPushLogEvents subscribes the node to the event bus for a push log request completion.
+func (n *Node) subscribeToPushLogEvents() {
+	sub, err := n.host.EventBus().Subscribe(new(net.EvtReceivedPushLog))
+	if err != nil {
+		log.Info(
+			n.ctx,
+			fmt.Sprintf("failed to subscribe to push log event: %v", err),
+		)
+	}
+	go func() {
+		for e := range sub.Out() {
+			n.pushLogEvent <- e.(net.EvtReceivedPushLog)
+		}
+	}()
+}
+
+// WaitForPeerConnectionEvent listens to the event channel for a connection event from a given peer.
+func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
+	if n.host.Network().Connectedness(id) == network.Connected {
+		return nil
+	}
+	for {
+		select {
+		case evt := <-n.peerEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for peer connection timed out")
+		}
+	}
+}
+
+// WaitForPubSubEvent listens to the event channel for pub sub event from a given peer.
+func (n *Node) WaitForPubSubEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pubSubEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for pubsub timed out")
+		}
+	}
+}
+
+// WaitForPushLogEvent listens to the event channel for a push log event from a given peer.
+func (n *Node) WaitForPushLogEvent(id peer.ID) error {
+	for {
+		select {
+		case evt := <-n.pushLogEvent:
+			if evt.Peer != id {
+				continue
+			}
+			return nil
+		case <-time.After(evtWaitTimeout):
+			return fmt.Errorf("waiting for pushlog timed out")
+		}
+	}
 }
 
 // replace with proper keystore
@@ -169,14 +296,14 @@ func getHostKey(keypath string) (crypto.PrivKey, error) {
 		if err := os.MkdirAll(keypath, os.ModePerm); err != nil {
 			return nil, err
 		}
-		if err = ioutil.WriteFile(pth, bytes, 0400); err != nil {
+		if err = os.WriteFile(pth, bytes, 0400); err != nil {
 			return nil, err
 		}
 		return key, nil
 	} else if err != nil {
 		return nil, err
 	} else {
-		bytes, err := ioutil.ReadFile(pth)
+		bytes, err := os.ReadFile(pth)
 		if err != nil {
 			return nil, err
 		}
@@ -194,4 +321,8 @@ func newHostKey() (crypto.PrivKey, []byte, error) {
 		return nil, nil, err
 	}
 	return priv, key, nil
+}
+
+func (n Node) Close() error {
+	return n.Peer.Close()
 }

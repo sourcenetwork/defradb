@@ -1,8 +1,8 @@
-cli/defradb/defradb
-cli/defradb/defradb.exe
-build/defradb*
-cover.out
-coverage-full.txt
-coverage-quick.txt
-bench/*.log
-bench/*.svg
+.vscode
+build/*
+cmd/defradb/defradb
+cmd/genclidocs/genclidocs
+cmd/genmanpages/genmanpages
+coverage.txt
+tests/bench/*.log
+tests/bench/*.svg

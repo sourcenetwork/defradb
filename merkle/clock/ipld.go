@@ -127,7 +127,7 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 	// The cid builder defaults to v0, we want to be using v1 Cids
 	nd.SetCidBuilder(
 		cid.V1Builder{
-			Codec:    cid.Raw,
+			Codec:    cid.DagProtobuf,
 			MhType:   mh.SHA2_256,
 			MhLength: -1,
 		})

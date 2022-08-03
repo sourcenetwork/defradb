@@ -1,6 +1,0 @@
-type user {
-	name: String 
-	age: Int 
-	verified: Boolean 
-	points: Float
-}

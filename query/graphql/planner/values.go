@@ -12,12 +12,11 @@ package planner
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // valuesNode contains a collection
@@ -27,16 +26,18 @@ import (
 // then the rest of the nodes in the graph. It
 // has no children planNodes.
 type valuesNode struct {
+	docMapper
+
 	p *Planner
 	// plan planNode
 
-	ordering []parser.SortCondition
+	ordering []mapper.OrderCondition
 
 	docs     *container.DocumentContainer
 	docIndex int
 }
 
-func (p *Planner) newContainerValuesNode(ordering []parser.SortCondition) *valuesNode {
+func (p *Planner) newContainerValuesNode(ordering []mapper.OrderCondition) *valuesNode {
 	return &valuesNode{
 		p:        p,
 		ordering: ordering,
@@ -48,10 +49,16 @@ func (p *Planner) newContainerValuesNode(ordering []parser.SortCondition) *value
 func (n *valuesNode) Init() error            { return nil }
 func (n *valuesNode) Start() error           { return nil }
 func (n *valuesNode) Spans(spans core.Spans) {}
-func (n *valuesNode) Close() {
+
+func (n *valuesNode) Kind() string {
+	return "valuesNode"
+}
+
+func (n *valuesNode) Close() error {
 	if n.docs != nil {
-		n.docs.Close()
+		return n.docs.Close()
 	}
+	return nil
 }
 
 func (n *valuesNode) Next() (bool, error) {
@@ -62,7 +69,7 @@ func (n *valuesNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *valuesNode) Values() map[string]interface{} {
+func (n *valuesNode) Value() core.Doc {
 	return n.docs.At(n.docIndex)
 }
 
@@ -84,15 +91,15 @@ func (n *valuesNode) Less(i, j int) bool {
 }
 
 // docValueLess extracts and compare field values of a document
-func (n *valuesNode) docValueLess(da, db map[string]interface{}) bool {
+func (n *valuesNode) docValueLess(da, db core.Doc) bool {
 	var ra, rb interface{}
 	for _, order := range n.ordering {
-		if order.Direction == parser.ASC {
-			ra = getMapProp(da, order.Field)
-			rb = getMapProp(db, order.Field)
-		} else if order.Direction == parser.DESC { // redundant, just else
-			ra = getMapProp(db, order.Field)
-			rb = getMapProp(da, order.Field)
+		if order.Direction == mapper.ASC {
+			ra = getDocProp(da, order.FieldIndexes)
+			rb = getDocProp(db, order.FieldIndexes)
+		} else if order.Direction == mapper.DESC { // redundant, just else
+			ra = getDocProp(db, order.FieldIndexes)
+			rb = getDocProp(da, order.FieldIndexes)
 		}
 
 		if c := base.Compare(ra, rb); c < 0 {
@@ -126,31 +133,25 @@ func (n *valuesNode) Len() int {
 // case of nested objects. The key delimeter is a ".".
 // Eg.
 // prop = "author.name" -> {author: {name: ...}}
-func getMapProp(obj map[string]interface{}, prop string) interface{} {
-	if prop == "" {
+func getDocProp(obj core.Doc, prop []int) interface{} {
+	if len(prop) == 0 {
 		return nil
 	}
-	props := strings.Split(prop, ".")
-	numProps := len(props)
-	return getMapPropList(obj, props, numProps)
+	return getMapPropList(obj, prop)
 }
 
-func getMapPropList(obj map[string]interface{}, props []string, numProps int) interface{} {
-	if numProps == 1 {
-		val, ok := obj[props[0]]
-		if !ok {
-			return nil
-		}
-		return val
+func getMapPropList(obj core.Doc, props []int) interface{} {
+	if len(props) == 1 {
+		return obj.Fields[props[0]]
 	}
 
-	val, ok := obj[props[0]]
+	val := obj.Fields[props[0]]
+	if val == nil {
+		return nil
+	}
+	subObj, ok := val.(core.Doc)
 	if !ok {
 		return nil
 	}
-	subObj, ok := val.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	return getMapPropList(subObj, props[1:], numProps-1)
+	return getMapPropList(subObj, props[1:])
 }

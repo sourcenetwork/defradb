@@ -14,41 +14,41 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/document"
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestCollectionDescription() base.CollectionDescription {
-	return base.CollectionDescription{
+func newTestCollectionDescription() client.CollectionDescription {
+	return client.CollectionDescription{
 		Name: "users",
 		ID:   uint32(1),
-		Schema: base.SchemaDescription{
+		Schema: client.SchemaDescription{
 			ID:       uint32(1),
 			FieldIDs: []uint32{1, 2, 3},
-			Fields: []base.FieldDescription{
+			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
-					ID:   base.FieldID(1),
-					Kind: base.FieldKind_DocKey,
+					ID:   client.FieldID(1),
+					Kind: client.FieldKind_DocKey,
 				},
 				{
 					Name: "Name",
-					ID:   base.FieldID(2),
-					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					ID:   client.FieldID(2),
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
 				},
 				{
 					Name: "Age",
-					ID:   base.FieldID(3),
-					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					ID:   client.FieldID(3),
+					Kind: client.FieldKind_INT,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
-		Indexes: []base.IndexDescription{
+		Indexes: []client.IndexDescription{
 			{
 				Name:    "primary",
 				ID:      uint32(0),
@@ -57,13 +57,12 @@ func newTestCollectionDescription() base.CollectionDescription {
 			},
 		},
 	}
-
 }
 
 func newTestFetcher() (*fetcher.DocumentFetcher, error) {
 	df := new(fetcher.DocumentFetcher)
 	desc := newTestCollectionDescription()
-	err := df.Init(&desc, &desc.Indexes[0], nil, false)
+	err := df.Init(&desc, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +112,8 @@ func TestFetcherStartWithoutInit(t *testing.T) {
 
 func TestMakeIndexPrefixKey(t *testing.T) {
 	desc := newTestCollectionDescription()
-	key := base.MakeIndexPrefixKey(&desc, &desc.Indexes[0])
-	assert.Equal(t, "/db/data/1/0", key.String())
+	key := base.MakeCollectionKey(desc)
+	assert.Equal(t, "/1", key.ToString())
 }
 
 func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
@@ -125,7 +124,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -143,7 +142,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -162,7 +161,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -170,7 +169,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	doc, err = document.NewFromJSON([]byte(`{
+	doc, err = client.NewDocFromJSON([]byte(`{
 		"Name": "Alice",
 		"Age": 27
 	}`))
@@ -188,7 +187,7 @@ func TestFetcherGetAllPrimaryIndexEncodedDocMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	err = df.Start(ctx, txn, core.Spans{})
@@ -210,7 +209,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -220,7 +219,7 @@ func TestFetcherGetAllPrimaryIndexDecodedSingle(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -254,7 +253,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -262,7 +261,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 	err = col.Save(ctx, doc)
 	assert.NoError(t, err)
 
-	doc, err = document.NewFromJSON([]byte(`{
+	doc, err = client.NewDocFromJSON([]byte(`{
 		"Name": "Alice",
 		"Age": 27
 	}`))
@@ -272,7 +271,7 @@ func TestFetcherGetAllPrimaryIndexDecodedMultiple(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -319,7 +318,7 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 	col, err := newTestCollectionWithSchema(ctx, db)
 	assert.NoError(t, err)
 
-	doc, err := document.NewFromJSON([]byte(`{
+	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
 	}`))
@@ -329,14 +328,14 @@ func TestFetcherGetOnePrimaryIndexDecoded(t *testing.T) {
 
 	df := new(fetcher.DocumentFetcher)
 	desc := col.Description()
-	err = df.Init(&desc, &desc.Indexes[0], nil, false)
+	err = df.Init(&desc, nil, false)
 	assert.NoError(t, err)
 
 	// create a span for our document we wish to find
-	docKey := core.Key{Key: base.MakeIndexPrefixKey(&desc, &desc.Indexes[0]).ChildString("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")}
-	spans := core.Spans{
+	docKey := base.MakeCollectionKey(desc).WithDocKey("bae-52b9170d-b77a-5887-b877-cbdbb99b009f")
+	spans := core.NewSpans(
 		core.NewSpan(docKey, docKey.PrefixEnd()),
-	}
+	)
 
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {

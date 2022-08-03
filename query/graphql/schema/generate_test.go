@@ -19,11 +19,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/query/graphql/schema/types"
-
 	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/logging"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +57,7 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -70,6 +69,10 @@ func Test_Generator_buildTypesFromAST_SingleScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -119,7 +122,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -131,6 +134,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -163,7 +170,7 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -175,6 +182,10 @@ func Test_Generator_buildTypesFromAST_SingleListScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -207,7 +218,7 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -219,6 +230,10 @@ func Test_Generator_buildTypesFromAST_SingleListNonNullScalarField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -251,7 +266,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -263,6 +278,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListScalarField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -295,7 +314,7 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -307,6 +326,10 @@ func Test_Generator_buildTypesFromAST_SingleNonNullListNonNullScalarField(t *tes
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -344,7 +367,7 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -356,6 +379,10 @@ func Test_Generator_buildTypesFromAST_MultiScalarField(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -412,7 +439,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -424,6 +451,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -443,7 +474,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -455,6 +486,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleScalarField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -493,7 +528,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -505,6 +540,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"myField": &gql.Field{
@@ -528,7 +567,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -540,6 +579,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectMultiScalarField(t *testing.T) 
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -569,7 +612,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 				},
 				"_version": &gql.Field{
 					Name: "_version",
-					Type: gql.NewList(types.Commit),
+					Type: gql.NewList(schemaTypes.CommitObject),
 				},
 				"_group": &gql.Field{
 					Name: "_group",
@@ -581,6 +624,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 				},
 				"_sum": &gql.Field{
 					Name: "_sum",
+					Type: gql.Float,
+				},
+				"_avg": &gql.Field{
+					Name: "_avg",
 					Type: gql.Float,
 				},
 				"myField": &gql.Field{
@@ -613,7 +660,7 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -625,6 +672,10 @@ func Test_Generator_buildTypesFromAST_MultiObjectSingleObjectField(t *testing.T)
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -675,7 +726,7 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 						},
 						"_version": &gql.Field{
 							Name: "_version",
-							Type: gql.NewList(types.Commit),
+							Type: gql.NewList(schemaTypes.CommitObject),
 						},
 						"_group": &gql.Field{
 							Name: "_group",
@@ -687,6 +738,10 @@ func Test_Generator_buildTypesFromAST_MissingObject(t *testing.T) {
 						},
 						"_sum": &gql.Field{
 							Name: "_sum",
+							Type: gql.Float,
+						},
+						"_avg": &gql.Field{
+							Name: "_avg",
 							Type: gql.Float,
 						},
 						"otherField": &gql.Field{
@@ -741,7 +796,7 @@ func runTestConfigForbuildTypesFromASTSuite(t *testing.T, g *Generator, schema s
 		assert.Equal(t, objDef.Name(), myObjectActual.Name(), "Mismatched object names from buildTypesFromAST")
 		log.Info(
 			ctx,
-			"expected vs actual objects",
+			"Expected vs actual objects",
 			logging.NewKV("DefinitionFields", objDef.Fields()),
 			logging.NewKV("ActualFields", myObjectActual.Fields()))
 
@@ -918,9 +973,11 @@ func runTestConfigForGenTypeFilterSuite(t *testing.T, g *Generator, obj *gql.Obj
 	for _, field := range obj.Fields() {
 		if !gql.IsLeafType(field.Type) {
 			unwrappedFieldType := unwrapType(field.Type)
-			base := g.genTypeFilterBaseArgInput(unwrappedFieldType.(*gql.Object))
-			err := g.manager.schema.AppendType(base)
-			assert.NoError(t, err, "Failed to generate sub object base arg input types")
+			base, hasBase := g.tryGenTypeFilterBaseArgInput(unwrappedFieldType.(*gql.Object))
+			if hasBase {
+				err := g.manager.schema.AppendType(base)
+				assert.NoError(t, err, "Failed to generate sub object base arg input types")
+			}
 		}
 	}
 	err := g.manager.schema.AppendType(filterInput)

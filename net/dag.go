@@ -21,7 +21,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -54,7 +54,7 @@ type dagJob struct {
 	node       ipld.Node       // the current ipld Node
 
 	collection client.Collection // collection our document belongs to
-	dockey     key.DocKey        // dockey of our document
+	dockey     core.DataStoreKey // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
 	// OLD FIELDS
@@ -82,7 +82,12 @@ func (p *Peer) sendJobWorker() {
 // initialization in New().
 func (p *Peer) dagWorker() {
 	for job := range p.jobQueue {
-		log.Debug(p.ctx, "Starting new job from dag queue", logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+		log.Debug(
+			p.ctx,
+			"Starting new job from DAG queue",
+			logging.NewKV("DocKey", job.dockey),
+			logging.NewKV("CID", job.node.Cid()),
+		)
 
 		select {
 		case <-p.ctx.Done():
@@ -103,12 +108,26 @@ func (p *Peer) dagWorker() {
 		)
 
 		if err != nil {
-			log.ErrorE(p.ctx, "Error processing log", err, logging.NewKV("DocKey", job.dockey), logging.NewKV("Cid", job.node.Cid()))
+			log.ErrorE(
+				p.ctx,
+				"Error processing log",
+				err,
+				logging.NewKV("DocKey", job.dockey),
+				logging.NewKV("CID", job.node.Cid()),
+			)
 			job.session.Done()
 			continue
 		}
 		go func(j *dagJob) {
-			p.handleChildBlocks(j.session, j.collection, j.dockey, j.fieldName, j.node, children, j.nodeGetter)
+			p.handleChildBlocks(
+				j.session,
+				j.collection,
+				j.dockey,
+				j.fieldName,
+				j.node,
+				children,
+				j.nodeGetter,
+			)
 			j.session.Done()
 		}(job)
 	}

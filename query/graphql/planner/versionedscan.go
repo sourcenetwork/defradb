@@ -13,10 +13,10 @@ package planner
 import (
 	"errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	"github.com/ipfs/go-cid"
 )
@@ -27,22 +27,24 @@ var (
 
 // scans an index for records
 type versionedScanNode struct {
+	documentIterator
+	docMapper
+
 	p *Planner
 
 	// versioned data
-	key     core.Key
+	key     core.DataStoreKey
 	version cid.Cid
 
-	desc base.CollectionDescription
+	desc client.CollectionDescription
 
-	fields []*base.FieldDescription
-	doc    map[string]interface{}
+	fields []*client.FieldDescription
 	docKey []byte
 
 	reverse bool
 
 	// filter data
-	filter *parser.Filter
+	filter *mapper.Filter
 
 	scanInitialized bool
 
@@ -51,7 +53,7 @@ type versionedScanNode struct {
 
 func (n *versionedScanNode) Init() error {
 	// init the fetcher
-	if err := n.fetcher.Init(&n.desc, nil, n.fields, n.reverse); err != nil {
+	if err := n.fetcher.Init(&n.desc, n.fields, n.reverse); err != nil {
 		return err
 	}
 	return n.initScan()
@@ -64,7 +66,7 @@ func (n *versionedScanNode) Start() error {
 }
 
 func (n *versionedScanNode) initScan() error {
-	if len(n.key.String()) == 0 || n.version.Equals(emptyCID) {
+	if n.key.DocKey == "" || n.version.Equals(emptyCID) {
 		return errors.New("VersionedScan is missing either a DocKey or VersionCID")
 	}
 
@@ -93,15 +95,15 @@ func (n *versionedScanNode) Next() (bool, error) {
 	// keep scanning until we find a doc that passes the filter
 	for {
 		var err error
-		n.docKey, n.doc, err = n.fetcher.FetchNextMap(n.p.ctx)
+		n.docKey, n.currentValue, err = n.fetcher.FetchNextDoc(n.p.ctx, n.documentMapping)
 		if err != nil {
 			return false, err
 		}
-		if n.doc == nil {
+		if len(n.currentValue.Fields) == 0 {
 			return false, nil
 		}
 
-		passed, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		passed, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}
@@ -117,11 +119,6 @@ func (n *versionedScanNode) Spans(spans core.Spans) {
 	// if len(spans) != 1 {
 	// 	return
 	// }
-}
-
-// Values returns the most recent result from Next()
-func (n *versionedScanNode) Values() map[string]interface{} {
-	return n.doc
 }
 
 func (n *versionedScanNode) Close() error {

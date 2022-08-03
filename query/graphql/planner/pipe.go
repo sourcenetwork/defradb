@@ -19,6 +19,9 @@ import (
 // The node will start empty, and then load items as they are requested.  Items that are
 // requested more than once will not be re-loaded from source.
 type pipeNode struct {
+	documentIterator
+	docMapper
+
 	source planNode
 
 	docs *container.DocumentContainer
@@ -27,12 +30,17 @@ type pipeNode struct {
 	docIndex int
 }
 
-func newPipeNode() pipeNode {
+func newPipeNode(docMap *core.DocumentMapping) pipeNode {
 	return pipeNode{
 		docs: container.NewDocumentContainer(0),
 		// A docIndex of minus -1 indicated that nothing has been read yet
-		docIndex: -1,
+		docIndex:  -1,
+		docMapper: docMapper{docMap},
 	}
+}
+
+func (n *pipeNode) Kind() string {
+	return "pipeNode"
 }
 
 func (n *pipeNode) Init() error {
@@ -48,15 +56,10 @@ func (n *pipeNode) Spans(spans core.Spans) { n.source.Spans(spans) }
 func (n *pipeNode) Close() error           { return n.source.Close() }
 func (n *pipeNode) Source() planNode       { return n.source }
 
-func (n *pipeNode) Values() map[string]interface{} {
-	// Values must be copied out of the node, in case consumers mutate the item
-	// for example: when rendering
-	return copyMap(n.docs.At(n.docIndex))
-}
-
 func (n *pipeNode) Next() (bool, error) {
-	// we need to load all docs up until the requested point - this allows us to handle situations where
-	// a child record might be requested before handled in the parent - e.g. with a child sort
+	// we need to load all docs up until the requested point - this allows us to
+	// handle situations where a child record might be requested before handled
+	// in the parent - e.g. with a child sort
 	for n.docIndex >= n.docs.Len()-1 {
 		hasNext, err := n.source.Next()
 		if err != nil {
@@ -66,12 +69,17 @@ func (n *pipeNode) Next() (bool, error) {
 			return false, nil
 		}
 
-		doc := n.source.Values()
+		doc := n.source.Value()
 		err = n.docs.AddDoc(doc)
 		if err != nil {
 			return false, err
 		}
 	}
 	n.docIndex++
+
+	// Values must be copied out of the node, in case consumers mutate the item
+	// for example: when rendering
+	doc := n.docs.At(n.docIndex)
+	n.currentValue = doc.Clone()
 	return true, nil
 }

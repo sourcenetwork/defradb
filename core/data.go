@@ -12,48 +12,49 @@ package core
 
 import "strings"
 
-// Span is a range of keys from [Start, End)
+// Span is a range of keys from [Start, End).
 type Span interface {
-	// Start returns the starting key of the Span
-	Start() Key
-	// End returns the ending key of the Span
-	End() Key
-	// Contains returns true of the Span contains the provided Span's range
+	// Start returns the starting key of the Span.
+	Start() DataStoreKey
+	// End returns the ending key of the Span.
+	End() DataStoreKey
+	// Contains returns true of the Span contains the provided Span's range.
 	Contains(Span) bool
-	// Equal returns true if the provided Span is equal to the current
+	// Equal returns true if the provided Span is equal to the current.
 	Equal(Span) bool
-	// Compare returns -1 if the provided span is less, 0 if it is equal, and 1 if its greater
+	// Compare returns -1 if the provided span is less, 0 if it is equal, and 1 if its greater.
 	Compare(Span) SpanComparisonResult
 }
 
 type span struct {
-	start Key
-	end   Key
+	Span
+	start DataStoreKey
+	end   DataStoreKey
 }
 
-func NewSpan(start, end Key) Span {
+func NewSpan(start, end DataStoreKey) Span {
 	return span{
 		start: start,
 		end:   end,
 	}
 }
 
-// Start returns the starting key of the Span
-func (s span) Start() Key {
+// Start returns the starting key of the Span.
+func (s span) Start() DataStoreKey {
 	return s.start
 }
 
-// End returns the ending key of the Span
-func (s span) End() Key {
+// End returns the ending key of the Span.
+func (s span) End() DataStoreKey {
 	return s.end
 }
 
-// Contains returns true of the Span contains the provided Span's range
+// Contains returns true of the Span contains the provided Span's range.
 func (s span) Contains(s2 Span) bool {
 	panic("not implemented") // TODO: Implement
 }
 
-// Equal returns true if the provided Span is equal to the current
+// Equal returns true if the provided Span is equal to the current.
 func (s span) Equal(s2 Span) bool {
 	panic("not implemented") // TODO: Implement
 }
@@ -84,10 +85,10 @@ func (this span) Compare(other Span) SpanComparisonResult {
 		return Equal
 	}
 
-	thisStart := this.start.String()
-	thisEnd := this.end.String()
-	otherStart := other.Start().String()
-	otherEnd := other.End().String()
+	thisStart := this.start.ToString()
+	thisEnd := this.end.ToString()
+	otherStart := other.Start().ToString()
+	otherEnd := other.End().ToString()
 
 	if thisStart < otherStart {
 		if thisEnd == otherStart || isAdjacent(this.end, other.Start()) {
@@ -146,16 +147,33 @@ func (this span) Compare(other Span) SpanComparisonResult {
 	return After
 }
 
-func isAdjacent(this Key, other Key) bool {
-	return len(this.String()) == len(other.String()) && (this.PrefixEnd().String() == other.String() || this.String() == other.PrefixEnd().String())
+func isAdjacent(this DataStoreKey, other DataStoreKey) bool {
+	return len(this.ToString()) == len(other.ToString()) &&
+		(this.PrefixEnd().ToString() == other.ToString() ||
+			this.ToString() == other.PrefixEnd().ToString())
 }
 
-// Spans is a collection of individual spans
-type Spans []Span
+// Spans is a collection of individual spans.
+type Spans struct {
+	HasValue bool
+	Value    []Span
+}
 
-// KeyValue is a KV store response containing the resulting ds.Key and byte array value
+func NewSpans(spans ...Span) Spans {
+	return Spans{
+		HasValue: true,
+		Value:    spans,
+	}
+}
+
+// KeyValue is a KV store response containing the resulting core.Key and byte array value.
 type KeyValue struct {
-	Key   Key
+	Key   DataStoreKey
+	Value []byte
+}
+
+type HeadKeyValue struct {
+	Key   HeadStoreKey
 	Value []byte
 }
 
@@ -163,12 +181,12 @@ type KeyValue struct {
 // a unique set in ascending order, where overlapping spans are merged into a single span.
 // Will handle spans with keys of different lengths, where one might be a prefix of another.
 // Adjacent spans will also be merged.
-func (spans Spans) MergeAscending() Spans {
+func MergeAscending(spans []Span) []Span {
 	if len(spans) <= 1 {
 		return spans
 	}
 
-	uniqueSpans := Spans{}
+	uniqueSpans := []Span{}
 
 	for _, span := range spans {
 		uniqueSpanFound := false
@@ -179,7 +197,7 @@ func (spans Spans) MergeAscending() Spans {
 			switch span.Compare(uniqueSpan) {
 			case Before:
 				// Shift all remaining unique spans one place to the right
-				newArray := make(Spans, len(uniqueSpans)+1)
+				newArray := make([]Span, len(uniqueSpans)+1)
 				for j := len(uniqueSpans); j > i; j-- {
 					newArray[j] = uniqueSpans[i]
 				}
@@ -200,7 +218,7 @@ func (spans Spans) MergeAscending() Spans {
 				uniqueSpanFound = true
 				i++
 			case StartBeforeEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(span.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -210,7 +228,7 @@ func (spans Spans) MergeAscending() Spans {
 				// Do nothing, span is contained within an existing unique-span
 				i = len(uniqueSpans)
 			case StartEqualEndAfter, StartWithinEndAfter, StartEqualToEndEndAfter:
-				uniqueSpans = uniqueSpans.removeBefore(i, span.End().String())
+				uniqueSpans = removeBefore(uniqueSpans, i, span.End().ToString())
 				uniqueSpans[i] = NewSpan(uniqueSpan.Start(), span.End())
 				uniqueSpanFound = true
 				// Exit the unique-span loop, this span has been handled
@@ -229,12 +247,11 @@ func (spans Spans) MergeAscending() Spans {
 }
 
 // Removes any items from the collection (given index onwards) who's end key is smaller
-// than the given value.  The returned collection will be a different instance to the given
-// and the given collection will not be mutated.
-func (spans Spans) removeBefore(startIndex int, end string) Spans {
+// than the given value. The returned collection will be a different instance.
+func removeBefore(spans []Span, startIndex int, end string) []Span {
 	indexOfLastMatchingItem := -1
 	for i := startIndex; i < len(spans); i++ {
-		if spans[i].End().String() <= end {
+		if spans[i].End().ToString() <= end {
 			indexOfLastMatchingItem = i
 		}
 	}
@@ -244,7 +261,7 @@ func (spans Spans) removeBefore(startIndex int, end string) Spans {
 	}
 
 	numberOfItemsToRemove := indexOfLastMatchingItem - startIndex
-	result := make(Spans, len(spans)-numberOfItemsToRemove)
+	result := make([]Span, len(spans)-numberOfItemsToRemove)
 	// Add the items preceding the removed items
 	for i := 0; i < startIndex; i++ {
 		result[i] = spans[i]

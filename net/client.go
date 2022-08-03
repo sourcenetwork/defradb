@@ -18,11 +18,11 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
 func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
-	dockey, err := key.NewFromString(lg.DocKey)
+	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
@@ -42,7 +42,7 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 		ctx,
 		"Preparing pushLog request",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("CID", lg.Cid),
 		logging.NewKV("SchemaId", lg.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
@@ -60,8 +60,8 @@ func (s *server) pushLog(ctx context.Context, lg core.Log, pid peer.ID) error {
 	log.Debug(
 		ctx, "Pushing log",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
-		logging.NewKV("Pid", pid))
+		logging.NewKV("CID", lg.Cid),
+		logging.NewKV("PID", pid))
 
 	client, err := s.dial(pid) // grpc dial over p2p stream
 	if err != nil {

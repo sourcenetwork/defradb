@@ -31,7 +31,7 @@ type CompositeDelta interface {
 type NetDelta interface {
 	Delta
 	GetSchemaID() string
-	// DocKey() key.DocKey
+	// DocKey() client.DocKey
 }
 
 type DAGLink struct {
