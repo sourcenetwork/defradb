@@ -22,9 +22,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
 
-var (
+// var (
 //log = logging.MustNewLogger("defra.bench")
-)
+// )
 
 func runQueryBenchGet(
 	b *testing.B,

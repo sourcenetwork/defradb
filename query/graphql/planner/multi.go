@@ -51,27 +51,30 @@ type appendNode interface {
 	Append() bool
 }
 
-// parallelNode implements the MultiNode interface. It
-// enables parallel execution of planNodes. This is needed
-// if a single query has multiple Select statements at the
-// same depth in the query.
-// Eg:
-// user {
-//		_key
-// 		name
-// 		friends {
-// 			name
-// 		}
-// 		_version {
-// 			cid
-// 		}
-// }
-//
-// In this example, both the friends selection and the _version
-// selection require their own planNode sub graphs to complete.
-// However, they are entirely independent graphs, so they can
-// be executed in parallel.
-//
+/*
+parallelNode implements the MultiNode interface. It
+enables parallel execution of planNodes. This is needed
+if a single query has multiple Select statements at the
+same depth in the query.
+
+Eg:
+
+	user {
+			_key
+			name
+			friends {
+				name
+			}
+			_version {
+				cid
+			}
+	}
+
+In this example, both the friends selection and the _version
+selection require their own planNode sub graphs to complete.
+However, they are entirely independent graphs, so they can
+be executed in parallel.
+*/
 type parallelNode struct { // serialNode?
 	documentIterator
 	docMapper

@@ -33,49 +33,49 @@ var (
 	_ Fetcher = (*VersionedFetcher)(nil)
 )
 
-// HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
-// to a specific version in the documents history graph, and return the fetched
-// state at that point exactly.
-//
-// Given the following Document state graph
-//
-// {} --> V1 --> V2 --> V3 --> V4
-//		  ^					   ^
-//		  |					   |
-// 	Target Version		 Current State
-//
-//
-// A regular DocumentFetcher fetches and returns the state at V4, but the
-// VersionsedFetcher would step backwards through the update graph, recompose
-// the state at the "Target Version" V1, and return the state at that point.
-//
-// This is achieved by reconstructing the target state using the given MerkleCRDT
-// DAG. Given the Target Version CID, we collect all the individual delta nodes
-// in the MerkleDAG, until we reach the initial (genesis) state.
-//
-// Transient/Ephemeral datastores are intanciated for the lifetime of the
-// traversal query, on a per object basis. This should be a basic map based
-// ds.Datastore, abstracted into a DSReaderWriter.
-//
-// The goal of the VersionedFetcher is to implement the same external API/Interface as
-// the DocumentFetcher, and to have it return the encoded/decoded document as
-// defined in the version, so that it can be used as a drop in replacement within
-// the scanNode query planner system.
-//
-// Current limitations:
-// - We can only return a single record from an VersionedFetcher
-// 	 instance.
-// - We can't query into related sub objects (at the moment, as related objects
-//   ids aren't in the state graphs.
-// - Probably more...
-//
-// Future optimizations:
-// - Incremental checkpoint/snapshotting
-// - Reverse traversal (starting from the current state, and working backwards)
-// - Create a efficient memory store for in-order traversal (BTree, etc)
-//
-// Note: Should we transition this state traversal into the CRDT objects themselves, and not
-// within a new fetcher?
+/*
+HistoryFetcher is like the normal DocumentFetcher, except it is able to traverse
+to a specific version in the documents history graph, and return the fetched
+state at that point exactly.
+
+Given the following Document state graph:
+
+{} --> V1 --> V2 --> V3 --> V4
+
+		  ^					   ^
+		  |					   |
+	Target Version		 Current State
+
+A regular DocumentFetcher fetches and returns the state at V4, but the
+VersionsedFetcher would step backwards through the update graph, recompose
+the state at the "Target Version" V1, and return the state at that point.
+
+This is achieved by reconstructing the target state using the given MerkleCRDT
+DAG. Given the Target Version CID, we collect all the individual delta nodes
+in the MerkleDAG, until we reach the initial (genesis) state.
+
+Transient/Ephemeral datastores are intanciated for the lifetime of the
+traversal query, on a per object basis. This should be a basic map based
+ds.Datastore, abstracted into a DSReaderWriter.
+
+The goal of the VersionedFetcher is to implement the same external API/Interface as
+the DocumentFetcher, and to have it return the encoded/decoded document as
+defined in the version, so that it can be used as a drop in replacement within
+the scanNode query planner system.
+
+Current limitations:
+  - We can only return a single record from an VersionedFetcher instance.
+  - We can't query into related sub objects (at the moment, as related objects ids aren't in the state graphs.
+  - Probably more...
+
+Future optimizations:
+- Incremental checkpoint/snapshotting
+- Reverse traversal (starting from the current state, and working backwards)
+- Create a efficient memory store for in-order traversal (BTree, etc)
+
+Note: Should we transition this state traversal into the CRDT objects themselves, and not
+within a new fetcher?
+*/
 type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher

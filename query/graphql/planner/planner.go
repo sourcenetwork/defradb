@@ -469,7 +469,7 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 }
 
 // explainRequest walks through the plan graph, and outputs the concrete planNodes that should
-//  be executed, maintaing their order in the plan graph (does not actually execute them).
+// be executed, maintaing their order in the plan graph (does not actually execute them).
 func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,

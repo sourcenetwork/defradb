@@ -839,11 +839,9 @@ func (c *collection) getTxn(ctx context.Context, readonly bool) (datastore.Txn, 
 }
 
 // discardImplicitTxn is a proxy function used by the collection to execute the Discard()
-//  transaction function only if its an implicit transaction.
-// Implicit transactions are transactions that are created *during* an operation
-//  execution as a side effect.
-// Explicit transactions are provided to the collection object via
-//  the "WithTxn(...)" function.
+// transaction function only if its an implicit transaction.
+// Implicit transactions are transactions that are created *during* an operation execution as a side effect.
+// Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
 func (c *collection) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
 	if c.txn == nil {
 		txn.Discard(ctx)

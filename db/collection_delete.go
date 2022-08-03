@@ -35,7 +35,7 @@ var (
 )
 
 // DeleteWith deletes a target document. Target can be a Filter statement,
-//  a single docKey, a single document, an array of docKeys, or an array of documents.
+// a single docKey, a single document, an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
 // Eg: DeleteWithFilter or DeleteWithKey
 func (c *collection) DeleteWith(
@@ -256,15 +256,17 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 }
 
 // Here is what our db stores look like:
-//   /db
-//   -> block /blocks => /db/blocks
-//   -> datastore /data => /db/data
-//   -> headstore /heads => /db/heads
-//   -> systemstore /system => /db/system
+//
+//	/db
+//	-> block /blocks => /db/blocks
+//	-> datastore /data => /db/data
+//	-> headstore /heads => /db/heads
+//	-> systemstore /system => /db/system
+//
 // For the delete operation we are concerned with:
-//   1) Deleting the actual blocks (blockstore).
-//   2) Deleting datastore state.
-//   3) Deleting headstore state.
+//  1. Deleting the actual blocks (blockstore).
+//  2. Deleting datastore state.
+//  3. Deleting headstore state.
 func (c *collection) applyFullDelete(
 	ctx context.Context,
 	txn datastore.Txn, dockey core.PrimaryDataStoreKey) error {
@@ -358,10 +360,11 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 	return d.delete(ctx, targetCid, block)
 }
 
-//  (ipld.Block
-//     (ipldProtobufNode{
-//                       Data: (cbor(crdt deltaPayload)),
-//                       Links: (_head => parentCid, fieldName => fieldCid)))
+// (ipld.Block
+//
+//	(ipldProtobufNode{
+//	                  Data: (cbor(crdt deltaPayload)),
+//	                  Links: (_head => parentCid, fieldName => fieldCid)))
 func (d dagDeleter) delete(
 	ctx context.Context,
 	targetCid cid.Cid,

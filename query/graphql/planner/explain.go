@@ -53,34 +53,38 @@ const (
 	spansLabel          = "spans"
 )
 
-// buildExplainGraph builds the explainGraph from the given top level plan.
-//
-// Request:
-// query @explain {
-//     user {
-//       _key
-//       age
-//       name
-//     }
-// }
-//
-//  Response:
-// {
-//   "data": [
-//     {
-//       "explain": {
-//         "selectTopNode": {
-//           "selectNode": {
-//	           ...
-//             "scanNode": {
-//               ...
-//             }
-//           }
-//         }
-//       }
-//     }
-//   ]
-// }
+/*
+buildExplainGraph builds the explainGraph from the given top level plan.
+
+Request:
+
+	query @explain {
+	    user {
+	      _key
+	      age
+	      name
+	    }
+	}
+
+	Response:
+
+	{
+	  "data": [
+	    {
+	      "explain": {
+	        "selectTopNode": {
+	          "selectNode": {
+		           ...
+	            "scanNode": {
+	              ...
+	            }
+	          }
+	        }
+	      }
+	    }
+	  ]
+	}
+*/
 func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 	explainGraph := map[string]interface{}{}
 
