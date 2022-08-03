@@ -16,13 +16,14 @@ Execute queries, add schema types, and run debug routines.
 ### Options inherited from parent commands
 
 ```
-      --logcolor           Enable colored output
-      --logformat string   Log format to use. Options are text, json (default "csv")
-      --loglevel string    Log level to use. Options are debug, info, error, fatal (default "info")
-      --logoutput string   Log output path (default "stderr")
-      --logtrace           Include stacktrace in error and fatal logs
-      --rootdir string     Directory for data and configuration to use (default "$HOME/.defradb")
-      --url string         URL of the target database's HTTP endpoint (default "localhost:9181")
+      --logformat string     Log format to use. Options are csv, json (default "csv")
+      --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
+      --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
+      --lognocolor           Disable colored log output
+      --logoutput string     Log output path (default "stderr")
+      --logtrace             Include stacktrace in error and fatal logs
+      --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
+      --url string           URL of the target database's HTTP endpoint (default "localhost:9181")
 ```
 
 ### SEE ALSO
