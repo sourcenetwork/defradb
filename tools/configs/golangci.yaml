@@ -122,11 +122,14 @@ linters:
     - nolintlint
     - revive
     - staticcheck
-    - structcheck
     - typecheck
     - unused
     - varcheck
     - whitespace
+
+  # https://github.com/golangci/golangci-lint/issues/2649
+  # Linters below are disabled for now because of go1.18 issue above^
+  # - structcheck
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
@@ -262,7 +265,7 @@ linters-settings:
 
   gosimple:
     # Select the Go version to target.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
@@ -328,14 +331,14 @@ linters-settings:
 
   staticcheck:
     # Select the Go version to target.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
 
   unused:
     # Select the Go version to target.
-    go: "1.17"
+    go: "1.18"
 
 
   whitespace:

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM docker.io/golang:1.17 AS BUILD
+FROM docker.io/golang:1.18 AS BUILD
 
 WORKDIR /app
 
