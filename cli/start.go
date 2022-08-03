@@ -67,12 +67,12 @@ var startCmd = &cobra.Command{
 		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
 			return err
 		}
-		log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+		log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		log.Info(ctx, "Starting DefraDB service...")
+		log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
 		// setup signal handlers
 		signalCh := make(chan os.Signal, 1)
@@ -82,7 +82,7 @@ var startCmd = &cobra.Command{
 
 		var err error
 		if cfg.Datastore.Store == badgerDatastoreName {
-			log.Info(
+			log.FeedbackInfo(
 				cmd.Context(),
 				"Opening badger store",
 				logging.NewKV("Path", cfg.Datastore.Badger.Path),
@@ -92,7 +92,7 @@ var startCmd = &cobra.Command{
 				cfg.Datastore.Badger.Options,
 			)
 		} else if cfg.Datastore.Store == "memory" {
-			log.Info(cmd.Context(), "Building new memory store")
+			log.FeedbackInfo(cmd.Context(), "Building new memory store")
 			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 			rootstore, err = badgerds.NewDatastore("", &opts)
 		}
@@ -118,7 +118,7 @@ var startCmd = &cobra.Command{
 		// init the p2p node
 		var n *node.Node
 		if !cfg.Net.P2PDisabled {
-			log.Info(cmd.Context(), "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+			log.FeedbackInfo(cmd.Context(), "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
 			n, err = node.NewNode(
 				cmd.Context(),
 				db,
@@ -126,10 +126,9 @@ var startCmd = &cobra.Command{
 				cfg.NodeConfig(),
 			)
 			if err != nil {
-				log.ErrorE(cmd.Context(), "Failed to start P2P node", err)
 				n.Close() //nolint:errcheck
 				db.Close(cmd.Context())
-				return err
+				return fmt.Errorf("failed to start P2P node: %w", err)
 			}
 
 			// parse peers and bootstrap
@@ -144,10 +143,9 @@ var startCmd = &cobra.Command{
 			}
 
 			if err := n.Start(); err != nil {
-				log.ErrorE(cmd.Context(), "Failed to start P2P listeners", err)
 				n.Close() //nolint:errcheck
 				db.Close(cmd.Context())
-				return err
+				return fmt.Errorf("failed to start P2P listeners: %w", err)
 			}
 
 			MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
@@ -175,17 +173,17 @@ var startCmd = &cobra.Command{
 			netService := netapi.NewService(n.Peer)
 
 			go func() {
-				log.Info(cmd.Context(), "Started RPC server", logging.NewKV("Address", addr))
+				log.FeedbackInfo(cmd.Context(), "Started RPC server", logging.NewKV("Address", addr))
 				netpb.RegisterServiceServer(server, netService)
 				if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-					log.FatalE(cmd.Context(), "failed to start RPC server", err)
+					log.FeedbackFatalE(cmd.Context(), "failed to start RPC server", err)
 				}
 			}()
 		}
 
 		// run the server listener in a separate goroutine
 		go func() {
-			log.Info(
+			log.FeedbackInfo(
 				cmd.Context(),
 				fmt.Sprintf(
 					"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
@@ -197,7 +195,7 @@ var startCmd = &cobra.Command{
 			)
 			s := http.NewServer(db, http.WithAddress(cfg.API.Address))
 			if err := s.Listen(); err != nil {
-				log.ErrorE(cmd.Context(), "Failed to start HTTP API listener", err)
+				log.FeedbackErrorE(cmd.Context(), "Failed to start HTTP API listener", err)
 				if n != nil {
 					n.Close() //nolint:errcheck
 				}
@@ -208,7 +206,7 @@ var startCmd = &cobra.Command{
 
 		// wait for shutdown signal
 		<-signalCh
-		log.Info(cmd.Context(), "Received interrupt; closing database...")
+		log.FeedbackInfo(cmd.Context(), "Received interrupt; closing database...")
 		if n != nil {
 			n.Close() //nolint:errcheck
 		}
@@ -225,7 +223,7 @@ func init() {
 	)
 	err := viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind net.peers", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
 	}
 
 	startCmd.Flags().String(
@@ -234,7 +232,7 @@ func init() {
 	)
 	err = viper.BindPFlag("datastore.store", startCmd.Flags().Lookup("store"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind datastore.store", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind datastore.store", err)
 	}
 
 	startCmd.Flags().String(
@@ -243,7 +241,7 @@ func init() {
 	)
 	err = viper.BindPFlag("net.p2paddress", startCmd.Flags().Lookup("p2paddr"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind net.p2paddress", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind net.p2paddress", err)
 	}
 
 	startCmd.Flags().String(
@@ -252,7 +250,7 @@ func init() {
 	)
 	err = viper.BindPFlag("net.tcpaddress", startCmd.Flags().Lookup("tcpaddr"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind net.tcpaddress", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind net.tcpaddress", err)
 	}
 
 	startCmd.Flags().Bool(
@@ -261,7 +259,7 @@ func init() {
 	)
 	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind net.p2pdisabled", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
 	}
 
 	rootCmd.AddCommand(startCmd)

@@ -61,9 +61,9 @@ See https://docs.source.network/BSL.txt for more information.
 		}
 
 		if defaultConfig {
-			log.Info(cmd.Context(), "Using default configuration")
+			log.FeedbackInfo(cmd.Context(), "Using default configuration")
 		} else {
-			log.Info(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 
 		}
 		return nil
@@ -82,7 +82,7 @@ func init() {
 	)
 	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind logging.loglevel", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind logging.loglevel", err)
 	}
 
 	rootCmd.PersistentFlags().StringArray(
@@ -96,7 +96,7 @@ func init() {
 	)
 	err = viper.BindPFlag("log.outputpath", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.outputpath", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.outputpath", err)
 	}
 
 	rootCmd.PersistentFlags().String(
@@ -105,7 +105,7 @@ func init() {
 	)
 	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.format", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.format", err)
 	}
 
 	rootCmd.PersistentFlags().Bool(
@@ -114,7 +114,7 @@ func init() {
 	)
 	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.stacktrace", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.stacktrace", err)
 	}
 
 	rootCmd.PersistentFlags().Bool(
@@ -123,7 +123,7 @@ func init() {
 	)
 	err = viper.BindPFlag("log.nocolor", rootCmd.PersistentFlags().Lookup("lognocolor"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind log.nocolor", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.nocolor", err)
 	}
 
 	rootCmd.PersistentFlags().String(
@@ -132,6 +132,6 @@ func init() {
 	)
 	err = viper.BindPFlag("api.address", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind api.address", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
 	}
 }
