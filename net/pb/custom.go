@@ -14,6 +14,7 @@ package net_pb
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-cid"
@@ -21,7 +22,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-varint"
 
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // customGogoType aggregates the interfaces that custom Gogo types need to implement.
@@ -75,7 +76,8 @@ func (id ProtoPeerID) Size() int {
 	return len([]byte(id.ID))
 }
 
-// ProtoAddr is a custom type used by gogo to serde raw multiaddresses into the ma.Multiaddr type, and back.
+// ProtoAddr is a custom type used by gogo to serde raw multiaddresses into
+//  the ma.Multiaddr type, and back.
 type ProtoAddr struct {
 	ma.Multiaddr
 }
@@ -135,7 +137,7 @@ func (c ProtoCid) MarshalJSON() ([]byte, error) {
 
 func (c *ProtoCid) Unmarshal(data []byte) (err error) {
 	c.Cid, err = cid.Cast(data)
-	if err == varint.ErrUnderflow {
+	if errors.Is(err, varint.ErrUnderflow) {
 		c.Cid = cid.Undef
 		return nil
 	}
@@ -157,7 +159,7 @@ func (c ProtoCid) Size() int {
 
 // ProtoCid is a custom type used by gogo to serde raw CIDs into the cid.CID type, and back.
 type ProtoDocKey struct {
-	key.DocKey
+	client.DocKey
 }
 
 var _ customGogoType = (*ProtoDocKey)(nil)
@@ -176,7 +178,7 @@ func (c ProtoDocKey) MarshalJSON() ([]byte, error) {
 }
 
 func (c *ProtoDocKey) Unmarshal(data []byte) (err error) {
-	c.DocKey, err = key.NewFromString(string(data))
+	c.DocKey, err = client.NewDocKeyFromString(string(data))
 	return err
 }
 

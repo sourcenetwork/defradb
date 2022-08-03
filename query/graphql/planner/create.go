@@ -11,12 +11,13 @@
 package planner
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 // createNode is used to construct and execute
@@ -27,6 +28,9 @@ import (
 // document, until we've exhausted the payload. No filtering
 // or Select plans
 type createNode struct {
+	documentIterator
+	docMapper
+
 	p *Planner
 
 	// cache information about the original data source
@@ -35,12 +39,15 @@ type createNode struct {
 
 	// newDoc is the JSON string of the new document, unparsed
 	newDocStr string
-	doc       *document.Document
+	doc       *client.Document
 
 	err error
 
 	returned bool
+	results  planNode
 }
+
+func (n *createNode) Kind() string { return "createNode" }
 
 func (n *createNode) Init() error { return nil }
 
@@ -50,7 +57,7 @@ func (n *createNode) Start() error {
 		return fmt.Errorf("Invalid document to create")
 	}
 
-	doc, err := document.NewFromJSON([]byte(n.newDocStr))
+	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
 	if err != nil {
 		n.err = err
 		return err
@@ -73,40 +80,86 @@ func (n *createNode) Next() (bool, error) {
 		return false, err
 	}
 
+	currentValue := n.documentMapping.NewDoc()
+
+	currentValue.SetKey(n.doc.Key().String())
+	for i, value := range n.doc.Values() {
+		// On create the document will have no aliased fields/aggregates/etc so we can safely take
+		// the first index.
+		n.documentMapping.SetFirstOfName(&currentValue, i.Name(), value.Value())
+	}
+
 	n.returned = true
+	n.currentValue = currentValue
+
+	desc := n.collection.Description()
+	docKey := base.MakeDocKey(desc, currentValue.GetKey())
+	n.results.Spans(core.NewSpans(core.NewSpan(docKey, docKey.PrefixEnd())))
+
+	err := n.results.Init()
+	if err != nil {
+		return false, err
+	}
+
+	err = n.results.Start()
+	if err != nil {
+		return false, err
+	}
+
+	// get the next result based on our point lookup
+	next, err := n.results.Next()
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
+	}
+
+	n.currentValue = n.results.Value()
 	return true, nil
 }
 
 func (n *createNode) Spans(spans core.Spans) { /* no-op */ }
 
-func (n *createNode) Values() map[string]interface{} {
-	val, _ := n.doc.ToMap()
-	return val
+func (n *createNode) Close() error {
+	return n.results.Close()
 }
 
-func (n *createNode) Close() error { return nil }
+func (n *createNode) Source() planNode { return n.results }
 
-func (n *createNode) Source() planNode { return nil }
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *createNode) Explain() (map[string]interface{}, error) {
+	data := map[string]interface{}{}
+	err := json.Unmarshal([]byte(n.newDocStr), &data)
+	if err != nil {
+		return nil, err
+	}
 
-func (p *Planner) CreateDoc(parsed *parser.Mutation) (planNode, error) {
+	return map[string]interface{}{
+		dataLabel: data,
+	}, nil
+}
+
+func (p *Planner) CreateDoc(parsed *mapper.Mutation) (planNode, error) {
+	results, err := p.Select(&parsed.Select)
+	if err != nil {
+		return nil, err
+	}
+
 	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		newDocStr: parsed.Data,
+		results:   results,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	// get collection
-	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 	create.collection = col
-
-	// last step, create a basic Select statement
-	// from the parsed Mutation object
-	// and construct a new Select planNode
-	// which uses the new create node as its
-	// source, instead of a scan node.
-	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, create, true, nil)
+	return create, nil
 }

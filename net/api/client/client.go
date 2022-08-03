@@ -46,7 +46,11 @@ func (c *Client) Close() error {
 }
 
 // AddReplicator sends a request to add a target replicator to the DB peer
-func (c *Client) AddReplicator(ctx context.Context, collection string, paddr ma.Multiaddr) (peer.ID, error) {
+func (c *Client) AddReplicator(
+	ctx context.Context,
+	collection string,
+	paddr ma.Multiaddr,
+) (peer.ID, error) {
 	if len(collection) == 0 {
 		return "", fmt.Errorf("Collection can't be empty")
 	}

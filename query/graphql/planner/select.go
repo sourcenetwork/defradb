@@ -12,14 +12,14 @@ package planner
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 
-	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+
+	cid "github.com/ipfs/go-cid"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 /*
@@ -44,32 +44,44 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 
 */
 
-// wraps a selectNode and all the logic of a plan
-// graph into a single struct for proper plan
-// expansion
+// Wraps a selectNode and all the logic of a plan graph into a single struct for proper plan expansion.
 // Executes the top level plan node.
 type selectTopNode struct {
-	source     planNode
+	docMapper
+
 	group      *groupNode
-	sort       *sortNode
+	order      *orderNode
 	limit      planNode
-	render     *renderNode
 	aggregates []aggregateNode
 
-	// top of the plan graph
+	// selectnode is used pre-wiring of the plan (before expansion and all).
+	selectnode *selectNode
+
+	// plan is the top of the plan graph (the wired and finalized plan graph).
 	plan planNode
-
-	// plan -> limit -> sort -> sort.plan = (values -> container | SORT_STRATEGY) -> render -> source
-
-	// ... source -> MultiNode -> TypeJoinNode.plan = (typeJoinOne | typeJoinMany) -> scanNode
 }
 
-func (n *selectTopNode) Init() error                    { return n.plan.Init() }
-func (n *selectTopNode) Start() error                   { return n.plan.Start() }
-func (n *selectTopNode) Next() (bool, error)            { return n.plan.Next() }
-func (n *selectTopNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *selectTopNode) Values() map[string]interface{} { return n.plan.Values() }
-func (n *selectTopNode) Source() planNode               { return n.source }
+func (n *selectTopNode) Kind() string { return "selectTopNode" }
+
+func (n *selectTopNode) Init() error { return n.plan.Init() }
+
+func (n *selectTopNode) Start() error { return n.plan.Start() }
+
+func (n *selectTopNode) Next() (bool, error) { return n.plan.Next() }
+
+func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+
+func (n *selectTopNode) Value() core.Doc { return n.plan.Value() }
+
+func (n *selectTopNode) Source() planNode { return n.plan }
+
+// Explain method for selectTopNode returns no attributes but is used to
+// subscribe / opt-into being an explainablePlanNode.
+func (n *selectTopNode) Explain() (map[string]interface{}, error) {
+	// No attributes are returned for selectTopNode.
+	return nil, nil
+}
+
 func (n *selectTopNode) Close() error {
 	if n.plan == nil {
 		return nil
@@ -78,6 +90,9 @@ func (n *selectTopNode) Close() error {
 }
 
 type selectNode struct {
+	documentIterator
+	docMapper
+
 	p *Planner
 
 	// main data source for the select node.
@@ -91,14 +106,6 @@ type selectNode struct {
 	// collection name, meta-data, etc.
 	sourceInfo sourceInfo
 
-	// data related to rendering
-	renderInfo *renderInfo
-
-	// internal doc pointer
-	// produced when Values()
-	// is called.
-	doc map[string]interface{}
-
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
 	// The filters which only apply to the main collection
@@ -107,9 +114,14 @@ type selectNode struct {
 	// to the sub type are defined here in the select.
 	// The filters that are defined on the subtype query
 	// are defined in the subtype scan node.
-	filter *parser.Filter
+	filter *mapper.Filter
 
-	groupSelect *parser.Select
+	parsed       *mapper.Select
+	groupSelects []*mapper.Select
+}
+
+func (n *selectNode) Kind() string {
+	return "selectNode"
 }
 
 func (n *selectNode) Init() error {
@@ -130,8 +142,8 @@ func (n *selectNode) Next() (bool, error) {
 			return false, err
 		}
 
-		n.doc = n.source.Values()
-		passes, err := parser.RunFilter(n.doc, n.filter, n.p.evalCtx)
+		n.currentValue = n.source.Value()
+		passes, err := mapper.RunFilter(n.currentValue, n.filter)
 		if err != nil {
 			return false, err
 		}
@@ -147,12 +159,23 @@ func (n *selectNode) Spans(spans core.Spans) {
 	n.source.Spans(spans)
 }
 
-func (n *selectNode) Values() map[string]interface{} {
-	return n.doc
-}
-
 func (n *selectNode) Close() error {
 	return n.source.Close()
+}
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *selectNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the filter attribute if it exists.
+	if n.filter == nil || n.filter.ExternalConditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.ExternalConditions
+	}
+
+	return explainerMap, nil
 }
 
 // initSource is the main workhorse for recursively constructing
@@ -160,11 +183,12 @@ func (n *selectNode) Close() error {
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) {
-	if parsed.CollectionName == "" {
-		parsed.CollectionName = parsed.Name
+func (n *selectNode) initSource() ([]aggregateNode, error) {
+	if n.parsed.CollectionName == "" {
+		n.parsed.CollectionName = n.parsed.Name
 	}
-	sourcePlan, err := n.p.getSource(parsed.CollectionName, parsed.QueryType == parser.VersionedScanQuery)
+
+	sourcePlan, err := n.p.getSource(n.parsed)
 	if err != nil {
 		return nil, err
 	}
@@ -184,110 +208,97 @@ func (n *selectNode) initSource(parsed *parser.Select) ([]aggregateNode, error) 
 		// If we have both a DocKey and a CID, then we need to run
 		// a TimeTravel (History-Traversing Versioned) query, which means
 		// we need to propagate the values to the underlying VersionedFetcher
-		if parsed.QueryType == parser.VersionedScanQuery {
-			c, err := cid.Decode(parsed.CID)
+		if n.parsed.Cid != "" {
+			c, err := cid.Decode(n.parsed.Cid)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to propagate VersionFetcher span, invalid CID: %w", err)
+				return nil, fmt.Errorf(
+					"Failed to propagate VersionFetcher span, invalid CID: %w",
+					err,
+				)
 			}
-			spans := fetcher.NewVersionedSpan(core.NewKey(parsed.DocKeys[0]), c) // @todo check len
+			spans := fetcher.NewVersionedSpan(
+				core.DataStoreKey{DocKey: n.parsed.DocKeys.Value[0]},
+				c,
+			) // @todo check len
 			origScan.Spans(spans)
-		} else if parsed.DocKeys != nil { // If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
+		} else if n.parsed.DocKeys.HasValue {
+			// If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _key equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			spans := make(core.Spans, len(parsed.DocKeys))
-			for i, docKey := range parsed.DocKeys {
-				dockeyIndexKey := base.MakeIndexKey(&sourcePlan.info.collectionDescription,
-					&sourcePlan.info.collectionDescription.Indexes[0], core.NewKey(docKey))
+			spans := make([]core.Span, len(n.parsed.DocKeys.Value))
+			for i, docKey := range n.parsed.DocKeys.Value {
+				dockeyIndexKey := base.MakeDocKey(sourcePlan.info.collectionDescription, docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
-			origScan.Spans(spans)
+			origScan.Spans(core.NewSpans(spans...))
 		}
 	}
 
-	return n.initFields(parsed)
+	return n.initFields(n.parsed)
 }
 
-func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) {
-	// re-organize the fields slice into reverse-alphabetical
-	// this makes sure the reserved database fields that start with
-	// a "_" end up at the end. So if/when we build our MultiNode
-	// all the AppendPlans end up at the end.
-	sort.Slice(parsed.Fields, func(i, j int) bool {
-		return !(strings.Compare(parsed.Fields[i].GetName(), parsed.Fields[j].GetName()) < 0)
-	})
-
+func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) {
 	aggregates := []aggregateNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
-		case *parser.Select:
-			// @todo: check select type:
-			// - TypeJoin
-			// - commitScan
-			if f.Name == parser.VersionFieldName { // reserved sub type for object queries
-				commitSlct := &parser.CommitSelect{
-					Name:  f.Name,
-					Alias: f.Alias,
-					// Type:   parser.LatestCommits,
-					Fields: f.Fields,
+		case *mapper.Aggregate:
+			var plan aggregateNode
+			var aggregateError error
+
+			switch f.Name {
+			case parserTypes.CountFieldName:
+				plan, aggregateError = n.p.Count(f, parsed)
+			case parserTypes.SumFieldName:
+				plan, aggregateError = n.p.Sum(f, parsed)
+			case parserTypes.AverageFieldName:
+				plan, aggregateError = n.p.Average(f)
+			}
+
+			if aggregateError != nil {
+				return nil, aggregateError
+			}
+
+			if plan != nil {
+				aggregates = append(aggregates, plan)
+			}
+		case *mapper.Select:
+			if f.Name == parserTypes.VersionFieldName { // reserved sub type for object queries
+				commitSlct := &mapper.CommitSelect{
+					Select: *f,
 				}
 				// handle _version sub selection query differently
 				// if we are executing a regular Scan query
 				// or a TimeTravel query.
-				if parsed.QueryType == parser.VersionedScanQuery {
+				if parsed.Cid != "" {
 					// for a TimeTravel query, we don't need the Latest
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
 					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocKey = parsed.DocKeys[0] // @todo check length
-					commitSlct.Cid = parsed.CID
-					commitSlct.Type = parser.OneCommit
+					commitSlct.DocKey = parsed.DocKeys.Value[0] // @todo check length
+					commitSlct.Cid = parsed.Cid
+					commitSlct.Type = mapper.OneCommit
 				} else {
-					commitSlct.Type = parser.LatestCommits
+					commitSlct.Type = mapper.LatestCommits
 				}
 				commitPlan, err := n.p.CommitSelect(commitSlct)
 				if err != nil {
 					return nil, err
 				}
 
-				if err := n.addSubPlan(field.GetName(), commitPlan); err != nil {
+				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
 					return nil, err
 				}
-			} else if f.Root == parser.ObjectSelection {
-				if f.Name == parser.GroupFieldName {
-					n.groupSelect = f
-				} else {
-					// nolint:errcheck
-					n.addTypeIndexJoin(f) // @TODO: ISSUE#158
-				}
-			}
-		case *parser.Field:
-			var plan aggregateNode
-			var aggregateError error
-
-			switch f.Statement.Name.Value {
-			case parser.CountFieldName:
-				plan, aggregateError = n.p.Count(f)
-			case parser.SumFieldName:
-				plan, aggregateError = n.p.Sum(&n.sourceInfo, f)
-			default:
-				continue
-			}
-
-			if aggregateError != nil {
-				return nil, aggregateError
-			}
-
-			aggregates = append(aggregates, plan)
-
-			aggregateError = n.joinAggregatedChild(parsed, f)
-			if aggregateError != nil {
-				return nil, aggregateError
+			} else if f.Name == parserTypes.GroupFieldName {
+				n.groupSelects = append(n.groupSelects, f)
+			} else {
+				//nolint:errcheck
+				n.addTypeIndexJoin(f) // @TODO: ISSUE#158
 			}
 		}
 	}
@@ -295,54 +306,13 @@ func (n *selectNode) initFields(parsed *parser.Select) ([]aggregateNode, error) 
 	return aggregates, nil
 }
 
-// Join any child collections required by the given transformation if the child collections have not been requested for render by the consumer
-func (n *selectNode) joinAggregatedChild(parsed *parser.Select, field *parser.Field) error {
-	source, err := field.GetAggregateSource()
-	if err != nil {
-		return err
-	}
-
-	if len(source) == 0 {
-		return nil
-	}
-
-	fieldName := source[0]
-	hasChildProperty := false
-	for _, field := range parsed.Fields {
-		if fieldName == field.GetName() {
-			hasChildProperty = true
-			break
-		}
-	}
-
-	// If the child item is not requested, then we have add in the necessary components to force the child records to be scanned through (they wont be rendered)
-	if !hasChildProperty {
-		if fieldName == parser.GroupFieldName {
-			// It doesn't really matter at the moment if multiple counts are requested and we overwrite the n.groupSelect property
-			n.groupSelect = &parser.Select{
-				Name: parser.GroupFieldName,
-			}
-		} else if parsed.Root != parser.CommitSelection {
-			fieldDescription, _ := n.sourceInfo.collectionDescription.GetField(fieldName)
-			if fieldDescription.Kind == base.FieldKind_FOREIGN_OBJECT_ARRAY {
-				subtype := &parser.Select{
-					Name: fieldName,
-				}
-				return n.addTypeIndexJoin(subtype)
-			}
-		}
-	}
-
-	return nil
-}
-
-func (n *selectNode) addTypeIndexJoin(subSelect *parser.Select) error {
+func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
 	typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subSelect)
 	if err != nil {
 		return err
 	}
 
-	if err := n.addSubPlan(subSelect.Name, typeIndexJoin); err != nil {
+	if err := n.addSubPlan(subSelect.Index, typeIndexJoin); err != nil {
 		return err
 	}
 
@@ -353,7 +323,10 @@ func (n *selectNode) Source() planNode { return n.source }
 
 // func appendSource() {}
 
-// func (n *selectNode) initRender(fields []*base.FieldDescription, aliases []string) error {
+// func (n *selectNode) initRender(
+//     fields []*client.FieldDescription,
+//     aliases []string,
+//) error {
 // 	return n.p.render(fields, aliases)
 // }
 
@@ -361,7 +334,7 @@ func (n *selectNode) Source() planNode { return n.source }
 // not to be used on the top level selection node.
 // This allows us to disable rendering on all sub Select nodes
 // and only run it at the end on the top level select node.
-func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
+func (p *Planner) SubSelect(parsed *mapper.Select) (planNode, error) {
 	plan, err := p.Select(parsed)
 	if err != nil {
 		return nil, err
@@ -370,21 +343,26 @@ func (p *Planner) SubSelect(parsed *parser.Select) (planNode, error) {
 	// if this is a sub select plan, we need to remove the render node
 	// as the final top level selectTopNode will handle all sub renders
 	top := plan.(*selectTopNode)
-	top.render = nil
 	return top, nil
 }
 
-func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromCollection bool, providedSourceInfo *sourceInfo) (planNode, error) {
+func (p *Planner) SelectFromSource(
+	parsed *mapper.Select,
+	source planNode,
+	fromCollection bool,
+	providedSourceInfo *sourceInfo,
+) (planNode, error) {
 	s := &selectNode{
 		p:          p,
 		source:     source,
 		origSource: source,
+		parsed:     parsed,
+		docMapper:  docMapper{&parsed.DocumentMapping},
 	}
 	s.filter = parsed.Filter
 	limit := parsed.Limit
-	sort := parsed.OrderBy
+	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
-	s.renderInfo = &renderInfo{}
 
 	if providedSourceInfo != nil {
 		s.sourceInfo = *providedSourceInfo
@@ -404,68 +382,71 @@ func (p *Planner) SelectFromSource(parsed *parser.Select, source planNode, fromC
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, parsed, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(limit)
+	limitPlan, err := p.HardLimit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	sortPlan, err := p.OrderBy(sort)
+	orderPlan, err := p.OrderBy(parsed, orderBy)
 	if err != nil {
 		return nil, err
 	}
 
 	top := &selectTopNode{
-		source:     s,
-		render:     p.render(parsed),
+		selectnode: s,
 		limit:      limitPlan,
-		sort:       sortPlan,
+		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		docMapper:  docMapper{&parsed.DocumentMapping},
 	}
 	return top, nil
 }
 
 // Select constructs a SelectPlan
-func (p *Planner) Select(parsed *parser.Select) (planNode, error) {
-	s := &selectNode{p: p}
-	s.filter = parsed.Filter
+func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
+	s := &selectNode{
+		p:         p,
+		filter:    parsed.Filter,
+		parsed:    parsed,
+		docMapper: docMapper{&parsed.DocumentMapping},
+	}
 	limit := parsed.Limit
-	sort := parsed.OrderBy
+	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
-	s.renderInfo = &renderInfo{}
 
-	aggregates, err := s.initSource(parsed)
+	aggregates, err := s.initSource()
 	if err != nil {
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, s.groupSelect)
+	groupPlan, err := p.GroupBy(groupBy, parsed, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(limit)
+	limitPlan, err := p.HardLimit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	sortPlan, err := p.OrderBy(sort)
+	orderPlan, err := p.OrderBy(parsed, orderBy)
 	if err != nil {
 		return nil, err
 	}
 
 	top := &selectTopNode{
-		source:     s,
-		render:     p.render(parsed),
+		selectnode: s,
 		limit:      limitPlan,
-		sort:       sortPlan,
+		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		docMapper:  docMapper{&parsed.DocumentMapping},
 	}
 	return top, nil
 }

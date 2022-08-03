@@ -11,126 +11,104 @@
 package planner
 
 import (
-	"errors"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
 type deleteNode struct {
+	documentIterator
+	docMapper
+
 	p *Planner
 
 	collection client.Collection
+	source     planNode
 
-	filter *parser.Filter
+	filter *mapper.Filter
 	ids    []string
-
-	isDeleting bool
-	deleteIter *valuesNode
 }
 
-// Next only returns once.
 func (n *deleteNode) Next() (bool, error) {
-	if n.isDeleting {
-		// create our result values node
-		if n.deleteIter == nil {
-			vnode := n.p.newContainerValuesNode(nil)
-			n.deleteIter = vnode
-		}
-
-		// Apply the deletes
-		var results *client.DeleteResult
-		var err error
-		numids := len(n.ids)
-
-		if n.filter != nil && numids != 0 {
-			return false, errors.New("Error: can't use filter and id / ids together.")
-		} else if n.filter != nil {
-			results, err = n.collection.DeleteWithFilter(n.p.ctx, n.filter)
-		} else if numids == 0 {
-			return false, errors.New("Error: no id(s) provided while delete mutation.")
-		} else if numids == 1 {
-			key, err2 := key.NewFromString(n.ids[0])
-			if err2 != nil {
-				return false, err2
-			}
-			results, err = n.collection.DeleteWithKey(n.p.ctx, key)
-		} else if numids > 1 {
-			keys := make([]key.DocKey, len(n.ids))
-			for i, v := range n.ids {
-				keys[i], err = key.NewFromString(v)
-				if err != nil {
-					return false, err
-				}
-			}
-			results, err = n.collection.DeleteWithKeys(n.p.ctx, keys)
-		} else {
-			return false, errors.New("Error: out of scope use of delete mutation.")
-		}
-
-		if err != nil {
-			return false, err
-		}
-
-		// Consume the deletes into our valuesNode
-		for _, resKey := range results.DocKeys {
-			err := n.deleteIter.docs.AddDoc(map[string]interface{}{"_key": resKey})
-			if err != nil {
-				return false, err
-			}
-		}
-
-		n.isDeleting = false
-
-		// lets release the results dockeys slice memory
-		results.DocKeys = nil
+	next, err := n.source.Next()
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
 	}
 
-	return n.deleteIter.Next()
-}
-
-func (n *deleteNode) Values() map[string]interface{} {
-	return n.deleteIter.Values()
+	n.currentValue = n.source.Value()
+	key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+	if err != nil {
+		return false, err
+	}
+	_, err = n.collection.DeleteWithKey(n.p.ctx, key)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (n *deleteNode) Spans(spans core.Spans) {
-	/* no-op */
+	n.source.Spans(spans)
+}
+
+func (n *deleteNode) Kind() string {
+	return "deleteNode"
 }
 
 func (n *deleteNode) Init() error {
-	return nil
+	return n.source.Init()
 }
 
 func (n *deleteNode) Start() error {
-	return nil
+	return n.source.Start()
 }
 
 func (n *deleteNode) Close() error {
-	return nil
+	return n.source.Close()
 }
 
 func (n *deleteNode) Source() planNode {
-	return nil
+	return n.source
 }
 
-func (p *Planner) DeleteDocs(parsed *parser.Mutation) (planNode, error) {
-	delete := &deleteNode{
-		p:          p,
-		filter:     parsed.Filter,
-		ids:        parsed.IDs,
-		isDeleting: true,
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *deleteNode) Explain() (map[string]interface{}, error) {
+	explainerMap := map[string]interface{}{}
+
+	// Add the document id(s) that request wants to delete.
+	explainerMap[idsLabel] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.ExternalConditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.ExternalConditions
 	}
 
-	// get collection
-	col, err := p.db.GetCollection(p.ctx, parsed.Schema)
+	return explainerMap, nil
+}
+
+func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	delete.collection = col.WithTxn(p.txn)
+	slctNode, err := p.Select(&parsed.Select)
+	if err != nil {
+		return nil, err
+	}
 
-	slct := parsed.ToSelect()
-	return p.SelectFromSource(slct, delete, true, nil)
+	return &deleteNode{
+		p:          p,
+		filter:     parsed.Filter,
+		ids:        parsed.DocKeys.Value,
+		collection: col.WithTxn(p.txn),
+		source:     slctNode,
+		docMapper:  docMapper{&parsed.DocumentMapping},
+	}, nil
 }

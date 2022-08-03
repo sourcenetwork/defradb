@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"math/rand"
 	"reflect"
 	"sort"
@@ -22,7 +23,8 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	mh "github.com/multiformats/go-multihash"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newRandomCID() cid.Cid {
@@ -49,7 +51,10 @@ func newRandomCID() cid.Cid {
 func newHeadSet() *heads {
 	s := newDS()
 
-	return newHeadset(store.AsDSReaderWriter(s), ds.NewKey("/test/db/heads/mydockey"))
+	return newHeadset(
+		datastore.AsDSReaderWriter(s),
+		core.HeadStoreKey{}.WithDocKey("mydockey").WithFieldId("1"),
+	)
 }
 
 func TestHeadsWrite(t *testing.T) {
@@ -102,7 +107,7 @@ func TestHeadsDelete(t *testing.T) {
 	}
 
 	_, err = heads.load(ctx, c)
-	if err != ds.ErrNotFound {
+	if !errors.Is(err, ds.ErrNotFound) {
 		t.Error("failed to delete from head set, value still set")
 		return
 	}
@@ -272,5 +277,4 @@ func TestHeaddsList(t *testing.T) {
 		t.Errorf("Invalid max height from List, have %v, want %v", h, uint64(2))
 		return
 	}
-
 }

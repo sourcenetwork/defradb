@@ -18,7 +18,7 @@ var configMutex sync.RWMutex
 var cachedConfig Config
 
 var registryMutex sync.Mutex
-var registry map[string][]Logger = map[string][]Logger{}
+var registry = map[string][]Logger{}
 
 func register(name string, logger Logger) {
 	registryMutex.Lock()

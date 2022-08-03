@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -33,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
-	"github.com/sourcenetwork/defradb/document/key"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -129,8 +129,9 @@ func (p *Peer) Start() error {
 	// register the p2p gRPC server
 	go func() {
 		pb.RegisterServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2plistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.FatalE(p.ctx, "Fatal p2p rpc serve error", err)
+		if err := p.p2pRPC.Serve(p2plistener); err != nil &&
+			!errors.Is(err, grpc.ErrServerStopped) {
+			log.FatalE(p.ctx, "Fatal P2P RPC server error", err)
 		}
 	}()
 
@@ -158,6 +159,18 @@ func (p *Peer) Close() error {
 	stopGRPCServer(p.ctx, p.p2pRPC)
 	// stopGRPCServer(p.tcpRPC)
 
+	// close event emitters
+	if p.server.pubSubEmitter != nil {
+		if err := p.server.pubSubEmitter.Close(); err != nil {
+			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err))
+		}
+	}
+	if p.server.pushLogEmitter != nil {
+		if err := p.server.pushLogEmitter.Close(); err != nil {
+			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err))
+		}
+	}
+
 	p.bus.Discard()
 	p.cancel()
 	return nil
@@ -167,7 +180,7 @@ func (p *Peer) Close() error {
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
 	if p.bus == nil {
-		log.Warn(p.ctx, "Tried to start internal broadcaster with none defined")
+		log.Info(p.ctx, "Tried to start internal broadcaster with none defined")
 		return
 	}
 
@@ -187,7 +200,7 @@ func (p *Peer) handleBroadcastLoop() {
 			} else if msg.Priority > 1 {
 				err = p.handleDocUpdateLog(msg)
 			} else {
-				log.Warn(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("Cid", msg.Cid))
+				log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", msg.Cid))
 			}
 
 			if err != nil {
@@ -197,18 +210,27 @@ func (p *Peer) handleBroadcastLoop() {
 	}
 }
 
-func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid.Cid, schemaID string) error {
-	log.Debug(p.ctx, "Registering a new document for our peer node", logging.NewKV("DocKey", dockey.String()))
-
-	block, err := p.db.GetBlock(ctx, c)
-	if err != nil {
-		log.ErrorE(p.ctx, "Failed to get document cid", err)
-		return err
-	}
+func (p *Peer) RegisterNewDocument(
+	ctx context.Context,
+	dockey client.DocKey,
+	c cid.Cid,
+	nd ipld.Node,
+	schemaID string,
+) error {
+	log.Debug(
+		p.ctx,
+		"Registering a new document for our peer node",
+		logging.NewKV("DocKey", dockey.String()),
+	)
 
 	// register topic
 	if err := p.server.addPubSubTopic(dockey.String()); err != nil {
-		log.ErrorE(p.ctx, "Failed to create new pubsub topic", err, logging.NewKV("DocKey", dockey.String()))
+		log.ErrorE(
+			p.ctx,
+			"Failed to create new pubsub topic",
+			err,
+			logging.NewKV("DocKey", dockey.String()),
+		)
 		return err
 	}
 
@@ -218,7 +240,7 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 		Cid:      &pb.ProtoCid{Cid: c},
 		SchemaID: []byte(schemaID),
 		Log: &pb.Document_Log{
-			Block: block.RawData(),
+			Block: nd.RawData(),
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -229,11 +251,15 @@ func (p *Peer) RegisterNewDocument(ctx context.Context, dockey key.DocKey, c cid
 }
 
 // AddReplicator adds a target peer node as a replication destination for documents in our DB
-func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Multiaddr) (peer.ID, error) {
+func (p *Peer) AddReplicator(
+	ctx context.Context,
+	collectionName string,
+	paddr ma.Multiaddr,
+) (peer.ID, error) {
 	var pid peer.ID
 
 	// verify collection
-	col, err := p.db.GetCollection(ctx, collection)
+	col, err := p.db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return pid, fmt.Errorf("Failed to get collection for replicator: %w", err)
 	}
@@ -259,7 +285,11 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	defer p.mu.Unlock()
 	if reps, exists := p.replicators[col.SchemaID()]; exists {
 		if _, exists := reps[pid]; exists {
-			return pid, fmt.Errorf("Replicator already exists for %s with ID %s", collection, pid)
+			return pid, fmt.Errorf(
+				"Replicator already exists for %s with ID %s",
+				collectionName,
+				pid,
+			)
 		}
 	} else {
 		p.replicators[col.SchemaID()] = make(map[peer.ID]struct{})
@@ -290,7 +320,12 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 	keysCh, err := col.GetAllDocKeys(ctx)
 	if err != nil {
 		txn.Discard(ctx)
-		return pid, fmt.Errorf("Failed to get dockey for replicator %s on %s: %w", pid, collection, err)
+		return pid, fmt.Errorf(
+			"Failed to get dockey for replicator %s on %s: %w",
+			pid,
+			collectionName,
+			err,
+		)
 	}
 
 	// async
@@ -304,8 +339,11 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 				log.ErrorE(p.ctx, "Key channel error", key.Err)
 				continue
 			}
-			dockey := key.Key
-			headset := clock.NewHeadSet(txn.Headstore(), dockey.ChildString(core.COMPOSITE_NAMESPACE))
+			dockey := core.DataStoreKeyFromDocKey(key.Key)
+			headset := clock.NewHeadSet(
+				txn.Headstore(),
+				dockey.WithFieldId(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+			)
 			cids, priority, err := headset.List(ctx)
 			if err != nil {
 				log.ErrorE(
@@ -313,8 +351,8 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 					"Failed to get heads",
 					err,
 					logging.NewKV("DocKey", dockey),
-					logging.NewKV("Pid", pid),
-					logging.NewKV("Collection", collection))
+					logging.NewKV("PID", pid),
+					logging.NewKV("Collection", collectionName))
 				continue
 			}
 			// loop over heads, get block, make the required logs, and send
@@ -322,28 +360,34 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 				blk, err := txn.DAGstore().Get(ctx, c)
 				if err != nil {
 					log.ErrorE(p.ctx, "Failed to get block", err,
-						logging.NewKV("Cid", c),
-						logging.NewKV("Pid", pid),
-						logging.NewKV("Collection", collection))
+						logging.NewKV("CID", c),
+						logging.NewKV("PID", pid),
+						logging.NewKV("Collection", collectionName))
 					continue
 				}
 
 				// @todo: remove encode/decode loop for core.Log data
 				nd, err := dag.DecodeProtobuf(blk.RawData())
 				if err != nil {
-					log.ErrorE(p.ctx, "Failed to decode protobuf", err, logging.NewKV("Cid", c))
+					log.ErrorE(p.ctx, "Failed to decode protobuf", err, logging.NewKV("CID", c))
 					continue
 				}
 
 				lg := core.Log{
-					DocKey:   dockey.String(),
+					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
 					Block:    nd,
 					Priority: priority,
 				}
 				if err := p.server.pushLog(ctx, lg, pid); err != nil {
-					log.ErrorE(p.ctx, "Failed to replicate log", err, logging.NewKV("Cid", c), logging.NewKV("Pid", pid))
+					log.ErrorE(
+						p.ctx,
+						"Failed to replicate log",
+						err,
+						logging.NewKV("CID", c),
+						logging.NewKV("PID", pid),
+					)
 				}
 			}
 		}
@@ -353,7 +397,7 @@ func (p *Peer) AddReplicator(ctx context.Context, collection string, paddr ma.Mu
 }
 
 func (p *Peer) handleDocCreateLog(lg core.Log) error {
-	dockey, err := key.NewFromString(lg.DocKey)
+	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
@@ -361,11 +405,11 @@ func (p *Peer) handleDocCreateLog(lg core.Log) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, lg)
 
-	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.SchemaID)
+	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.Block, lg.SchemaID)
 }
 
 func (p *Peer) handleDocUpdateLog(lg core.Log) error {
-	dockey, err := key.NewFromString(lg.DocKey)
+	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
 	}
@@ -373,7 +417,7 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 		p.ctx,
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("Cid", lg.Cid),
+		logging.NewKV("CID", lg.Cid),
 		logging.NewKV("SchemaId", lg.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
@@ -408,7 +452,7 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
 						"Failed pushing log",
 						err,
 						logging.NewKV("DocKey", lg.DocKey),
-						logging.NewKV("Cid", lg.Cid),
+						logging.NewKV("CID", lg.Cid),
 						logging.NewKV("PeerId", peerID))
 				}
 			}(pid)
@@ -426,8 +470,16 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 	select {
 	case <-timer.C:
 		server.Stop()
-		log.Warn(ctx, "peer GRPC server was shutdown ungracefully")
+		log.Info(ctx, "Peer gRPC server was shutdown ungracefully")
 	case <-stopped:
 		timer.Stop()
 	}
+}
+
+type EvtReceivedPushLog struct {
+	Peer peer.ID
+}
+
+type EvtPubSub struct {
+	Peer peer.ID
 }

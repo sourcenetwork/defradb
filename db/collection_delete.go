@@ -19,64 +19,46 @@ import (
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	query "github.com/ipfs/go-datastore/query"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 var (
-	ErrInvalidDeleteTarget = errors.New("The doc delete targeter is an unknown type")
-	ErrDeleteTargetEmpty   = errors.New("The doc delete targeter cannot be empty")
-	ErrDeleteEmpty         = errors.New("The doc delete cannot be empty")
+	ErrDeleteTargetEmpty = errors.New("The doc delete targeter cannot be empty")
+	ErrDeleteEmpty       = errors.New("The doc delete cannot be empty")
 )
 
 // DeleteWith deletes a target document. Target can be a Filter statement,
 //  a single docKey, a single document, an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
 // Eg: DeleteWithFilter or DeleteWithKey
-func (c *Collection) DeleteWith(
+func (c *collection) DeleteWith(
 	ctx context.Context,
 	target interface{},
-	opts ...client.DeleteOpt) error {
-
+) (*client.DeleteResult, error) {
 	switch t := target.(type) {
-
 	case string, map[string]interface{}, *parser.Filter:
-		_, err := c.DeleteWithFilter(ctx, t, opts...)
-		return err
-
-	case key.DocKey:
-		_, err := c.DeleteWithKey(ctx, t, opts...)
-		return err
-
-	case []key.DocKey:
-		_, err := c.DeleteWithKeys(ctx, t, opts...)
-		return err
-
-	case *document.SimpleDocument:
-		return c.DeleteWithDoc(t, opts...)
-
-	case []*document.SimpleDocument:
-		return c.DeleteWithDocs(t, opts...)
-
+		return c.DeleteWithFilter(ctx, t)
+	case client.DocKey:
+		return c.DeleteWithKey(ctx, t)
+	case []client.DocKey:
+		return c.DeleteWithKeys(ctx, t)
 	default:
-		return ErrInvalidDeleteTarget
-
+		return nil, client.ErrInvalidDeleteTarget
 	}
 }
 
 // DeleteWithKey deletes using a DocKey to target a single document for delete.
-func (c *Collection) DeleteWithKey(
+func (c *collection) DeleteWithKey(
 	ctx context.Context,
-	key key.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
+	key client.DocKey,
+) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -84,7 +66,8 @@ func (c *Collection) DeleteWithKey(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithKey(ctx, txn, key, opts...)
+	dsKey := c.getPrimaryKeyFromDocKey(key)
+	res, err := c.deleteWithKey(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +76,10 @@ func (c *Collection) DeleteWithKey(
 }
 
 // DeleteWithKeys is the same as DeleteWithKey but accepts multiple keys as a slice.
-func (c *Collection) DeleteWithKeys(
+func (c *collection) DeleteWithKeys(
 	ctx context.Context,
-	keys []key.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
+	keys []client.DocKey,
+) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -105,7 +87,7 @@ func (c *Collection) DeleteWithKeys(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithKeys(ctx, txn, keys, opts...)
+	res, err := c.deleteWithKeys(ctx, txn, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -114,11 +96,10 @@ func (c *Collection) DeleteWithKeys(
 }
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
-func (c *Collection) DeleteWithFilter(
+func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter interface{},
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
+) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
 		return nil, err
@@ -126,20 +107,19 @@ func (c *Collection) DeleteWithFilter(
 
 	defer c.discardImplicitTxn(ctx, txn)
 
-	res, err := c.deleteWithFilter(ctx, txn, filter, opts...)
+	res, err := c.deleteWithFilter(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
 
 	return res, c.commitImplicitTxn(ctx, txn)
-
 }
 
-func (c *Collection) deleteWithKey(
+func (c *collection) deleteWithKey(
 	ctx context.Context,
-	txn core.Txn,
-	key key.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
+	txn datastore.Txn,
+	key core.PrimaryDataStoreKey,
+) (*client.DeleteResult, error) {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, key)
@@ -147,7 +127,7 @@ func (c *Collection) deleteWithKey(
 		return nil, err
 	}
 	if !found {
-		return nil, ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFound
 	}
 
 	// Apply the function that will perform the full deletion of the document.
@@ -159,36 +139,36 @@ func (c *Collection) deleteWithKey(
 	// Upon successfull deletion, record a summary.
 	results := &client.DeleteResult{
 		Count:   1,
-		DocKeys: []string{key.String()},
+		DocKeys: []string{key.DocKey},
 	}
 
 	return results, nil
 }
 
-func (c *Collection) deleteWithKeys(
+func (c *collection) deleteWithKeys(
 	ctx context.Context,
-	txn core.Txn,
-	keys []key.DocKey,
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
+	txn datastore.Txn,
+	keys []client.DocKey,
+) (*client.DeleteResult, error) {
 	results := &client.DeleteResult{
 		DocKeys: make([]string, 0),
 	}
 
 	for _, key := range keys {
+		dsKey := c.getPrimaryKeyFromDocKey(key)
 
 		// Check this docKey actually exists.
-		found, err := c.exists(ctx, txn, key)
+		found, err := c.exists(ctx, txn, dsKey)
 
 		if err != nil {
 			return nil, err
 		}
 		if !found {
-			return nil, ErrDocumentNotFound
+			return nil, client.ErrDocumentNotFound
 		}
 
 		// Apply the function that will perform the full deletion of this document.
-		err = c.applyFullDelete(ctx, txn, key)
+		err = c.applyFullDelete(ctx, txn, dsKey)
 		if err != nil {
 			return nil, err
 		}
@@ -203,12 +183,11 @@ func (c *Collection) deleteWithKeys(
 	return results, nil
 }
 
-func (c *Collection) deleteWithFilter(
+func (c *collection) deleteWithFilter(
 	ctx context.Context,
-	txn core.Txn,
+	txn datastore.Txn,
 	filter interface{},
-	opts ...client.DeleteOpt) (*client.DeleteResult, error) {
-
+) (*client.DeleteResult, error) {
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)
 	if err != nil {
@@ -241,13 +220,14 @@ func (c *Collection) deleteWithFilter(
 			break
 		}
 
+		doc := query.Value()
 		// Extract the dockey in the string format from the document value.
-		docKey := query.Values()[parser.DocKeyFieldName].(string)
+		docKey := doc.GetKey()
 
-		// Convert from string to key.DocKey.
-		key, err := key.NewFromString(docKey)
-		if err != nil {
-			return nil, err
+		// Convert from string to client.DocKey.
+		key := core.PrimaryDataStoreKey{
+			CollectionId: fmt.Sprint(c.colID),
+			DocKey:       docKey,
 		}
 
 		// Delete the document that is associated with this key we got from the filter.
@@ -266,10 +246,10 @@ func (c *Collection) deleteWithFilter(
 }
 
 type dagDeleter struct {
-	bstore core.DAGStore
+	bstore datastore.DAGStore
 }
 
-func newDagDeleter(bstore core.DAGStore) dagDeleter {
+func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 	return dagDeleter{
 		bstore: bstore,
 	}
@@ -285,10 +265,9 @@ func newDagDeleter(bstore core.DAGStore) dagDeleter {
 //   1) Deleting the actual blocks (blockstore).
 //   2) Deleting datastore state.
 //   3) Deleting headstore state.
-func (c *Collection) applyFullDelete(
+func (c *collection) applyFullDelete(
 	ctx context.Context,
-	txn core.Txn, dockey key.DocKey) error {
-
+	txn datastore.Txn, dockey core.PrimaryDataStoreKey) error {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, dockey)
@@ -296,7 +275,7 @@ func (c *Collection) applyFullDelete(
 		return err
 	}
 	if !found {
-		return ErrDocumentNotFound
+		return client.ErrDocumentNotFound
 	}
 
 	// 1. =========================== Delete blockstore state ===========================
@@ -305,7 +284,10 @@ func (c *Collection) applyFullDelete(
 	// Covert dockey to compositeKey as follows:
 	//  * dockey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs
 	//  => compositeKey: bae-kljhLKHJG-lkjhgkldjhlzkdf-kdhflkhjsklgh-kjdhlkghjs/C
-	compositeKey := dockey.Key.ChildString(core.COMPOSITE_NAMESPACE)
+	compositeKey := core.HeadStoreKey{
+		DocKey:  dockey.DocKey,
+		FieldId: core.COMPOSITE_NAMESPACE,
+	}
 	headset := clock.NewHeadSet(txn.Headstore(), compositeKey)
 
 	// Get all the heads (cids).
@@ -323,24 +305,7 @@ func (c *Collection) applyFullDelete(
 	} // ================================================ Successfully deleted the blocks
 
 	// 2. =========================== Delete datastore state ============================
-	dataQuery := query.Query{
-		Prefix:   c.getPrimaryIndexDocKey(dockey.Key).String(),
-		KeysOnly: true,
-	}
-	dataResult, err := txn.Datastore().Query(ctx, dataQuery)
-	for e := range dataResult.Next() {
-		if e.Error != nil {
-			return err
-		}
-
-		// docs: https://pkg.go.dev/github.com/ipfs/go-datastore
-		err = txn.Datastore().Delete(ctx, ds.NewKey(e.Key))
-		if err != nil {
-			return err
-		}
-	}
-	// Delete the parent marker key for this document.
-	err = txn.Datastore().Delete(ctx, c.getPrimaryIndexDocKey(dockey.Key).Instance("v"))
+	_, err = c.delete(ctx, txn, dockey)
 	if err != nil {
 		return err
 	}
@@ -348,7 +313,7 @@ func (c *Collection) applyFullDelete(
 
 	// 3. =========================== Delete headstore state ===========================
 	headQuery := query.Query{
-		Prefix:   dockey.Key.String(),
+		Prefix:   dockey.ToString(),
 		KeysOnly: true,
 	}
 	headResult, err := txn.Headstore().Query(ctx, headQuery)
@@ -373,7 +338,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 
 	// Get the block using the cid.
 	block, err := d.bstore.Get(ctx, targetCid)
-	if err == blockstore.ErrNotFound {
+	if errors.Is(err, ipld.ErrNotFound{Cid: targetCid}) {
 		// If we have multiple heads corresponding to a dockey, one of the heads
 		//  could have already deleted the parental dag chain.
 		// Example: in the diagram below, HEAD#1 with cid1 deleted (represented by `:x`)
@@ -385,7 +350,6 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 		// (A:x) --> (B:x) --> (C:x) --> (D:x) |
 		//                                     | --> (F:d) HEAD#2->cid2
 		return nil
-
 	} else if err != nil {
 		return err
 	}
@@ -402,7 +366,6 @@ func (d dagDeleter) delete(
 	ctx context.Context,
 	targetCid cid.Cid,
 	targetBlock block.Block) error {
-
 	targetNode, err := dag.DecodeProtobuf(targetBlock.RawData())
 	if err != nil {
 		return err
@@ -420,21 +383,5 @@ func (d dagDeleter) delete(
 		}
 	}
 
-	return nil
-}
-
-// =================================== UNIMPLEMENTED ===================================
-
-// DeleteWithDoc deletes targeting the supplied document.
-func (c *Collection) DeleteWithDoc(
-	doc *document.SimpleDocument,
-	opts ...client.DeleteOpt) error {
-	return nil
-}
-
-// DeleteWithDocs deletes all the supplied documents in the slice.
-func (c *Collection) DeleteWithDocs(
-	docs []*document.SimpleDocument,
-	opts ...client.DeleteOpt) error {
 	return nil
 }

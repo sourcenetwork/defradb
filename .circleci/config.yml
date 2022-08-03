@@ -2,75 +2,99 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
+#========================================================================================================[ COMMANDS ]
+commands:
+
+  # A reusable command with a boolean parameter to specify if we want to run change detection or not.
+  build_and_test:
+
+    parameters:
+      no_change_detection:
+        description: "If true then just builds and runs tests, otherwise detects for database changes."
+        type: boolean
+        default: false
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - go-mod-v5-cimg-go-1.17-{{ checksum "go.sum" }}
+
+      - run:
+          name: Install go modules into the module cache.
+          command: make deps:modules
+
+      - save_cache:
+          key: go-mod-v5-cimg-go-1.17-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+
+      - when:
+          condition: << parameters.no_change_detection >>
+          steps:
+            - run:
+                name: Run tests
+                command: |
+                  make test:verbose
+                environment:
+                  DEFRA_BADGER_MEMORY: true
+                  DEFRA_BADGER_FILE: true
+                  DEFRA_MAP: true
+
+      - when:
+          condition:
+            not: << parameters.no_change_detection >>
+          steps:
+            - run:
+                name: Run tests with change detection
+                command: |
+                  make test:changes
+                environment:
+                  DEFRA_DETECT_DATABASE_CHANGES: true
+
+      - store_test_results:
+          path: "/tmp/defradb-dev"
+
+
+#============================================================================================================[ JOBS ]
+# Define jobs to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
-    working_directory: ~/repo
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: circleci/golang:1.17.5
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
-      - run:
-          name: Install Dependencies
-          command: make deps
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-      - run:
-          name: Run tests
-          command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -race
-          environment:
-            DEFRA_BADGER_MEMORY: true
-            DEFRA_BADGER_FILE: true
-            DEFRA_MAP: true
-      - store_test_results:
-          path: /tmp/test-reports
-  change_detection:
-    working_directory: ~/repo
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: circleci/golang:1.17.5
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
-      - run:
-          name: Install Dependencies
-          command: make deps
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-      - run:
-          name: Run tests
-          command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml -- ./... -p 1
-          environment:
-            DEFRA_DETECT_DATABASE_CHANGES: true
-      - store_test_results:
-          path: /tmp/test-reports
 
+  # Job builds and runs all the test.
+  build:
+
+    working_directory: ~/repo
+
+    docker:
+      # https://circleci.com/developer/images/image/cimg/go
+      - image: cimg/go:1.17
+
+    steps:
+      - build_and_test:
+          no_change_detection: true
+
+  # Job detects if we have a database change.
+  change_detection:
+
+    working_directory: ~/repo
+
+    docker:
+      # https://circleci.com/developer/images/image/cimg/go
+      - image: cimg/go:1.17
+
+    steps:
+      - build_and_test:
+          no_change_detection: false
+
+
+#=======================================================================================================[ WORKFLOWS ]
 # Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  build-test: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+
+  build-test:
+
     jobs:
       - build
       - change_detection

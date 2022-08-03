@@ -17,12 +17,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
-)
-
-var (
-	keysNs         = "k" // /keys namespace /set/k/<key>/{v,p}
-	valueSuffix    = "v" // value key
-	prioritySuffix = "p" // priority key
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // baseCRDT is embedded as a base layer into all
@@ -30,62 +25,39 @@ var (
 // duplication, and better manage the overhead
 // tasks that all the CRDTs need to implement anyway
 type baseCRDT struct {
-	store          core.DSReaderWriter
-	namespace      ds.Key
-	keysNs         string
-	valueSuffix    string
-	prioritySuffix string
+	store datastore.DSReaderWriter
+	key   core.DataStoreKey
 }
 
-// @todo paramaterize ns/suffix
-func newBaseCRDT(store core.DSReaderWriter, namespace ds.Key) baseCRDT {
+// @TODO paramaterize ns/suffix
+func newBaseCRDT(store datastore.DSReaderWriter, key core.DataStoreKey) baseCRDT {
 	return baseCRDT{
-		store:          store,
-		namespace:      namespace,
-		keysNs:         keysNs,
-		valueSuffix:    valueSuffix,
-		prioritySuffix: prioritySuffix,
+		store: store,
+		key:   key,
 	}
 }
 
-func (base baseCRDT) keyPrefix(key string) ds.Key {
-	return base.namespace.ChildString(key)
-}
-
-func (base baseCRDT) valueKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(base.valueSuffix)
-}
-
-func (base baseCRDT) priorityKey(key string) ds.Key {
-	return base.namespace.ChildString(key).Instance(base.prioritySuffix)
-}
-
-// Commented because this function is unused (for linter).
-// func (base baseCRDT) typeKey(key string) ds.Key {
-// 	return base.namespace.ChildString(key).Instance(crdtTypeSuffix)
-// }
-
-// func (base baseCRDT) dataTypeKey(key string) ds.Key {
-// 	return base.namespace.ChildString(key).Instance(dataTypeSuffix)
-// }
-
-func (base baseCRDT) setPriority(ctx context.Context, key string, priority uint64) error {
-	prioK := base.priorityKey(key)
+func (base baseCRDT) setPriority(
+	ctx context.Context,
+	key core.DataStoreKey,
+	priority uint64,
+) error {
+	prioK := key.WithPriorityFlag()
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, priority+1)
 	if n == 0 {
 		return errors.New("error encoding priority")
 	}
 
-	return base.store.Put(ctx, prioK, buf[0:n])
+	return base.store.Put(ctx, prioK.ToDS(), buf[0:n])
 }
 
 // get the current priority for given key
-func (base baseCRDT) getPriority(ctx context.Context, key string) (uint64, error) {
-	pKey := base.priorityKey(key)
-	pbuf, err := base.store.Get(ctx, pKey)
+func (base baseCRDT) getPriority(ctx context.Context, key core.DataStoreKey) (uint64, error) {
+	pKey := key.WithPriorityFlag()
+	pbuf, err := base.store.Get(ctx, pKey.ToDS())
 	if err != nil {
-		if err == ds.ErrNotFound {
+		if errors.Is(err, ds.ErrNotFound) {
 			return 0, nil
 		}
 		return 0, err

@@ -12,12 +12,15 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Limit the results, yielding only what the limit/offset permits
 // @todo: Handle cursor
 type hardLimitNode struct {
+	docMapper
+
 	p    *Planner
 	plan planNode
 
@@ -26,18 +29,22 @@ type hardLimitNode struct {
 	rowIndex int64
 }
 
-// HardLimit creates a new hardLimitNode initalized from
-// the parser.Limit object.
-func (p *Planner) HardLimit(n *parser.Limit) (*hardLimitNode, error) {
+// HardLimit creates a new hardLimitNode initalized from the parser.Limit object.
+func (p *Planner) HardLimit(parsed *mapper.Select, n *mapper.Limit) (*hardLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
 	return &hardLimitNode{
-		p:        p,
-		limit:    n.Limit,
-		offset:   n.Offset,
-		rowIndex: 0,
+		p:         p,
+		limit:     n.Limit,
+		offset:    n.Offset,
+		rowIndex:  0,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
+}
+
+func (n *hardLimitNode) Kind() string {
+	return "hardLimitNode"
 }
 
 func (n *hardLimitNode) Init() error {
@@ -45,14 +52,14 @@ func (n *hardLimitNode) Init() error {
 	return n.plan.Init()
 }
 
-func (n *hardLimitNode) Start() error                   { return n.plan.Start() }
-func (n *hardLimitNode) Spans(spans core.Spans)         { n.plan.Spans(spans) }
-func (n *hardLimitNode) Close() error                   { return n.plan.Close() }
-func (n *hardLimitNode) Values() map[string]interface{} { return n.plan.Values() }
+func (n *hardLimitNode) Start() error           { return n.plan.Start() }
+func (n *hardLimitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *hardLimitNode) Close() error           { return n.plan.Close() }
+func (n *hardLimitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *hardLimitNode) Next() (bool, error) {
 	// check if we're passed the limit
-	if n.rowIndex-n.offset >= n.limit {
+	if n.limit != 0 && n.rowIndex-n.offset >= n.limit {
 		return false, nil
 	}
 
@@ -74,10 +81,26 @@ func (n *hardLimitNode) Next() (bool, error) {
 
 func (n *hardLimitNode) Source() planNode { return n.plan }
 
+func (n *hardLimitNode) Explain() (map[string]interface{}, error) {
+	exp := map[string]interface{}{
+		limitLabel:  n.limit,
+		offsetLabel: n.offset,
+	}
+
+	if n.limit == 0 {
+		exp[limitLabel] = nil
+	}
+
+	return exp, nil
+}
+
 // limit the results, flagging any records outside the bounds of limit/offset with
 // with a 'hidden' flag blocking rendering.  Used if consumers of the results require
 // the full dataset.
 type renderLimitNode struct {
+	documentIterator
+	docMapper
+
 	p    *Planner
 	plan planNode
 
@@ -88,16 +111,21 @@ type renderLimitNode struct {
 
 // RenderLimit creates a new renderLimitNode initalized from
 // the parser.Limit object.
-func (p *Planner) RenderLimit(n *parser.Limit) (*renderLimitNode, error) {
+func (p *Planner) RenderLimit(docMap *core.DocumentMapping, n *parserTypes.Limit) (*renderLimitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do
 	}
 	return &renderLimitNode{
-		p:        p,
-		limit:    n.Limit,
-		offset:   n.Offset,
-		rowIndex: 0,
+		p:         p,
+		limit:     n.Limit,
+		offset:    n.Offset,
+		rowIndex:  0,
+		docMapper: docMapper{docMap},
 	}, nil
+}
+
+func (n *renderLimitNode) Kind() string {
+	return "renderLimitNode"
 }
 
 func (n *renderLimitNode) Init() error {
@@ -108,23 +136,32 @@ func (n *renderLimitNode) Init() error {
 func (n *renderLimitNode) Start() error           { return n.plan.Start() }
 func (n *renderLimitNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
 func (n *renderLimitNode) Close() error           { return n.plan.Close() }
-func (n *renderLimitNode) Values() map[string]interface{} {
-	value := n.plan.Values()
-
-	if n.rowIndex-n.offset > n.limit || n.rowIndex <= n.offset {
-		value[parser.HiddenFieldName] = struct{}{}
-	}
-
-	return value
-}
 
 func (n *renderLimitNode) Next() (bool, error) {
 	if next, err := n.plan.Next(); !next {
 		return false, err
 	}
 
+	n.currentValue = n.plan.Value()
+
 	n.rowIndex++
+	if (n.limit != 0 && n.rowIndex-n.offset > n.limit) || n.rowIndex <= n.offset {
+		n.currentValue.Hidden = true
+	}
 	return true, nil
 }
 
 func (n *renderLimitNode) Source() planNode { return n.plan }
+
+func (n *renderLimitNode) Explain() (map[string]interface{}, error) {
+	exp := map[string]interface{}{
+		limitLabel:  n.limit,
+		offsetLabel: n.offset,
+	}
+
+	if n.limit == 0 {
+		exp[limitLabel] = nil
+	}
+
+	return exp, nil
+}

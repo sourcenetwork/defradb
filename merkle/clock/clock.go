@@ -15,9 +15,9 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/sourcenetwork/defradb/logging"
@@ -28,25 +28,34 @@ var (
 )
 
 type MerkleClock struct {
-	headstore core.DSReaderWriter
-	dagstore  core.DAGStore
+	headstore datastore.DSReaderWriter
+	dagstore  datastore.DAGStore
 	// dagSyncer
 	headset *heads
 	crdt    core.ReplicatedData
 }
 
-// NewMerkleClock returns a new merkle clock to read/write events (deltas) to
-// the clock
-func NewMerkleClock(headstore core.DSReaderWriter, dagstore core.DAGStore, id string, crdt core.ReplicatedData) core.MerkleClock {
+// NewMerkleClock returns a new MerkleClock to read/write events (deltas) to the clock.
+func NewMerkleClock(
+	headstore datastore.DSReaderWriter,
+	dagstore datastore.DAGStore,
+	namespace core.HeadStoreKey,
+	crdt core.ReplicatedData,
+) core.MerkleClock {
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
-		headset:   newHeadset(headstore, ds.NewKey(id)),
+		headset:   newHeadset(headstore, namespace),
 		crdt:      crdt,
 	}
 }
 
-func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uint64, delta core.Delta) (ipld.Node, error) {
+func (mc *MerkleClock) putBlock(
+	ctx context.Context,
+	heads []cid.Cid,
+	height uint64,
+	delta core.Delta,
+) (ipld.Node, error) {
 	if delta != nil {
 		delta.SetPriority(height)
 	}
@@ -76,10 +85,13 @@ func (mc *MerkleClock) putBlock(ctx context.Context, heads []cid.Cid, height uin
 
 // @todo Change AddDAGNode to AddDelta
 
-// AddDAGNode adds a new delta to the existing DAG for this MerkleClock
+// AddDAGNode adds a new delta to the existing DAG for this MerkleClock.
 // It checks the current heads, sets the delta priority in the merkle dag
-// adds it to the blockstore the runs ProcessNode
-func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Cid, ipld.Node, error) {
+// adds it to the blockstore the runs ProcessNode.
+func (mc *MerkleClock) AddDAGNode(
+	ctx context.Context,
+	delta core.Delta,
+) (cid.Cid, ipld.Node, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
 		return cid.Undef, nil, fmt.Errorf("error getting heads : %w", err)
@@ -113,9 +125,16 @@ func (mc *MerkleClock) AddDAGNode(ctx context.Context, delta core.Delta) (cid.Ci
 
 // ProcessNode processes an already merged delta into a crdt
 // by
-func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root cid.Cid, rootPrio uint64, delta core.Delta, node ipld.Node) ([]cid.Cid, error) {
+func (mc *MerkleClock) ProcessNode(
+	ctx context.Context,
+	ng core.NodeGetter,
+	root cid.Cid,
+	rootPrio uint64,
+	delta core.Delta,
+	node ipld.Node,
+) ([]cid.Cid, error) {
 	current := node.Cid()
-	log.Debug(ctx, "Running ProcessNode", logging.NewKV("Cid", current))
+	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
 		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
@@ -126,7 +145,7 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 	hasHeads := false
 	log.Debug(ctx, "Stepping through node links")
 	for _, l := range links {
-		log.Debug(ctx, "checking link", logging.NewKV("Name", l.Name), logging.NewKV("Cid", l.Cid))
+		log.Debug(ctx, "Checking link", logging.NewKV("Name", l.Name), logging.NewKV("CID", l.Cid))
 		if l.Name == "_head" {
 			hasHeads = true
 			break
@@ -172,7 +191,12 @@ func (mc *MerkleClock) ProcessNode(ctx context.Context, ng core.NodeGetter, root
 			log.Debug(ctx, "Adding head")
 			err := mc.headset.Add(ctx, root, rootPrio)
 			if err != nil {
-				log.ErrorE(ctx, "error adding head (when root is new head)", err, logging.NewKV("Root", root))
+				log.ErrorE(
+					ctx,
+					"Failure adding head (when root is a new head)",
+					err,
+					logging.NewKV("Root", root),
+				)
 				// OR should this also return like below comment??
 				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
 			}

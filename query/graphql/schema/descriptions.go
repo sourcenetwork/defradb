@@ -16,11 +16,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
+	"github.com/sourcenetwork/defradb/client"
 
 	gql "github.com/graphql-go/graphql"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -28,16 +27,16 @@ var (
 	// directly. As it will yield incorrect and unexpected
 	// results
 
-	// nolint:deadcode,unused,varcheck
-	gqlTypeToFieldKindReference = map[gql.Type]base.FieldKind{
-		gql.ID:        base.FieldKind_DocKey,
-		gql.Boolean:   base.FieldKind_BOOL,
-		gql.Int:       base.FieldKind_INT,
-		gql.Float:     base.FieldKind_FLOAT,
-		gql.DateTime:  base.FieldKind_DATE,
-		gql.String:    base.FieldKind_STRING,
-		&gql.Object{}: base.FieldKind_FOREIGN_OBJECT,
-		&gql.List{}:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
+	//nolint:deadcode,unused,varcheck
+	gqlTypeToFieldKindReference = map[gql.Type]client.FieldKind{
+		gql.ID:        client.FieldKind_DocKey,
+		gql.Boolean:   client.FieldKind_BOOL,
+		gql.Int:       client.FieldKind_INT,
+		gql.Float:     client.FieldKind_FLOAT,
+		gql.DateTime:  client.FieldKind_DATE,
+		gql.String:    client.FieldKind_STRING,
+		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
+		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
 		// More custom ones to come
 		// - JSON
 		// - ByteArray
@@ -45,88 +44,103 @@ var (
 	}
 
 	// This map is fine to use
-	defaultCRDTForFieldKind = map[base.FieldKind]core.CType{
-		base.FieldKind_DocKey:               core.LWW_REGISTER,
-		base.FieldKind_BOOL:                 core.LWW_REGISTER,
-		base.FieldKind_BOOL_ARRAY:           core.LWW_REGISTER,
-		base.FieldKind_INT:                  core.LWW_REGISTER,
-		base.FieldKind_INT_ARRAY:            core.LWW_REGISTER,
-		base.FieldKind_FLOAT:                core.LWW_REGISTER,
-		base.FieldKind_FLOAT_ARRAY:          core.LWW_REGISTER,
-		base.FieldKind_DATE:                 core.LWW_REGISTER,
-		base.FieldKind_STRING:               core.LWW_REGISTER,
-		base.FieldKind_STRING_ARRAY:         core.LWW_REGISTER,
-		base.FieldKind_FOREIGN_OBJECT:       core.NONE_CRDT,
-		base.FieldKind_FOREIGN_OBJECT_ARRAY: core.NONE_CRDT,
+	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
+		client.FieldKind_DocKey:               client.LWW_REGISTER,
+		client.FieldKind_BOOL:                 client.LWW_REGISTER,
+		client.FieldKind_BOOL_ARRAY:           client.LWW_REGISTER,
+		client.FieldKind_INT:                  client.LWW_REGISTER,
+		client.FieldKind_INT_ARRAY:            client.LWW_REGISTER,
+		client.FieldKind_FLOAT:                client.LWW_REGISTER,
+		client.FieldKind_FLOAT_ARRAY:          client.LWW_REGISTER,
+		client.FieldKind_DATE:                 client.LWW_REGISTER,
+		client.FieldKind_STRING:               client.LWW_REGISTER,
+		client.FieldKind_STRING_ARRAY:         client.LWW_REGISTER,
+		client.FieldKind_FOREIGN_OBJECT:       client.NONE_CRDT,
+		client.FieldKind_FOREIGN_OBJECT_ARRAY: client.NONE_CRDT,
 	}
 )
 
-func gqlTypeToFieldKind(t gql.Type) base.FieldKind {
+func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
+	const (
+		typeID             string = "ID"
+		typeBoolean        string = "Boolean"
+		typeNotNullBoolean string = "Boolean!"
+		typeInt            string = "Int"
+		typeNotNullInt     string = "Int!"
+		typeFloat          string = "Float"
+		typeNotNullFloat   string = "Float!"
+		typeDate           string = "Date"
+		typeString         string = "String"
+		typeNotNullString  string = "String!"
+	)
+
 	switch v := t.(type) {
 	case *gql.Scalar:
 		switch v.Name() {
-		case "ID":
-			return base.FieldKind_DocKey
-		case "Boolean":
-			return base.FieldKind_BOOL
-		case "Int":
-			return base.FieldKind_INT
-		case "Float":
-			return base.FieldKind_FLOAT
-		case "Date":
-			return base.FieldKind_DATE
-		case "String":
-			return base.FieldKind_STRING
+		case typeID:
+			return client.FieldKind_DocKey
+		case typeBoolean:
+			return client.FieldKind_BOOL
+		case typeInt:
+			return client.FieldKind_INT
+		case typeFloat:
+			return client.FieldKind_FLOAT
+		case typeDate:
+			return client.FieldKind_DATE
+		case typeString:
+			return client.FieldKind_STRING
 		}
 	case *gql.Object:
-		return base.FieldKind_FOREIGN_OBJECT
+		return client.FieldKind_FOREIGN_OBJECT
 	case *gql.List:
-		if scalar, isScalar := v.OfType.(*gql.Scalar); isScalar {
-			switch scalar.Name() {
-			case "Boolean":
-				return base.FieldKind_BOOL_ARRAY
-			case "Int":
-				return base.FieldKind_INT_ARRAY
-			case "Float":
-				return base.FieldKind_FLOAT_ARRAY
-			case "String":
-				return base.FieldKind_STRING_ARRAY
+		if notNull, isNotNull := v.OfType.(*gql.NonNull); isNotNull {
+			switch notNull.Name() {
+			case typeNotNullBoolean:
+				return client.FieldKind_BOOL_ARRAY
+			case typeNotNullInt:
+				return client.FieldKind_INT_ARRAY
+			case typeNotNullFloat:
+				return client.FieldKind_FLOAT_ARRAY
+			case typeNotNullString:
+				return client.FieldKind_STRING_ARRAY
 			}
 		}
-		return base.FieldKind_FOREIGN_OBJECT_ARRAY
+		return client.FieldKind_FOREIGN_OBJECT_ARRAY
 	}
 
-	return base.FieldKind_None
+	return client.FieldKind_None
 }
 
-func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDescription, error) {
+func (g *Generator) CreateDescriptions(
+	types []*gql.Object,
+) ([]client.CollectionDescription, error) {
 	// create a indexable cached map
 	typeMap := make(map[string]*gql.Object)
 	for _, t := range types {
 		typeMap[t.Name()] = t
 	}
 
-	descs := make([]base.CollectionDescription, len(types))
+	descs := make([]client.CollectionDescription, len(types))
 	// do the real generation
 	for i, t := range types {
-		desc := base.CollectionDescription{
+		desc := client.CollectionDescription{
 			Name: t.Name(),
 		}
 
 		// add schema
-		desc.Schema = base.SchemaDescription{
+		desc.Schema = client.SchemaDescription{
 			Name: t.Name(),
-			Fields: []base.FieldDescription{
+			Fields: []client.FieldDescription{
 				{
-					Name: "_key",
-					Kind: base.FieldKind_DocKey,
-					Typ:  core.NONE_CRDT,
+					Name: parserTypes.DocKeyFieldName,
+					Kind: client.FieldKind_DocKey,
+					Typ:  client.NONE_CRDT,
 				},
 			},
 		}
 		// and schema fields
 		for fname, field := range t.Fields() {
-			if _, ok := parser.ReservedFields[fname]; ok {
+			if _, ok := parserTypes.ReservedFields[fname]; ok {
 				continue
 			}
 
@@ -136,16 +150,15 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 			// field associated with a related type, as
 			// its defined down below in the IsObject block.
 			if _, exists := desc.GetField(fname); exists {
-				// lets make sure its an _id field, otherwise
+				// let's make sure its an _id field, otherwise
 				// we might have an error here
-				if strings.HasSuffix(fname, "_id") {
-					continue
-				} else {
+				if !strings.HasSuffix(fname, "_id") {
 					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())
 				}
+				continue
 			}
 
-			fd := base.FieldDescription{
+			fd := client.FieldDescription{
 				Name: fname,
 				Kind: gqlTypeToFieldKind(field.Type),
 			}
@@ -163,7 +176,8 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
 						fname,
 						field.Type.Name(),
-						t.Name())
+						t.Name(),
+					)
 				}
 				fd.RelationName = rel.name
 
@@ -172,7 +186,7 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 					return nil, errors.New("Relation is missing field")
 				}
 
-				fd.Meta = rel.Kind() | fieldRelationType
+				fd.RelationType = rel.Kind() | fieldRelationType
 
 				// handle object id field, defined as {{object_name}}_id
 				// with type gql.ID
@@ -184,16 +198,18 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 					for i, sf := range desc.Schema.Fields {
 						if sf.Name == fmt.Sprintf("%s_id", fname) {
 							// delete element matching
-							desc.Schema.Fields = append(desc.Schema.Fields[:i], desc.Schema.Fields[i+1:]...)
+							desc.Schema.Fields = append(
+								desc.Schema.Fields[:i],
+								desc.Schema.Fields[i+1:]...)
 							break
 						}
 					}
 
 					// create field
-					fdRelated := base.FieldDescription{
-						Name: fmt.Sprintf("%s_id", fname),
-						Kind: gqlTypeToFieldKind(gql.ID),
-						Meta: base.Meta_Relation_INTERNAL_ID,
+					fdRelated := client.FieldDescription{
+						Name:         fmt.Sprintf("%s_id", fname),
+						Kind:         gqlTypeToFieldKind(gql.ID),
+						RelationType: client.Relation_Type_INTERNAL_ID,
 					}
 					fdRelated.Typ = defaultCRDTForFieldKind[fdRelated.Kind]
 					desc.Schema.Fields = append(desc.Schema.Fields, fdRelated)
@@ -205,17 +221,17 @@ func (g *Generator) CreateDescriptions(types []*gql.Object) ([]base.CollectionDe
 
 		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
-			// make sure that the _key is always at the beginning
-			if desc.Schema.Fields[i].Name == "_key" {
+			// make sure that the _key (DocKeyFieldName) is always at the beginning
+			if desc.Schema.Fields[i].Name == parserTypes.DocKeyFieldName {
 				return true
-			} else if desc.Schema.Fields[j].Name == "_key" {
+			} else if desc.Schema.Fields[j].Name == parserTypes.DocKeyFieldName {
 				return false
 			}
 			return desc.Schema.Fields[i].Name < desc.Schema.Fields[j].Name
 		})
 
 		// add default index
-		desc.Indexes = []base.IndexDescription{
+		desc.Indexes = []client.IndexDescription{
 			{
 				Name:    "primary",
 				ID:      uint32(0),
@@ -243,48 +259,48 @@ type book {
 
 // don't need to worry about IDs and FieldIDs
 
-return base.CollectionDescription{
+return client.CollectionDescription{
 		Name: "book",
 		ID:   uint32(2),
-		Schema: base.SchemaDescription{
+		Schema: client.SchemaDescription{
 			ID:       uint32(2),
 			FieldIDs: []uint32{1, 2, 3, 4, 5},
-			Fields: []base.FieldDescription{
-				base.FieldDescription{
+			Fields: []client.FieldDescription{
+				client.FieldDescription{
 					Name: "_key",
 					ID:   base.FieldID(1),
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "rating",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_FLOAT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name:   "author",
 					ID:     base.FieldID(5),
 					Kind:   base.FieldKind_FOREIGN_OBJECT,
 					Schema: "author",
-					Typ:    core.NONE_CRDT,
-					Meta:   base.Meta_Relation_ONE | base.Meta_Relation_Primary,
+					Typ:    client.NONE_CRDT,
+					Meta:   base.Relation_Type_ONE | base.Relation_Type_Primary,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "author_id",
 					ID:   base.FieldID(6),
 					Kind: base.FieldKind_DocKey,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
 			},
 		},
-		Indexes: []base.IndexDescription{
-			base.IndexDescription{
+		Indexes: []client.IndexDescription{
+			client.IndexDescription{
 				Name:    "primary",
 				ID:      uint32(0),
 				Primary: true,
@@ -293,49 +309,49 @@ return base.CollectionDescription{
 		},
 	}
 
-	return base.CollectionDescription{
+	return client.CollectionDescription{
 		Name: "author",
 		ID:   uint32(3),
-		Schema: base.SchemaDescription{
+		Schema: client.SchemaDescription{
 			ID:       uint32(3),
 			Name:     "author",
 			FieldIDs: []uint32{1, 2, 3, 4, 5},
-			Fields: []base.FieldDescription{
-				base.FieldDescription{
+			Fields: []client.FieldDescription{
+				client.FieldDescription{
 					Name: "_key",
 					ID:   base.FieldID(1),
 					Kind: base.FieldKind_DocKey,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "name",
 					ID:   base.FieldID(2),
 					Kind: base.FieldKind_STRING,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "age",
 					ID:   base.FieldID(3),
 					Kind: base.FieldKind_INT,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name: "verified",
 					ID:   base.FieldID(4),
 					Kind: base.FieldKind_BOOL,
-					Typ:  core.LWW_REGISTER,
+					Typ:  client.LWW_REGISTER,
 				},
-				base.FieldDescription{
+				client.FieldDescription{
 					Name:   "published",
 					ID:     base.FieldID(5),
 					Kind:   base.FieldKind_FOREIGN_OBJECT_ARRAY,
 					Schema: "book",
-					Typ:    core.NONE_CRDT,
-					Meta:   base.Meta_Relation_ONEMANY,
+					Typ:    client.NONE_CRDT,
+					Meta:   base.Relation_Type_ONEMANY,
 				},
 			},
 		},
-		Indexes: []base.IndexDescription{
-			base.IndexDescription{
+		Indexes: []client.IndexDescription{
+			client.IndexDescription{
 				Name:    "primary",
 				ID:      uint32(0),
 				Primary: true,

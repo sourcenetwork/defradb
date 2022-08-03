@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // type uint8 uint8
@@ -52,7 +52,9 @@ func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	return rel, nil
 }
 
-func (rm *RelationManager) GetRelationByDescription(field, schemaType, objectType string) *Relation {
+func (rm *RelationManager) GetRelationByDescription(
+	field, schemaType, objectType string,
+) *Relation {
 	for _, rel := range rm.relations {
 		t1, t2 := rel.schemaTypes[0], rel.schemaTypes[1]
 		if (t1 == schemaType && t2 == objectType) ||
@@ -94,72 +96,84 @@ func (rm *RelationManager) Exists(name string) bool {
 
 // RegisterSingle is used if you only know a single side of the relation
 // at a time. It allows you to iteratively, across two calls, build the relation.
-// It will fail if you call it again on a relation that has been registered AND finalized
-func (rm *RelationManager) RegisterSingle(name, schemaType, schemaField string, relType uint8) (bool, error) {
+// If the relation exists and is finalized, then nothing is done. Returns true
+// if nothing is done or the relation is successfully registered.
+func (rm *RelationManager) RegisterSingle(
+	name string,
+	schemaType string,
+	schemaField string,
+	relType client.RelationType,
+) (bool, error) {
 	if name == "" {
 		return false, errors.New("Relation name must be non empty")
 	}
 
 	// make sure the relation type is ONLY One or Many, not both
-	if base.IsSet(relType, base.Meta_Relation_ONE) == base.IsSet(relType, base.Meta_Relation_MANY) {
+	if relType.IsSet(client.Relation_Type_ONE) == relType.IsSet(client.Relation_Type_MANY) {
 		return false, errors.New("Relation type can only be either One or Many, not both")
 	}
 
 	// make a copy of rel type, one goes to the relation.relType, and the other goes into the []types.
 	// We need to clear the Primary bit on the relation.relType so we make a copy
 	rt := relType
-	rt &^= base.Meta_Relation_Primary // clear the primary bit
+	rt &^= client.Relation_Type_Primary // clear the primary bit
 
 	rel, ok := rm.relations[name]
 	if !ok {
-		rel = &Relation{
+		// If a relation doesn't exist then make one.
+		rm.relations[name] = &Relation{
 			name:        name,
 			relType:     rt,
-			types:       []uint8{relType},
+			types:       []client.RelationType{relType},
 			schemaTypes: []string{schemaType},
 			fields:      []string{schemaField},
 		}
-	} else if rel.finalized {
-		return false, errors.New("Cannot update a relation that is already finalized")
-	} else {
-		// relation exists, and is not finalized
+		return true, nil
+	}
 
-		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many
-		// one
-		if base.IsSet(rel.relType, base.Meta_Relation_ONE) {
-			if base.IsSet(relType, base.Meta_Relation_ONE) { // One-to-One
-				rel.relType = base.Meta_Relation_ONEONE
-			} else if base.IsSet(relType, base.Meta_Relation_MANY) {
-				rel.relType = base.Meta_Relation_ONEMANY
+	if !rel.finalized {
+		// If a  relation exists, and is not finalized, then finalizing it.
+
+		// handle relationType, needs to be either One-to-One, One-to-Many, Many-to-Many.
+		if rel.relType.IsSet(client.Relation_Type_ONE) {
+			if relType.IsSet(client.Relation_Type_ONE) { // One-to-One
+				rel.relType = client.Relation_Type_ONEONE
+			} else if relType.IsSet(client.Relation_Type_MANY) {
+				rel.relType = client.Relation_Type_ONEMANY
 			}
 		} else { // many
-			if base.IsSet(relType, base.Meta_Relation_ONE) {
-				rel.relType = base.Meta_Relation_ONEMANY
-			} else if base.IsSet(relType, base.Meta_Relation_MANY) {
-				rel.relType = base.Meta_Relation_MANYMANY
+			if relType.IsSet(client.Relation_Type_ONE) {
+				rel.relType = client.Relation_Type_ONEMANY
+			} else if relType.IsSet(client.Relation_Type_MANY) {
+				rel.relType = client.Relation_Type_MANYMANY
 			}
 		}
 
 		rel.types = append(rel.types, relType)
 		rel.schemaTypes = append(rel.schemaTypes, schemaType)
 		rel.fields = append(rel.fields, schemaField)
+
+		// Try finalizing the relation.
 		if err := rel.finalize(); err != nil {
 			return false, err
 		}
-
+		rm.relations[name] = rel
 	}
 
-	rm.relations[name] = rel
 	return true, nil
 }
 
 // RegisterRelation adds a new relation to the RelationManager
 // if it doesn't already exist.
-func (rm *RelationManager) RegisterOneToOne(name, primaryType, primaryField, secondaryType, secondaryField string) (bool, error) {
+func (rm *RelationManager) RegisterOneToOne(
+	name, primaryType, primaryField, secondaryType, secondaryField string,
+) (bool, error) {
 	return rm.register(nil)
 }
 
-func (rm *RelationManager) RegisterOneToMany(name, oneType, oneField, manyType, manyField string) (bool, error) {
+func (rm *RelationManager) RegisterOneToMany(
+	name, oneType, oneField, manyType, manyField string,
+) (bool, error) {
 	return rm.register(nil)
 }
 
@@ -173,8 +187,8 @@ func (rm *RelationManager) register(rel *Relation) (bool, error) {
 
 type Relation struct {
 	name        string
-	relType     uint8
-	types       []uint8
+	relType     client.RelationType
+	types       []client.RelationType
 	schemaTypes []string // []gql.Object??
 	fields      []string //
 
@@ -190,9 +204,9 @@ func (r *Relation) finalize() error {
 	}
 
 	// make sure its one of One-to-One, One-to-Many, Many-to-Many
-	if !base.IsSet(r.relType, base.Meta_Relation_ONEONE) &&
-		!base.IsSet(r.relType, base.Meta_Relation_ONEMANY) &&
-		!base.IsSet(r.relType, base.Meta_Relation_MANYMANY) {
+	if !r.relType.IsSet(client.Relation_Type_ONEONE) &&
+		!r.relType.IsSet(client.Relation_Type_ONEMANY) &&
+		!r.relType.IsSet(client.Relation_Type_MANYMANY) {
 		return errors.New("Relation has an invalid type to be finalize")
 	}
 
@@ -203,24 +217,24 @@ func (r *Relation) finalize() error {
 		xBit := t1 ^ t2
 
 		// both types have primary set
-		if base.IsSet(aBit, base.Meta_Relation_Primary) {
+		if aBit.IsSet(client.Relation_Type_Primary) {
 			return errors.New("relation can only have a single field set as primary")
-		} else if !base.IsSet(xBit, base.Meta_Relation_Primary) {
+		} else if !xBit.IsSet(client.Relation_Type_Primary) {
 			// neither type has primary set, auto add to
 			// lexicographically first one by schema type name
 			if strings.Compare(r.schemaTypes[0], r.schemaTypes[1]) < 1 {
-				r.types[1] = r.types[1] | base.Meta_Relation_Primary
+				r.types[1] = r.types[1] | client.Relation_Type_Primary
 			} else {
-				r.types[0] = r.types[0] | base.Meta_Relation_Primary
+				r.types[0] = r.types[0] | client.Relation_Type_Primary
 			}
 		}
 	} else if IsOneToMany(r.relType) { // if its a one-to-many, set the one side as primary
 		if IsOne(r.types[0]) {
-			r.types[0] |= base.Meta_Relation_Primary  // set primary on one
-			r.types[1] &^= base.Meta_Relation_Primary // clear primary on many
+			r.types[0] |= client.Relation_Type_Primary  // set primary on one
+			r.types[1] &^= client.Relation_Type_Primary // clear primary on many
 		} else {
-			r.types[1] |= base.Meta_Relation_Primary  // set primary on one
-			r.types[0] &^= base.Meta_Relation_Primary // clear primary on many
+			r.types[1] |= client.Relation_Type_Primary  // set primary on one
+			r.types[0] &^= client.Relation_Type_Primary // clear primary on many
 		}
 	}
 
@@ -233,7 +247,7 @@ func (r Relation) GetFields() []string {
 }
 
 // Type returns what kind of relation it is
-func (r Relation) Kind() uint8 {
+func (r Relation) Kind() client.RelationType {
 	return r.relType
 }
 
@@ -250,7 +264,7 @@ func (r Relation) SchemaTypeIsPrimary(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_Primary)
+	return relType.IsSet(client.Relation_Type_Primary)
 }
 
 // SchemaTypeIsOne returns true if the provided type of the relation
@@ -262,7 +276,7 @@ func (r Relation) SchemaTypeIsOne(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_ONE)
+	return relType.IsSet(client.Relation_Type_ONE)
 }
 
 // SchemaTypeIsMany returns true if the provided type of the relation
@@ -274,7 +288,7 @@ func (r Relation) SchemaTypeIsMany(t string) bool {
 	}
 
 	relType := r.types[i]
-	return base.IsSet(relType, base.Meta_Relation_MANY)
+	return relType.IsSet(client.Relation_Type_MANY)
 }
 
 func (r Relation) schemaTypeExists(t string) (int, bool) {
@@ -286,22 +300,22 @@ func (r Relation) schemaTypeExists(t string) (int, bool) {
 	return -1, false
 }
 
-func (r Relation) GetField(schemaType string, field string) (string, uint8, bool) {
+func (r Relation) GetField(schemaType string, field string) (string, client.RelationType, bool) {
 	for i, f := range r.fields {
 		if f == field && r.schemaTypes[i] == schemaType {
 			return f, r.types[i], true
 		}
 	}
-	return "", uint8(0), false
+	return "", client.RelationType(0), false
 }
 
-func (r Relation) GetFieldFromSchemaType(schemaType string) (string, uint8, bool) {
+func (r Relation) GetFieldFromSchemaType(schemaType string) (string, client.RelationType, bool) {
 	for i, s := range r.schemaTypes {
 		if s == schemaType {
 			return r.fields[1-i], r.types[1-i], true
 		}
 	}
-	return "", uint8(0), false
+	return "", client.RelationType(0), false
 }
 
 func genRelationName(t1, t2 string) (string, error) {
@@ -315,37 +329,36 @@ func genRelationName(t1, t2 string) (string, error) {
 		return fmt.Sprintf("%s_%s", t1, t2), nil
 	}
 	return fmt.Sprintf("%s_%s", t2, t1), nil
-
 }
 
 // IsPrimary returns true if the Relation_Primary bit is set
-func IsPrimary(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_Primary)
+func IsPrimary(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_Primary)
 }
 
 // IsOne returns true if the Relation_ONE bit is set
-func IsOne(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONE)
+func IsOne(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_ONE)
 }
 
 // IsOneToOne returns true if the Relation_ONEONE bit is set
-func IsOneToOne(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONEONE)
+func IsOneToOne(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_ONEONE)
 }
 
 // IsMany returns true if the Relation_MANY bit is set
-func IsMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_MANY)
+func IsMany(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_MANY)
 }
 
 // IsOneToMany returns true if the Relation_ONEMANY is set
-func IsOneToMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_ONEMANY)
+func IsOneToMany(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_ONEMANY)
 }
 
 // IsManyToMany returns true if the Relation_MANYMANY bit is set
-func IsManyToMany(fieldmeta uint8) bool {
-	return base.IsSet(fieldmeta, base.Meta_Relation_MANYMANY)
+func IsManyToMany(fieldmeta client.RelationType) bool {
+	return fieldmeta.IsSet(client.Relation_Type_MANYMANY)
 }
 
 /* Example usage
@@ -369,7 +382,8 @@ Relation names are autogenerated. They are the combination of each type
 in the relation, sorted alphabetically.
 
 Relations:
-name: author_book | related types: author, book | fields: author, published (index same as types) type: one-to-many.
+name: author_book | related types: author, book | fields: author, published
+ (index same as types) type: one-to-many.
 
 rm.GetRelations(type) returns all the relations containing that type
 rel := rm.GetRelation(name) returns the exact relation (if it exists) between those types

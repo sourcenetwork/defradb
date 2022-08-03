@@ -19,13 +19,13 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/document/key"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -36,7 +36,7 @@ import (
 func (p *Peer) processLog(
 	ctx context.Context,
 	col client.Collection,
-	dockey key.DocKey,
+	dockey core.DataStoreKey,
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
@@ -70,7 +70,12 @@ func (p *Peer) processLog(
 		return nil, fmt.Errorf("Failed to decode delta object: %w", err)
 	}
 
-	log.Debug(ctx, "Processing push log request", logging.NewKV("DocKey", dockey), logging.NewKV("Cid", c))
+	log.Debug(
+		ctx,
+		"Processing PushLog request",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("CID", c),
+	)
 	height := delta.GetPriority()
 
 	if err := txn.DAGstore().Put(ctx, nd); err != nil {
@@ -89,20 +94,33 @@ func (p *Peer) processLog(
 	return cids, txn.Commit(ctx)
 }
 
-func initCRDTForType(ctx context.Context, txn core.MultiStore, col client.Collection, docKey key.DocKey, field string) (crdt.MerkleCRDT, error) {
-	var key ds.Key
-	var ctype core.CType
+func initCRDTForType(
+	ctx context.Context,
+	txn datastore.MultiStore,
+	col client.Collection,
+	docKey core.DataStoreKey,
+	field string,
+) (crdt.MerkleCRDT, error) {
+	var key core.DataStoreKey
+	var ctype client.CType
+	description := col.Description()
 	if field == "" { // empty field name implies composite type
-		ctype = core.COMPOSITE
-		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(core.COMPOSITE_NAMESPACE)
+		ctype = client.COMPOSITE
+		key = base.MakeCollectionKey(
+			description,
+		).WithInstanceInfo(
+			docKey,
+		).WithFieldId(
+			core.COMPOSITE_NAMESPACE,
+		)
 	} else {
-		fd, ok := col.Description().GetField(field)
+		fd, ok := description.GetField(field)
 		if !ok {
 			return nil, fmt.Errorf("Couldn't find field %s for doc %s", field, docKey)
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
-		key = col.GetPrimaryIndexDocKey(docKey.Key).ChildString(fieldID)
+		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
@@ -116,7 +134,10 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	return format.Decode(blk)
 }
 
-func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) *clock.CrdtNodeGetter {
+func (p *Peer) createNodeGetter(
+	crdt crdt.MerkleCRDT,
+	getter format.NodeGetter,
+) *clock.CrdtNodeGetter {
 	return &clock.CrdtNodeGetter{
 		NodeGetter:     getter,
 		DeltaExtractor: crdt.DeltaDecode,
@@ -126,7 +147,7 @@ func (p *Peer) createNodeGetter(crdt crdt.MerkleCRDT, getter format.NodeGetter) 
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
 	col client.Collection,
-	dockey key.DocKey,
+	dockey core.DataStoreKey,
 	field string,
 	nd ipld.Node,
 	children []cid.Cid,
@@ -162,17 +183,17 @@ func (p *Peer) handleChildBlocks(
 		// get object
 		cNode, err := getter.Get(ctx, c)
 		if err != nil {
-			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("Cid", c))
+			log.ErrorE(ctx, "Failed to get node", err, logging.NewKV("CID", c))
 			continue
 		}
 
 		log.Debug(
 			ctx,
-			"Submitting new job to dag queue",
+			"Submitting new job to DAG queue",
 			logging.NewKV("Collection", col.Name()),
 			logging.NewKV("DocKey", dockey),
 			logging.NewKV("Field", fieldName),
-			logging.NewKV("Cid", cNode.Cid()))
+			logging.NewKV("CID", cNode.Cid()))
 
 		session.Add(1)
 		job := &dagJob{
@@ -189,7 +210,6 @@ func (p *Peer) handleChildBlocks(
 		case <-p.ctx.Done():
 			return // jump out
 		}
-
 	}
 
 	// Clear up any children we failed to get from queued children

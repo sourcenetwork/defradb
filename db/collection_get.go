@@ -13,52 +13,56 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/document"
-	"github.com/sourcenetwork/defradb/document/key"
 )
 
-func (c *Collection) Get(ctx context.Context, key key.DocKey) (*document.Document, error) {
+func (c *collection) Get(ctx context.Context, key client.DocKey) (*client.Document, error) {
 	// create txn
 	txn, err := c.getTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer c.discardImplicitTxn(ctx, txn)
+	dsKey := c.getPrimaryKeyFromDocKey(key)
 
-	found, err := c.exists(ctx, txn, key)
+	found, err := c.exists(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		return nil, ErrDocumentNotFound
+		return nil, client.ErrDocumentNotFound
 	}
 
-	doc, err := c.get(ctx, txn, key)
+	doc, err := c.get(ctx, txn, dsKey)
 	if err != nil {
 		return nil, err
 	}
 	return doc, c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *Collection) get(ctx context.Context, txn core.Txn, key key.DocKey) (*document.Document, error) {
+func (c *collection) get(
+	ctx context.Context,
+	txn datastore.Txn,
+	key core.PrimaryDataStoreKey,
+) (*client.Document, error) {
 	// create a new document fetcher
 	df := new(fetcher.DocumentFetcher)
 	desc := &c.desc
-	index := &c.desc.Indexes[0]
 	// initialize it with the primary index
-	err := df.Init(&c.desc, &c.desc.Indexes[0], nil, false)
+	err := df.Init(&c.desc, nil, false)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
 	// construct target key for DocKey
-	targetKey := base.MakeIndexKey(desc, index, core.Key{Key: key.Key})
+	targetKey := base.MakeDocKey(*desc, key.DocKey)
 	// run the doc fetcher
-	err = df.Start(ctx, txn, core.Spans{core.NewSpan(targetKey, targetKey.PrefixEnd())})
+	err = df.Start(ctx, txn, core.NewSpans(core.NewSpan(targetKey, targetKey.PrefixEnd())))
 	if err != nil {
 		_ = df.Close()
 		return nil, err

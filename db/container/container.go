@@ -10,16 +10,20 @@
 
 package container
 
+import (
+	"github.com/sourcenetwork/defradb/core"
+)
+
 // DocumentContainer is a specialized buffer to store potentially
 // thousands of document value maps. Its used by the Planner system
 // to store documents that need to have logic applied to all of them.
-// For example, in the sortNode and future groupNode. The Document
+// For example, in the orderNode and future groupNode. The Document
 // Container acts as an array, so you can append, index, and get the
 // length of all the documents inside.
 // Close() is called if you want to free all the memory associated
 // with the container
 type DocumentContainer struct {
-	docs    []map[string]interface{}
+	docs    []core.Doc
 	numDocs int
 }
 
@@ -28,13 +32,13 @@ type DocumentContainer struct {
 // A capacity of 0 ignores any initial pre-allocation.
 func NewDocumentContainer(capacity int) *DocumentContainer {
 	return &DocumentContainer{
-		docs:    make([]map[string]interface{}, capacity),
+		docs:    make([]core.Doc, capacity),
 		numDocs: 0,
 	}
 }
 
 // At returns the document at the specified index.
-func (c *DocumentContainer) At(index int) map[string]interface{} {
+func (c *DocumentContainer) At(index int) core.Doc {
 	if index < 0 || index >= c.numDocs {
 		panic("Invalid index for document container")
 	}
@@ -46,13 +50,11 @@ func (c *DocumentContainer) Len() int {
 }
 
 // AddDoc adds a new document to the DocumentContainer.
-// It makes a deep copy before its added
-func (c *DocumentContainer) AddDoc(doc map[string]interface{}) error {
-	if doc == nil {
-		return nil
-	}
-	// append to docs slice
-	copyDoc := copyMap(doc)
+//
+// It makes a deep copy before its added to allow for independent mutation of
+// the added clone.
+func (c *DocumentContainer) AddDoc(doc core.Doc) error {
+	copyDoc := doc.Clone()
 	c.docs = append(c.docs, copyDoc)
 	c.numDocs++
 	return nil
@@ -70,21 +72,8 @@ func (c *DocumentContainer) Swap(i, j int) {
 	c.docs[j] = tmp
 }
 
-func (c *DocumentContainer) Close() {
+func (c *DocumentContainer) Close() error {
 	c.docs = nil
 	c.numDocs = 0
-}
-
-func copyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
-	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
-		if ok {
-			cp[k] = copyMap(vm)
-		} else {
-			cp[k] = v
-		}
-	}
-
-	return cp
+	return nil
 }

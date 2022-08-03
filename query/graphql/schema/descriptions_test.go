@@ -14,13 +14,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var testDefaultIndex = []base.IndexDescription{
+var testDefaultIndex = []client.IndexDescription{
 	{
 		Name:    "primary",
 		ID:      uint32(0),
@@ -40,31 +39,31 @@ func TestSingleSimpleType(t *testing.T) {
 				verified: Boolean
 			}
 			`,
-			targetDescs: []base.CollectionDescription{
+			targetDescs: []client.CollectionDescription{
 				{
 					Name: "user",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "user",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "age",
-								Kind: base.FieldKind_INT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: base.FieldKind_BOOL,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_BOOL,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -87,31 +86,31 @@ func TestSingleSimpleType(t *testing.T) {
 				rating: Float
 			}
 			`,
-			targetDescs: []base.CollectionDescription{
+			targetDescs: []client.CollectionDescription{
 				{
 					Name: "user",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "user",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "age",
-								Kind: base.FieldKind_INT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "verified",
-								Kind: base.FieldKind_BOOL,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_BOOL,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -119,28 +118,28 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Name: "author",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "author",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "publisher",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: base.FieldKind_FLOAT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -163,40 +162,40 @@ func TestSingleSimpleType(t *testing.T) {
 				published: book
 			}
 			`,
-			targetDescs: []base.CollectionDescription{
+			targetDescs: []client.CollectionDescription{
 				{
 					Name: "book",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "book",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name:         "author",
 								RelationName: "author_book",
-								Kind:         base.FieldKind_FOREIGN_OBJECT,
-								Typ:          core.NONE_CRDT,
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
 								Schema:       "author",
-								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEONE,
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
 							},
 							{
-								Name: "author_id",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.LWW_REGISTER,
-								Meta: base.Meta_Relation_INTERNAL_ID,
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: base.FieldKind_FLOAT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -204,37 +203,113 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Name: "author",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "author",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "age",
-								Kind: base.FieldKind_INT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name:         "published",
 								RelationName: "author_book",
-								Kind:         base.FieldKind_FOREIGN_OBJECT,
-								Typ:          core.NONE_CRDT,
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
 								Schema:       "book",
-								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEONE | base.Meta_Relation_Primary,
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
 							},
 							{
-								Name: "published_id",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.LWW_REGISTER,
-								Meta: base.Meta_Relation_INTERNAL_ID,
+								Name:         "published_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
+			description: "Multiple simple types",
+			sdl: `
+			type user {
+				name: String
+				age: Int
+				verified: Boolean
+			}
+
+			type author {
+				name: String
+				publisher: String
+				rating: Float
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "user",
+					Schema: client.SchemaDescription{
+						Name: "user",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "verified",
+								Kind: client.FieldKind_BOOL,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "publisher",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -248,6 +323,194 @@ func TestSingleSimpleType(t *testing.T) {
 			type book {
 				name: String
 				rating: Float
+				author: author @relation(name:"book_authors")
+			}
+
+			type author {
+				name: String
+				age: Int
+				published: book @relation(name:"book_authors")
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "book",
+					Schema: client.SchemaDescription{
+						Name: "book",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "author",
+								RelationName: "book_authors",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "author",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							},
+							{
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name:         "published",
+								RelationName: "book_authors",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "book",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+							},
+							{
+								Name:         "published_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
+			description: "Multiple types with relations (one-to-one) with directive",
+			sdl: `
+			type book {
+				name: String
+				rating: Float
+				author: author @primary
+			}
+
+			type author {
+				name: String
+				age: Int
+				published: book
+			}
+			`,
+			targetDescs: []client.CollectionDescription{
+				{
+					Name: "book",
+					Schema: client.SchemaDescription{
+						Name: "book",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name:         "author",
+								RelationName: "author_book",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "author",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE | client.Relation_Type_Primary,
+							},
+							{
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "rating",
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+				{
+					Name: "author",
+					Schema: client.SchemaDescription{
+						Name: "author",
+						Fields: []client.FieldDescription{
+							{
+								Name: "_key",
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name:         "published",
+								RelationName: "author_book",
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
+								Schema:       "book",
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEONE,
+							},
+							{
+								Name:         "published_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
+							},
+						},
+					},
+					Indexes: testDefaultIndex,
+				},
+			},
+		},
+		{
+			description: "Multiple types with relations (one-to-many)",
+			sdl: `
+			type book {
+				name: String
+				rating: Float
 				author: author
 			}
 
@@ -257,40 +520,40 @@ func TestSingleSimpleType(t *testing.T) {
 				published: [book]
 			}
 			`,
-			targetDescs: []base.CollectionDescription{
+			targetDescs: []client.CollectionDescription{
 				{
 					Name: "book",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "book",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name:         "author",
 								RelationName: "author_book",
-								Kind:         base.FieldKind_FOREIGN_OBJECT,
-								Typ:          core.NONE_CRDT,
+								Kind:         client.FieldKind_FOREIGN_OBJECT,
+								Typ:          client.NONE_CRDT,
 								Schema:       "author",
-								Meta:         base.Meta_Relation_ONE | base.Meta_Relation_ONEMANY | base.Meta_Relation_Primary,
+								RelationType: client.Relation_Type_ONE | client.Relation_Type_ONEMANY | client.Relation_Type_Primary,
 							},
 							{
-								Name: "author_id",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.LWW_REGISTER,
-								Meta: base.Meta_Relation_INTERNAL_ID,
+								Name:         "author_id",
+								Kind:         client.FieldKind_DocKey,
+								Typ:          client.LWW_REGISTER,
+								RelationType: client.Relation_Type_INTERNAL_ID,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "rating",
-								Kind: base.FieldKind_FLOAT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_FLOAT,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -298,31 +561,31 @@ func TestSingleSimpleType(t *testing.T) {
 				},
 				{
 					Name: "author",
-					Schema: base.SchemaDescription{
+					Schema: client.SchemaDescription{
 						Name: "author",
-						Fields: []base.FieldDescription{
+						Fields: []client.FieldDescription{
 							{
 								Name: "_key",
-								Kind: base.FieldKind_DocKey,
-								Typ:  core.NONE_CRDT,
+								Kind: client.FieldKind_DocKey,
+								Typ:  client.NONE_CRDT,
 							},
 							{
 								Name: "age",
-								Kind: base.FieldKind_INT,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_INT,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name: "name",
-								Kind: base.FieldKind_STRING,
-								Typ:  core.LWW_REGISTER,
+								Kind: client.FieldKind_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
 								Name:         "published",
 								RelationName: "author_book",
-								Kind:         base.FieldKind_FOREIGN_OBJECT_ARRAY,
-								Typ:          core.NONE_CRDT,
+								Kind:         client.FieldKind_FOREIGN_OBJECT_ARRAY,
+								Typ:          client.NONE_CRDT,
 								Schema:       "book",
-								Meta:         base.Meta_Relation_MANY | base.Meta_Relation_ONEMANY,
+								RelationType: client.Relation_Type_MANY | client.Relation_Type_ONEMANY,
 							},
 						},
 					},
@@ -359,5 +622,5 @@ func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 type descriptionTestCase struct {
 	description string
 	sdl         string
-	targetDescs []base.CollectionDescription
+	targetDescs []client.CollectionDescription
 }

@@ -14,38 +14,34 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/store"
+	"github.com/sourcenetwork/defradb/datastore"
 
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	mh "github.com/multiformats/go-multihash"
 )
 
-// var ()
-
 func newDS() ds.Datastore {
 	return ds.NewMapDatastore()
 }
 
 func newTestMerkleClock() *MerkleClock {
-	ns := ds.NewKey("/test/db")
 	s := newDS()
-	rw := store.AsDSReaderWriter(s)
-	multistore := store.MultiStoreFrom(rw)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(rw, ns, id)
-	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
+
+	rw := datastore.AsDSReaderWriter(s)
+	multistore := datastore.MultiStoreFrom(rw)
+	reg := crdt.NewLWWRegister(rw, core.DataStoreKey{})
+	return NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{DocKey: "dockey", FieldId: "1"}, reg).(*MerkleClock)
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	ns := ds.NewKey("/test/db")
 	s := newDS()
-	rw := store.AsDSReaderWriter(s)
-	multistore := store.MultiStoreFrom(rw)
-	id := "mydockey"
-	reg := crdt.NewLWWRegister(rw, ns, id)
-	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), id, reg).(*MerkleClock)
+	rw := datastore.AsDSReaderWriter(s)
+	multistore := datastore.MultiStoreFrom(rw)
+	reg := crdt.NewLWWRegister(rw, core.DataStoreKey{})
+	clk := NewMerkleClock(multistore.Headstore(), multistore.DAGstore(), core.HeadStoreKey{}, reg).(*MerkleClock)
 
 	if clk.headstore != multistore.Headstore() {
 		t.Error("MerkleClock store not correctly set")
@@ -77,7 +73,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	// tested as well here.
 }
 
-func TetMerkleClockPutBlockWithHeads(t *testing.T) {
+func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	ctx := context.Background()
 	clk := newTestMerkleClock()
 	delta := &crdt.LWWRegDelta{
@@ -146,7 +142,13 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 	}
 
 	if delta.GetPriority() != 1 && delta2.GetPriority() != 2 {
-		t.Errorf("AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)", 1, 2, delta.GetPriority(), delta2.GetPriority())
+		t.Errorf(
+			"AddDAGNOde failed with incorrect delta priority vals, want (%v) (%v), have (%v) (%v)",
+			1,
+			2,
+			delta.GetPriority(),
+			delta2.GetPriority(),
+		)
 	}
 
 	// check if lww state is correct (val is test2)

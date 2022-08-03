@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation.
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,10 +15,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/store"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -71,7 +72,7 @@ var (
 // Future optimizations:
 // - Incremental checkpoint/snapshotting
 // - Reverse traversal (starting from the current state, and working backwards)
-// - Create a effecient memory store for in-order traversal (BTree, etc)
+// - Create a efficient memory store for in-order traversal (BTree, etc)
 //
 // Note: Should we transition this state traversal into the CRDT objects themselves, and not
 // within a new fetcher?
@@ -79,20 +80,20 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	*DocumentFetcher
 
-	txn core.Txn
+	txn datastore.Txn
 	ctx context.Context
 
 	// Transient version store
 	root  ds.Datastore
-	store core.Txn
+	store datastore.Txn
 
-	key     core.Key
+	key     core.DataStoreKey
 	version cid.Cid
 
 	queuedCids *list.List
 
-	col *base.CollectionDescription
-	// @todo index  *base.IndexDescription
+	col *client.CollectionDescription
+	// @todo index  *client.IndexDescription
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
@@ -100,43 +101,49 @@ type VersionedFetcher struct {
 
 // Start
 
-func (vf *VersionedFetcher) Init(col *base.CollectionDescription, index *base.IndexDescription, fields []*base.FieldDescription, reverse bool) error {
+func (vf *VersionedFetcher) Init(
+	col *client.CollectionDescription,
+	fields []*client.FieldDescription,
+	reverse bool,
+) error {
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.mCRDTs = make(map[uint32]crdt.MerkleCRDT)
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.DocumentFetcher = new(DocumentFetcher)
-	return vf.DocumentFetcher.Init(col, &col.Indexes[0], fields, reverse)
-
+	return vf.DocumentFetcher.Init(col, fields, reverse)
 }
 
 // Start serializes the correct state accoriding to the Key and CID
-func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.Spans) error {
+func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
 		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
 	}
 
-	if len(spans) != 1 {
+	if len(spans.Value) != 1 {
 		return errors.New("spans must contain only a single entry")
 	}
 
 	// For the VersionedFetcher, the spans needs to be in the format
 	// Span{Start: DocKey, End: CID}
-	dk := spans[0].Start()
-	cidRaw := spans[0].End()
-	if len(dk.String()) == 0 {
+	dk := spans.Value[0].Start()
+	cidRaw := spans.Value[0].End()
+	if dk.DocKey == "" {
 		return errors.New("spans missing start DocKey")
-	} else if len(cidRaw.String()) == 0 {
+	} else if cidRaw.DocKey == "" { // todo: dont abuse DataStoreKey/Span like this!
 		return errors.New("span missing end CID")
 	}
 
 	// decode cidRaw from core.Key to cid.Cid
 	// need to remove '/' prefix from the core.Key
 
-	c, err := cid.Decode(cidRaw.String()[1:])
+	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.String()))
+		return errors.Wrap(
+			err,
+			fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey),
+		)
 	}
 
 	vf.txn = txn
@@ -147,7 +154,11 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.
 	// create store
 	root := ds.NewMapDatastore()
 	vf.root = root
-	vf.store, err = store.NewTxnFrom(ctx, root, false) // were going to discard and nuke this later
+	vf.store, err = datastore.NewTxnFrom(
+		ctx,
+		root,
+		false,
+	) // were going to discard and nuke this later
 	if err != nil {
 		return err
 	}
@@ -156,7 +167,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn core.Txn, spans core.
 		return fmt.Errorf("Failed seeking state to %v: %w", c, err)
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
+	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
@@ -184,7 +195,7 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 		return err
 	}
 
-	return vf.DocumentFetcher.Start(ctx, vf.store, nil)
+	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
 // seekTo seeks to the given CID version by steping through the CRDT
@@ -300,12 +311,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
-	if err != nil && err != dag.ErrLinkNotFound {
+	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
 		return fmt.Errorf("(version fetcher) failed to get node link from DAG: %w", err)
 	}
 
 	// only seekNext on parent if we have a HEAD link
-	if err != dag.ErrLinkNotFound {
+	if !errors.Is(err, dag.ErrLinkNotFound) {
 		err := vf.seekNext(l.Cid, true)
 		if err != nil {
 			return err
@@ -345,7 +356,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	// first arg 0 is the index for the composite DAG in the mCRDTs cache
-	if err := vf.processNode(0, nd, core.COMPOSITE, ""); err != nil {
+	if err := vf.processNode(0, nd, client.COMPOSITE, ""); err != nil {
 		return err
 	}
 
@@ -366,8 +377,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		if fieldID == uint32(0) {
 			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
 		}
-		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and get CType from descriptions
-		if err := vf.processNode(fieldID, subNd, core.LWW_REGISTER, l.Name); err != nil {
+		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
+		//        get CType from descriptions
+		if err := vf.processNode(fieldID, subNd, client.LWW_REGISTER, l.Name); err != nil {
 			return err
 		}
 	}
@@ -375,11 +387,16 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	return nil
 }
 
-func (vf *VersionedFetcher) processNode(crdtIndex uint32, nd format.Node, ctype core.CType, fieldName string) (err error) {
+func (vf *VersionedFetcher) processNode(
+	crdtIndex uint32,
+	nd format.Node,
+	ctype client.CType,
+	fieldName string,
+) (err error) {
 	// handle CompositeDAG
 	mcrdt, exists := vf.mCRDTs[crdtIndex]
 	if !exists {
-		key, err := vf.col.GetPrimaryIndexDocKeyForCRDT(ctype, vf.key.Key, fieldName)
+		key, err := base.MakePrimaryIndexKeyForCRDT(*vf.col, ctype, vf.key, fieldName)
 		if err != nil {
 			return err
 		}
@@ -422,14 +439,7 @@ func (vf *VersionedFetcher) Close() error {
 	return vf.DocumentFetcher.Close()
 }
 
-func NewVersionedSpan(dockey core.Key, version cid.Cid) core.Spans {
-	return core.Spans{core.NewSpan(dockey, core.NewKey(version.String()))}
+func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
+	// Todo: Dont abuse DataStoreKey for version cid!
+	return core.NewSpans(core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()}))
 }
-
-// func createMerkleCRDT(ctype core.CType, key ds.Key, store core.MultiStore) (crdt.MerkleCRDT, error) {
-// 	key := vf.col.GetPrimaryIndexDocKey(vf.key.Key).ChildString(core.COMPOSITE_ID)
-// 	compCRDT, err = crdt.DefaultFactory.InstanceWithStores(vf.store, core.COMPOSITE, key)
-// 	if err != nil {
-// 		return err
-// 	}
-// }

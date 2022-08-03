@@ -10,11 +10,19 @@
 
 package logging
 
-type EncoderFormat = int8
-type EncoderFormatOption struct {
-	EncoderFormat EncoderFormat
-	HasValue      bool
-}
+import (
+	"context"
+	"io"
+	"os"
+)
+
+type (
+	EncoderFormat       = int8
+	EncoderFormatOption struct {
+		EncoderFormat EncoderFormat
+		HasValue      bool
+	}
+)
 
 func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 	return EncoderFormatOption{
@@ -24,15 +32,20 @@ func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 }
 
 const (
+	stderr = "stderr"
+	stdout = "stdout"
+
 	JSON EncoderFormat = iota
 	CSV
 )
 
-type LogLevel = int8
-type LogLevelOption struct {
-	LogLevel LogLevel
-	HasValue bool
-}
+type (
+	LogLevel       = int8
+	LogLevelOption struct {
+		LogLevel LogLevel
+		HasValue bool
+	}
+)
 
 func NewLogLevelOption(v LogLevel) LogLevelOption {
 	return LogLevelOption{
@@ -54,6 +67,16 @@ type EnableStackTraceOption struct {
 	HasValue         bool
 }
 
+type EnableCallerOption struct {
+	EnableCaller bool
+	HasValue     bool
+}
+
+type DisableColorOption struct {
+	DisableColor bool
+	HasValue     bool
+}
+
 func NewEnableStackTraceOption(enable bool) EnableStackTraceOption {
 	return EnableStackTraceOption{
 		EnableStackTrace: enable,
@@ -61,27 +84,41 @@ func NewEnableStackTraceOption(enable bool) EnableStackTraceOption {
 	}
 }
 
-type Config struct {
-	Level                 LogLevelOption
-	EnableStackTrace      EnableStackTraceOption
-	EncoderFormat         EncoderFormatOption
-	OutputPaths           []string
-	OverridesByLoggerName map[string]OverrideConfig
+func NewEnableCallerOption(enable bool) EnableCallerOption {
+	return EnableCallerOption{
+		EnableCaller: enable,
+		HasValue:     true,
+	}
 }
 
-type OverrideConfig struct {
-	Level            LogLevelOption
-	EnableStackTrace EnableStackTraceOption
-	EncoderFormat    EncoderFormatOption
-	OutputPaths      []string
+func NewDisableColorOption(disable bool) DisableColorOption {
+	return DisableColorOption{
+		DisableColor: disable,
+		HasValue:     true,
+	}
+}
+
+type Config struct {
+	Level                 LogLevelOption
+	EncoderFormat         EncoderFormatOption
+	EnableStackTrace      EnableStackTraceOption
+	EnableCaller          EnableCallerOption
+	DisableColor          DisableColorOption
+	OutputPaths           []string
+	OverridesByLoggerName map[string]Config
+
+	pipe io.Writer // this is used for testing purposes only
 }
 
 func (c Config) forLogger(name string) Config {
 	loggerConfig := Config{
 		Level:            c.Level,
 		EnableStackTrace: c.EnableStackTrace,
+		DisableColor:     c.DisableColor,
+		EnableCaller:     c.EnableCaller,
 		EncoderFormat:    c.EncoderFormat,
 		OutputPaths:      c.OutputPaths,
+		pipe:             c.pipe,
 	}
 
 	if override, hasOverride := c.OverridesByLoggerName[name]; hasOverride {
@@ -91,11 +128,20 @@ func (c Config) forLogger(name string) Config {
 		if override.EnableStackTrace.HasValue {
 			loggerConfig.EnableStackTrace = override.EnableStackTrace
 		}
+		if override.EnableCaller.HasValue {
+			loggerConfig.EnableCaller = override.EnableCaller
+		}
+		if override.DisableColor.HasValue {
+			loggerConfig.DisableColor = override.DisableColor
+		}
 		if override.EncoderFormat.HasValue {
 			loggerConfig.EncoderFormat = override.EncoderFormat
 		}
 		if len(override.OutputPaths) != 0 {
 			loggerConfig.OutputPaths = override.OutputPaths
+		}
+		if override.pipe != nil {
+			loggerConfig.pipe = override.pipe
 		}
 	}
 
@@ -103,13 +149,16 @@ func (c Config) forLogger(name string) Config {
 }
 
 func (c Config) copy() Config {
-	overridesByLoggerName := make(map[string]OverrideConfig, len(c.OverridesByLoggerName))
+	overridesByLoggerName := make(map[string]Config, len(c.OverridesByLoggerName))
 	for k, o := range c.OverridesByLoggerName {
-		overridesByLoggerName[k] = OverrideConfig{
+		overridesByLoggerName[k] = Config{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
 			EncoderFormat:    o.EncoderFormat,
+			EnableCaller:     o.EnableCaller,
+			DisableColor:     o.DisableColor,
 			OutputPaths:      o.OutputPaths,
+			pipe:             o.pipe,
 		}
 	}
 
@@ -118,10 +167,14 @@ func (c Config) copy() Config {
 		EnableStackTrace:      c.EnableStackTrace,
 		EncoderFormat:         c.EncoderFormat,
 		OutputPaths:           c.OutputPaths,
+		EnableCaller:          c.EnableCaller,
+		DisableColor:          c.DisableColor,
 		OverridesByLoggerName: overridesByLoggerName,
+		pipe:                  c.pipe,
 	}
 }
 
+// Create a new Config given new config options. Each updated Config field is handled.
 func (oldConfig Config) with(newConfigOptions Config) Config {
 	newConfig := oldConfig.copy()
 
@@ -133,23 +186,76 @@ func (oldConfig Config) with(newConfigOptions Config) Config {
 		newConfig.EnableStackTrace = newConfigOptions.EnableStackTrace
 	}
 
+	if newConfigOptions.EnableCaller.HasValue {
+		newConfig.EnableCaller = newConfigOptions.EnableCaller
+	}
+
+	if newConfigOptions.DisableColor.HasValue {
+		newConfig.DisableColor = newConfigOptions.DisableColor
+	}
+
 	if newConfigOptions.EncoderFormat.HasValue {
 		newConfig.EncoderFormat = newConfigOptions.EncoderFormat
 	}
 
 	if len(newConfigOptions.OutputPaths) != 0 {
-		newConfig.OutputPaths = newConfigOptions.OutputPaths
+		newConfig.OutputPaths = validatePaths(newConfigOptions.OutputPaths)
+	}
+
+	if newConfigOptions.pipe != nil {
+		newConfig.pipe = newConfigOptions.pipe
 	}
 
 	for k, o := range newConfigOptions.OverridesByLoggerName {
-		// We fully overwrite overrides to allow for ease of reset/removal (can provide empty to return to default)
-		newConfig.OverridesByLoggerName[k] = OverrideConfig{
+		// We fully overwrite overrides to allow for ease of
+		// reset/removal (can provide empty to return to default)
+		newConfig.OverridesByLoggerName[k] = Config{
 			Level:            o.Level,
 			EnableStackTrace: o.EnableStackTrace,
+			EnableCaller:     o.EnableCaller,
+			DisableColor:     o.DisableColor,
 			EncoderFormat:    o.EncoderFormat,
-			OutputPaths:      o.OutputPaths,
+			OutputPaths:      validatePaths(o.OutputPaths),
+			pipe:             o.pipe,
 		}
 	}
 
 	return newConfig
+}
+
+// validatePath ensure that all output paths are valid to avoid zap sync errors
+// and also to ensure that the logs are not lost.
+func validatePaths(paths []string) []string {
+	validatedPaths := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if p == stderr || p == stdout {
+			validatedPaths = append(validatedPaths, p)
+			continue
+		}
+
+		if f, err := os.OpenFile(p, os.O_CREATE|os.O_APPEND, 0644); err != nil {
+			log.Info(context.Background(), "cannot use provided path", NewKV("err", err))
+		} else {
+			err := f.Close()
+			if err != nil {
+				log.Info(context.Background(), "problem closing file", NewKV("err", err))
+			}
+
+			validatedPaths = append(validatedPaths, p)
+		}
+	}
+
+	return validatedPaths
+}
+
+func willOutputToStderrOrStdout(paths []string) bool {
+	if len(paths) == 0 {
+		return true
+	}
+	for _, p := range paths {
+		if p == stderr || p == stdout {
+			return true
+		}
+	}
+	return false
 }
