@@ -193,7 +193,7 @@ var startCmd = &cobra.Command{
 					httpapi.RootPath,
 				),
 			)
-			s := http.NewServer(db, http.WithAddress(cfg.API.Address))
+			s := http.NewServer(db, http.WithAddress(cfg.API.Address), http.WithPeerID(n.PeerID().String()))
 			if err := s.Listen(); err != nil {
 				log.FeedbackErrorE(cmd.Context(), "Failed to start HTTP API listener", err)
 				if n != nil {

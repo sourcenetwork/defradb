@@ -32,6 +32,8 @@ type handler struct {
 
 type ctxDB struct{}
 
+type ctxPeerID struct{}
+
 type dataResponse struct {
 	Data interface{} `json:"data"`
 }
@@ -71,6 +73,9 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
+		if h.options.peerID != "" {
+			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
+		}
 		f(rw, req.WithContext(ctx))
 	}
 }

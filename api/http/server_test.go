@@ -56,3 +56,8 @@ func TestNewServerWithAllowedOrigins(t *testing.T) {
 	s := NewServer(nil, WithAllowedOrigins("https://source.network", "https://app.source.network"))
 	assert.Equal(t, []string{"https://source.network", "https://app.source.network"}, s.options.allowedOrigins)
 }
+
+func TestNewServerWithPeerID(t *testing.T) {
+	s := NewServer(nil, WithPeerID("12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR"))
+	assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", s.options.peerID)
+}

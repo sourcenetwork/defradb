@@ -41,6 +41,7 @@ type testOptions struct {
 	Headers        map[string]string
 	ExpectedStatus int
 	ResponseData   interface{}
+	ServerOptions  serverOptions
 }
 
 type testUser struct {
@@ -775,6 +776,50 @@ query {
 	}
 }
 
+func TestPeerIDHandler(t *testing.T) {
+	resp := dataResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             nil,
+		Method:         "GET",
+		Path:           PeerIDPath,
+		Body:           nil,
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+		ServerOptions: serverOptions{
+			peerID: "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR",
+		},
+	})
+
+	switch v := resp.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", v["peerID"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+	}
+}
+
+func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
+
+	errResponse := errorResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             nil,
+		Method:         "GET",
+		Path:           PeerIDPath,
+		Body:           nil,
+		ExpectedStatus: 500,
+		ResponseData:   &errResponse,
+	})
+
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no peer ID in context")
+	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no peer ID in context", errResponse.Errors[0].Message)
+}
+
 func testRequest(opt testOptions) {
 	req, err := http.NewRequest(opt.Method, opt.Path, opt.Body)
 	if err != nil {
@@ -785,7 +830,7 @@ func testRequest(opt testOptions) {
 		req.Header.Set(k, v)
 	}
 
-	h := newHandler(opt.DB, serverOptions{})
+	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)

@@ -31,6 +31,7 @@ const (
 	BlocksPath     string = versionedAPIPath + "/blocks"
 	GraphQLPath    string = versionedAPIPath + "/graphql"
 	SchemaLoadPath string = versionedAPIPath + "/schema/load"
+	PeerIDPath     string = versionedAPIPath + "/peerid"
 )
 
 var schemeError = errors.New("base must start with the http or https scheme")
@@ -59,6 +60,7 @@ func setRoutes(h *handler) *handler {
 	h.Get(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
+	h.Get(PeerIDPath, h.handle(peerIDHandler))
 
 	return h
 }

@@ -237,3 +237,20 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 		http.StatusOK,
 	)
 }
+
+func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
+	peerID, ok := req.Context().Value(ctxPeerID{}).(string)
+	if !ok {
+		handleErr(req.Context(), rw, errors.New("no peer ID in context"), http.StatusInternalServerError)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse(
+			"peerID", peerID,
+		),
+		http.StatusOK,
+	)
+}

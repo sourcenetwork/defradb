@@ -24,6 +24,7 @@ type Server struct {
 
 type serverOptions struct {
 	allowedOrigins []string
+	peerID         string
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -56,6 +57,12 @@ func WithAllowedOrigins(origins ...string) func(*Server) {
 func WithAddress(addr string) func(*Server) {
 	return func(s *Server) {
 		s.Addr = addr
+	}
+}
+
+func WithPeerID(id string) func(*Server) {
+	return func(s *Server) {
+		s.options.peerID = id
 	}
 }
 
