@@ -30,7 +30,7 @@ func init() {
 	)
 	err := viper.BindPFlag("net.rpcaddress", rpcCmd.PersistentFlags().Lookup("addr"))
 	if err != nil {
-		log.FatalE(context.Background(), "Could not bind net.rpcaddress", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind net.rpcaddress", err)
 	}
 	clientCmd.AddCommand(rpcCmd)
 }
