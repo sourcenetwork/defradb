@@ -41,7 +41,7 @@ for the p2p data sync system.`,
 			return fmt.Errorf("could not parse peer address: %w", err)
 		}
 
-		log.Info(
+		log.FeedbackInfo(
 			cmd.Context(),
 			"Adding replicator for collection",
 			logging.NewKV("PeerAddress", peerAddr),
@@ -67,7 +67,7 @@ for the p2p data sync system.`,
 		if err != nil {
 			return fmt.Errorf("failed to add replicator, request failed: %w", err)
 		}
-		log.Info(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
+		log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
 		return nil
 	},
 }
