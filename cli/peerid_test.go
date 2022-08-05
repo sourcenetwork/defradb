@@ -31,11 +31,9 @@ func TestGetPeerIDCmd(t *testing.T) {
 	}
 
 	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
+	peerIDCmd.SetOut(b)
 
-	rootCmd.SetArgs([]string{"client", "peerid"})
-
-	err = rootCmd.Execute()
+	err = peerIDCmd.RunE(peerIDCmd, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
