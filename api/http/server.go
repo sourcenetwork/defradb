@@ -11,6 +11,8 @@
 package http
 
 import (
+	"context"
+	"net"
 	"net/http"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -18,7 +20,9 @@ import (
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	options serverOptions
+	options  serverOptions
+	listener net.Listener
+
 	http.Server
 }
 
@@ -66,7 +70,21 @@ func WithPeerID(id string) func(*Server) {
 	}
 }
 
-// Listen calls ListenAndServe with our router.
-func (s *Server) Listen() error {
-	return s.ListenAndServe()
+// Listen creates a new net.Listener and saves it on the receiver.
+func (s *Server) Listen(ctx context.Context) error {
+	lc := net.ListenConfig{}
+	l, err := lc.Listen(ctx, "tcp", s.Addr)
+	if err != nil {
+		return err
+	}
+	s.listener = l
+	return nil
+}
+
+// Run calls Serve with the reveiver's listener
+func (s *Server) Run() error {
+	if s.listener == nil {
+		return errNoListener
+	}
+	return s.Serve(s.listener)
 }

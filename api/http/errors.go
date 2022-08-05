@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,6 +20,11 @@ import (
 )
 
 var env = os.Getenv("DEFRA_ENV")
+
+var (
+	errNoListener = errors.New("cannot serve with no listener")
+	errSchema     = errors.New("base must start with the http or https scheme")
+)
 
 type errorResponse struct {
 	Errors []errorItem `json:"errors"`

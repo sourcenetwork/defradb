@@ -34,8 +34,6 @@ const (
 	PeerIDPath     string = versionedAPIPath + "/peerid"
 )
 
-var schemeError = errors.New("base must start with the http or https scheme")
-
 func setRoutes(h *handler) *handler {
 	h.Mux = chi.NewRouter()
 
@@ -70,7 +68,7 @@ func setRoutes(h *handler) *handler {
 // The base must start with a http or https.
 func JoinPaths(base string, paths ...string) (*url.URL, error) {
 	if !strings.HasPrefix(base, "http") {
-		return nil, schemeError
+		return nil, errSchema
 	}
 
 	u, err := url.Parse(base)
