@@ -12,6 +12,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"testing"
@@ -20,11 +21,21 @@ import (
 )
 
 func TestGetPeerIDCmd(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	cfg.Datastore.Store = "memory"
+	cfg.Datastore.Badger.Path = dir
+	n, err := start(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
+
 	rootCmd.SetArgs([]string{"client", "peerid"})
 
-	err := rootCmd.Execute()
+	err = rootCmd.Execute()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,5 +56,5 @@ func TestGetPeerIDCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.NotEmpty(t, r.Data.PeerID)
+	assert.Equal(t, n.PeerID().String(), r.Data.PeerID)
 }
