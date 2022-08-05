@@ -1,7 +1,10 @@
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
 
 <p align="center">
-<img height="120px" src="docs/DefraDB_Full-v2-cropped.png">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/DefraDB_White.svg">
+    <img height="120px" width="374px" alt="DefraDB" src="docs/DefraDB_Full.svg">
+  </picture>
 </p>
 
 DefraDB is a peer-to-peer edge document database redefining promises of data ownership, personal privacy, and information security, around the user. It features a GraphQL-compatible query language called [DQL](https://docs.source.network/query-specification/query-language-overview). Its data model, enabled by [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf), makes possible a multi-write-master architecture. It is the core data system for the [Source](https://source.network/) ecosystem. It is built with technologies like [IPLD](https://docs.ipld.io/) and [libP2P](https://libp2p.io/), and featuring Web3 and semantic properties.
