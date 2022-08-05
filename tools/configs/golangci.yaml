@@ -55,6 +55,11 @@ run:
   # If false (default) - golangci-lint acquires file lock on start.
   allow-parallel-runners: false
 
+  # Define the Go version limit.
+  # Mainly related to generics support since go1.18.
+  # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`, fallback on 1.18
+  go: "1.18"
+
 #=====================================================================================[ Output Configuration Options ]
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
