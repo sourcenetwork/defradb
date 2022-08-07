@@ -22,11 +22,6 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 
 		{
 			Description: "Simple delete mutation where one element exists.",
-			Query: `mutation {
-						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-							_key
-						}
-					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
@@ -37,31 +32,55 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			TransactionalQueries: []testUtils.TransactionQuery{
 				{
-					"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+					TransactionId: 0,
+					Query: `mutation {
+								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+									_key
+								}
+							}`,
+					Results: []map[string]interface{}{
+						{
+							"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+						},
+					},
+				},
+				{
+					TransactionId: 0,
+					Query: `query {
+								user(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
+									_key
+								}
+							}`,
+
+					// explicitly empty
+					Results: []map[string]interface{}{},
 				},
 			},
-			ExpectedError: "",
+
+			// Map store does not support transactions
+			DisableMapStore: true,
 		},
 
 		{
 			Description: "Simple delete mutation with an aliased _key name.",
+			Docs: map[int][]string{
+				0: {
+					`{
+						"name": "Shahzad",
+						"age":  26,
+						"points": 48.5,
+						"verified": true
+					}`,
+				},
+			},
 			Query: `mutation {
 						delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 							FancyKey: _key
 						}
 					}`,
-			Docs: map[int][]string{
-				0: {
-					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
-						"verified": true
-					}`,
-				},
-			},
+
 			Results: []map[string]interface{}{
 				{
 					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",

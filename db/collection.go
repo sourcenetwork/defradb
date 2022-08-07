@@ -686,7 +686,6 @@ func (c *collection) delete(
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (bool, error) {
-	fmt.Println("DELETING:", key.ToDS())
 	err := txn.Datastore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return false, err
