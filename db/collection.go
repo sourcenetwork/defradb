@@ -686,13 +686,27 @@ func (c *collection) delete(
 	txn datastore.Txn,
 	key core.PrimaryDataStoreKey,
 ) (bool, error) {
+	fmt.Println("DELETING:", key.ToDS())
 	err := txn.Datastore().Delete(ctx, key.ToDS())
 	if err != nil {
 		return false, err
 	}
 
+	// delete value instance
+	keyDS := key.ToDataStoreKey()
+	keyDS.InstanceType = core.ValueKey
+	if _, err = c.deleteWithPrefix(ctx, txn, keyDS); err != nil {
+		return false, err
+	}
+
+	// delete priority instance
+	keyDS.InstanceType = core.PriorityKey
+	return c.deleteWithPrefix(ctx, txn, keyDS)
+}
+
+func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
-		Prefix:   key.ToDataStoreKey().ToString(),
+		Prefix:   key.ToString(),
 		KeysOnly: true,
 	}
 	res, err := txn.Datastore().Query(ctx, q)
@@ -702,6 +716,7 @@ func (c *collection) delete(
 			return false, err
 		}
 
+		fmt.Println("DELETING (from query):", core.NewDataStoreKey(e.Key).ToDS())
 		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
 		if err != nil {
 			return false, err
