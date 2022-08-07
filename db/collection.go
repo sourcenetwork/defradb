@@ -704,6 +704,7 @@ func (c *collection) delete(
 	return c.deleteWithPrefix(ctx, txn, keyDS)
 }
 
+// deleteWithPrefix will delete all the keys using a prefix query set as the given key.
 func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
 		Prefix:   key.ToString(),
@@ -716,7 +717,6 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 			return false, err
 		}
 
-		fmt.Println("DELETING (from query):", core.NewDataStoreKey(e.Key).ToDS())
 		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
 		if err != nil {
 			return false, err
