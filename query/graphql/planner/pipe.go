@@ -70,10 +70,7 @@ func (n *pipeNode) Next() (bool, error) {
 		}
 
 		doc := n.source.Value()
-		err = n.docs.AddDoc(doc)
-		if err != nil {
-			return false, err
-		}
+		n.docs.AddDoc(doc)
 	}
 	n.docIndex++
 

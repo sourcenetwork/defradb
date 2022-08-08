@@ -56,7 +56,7 @@ func (n *valuesNode) Kind() string {
 
 func (n *valuesNode) Close() error {
 	if n.docs != nil {
-		return n.docs.Close()
+		n.docs.Close()
 	}
 	return nil
 }

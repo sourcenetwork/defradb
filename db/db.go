@@ -179,8 +179,8 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *db) PrintDump(ctx context.Context) {
-	printStore(ctx, db.multistore.Rootstore())
+func (db *db) PrintDump(ctx context.Context) error {
+	return printStore(ctx, db.multistore.Rootstore())
 }
 
 func (db *db) Executor() *planner.QueryExecutor {
@@ -211,7 +211,7 @@ func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
@@ -219,19 +219,13 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	defer func() {
-		err := results.Close()
-		if err != nil {
-			log.ErrorE(ctx, "Failure closing set of query store results", err)
-		}
-	}()
 
 	for r := range results.Next() {
 		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
+
+	return results.Close()
 }
