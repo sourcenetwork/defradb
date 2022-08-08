@@ -23,8 +23,7 @@ import (
 // Close() is called if you want to free all the memory associated
 // with the container
 type DocumentContainer struct {
-	docs    []core.Doc
-	numDocs int
+	docs []core.Doc
 }
 
 // NewDocumentContainer returns a new instance of the Document
@@ -32,48 +31,36 @@ type DocumentContainer struct {
 // A capacity of 0 ignores any initial pre-allocation.
 func NewDocumentContainer(capacity int) *DocumentContainer {
 	return &DocumentContainer{
-		docs:    make([]core.Doc, capacity),
-		numDocs: 0,
+		docs: make([]core.Doc, capacity),
 	}
 }
 
 // At returns the document at the specified index.
 func (c *DocumentContainer) At(index int) core.Doc {
-	if index < 0 || index >= c.numDocs {
-		panic("Invalid index for document container")
-	}
 	return c.docs[index]
 }
 
 func (c *DocumentContainer) Len() int {
-	return c.numDocs
+	return len(c.docs)
 }
 
 // AddDoc adds a new document to the DocumentContainer.
 //
 // It makes a deep copy before its added to allow for independent mutation of
 // the added clone.
-func (c *DocumentContainer) AddDoc(doc core.Doc) error {
+func (c *DocumentContainer) AddDoc(doc core.Doc) {
 	copyDoc := doc.Clone()
 	c.docs = append(c.docs, copyDoc)
-	c.numDocs++
-	return nil
 }
 
 // Swap switches the documents at index i and j
 // with one another.
 func (c *DocumentContainer) Swap(i, j int) {
-	if i < 0 || i >= c.numDocs || j < 0 || j >= c.numDocs {
-		panic("Invalid index for Document container")
-	}
-
 	tmp := c.docs[i]
 	c.docs[i] = c.docs[j]
 	c.docs[j] = tmp
 }
 
-func (c *DocumentContainer) Close() error {
+func (c *DocumentContainer) Close() {
 	c.docs = nil
-	c.numDocs = 0
-	return nil
 }

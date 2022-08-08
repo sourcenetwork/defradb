@@ -196,8 +196,8 @@ func newAllSortStrategy(v *valuesNode) *allSortStrategy {
 
 // Add adds a new document to underlying valueNode
 func (s *allSortStrategy) Add(doc core.Doc) error {
-	err := s.valueNode.docs.AddDoc(doc)
-	return err
+	s.valueNode.docs.AddDoc(doc)
+	return nil
 }
 
 // Finish finalizes and sorts the underling valueNode

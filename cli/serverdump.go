@@ -60,8 +60,7 @@ var serverDumpCmd = &cobra.Command{
 		}
 
 		log.FeedbackInfo(cmd.Context(), "Dumping DB state...")
-		db.PrintDump(cmd.Context())
-		return nil
+		return db.PrintDump(cmd.Context())
 	},
 }
 
