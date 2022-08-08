@@ -15,23 +15,9 @@ package utils
 import (
 	"fmt"
 
-	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
-
-var (
-	bootstrapPeers = []string{}
-)
-
-func DefaultBoostrapPeers() []peer.AddrInfo {
-	ipfspeers := ipfslite.DefaultBootstrapPeers()
-	textilepeers, err := ParsePeers(bootstrapPeers)
-	if err != nil {
-		panic("coudn't parse default bootstrap peers")
-	}
-	return append(textilepeers, ipfspeers...)
-}
 
 func ParsePeers(addrs []string) ([]peer.AddrInfo, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
