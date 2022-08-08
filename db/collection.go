@@ -691,8 +691,22 @@ func (c *collection) delete(
 		return false, err
 	}
 
+	// delete value instance
+	keyDS := key.ToDataStoreKey()
+	keyDS.InstanceType = core.ValueKey
+	if _, err = c.deleteWithPrefix(ctx, txn, keyDS); err != nil {
+		return false, err
+	}
+
+	// delete priority instance
+	keyDS.InstanceType = core.PriorityKey
+	return c.deleteWithPrefix(ctx, txn, keyDS)
+}
+
+// deleteWithPrefix will delete all the keys using a prefix query set as the given key.
+func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
-		Prefix:   key.ToDataStoreKey().ToString(),
+		Prefix:   key.ToString(),
 		KeysOnly: true,
 	}
 	res, err := txn.Datastore().Query(ctx, q)
