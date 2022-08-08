@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/sourcenetwork/defradb/core/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,7 +55,7 @@ func TestHandleErrOnBadRequest(t *testing.T) {
 
 	resp := rec.Result()
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +88,7 @@ func TestHandleErrOnInternalServerError(t *testing.T) {
 
 	resp := rec.Result()
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +120,7 @@ func TestHandleErrOnNotFound(t *testing.T) {
 
 	resp := rec.Result()
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
 	if err != nil {
 		t.Fatal(err)
@@ -152,7 +153,7 @@ func TestHandleErrOnDefault(t *testing.T) {
 
 	resp := rec.Result()
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&errResponse)
 	if err != nil {
 		t.Fatal(err)

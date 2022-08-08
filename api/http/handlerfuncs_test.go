@@ -25,6 +25,7 @@ import (
 	"github.com/ipfs/go-cid"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core/api"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/stretchr/testify/assert"
@@ -54,7 +55,7 @@ type testVersion struct {
 }
 
 func TestRootHandler(t *testing.T) {
-	resp := dataResponse{}
+	resp := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -73,7 +74,7 @@ func TestRootHandler(t *testing.T) {
 }
 
 func TestPingHandler(t *testing.T) {
-	resp := dataResponse{}
+	resp := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -96,7 +97,7 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
-	resp := dataResponse{}
+	resp := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -118,7 +119,7 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 func TestDumpHandlerWithDBError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -137,7 +138,7 @@ func TestDumpHandlerWithDBError(t *testing.T) {
 func TestExecGQLWithNilBody(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -157,7 +158,7 @@ func TestExecGQLWithNilBody(t *testing.T) {
 func TestExecGQLWithEmptyBody(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -190,7 +191,7 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -210,7 +211,7 @@ func TestExecGQLWithMockBody(t *testing.T) {
 func TestExecGQLWithInvalidContentType(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	stmt := `
 mutation {
 	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
@@ -238,7 +239,7 @@ mutation {
 func TestExecGQLWithNoDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	stmt := `
 mutation {
 	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
@@ -281,7 +282,7 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 ]`
 
 	buf := bytes.NewBuffer([]byte(stmt))
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -325,7 +326,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := api.DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -368,7 +369,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := api.DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -388,7 +389,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -423,7 +424,7 @@ mutation {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := api.DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -457,7 +458,7 @@ mutation {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := api.DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -480,7 +481,7 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -510,7 +511,7 @@ type user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -544,7 +545,7 @@ types user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -579,7 +580,7 @@ type user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	resp := dataResponse{}
+	resp := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -602,7 +603,7 @@ type user {
 func TestGetBlockHandlerWithMultihashError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -628,7 +629,7 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 	}
 	dsKey := dshelp.MultihashToDsKey(cID.Hash())
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -648,7 +649,7 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 func TestGetBlockHandlerWithNoDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -671,7 +672,7 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -705,7 +706,7 @@ mutation {
 	buf := bytes.NewBuffer([]byte(stmt))
 
 	users := []testUser{}
-	resp := dataResponse{
+	resp := api.DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -734,7 +735,7 @@ query {
 	buf2 := bytes.NewBuffer([]byte(fmt.Sprintf(stmt2, users[0].Key)))
 
 	users2 := []testUser{}
-	resp2 := dataResponse{
+	resp2 := api.DataResponse{
 		Data: &users2,
 	}
 	testRequest(testOptions{
@@ -752,7 +753,7 @@ query {
 		t.Fatal(err)
 	}
 
-	resp3 := dataResponse{}
+	resp3 := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -777,7 +778,7 @@ query {
 }
 
 func TestPeerIDHandler(t *testing.T) {
-	resp := dataResponse{}
+	resp := api.DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -803,7 +804,7 @@ func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
 
-	errResponse := errorResponse{}
+	errResponse := api.ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,

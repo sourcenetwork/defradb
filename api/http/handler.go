@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core/api"
 )
 
 type handler struct {
@@ -34,15 +35,11 @@ type ctxDB struct{}
 
 type ctxPeerID struct{}
 
-type dataResponse struct {
-	Data interface{} `json:"data"`
-}
-
-// simpleDataResponse is a helper function that returns a dataResponse struct.
+// simpleDataResponse is a helper function that returns a api.DataResponse struct.
 // Odd arguments are the keys and must be strings otherwise they are ignored.
 // Even arguments are the values associated with the previous key.
 // Odd arguments are also ignored if there are no following arguments.
-func simpleDataResponse(args ...interface{}) dataResponse {
+func simpleDataResponse(args ...interface{}) api.DataResponse {
 	data := make(map[string]interface{})
 
 	for i := 0; i < len(args); i += 2 {
@@ -57,7 +54,7 @@ func simpleDataResponse(args ...interface{}) dataResponse {
 		}
 	}
 
-	return dataResponse{
+	return api.DataResponse{
 		Data: data,
 	}
 }
