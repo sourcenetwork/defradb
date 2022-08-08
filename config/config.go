@@ -338,7 +338,7 @@ type LoggingConfig struct {
 	Level          string
 	Stacktrace     bool
 	Format         string
-	OutputPath     string // logging actually supports multiple output paths, but here only one is supported
+	Output         string // logging actually supports multiple output paths, but here only one is supported
 	Caller         bool
 	NoColor        bool
 	NamedOverrides map[string]*NamedLoggingConfig
@@ -354,7 +354,7 @@ func defaultLogConfig() *LoggingConfig {
 		Level:          logLevelInfo,
 		Stacktrace:     false,
 		Format:         "csv",
-		OutputPath:     "stderr",
+		Output:         "stderr",
 		Caller:         false,
 		NoColor:        false,
 		NamedOverrides: make(map[string]*NamedLoggingConfig),
@@ -402,7 +402,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
 		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
-		OutputPaths:           []string{logcfg.OutputPath},
+		OutputPaths:           []string{logcfg.Output},
 		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
 	}, nil
