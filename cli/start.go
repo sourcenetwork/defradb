@@ -21,6 +21,7 @@ import (
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
@@ -71,12 +72,12 @@ var startCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		n, err := start(cmd.Context())
+		n, db, err := start(cmd.Context())
 		if err != nil {
 			return err
 		}
 
-		wait(cmd.Context(), n)
+		wait(cmd.Context(), n, db)
 
 		return nil
 	},
@@ -140,7 +141,7 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 }
 
-func start(ctx context.Context) (*node.Node, error) {
+func start(ctx context.Context) (*node.Node, client.DB, error) {
 	log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
 	var rootstore ds.Batching
@@ -163,7 +164,7 @@ func start(ctx context.Context) (*node.Node, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to open datastore: %w", err)
+		return nil, nil, fmt.Errorf("failed to open datastore: %w", err)
 	}
 
 	var options []db.Option
@@ -177,7 +178,7 @@ func start(ctx context.Context) (*node.Node, error) {
 
 	db, err := db.NewDB(ctx, rootstore, options...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create database: %w", err)
+		return nil, nil, fmt.Errorf("failed to create database: %w", err)
 	}
 
 	// init the p2p node
@@ -193,7 +194,7 @@ func start(ctx context.Context) (*node.Node, error) {
 		if err != nil {
 			n.Close() //nolint:errcheck
 			db.Close(ctx)
-			return nil, fmt.Errorf("failed to start P2P node: %w", err)
+			return nil, nil, fmt.Errorf("failed to start P2P node: %w", err)
 		}
 
 		// parse peers and bootstrap
@@ -201,7 +202,7 @@ func start(ctx context.Context) (*node.Node, error) {
 			log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
 			addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
+				return nil, nil, fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
 			}
 			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 			n.Boostrap(addrs)
@@ -210,21 +211,21 @@ func start(ctx context.Context) (*node.Node, error) {
 		if err := n.Start(); err != nil {
 			n.Close() //nolint:errcheck
 			db.Close(ctx)
-			return nil, fmt.Errorf("failed to start P2P listeners: %w", err)
+			return nil, nil, fmt.Errorf("failed to start P2P listeners: %w", err)
 		}
 
 		MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse multiaddress: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse multiaddress: %w", err)
 		}
 		addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse TCP address: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse TCP address: %w", err)
 		}
 
 		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse RPC timeout duration: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse RPC timeout duration: %w", err)
 		}
 
 		server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -232,7 +233,7 @@ func start(ctx context.Context) (*node.Node, error) {
 		}))
 		tcplistener, err := gonet.Listen("tcp", addr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to listen on TCP address %v: %w", addr, err)
+			return nil, nil, fmt.Errorf("failed to listen on TCP address %v: %w", addr, err)
 		}
 
 		netService := netapi.NewService(n.Peer)
@@ -246,9 +247,15 @@ func start(ctx context.Context) (*node.Node, error) {
 		}()
 	}
 
-	s := http.NewServer(db, http.WithAddress(cfg.API.Address), http.WithPeerID(n.PeerID().String()))
+	sOpt := []func(*http.Server){
+		http.WithAddress(cfg.API.Address),
+	}
+	if n != nil {
+		sOpt = append(sOpt, http.WithPeerID(n.PeerID().String()))
+	}
+	s := http.NewServer(db, sOpt...)
 	if err := s.Listen(ctx); err != nil {
-		return nil, fmt.Errorf("failed to listen on TCP address %v: %w", s.Addr, err)
+		return nil, nil, fmt.Errorf("failed to listen on TCP address %v: %w", s.Addr, err)
 	}
 
 	// run the server in a separate goroutine
@@ -273,11 +280,11 @@ func start(ctx context.Context) (*node.Node, error) {
 		}
 	}()
 
-	return n, nil
+	return n, db, nil
 }
 
 // wait waits for an interrupt signal to close the program.
-func wait(ctx context.Context, n *node.Node) {
+func wait(ctx context.Context, n *node.Node, db client.DB) {
 	// setup signal handlers
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
@@ -287,6 +294,6 @@ func wait(ctx context.Context, n *node.Node) {
 	if n != nil {
 		n.Close() //nolint:errcheck
 	}
-	n.DB.Close(ctx)
+	db.Close(ctx)
 	os.Exit(0)
 }

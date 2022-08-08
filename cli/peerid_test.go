@@ -25,7 +25,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
-	n, err := start(ctx)
+	n, _, err := start(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
