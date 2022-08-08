@@ -22,11 +22,6 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 
 		{
 			Description: "Simple multi-key delete mutation with one key that exists.",
-			Query: `mutation {
-						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
-							_key
-						}
-					}`,
 			Docs: map[int][]string{
 				0: {
 					`{
@@ -37,12 +32,32 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			TransactionalQueries: []testUtils.TransactionQuery{
 				{
-					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+					TransactionId: 0,
+					Query: `mutation {
+						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+							_key
+						}
+					}`,
+					Results: []map[string]interface{}{
+						{
+							"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+						},
+					},
+				},
+				{
+					TransactionId: 0,
+					Query: `query {
+						user(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
+							_key
+						}
+					}`,
+					Results: []map[string]interface{}{},
 				},
 			},
-			ExpectedError: "",
+			// Map store does not support transactions
+			DisableMapStore: true,
 		},
 
 		{
