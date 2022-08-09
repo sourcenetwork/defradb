@@ -811,14 +811,14 @@ func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
 		Method:         "GET",
 		Path:           PeerIDPath,
 		Body:           nil,
-		ExpectedStatus: 500,
+		ExpectedStatus: 404,
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no peer ID in context")
-	assert.Equal(t, http.StatusInternalServerError, errResponse.Errors[0].Extensions.Status)
-	assert.Equal(t, "Internal Server Error", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no peer ID in context", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no peer ID available. P2P might be disabled")
+	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Not Found", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no peer ID available. P2P might be disabled", errResponse.Errors[0].Message)
 }
 
 func testRequest(opt testOptions) {

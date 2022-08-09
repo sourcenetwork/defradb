@@ -240,8 +240,8 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 
 func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	peerID, ok := req.Context().Value(ctxPeerID{}).(string)
-	if !ok {
-		handleErr(req.Context(), rw, errors.New("no peer ID in context"), http.StatusInternalServerError)
+	if !ok || peerID == "" {
+		handleErr(req.Context(), rw, errors.New("no peer ID available. P2P might be disabled"), http.StatusNotFound)
 		return
 	}
 

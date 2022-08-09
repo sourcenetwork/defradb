@@ -18,6 +18,7 @@ import (
 	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/core/api"
 	"github.com/spf13/cobra"
 )
 
@@ -57,17 +58,25 @@ var peerIDCmd = &cobra.Command{
 		if isFileInfoPipe(stdout) {
 			cmd.Println(string(response))
 		} else {
-			type peerIDResponse struct {
-				Data struct {
-					PeerID string `json:"peerID"`
-				} `json:"data"`
+			if res.StatusCode == http.StatusNotFound {
+				r := api.ErrorResponse{}
+				err = json.Unmarshal(response, &r)
+				if err != nil {
+					return fmt.Errorf("parsing of response failed: %w", err)
+				}
+				if len(r.Errors) > 0 {
+					log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
+				}
 			}
-			r := peerIDResponse{}
+
+			r := api.DataResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
 				return fmt.Errorf("parsing of response failed: %w", err)
 			}
-			log.FeedbackInfo(cmd.Context(), r.Data.PeerID)
+			if data, ok := r.Data.(map[string]interface{}); ok {
+				log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
+			}
 		}
 		return nil
 	},

@@ -15,8 +15,10 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net/http"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +27,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 	ctx := context.Background()
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
-	n, _, err := start(ctx)
+	di, err := start(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,16 +45,55 @@ func TestGetPeerIDCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	type peerIDResponse struct {
-		Data struct {
-			PeerID string `json:"peerID"`
-		} `json:"data"`
-	}
-	r := peerIDResponse{}
+	r := api.DataResponse{}
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, n.PeerID().String(), r.Data.PeerID)
+	switch v := r.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, di.node.PeerID().String(), v["peerID"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", r.Data)
+	}
+
+	di.close(ctx)
+}
+
+func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	cfg.Datastore.Store = "memory"
+	cfg.Datastore.Badger.Path = dir
+	cfg.Net.P2PDisabled = true
+	di, err := start(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := bytes.NewBufferString("")
+	peerIDCmd.SetOut(b)
+
+	err = peerIDCmd.RunE(peerIDCmd, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := io.ReadAll(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r := api.ErrorResponse{}
+	err = json.Unmarshal(out, &r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusNotFound, r.Errors[0].Extensions.Status)
+	assert.Equal(t, "Not Found", r.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no peer ID available. P2P might be disabled", r.Errors[0].Message)
+
+	di.close(ctx)
 }
