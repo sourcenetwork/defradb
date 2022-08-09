@@ -296,7 +296,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 				httpapi.RootPath,
 			),
 		)
-		if err := s.Run(); err != nil && err != http.ErrServerClosed {
+		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
 				n.Close() //nolint:errcheck
