@@ -149,10 +149,22 @@ type defraInstance struct {
 
 func (di *defraInstance) close(ctx context.Context) {
 	if di.node != nil {
-		di.node.Close() //nolint:errcheck
+		if err := di.node.Close(); err != nil {
+			log.FeedbackInfo(
+				ctx,
+				"the node could not be closed successfully",
+				logging.NewKV("Error", err),
+			)
+		}
 	}
 	di.db.Close(ctx)
-	di.server.Close()
+	if err := di.server.Close(); err != nil {
+		log.FeedbackInfo(
+			ctx,
+			"the server could not be closed successfully",
+			logging.NewKV("Error", err),
+		)
+	}
 }
 
 func start(ctx context.Context) (*defraInstance, error) {
