@@ -33,6 +33,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer di.close(ctx)
 
 	b := bytes.NewBufferString("")
 	peerIDCmd.SetOut(b)
@@ -47,20 +48,13 @@ func TestGetPeerIDCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httpapi.DataResponse{}
+	r := make(map[string]interface{})
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)
 	}
+	assert.Equal(t, di.node.PeerID().String(), r["peerID"])
 
-	switch v := r.Data.(type) {
-	case map[string]interface{}:
-		assert.Equal(t, di.node.PeerID().String(), v["peerID"])
-	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", r.Data)
-	}
-
-	di.close(ctx)
 }
 
 func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
@@ -73,6 +67,7 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer di.close(ctx)
 
 	b := bytes.NewBufferString("")
 	peerIDCmd.SetOut(b)
@@ -87,15 +82,13 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httpapi.ErrorResponse{}
+	r := httpapi.ErrorItem{}
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusNotFound, r.Errors[0].Extensions.Status)
-	assert.Equal(t, "Not Found", r.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "no peer ID available. P2P might be disabled", r.Errors[0].Message)
-
-	di.close(ctx)
+	assert.Equal(t, http.StatusNotFound, r.Extensions.Status)
+	assert.Equal(t, "Not Found", r.Extensions.HTTPError)
+	assert.Equal(t, "no peer ID available. P2P might be disabled", r.Message)
 }

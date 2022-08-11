@@ -12,6 +12,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,29 +55,42 @@ var peerIDCmd = &cobra.Command{
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		if isFileInfoPipe(stdout) {
-			cmd.Println(string(response))
-		} else {
-			if res.StatusCode == http.StatusNotFound {
-				r := httpapi.ErrorResponse{}
-				err = json.Unmarshal(response, &r)
-				if err != nil {
-					return fmt.Errorf("parsing of response failed: %w", err)
-				}
-				if len(r.Errors) > 0 {
-					log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
-				}
-			}
-
-			r := httpapi.DataResponse{}
+		if res.StatusCode == http.StatusNotFound {
+			r := httpapi.ErrorResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
 				return fmt.Errorf("parsing of response failed: %w", err)
 			}
-			if data, ok := r.Data.(map[string]interface{}); ok {
-				log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
+			if len(r.Errors) > 0 {
+				if isFileInfoPipe(stdout) {
+					b, err := json.Marshal(r.Errors[0])
+					if err != nil {
+						return fmt.Errorf("mashalling error response failed: %w", err)
+					}
+					cmd.Println(string(b))
+				}
+				log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
+				return nil
 			}
+			return errors.New("no peer ID available. P2P might be disabled")
 		}
+
+		r := httpapi.DataResponse{}
+		err = json.Unmarshal(response, &r)
+		if err != nil {
+			return fmt.Errorf("parsing of response failed: %w", err)
+		}
+		if isFileInfoPipe(stdout) {
+			b, err := json.Marshal(r.Data)
+			if err != nil {
+				return fmt.Errorf("mashalling data response failed: %w", err)
+			}
+			cmd.Println(string(b))
+		}
+		if data, ok := r.Data.(map[string]interface{}); ok {
+			log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
+		}
+
 		return nil
 	},
 }
