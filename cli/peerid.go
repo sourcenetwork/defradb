@@ -18,7 +18,6 @@ import (
 	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/core/api"
 	"github.com/spf13/cobra"
 )
 
@@ -59,7 +58,7 @@ var peerIDCmd = &cobra.Command{
 			cmd.Println(string(response))
 		} else {
 			if res.StatusCode == http.StatusNotFound {
-				r := api.ErrorResponse{}
+				r := httpapi.ErrorResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
 					return fmt.Errorf("parsing of response failed: %w", err)
@@ -69,7 +68,7 @@ var peerIDCmd = &cobra.Command{
 				}
 			}
 
-			r := api.DataResponse{}
+			r := httpapi.DataResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
 				return fmt.Errorf("parsing of response failed: %w", err)

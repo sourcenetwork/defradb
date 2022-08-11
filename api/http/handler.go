@@ -20,7 +20,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core/api"
 )
 
 type handler struct {
@@ -35,11 +34,11 @@ type ctxDB struct{}
 
 type ctxPeerID struct{}
 
-// simpleDataResponse is a helper function that returns a api.DataResponse struct.
+// simpleDataResponse is a helper function that returns a DataResponse struct.
 // Odd arguments are the keys and must be strings otherwise they are ignored.
 // Even arguments are the values associated with the previous key.
 // Odd arguments are also ignored if there are no following arguments.
-func simpleDataResponse(args ...interface{}) api.DataResponse {
+func simpleDataResponse(args ...interface{}) DataResponse {
 	data := make(map[string]interface{})
 
 	for i := 0; i < len(args); i += 2 {
@@ -54,7 +53,7 @@ func simpleDataResponse(args ...interface{}) api.DataResponse {
 		}
 	}
 
-	return api.DataResponse{
+	return DataResponse{
 		Data: data,
 	}
 }
@@ -112,4 +111,9 @@ func dbFromContext(ctx context.Context) (client.DB, error) {
 	}
 
 	return db, nil
+}
+
+// DataResponse it the GQL top level object holding data for the response payload.
+type DataResponse struct {
+	Data interface{} `json:"data"`
 }

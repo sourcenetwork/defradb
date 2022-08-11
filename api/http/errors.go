@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/sourcenetwork/defradb/core/api"
 )
 
 var env = os.Getenv("DEFRA_ENV")
@@ -28,6 +26,23 @@ var (
 	errSchema     = errors.New("base must start with the http or https scheme")
 )
 
+// ErrorResponse it the GQL top level object holding error items for the response payload.
+type ErrorResponse struct {
+	Errors []ErrorItem `json:"errors"`
+}
+
+// ErrorItem hold an error message and extensions that might be pertinent to the request
+type ErrorItem struct {
+	Message    string     `json:"message"`
+	Extensions extensions `json:"extensions,omitempty"`
+}
+
+type extensions struct {
+	Status    int    `json:"status"`
+	HTTPError string `json:"httpError"`
+	Stack     string `json:"stack,omitempty"`
+}
+
 func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status int) {
 	if status == http.StatusInternalServerError {
 		log.ErrorE(ctx, http.StatusText(status), err)
@@ -36,11 +51,11 @@ func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status in
 	sendJSON(
 		ctx,
 		rw,
-		api.ErrorResponse{
-			Errors: []api.ErrorItem{
+		ErrorResponse{
+			Errors: []ErrorItem{
 				{
 					Message: err.Error(),
-					Extensions: &api.Extensions{
+					Extensions: extensions{
 						Status:    status,
 						HTTPError: http.StatusText(status),
 						Stack:     formatError(err),

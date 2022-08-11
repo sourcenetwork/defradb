@@ -18,7 +18,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/core/api"
+	httpapi "github.com/sourcenetwork/defradb/api/http"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +47,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := api.DataResponse{}
+	r := httpapi.DataResponse{}
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +87,7 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := api.ErrorResponse{}
+	r := httpapi.ErrorResponse{}
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)
