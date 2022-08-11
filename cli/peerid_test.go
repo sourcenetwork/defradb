@@ -53,8 +53,8 @@ func TestGetPeerIDCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, di.node.PeerID().String(), r["peerID"])
 
+	assert.Equal(t, di.node.PeerID().String(), r["peerID"])
 }
 
 func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
