@@ -23,7 +23,7 @@ import (
 
 var peerIDCmd = &cobra.Command{
 	Use:   "peerid",
-	Short: "Get the peer ID of the Defra node",
+	Short: "Get the peer ID of the DefraDB node",
 	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
