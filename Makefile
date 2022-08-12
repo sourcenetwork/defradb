@@ -138,6 +138,10 @@ test\:bench:
 test\:bench-short:
 	@$(MAKE) -C ./tests/bench/ bench:short
 
+.PHONY: test\:scripts
+test\:scripts:
+	@$(MAKE) -C ./tools/scripts/ test
+
 # Using go-acc to ensure integration tests are included.
 # Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
 # Example: `make test:coverage path="./api/..."`

@@ -21,5 +21,8 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v3
 
+      - name: Ensure the script is not broken
+        run: make test:scripts
+
       - name: Run the validation script on the title
         run: ./tools/scripts/validate-conventional-style.sh "${{ github.event.pull_request.title }}"
