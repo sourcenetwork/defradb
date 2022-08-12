@@ -68,8 +68,9 @@ var peerIDCmd = &cobra.Command{
 						return fmt.Errorf("mashalling error response failed: %w", err)
 					}
 					cmd.Println(string(b))
+				} else {
+					log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
 				}
-				log.FeedbackInfo(cmd.Context(), r.Errors[0].Message)
 				return nil
 			}
 			return errors.New("no peer ID available. P2P might be disabled")
@@ -86,8 +87,7 @@ var peerIDCmd = &cobra.Command{
 				return fmt.Errorf("mashalling data response failed: %w", err)
 			}
 			cmd.Println(string(b))
-		}
-		if data, ok := r.Data.(map[string]interface{}); ok {
+		} else if data, ok := r.Data.(map[string]interface{}); ok {
 			log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
 		}
 
