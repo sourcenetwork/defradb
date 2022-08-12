@@ -300,8 +300,9 @@ func start(ctx context.Context) (*defraInstance, error) {
 		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
-				err := n.Close()
-				log.FeedbackErrorE(ctx, "Failed to close node", err)
+				if err := n.Close(); err != nil {
+					log.FeedbackErrorE(ctx, "Failed to close node", err)
+				}
 			}
 			db.Close(ctx)
 			os.Exit(1)
