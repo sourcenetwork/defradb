@@ -270,7 +270,9 @@ func (g *Generator) expandInputArgument(
 			}
 		case *gql.Scalar:
 			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
-				g.createExpandedFieldAggregate(ctx, obj, def)
+				if err := g.createExpandedFieldAggregate(ctx, obj, def); err != nil {
+					return err
+				}
 			}
 			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
@@ -285,7 +287,7 @@ func (g *Generator) createExpandedFieldAggregate(
 	ctx context.Context,
 	obj *gql.Object,
 	f *gql.FieldDefinition,
-) {
+) error {
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var filterTypeName string
@@ -307,7 +309,9 @@ func (g *Generator) createExpandedFieldAggregate(
 					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				log.Error(ctx, "Target=["+target+"] not found in fields of "+obj.Name())
+				targetError := target + " not found in fields of " + obj.Name()
+				log.Error(ctx, targetError)
+				return errors.New(targetError)
 			}
 		}
 
@@ -319,6 +323,8 @@ func (g *Generator) createExpandedFieldAggregate(
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
 	}
+
+	return nil
 }
 
 func (g *Generator) createExpandedFieldSingle(
