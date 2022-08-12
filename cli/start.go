@@ -218,7 +218,6 @@ func start(ctx context.Context) (*defraInstance, error) {
 			cfg.NodeConfig(),
 		)
 		if err != nil {
-			n.Close() //nolint:errcheck
 			db.Close(ctx)
 			return nil, fmt.Errorf("failed to start P2P node: %w", err)
 		}
@@ -235,7 +234,9 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}
 
 		if err := n.Start(); err != nil {
-			n.Close() //nolint:errcheck
+			if e := n.Close(); e != nil {
+				err = fmt.Errorf("failed to close node: %v: %w", e.Error(), err)
+			}
 			db.Close(ctx)
 			return nil, fmt.Errorf("failed to start P2P listeners: %w", err)
 		}
@@ -299,7 +300,8 @@ func start(ctx context.Context) (*defraInstance, error) {
 		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
-				n.Close() //nolint:errcheck
+				err := n.Close()
+				log.FeedbackErrorE(ctx, "Failed to close node", err)
 			}
 			db.Close(ctx)
 			os.Exit(1)
