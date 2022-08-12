@@ -34,6 +34,11 @@ type ctxDB struct{}
 
 type ctxPeerID struct{}
 
+// DataResponse it the GQL top level object holding data for the response payload.
+type DataResponse struct {
+	Data interface{} `json:"data"`
+}
+
 // simpleDataResponse is a helper function that returns a DataResponse struct.
 // Odd arguments are the keys and must be strings otherwise they are ignored.
 // Even arguments are the values associated with the previous key.
@@ -111,9 +116,4 @@ func dbFromContext(ctx context.Context) (client.DB, error) {
 	}
 
 	return db, nil
-}
-
-// DataResponse it the GQL top level object holding data for the response payload.
-type DataResponse struct {
-	Data interface{} `json:"data"`
 }
