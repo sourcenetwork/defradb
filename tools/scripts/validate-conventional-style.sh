@@ -8,7 +8,8 @@
 #========================================================================================
 
 # Declare a non-mutable indexed array that contains all the subset of conventional style
-#  labels that we deem valid for our use case.
+#  labels that we deem valid for our use case. There should always be insync with the
+#  labels we have defined for the change log in: `defradb/tools/configs/chglog/config.yml`.
 readonly -a VALID_LABELS=("chore"
                           "ci"
                           "docs"
