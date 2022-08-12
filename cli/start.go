@@ -152,7 +152,7 @@ func (di *defraInstance) close(ctx context.Context) {
 		if err := di.node.Close(); err != nil {
 			log.FeedbackInfo(
 				ctx,
-				"the node could not be closed successfully",
+				"The node could not be closed successfully",
 				logging.NewKV("Error", err),
 			)
 		}
@@ -161,7 +161,7 @@ func (di *defraInstance) close(ctx context.Context) {
 	if err := di.server.Close(); err != nil {
 		log.FeedbackInfo(
 			ctx,
-			"the server could not be closed successfully",
+			"The server could not be closed successfully",
 			logging.NewKV("Error", err),
 		)
 	}
@@ -268,7 +268,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
 			netpb.RegisterServiceServer(server, netService)
 			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-				log.FeedbackFatalE(ctx, "failed to start RPC server", err)
+				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
 			}
 		}()
 	}
