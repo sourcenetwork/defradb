@@ -34,7 +34,8 @@ if [ "${#TITLE}" -gt 60 ]; then
 fi
 
 # Split the title at ':' and store the result in ${SPLIT_TOKENS}.
-readarray -d : -t SPLIT_TOKENS <<< "${TITLE}"
+# Doing eval to ensure the split works for elements that contain spaces.
+eval "SPLIT_TOKENS=($(echo "\"$TITLE\"" | sed 's/:/" "/g'))";
 
 # Validate the `:` token exists exactly once.
 if [ "${#SPLIT_TOKENS[*]}" -ne 2 ]; then
@@ -43,7 +44,7 @@ if [ "${#SPLIT_TOKENS[*]}" -ne 2 ]; then
 fi
 
 LABEL="${SPLIT_TOKENS[0]}";
-DESCRIPTION="${SPLIT_TOKENS[1]::-1}"; # Also trim the EOL.
+DESCRIPTION="${SPLIT_TOKENS[1]}";
 
 printf "Info: label = [%s]\n" "${LABEL}";
 printf "Info: description = [%s]\n" "${DESCRIPTION}";
