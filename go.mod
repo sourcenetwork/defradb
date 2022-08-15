@@ -21,7 +21,7 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-merkledag v0.6.0
 	github.com/jbenet/goprocess v0.1.4
-	github.com/libp2p/go-libp2p v0.20.1
+	github.com/libp2p/go-libp2p v0.20.3
 	github.com/libp2p/go-libp2p-connmgr v0.4.0 // indirect
 	github.com/libp2p/go-libp2p-core v0.16.1
 	github.com/libp2p/go-libp2p-gostream v0.3.1
