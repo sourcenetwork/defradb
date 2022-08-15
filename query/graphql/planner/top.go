@@ -115,6 +115,10 @@ func (n *topLevelNode) Source() planNode {
 	return nil
 }
 
+func (n *topLevelNode) Explain() (map[string]any, error) {
+	return map[string]any{}, nil
+}
+
 func (n *topLevelNode) Next() (bool, error) {
 	if n.isdone {
 		return false, nil
