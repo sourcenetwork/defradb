@@ -18,6 +18,8 @@ import (
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
+const topLevelNodeKind string = "topLevelNode"
+
 // topLevelNode is a special node that represents the very top of the
 // plan graph. It has no source, and will only yield a single item
 // containing all of its children.
@@ -50,7 +52,7 @@ func (n *topLevelNode) Spans(spans core.Spans) {
 }
 
 func (n *topLevelNode) Kind() string {
-	return "topLevelNode"
+	return topLevelNodeKind
 }
 
 func (n *topLevelNode) Init() error {

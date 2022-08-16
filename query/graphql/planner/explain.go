@@ -90,7 +90,6 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 	}
 
 	switch node := source.(type) {
-
 	// Walk the multiple children if it is a MultiNode.
 	// Note: MultiNode nodes are not explainable but we use them to wrap the children under them.
 	case MultiNode:
@@ -144,7 +143,7 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 
 		// If not the last child then keep walking the graph to find more explainable nodes.
 		// Also make sure the next source / child isn't a recursive `topLevelNode`.
-		if next := node.Source(); next != nil && next.Kind() != "topLevelNode" {
+		if next := node.Source(); next != nil && next.Kind() != topLevelNodeKind {
 			nextExplainGraph, err := buildExplainGraph(next)
 			if err != nil {
 				return nil, err
