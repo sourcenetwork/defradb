@@ -97,12 +97,13 @@ func (cfg *Config) Load(rootDirPath string) error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc())); err != nil {
+	err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
 	cfg.setBadgerVLogMaxSize()
 	cfg.handleParams(rootDirPath)
-	err := cfg.validate()
+	err = cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -128,7 +129,8 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc())); err != nil {
+	err = viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
 	rootDir, err := DefaultRootDir()
@@ -178,7 +180,7 @@ func (cfg *Config) handleParams(rootDir string) {
 }
 
 func (cfg *Config) setBadgerVLogMaxSize() {
-	cfg.Datastore.Badger.ValueLogFileSize = int64(cfg.Datastore.Badger.VLogMaxSize)
+	cfg.Datastore.Badger.Options.ValueLogFileSize = int64(cfg.Datastore.Badger.ValueLogFileSize)
 }
 
 // DatastoreConfig configures datastores.
@@ -190,8 +192,8 @@ type DatastoreConfig struct {
 
 // BadgerConfig configures Badger's on-disk / filesystem mode.
 type BadgerConfig struct {
-	Path        string
-	VLogMaxSize ByteSize
+	Path             string
+	ValueLogFileSize ByteSize
 	*badgerds.Options
 }
 
@@ -278,9 +280,9 @@ func defaultDatastoreConfig() *DatastoreConfig {
 	return &DatastoreConfig{
 		Store: "badger",
 		Badger: BadgerConfig{
-			Path:        "data",
-			VLogMaxSize: 1 * GB,
-			Options:     &opts,
+			Path:             "data",
+			ValueLogFileSize: 1 * GB,
+			Options:          &opts,
 		},
 	}
 }

@@ -236,12 +236,12 @@ func init() {
 	}
 
 	startCmd.Flags().Var(
-		&cfg.Datastore.Badger.VLogMaxSize, "vlogmaxsize",
-		"Specify the datastore maximum value log file size (in bytes)",
+		&cfg.Datastore.Badger.ValueLogFileSize, "valuelogfilesize",
+		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
 	)
-	err = viper.BindPFlag("datastore.badger.vlogmaxsize", startCmd.Flags().Lookup("vlogmaxsize"))
+	err = viper.BindPFlag("datastore.badger.valuelogfilesize", startCmd.Flags().Lookup("valuelogfilesize"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind datastore..badger.vlogmaxsize", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind datastore.badger.valuelogfilesize", err)
 	}
 
 	startCmd.Flags().String(
