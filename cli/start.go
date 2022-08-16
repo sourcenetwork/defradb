@@ -235,6 +235,15 @@ func init() {
 		log.FeedbackFatalE(context.Background(), "Could not bind datastore.store", err)
 	}
 
+	startCmd.Flags().Var(
+		&cfg.Datastore.Badger.VLogMaxSize, "vlogmaxsize",
+		"Specify the datastore maximum value log file size (in bytes)",
+	)
+	err = viper.BindPFlag("datastore.badger.vlogmaxsize", startCmd.Flags().Lookup("vlogmaxsize"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind datastore..badger.vlogmaxsize", err)
+	}
+
 	startCmd.Flags().String(
 		"p2paddr", cfg.Net.P2PAddress,
 		"Listener address for the p2p network (formatted as a libp2p MultiAddr)",

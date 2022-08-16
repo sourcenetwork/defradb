@@ -341,3 +341,87 @@ func TestNodeConfig(t *testing.T) {
 	assert.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	assert.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
 }
+
+func TestUnmarshallByteSize(t *testing.T) {
+	var bs ByteSize
+
+	b := []byte("10")
+	err := bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	b = []byte("10B")
+	err = bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	b = []byte("10 B")
+	err = bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	kb := []byte("10KB")
+	err = bs.UnmarshalText(kb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*KB, bs)
+
+	kb = []byte("10 kb")
+	err = bs.UnmarshalText(kb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*KB, bs)
+
+	mb := []byte("10MB")
+	err = bs.UnmarshalText(mb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*MB, bs)
+
+	gb := []byte("10GB")
+	err = bs.UnmarshalText(gb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*GB, bs)
+
+	tb := []byte("10TB")
+	err = bs.UnmarshalText(tb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*TB, bs)
+
+	pb := []byte("10PB")
+	err = bs.UnmarshalText(pb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*PB, bs)
+
+	eb := []byte("१")
+	err = bs.UnmarshalText(eb)
+	assert.Error(t, err)
+}
+
+func TestByteSizeType(t *testing.T) {
+	var bs ByteSize
+	assert.Equal(t, "ByteSize", bs.Type())
+}
+
+func TestByteSizeToString(t *testing.T) {
+	b := 999 * B
+	assert.Equal(t, "999", b.String())
+
+	mb := 10 * MB
+	assert.Equal(t, "10MB", mb.String())
+}

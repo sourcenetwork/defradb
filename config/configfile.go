@@ -54,6 +54,9 @@ datastore:
   store: {{ .Datastore.Store }}
   badger:
     path: {{ .Datastore.Badger.Path }}
+    # Maximum file size of the value log file. The actual file size will be 2*vlogmaxsize.
+    # Human friendly units can be used (ex: 500MB).
+    vlogmaxsize: {{ .Datastore.Badger.VLogMaxSize }}
   # memory:
   #    size: {{ .Datastore.Memory.Size }}
 
