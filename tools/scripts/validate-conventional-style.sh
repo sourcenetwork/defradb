@@ -57,7 +57,7 @@ fi
 
 CHECK_SPACE="${DESCRIPTION::1}"; # First character
 CHECK_FIRST_UPPER_CASE="${DESCRIPTION:1:1}"; # Second character
-CHECK_LAST_LOWER_CASE="${DESCRIPTION: -1}"; # Last character
+CHECK_LAST_LOWER_CASE_OR_NUM="${DESCRIPTION: -1}"; # Last character
 
 # Validate that there is a space between the label and description.
 if [ "${CHECK_SPACE}" != " " ]; then
@@ -71,9 +71,9 @@ if [[ "${CHECK_FIRST_UPPER_CASE}" != [A-Z] ]]; then
     exit 7;
 fi
 
-# Validate that the last character of the description is a lower case alphabet character.
-if [[ "${CHECK_LAST_LOWER_CASE}" != [a-z] ]]; then
-    printf "Error: Last character of the description is not a lowercase alphabet.\n";
+# Validate that the last character is a lower case alphabet or a number character.
+if [[ "${CHECK_LAST_LOWER_CASE_OR_NUM}" != [a-z0-9] ]]; then
+    printf "Error: Last character is neither a lowercase alphabet nor a number.\n";
     exit 8;
 fi
 

@@ -37,6 +37,7 @@ TestReturnCode "${T1} 'ci: Last character should not be period.'" 8;
 TestReturnCode "${T1} 'ci: Last character is not lowercase alphabeT'" 8;
 TestReturnCode "${T1} 'ci: Last character is a space '" 8;
 TestReturnCode "${T1} 'bug: This is an invalid label'" 9;
+TestReturnCode "${T1} 'ci: Last character is a number v1.5.0'" 0;
 TestReturnCode "${T1} 'chore: This is a valid title'" 0;
 TestReturnCode "${T1} 'ci: This is a valid title'" 0;
 TestReturnCode "${T1} 'docs: This is a valid title'" 0;
