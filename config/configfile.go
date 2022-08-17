@@ -54,7 +54,7 @@ datastore:
   store: {{ .Datastore.Store }}
   badger:
     path: {{ .Datastore.Badger.Path }}
-    # Maximum file size of the value log files. The in memory file size will be 2*valuelogfilesize.
+    # Maximum file size of the value log files. The in-memory file size will be 2*valuelogfilesize.
     # Human friendly units can be used (ex: 500MB).
     valuelogfilesize: {{ .Datastore.Badger.ValueLogFileSize }}
   # memory:

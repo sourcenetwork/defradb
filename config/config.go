@@ -101,7 +101,7 @@ func (cfg *Config) Load(rootDirPath string) error {
 	if err != nil {
 		return err
 	}
-	cfg.setBadgerVLogMaxSize()
+
 	cfg.handleParams(rootDirPath)
 	err = cfg.validate()
 	if err != nil {
@@ -137,7 +137,7 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	if err != nil {
 		log.FatalE(context.Background(), "Could not get home directory", err)
 	}
-	cfg.setBadgerVLogMaxSize()
+
 	cfg.handleParams(rootDir)
 	err = cfg.validate()
 	if err != nil {
@@ -177,6 +177,7 @@ func (cfg *Config) handleParams(rootDir string) {
 	if !filepath.IsAbs(cfg.Datastore.Badger.Path) {
 		cfg.Datastore.Badger.Path = filepath.Join(rootDir, cfg.Datastore.Badger.Path)
 	}
+	cfg.setBadgerVLogMaxSize()
 }
 
 func (cfg *Config) setBadgerVLogMaxSize() {
@@ -200,15 +201,15 @@ type BadgerConfig struct {
 type ByteSize uint64
 
 const (
-	B  ByteSize = 1
-	KB          = B << 10
-	MB          = KB << 10
-	GB          = MB << 10
-	TB          = GB << 10
-	PB          = TB << 10
+	B   ByteSize = 1
+	KiB          = B << 10
+	MiB          = KiB << 10
+	GiB          = MiB << 10
+	TiB          = GiB << 10
+	PiB          = TiB << 10
 )
 
-// UnmarshallText calls Set on ByteSize with the given text
+// UnmarshalText calls Set on ByteSize with the given text
 func (bs *ByteSize) UnmarshalText(text []byte) error {
 	return bs.Set(string(text))
 }
@@ -232,16 +233,16 @@ func (bs *ByteSize) Set(s string) error {
 	switch strings.ToUpper(strings.Trim(unit, " ")) {
 	case "B":
 		*bs = ByteSize(digits) * B
-	case "KB":
-		*bs = ByteSize(digits) * KB
-	case "MB":
-		*bs = ByteSize(digits) * MB
-	case "GB":
-		*bs = ByteSize(digits) * GB
-	case "TB":
-		*bs = ByteSize(digits) * TB
-	case "PB":
-		*bs = ByteSize(digits) * PB
+	case "KB", "KIB":
+		*bs = ByteSize(digits) * KiB
+	case "MB", "MIB":
+		*bs = ByteSize(digits) * MiB
+	case "GB", "GIB":
+		*bs = ByteSize(digits) * GiB
+	case "TB", "TIB":
+		*bs = ByteSize(digits) * TiB
+	case "PB", "PIB":
+		*bs = ByteSize(digits) * PiB
 	default:
 		*bs = ByteSize(digits)
 	}
@@ -251,7 +252,7 @@ func (bs *ByteSize) Set(s string) error {
 
 // String returns the string formatted output of ByteSize
 func (bs *ByteSize) String() string {
-	const unit = 1000
+	const unit = 1024
 	bsInt := int64(*bs)
 	if bsInt < unit {
 		return fmt.Sprintf("%d", bsInt)
@@ -261,7 +262,7 @@ func (bs *ByteSize) String() string {
 		div *= unit
 		exp++
 	}
-	return fmt.Sprintf("%d%cB", bsInt/div, "KMGTP"[exp])
+	return fmt.Sprintf("%d%ciB", bsInt/div, "KMGTP"[exp])
 }
 
 // Type returns the type as a string.
@@ -281,7 +282,7 @@ func defaultDatastoreConfig() *DatastoreConfig {
 		Store: "badger",
 		Badger: BadgerConfig{
 			Path:             "data",
-			ValueLogFileSize: 1 * GB,
+			ValueLogFileSize: 1 * GiB,
 			Options:          &opts,
 		},
 	}
