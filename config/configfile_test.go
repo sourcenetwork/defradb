@@ -102,3 +102,34 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	assert.Equal(t, cfg.Log.Output, cfgFromFile.Log.Output)
 	assert.Equal(t, cfg.Log.Stacktrace, cfgFromFile.Log.Stacktrace)
 }
+
+func TestReadConfigFileForDatastore(t *testing.T) {
+	dir := t.TempDir()
+
+	cfg := DefaultConfig()
+	cfg.Datastore.Store = "badger"
+	cfg.Datastore.Badger.Path = "dataPath"
+	cfg.Datastore.Badger.ValueLogFileSize = 512 * MiB
+
+	err := cfg.WriteConfigFileToRootDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := dir + "/" + DefaultDefraDBConfigFileName
+
+	_, err = os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfgFromFile := DefaultConfig()
+
+	err = cfgFromFile.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, cfg.Datastore.Store, cfgFromFile.Datastore.Store)
+	assert.Equal(t, dir+"/"+cfg.Datastore.Badger.Path, cfgFromFile.Datastore.Badger.Path)
+	assert.Equal(t, cfg.Datastore.Badger.ValueLogFileSize, cfgFromFile.Datastore.Badger.ValueLogFileSize)
+}
