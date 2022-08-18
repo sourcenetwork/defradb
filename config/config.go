@@ -50,10 +50,13 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
+	"unicode"
 
+	"github.com/mitchellh/mapstructure"
 	ma "github.com/multiformats/go-multiaddr"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/logging"
@@ -94,11 +97,13 @@ func (cfg *Config) Load(rootDirPath string) error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg); err != nil {
+	err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
+
 	cfg.handleParams(rootDirPath)
-	err := cfg.validate()
+	err = cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -124,13 +129,15 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg); err != nil {
+	err = viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
 	rootDir, err := DefaultRootDir()
 	if err != nil {
 		log.FatalE(context.Background(), "Could not get home directory", err)
 	}
+
 	cfg.handleParams(rootDir)
 	err = cfg.validate()
 	if err != nil {
@@ -170,6 +177,11 @@ func (cfg *Config) handleParams(rootDir string) {
 	if !filepath.IsAbs(cfg.Datastore.Badger.Path) {
 		cfg.Datastore.Badger.Path = filepath.Join(rootDir, cfg.Datastore.Badger.Path)
 	}
+	cfg.setBadgerVLogMaxSize()
+}
+
+func (cfg *Config) setBadgerVLogMaxSize() {
+	cfg.Datastore.Badger.Options.ValueLogFileSize = int64(cfg.Datastore.Badger.ValueLogFileSize)
 }
 
 // DatastoreConfig configures datastores.
@@ -181,8 +193,81 @@ type DatastoreConfig struct {
 
 // BadgerConfig configures Badger's on-disk / filesystem mode.
 type BadgerConfig struct {
-	Path string
+	Path             string
+	ValueLogFileSize ByteSize
 	*badgerds.Options
+}
+
+type ByteSize uint64
+
+const (
+	B   ByteSize = 1
+	KiB          = B << 10
+	MiB          = KiB << 10
+	GiB          = MiB << 10
+	TiB          = GiB << 10
+	PiB          = TiB << 10
+)
+
+// UnmarshalText calls Set on ByteSize with the given text
+func (bs *ByteSize) UnmarshalText(text []byte) error {
+	return bs.Set(string(text))
+}
+
+// Set parses a string into ByteSize
+func (bs *ByteSize) Set(s string) error {
+	digitString := ""
+	unit := ""
+	for _, char := range s {
+		if unicode.IsDigit(char) {
+			digitString += string(char)
+		} else {
+			unit += string(char)
+		}
+	}
+	digits, err := strconv.Atoi(digitString)
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToUpper(strings.Trim(unit, " ")) {
+	case "B":
+		*bs = ByteSize(digits) * B
+	case "KB", "KIB":
+		*bs = ByteSize(digits) * KiB
+	case "MB", "MIB":
+		*bs = ByteSize(digits) * MiB
+	case "GB", "GIB":
+		*bs = ByteSize(digits) * GiB
+	case "TB", "TIB":
+		*bs = ByteSize(digits) * TiB
+	case "PB", "PIB":
+		*bs = ByteSize(digits) * PiB
+	default:
+		*bs = ByteSize(digits)
+	}
+
+	return nil
+}
+
+// String returns the string formatted output of ByteSize
+func (bs *ByteSize) String() string {
+	const unit = 1024
+	bsInt := int64(*bs)
+	if bsInt < unit {
+		return fmt.Sprintf("%d", bsInt)
+	}
+	div, exp := int64(unit), 0
+	for n := bsInt / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%d%ciB", bsInt/div, "KMGTP"[exp])
+}
+
+// Type returns the type as a string.
+func (bs *ByteSize) Type() string {
+	return "ByteSize"
 }
 
 // MemoryConfig configures of Badger's memory mode.
@@ -191,10 +276,14 @@ type MemoryConfig struct {
 }
 
 func defaultDatastoreConfig() *DatastoreConfig {
+	// create a copy of the default badger options
+	opts := badgerds.DefaultOptions
 	return &DatastoreConfig{
 		Store: "badger",
 		Badger: BadgerConfig{
-			Path: "data",
+			Path:             "data",
+			ValueLogFileSize: 1 * GiB,
+			Options:          &opts,
 		},
 	}
 }
