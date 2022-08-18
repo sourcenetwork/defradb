@@ -219,17 +219,6 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 			}
 		}
 		return nil
-	case MultiNode:
-		return p.expandMultiNode(n, parentPlan)
-
-	case *updateNode:
-		return p.expandPlan(n.results, parentPlan)
-
-	case *createNode:
-		return p.expandPlan(n.results, parentPlan)
-
-	case *deleteNode:
-		return p.expandPlan(n.source, parentPlan)
 
 	case *topLevelNode:
 		for _, child := range n.children {
@@ -247,6 +236,18 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 			}
 		}
 		return nil
+
+	case MultiNode:
+		return p.expandMultiNode(n, parentPlan)
+
+	case *updateNode:
+		return p.expandPlan(n.results, parentPlan)
+
+	case *createNode:
+		return p.expandPlan(n.results, parentPlan)
+
+	case *deleteNode:
+		return p.expandPlan(n.source, parentPlan)
 
 	default:
 		return nil

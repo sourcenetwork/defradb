@@ -43,7 +43,36 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"topLevelNode": dataMap{},
+					"topLevelNode": []dataMap{
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter":         nil,
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"countNode": dataMap{
+								"sources": []dataMap{
+									{
+										"fieldName": "author",
+										"filter":    nil,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -92,7 +121,44 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"topLevelNode": dataMap{},
+					"topLevelNode": []dataMap{
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+											},
+										},
+										"spans": []dataMap{
+											{
+												"start": "/3",
+												"end":   "/4",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"countNode": dataMap{
+								"sources": []dataMap{
+									{
+										"fieldName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

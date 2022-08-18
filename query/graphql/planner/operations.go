@@ -22,13 +22,13 @@ var (
 	_ planNode = (*hardLimitNode)(nil)
 	_ planNode = (*headsetScanNode)(nil)
 	_ planNode = (*multiScanNode)(nil)
+	_ planNode = (*orderNode)(nil)
 	_ planNode = (*parallelNode)(nil)
 	_ planNode = (*pipeNode)(nil)
 	_ planNode = (*renderLimitNode)(nil)
 	_ planNode = (*scanNode)(nil)
 	_ planNode = (*selectNode)(nil)
 	_ planNode = (*selectTopNode)(nil)
-	_ planNode = (*orderNode)(nil)
 	_ planNode = (*sumNode)(nil)
 	_ planNode = (*topLevelNode)(nil)
 	_ planNode = (*typeIndexJoin)(nil)
@@ -36,6 +36,9 @@ var (
 	_ planNode = (*typeJoinOne)(nil)
 	_ planNode = (*updateNode)(nil)
 	_ planNode = (*valuesNode)(nil)
+
+	_ MultiNode = (*parallelNode)(nil)
+	_ MultiNode = (*topLevelNode)(nil)
 )
 
 // type joinNode struct {
