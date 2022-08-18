@@ -13,7 +13,7 @@ package http
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -141,7 +141,7 @@ func TestSendJSONWithNoErrors(t *testing.T) {
 
 	sendJSON(context.Background(), rec, obj, 200)
 
-	body, err := ioutil.ReadAll(rec.Result().Body)
+	body, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}
