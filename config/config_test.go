@@ -12,7 +12,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -183,11 +182,16 @@ func TestLoadNonExistingConfigFile(t *testing.T) {
 func TestLoadInvalidConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	dir := t.TempDir()
-	ioutil.WriteFile(filepath.Join(dir, DefaultDefraDBConfigFileName), []byte("{"), 0644)
 
-	err := cfg.Load(dir)
+	errWrite := os.WriteFile(
+		filepath.Join(dir, DefaultDefraDBConfigFileName),
+		[]byte("{"),
+		0644,
+	)
+	assert.NoError(t, errWrite)
 
-	assert.Error(t, err)
+	errLoad := cfg.Load(dir)
+	assert.Error(t, errLoad)
 }
 
 func TestInvalidEnvVars(t *testing.T) {
@@ -241,7 +245,6 @@ func TestValidRPCTimeoutDuration(t *testing.T) {
 	cfg.LoadWithoutRootDir()
 	_, err := cfg.Net.RPCTimeoutDuration()
 
-	assert.NoError(t, err)
 	assert.NoError(t, err)
 }
 
