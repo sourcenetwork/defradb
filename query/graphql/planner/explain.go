@@ -16,7 +16,7 @@ import (
 
 type explainablePlanNode interface {
 	planNode
-	Explain() (map[string]interface{}, error)
+	Explain() (map[string]any, error)
 }
 
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
@@ -35,6 +35,7 @@ var (
 	_ explainablePlanNode = (*selectNode)(nil)
 	_ explainablePlanNode = (*selectTopNode)(nil)
 	_ explainablePlanNode = (*sumNode)(nil)
+	_ explainablePlanNode = (*topLevelNode)(nil)
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
 )
@@ -81,8 +82,8 @@ const (
 //     }
 //   ]
 // }
-func buildExplainGraph(source planNode) (map[string]interface{}, error) {
-	explainGraph := map[string]interface{}{}
+func buildExplainGraph(source planNode) (map[string]any, error) {
+	explainGraph := map[string]any{}
 
 	if source == nil {
 		return explainGraph, nil
@@ -93,7 +94,7 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 	// Note: MultiNode nodes are not explainable but we use them to wrap the children under them.
 	case MultiNode:
 		// List to store all explain graphs of explainable children of MultiNode.
-		multiChildExplainGraph := []map[string]interface{}{}
+		multiChildExplainGraph := []map[string]any{}
 		for _, childSource := range node.Children() {
 			childExplainGraph, err := buildExplainGraph(childSource)
 			if err != nil {
@@ -137,12 +138,13 @@ func buildExplainGraph(source planNode) (map[string]interface{}, error) {
 
 		// Support nil to signal as if there are no attributes to explain for that node.
 		if explainGraphBuilder == nil {
-			explainGraphBuilder = map[string]interface{}{}
+			explainGraphBuilder = map[string]any{}
 		}
 
 		// If not the last child then keep walking the graph to find more explainable nodes.
-		if node.Source() != nil {
-			nextExplainGraph, err := buildExplainGraph(node.Source())
+		// Also make sure the next source / child isn't a recursive `topLevelNode`.
+		if next := node.Source(); next != nil && next.Kind() != topLevelNodeKind {
+			nextExplainGraph, err := buildExplainGraph(next)
 			if err != nil {
 				return nil, err
 			}

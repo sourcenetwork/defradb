@@ -47,7 +47,106 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"topLevelNode": dataMap{},
+					"topLevelNode": []dataMap{
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"sumNode": dataMap{
+								"sources": []dataMap{
+									{
+										"childFieldName": "age",
+										"fieldName":      "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"countNode": dataMap{
+								"sources": []dataMap{
+									{
+										"fieldName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"averageNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
@@ -96,7 +195,111 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 		Results: []dataMap{
 			{
 				"explain": dataMap{
-					"topLevelNode": dataMap{},
+					"topLevelNode": []dataMap{
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+												"_ne": nil,
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+												"_ne": nil,
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"selectTopNode": dataMap{
+								"selectNode": dataMap{
+									"filter": nil,
+									"scanNode": dataMap{
+										"collectionID":   "3",
+										"collectionName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+												"_gt": int64(26),
+											},
+										},
+										"spans": []dataMap{
+											{
+												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"sumNode": dataMap{
+								"sources": []dataMap{
+									{
+										"childFieldName": "age",
+										"fieldName":      "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+												"_ne": nil,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"countNode": dataMap{
+								"sources": []dataMap{
+									{
+										"fieldName": "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int64(26),
+												"_ne": nil,
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"averageNode": dataMap{},
+						},
+					},
 				},
 			},
 		},
