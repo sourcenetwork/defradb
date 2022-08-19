@@ -32,15 +32,18 @@ type handler struct {
 
 type ctxDB struct{}
 
-type dataResponse struct {
+type ctxPeerID struct{}
+
+// DataResponse is the GQL top level object holding data for the response payload.
+type DataResponse struct {
 	Data interface{} `json:"data"`
 }
 
-// simpleDataResponse is a helper function that returns a dataResponse struct.
+// simpleDataResponse is a helper function that returns a DataResponse struct.
 // Odd arguments are the keys and must be strings otherwise they are ignored.
 // Even arguments are the values associated with the previous key.
 // Odd arguments are also ignored if there are no following arguments.
-func simpleDataResponse(args ...interface{}) dataResponse {
+func simpleDataResponse(args ...interface{}) DataResponse {
 	data := make(map[string]interface{})
 
 	for i := 0; i < len(args); i += 2 {
@@ -55,7 +58,7 @@ func simpleDataResponse(args ...interface{}) dataResponse {
 		}
 	}
 
-	return dataResponse{
+	return DataResponse{
 		Data: data,
 	}
 }
@@ -71,6 +74,9 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
+		if h.options.peerID != "" {
+			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
+		}
 		f(rw, req.WithContext(ctx))
 	}
 }

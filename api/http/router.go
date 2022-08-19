@@ -31,9 +31,8 @@ const (
 	BlocksPath     string = versionedAPIPath + "/blocks"
 	GraphQLPath    string = versionedAPIPath + "/graphql"
 	SchemaLoadPath string = versionedAPIPath + "/schema/load"
+	PeerIDPath     string = versionedAPIPath + "/peerid"
 )
-
-var schemeError = errors.New("base must start with the http or https scheme")
 
 func setRoutes(h *handler) *handler {
 	h.Mux = chi.NewRouter()
@@ -59,6 +58,7 @@ func setRoutes(h *handler) *handler {
 	h.Get(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(GraphQLPath, h.handle(execGQLHandler))
 	h.Post(SchemaLoadPath, h.handle(loadSchemaHandler))
+	h.Get(PeerIDPath, h.handle(peerIDHandler))
 
 	return h
 }
@@ -68,7 +68,7 @@ func setRoutes(h *handler) *handler {
 // The base must start with a http or https.
 func JoinPaths(base string, paths ...string) (*url.URL, error) {
 	if !strings.HasPrefix(base, "http") {
-		return nil, schemeError
+		return nil, errSchema
 	}
 
 	u, err := url.Parse(base)

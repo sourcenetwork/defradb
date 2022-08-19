@@ -15,12 +15,14 @@ import (
 	"errors"
 	"fmt"
 	gonet "net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 
 	ma "github.com/multiformats/go-multiaddr"
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
@@ -33,7 +35,6 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -71,147 +72,13 @@ var startCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := context.Background()
-		log.FeedbackInfo(ctx, "Starting DefraDB service...")
-
-		// setup signal handlers
-		signalCh := make(chan os.Signal, 1)
-		signal.Notify(signalCh, os.Interrupt)
-
-		var rootstore ds.Batching
-
-		var err error
-		if cfg.Datastore.Store == badgerDatastoreName {
-			log.FeedbackInfo(
-				cmd.Context(),
-				"Opening badger store",
-				logging.NewKV("Path", cfg.Datastore.Badger.Path),
-			)
-			rootstore, err = badgerds.NewDatastore(
-				cfg.Datastore.Badger.Path,
-				cfg.Datastore.Badger.Options,
-			)
-		} else if cfg.Datastore.Store == "memory" {
-			log.FeedbackInfo(cmd.Context(), "Building new memory store")
-			opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-			rootstore, err = badgerds.NewDatastore("", &opts)
-		}
-
+		di, err := start(cmd.Context())
 		if err != nil {
-			return fmt.Errorf("failed to open datastore: %w", err)
+			return err
 		}
 
-		var options []db.Option
+		wait(cmd.Context(), di)
 
-		// check for p2p
-		var bs *broadcast.Broadcaster
-		if !cfg.Net.P2PDisabled {
-			bs = broadcast.NewBroadcaster(busBufferSize)
-			options = append(options, db.WithBroadcaster(bs))
-		}
-
-		db, err := db.NewDB(cmd.Context(), rootstore, options...)
-		if err != nil {
-			return fmt.Errorf("failed to create database: %w", err)
-		}
-
-		// init the p2p node
-		var n *node.Node
-		if !cfg.Net.P2PDisabled {
-			log.FeedbackInfo(cmd.Context(), "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
-			n, err = node.NewNode(
-				cmd.Context(),
-				db,
-				bs,
-				cfg.NodeConfig(),
-			)
-			if err != nil {
-				n.Close() //nolint:errcheck
-				db.Close(cmd.Context())
-				return fmt.Errorf("failed to start P2P node: %w", err)
-			}
-
-			// parse peers and bootstrap
-			if len(cfg.Net.Peers) != 0 {
-				log.Debug(cmd.Context(), "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
-				addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
-				if err != nil {
-					return fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
-				}
-				log.Debug(cmd.Context(), "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
-				n.Boostrap(addrs)
-			}
-
-			if err := n.Start(); err != nil {
-				n.Close() //nolint:errcheck
-				db.Close(cmd.Context())
-				return fmt.Errorf("failed to start P2P listeners: %w", err)
-			}
-
-			MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
-			if err != nil {
-				return fmt.Errorf("failed to parse multiaddress: %w", err)
-			}
-			addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
-			if err != nil {
-				return fmt.Errorf("failed to parse TCP address: %w", err)
-			}
-
-			rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
-			if err != nil {
-				return fmt.Errorf("failed to parse RPC timeout duration: %w", err)
-			}
-
-			server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-				MaxConnectionIdle: rpcTimeoutDuration,
-			}))
-			tcplistener, err := gonet.Listen("tcp", addr)
-			if err != nil {
-				return fmt.Errorf("failed to listen on TCP address %v: %w", addr, err)
-			}
-
-			netService := netapi.NewService(n.Peer)
-
-			go func() {
-				log.FeedbackInfo(cmd.Context(), "Started RPC server", logging.NewKV("Address", addr))
-				netpb.RegisterServiceServer(server, netService)
-				if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-					log.FeedbackFatalE(cmd.Context(), "failed to start RPC server", err)
-				}
-			}()
-		}
-
-		// run the server listener in a separate goroutine
-		go func() {
-			log.FeedbackInfo(
-				cmd.Context(),
-				fmt.Sprintf(
-					"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
-					cfg.API.AddressToURL(),
-					httpapi.RootPath,
-					cfg.API.AddressToURL(),
-					httpapi.RootPath,
-				),
-			)
-			s := http.NewServer(db, http.WithAddress(cfg.API.Address))
-			if err := s.Listen(); err != nil {
-				log.FeedbackErrorE(cmd.Context(), "Failed to start HTTP API listener", err)
-				if n != nil {
-					n.Close() //nolint:errcheck
-				}
-				db.Close(cmd.Context())
-				os.Exit(1)
-			}
-		}()
-
-		// wait for shutdown signal
-		<-signalCh
-		log.FeedbackInfo(cmd.Context(), "Received interrupt; closing database...")
-		if n != nil {
-			n.Close() //nolint:errcheck
-		}
-		db.Close(cmd.Context())
-		os.Exit(0)
 		return nil
 	},
 }
@@ -272,4 +139,191 @@ func init() {
 	}
 
 	rootCmd.AddCommand(startCmd)
+}
+
+type defraInstance struct {
+	node   *node.Node
+	db     client.DB
+	server *httpapi.Server
+}
+
+func (di *defraInstance) close(ctx context.Context) {
+	if di.node != nil {
+		if err := di.node.Close(); err != nil {
+			log.FeedbackInfo(
+				ctx,
+				"The node could not be closed successfully",
+				logging.NewKV("Error", err),
+			)
+		}
+	}
+	di.db.Close(ctx)
+	if err := di.server.Close(); err != nil {
+		log.FeedbackInfo(
+			ctx,
+			"The server could not be closed successfully",
+			logging.NewKV("Error", err),
+		)
+	}
+}
+
+func start(ctx context.Context) (*defraInstance, error) {
+	log.FeedbackInfo(ctx, "Starting DefraDB service...")
+
+	var rootstore ds.Batching
+
+	var err error
+	if cfg.Datastore.Store == badgerDatastoreName {
+		log.FeedbackInfo(
+			ctx,
+			"Opening badger store",
+			logging.NewKV("Path", cfg.Datastore.Badger.Path),
+		)
+		rootstore, err = badgerds.NewDatastore(
+			cfg.Datastore.Badger.Path,
+			cfg.Datastore.Badger.Options,
+		)
+	} else if cfg.Datastore.Store == "memory" {
+		log.FeedbackInfo(ctx, "Building new memory store")
+		opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+		rootstore, err = badgerds.NewDatastore("", &opts)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to open datastore: %w", err)
+	}
+
+	var options []db.Option
+
+	// check for p2p
+	var bs *broadcast.Broadcaster
+	if !cfg.Net.P2PDisabled {
+		bs = broadcast.NewBroadcaster(busBufferSize)
+		options = append(options, db.WithBroadcaster(bs))
+	}
+
+	db, err := db.NewDB(ctx, rootstore, options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database: %w", err)
+	}
+
+	// init the p2p node
+	var n *node.Node
+	if !cfg.Net.P2PDisabled {
+		log.FeedbackInfo(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+		n, err = node.NewNode(
+			ctx,
+			db,
+			bs,
+			cfg.NodeConfig(),
+		)
+		if err != nil {
+			db.Close(ctx)
+			return nil, fmt.Errorf("failed to start P2P node: %w", err)
+		}
+
+		// parse peers and bootstrap
+		if len(cfg.Net.Peers) != 0 {
+			log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
+			addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
+			}
+			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
+			n.Boostrap(addrs)
+		}
+
+		if err := n.Start(); err != nil {
+			if e := n.Close(); e != nil {
+				err = fmt.Errorf("failed to close node: %v: %w", e.Error(), err)
+			}
+			db.Close(ctx)
+			return nil, fmt.Errorf("failed to start P2P listeners: %w", err)
+		}
+
+		MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse multiaddress: %w", err)
+		}
+		addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse TCP address: %w", err)
+		}
+
+		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RPC timeout duration: %w", err)
+		}
+
+		server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: rpcTimeoutDuration,
+		}))
+		tcplistener, err := gonet.Listen("tcp", addr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to listen on TCP address %v: %w", addr, err)
+		}
+
+		netService := netapi.NewService(n.Peer)
+
+		go func() {
+			log.FeedbackInfo(ctx, "Started RPC server", logging.NewKV("Address", addr))
+			netpb.RegisterServiceServer(server, netService)
+			if err := server.Serve(tcplistener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+				log.FeedbackFatalE(ctx, "Failed to start RPC server", err)
+			}
+		}()
+	}
+
+	sOpt := []func(*httpapi.Server){
+		httpapi.WithAddress(cfg.API.Address),
+	}
+	if n != nil {
+		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
+	}
+	s := httpapi.NewServer(db, sOpt...)
+	if err := s.Listen(ctx); err != nil {
+		return nil, fmt.Errorf("failed to listen on TCP address %v: %w", s.Addr, err)
+	}
+
+	// run the server in a separate goroutine
+	go func() {
+		log.FeedbackInfo(
+			ctx,
+			fmt.Sprintf(
+				"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
+				cfg.API.AddressToURL(),
+				httpapi.RootPath,
+				cfg.API.AddressToURL(),
+				httpapi.RootPath,
+			),
+		)
+		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
+			if n != nil {
+				if err := n.Close(); err != nil {
+					log.FeedbackErrorE(ctx, "Failed to close node", err)
+				}
+			}
+			db.Close(ctx)
+			os.Exit(1)
+		}
+	}()
+
+	return &defraInstance{
+		node:   n,
+		db:     db,
+		server: s,
+	}, nil
+}
+
+// wait waits for an interrupt signal to close the program.
+func wait(ctx context.Context, di *defraInstance) {
+	// setup signal handlers
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt)
+
+	<-signalCh
+	log.FeedbackInfo(ctx, "Received interrupt; closing database...")
+	di.close(ctx)
+	os.Exit(0)
 }

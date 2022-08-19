@@ -41,6 +41,7 @@ type testOptions struct {
 	Headers        map[string]string
 	ExpectedStatus int
 	ResponseData   interface{}
+	ServerOptions  serverOptions
 }
 
 type testUser struct {
@@ -53,7 +54,7 @@ type testVersion struct {
 }
 
 func TestRootHandler(t *testing.T) {
-	resp := dataResponse{}
+	resp := DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -72,7 +73,7 @@ func TestRootHandler(t *testing.T) {
 }
 
 func TestPingHandler(t *testing.T) {
-	resp := dataResponse{}
+	resp := DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -95,7 +96,7 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
-	resp := dataResponse{}
+	resp := DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -117,7 +118,7 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 func TestDumpHandlerWithDBError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -136,7 +137,7 @@ func TestDumpHandlerWithDBError(t *testing.T) {
 func TestExecGQLWithNilBody(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -156,7 +157,7 @@ func TestExecGQLWithNilBody(t *testing.T) {
 func TestExecGQLWithEmptyBody(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -189,7 +190,7 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -209,7 +210,7 @@ func TestExecGQLWithMockBody(t *testing.T) {
 func TestExecGQLWithInvalidContentType(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	stmt := `
 mutation {
 	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
@@ -237,7 +238,7 @@ mutation {
 func TestExecGQLWithNoDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	stmt := `
 mutation {
 	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
@@ -280,7 +281,7 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 ]`
 
 	buf := bytes.NewBuffer([]byte(stmt))
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -324,7 +325,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -367,7 +368,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -387,7 +388,7 @@ func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -422,7 +423,7 @@ mutation {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -456,7 +457,7 @@ mutation {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 	users := []testUser{}
-	resp := dataResponse{
+	resp := DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -479,7 +480,7 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	// if Read is called, it will return error
 	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -509,7 +510,7 @@ type user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -543,7 +544,7 @@ types user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -578,7 +579,7 @@ type user {
 
 	buf := bytes.NewBuffer([]byte(stmt))
 
-	resp := dataResponse{}
+	resp := DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -601,7 +602,7 @@ type user {
 func TestGetBlockHandlerWithMultihashError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -627,7 +628,7 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 	}
 	dsKey := dshelp.MultihashToDsKey(cID.Hash())
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -647,7 +648,7 @@ func TestGetBlockHandlerWithDSKeyWithNoDB(t *testing.T) {
 func TestGetBlockHandlerWithNoDB(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             nil,
@@ -670,7 +671,7 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
 
-	errResponse := errorResponse{}
+	errResponse := ErrorResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -704,7 +705,7 @@ mutation {
 	buf := bytes.NewBuffer([]byte(stmt))
 
 	users := []testUser{}
-	resp := dataResponse{
+	resp := DataResponse{
 		Data: &users,
 	}
 	testRequest(testOptions{
@@ -733,7 +734,7 @@ query {
 	buf2 := bytes.NewBuffer([]byte(fmt.Sprintf(stmt2, users[0].Key)))
 
 	users2 := []testUser{}
-	resp2 := dataResponse{
+	resp2 := DataResponse{
 		Data: &users2,
 	}
 	testRequest(testOptions{
@@ -751,7 +752,7 @@ query {
 		t.Fatal(err)
 	}
 
-	resp3 := dataResponse{}
+	resp3 := DataResponse{}
 	testRequest(testOptions{
 		Testing:        t,
 		DB:             defra,
@@ -775,6 +776,50 @@ query {
 	}
 }
 
+func TestPeerIDHandler(t *testing.T) {
+	resp := DataResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             nil,
+		Method:         "GET",
+		Path:           PeerIDPath,
+		Body:           nil,
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+		ServerOptions: serverOptions{
+			peerID: "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR",
+		},
+	})
+
+	switch v := resp.Data.(type) {
+	case map[string]interface{}:
+		assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", v["peerID"])
+	default:
+		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+	}
+}
+
+func TestPeerIDHandlerWithNoPeerIDInContext(t *testing.T) {
+	t.Cleanup(CleanupEnv)
+	env = "dev"
+
+	errResponse := ErrorResponse{}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             nil,
+		Method:         "GET",
+		Path:           PeerIDPath,
+		Body:           nil,
+		ExpectedStatus: 404,
+		ResponseData:   &errResponse,
+	})
+
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "no peer ID available. P2P might be disabled")
+	assert.Equal(t, http.StatusNotFound, errResponse.Errors[0].Extensions.Status)
+	assert.Equal(t, "Not Found", errResponse.Errors[0].Extensions.HTTPError)
+	assert.Equal(t, "no peer ID available. P2P might be disabled", errResponse.Errors[0].Message)
+}
+
 func testRequest(opt testOptions) {
 	req, err := http.NewRequest(opt.Method, opt.Path, opt.Body)
 	if err != nil {
@@ -785,7 +830,7 @@ func testRequest(opt testOptions) {
 		req.Header.Set(k, v)
 	}
 
-	h := newHandler(opt.DB, serverOptions{})
+	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
