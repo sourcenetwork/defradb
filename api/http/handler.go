@@ -34,7 +34,7 @@ type ctxDB struct{}
 
 type ctxPeerID struct{}
 
-// DataResponse it the GQL top level object holding data for the response payload.
+// DataResponse is the GQL top level object holding data for the response payload.
 type DataResponse struct {
 	Data interface{} `json:"data"`
 }

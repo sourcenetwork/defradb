@@ -81,7 +81,7 @@ func (s *Server) Listen(ctx context.Context) error {
 	return nil
 }
 
-// Run calls Serve with the reveiver's listener
+// Run calls Serve with the receiver's listener
 func (s *Server) Run() error {
 	if s.listener == nil {
 		return errNoListener

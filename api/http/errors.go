@@ -26,7 +26,7 @@ var (
 	errSchema     = errors.New("base must start with the http or https scheme")
 )
 
-// ErrorResponse it the GQL top level object holding error items for the response payload.
+// ErrorResponse is the GQL top level object holding error items for the response payload.
 type ErrorResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
