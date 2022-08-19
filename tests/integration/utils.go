@@ -617,6 +617,8 @@ func assertQueryResults(
 	if assertErrors(t, description, result.Errors, expectedError) {
 		return true
 	}
+
+	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]interface{})
 
 	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))

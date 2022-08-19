@@ -1210,10 +1210,13 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 				} else { // sub objects
 					configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
 					if !isOrderable {
-						continue
-					}
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: configType,
+						fields[field.Name] = &gql.InputObjectFieldConfig{
+							Type: &gql.InputObjectField{},
+						}
+					} else {
+						fields[field.Name] = &gql.InputObjectFieldConfig{
+							Type: configType,
+						}
 					}
 				}
 			}
