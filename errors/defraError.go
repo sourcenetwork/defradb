@@ -17,6 +17,8 @@ import (
 	"strings"
 )
 
+const StackKey string = "Stack"
+
 var (
 	_ error         = (*defraError)(nil)
 	_ fmt.Formatter = (*defraError)(nil)
@@ -63,6 +65,9 @@ func (e *defraError) Unwrap() error {
 	return e.inner
 }
 
+// Format writes the error into the given state.
+//
+// Currently the following runes are supported: `v[+]` (+ also writes out the stacktrace), `s`, `q`.
 func (e *defraError) Format(f fmt.State, verb rune) {
 	errorString := e.Error()
 	switch verb {
@@ -80,6 +85,6 @@ func (e *defraError) Format(f fmt.State, verb rune) {
 	case 's':
 		_, _ = io.WriteString(f, errorString)
 	case 'q':
-		fmt.Fprintf(f, "%q", errorString)
+		_, _ = fmt.Fprintf(f, "%q", errorString)
 	}
 }

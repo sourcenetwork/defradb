@@ -17,10 +17,7 @@ import (
 	goErrors "github.com/go-errors/errors"
 )
 
-const InnerErrorKey string = "Inner"
-const StackKey string = "Stack"
-
-// todo: make these configurable:
+// todo: make this configurable:
 // https://github.com/sourcenetwork/defradb/issues/733
 const MaxStackDepth int = 50
 
@@ -39,7 +36,7 @@ func NewKV(key string, value interface{}) KV {
 // New creates a new Defra error, suffixing any key-value
 // pairs provided.
 //
-// A stacktrace will be yielded if formating with a `+`, e.g `fmt.Sprintf("%+v", err)`.
+// A stacktrace will be yielded if formatting with a `+`, e.g `fmt.Sprintf("%+v", err)`.
 func New(message string, keyvals ...KV) error {
 	return newError(message, keyvals...)
 }
@@ -56,11 +53,9 @@ func newError(message string, keyvals ...KV) *defraError {
 	return withStackTrace(message, keyvals...)
 }
 
-// ErrorS creates a new Defra error, suffixing any key-value
-// pairs provided, and a stacktrace.
 func withStackTrace(message string, keyvals ...KV) *defraError {
 	stackBuffer := make([]uintptr, MaxStackDepth)
-	// Skip the first X frames as they are part of the error generation library and are
+	// Skip the first X frames as they are part of this library (and dependencies) and are
 	// best hidden.
 	length := runtime.Callers(4, stackBuffer[:])
 	stack := stackBuffer[:length]
