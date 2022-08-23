@@ -131,9 +131,9 @@ func (n *countNode) Next() (bool, error) {
 	return true, nil
 }
 
-func countItems[T any](collection []T, filter *mapper.Filter) (int, error) {
+func countItems[T any](items []T, filter *mapper.Filter) (int, error) {
 	count := 0
-	for _, item := range collection {
+	for _, item := range items {
 		passed, err := mapper.RunFilter(item, filter)
 		if err != nil {
 			return 0, err

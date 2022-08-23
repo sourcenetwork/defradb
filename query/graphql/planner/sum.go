@@ -242,9 +242,9 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
-func sumItems[T any](collection []T, filter *mapper.Filter, toFloat func(T) float64) (float64, error) {
+func sumItems[T any](items []T, filter *mapper.Filter, toFloat func(T) float64) (float64, error) {
 	var sum float64 = 0
-	for _, item := range collection {
+	for _, item := range items {
 		passed, err := mapper.RunFilter(item, filter)
 		if err != nil {
 			return 0, err
