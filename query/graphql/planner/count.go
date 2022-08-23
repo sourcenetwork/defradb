@@ -99,62 +99,28 @@ func (n *countNode) Next() (bool, error) {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 			if source.Filter != nil {
+				var arrayCount int
+				var err error
 				switch array := property.(type) {
 				case []core.Doc:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter)
 
 				case []bool:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter)
 
 				case []int64:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter)
 
 				case []float64:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter)
 
 				case []string:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter)
 				}
+				if err != nil {
+					return false, err
+				}
+				count += arrayCount
 			} else {
 				count = count + v.Len()
 			}
@@ -163,6 +129,20 @@ func (n *countNode) Next() (bool, error) {
 
 	n.currentValue.Fields[n.virtualFieldIndex] = count
 	return true, nil
+}
+
+func countItems[T any](collection []T, filter *mapper.Filter) (int, error) {
+	count := 0
+	for _, item := range collection {
+		passed, err := mapper.RunFilter(item, filter)
+		if err != nil {
+			return 0, err
+		}
+		if passed {
+			count += 1
+		}
+	}
+	return count, nil
 }
 
 func (n *countNode) SetPlan(p planNode) { n.plan = p }
