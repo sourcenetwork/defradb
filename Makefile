@@ -95,7 +95,7 @@ dev\:start:
 
 .PHONY: tidy
 tidy:
-	go mod tidy
+	go mod tidy -go=1.18
 
 .PHONY: clean
 clean:
