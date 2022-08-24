@@ -548,6 +548,28 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 	return cval, err
 }
 
+func covertNillableArrayToCval[T any](val any) ([]*T, error) {
+	if val == nil {
+		return nil, nil
+	}
+	untypedCollection := val.([]interface{})
+	// Cbor deals with pointers better than structs by default, however in the future
+	// we may want to write a custom encoder for the Option[T] type
+	resultArray := make([]*T, len(untypedCollection))
+	for i, value := range untypedCollection {
+		if value == nil {
+			resultArray[i] = nil
+			continue
+		}
+		tValue, ok := value.(T)
+		if !ok {
+			return nil, fmt.Errorf("Failed to cast value: %v of type: %T to %T", value, value, *new(T))
+		}
+		resultArray[i] = &tValue
+	}
+	return resultArray, nil
+}
+
 func (c *collection) applyMergePatchOp( //nolint:unused
 	txn datastore.Txn,
 	docKey string,
