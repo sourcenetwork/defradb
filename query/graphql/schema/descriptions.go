@@ -48,6 +48,7 @@ var (
 		client.FieldKind_DocKey:               client.LWW_REGISTER,
 		client.FieldKind_BOOL:                 client.LWW_REGISTER,
 		client.FieldKind_BOOL_ARRAY:           client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_BOOL_ARRAY:  client.LWW_REGISTER,
 		client.FieldKind_INT:                  client.LWW_REGISTER,
 		client.FieldKind_INT_ARRAY:            client.LWW_REGISTER,
 		client.FieldKind_FLOAT:                client.LWW_REGISTER,
@@ -104,6 +105,10 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 			case typeNotNullString:
 				return client.FieldKind_STRING_ARRAY
 			}
+		}
+		switch v.OfType.Name() {
+		case typeBoolean:
+			return client.FieldKind_NILLABLE_BOOL_ARRAY
 		}
 		return client.FieldKind_FOREIGN_OBJECT_ARRAY
 	}

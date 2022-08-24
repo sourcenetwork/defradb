@@ -478,6 +478,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = boolArray
+
+	case client.FieldKind_NILLABLE_BOOL_ARRAY:
+		cval, err = covertNillableArrayToCval[bool](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
 		cval, ok = val.(float64)
 	case client.FieldKind_FLOAT_ARRAY:

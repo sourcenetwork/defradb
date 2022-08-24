@@ -55,6 +55,13 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = boolArray
+
+		case client.FieldKind_NILLABLE_BOOL_ARRAY:
+			val, err = convertNillableArray[bool](array)
+			if err != nil {
+				return ctype, nil, err
+			}
+
 		case client.FieldKind_INT_ARRAY:
 			intArray := make([]int64, len(array))
 			for i, untypedValue := range array {

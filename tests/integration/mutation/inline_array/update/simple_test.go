@@ -13,6 +13,7 @@ package update
 import (
 	"testing"
 
+	. "github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	inlineArray "github.com/sourcenetwork/defradb/tests/integration/mutation/inline_array"
 )
@@ -139,6 +140,34 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 	for _, test := range tests {
 		inlineArray.ExecuteTestCase(t, test)
 	}
+}
+
+func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, booleans",
+		Query: `mutation {
+					update_users(data: "{\"IndexLikesDislikes\": [true, true, false, true, null]}") {
+						Name
+						IndexLikesDislikes
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"IndexLikesDislikes": [true, true, false, true]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":               "John",
+				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), Some(true), None[bool]()},
+			},
+		},
+	}
+
+	inlineArray.ExecuteTestCase(t, test)
 }
 
 func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {

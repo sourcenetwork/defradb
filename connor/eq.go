@@ -3,6 +3,7 @@ package connor
 import (
 	"reflect"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor/numbers"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -23,6 +24,12 @@ func eq(condition, data interface{}) (bool, error) {
 			}
 		}
 		return false, nil
+
+	case client.Option[bool]:
+		if !arr.HasValue {
+			return condition == nil, nil
+		}
+		data = arr.Value
 	}
 
 	switch cn := condition.(type) {

@@ -138,6 +138,8 @@ const (
 
 	// Array of embedded objects, accessed via foreign keys
 	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17
+
+	FieldKind_NILLABLE_BOOL_ARRAY FieldKind = 18
 )
 
 type RelationType uint8

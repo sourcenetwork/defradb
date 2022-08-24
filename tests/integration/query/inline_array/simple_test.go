@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	. "github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -92,6 +93,34 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 	for _, test := range tests {
 		executeTestCase(t, test)
 	}
+}
+
+func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, booleans",
+		Query: `query {
+					users {
+						Name
+						IndexLikesDislikes
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"IndexLikesDislikes": [true, true, false, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":               "John",
+				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), None[bool]()},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithIntegers(t *testing.T) {

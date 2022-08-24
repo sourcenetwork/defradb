@@ -44,6 +44,34 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with filter, count of nillable bool array",
+		Query: `query {
+					users {
+						Name
+						_count(IndexLikesDislikes: {filter: {_eq: true}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"IndexLikesDislikes": [true, true, false, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":   "John",
+				"_count": 2,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array, filtered count of integer array",
