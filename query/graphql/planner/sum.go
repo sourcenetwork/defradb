@@ -196,54 +196,39 @@ func (n *sumNode) Next() (bool, error) {
 
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
+		var collectionSum float64
+		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem core.Doc) float64 {
 				childProperty := childItem.Fields[source.ChildTarget.Index]
 				switch v := childProperty.(type) {
 				case int:
-					sum += float64(v)
+					return float64(v)
 				case int64:
-					sum += float64(v)
+					return float64(v)
 				case uint64:
-					sum += float64(v)
+					return float64(v)
 				case float64:
-					sum += v
+					return v
 				default:
-					// do nothing, cannot be summed
+					// return nothing, cannot be summed
+					return 0
 				}
-			}
+			})
 		case []int64:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-				sum += float64(childItem)
-			}
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem int64) float64 {
+				return float64(childItem)
+			})
 		case []float64:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-				sum += childItem
-			}
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem float64) float64 {
+				return childItem
+			})
 		}
+		if err != nil {
+			return false, err
+		}
+		sum += collectionSum
 	}
 
 	var typedSum interface{}
@@ -255,6 +240,21 @@ func (n *sumNode) Next() (bool, error) {
 	n.currentValue.Fields[n.virtualFieldIndex] = typedSum
 
 	return true, nil
+}
+
+func sumItems[T any](items []T, filter *mapper.Filter, toFloat func(T) float64) (float64, error) {
+	var sum float64 = 0
+	for _, item := range items {
+		passed, err := mapper.RunFilter(item, filter)
+		if err != nil {
+			return 0, err
+		}
+		if !passed {
+			continue
+		}
+		sum += toFloat(item)
+	}
+	return sum, nil
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
