@@ -120,6 +120,27 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 	return ctype, val, nil
 }
 
+func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
+	resultArray := make([]client.Option[T], len(items))
+	for i, untypedValue := range items {
+		if untypedValue == nil {
+			resultArray[i] = client.None[T]()
+			continue
+		}
+		value, ok := untypedValue.(T)
+		if !ok {
+			return nil, fmt.Errorf(
+				"Could not convert type: %T, value: %v to %T.",
+				untypedValue,
+				untypedValue,
+				*new(T),
+			)
+		}
+		resultArray[i] = client.Some(value)
+	}
+	return resultArray, nil
+}
+
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
 	Key        []byte
