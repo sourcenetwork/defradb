@@ -24,6 +24,7 @@ var userCollectionGQLSchema = (`
 		FavouriteIntegers: [Int!]
 		TestScores: [Int]
 		FavouriteFloats: [Float!]
+		PageRatings: [Float]
 		PreferredStrings: [String!]
 	}
 `)

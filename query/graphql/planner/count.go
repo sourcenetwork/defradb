@@ -121,6 +121,9 @@ func (n *countNode) Next() (bool, error) {
 				case []float64:
 					arrayCount, err = countItems(array, source.Filter)
 
+				case []client.Option[float64]:
+					arrayCount, err = countItems(array, source.Filter)
+
 				case []string:
 					arrayCount, err = countItems(array, source.Filter)
 				}

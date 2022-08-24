@@ -156,6 +156,34 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array, filtered count of nillable float array",
+		Query: `query {
+					users {
+						Name
+						_count(PageRatings: {filter: {_lt: 9}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Shahzad",
+					"PageRatings": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":   "Shahzad",
+				"_count": 2,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array, filtered count of string array",

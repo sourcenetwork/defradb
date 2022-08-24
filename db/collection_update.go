@@ -509,6 +509,13 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		ok = true
 		cval = floatArray
 
+	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+		cval, err = covertNillableArrayToCval[float64](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_DATE:
 		var sval string
 		sval, ok = val.(string)

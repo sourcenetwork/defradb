@@ -469,6 +469,34 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 	}
 }
 
+func TestMutationInlineArrayWithNillableFloats(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable floats",
+		Query: `mutation {
+					update_users(data: "{\"PageRatings\": [3.1425, -0.00000000001, null, 10]}") {
+						Name
+						PageRatings
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageRatings": [3.1425, null, -0.00000000001, 10]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":        "John",
+				"PageRatings": []Option[float64]{Some(3.1425), Some(-0.00000000001), None[float64](), Some[float64](10)},
+			},
+		},
+	}
+
+	inlineArray.ExecuteTestCase(t, test)
+}
+
 func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{

@@ -267,3 +267,31 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, average of populated nillable float array",
+		Query: `query {
+					users {
+						Name
+						_avg(PageRatings: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageRatings": [-0.1, 0, 0.9, 0, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "John",
+				"_avg": float64(0.2),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

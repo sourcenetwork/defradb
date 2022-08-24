@@ -91,6 +91,13 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = floatArray
+
+		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+			val, err = convertNillableArray[float64](array)
+			if err != nil {
+				return ctype, nil, err
+			}
+
 		case client.FieldKind_STRING_ARRAY:
 			stringArray := make([]string, len(array))
 			for i, untypedValue := range array {

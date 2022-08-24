@@ -99,3 +99,31 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with filter, sum of nillable float array",
+		Query: `query {
+					users {
+						Name
+						_sum(PageRatings: {filter: {_lt: 9}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Shahzad",
+					"PageRatings": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Shahzad",
+				"_sum": float64(3.14250000001),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
