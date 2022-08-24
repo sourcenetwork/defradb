@@ -269,6 +269,34 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 	}
 }
 
+func TestQueryInlineArrayWithNillableInts(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable ints",
+		Query: `query {
+					users {
+						Name
+						TestScores
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"TestScores": [-1, null, -1, 2, 0]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":       "John",
+				"TestScores": []Option[int64]{Some[int64](-1), None[int64](), Some[int64](-1), Some[int64](2), Some[int64](0)},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithFloats(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{

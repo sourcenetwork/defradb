@@ -140,6 +140,7 @@ const (
 	FieldKind_FOREIGN_OBJECT_ARRAY FieldKind = 17
 
 	FieldKind_NILLABLE_BOOL_ARRAY FieldKind = 18
+	FieldKind_NILLABLE_INT_ARRAY  FieldKind = 19
 )
 
 type RelationType uint8

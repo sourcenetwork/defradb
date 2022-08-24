@@ -220,6 +220,15 @@ func (n *sumNode) Next() (bool, error) {
 			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem int64) float64 {
 				return float64(childItem)
 			})
+
+		case []client.Option[int64]:
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem client.Option[int64]) float64 {
+				if !childItem.HasValue {
+					return 0
+				}
+				return float64(childItem.Value)
+			})
+
 		case []float64:
 			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem float64) float64 {
 				return childItem

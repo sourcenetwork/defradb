@@ -541,6 +541,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = intArray
+
+	case client.FieldKind_NILLABLE_INT_ARRAY:
+		cval, err = covertNillableArrayToCvalWithConverter(val, func(in float64) int64 { return int64(in) })
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
 		err = errors.New("Merge doesn't support sub types yet")
@@ -574,6 +582,29 @@ func covertNillableArrayToCval[T any](val any) ([]*T, error) {
 			return nil, fmt.Errorf("Failed to cast value: %v of type: %T to %T", value, value, *new(T))
 		}
 		resultArray[i] = &tValue
+	}
+	return resultArray, nil
+}
+
+func covertNillableArrayToCvalWithConverter[TIn any, TOut any](val any, converter func(TIn) TOut) ([]*TOut, error) {
+	if val == nil {
+		return nil, nil
+	}
+	untypedCollection := val.([]interface{})
+	// Cbor deals with pointers better than structs by default, however in the future
+	// we may want to write a custom encoder for the Option[T] type
+	resultArray := make([]*TOut, len(untypedCollection))
+	for i, value := range untypedCollection {
+		if value == nil {
+			resultArray[i] = nil
+			continue
+		}
+		tValue, ok := value.(TIn)
+		if !ok {
+			return nil, fmt.Errorf("Failed to cast value: %v of type: %T to %T", value, value, *new(TIn))
+		}
+		outValue := converter(tValue)
+		resultArray[i] = &outValue
 	}
 	return resultArray, nil
 }

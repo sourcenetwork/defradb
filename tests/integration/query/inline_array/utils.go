@@ -22,6 +22,7 @@ var userCollectionGQLSchema = (`
 		LikedIndexes: [Boolean!]
 		IndexLikesDislikes: [Boolean]
 		FavouriteIntegers: [Int!]
+		TestScores: [Int]
 		FavouriteFloats: [Float!]
 		PreferredStrings: [String!]
 	}

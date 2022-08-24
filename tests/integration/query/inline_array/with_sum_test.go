@@ -100,6 +100,34 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, sum of nillable integer array",
+		Query: `query {
+					users {
+						Name
+						_sum(TestScores: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Shahzad",
+					"TestScores": [-1, 2, null, 1, 0]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Shahzad",
+				"_sum": int64(2),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple inline array with no filter, sum of nil float array",

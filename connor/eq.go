@@ -30,6 +30,12 @@ func eq(condition, data interface{}) (bool, error) {
 			return condition == nil, nil
 		}
 		data = arr.Value
+
+	case client.Option[int64]:
+		if !arr.HasValue {
+			return condition == nil, nil
+		}
+		data = arr.Value
 	}
 
 	switch cn := condition.(type) {
