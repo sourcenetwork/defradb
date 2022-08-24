@@ -627,3 +627,31 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 		inlineArray.ExecuteTestCase(t, test)
 	}
 }
+
+func TestMutationInlineArrayWithNillableStrings(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable strings",
+		Query: `mutation {
+					update_users(data: "{\"PageHeaders\": [\"\", \"the previous\", null, \"empty string\", \"blank string\", \"hitchi\"]}") {
+						Name
+						PageHeaders
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageHeaders": ["", "the previous", "the first", "empty string", null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":        "John",
+				"PageHeaders": []Option[string]{Some(""), Some("the previous"), None[string](), Some("empty string"), Some("blank string"), Some("hitchi")},
+			},
+		},
+	}
+
+	inlineArray.ExecuteTestCase(t, test)
+}

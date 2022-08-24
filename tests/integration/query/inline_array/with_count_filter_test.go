@@ -211,3 +211,31 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array, filtered count of string array",
+		Query: `query {
+					users {
+						Name
+						_count(PageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Shahzad",
+					"PageHeaders": ["", "the previous", null, "empty string"]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":   "Shahzad",
+				"_count": 2,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

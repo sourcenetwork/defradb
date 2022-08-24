@@ -26,6 +26,7 @@ var userCollectionGQLSchema = (`
 		FavouriteFloats: [Float!]
 		PageRatings: [Float]
 		PreferredStrings: [String!]
+		PageHeaders: [String]
 	}
 `)
 

@@ -480,3 +480,31 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQueryInlineArrayWithNillableString(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable strings",
+		Query: `query {
+					users {
+						Name
+						PageHeaders
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageHeaders": ["", "the previous", "the first", "empty string", null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":        "John",
+				"PageHeaders": []Option[string]{Some(""), Some("the previous"), Some("the first"), Some("empty string"), None[string]()},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

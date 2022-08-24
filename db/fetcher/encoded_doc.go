@@ -111,6 +111,12 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 				}
 			}
 			val = stringArray
+
+		case client.FieldKind_NILLABLE_STRING_ARRAY:
+			val, err = convertNillableArray[string](array)
+			if err != nil {
+				return ctype, nil, err
+			}
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch e.Desc.Kind {

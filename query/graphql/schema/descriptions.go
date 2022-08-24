@@ -45,21 +45,22 @@ var (
 
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
-		client.FieldKind_DocKey:               client.LWW_REGISTER,
-		client.FieldKind_BOOL:                 client.LWW_REGISTER,
-		client.FieldKind_BOOL_ARRAY:           client.LWW_REGISTER,
-		client.FieldKind_NILLABLE_BOOL_ARRAY:  client.LWW_REGISTER,
-		client.FieldKind_INT:                  client.LWW_REGISTER,
-		client.FieldKind_INT_ARRAY:            client.LWW_REGISTER,
-		client.FieldKind_NILLABLE_INT_ARRAY:   client.LWW_REGISTER,
-		client.FieldKind_FLOAT:                client.LWW_REGISTER,
-		client.FieldKind_FLOAT_ARRAY:          client.LWW_REGISTER,
-		client.FieldKind_NILLABLE_FLOAT_ARRAY: client.LWW_REGISTER,
-		client.FieldKind_DATE:                 client.LWW_REGISTER,
-		client.FieldKind_STRING:               client.LWW_REGISTER,
-		client.FieldKind_STRING_ARRAY:         client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT:       client.NONE_CRDT,
-		client.FieldKind_FOREIGN_OBJECT_ARRAY: client.NONE_CRDT,
+		client.FieldKind_DocKey:                client.LWW_REGISTER,
+		client.FieldKind_BOOL:                  client.LWW_REGISTER,
+		client.FieldKind_BOOL_ARRAY:            client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_BOOL_ARRAY:   client.LWW_REGISTER,
+		client.FieldKind_INT:                   client.LWW_REGISTER,
+		client.FieldKind_INT_ARRAY:             client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_INT_ARRAY:    client.LWW_REGISTER,
+		client.FieldKind_FLOAT:                 client.LWW_REGISTER,
+		client.FieldKind_FLOAT_ARRAY:           client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_FLOAT_ARRAY:  client.LWW_REGISTER,
+		client.FieldKind_DATE:                  client.LWW_REGISTER,
+		client.FieldKind_STRING:                client.LWW_REGISTER,
+		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
+		client.FieldKind_FOREIGN_OBJECT:        client.NONE_CRDT,
+		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
 
@@ -115,6 +116,8 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 			return client.FieldKind_NILLABLE_INT_ARRAY
 		case typeFloat:
 			return client.FieldKind_NILLABLE_FLOAT_ARRAY
+		case typeString:
+			return client.FieldKind_NILLABLE_STRING_ARRAY
 		}
 		return client.FieldKind_FOREIGN_OBJECT_ARRAY
 	}

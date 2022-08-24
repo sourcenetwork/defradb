@@ -126,6 +126,9 @@ func (n *countNode) Next() (bool, error) {
 
 				case []string:
 					arrayCount, err = countItems(array, source.Filter)
+
+				case []client.Option[string]:
+					arrayCount, err = countItems(array, source.Filter)
 				}
 				if err != nil {
 					return false, err

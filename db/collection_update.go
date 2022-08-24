@@ -460,6 +460,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = stringArray
+
+	case client.FieldKind_NILLABLE_STRING_ARRAY:
+		cval, err = covertNillableArrayToCval[string](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_BOOL:
 		cval, ok = val.(bool)
 	case client.FieldKind_BOOL_ARRAY:
