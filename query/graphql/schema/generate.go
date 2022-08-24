@@ -309,9 +309,11 @@ func (g *Generator) createExpandedFieldAggregate(
 					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				targetError := target + " not found in fields of " + obj.Name()
-				log.Error(ctx, targetError)
-				return errors.New(targetError)
+				return fmt.Errorf(
+					"Aggregate target not found. HostObject: {%s}, Target: {%s}",
+					obj.Name(),
+					target,
+				)
 			}
 		}
 
