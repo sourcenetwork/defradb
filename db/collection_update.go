@@ -462,7 +462,7 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		cval = stringArray
 
 	case client.FieldKind_NILLABLE_STRING_ARRAY:
-		cval, err = covertNillableArrayToCval[string](val)
+		cval, err = convertNillableArray[string](val)
 		if err != nil {
 			return nil, err
 		}
@@ -488,7 +488,7 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		cval = boolArray
 
 	case client.FieldKind_NILLABLE_BOOL_ARRAY:
-		cval, err = covertNillableArrayToCval[bool](val)
+		cval, err = convertNillableArray[bool](val)
 		if err != nil {
 			return nil, err
 		}
@@ -518,7 +518,7 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		cval = floatArray
 
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-		cval, err = covertNillableArrayToCval[float64](val)
+		cval, err = convertNillableArray[float64](val)
 		if err != nil {
 			return nil, err
 		}
@@ -558,7 +558,7 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		cval = intArray
 
 	case client.FieldKind_NILLABLE_INT_ARRAY:
-		cval, err = covertNillableArrayToCvalWithConverter(val, func(in float64) int64 { return int64(in) })
+		cval, err = convertNillableArrayWithConverter(val, func(in float64) int64 { return int64(in) })
 		if err != nil {
 			return nil, err
 		}
@@ -579,7 +579,7 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 	return cval, err
 }
 
-func covertNillableArrayToCval[T any](val any) ([]*T, error) {
+func convertNillableArray[T any](val any) ([]*T, error) {
 	if val == nil {
 		return nil, nil
 	}
@@ -601,7 +601,7 @@ func covertNillableArrayToCval[T any](val any) ([]*T, error) {
 	return resultArray, nil
 }
 
-func covertNillableArrayToCvalWithConverter[TIn any, TOut any](val any, converter func(TIn) TOut) ([]*TOut, error) {
+func convertNillableArrayWithConverter[TIn any, TOut any](val any, converter func(TIn) TOut) ([]*TOut, error) {
 	if val == nil {
 		return nil, nil
 	}
