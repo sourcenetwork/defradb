@@ -17,6 +17,7 @@ package planner
 import (
 	"reflect"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
@@ -99,24 +100,11 @@ func (n *countNode) Next() (bool, error) {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 			if source.Filter != nil {
-				var arrayCount int
-				var err error
-				switch array := property.(type) {
-				case []core.Doc:
-					arrayCount, err = countItems(array, source.Filter)
-
-				case []bool:
-					arrayCount, err = countItems(array, source.Filter)
-
-				case []int64:
-					arrayCount, err = countItems(array, source.Filter)
-
-				case []float64:
-					arrayCount, err = countItems(array, source.Filter)
-
-				case []string:
-					arrayCount, err = countItems(array, source.Filter)
+				array, err := client.AnyToAnyList(property)
+				if err != nil {
+					return false, err
 				}
+				arrayCount, err := countItems(array, source.Filter)
 				if err != nil {
 					return false, err
 				}
