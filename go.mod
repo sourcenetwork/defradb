@@ -9,6 +9,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
+	github.com/go-errors/errors v1.0.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/graphql-go/graphql v0.8.0
 	github.com/hsanjuan/ipfs-lite v1.4.1
