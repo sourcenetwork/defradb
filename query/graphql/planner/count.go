@@ -99,43 +99,43 @@ func (n *countNode) Next() (bool, error) {
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			if source.Filter != nil {
+			if source.Filter == nil && source.Limit == nil {
+				count = count + v.Len()
+			} else {
 				var arrayCount int
 				var err error
 				switch array := property.(type) {
 				case []core.Doc:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []bool:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []client.Option[bool]:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []int64:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []client.Option[int64]:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []float64:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []client.Option[float64]:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []string:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []client.Option[string]:
-					arrayCount, err = countItems(array, source.Filter)
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 				}
 				if err != nil {
 					return false, err
 				}
 				count += arrayCount
-			} else {
-				count = count + v.Len()
 			}
 		}
 	}
@@ -144,18 +144,24 @@ func (n *countNode) Next() (bool, error) {
 	return true, nil
 }
 
-func countItems[T any](items []T, filter *mapper.Filter) (int, error) {
-	count := 0
-	for _, item := range items {
-		passed, err := mapper.RunFilter(item, filter)
-		if err != nil {
-			return 0, err
-		}
-		if passed {
-			count += 1
-		}
+func countItems[T any](items []T, filter *mapper.Filter, limit *mapper.Limit) (int, error) {
+	enumerable := core.EnumerateSlice(items)
+	if filter != nil {
+		enumerable = core.Where(enumerable, func(item T) (bool, error) {
+			return mapper.RunFilter(item, filter)
+		})
 	}
-	return count, nil
+
+	if limit != nil {
+		enumerable = core.Take(enumerable, limit.Limit)
+	}
+
+	count := 0
+	err := core.OnEach(enumerable, func() {
+		count += 1
+	})
+
+	return count, err
 }
 
 func (n *countNode) SetPlan(p planNode) { n.plan = p }

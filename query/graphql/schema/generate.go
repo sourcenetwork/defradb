@@ -796,9 +796,9 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
 		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
-			"_": &gql.InputObjectFieldConfig{
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "Placeholder - empty object not permitted, but will have fields shortly",
+				Description: "The maximum number of child items to count.",
 			},
 		},
 	})

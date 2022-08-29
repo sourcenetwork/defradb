@@ -80,15 +80,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									"name": "users__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
-											"type": map[string]interface{}{
-												"name": "Int",
-											},
-										},
-										map[string]interface{}{
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "usersFilterArg",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},
