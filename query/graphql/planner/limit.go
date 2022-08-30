@@ -28,7 +28,7 @@ type limitNode struct {
 	rowIndex int64
 }
 
-// HardLimit creates a new limitNode initalized from the parser.Limit object.
+// Limit creates a new limitNode initalized from the parser.Limit object.
 func (p *Planner) Limit(parsed *mapper.Select, n *mapper.Limit) (*limitNode, error) {
 	if n == nil {
 		return nil, nil // nothing to do

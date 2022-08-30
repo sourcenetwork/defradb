@@ -846,7 +846,7 @@ func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-// Note: Currently only compares Name and Filter as that is all that is currently required,
+// Note: Currently only compares Name, Filter and Limit as that is all that is currently required,
 // but this should be extended in the future.
 func (s Targetable) equal(other Targetable) bool {
 	if s.Index != other.Index &&
