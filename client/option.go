@@ -17,14 +17,14 @@ type Option[T any] struct {
 	hasValue bool
 
 	// The Value of this Option. Should be ignored if HasValue is false.
-	Value T
+	value T
 }
 
 // Some returns an `Option` of type `T` with the given value.
 func Some[T any](value T) Option[T] {
 	return Option[T]{
 		hasValue: true,
-		Value:    value,
+		value:    value,
 	}
 }
 
@@ -37,4 +37,10 @@ func None[T any]() Option[T] {
 // it returns true, this Option contains a value, if it is false it contains no value.
 func (o Option[T]) HasValue() bool {
 	return o.hasValue
+}
+
+// Value returns the Value of this Option. Value returned is invalid HasValue() is false
+// and should be ignored.
+func (o Option[T]) Value() T {
+	return o.value
 }

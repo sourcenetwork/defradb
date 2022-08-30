@@ -228,7 +228,7 @@ func (n *sumNode) Next() (bool, error) {
 				if !childItem.HasValue() {
 					return 0
 				}
-				return float64(childItem.Value)
+				return float64(childItem.Value())
 			})
 
 		case []float64:
@@ -241,7 +241,7 @@ func (n *sumNode) Next() (bool, error) {
 				if !childItem.HasValue() {
 					return 0
 				}
-				return childItem.Value
+				return childItem.Value()
 			})
 		}
 		if err != nil {

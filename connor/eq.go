@@ -29,25 +29,25 @@ func eq(condition, data interface{}) (bool, error) {
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
-		data = arr.Value
+		data = arr.Value()
 
 	case client.Option[int64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
-		data = arr.Value
+		data = arr.Value()
 
 	case client.Option[float64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
-		data = arr.Value
+		data = arr.Value()
 
 	case client.Option[string]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
-		data = arr.Value
+		data = arr.Value()
 	}
 
 	switch cn := condition.(type) {
