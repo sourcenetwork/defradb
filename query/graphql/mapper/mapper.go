@@ -144,6 +144,7 @@ func resolveAggregates(
 							Name:  target.hostExternalName,
 						},
 						Filter: ToFilter(target.filter, mapping),
+						Limit:  target.limit,
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)

@@ -78,7 +78,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 									"name": "users___version__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
+											"name": "limit",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},

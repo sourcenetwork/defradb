@@ -60,15 +60,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									"name": "users__FavouriteIntegers__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
-											"type": map[string]interface{}{
-												"name": "Int",
-											},
-										},
-										map[string]interface{}{
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "NotNullIntOperatorBlock",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},
@@ -100,7 +100,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									"name": "users___version__CountSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
+											"name": "limit",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
