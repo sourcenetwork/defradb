@@ -48,14 +48,14 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"filter":    nil,
+										"filter":    dataMap{"_ne": nil},
 										"fieldName": "chapterPages",
 									},
 								},
 								"sumNode": dataMap{
 									"sources": []dataMap{
 										{
-											"filter":         nil,
+											"filter":         dataMap{"_ne": nil},
 											"fieldName":      "chapterPages",
 											"childFieldName": nil,
 										},

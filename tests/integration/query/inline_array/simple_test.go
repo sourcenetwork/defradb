@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	. "github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -92,6 +93,34 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 	for _, test := range tests {
 		executeTestCase(t, test)
 	}
+}
+
+func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, booleans",
+		Query: `query {
+					users {
+						Name
+						IndexLikesDislikes
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"IndexLikesDislikes": [true, true, false, null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":               "John",
+				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), None[bool]()},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithIntegers(t *testing.T) {
@@ -240,6 +269,34 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 	}
 }
 
+func TestQueryInlineArrayWithNillableInts(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable ints",
+		Query: `query {
+					users {
+						Name
+						TestScores
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"TestScores": [-1, null, -1, 2, 0]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":       "John",
+				"TestScores": []Option[int64]{Some[int64](-1), None[int64](), Some[int64](-1), Some[int64](2), Some[int64](0)},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithFloats(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
@@ -318,6 +375,34 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 	}
 }
 
+func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable floats",
+		Query: `query {
+					users {
+						Name
+						PageRatings
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageRatings": [3.1425, null, -0.00000000001, 10]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":        "John",
+				"PageRatings": []Option[float64]{Some(3.1425), None[float64](), Some(-0.00000000001), Some[float64](10)},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineArrayWithStrings(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
@@ -394,4 +479,32 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 	for _, test := range tests {
 		executeTestCase(t, test)
 	}
+}
+
+func TestQueryInlineArrayWithNillableString(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, nillable strings",
+		Query: `query {
+					users {
+						Name
+						PageHeaders
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageHeaders": ["", "the previous", "the first", "empty string", null]
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":        "John",
+				"PageHeaders": []Option[string]{Some(""), Some("the previous"), Some("the first"), Some("empty string"), None[string]()},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }

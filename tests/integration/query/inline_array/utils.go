@@ -20,9 +20,13 @@ var userCollectionGQLSchema = (`
 	type users {
 		Name: String
 		LikedIndexes: [Boolean!]
+		IndexLikesDislikes: [Boolean]
 		FavouriteIntegers: [Int!]
+		TestScores: [Int]
 		FavouriteFloats: [Float!]
+		PageRatings: [Float]
 		PreferredStrings: [String!]
+		PageHeaders: [String]
 	}
 `)
 

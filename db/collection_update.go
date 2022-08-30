@@ -460,6 +460,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = stringArray
+
+	case client.FieldKind_NILLABLE_STRING_ARRAY:
+		cval, err = convertNillableArray[string](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_BOOL:
 		cval, ok = val.(bool)
 	case client.FieldKind_BOOL_ARRAY:
@@ -478,6 +486,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = boolArray
+
+	case client.FieldKind_NILLABLE_BOOL_ARRAY:
+		cval, err = convertNillableArray[bool](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
 		cval, ok = val.(float64)
 	case client.FieldKind_FLOAT_ARRAY:
@@ -500,6 +516,13 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = floatArray
+
+	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+		cval, err = convertNillableArray[float64](val)
+		if err != nil {
+			return nil, err
+		}
+		ok = true
 
 	case client.FieldKind_DATE:
 		var sval string
@@ -533,6 +556,14 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 		}
 		ok = true
 		cval = intArray
+
+	case client.FieldKind_NILLABLE_INT_ARRAY:
+		cval, err = convertNillableArrayWithConverter(val, func(in float64) int64 { return int64(in) })
+		if err != nil {
+			return nil, err
+		}
+		ok = true
+
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
 		err = errors.New("Merge doesn't support sub types yet")
@@ -546,6 +577,51 @@ func validateFieldSchema(val interface{}, field client.FieldDescription) (interf
 	}
 
 	return cval, err
+}
+
+func convertNillableArray[T any](val any) ([]*T, error) {
+	if val == nil {
+		return nil, nil
+	}
+	untypedCollection := val.([]interface{})
+	// Cbor deals with pointers better than structs by default, however in the future
+	// we may want to write a custom encoder for the Option[T] type
+	resultArray := make([]*T, len(untypedCollection))
+	for i, value := range untypedCollection {
+		if value == nil {
+			resultArray[i] = nil
+			continue
+		}
+		tValue, ok := value.(T)
+		if !ok {
+			return nil, fmt.Errorf("Failed to cast value: %v of type: %T to %T", value, value, *new(T))
+		}
+		resultArray[i] = &tValue
+	}
+	return resultArray, nil
+}
+
+func convertNillableArrayWithConverter[TIn any, TOut any](val any, converter func(TIn) TOut) ([]*TOut, error) {
+	if val == nil {
+		return nil, nil
+	}
+	untypedCollection := val.([]interface{})
+	// Cbor deals with pointers better than structs by default, however in the future
+	// we may want to write a custom encoder for the Option[T] type
+	resultArray := make([]*TOut, len(untypedCollection))
+	for i, value := range untypedCollection {
+		if value == nil {
+			resultArray[i] = nil
+			continue
+		}
+		tValue, ok := value.(TIn)
+		if !ok {
+			return nil, fmt.Errorf("Failed to cast value: %v of type: %T to %T", value, value, *new(TIn))
+		}
+		outValue := converter(tValue)
+		resultArray[i] = &outValue
+	}
+	return resultArray, nil
 }
 
 func (c *collection) applyMergePatchOp( //nolint:unused

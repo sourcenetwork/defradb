@@ -83,7 +83,8 @@ func (p *Planner) isValueFloat(
 			)
 		}
 		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-			fieldDescription.Kind == client.FieldKind_FLOAT, nil
+			fieldDescription.Kind == client.FieldKind_FLOAT ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 	}
 
 	// If path length is two, we are summing a group or a child relationship
@@ -132,7 +133,8 @@ func (p *Planner) isValueFloat(
 	}
 
 	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-		fieldDescription.Kind == client.FieldKind_FLOAT, nil
+		fieldDescription.Kind == client.FieldKind_FLOAT ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 }
 
 func (n *sumNode) Kind() string {
@@ -220,9 +222,26 @@ func (n *sumNode) Next() (bool, error) {
 			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem int64) float64 {
 				return float64(childItem)
 			})
+
+		case []client.Option[int64]:
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem client.Option[int64]) float64 {
+				if !childItem.HasValue {
+					return 0
+				}
+				return float64(childItem.Value)
+			})
+
 		case []float64:
 			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem float64) float64 {
 				return childItem
+			})
+
+		case []client.Option[float64]:
+			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem client.Option[float64]) float64 {
+				if !childItem.HasValue {
+					return 0
+				}
+				return childItem.Value
 			})
 		}
 		if err != nil {
