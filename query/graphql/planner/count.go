@@ -17,6 +17,7 @@ package planner
 import (
 	"reflect"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
@@ -108,13 +109,25 @@ func (n *countNode) Next() (bool, error) {
 				case []bool:
 					arrayCount, err = countItems(array, source.Filter)
 
+				case []client.Option[bool]:
+					arrayCount, err = countItems(array, source.Filter)
+
 				case []int64:
+					arrayCount, err = countItems(array, source.Filter)
+
+				case []client.Option[int64]:
 					arrayCount, err = countItems(array, source.Filter)
 
 				case []float64:
 					arrayCount, err = countItems(array, source.Filter)
 
+				case []client.Option[float64]:
+					arrayCount, err = countItems(array, source.Filter)
+
 				case []string:
+					arrayCount, err = countItems(array, source.Filter)
+
+				case []client.Option[string]:
 					arrayCount, err = countItems(array, source.Filter)
 				}
 				if err != nil {

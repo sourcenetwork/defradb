@@ -1304,7 +1304,9 @@ func isNumericArray(list *gql.List) bool {
 	// We have to compare the names here, as the gql lib we use
 	// does not have an easier way to compare non-nullable types
 	return list.OfType.Name() == gql.NewNonNull(gql.Float).Name() ||
-		list.OfType.Name() == gql.NewNonNull(gql.Int).Name()
+		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
+		list.OfType == gql.Int ||
+		list.OfType == gql.Float
 }
 
 // find a given directive

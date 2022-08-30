@@ -307,13 +307,15 @@ func appendUnderlyingAggregates(
 
 		for _, target := range aggregate.targets {
 			if target.childExternalName != "" {
-				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; !isAggregate {
-					// Append a not-nil filter if the target is not an aggregate.
-					// Aggregate-targets are excluded here as they are assumed to always have a value and
-					// amending the filter introduces significant complexity for both machine and developer.
-					appendNotNilFilter(target, target.childExternalName)
+				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; isAggregate {
+					continue
 				}
 			}
+			// Append a not-nil filter if the target is not an aggregate.
+			// If the target has no childExternalName we assume it is an inline-array (and thus not an aggregate).
+			// Aggregate-targets are excluded here as they are assumed to always have a value and
+			// amending the filter introduces significant complexity for both machine and developer.
+			appendNotNilFilter(target, target.childExternalName)
 		}
 
 		for _, dependencyName := range dependencies {
@@ -1036,10 +1038,16 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 		field.filter.Conditions = map[string]interface{}{}
 	}
 
-	childBlock, hasChildBlock := field.filter.Conditions[childField]
-	if !hasChildBlock {
-		childBlock = map[string]interface{}{}
-		field.filter.Conditions[childField] = childBlock
+	var childBlock any
+	var hasChildBlock bool
+	if childField == "" {
+		childBlock = field.filter.Conditions
+	} else {
+		childBlock, hasChildBlock = field.filter.Conditions[childField]
+		if !hasChildBlock {
+			childBlock = map[string]interface{}{}
+			field.filter.Conditions[childField] = childBlock
+		}
 	}
 
 	typedChildBlock := childBlock.(map[string]interface{})
