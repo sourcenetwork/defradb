@@ -890,6 +890,10 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			"field": &gql.InputObjectFieldConfig{
 				Type: fieldsEnum,
 			},
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The maximum number of child items to aggregate.",
+			},
 		}, nil
 	}
 

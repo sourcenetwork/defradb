@@ -149,6 +149,12 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 												"name": "usersFilterArg",
 											},
 										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -213,6 +219,12 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "usersFilterArg",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},

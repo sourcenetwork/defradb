@@ -193,6 +193,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												"name": "usersFilterArg",
 											},
 										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -279,6 +285,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "usersFilterArg",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},
