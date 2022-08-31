@@ -51,7 +51,7 @@ type selectTopNode struct {
 
 	group      *groupNode
 	order      *orderNode
-	limit      planNode
+	limit      *limitNode
 	aggregates []aggregateNode
 
 	// selectnode is used pre-wiring of the plan (before expansion and all).
@@ -387,7 +387,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(parsed, limit)
+	limitPlan, err := p.Limit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +430,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(parsed, limit)
+	limitPlan, err := p.Limit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}

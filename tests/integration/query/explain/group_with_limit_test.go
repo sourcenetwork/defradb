@@ -74,7 +74,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"hardLimitNode": dataMap{
+						"limitNode": dataMap{
 							"limit":  int64(1),
 							"offset": int64(1),
 							"groupNode": dataMap{
@@ -367,7 +367,7 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"hardLimitNode": dataMap{
+						"limitNode": dataMap{
 							"limit":  int64(1),
 							"offset": int64(0),
 							"groupNode": dataMap{

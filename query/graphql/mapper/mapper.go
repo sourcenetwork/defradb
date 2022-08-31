@@ -846,7 +846,7 @@ func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-// Note: Currently only compares Name and Filter as that is all that is currently required,
+// Note: Currently only compares Name, Filter and Limit as that is all that is currently required,
 // but this should be extended in the future.
 func (s Targetable) equal(other Targetable) bool {
 	if s.Index != other.Index &&
@@ -854,15 +854,39 @@ func (s Targetable) equal(other Targetable) bool {
 		return false
 	}
 
-	if s.Filter == nil {
-		return other.Filter == nil
+	if !s.Filter.equal(other.Filter) {
+		return false
 	}
 
-	if other.Filter == nil {
-		return s.Filter == nil
+	if !s.Limit.equal(other.Limit) {
+		return false
 	}
 
-	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
+	return true
+}
+
+func (l *Limit) equal(other *Limit) bool {
+	if l == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return l == nil
+	}
+
+	return l.Limit == other.Limit && l.Offset == other.Offset
+}
+
+func (f *Filter) equal(other *Filter) bool {
+	if f == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return f == nil
+	}
+
+	return reflect.DeepEqual(f.Conditions, other.Conditions)
 }
 
 // aggregateRequest is an intermediary struct defining a consumer-requested
