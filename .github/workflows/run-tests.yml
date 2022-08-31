@@ -23,5 +23,12 @@ jobs:
           make deps:modules
           make deps:test
 
+      - name: Build binary
+        run: make build
+
+        # This is to ensure tests pass with a running server.
+      - name: Start server from binary
+        run: ./build/defradb start &
+
       - name: Run the tests, showing name of each test
         run: make test:names

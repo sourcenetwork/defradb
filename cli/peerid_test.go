@@ -19,9 +19,19 @@ import (
 	"testing"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/config"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// setTestingAddresses overrides the config addresses to be the ones reserved for testing.
+// Used to ensure the tests don't fail due to address clashes with the running server (with default config).
+func setTestingAddresses(cfg *config.Config) {
+	cfg.API.Address = "localhost:9182"
+	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/9172"
+	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/9162"
+	cfg.Net.RPCAddress = "0.0.0.0:9162"
+}
 
 func TestGetPeerIDCmd(t *testing.T) {
 	dir := t.TempDir()
@@ -29,6 +39,8 @@ func TestGetPeerIDCmd(t *testing.T) {
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = false
+	setTestingAddresses(cfg)
+
 	di, err := start(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -63,6 +75,8 @@ func TestGetPeerIDCmdWithNoP2P(t *testing.T) {
 	cfg.Datastore.Store = "memory"
 	cfg.Datastore.Badger.Path = dir
 	cfg.Net.P2PDisabled = true
+	setTestingAddresses(cfg)
+
 	di, err := start(ctx)
 	if err != nil {
 		t.Fatal(err)
