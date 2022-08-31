@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -202,7 +203,7 @@ func (n *sumNode) Next() (bool, error) {
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem core.Doc) float64 {
+			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem core.Doc) float64 {
 				childProperty := childItem.Fields[source.ChildTarget.Index]
 				switch v := childProperty.(type) {
 				case int:
@@ -219,30 +220,40 @@ func (n *sumNode) Next() (bool, error) {
 				}
 			})
 		case []int64:
-			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem int64) float64 {
+			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem int64) float64 {
 				return float64(childItem)
 			})
 
 		case []client.Option[int64]:
-			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem client.Option[int64]) float64 {
-				if !childItem.HasValue() {
-					return 0
-				}
-				return float64(childItem.Value())
-			})
+			collectionSum, err = sumItems(
+				childCollection,
+				source.Filter,
+				source.Limit,
+				func(childItem client.Option[int64]) float64 {
+					if !childItem.HasValue() {
+						return 0
+					}
+					return float64(childItem.Value())
+				},
+			)
 
 		case []float64:
-			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem float64) float64 {
+			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem float64) float64 {
 				return childItem
 			})
 
 		case []client.Option[float64]:
-			collectionSum, err = sumItems(childCollection, source.Filter, func(childItem client.Option[float64]) float64 {
-				if !childItem.HasValue() {
-					return 0
-				}
-				return childItem.Value()
-			})
+			collectionSum, err = sumItems(
+				childCollection,
+				source.Filter,
+				source.Limit,
+				func(childItem client.Option[float64]) float64 {
+					if !childItem.HasValue() {
+						return 0
+					}
+					return childItem.Value()
+				},
+			)
 		}
 		if err != nil {
 			return false, err
@@ -261,19 +272,24 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
-func sumItems[T any](items []T, filter *mapper.Filter, toFloat func(T) float64) (float64, error) {
-	var sum float64 = 0
-	for _, item := range items {
-		passed, err := mapper.RunFilter(item, filter)
-		if err != nil {
-			return 0, err
-		}
-		if !passed {
-			continue
-		}
-		sum += toFloat(item)
+func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toFloat func(T) float64) (float64, error) {
+	items := enumerable.New(source)
+	if filter != nil {
+		items = enumerable.Where(items, func(item T) (bool, error) {
+			return mapper.RunFilter(item, filter)
+		})
 	}
-	return sum, nil
+
+	if limit != nil {
+		items = enumerable.Take(items, limit.Limit)
+	}
+
+	var sum float64 = 0
+	err := enumerable.ForEach(items, func(item T) {
+		sum += toFloat(item)
+	})
+
+	return sum, err
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }

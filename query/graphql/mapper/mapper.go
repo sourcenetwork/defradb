@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -143,6 +144,7 @@ func resolveAggregates(
 							Name:  target.hostExternalName,
 						},
 						Filter: ToFilter(target.filter, mapping),
+						Limit:  target.limit,
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
@@ -186,6 +188,7 @@ func resolveAggregates(
 							Name:  target.hostExternalName,
 						},
 						Filter: convertedFilter,
+						Limit:  target.limit,
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: *childMapping,
@@ -921,6 +924,9 @@ type aggregateRequestTarget struct {
 
 	// The aggregate filter specified by the consumer for this target. Optional.
 	filter *parser.Filter
+
+	// The aggregate limit-offset specified by the consumer for this target. Optional.
+	limit *Limit
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -937,6 +943,7 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 			hostExternalName := argument.Name.Value
 			var childExternalName string
 			var filter *parser.Filter
+			var limit *Limit
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
 			if hasFieldArg {
@@ -954,10 +961,22 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 				}
 			}
 
+			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
+			if hasLimitArg {
+				limitValue, err := strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				limit = &Limit{
+					Limit: limitValue,
+				}
+			}
+
 			targets[i] = &aggregateRequestTarget{
 				hostExternalName:  hostExternalName,
 				childExternalName: childExternalName,
 				filter:            filter,
+				limit:             limit,
 			}
 		}
 	}
