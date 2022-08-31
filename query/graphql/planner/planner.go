@@ -280,10 +280,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.limit != nil {
-		err := p.expandLimitPlan(plan, parentPlan)
-		if err != nil {
-			return err
-		}
+		p.expandLimitPlan(plan, parentPlan)
 	}
 
 	return nil
@@ -372,51 +369,20 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	return nil
 }
 
-func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {
-	switch l := plan.limit.(type) {
-	case *hardLimitNode:
-		if l == nil {
-			return nil
-		}
-
-		// Limits get more complicated with groups and have to be handled internally, so we ensure
-		// any limit plan is disabled here
-		if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
-			plan.limit = nil
-			return nil
-		}
-
-		// if this is a child node, and the parent select has an aggregate then we need to
-		// replace the hard limit with a render limit to allow the full set of child records
-		// to be aggregated
-		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
-			renderLimit, err := p.RenderLimit(
-				parentPlan.documentMapping,
-				&parserTypes.Limit{
-					Offset: l.offset,
-					Limit:  l.limit,
-				},
-			)
-			if err != nil {
-				return err
-			}
-			plan.limit = renderLimit
-
-			renderLimit.plan = plan.plan
-			plan.plan = plan.limit
-		} else {
-			l.plan = plan.plan
-			plan.plan = plan.limit
-		}
-	case *renderLimitNode:
-		if l == nil {
-			return nil
-		}
-
-		l.plan = plan.plan
-		plan.plan = plan.limit
+func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) {
+	if plan.limit == nil {
+		return
 	}
-	return nil
+
+	// Limits get more complicated with groups and have to be handled internally, so we ensure
+	// any limit plan is disabled here
+	if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
+		plan.limit = nil
+		return
+	}
+
+	plan.limit.plan = plan.plan
+	plan.plan = plan.limit
 }
 
 // walkAndReplace walks through the provided plan, and searches for an instance
