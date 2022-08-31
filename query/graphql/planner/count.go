@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -144,20 +145,20 @@ func (n *countNode) Next() (bool, error) {
 	return true, nil
 }
 
-func countItems[T any](items []T, filter *mapper.Filter, limit *mapper.Limit) (int, error) {
-	enumerable := core.EnumerateSlice(items)
+func countItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit) (int, error) {
+	items := enumerable.New(source)
 	if filter != nil {
-		enumerable = core.Where(enumerable, func(item T) (bool, error) {
+		items = enumerable.Where(items, func(item T) (bool, error) {
 			return mapper.RunFilter(item, filter)
 		})
 	}
 
 	if limit != nil {
-		enumerable = core.Take(enumerable, limit.Limit)
+		items = enumerable.Take(items, limit.Limit)
 	}
 
 	count := 0
-	err := core.OnEach(enumerable, func() {
+	err := enumerable.OnEach(items, func() {
 		count += 1
 	})
 

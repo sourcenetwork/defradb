@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -271,20 +272,20 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
-func sumItems[T any](items []T, filter *mapper.Filter, limit *mapper.Limit, toFloat func(T) float64) (float64, error) {
-	enumerable := core.EnumerateSlice(items)
+func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toFloat func(T) float64) (float64, error) {
+	items := enumerable.New(source)
 	if filter != nil {
-		enumerable = core.Where(enumerable, func(item T) (bool, error) {
+		items = enumerable.Where(items, func(item T) (bool, error) {
 			return mapper.RunFilter(item, filter)
 		})
 	}
 
 	if limit != nil {
-		enumerable = core.Take(enumerable, limit.Limit)
+		items = enumerable.Take(items, limit.Limit)
 	}
 
 	var sum float64 = 0
-	err := core.ForEach(enumerable, func(item T) {
+	err := enumerable.ForEach(items, func(item T) {
 		sum += toFloat(item)
 	})
 

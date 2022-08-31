@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package enumerable
 
 // Enumerable represents a set of elements that can be iterated through
 // multiple times.
@@ -42,8 +42,8 @@ type enumerableSlice[T any] struct {
 	maxIndex     int
 }
 
-// EnumerateSlice creates an `Enumerable` from the given slice.
-func EnumerateSlice[T any](source []T) Enumerable[T] {
+// New creates an `Enumerable` from the given slice.
+func New[T any](source []T) Enumerable[T] {
 	return &enumerableSlice[T]{
 		source:       source,
 		currentIndex: -1,
@@ -65,75 +65,6 @@ func (s *enumerableSlice[T]) Value() T {
 
 func (s *enumerableSlice[T]) Reset() {
 	s.currentIndex = -1
-}
-
-type enumerableWhere[T any] struct {
-	source    Enumerable[T]
-	predicate func(T) (bool, error)
-}
-
-// Where creates an `Enumerable` from the given `Enumerable` and predicate. Items in the
-// source `Enumerable` must return true when passed into the predicate in order to be yielded
-// from the returned `Enumerable`.
-func Where[T any](source Enumerable[T], predicate func(T) (bool, error)) Enumerable[T] {
-	return &enumerableWhere[T]{
-		source:    source,
-		predicate: predicate,
-	}
-}
-
-func (s *enumerableWhere[T]) Next() (bool, error) {
-	for {
-		hasNext, err := s.source.Next()
-		if !hasNext || err != nil {
-			return hasNext, err
-		}
-
-		value := s.source.Value()
-		if passes, err := s.predicate(value); passes || err != nil {
-			return passes, err
-		}
-	}
-}
-
-func (s *enumerableWhere[T]) Value() T {
-	return s.source.Value()
-}
-
-func (s *enumerableWhere[T]) Reset() {
-	s.source.Reset()
-}
-
-type enumerableTake[T any] struct {
-	source Enumerable[T]
-	limit  int64
-	count  int64
-}
-
-// Take creates an `Enumerable` from the given `Enumerable` and limit. The returned
-// `Enumerable` will restrict the maximum number of items yielded to the given limit.
-func Take[T any](source Enumerable[T], limit int64) Enumerable[T] {
-	return &enumerableTake[T]{
-		source: source,
-		limit:  limit,
-	}
-}
-
-func (s *enumerableTake[T]) Next() (bool, error) {
-	if s.count == s.limit {
-		return false, nil
-	}
-	s.count += 1
-	return s.source.Next()
-}
-
-func (s *enumerableTake[T]) Value() T {
-	return s.source.Value()
-}
-
-func (s *enumerableTake[T]) Reset() {
-	s.count = 0
-	s.source.Reset()
 }
 
 // ForEach iterates over the given source `Enumerable` performing the given
