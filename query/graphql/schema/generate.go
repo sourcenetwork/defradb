@@ -348,10 +348,10 @@ func (g *Generator) createExpandedFieldList(
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"having": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
-			"order":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			"limit":  schemaTypes.NewArgConfig(gql.Int),
-			"offset": schemaTypes.NewArgConfig(gql.Int),
+			"having":                schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
+			"order":                 schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			parserTypes.LimitClause: schemaTypes.NewArgConfig(gql.Int),
+			"offset":                schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -771,9 +771,9 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
-					"_": &gql.InputObjectFieldConfig{
+					parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
-						Description: "Placeholder - empty object not permitted, but will have fields shortly",
+						Description: "The maximum number of child items to aggregate.",
 					},
 				},
 			})
@@ -796,9 +796,9 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
 		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
-			"_": &gql.InputObjectFieldConfig{
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "Placeholder - empty object not permitted, but will have fields shortly",
+				Description: "The maximum number of child items to count.",
 			},
 		},
 	})
@@ -820,9 +820,9 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 			Name: genNumericInlineArrayCountName(obj.Name(), field.Name),
 			Fields: gql.InputObjectConfigFieldMap{
-				"_": &gql.InputObjectFieldConfig{
+				parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
-					Description: "Placeholder - empty object not permitted, but will have fields shortly",
+					Description: "The maximum number of child items to count.",
 				},
 			},
 		})
@@ -889,6 +889,10 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 		return gql.InputObjectConfigFieldMap{
 			"field": &gql.InputObjectFieldConfig{
 				Type: fieldsEnum,
+			},
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The maximum number of child items to aggregate.",
 			},
 		}, nil
 	}
@@ -1263,15 +1267,15 @@ func (g *Generator) genTypeQueryableFieldList(
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":     schemaTypes.NewArgConfig(gql.String),
-			"filter":  schemaTypes.NewArgConfig(config.filter),
-			"groupBy": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"having":  schemaTypes.NewArgConfig(config.having),
-			"order":   schemaTypes.NewArgConfig(config.order),
-			"limit":   schemaTypes.NewArgConfig(gql.Int),
-			"offset":  schemaTypes.NewArgConfig(gql.Int),
+			"dockey":                schemaTypes.NewArgConfig(gql.String),
+			"dockeys":               schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"cid":                   schemaTypes.NewArgConfig(gql.String),
+			"filter":                schemaTypes.NewArgConfig(config.filter),
+			"groupBy":               schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"having":                schemaTypes.NewArgConfig(config.having),
+			"order":                 schemaTypes.NewArgConfig(config.order),
+			parserTypes.LimitClause: schemaTypes.NewArgConfig(gql.Int),
+			"offset":                schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
