@@ -771,9 +771,9 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
-					"_": &gql.InputObjectFieldConfig{
+					parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
-						Description: "Placeholder - empty object not permitted, but will have fields shortly",
+						Description: "The maximum number of child items to aggregate.",
 					},
 				},
 			})

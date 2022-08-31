@@ -162,15 +162,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 									"name": "users__FavouriteFloats__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
-											"type": map[string]interface{}{
-												"name": "Int",
-											},
-										},
-										map[string]interface{}{
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "NotNullFloatOperatorBlock",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},
@@ -256,15 +256,15 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 									"name": "users__FavouriteIntegers__NumericSelector",
 									"inputFields": []interface{}{
 										map[string]interface{}{
-											"name": "_",
-											"type": map[string]interface{}{
-												"name": "Int",
-											},
-										},
-										map[string]interface{}{
 											"name": "filter",
 											"type": map[string]interface{}{
 												"name": "NotNullIntOperatorBlock",
+											},
+										},
+										map[string]interface{}{
+											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
 											},
 										},
 									},
