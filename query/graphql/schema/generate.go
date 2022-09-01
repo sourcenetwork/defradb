@@ -174,7 +174,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	for _, def := range generatedQueryFields {
 		switch obj := def.Type.(type) {
 		case *gql.List:
-			if err := g.expandInputArgument(ctx, obj.OfType.(*gql.Object)); err != nil {
+			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
 		case *gql.Scalar:
@@ -216,7 +216,6 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 }
 
 func (g *Generator) expandInputArgument(
-	ctx context.Context,
 	obj *gql.Object,
 ) error {
 	fields := obj.Fields()
@@ -238,7 +237,7 @@ func (g *Generator) expandInputArgument(
 			g.expandedFields[fieldKey] = true
 
 			// make sure all the sub fields are expanded first
-			if err := g.expandInputArgument(ctx, t); err != nil {
+			if err := g.expandInputArgument(t); err != nil {
 				return err
 			}
 
@@ -258,7 +257,7 @@ func (g *Generator) expandInputArgument(
 			g.expandedFields[fieldKey] = true
 
 			if listObjType, ok := listType.(*gql.Object); ok {
-				if err := g.expandInputArgument(ctx, listObjType); err != nil {
+				if err := g.expandInputArgument(listObjType); err != nil {
 					return err
 				}
 
@@ -270,7 +269,7 @@ func (g *Generator) expandInputArgument(
 			}
 		case *gql.Scalar:
 			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
-				if err := g.createExpandedFieldAggregate(ctx, obj, def); err != nil {
+				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
 					return err
 				}
 			}
@@ -284,7 +283,6 @@ func (g *Generator) expandInputArgument(
 }
 
 func (g *Generator) createExpandedFieldAggregate(
-	ctx context.Context,
 	obj *gql.Object,
 	f *gql.FieldDefinition,
 ) error {
