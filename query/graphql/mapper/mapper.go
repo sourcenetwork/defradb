@@ -148,7 +148,7 @@ func resolveAggregates(
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
-					convertedFilter = ToFilter(target.filter, &mapping.ChildMappings[childObjectIndex])
+					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[childObjectIndex])
 
 					host, hasHost = tryGetTarget(target.hostExternalName, convertedFilter, fields)
 				}
@@ -173,12 +173,12 @@ func resolveAggregates(
 					return nil, err
 				}
 				childMapping = childMapping.CloneWithoutRender()
-				mapping.SetChildAt(index, *childMapping)
+				mapping.SetChildAt(index, childMapping)
 
 				if !childIsMapped {
 					// If the child was not mapped, the filter will not have been converted yet
 					// so we must do that now.
-					convertedFilter = ToFilter(target.filter, &mapping.ChildMappings[index])
+					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[index])
 				}
 
 				dummyJoin := &Select{
@@ -428,7 +428,7 @@ func getRequestables(
 					return nil, nil, err
 				}
 				fields = append(fields, innerSelect)
-				mapping.SetChildAt(index, innerSelect.DocumentMapping)
+				mapping.SetChildAt(index, &innerSelect.DocumentMapping)
 			}
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
@@ -607,7 +607,7 @@ func resolveInnerFilterDependencies(
 			return nil, err
 		}
 		childMapping = childMapping.CloneWithoutRender()
-		mapping.SetChildAt(index, *childMapping)
+		mapping.SetChildAt(index, childMapping)
 
 		dummyJoin := &Select{
 			Targetable: Targetable{
@@ -755,7 +755,7 @@ func toFilterMap(
 					// If the innerSourceValue is also a map, then we should parse the nested clause
 					// using the child mapping, as this key must refer to a host property in a join
 					// and deeper keys must refer to properties on the child items.
-					innerMapping = &mapping.ChildMappings[index]
+					innerMapping = mapping.ChildMappings[index]
 				default:
 					innerMapping = mapping
 				}
@@ -823,7 +823,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 			fieldIndexes[fieldIndex] = firstFieldIndex
 			if fieldIndex != len(fields)-1 {
 				// no need to do this for the last (and will panic)
-				currentMapping = &currentMapping.ChildMappings[firstFieldIndex]
+				currentMapping = currentMapping.ChildMappings[firstFieldIndex]
 			}
 		}
 
