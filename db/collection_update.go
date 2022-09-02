@@ -480,18 +480,15 @@ func getString(v *fastjson.Value) (string, error) {
 }
 
 func getBool(v *fastjson.Value) (bool, error) {
-	b, err := v.Bool()
-	return b, err
+	return v.Bool()
 }
 
 func getFloat64(v *fastjson.Value) (float64, error) {
-	f, err := v.Float64()
-	return f, err
+	return v.Float64()
 }
 
 func getInt64(v *fastjson.Value) (int64, error) {
-	f, err := v.Int64()
-	return f, err
+	return v.Int64()
 }
 
 func getDate(v *fastjson.Value) (time.Time, error) {
