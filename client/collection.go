@@ -83,26 +83,26 @@ type Collection interface {
 	//
 	// Returns an ErrInvalidUpdateTarget error if the target type is not supported.
 	// Returns an ErrInvalidUpdater error if the updater type is not supported.
-	UpdateWith(ctx context.Context, target interface{}, updater interface{}) (*UpdateResult, error)
+	UpdateWith(ctx context.Context, target interface{}, updater string) (*UpdateResult, error)
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
-	UpdateWithFilter(ctx context.Context, filter interface{}, updater interface{}) (*UpdateResult, error)
+	UpdateWithFilter(ctx context.Context, filter interface{}, updater string) (*UpdateResult, error)
 	// UpdateWithKey updates using a DocKey to target a single document for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocKey is not found.
-	UpdateWithKey(ctx context.Context, key DocKey, updater interface{}) (*UpdateResult, error)
+	UpdateWithKey(ctx context.Context, key DocKey, updater string) (*UpdateResult, error)
 	// UpdateWithKeys updates documents matching the given DocKeys.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
 	//
 	// Returns an ErrDocumentNotFound if a document is not found for any given DocKey.
-	UpdateWithKeys(context.Context, []DocKey, interface{}) (*UpdateResult, error)
+	UpdateWithKeys(context.Context, []DocKey, string) (*UpdateResult, error)
 
 	// DeleteWith deletes a target document.
 	//
