@@ -112,3 +112,19 @@ var aggregateFields = fields{
 		},
 	},
 }
+
+// makeInputObject retrned a properly made input field type
+// using name (outer), name of type (inner), and types ofType.
+func makeInputObject(
+	name string,
+	typeName any,
+	ofType any,
+) map[string]any {
+	return map[string]any{
+		"name": name,
+		"type": map[string]any{
+			"name":   typeName,
+			"ofType": ofType,
+		},
+	}
+}
