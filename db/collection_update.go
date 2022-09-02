@@ -431,28 +431,28 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getString(val)
 
 	case client.FieldKind_STRING_ARRAY:
-		return getArray(val, getString, "", false)
+		return getArray(val, getString, "")
 
 	case client.FieldKind_NILLABLE_STRING_ARRAY:
-		return getArray(val, getString, "", true)
+		return getArray(val, getString, nil)
 
 	case client.FieldKind_BOOL:
 		return getBool(val)
 
 	case client.FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool, false, false)
+		return getArray(val, getBool, false)
 
 	case client.FieldKind_NILLABLE_BOOL_ARRAY:
-		return getArray(val, getBool, false, true)
+		return getArray(val, getBool, nil)
 
 	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
 		return getFloat64(val)
 
 	case client.FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64, 0, false)
+		return getArray(val, getFloat64, 0)
 
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-		return getArray(val, getFloat64, 0, true)
+		return getArray(val, getFloat64, nil)
 
 	case client.FieldKind_DATE:
 		return getDate(val)
@@ -461,10 +461,10 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getInt64(val)
 
 	case client.FieldKind_INT_ARRAY:
-		return getArray(val, getInt64, 0, false)
+		return getArray(val, getInt64, 0)
 
 	case client.FieldKind_NILLABLE_INT_ARRAY:
-		return getArray(val, getInt64, 0, true)
+		return getArray(val, getInt64, nil)
 
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
@@ -505,8 +505,7 @@ func getDate(v *fastjson.Value) (time.Time, error) {
 func getArray[T any](
 	val *fastjson.Value,
 	typeGetter func(*fastjson.Value) (T, error),
-	zeroValue T,
-	isNillable bool,
+	zeroValue any,
 ) (any, error) {
 	if val.Type() == fastjson.TypeNull {
 		return nil, nil
@@ -517,7 +516,7 @@ func getArray[T any](
 		return nil, err
 	}
 
-	if isNillable {
+	if zeroValue == nil {
 		arr := make([]*T, len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
@@ -536,7 +535,11 @@ func getArray[T any](
 	arr := make([]T, len(valArray))
 	for i, arrItem := range valArray {
 		if arrItem.Type() == fastjson.TypeNull {
-			arr[i] = zeroValue
+			var ok bool
+			arr[i], ok = zeroValue.(T)
+			if !ok {
+				return nil, errors.New("zeroValue should be of the same type as the array items type")
+			}
 			continue
 		}
 		arr[i], err = typeGetter(arrItem)
