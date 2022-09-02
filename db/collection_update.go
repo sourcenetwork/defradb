@@ -431,7 +431,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getString(val)
 
 	case client.FieldKind_STRING_ARRAY:
-		return getArray(val, getString, "")
+		return getArray(val, getString)
 
 	case client.FieldKind_NILLABLE_STRING_ARRAY:
 		return getNillableArray(val, getString)
@@ -440,7 +440,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getBool(val)
 
 	case client.FieldKind_BOOL_ARRAY:
-		return getArray(val, getBool, false)
+		return getArray(val, getBool)
 
 	case client.FieldKind_NILLABLE_BOOL_ARRAY:
 		return getNillableArray(val, getBool)
@@ -449,7 +449,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getFloat64(val)
 
 	case client.FieldKind_FLOAT_ARRAY:
-		return getArray(val, getFloat64, 0)
+		return getArray(val, getFloat64)
 
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
@@ -461,7 +461,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getInt64(val)
 
 	case client.FieldKind_INT_ARRAY:
-		return getArray(val, getInt64, 0)
+		return getArray(val, getInt64)
 
 	case client.FieldKind_NILLABLE_INT_ARRAY:
 		return getNillableArray(val, getInt64)
@@ -502,7 +502,6 @@ func getDate(v *fastjson.Value) (time.Time, error) {
 func getArray[T any](
 	val *fastjson.Value,
 	typeGetter func(*fastjson.Value) (T, error),
-	zeroValue T,
 ) ([]T, error) {
 	if val.Type() == fastjson.TypeNull {
 		return nil, nil
@@ -516,7 +515,6 @@ func getArray[T any](
 	arr := make([]T, len(valArray))
 	for i, arrItem := range valArray {
 		if arrItem.Type() == fastjson.TypeNull {
-			arr[i] = zeroValue
 			continue
 		}
 		arr[i], err = typeGetter(arrItem)
