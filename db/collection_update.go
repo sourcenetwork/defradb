@@ -431,44 +431,40 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (in
 		return getString(val)
 
 	case client.FieldKind_STRING_ARRAY:
-		return array(val, getString, "")
+		return getArray(val, getString, "", false)
 
 	case client.FieldKind_NILLABLE_STRING_ARRAY:
-		return convertNillableArray(val, getString)
+		return getArray(val, getString, "", true)
 
 	case client.FieldKind_BOOL:
-		return val.Bool()
+		return getBool(val)
 
 	case client.FieldKind_BOOL_ARRAY:
-		return array(val, getBool, false)
+		return getArray(val, getBool, false, false)
 
 	case client.FieldKind_NILLABLE_BOOL_ARRAY:
-		return convertNillableArray(val, getBool)
+		return getArray(val, getBool, false, true)
 
 	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
-		return val.Float64()
+		return getFloat64(val)
 
 	case client.FieldKind_FLOAT_ARRAY:
-		return array(val, getFloat64, 0)
+		return getArray(val, getFloat64, 0, false)
 
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-		return convertNillableArray(val, getFloat64)
+		return getArray(val, getFloat64, 0, true)
 
 	case client.FieldKind_DATE:
-		v, err := val.StringBytes()
-		if err != nil {
-			return nil, err
-		}
-		return time.Parse(time.RFC3339, string(v))
+		return getDate(val)
 
 	case client.FieldKind_INT:
-		return val.Int64()
+		return getInt64(val)
 
 	case client.FieldKind_INT_ARRAY:
-		return array(val, getInt64, 0)
+		return getArray(val, getInt64, 0, false)
 
 	case client.FieldKind_NILLABLE_INT_ARRAY:
-		return convertNillableArray(val, getInt64)
+		return getArray(val, getInt64, 0, true)
 
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
@@ -498,11 +494,20 @@ func getInt64(v *fastjson.Value) (int64, error) {
 	return f, err
 }
 
-func array[T any](
+func getDate(v *fastjson.Value) (time.Time, error) {
+	s, err := getString(v)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Parse(time.RFC3339, s)
+}
+
+func getArray[T any](
 	val *fastjson.Value,
 	typeGetter func(*fastjson.Value) (T, error),
 	zeroValue T,
-) ([]T, error) {
+	isNillable bool,
+) (any, error) {
 	if val.Type() == fastjson.TypeNull {
 		return nil, nil
 	}
@@ -510,6 +515,22 @@ func array[T any](
 	valArray, err := val.Array()
 	if err != nil {
 		return nil, err
+	}
+
+	if isNillable {
+		arr := make([]*T, len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = nil
+				continue
+			}
+			v, err := typeGetter(arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = &v
+		}
+		return arr, nil
 	}
 
 	arr := make([]T, len(valArray))
@@ -522,34 +543,6 @@ func array[T any](
 		if err != nil {
 			return nil, err
 		}
-	}
-	return arr, nil
-}
-
-func convertNillableArray[T any](
-	val *fastjson.Value,
-	typeGetter func(*fastjson.Value) (T, error),
-) ([]*T, error) {
-	if val.Type() == fastjson.TypeNull {
-		return nil, nil
-	}
-
-	valArray, err := val.Array()
-	if err != nil {
-		return nil, err
-	}
-
-	arr := make([]*T, len(valArray))
-	for i, arrItem := range valArray {
-		if arrItem.Type() == fastjson.TypeNull {
-			arr[i] = nil
-			continue
-		}
-		v, err := typeGetter(arrItem)
-		if err != nil {
-			return nil, err
-		}
-		arr[i] = &v
 	}
 	return arr, nil
 }
