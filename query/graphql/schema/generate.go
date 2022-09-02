@@ -215,9 +215,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	return defs, nil
 }
 
-func (g *Generator) expandInputArgument(
-	obj *gql.Object,
-) error {
+func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
 		// ignore reserved fields, execpt the Group field (as that requires typing), and aggregates

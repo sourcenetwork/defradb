@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestInputTypeOfComplexSchema(t *testing.T) {
+func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	test := QueryTestCase{
 		Schema: []string{
 			`
@@ -22,7 +22,6 @@ func TestInputTypeOfComplexSchema(t *testing.T) {
 				    name: String
 				    rating: Float
 				    author: author
-				    publisher: publisher
 				}
 
 				type author {
@@ -30,13 +29,6 @@ func TestInputTypeOfComplexSchema(t *testing.T) {
 				    age: Int
 				    verified: Boolean
 				    wrote: book @primary
-				}
-				
-				type publisher {
-				    name: String
-				    address: String
-				    favouritePageNumbers: [Int!]
-				    published: [book]
 				}
 			`,
 		},
@@ -70,234 +62,70 @@ func TestInputTypeOfComplexSchema(t *testing.T) {
 				}
 			}
 		`,
-		ContainsData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ContainsData: map[string]any{
+			"__type": map[string]any{
 				"name": "author",
-				"fields": []interface{}{
-					map[string]interface{}{
+				"fields": []any{
+					map[string]any{
+						// Asserting only on group, because it is the field that contains `order` info we are
+						// looking for, additionally wanted to reduce the noise of other elements that were getting
+						// dumped out which made the entire output horrible.
 						"name": "_group",
-						"args": []interface{}{
-							map[string]interface{}{
-								"name": "filter",
-								"type": map[string]interface{}{
-									"name":   "authorFilterArg",
-									"ofType": interface{}(nil),
-									"inputFields": []interface{}{
-										map[string]interface{}{
-											"name": "_and",
-											"type": map[string]interface{}{
-												"name": interface{}(nil),
-												"ofType": map[string]interface{}{
-													"kind": "INPUT_OBJECT",
-													"name": "authorFilterArg",
-												},
-											},
-										},
-										map[string]interface{}{
-											"name": "_key",
-											"type": map[string]interface{}{
-												"name":   "IDOperatorBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "_not",
-											"type": map[string]interface{}{
-												"name":   "authorFilterArg",
-												"ofType": interface{}(nil)},
-										},
-										map[string]interface{}{
-											"name": "_or",
-											"type": map[string]interface{}{
-												"name": interface{}(nil),
-												"ofType": map[string]interface{}{
-													"kind": "INPUT_OBJECT",
-													"name": "authorFilterArg",
-												},
-											},
-										},
-										map[string]interface{}{
-											"name": "age",
-											"type": map[string]interface{}{
-												"name":   "IntOperatorBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "name",
-											"type": map[string]interface{}{
-												"name":   "StringOperatorBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "verified",
-											"type": map[string]interface{}{
-												"name":   "BooleanOperatorBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "wrote",
-											"type": map[string]interface{}{
-												"name":   "bookFilterBaseArg",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "wrote_id",
-											"type": map[string]interface{}{
-												"name":   "IDOperatorBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-									},
-								},
-							},
-							map[string]interface{}{
-								"name": "groupBy",
-								"type": map[string]interface{}{
-									"inputFields": interface{}(nil),
-									"name":        interface{}(nil),
-									"ofType": map[string]interface{}{
-										"kind": "NON_NULL",
-										"name": interface{}(nil),
-									},
-								},
-							},
-							map[string]interface{}{
-								"name": "having",
-								"type": map[string]interface{}{
-									"name":   "authorHavingArg",
-									"ofType": interface{}(nil),
-									"inputFields": []interface{}{
-										map[string]interface{}{
-											"name": "_avg",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "_count",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "_key",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "_sum",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "age",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "name",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "verified",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-										map[string]interface{}{
-											"name": "wrote_id",
-											"type": map[string]interface{}{
-												"name":   "authorHavingBlock",
-												"ofType": interface{}(nil),
-											},
-										},
-									},
-								},
-							},
-							map[string]interface{}{
-								"name": "limit",
-								"type": map[string]interface{}{
-									"inputFields": interface{}(nil),
-									"name":        "Int",
-									"ofType":      interface{}(nil),
-								},
-							},
-							map[string]interface{}{
-								"name": "offset",
-								"type": map[string]interface{}{
-									"inputFields": interface{}(nil),
-									"name":        "Int",
-									"ofType":      interface{}(nil),
-								},
-							},
-							map[string]interface{}{
+						"args": append(
+							defaultGroupArgsWithoutOrder,
+							map[string]any{
 								"name": "order",
-								"type": map[string]interface{}{
-									"inputFields": []interface{}{
-										map[string]interface{}{
+								"type": map[string]any{
+									"name":   "authorOrderArg",
+									"ofType": nil,
+									"inputFields": []any{
+										map[string]any{
 											"name": "_key",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "Ordering",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name": "age",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "Ordering",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name": "name",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "Ordering",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name": "verified",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "Ordering",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
-										map[string]interface{}{
+										// Without the relation type we won't have the following ordering type(s).
+										map[string]any{
 											"name": "wrote",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "bookOrderArg",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name": "wrote_id",
-											"type": map[string]interface{}{
+											"type": map[string]any{
 												"name":   "Ordering",
-												"ofType": interface{}(nil),
+												"ofType": nil,
 											},
 										},
 									},
-									"name":   "authorOrderArg",
-									"ofType": interface{}(nil),
 								},
 							},
-						},
+						),
 					},
 				},
 			},
@@ -305,4 +133,87 @@ func TestInputTypeOfComplexSchema(t *testing.T) {
 	}
 
 	ExecuteQueryTestCase(t, test)
+}
+
+var defaultGroupArgsWithoutOrder = []any{
+
+	map[string]any{
+		"name": "filter",
+		"type": filterArg,
+	},
+
+	map[string]any{
+		"name": "groupBy",
+		"type": groupByArg,
+	},
+
+	map[string]any{
+		"name": "having",
+		"type": havingArg,
+	},
+
+	map[string]any{
+		"name": "limit",
+		"type": intArgType,
+	},
+
+	map[string]any{
+		"name": "offset",
+		"type": intArgType,
+	},
+}
+
+var groupByArg = map[string]any{
+	"inputFields": nil,
+	"name":        nil,
+	"ofType": map[string]any{
+		"kind": "NON_NULL",
+		"name": nil,
+	},
+}
+
+var intArgType = map[string]any{
+	"inputFields": nil,
+	"name":        "Int",
+	"ofType":      nil,
+}
+
+var filterArg = map[string]any{
+	"name":   "authorFilterArg",
+	"ofType": nil,
+	"inputFields": []any{
+		makeInputObject("_and", nil, inputObjAuthorFilterArg),
+		makeInputObject("_key", "IDOperatorBlock", nil),
+		makeInputObject("_not", "authorFilterArg", nil),
+		makeInputObject("_or", nil, inputObjAuthorFilterArg),
+		makeInputObject("age", "IntOperatorBlock", nil),
+		makeInputObject("name", "StringOperatorBlock", nil),
+		makeInputObject("verified", "BooleanOperatorBlock", nil),
+		makeInputObject("wrote", "bookFilterBaseArg", nil),
+		makeInputObject("wrote_id", "IDOperatorBlock", nil),
+	},
+}
+
+var havingArg = map[string]any{
+	"name":   "authorHavingArg",
+	"ofType": nil,
+	"inputFields": []any{
+		makeAuthorHavingBlockForName("_avg"),
+		makeAuthorHavingBlockForName("_count"),
+		makeAuthorHavingBlockForName("_key"),
+		makeAuthorHavingBlockForName("_sum"),
+		makeAuthorHavingBlockForName("age"),
+		makeAuthorHavingBlockForName("name"),
+		makeAuthorHavingBlockForName("verified"),
+		makeAuthorHavingBlockForName("wrote_id"),
+	},
+}
+
+var inputObjAuthorFilterArg = map[string]any{
+	"kind": "INPUT_OBJECT",
+	"name": "authorFilterArg",
+}
+
+func makeAuthorHavingBlockForName(name string) map[string]any {
+	return makeInputObject(name, "authorHavingBlock", nil)
 }
