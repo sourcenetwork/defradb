@@ -113,6 +113,170 @@ var aggregateFields = fields{
 	},
 }
 
+var cidArg = field{
+	"name": "cid",
+	"type": map[string]any{
+		"name":        "String",
+		"inputFields": nil,
+	},
+}
+var dockeyArg = field{
+	"name": "dockey",
+	"type": map[string]any{
+		"name":        "String",
+		"inputFields": nil,
+	},
+}
+var dockeysArg = field{
+	"name": "dockeys",
+	"type": map[string]any{
+		"name":        nil,
+		"inputFields": nil,
+	},
+}
+
+var groupByArg = field{
+	"name": "groupBy",
+	"type": map[string]any{
+		"name":        nil,
+		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
+	},
+}
+
+var limitArg = field{
+	"name": "limit",
+	"type": map[string]any{
+		"name":        "Int",
+		"inputFields": nil,
+		"ofType":      nil,
+	},
+}
+
+var offsetArg = field{
+	"name": "offset",
+	"type": map[string]any{
+		"name":        "Int",
+		"inputFields": nil,
+		"ofType":      nil,
+	},
+}
+
+func buildHavingArg(objectName string, fields ...string) field {
+	havingBlockName := objectName + "HavingBlock"
+	inputFields := []any{
+		makeInputObject("_avg", havingBlockName, nil),
+		makeInputObject("_count", havingBlockName, nil),
+		makeInputObject("_key", havingBlockName, nil),
+		makeInputObject("_sum", havingBlockName, nil),
+	}
+
+	for _, field := range fields {
+		inputFields = append(inputFields, makeInputObject(field, havingBlockName, nil))
+	}
+
+	return field{
+		"name": "having",
+		"type": field{
+			"name":        objectName + "HavingArg",
+			"ofType":      nil,
+			"inputFields": inputFields,
+		},
+	}
+}
+
+type argDef struct {
+	fieldName string
+	typeName  string
+}
+
+func buildOrderArg(objectName string, fields []argDef) field {
+	inputFields := []any{
+		makeInputObject("_key", "Ordering", nil),
+	}
+
+	for _, field := range fields {
+		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
+	}
+
+	return field{
+		"name": "order",
+		"type": field{
+			"name":        objectName + "OrderArg",
+			"ofType":      nil,
+			"inputFields": inputFields,
+		},
+	}
+}
+
+func buildFilterArg(objectName string, fields []argDef) field {
+	filterArgName := objectName + "FilterArg"
+
+	inputFields := []any{
+		makeInputObject("_and", nil, map[string]any{
+			"kind": "INPUT_OBJECT",
+			"name": filterArgName,
+		}),
+		makeInputObject("_key", "IDOperatorBlock", nil),
+		makeInputObject("_not", "authorFilterArg", nil),
+		makeInputObject("_or", nil, map[string]any{
+			"kind": "INPUT_OBJECT",
+			"name": filterArgName,
+		}),
+	}
+
+	for _, field := range fields {
+		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
+	}
+
+	return field{
+		"name": "filter",
+		"type": field{
+			"name":        filterArgName,
+			"ofType":      nil,
+			"inputFields": inputFields,
+		},
+	}
+}
+
+// trimField creates a new object using the provided defaults, but only containing
+// the provided properties. Function is recursive and will respect inner properties.
+func trimField(fullDefault field, properties map[string]any) field {
+	result := field{}
+	for key, children := range properties {
+		switch childProps := children.(type) {
+		case map[string]any:
+			fullValue := fullDefault[key]
+			var value any
+			if fullValue == nil {
+				value = nil
+			} else if fullField, isField := fullValue.(field); isField {
+				value = trimField(fullField, childProps)
+			} else {
+				value = fullValue
+			}
+			result[key] = value
+
+		default:
+			result[key] = fullDefault[key]
+		}
+	}
+	return result
+}
+
+// trimFields creates a new slice of new objects using the provided defaults, but only containing
+// the provided properties. Function is recursive and will respect inner prop properties.
+func trimFields(fullDefaultFields fields, properties map[string]any) fields {
+	result := fields{}
+	for _, field := range fullDefaultFields {
+		result = append(result, trimField(field, properties))
+	}
+	return result
+}
+
 // makeInputObject retrned a properly made input field type
 // using name (outer), name of type (inner), and types ofType.
 func makeInputObject(

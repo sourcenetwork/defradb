@@ -125,7 +125,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 									},
 								},
 							},
-						),
+						).tidy(),
 					},
 				},
 			},
@@ -135,85 +135,46 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	ExecuteQueryTestCase(t, test)
 }
 
-var defaultGroupArgsWithoutOrder = []any{
-
-	map[string]any{
-		"name": "filter",
-		"type": filterArg,
-	},
-
-	map[string]any{
-		"name": "groupBy",
-		"type": groupByArg,
-	},
-
-	map[string]any{
-		"name": "having",
-		"type": havingArg,
-	},
-
-	map[string]any{
-		"name": "limit",
-		"type": intArgType,
-	},
-
-	map[string]any{
-		"name": "offset",
-		"type": intArgType,
+var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{
+	"name": struct{}{},
+	"type": map[string]any{
+		"name": struct{}{},
+		"ofType": map[string]any{
+			"kind": struct{}{},
+			"name": struct{}{},
+		},
+		"inputFields": struct{}{},
 	},
 }
 
-var groupByArg = map[string]any{
-	"inputFields": nil,
-	"name":        nil,
-	"ofType": map[string]any{
-		"kind": "NON_NULL",
-		"name": nil,
+var defaultGroupArgsWithoutOrder = trimFields(
+	fields{
+		buildFilterArg("author", []argDef{
+			{
+				fieldName: "age",
+				typeName:  "IntOperatorBlock",
+			},
+			{
+				fieldName: "name",
+				typeName:  "StringOperatorBlock",
+			},
+			{
+				fieldName: "verified",
+				typeName:  "BooleanOperatorBlock",
+			},
+			{
+				fieldName: "wrote",
+				typeName:  "bookFilterBaseArg",
+			},
+			{
+				fieldName: "wrote_id",
+				typeName:  "IDOperatorBlock",
+			},
+		}),
+		groupByArg,
+		buildHavingArg("author", "age", "name", "verified", "wrote_id"),
+		limitArg,
+		offsetArg,
 	},
-}
-
-var intArgType = map[string]any{
-	"inputFields": nil,
-	"name":        "Int",
-	"ofType":      nil,
-}
-
-var filterArg = map[string]any{
-	"name":   "authorFilterArg",
-	"ofType": nil,
-	"inputFields": []any{
-		makeInputObject("_and", nil, inputObjAuthorFilterArg),
-		makeInputObject("_key", "IDOperatorBlock", nil),
-		makeInputObject("_not", "authorFilterArg", nil),
-		makeInputObject("_or", nil, inputObjAuthorFilterArg),
-		makeInputObject("age", "IntOperatorBlock", nil),
-		makeInputObject("name", "StringOperatorBlock", nil),
-		makeInputObject("verified", "BooleanOperatorBlock", nil),
-		makeInputObject("wrote", "bookFilterBaseArg", nil),
-		makeInputObject("wrote_id", "IDOperatorBlock", nil),
-	},
-}
-
-var havingArg = map[string]any{
-	"name":   "authorHavingArg",
-	"ofType": nil,
-	"inputFields": []any{
-		makeAuthorHavingBlockForName("_avg"),
-		makeAuthorHavingBlockForName("_count"),
-		makeAuthorHavingBlockForName("_key"),
-		makeAuthorHavingBlockForName("_sum"),
-		makeAuthorHavingBlockForName("age"),
-		makeAuthorHavingBlockForName("name"),
-		makeAuthorHavingBlockForName("verified"),
-		makeAuthorHavingBlockForName("wrote_id"),
-	},
-}
-
-var inputObjAuthorFilterArg = map[string]any{
-	"kind": "INPUT_OBJECT",
-	"name": "authorFilterArg",
-}
-
-func makeAuthorHavingBlockForName(name string) map[string]any {
-	return makeInputObject(name, "authorHavingBlock", nil)
-}
+	testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
+)
