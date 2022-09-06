@@ -164,7 +164,7 @@ var defaultGroupArgsWithoutOrder = trimFields(
 			},
 			{
 				fieldName: "wrote",
-				typeName:  "bookFilterBaseArg",
+				typeName:  "bookFilterArg",
 			},
 			{
 				fieldName: "wrote_id",

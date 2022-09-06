@@ -21,7 +21,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -63,7 +65,7 @@ func toSelect(
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
-	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping)
+	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -556,6 +558,7 @@ func resolveFilterDependencies(
 	parentCollectionName string,
 	source *parser.Filter,
 	mapping *core.DocumentMapping,
+	existingFields []Requestable,
 ) ([]Requestable, error) {
 	if source == nil {
 		return nil, nil
@@ -566,6 +569,7 @@ func resolveFilterDependencies(
 		parentCollectionName,
 		source.Conditions,
 		mapping,
+		existingFields,
 	)
 }
 
@@ -574,6 +578,7 @@ func resolveInnerFilterDependencies(
 	parentCollectionName string,
 	source map[string]interface{},
 	mapping *core.DocumentMapping,
+	existingFields []Requestable,
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
@@ -584,14 +589,62 @@ func resolveInnerFilterDependencies(
 
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
-		if propertyMapped {
-			// Inner properties should be recursively checked here, however at the moment
-			// filters do not support querying any deeper anyway.
-			// https://github.com/sourcenetwork/defradb/issues/509
+		if !propertyMapped {
+			index := mapping.GetNextIndex()
+
+			dummyParsed := &parser.Select{
+				Name: key,
+			}
+
+			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+			if err != nil {
+				return nil, err
+			}
+
+			childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+			if err != nil {
+				return nil, err
+			}
+			childMapping = childMapping.CloneWithoutRender()
+			mapping.SetChildAt(index, childMapping)
+
+			dummyJoin := &Select{
+				Targetable: Targetable{
+					Field: Field{
+						Index: index,
+						Name:  key,
+					},
+				},
+				CollectionName:  childCollectionName,
+				DocumentMapping: *childMapping,
+			}
+
+			newFields = append(newFields, dummyJoin)
+			mapping.Add(index, key)
+		}
+
+		keyIndex := mapping.FirstIndexOfName(key)
+
+		if keyIndex >= len(mapping.ChildMappings) {
+			// If the key index is outside the bounds of the child mapping array, then
+			// this is not a relation/join and we can continue (no child props to process)
 			continue
 		}
 
-		index := mapping.GetNextIndex()
+		childMap := mapping.ChildMappings[keyIndex]
+		if childMap == nil {
+			// If childMap is nil, then this is not a relation/join and we can continue
+			// (no child props to process)
+			continue
+		}
+
+		childSource := source[key]
+		childFilter, isChildFilter := childSource.(map[string]interface{})
+		if !isChildFilter {
+			// If the filter is not a child filter then the will be no inner dependencies to add and
+			// we can continue.
+			continue
+		}
 
 		dummyParsed := &parser.Select{
 			Name: key,
@@ -602,26 +655,45 @@ func resolveInnerFilterDependencies(
 			return nil, err
 		}
 
-		childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+		allFields := enumerable.Concat(
+			enumerable.New(newFields),
+			enumerable.New(existingFields),
+		)
+
+		matchingFields := enumerable.Where(allFields, func(existingField Requestable) (bool, error) {
+			return existingField.GetIndex() == keyIndex, nil
+		})
+
+		matchingHosts := enumerable.Select(matchingFields, func(existingField Requestable) (*Select, error) {
+			host, isSelect := existingField.AsSelect()
+			if !isSelect {
+				// This should never be possible
+				return nil, errors.New("Host must be a Select, but was not")
+			}
+			return host, nil
+		})
+
+		host, hasHost, err := enumerable.TryGetFirst(matchingHosts)
 		if err != nil {
 			return nil, err
 		}
-		childMapping = childMapping.CloneWithoutRender()
-		mapping.SetChildAt(index, childMapping)
-
-		dummyJoin := &Select{
-			Targetable: Targetable{
-				Field: Field{
-					Index: index,
-					Name:  key,
-				},
-			},
-			CollectionName:  childCollectionName,
-			DocumentMapping: *childMapping,
+		if !hasHost {
+			// This should never be possible
+			return nil, errors.New("Failed to find host field")
 		}
 
-		newFields = append(newFields, dummyJoin)
-		mapping.Add(index, key)
+		childFields, err := resolveInnerFilterDependencies(
+			descriptionsRepo,
+			childCollectionName,
+			childFilter,
+			childMap,
+			host.Fields,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		host.Fields = append(host.Fields, childFields...)
 	}
 
 	return newFields, nil

@@ -129,21 +129,13 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	generatedFilterBaseArgs := []*gql.InputObject{}
+	generatedFilterLeafArgs := []*gql.InputObject{}
 	for _, defaultType := range inlineArrayTypes() {
 		leafFilterArg := g.genLeafFilterArgInput(defaultType)
-		generatedFilterBaseArgs = append(generatedFilterBaseArgs, leafFilterArg)
+		generatedFilterLeafArgs = append(generatedFilterLeafArgs, leafFilterArg)
 	}
 
-	for _, t := range g.typeDefs {
-		generatedFilterBaseArg, hasFilter := g.tryGenTypeFilterBaseArgInput(t)
-		if !hasFilter {
-			continue
-		}
-		generatedFilterBaseArgs = append(generatedFilterBaseArgs, generatedFilterBaseArg)
-	}
-
-	for _, t := range generatedFilterBaseArgs {
+	for _, t := range generatedFilterLeafArgs {
 		err := g.appendIfNotExists(t)
 		if err != nil {
 			return nil, err
@@ -1119,7 +1111,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 					}
 				} else { // objects (relations)
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterBaseArg")],
+						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")],
 					}
 				}
 			}
@@ -1189,31 +1181,6 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 	inputCfg.Fields = fieldThunk
 	selfRefType = gql.NewInputObject(inputCfg)
 	return selfRefType
-}
-
-// input {Type.Name}FilterBaseArg { ... }
-func (g *Generator) tryGenTypeFilterBaseArgInput(obj *gql.Object) (*gql.InputObject, bool) {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "FilterBaseArg"),
-	}
-	fields := gql.InputObjectConfigFieldMap{}
-	// generate basic filter operator blocks for all the Leaf types
-	// (scalars + enums)
-	for _, field := range obj.Fields() {
-		operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
-		if isFilterable {
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: operatorType,
-			}
-		}
-	}
-
-	if len(fields) == 0 {
-		return nil, false
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg), true
 }
 
 // query spec - sec N
