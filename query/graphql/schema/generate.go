@@ -12,13 +12,13 @@ package schema
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 
 	gql "github.com/graphql-go/graphql"
@@ -130,6 +130,11 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 	}
 
 	generatedFilterBaseArgs := []*gql.InputObject{}
+	for _, defaultType := range inlineArrayTypes() {
+		leafFilterArg := g.genLeafFilterArgInput(defaultType)
+		generatedFilterBaseArgs = append(generatedFilterBaseArgs, leafFilterArg)
+	}
+
 	for _, t := range g.typeDefs {
 		generatedFilterBaseArg, hasFilter := g.tryGenTypeFilterBaseArgInput(t)
 		if !hasFilter {
@@ -297,9 +302,9 @@ func (g *Generator) createExpandedFieldAggregate(
 					if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
 						// GQL does not support '!' in type names, and so we have to manipulate the
 						// underlying name like this if it is a nullable type.
-						filterTypeName = fmt.Sprintf("NotNull%sOperatorBlock", notNull.OfType.Name())
+						filterTypeName = fmt.Sprintf("NotNull%sFilterArg", notNull.OfType.Name())
 					} else {
-						filterTypeName = genTypeName(list.OfType, "OperatorBlock")
+						filterTypeName = genTypeName(list.OfType, "FilterArg")
 					}
 				} else {
 					filterTypeName = targeted.Type.Name() + "FilterArg"
@@ -1124,6 +1129,63 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	)
 
 	// add the fields thunker
+	inputCfg.Fields = fieldThunk
+	selfRefType = gql.NewInputObject(inputCfg)
+	return selfRefType
+}
+
+func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
+	var selfRefType *gql.InputObject
+
+	var filterTypeName string
+	if notNull, isNotNull := obj.(*gql.NonNull); isNotNull {
+		// GQL does not support '!' in type names, and so we have to manipulate the
+		// underlying name like this if it is a nullable type.
+		filterTypeName = fmt.Sprintf("NotNull%s", notNull.OfType.Name())
+	} else {
+		filterTypeName = obj.Name()
+	}
+
+	inputCfg := gql.InputObjectConfig{
+		Name: fmt.Sprintf("%s%s", filterTypeName, "FilterArg"),
+	}
+
+	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		compoundListType := &gql.InputObjectFieldConfig{
+			Type: gql.NewList(selfRefType),
+		}
+
+		fields["_and"] = compoundListType
+		fields["_or"] = compoundListType
+
+		operatorBlockName := fmt.Sprintf("%s%s", filterTypeName, "OperatorBlock")
+		operatorType, hasOperatorType := g.manager.schema.TypeMap()[operatorBlockName]
+		if !hasOperatorType {
+			// This should be impossible
+			return nil, errors.New("Operator block not found", errors.NewKV("Name", operatorBlockName))
+		}
+
+		operatorObject, isInputObj := operatorType.(*gql.InputObject)
+		if !isInputObj {
+			// This should be impossible
+			return nil, errors.New(
+				"Invalid cast",
+				errors.NewKV("Expected type", "*gql.InputObject"),
+				errors.NewKV("Actual type", fmt.Sprintf("%T", operatorType)),
+			)
+		}
+
+		for f, field := range operatorObject.Fields() {
+			fields[f] = &gql.InputObjectFieldConfig{
+				Type: field.Type,
+			}
+		}
+
+		return fields, nil
+	}
+
 	inputCfg.Fields = fieldThunk
 	selfRefType = gql.NewInputObject(inputCfg)
 	return selfRefType
