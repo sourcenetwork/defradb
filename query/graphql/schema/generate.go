@@ -1101,6 +1101,10 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 				}
 				// scalars (leafs)
 				if gql.IsLeafType(field.Type) {
+					if _, isList := field.Type.(*gql.List); isList {
+						// Filtering by inline array value is currently not supported
+						continue
+					}
 					operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
 					if !isFilterable {
 						continue
