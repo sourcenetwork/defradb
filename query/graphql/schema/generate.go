@@ -353,10 +353,10 @@ func (g *Generator) createExpandedFieldList(
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"having":                schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
-			"order":                 schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			parserTypes.LimitClause: schemaTypes.NewArgConfig(gql.Int),
-			"offset":                schemaTypes.NewArgConfig(gql.Int),
+			"having":                 schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
+			"order":                  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -1316,15 +1316,15 @@ func (g *Generator) genTypeQueryableFieldList(
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":                schemaTypes.NewArgConfig(gql.String),
-			"dockeys":               schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":                   schemaTypes.NewArgConfig(gql.String),
-			"filter":                schemaTypes.NewArgConfig(config.filter),
-			"groupBy":               schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"having":                schemaTypes.NewArgConfig(config.having),
-			"order":                 schemaTypes.NewArgConfig(config.order),
-			parserTypes.LimitClause: schemaTypes.NewArgConfig(gql.Int),
-			"offset":                schemaTypes.NewArgConfig(gql.Int),
+			"dockey":                 schemaTypes.NewArgConfig(gql.String),
+			"dockeys":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"cid":                    schemaTypes.NewArgConfig(gql.String),
+			"filter":                 schemaTypes.NewArgConfig(config.filter),
+			"groupBy":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"having":                 schemaTypes.NewArgConfig(config.having),
+			"order":                  schemaTypes.NewArgConfig(config.order),
+			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
