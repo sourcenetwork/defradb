@@ -281,6 +281,7 @@ func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toF
 	}
 
 	if limit != nil {
+		items = enumerable.Skip(items, limit.Offset)
 		items = enumerable.Take(items, limit.Limit)
 	}
 
