@@ -70,6 +70,12 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 													"name": "Int",
 												},
 											},
+											map[string]interface{}{
+												"name": "offset",
+												"type": map[string]interface{}{
+													"name": "Int",
+												},
+											},
 										},
 									},
 								},

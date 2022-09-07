@@ -809,6 +809,10 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 				Type:        gql.Int,
 				Description: "The maximum number of child items to count.",
 			},
+			parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The index from which to start counting items.",
+			},
 		},
 	})
 
