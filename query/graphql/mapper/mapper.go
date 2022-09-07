@@ -1034,13 +1034,29 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 			}
 
 			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
+			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
+			var limitValue int64
+			var offsetValue int64
 			if hasLimitArg {
-				limitValue, err := strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				var err error
+				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
 				if err != nil {
 					return nil, err
 				}
+			}
+
+			if hasOffsetArg {
+				var err error
+				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if hasLimitArg || hasOffsetArg {
 				limit = &Limit{
-					Limit: limitValue,
+					Limit:  limitValue,
+					Offset: offsetValue,
 				}
 			}
 

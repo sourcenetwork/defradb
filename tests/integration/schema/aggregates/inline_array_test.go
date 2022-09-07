@@ -71,6 +71,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -101,6 +107,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},

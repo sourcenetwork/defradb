@@ -829,6 +829,10 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 					Type:        gql.Int,
 					Description: "The maximum number of child items to count.",
 				},
+				parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+					Type:        gql.Int,
+					Description: "The index from which to start counting items.",
+				},
 			},
 		})
 

@@ -154,6 +154,7 @@ func countItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit) (
 	}
 
 	if limit != nil {
+		items = enumerable.Skip(items, limit.Offset)
 		items = enumerable.Take(items, limit.Limit)
 	}
 
