@@ -128,6 +128,19 @@ func defaultDirectivesType() []*gql.Directive {
 	}
 }
 
+func inlineArrayTypes() []gql.Type {
+	return []gql.Type{
+		gql.Boolean,
+		gql.Float,
+		gql.Int,
+		gql.String,
+		gql.NewNonNull(gql.Boolean),
+		gql.NewNonNull(gql.Float),
+		gql.NewNonNull(gql.Int),
+		gql.NewNonNull(gql.String),
+	}
+}
+
 // default type map includes all the native scalar types
 func defaultTypes() []gql.Type {
 	return []gql.Type{
