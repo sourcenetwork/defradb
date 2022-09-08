@@ -16,6 +16,55 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query without group by, no children, count on non-existant group",
+		Query: `query {
+					users {
+						Age
+						_count(_group: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+		},
+		ExpectedError: "_group may only be referenced when within a groupBy query",
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query without group by, no children, count on inner non-existant group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_group {
+							Name
+							_count(_group: {})
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+		},
+		ExpectedError: "_group may only be referenced when within a groupBy query",
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group",
