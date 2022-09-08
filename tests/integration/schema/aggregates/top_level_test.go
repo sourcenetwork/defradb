@@ -111,6 +111,10 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 										name
 										type {
 											name
+											kind
+											ofType {
+												name
+											}
 										}
 									}
 								}
@@ -135,25 +139,35 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 											map[string]interface{}{
 												"name": "field",
 												"type": map[string]interface{}{
-													"name": "usersNumericFieldsArg",
+													"name": nil,
+													"kind": "NON_NULL",
+													"ofType": map[string]interface{}{
+														"name": "usersNumericFieldsArg",
+													},
 												},
 											},
 											map[string]interface{}{
 												"name": "filter",
 												"type": map[string]interface{}{
-													"name": "usersFilterArg",
+													"name":   "usersFilterArg",
+													"kind":   "INPUT_OBJECT",
+													"ofType": nil,
 												},
 											},
 											map[string]interface{}{
 												"name": "limit",
 												"type": map[string]interface{}{
-													"name": "Int",
+													"name":   "Int",
+													"kind":   "SCALAR",
+													"ofType": nil,
 												},
 											},
 											map[string]interface{}{
 												"name": "offset",
 												"type": map[string]interface{}{
-													"name": "Int",
+													"name":   "Int",
+													"kind":   "SCALAR",
+													"ofType": nil,
 												},
 											},
 										},
@@ -191,6 +205,10 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 										name
 										type {
 											name
+											kind
+											ofType {
+												name
+											}
 										}
 									}
 								}
@@ -215,25 +233,35 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 											map[string]interface{}{
 												"name": "field",
 												"type": map[string]interface{}{
-													"name": "usersNumericFieldsArg",
+													"name": nil,
+													"kind": "NON_NULL",
+													"ofType": map[string]interface{}{
+														"name": "usersNumericFieldsArg",
+													},
 												},
 											},
 											map[string]interface{}{
 												"name": "filter",
 												"type": map[string]interface{}{
-													"name": "usersFilterArg",
+													"name":   "usersFilterArg",
+													"kind":   "INPUT_OBJECT",
+													"ofType": nil,
 												},
 											},
 											map[string]interface{}{
 												"name": "limit",
 												"type": map[string]interface{}{
-													"name": "Int",
+													"name":   "Int",
+													"kind":   "SCALAR",
+													"ofType": nil,
 												},
 											},
 											map[string]interface{}{
 												"name": "offset",
 												"type": map[string]interface{}{
-													"name": "Int",
+													"name":   "Int",
+													"kind":   "SCALAR",
+													"ofType": nil,
 												},
 											},
 										},
