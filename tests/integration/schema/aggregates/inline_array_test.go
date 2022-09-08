@@ -71,6 +71,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -91,6 +97,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -101,6 +113,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
@@ -173,6 +191,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -195,6 +219,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
@@ -267,6 +297,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -289,6 +325,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
@@ -350,6 +392,13 @@ var aggregateGroupArg = map[string]interface{}{
 					"inputFields": nil,
 				},
 			},
+			map[string]interface{}{
+				"name": "offset",
+				"type": map[string]interface{}{
+					"name":        "Int",
+					"inputFields": nil,
+				},
+			},
 		},
 	},
 }
@@ -361,6 +410,13 @@ var aggregateVersionArg = map[string]interface{}{
 		"inputFields": []interface{}{
 			map[string]interface{}{
 				"name": "limit",
+				"type": map[string]interface{}{
+					"name":        "Int",
+					"inputFields": nil,
+				},
+			},
+			map[string]interface{}{
+				"name": "offset",
 				"type": map[string]interface{}{
 					"name":        "Int",
 					"inputFields": nil,
@@ -476,6 +532,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 												"inputFields": nil,
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
 									},
 								},
 							},
@@ -586,6 +649,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name":        "Int",
 												"inputFields": nil,
@@ -730,6 +800,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 												"inputFields": nil,
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
 									},
 								},
 							},
@@ -864,6 +941,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name":        "Int",
 												"inputFields": nil,
@@ -1008,6 +1092,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 												"inputFields": nil,
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
 									},
 								},
 							},
@@ -1147,6 +1238,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 												"inputFields": nil,
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
 									},
 								},
 							},
@@ -1268,6 +1366,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 												"inputFields": nil,
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
 									},
 								},
 							},
@@ -1378,6 +1483,13 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name":        "Int",
+												"inputFields": nil,
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name":        "Int",
 												"inputFields": nil,
