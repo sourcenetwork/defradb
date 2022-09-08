@@ -208,7 +208,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 										map[string]interface{}{
 											"name": "field",
 											"type": map[string]interface{}{
-												"name": "usersNumericFieldsArg",
+												"name": nil,
 											},
 										},
 										map[string]interface{}{
@@ -314,7 +314,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 										map[string]interface{}{
 											"name": "field",
 											"type": map[string]interface{}{
-												"name": "usersNumericFieldsArg",
+												"name": nil,
 											},
 										},
 										map[string]interface{}{

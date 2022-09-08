@@ -905,7 +905,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 
 		return gql.InputObjectConfigFieldMap{
 			"field": &gql.InputObjectFieldConfig{
-				Type: fieldsEnum,
+				Type: gql.NewNonNull(fieldsEnum),
 			},
 			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,

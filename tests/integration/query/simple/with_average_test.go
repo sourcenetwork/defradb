@@ -16,13 +16,25 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithAverageOnUndefined(t *testing.T) {
+func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query, average on undefined",
+		Description: "Simple query, average on undefined object",
 		Query: `query {
 					_avg
 				}`,
 		ExpectedError: "Aggregate must be provided with a property to aggregate.",
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query, average on undefined field",
+		Query: `query {
+					_avg(users: {})
+				}`,
+		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
 	}
 
 	executeTestCase(t, test)
