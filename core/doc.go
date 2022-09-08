@@ -96,7 +96,7 @@ type DocumentMapping struct {
 	//
 	// Indexes correspond exactly to field indexes, however entries may be default
 	// if the field is unmappable (e.g. integer fields).
-	ChildMappings []DocumentMapping
+	ChildMappings []*DocumentMapping
 }
 
 // NewDocumentMapping instantiates a new DocumentMapping instance.
@@ -111,7 +111,7 @@ func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	result := DocumentMapping{
 		IndexesByName: make(map[string][]int, len(source.IndexesByName)),
 		nextIndex:     source.nextIndex,
-		ChildMappings: make([]DocumentMapping, len(source.ChildMappings)),
+		ChildMappings: make([]*DocumentMapping, len(source.ChildMappings)),
 	}
 
 	for externalName, sourceIndexes := range source.IndexesByName {
@@ -121,7 +121,7 @@ func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	}
 
 	for i, childMapping := range source.ChildMappings {
-		result.ChildMappings[i] = *childMapping.CloneWithoutRender()
+		result.ChildMappings[i] = childMapping.CloneWithoutRender()
 	}
 
 	return &result
@@ -210,10 +210,10 @@ func (mapping *DocumentMapping) Add(index int, name string) {
 //
 // If the index is greater than the ChildMappings length the collection will
 // grow.
-func (m *DocumentMapping) SetChildAt(index int, childMapping DocumentMapping) {
-	var newMappings []DocumentMapping
+func (m *DocumentMapping) SetChildAt(index int, childMapping *DocumentMapping) {
+	var newMappings []*DocumentMapping
 	if index >= len(m.ChildMappings)-1 {
-		newMappings = make([]DocumentMapping, index+1)
+		newMappings = make([]*DocumentMapping, index+1)
 		copy(newMappings, m.ChildMappings)
 	} else {
 		newMappings = m.ChildMappings
@@ -238,6 +238,10 @@ func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string,
 
 	// Try to find the name of this index in the ChildMappings.
 	for _, childMapping := range mapping.ChildMappings {
+		if childMapping == nil {
+			continue
+		}
+
 		name, found := childMapping.TryToFindNameFromIndex(targetIndex)
 		if found {
 			return name, true

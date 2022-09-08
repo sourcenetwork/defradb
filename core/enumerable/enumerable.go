@@ -101,3 +101,15 @@ func OnEach[T any](source Enumerable[T], action func()) error {
 	source.Reset()
 	return nil
 }
+
+// TryGetFirst returns the first element yielded from the given source along with true.
+// If no items are yielded by the source, then false with be returned.  Any errors generated
+// during enumeration will be yielded instead of a value.
+func TryGetFirst[T any](source Enumerable[T]) (T, bool, error) {
+	hasNext, err := source.Next()
+	if err != nil || !hasNext {
+		var defaultV T
+		return defaultV, false, err
+	}
+	return source.Value(), true, nil
+}
