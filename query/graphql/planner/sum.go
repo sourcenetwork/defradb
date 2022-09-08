@@ -203,7 +203,7 @@ func (n *sumNode) Next() (bool, error) {
 		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem core.Doc) float64 {
+			collectionSum = sumDocs(childCollection, func(childItem core.Doc) float64 {
 				childProperty := childItem.Fields[source.ChildTarget.Index]
 				switch v := childProperty.(type) {
 				case int:
@@ -272,6 +272,20 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
+// offsets sums the documents in a slice, skipping over hidden items (a grouping mechanic).
+// Docs should be counted with this function to avoid applying offsets twice (once in the
+// select, then once here).
+func sumDocs(docs []core.Doc, toFloat func(core.Doc) float64) float64 {
+	var sum float64 = 0
+	for _, doc := range docs {
+		if !doc.Hidden {
+			sum += toFloat(doc)
+		}
+	}
+
+	return sum
+}
+
 func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toFloat func(T) float64) (float64, error) {
 	items := enumerable.New(source)
 	if filter != nil {
@@ -281,6 +295,7 @@ func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toF
 	}
 
 	if limit != nil {
+		items = enumerable.Skip(items, limit.Offset)
 		items = enumerable.Take(items, limit.Limit)
 	}
 

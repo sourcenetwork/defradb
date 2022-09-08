@@ -107,7 +107,7 @@ func (n *countNode) Next() (bool, error) {
 				var err error
 				switch array := property.(type) {
 				case []core.Doc:
-					arrayCount, err = countItems(array, source.Filter, source.Limit)
+					arrayCount = countDocs(array)
 
 				case []bool:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
@@ -145,6 +145,20 @@ func (n *countNode) Next() (bool, error) {
 	return true, nil
 }
 
+// countDocs counts the number of documents in a slice, skipping over hidden items
+// (a grouping mechanic). Docs should be counted with this function to avoid applying
+// offsets twice (once in the select, then once here).
+func countDocs(docs []core.Doc) int {
+	count := 0
+	for _, doc := range docs {
+		if !doc.Hidden {
+			count += 1
+		}
+	}
+
+	return count
+}
+
 func countItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit) (int, error) {
 	items := enumerable.New(source)
 	if filter != nil {
@@ -154,6 +168,7 @@ func countItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit) (
 	}
 
 	if limit != nil {
+		items = enumerable.Skip(items, limit.Offset)
 		items = enumerable.Take(items, limit.Limit)
 	}
 

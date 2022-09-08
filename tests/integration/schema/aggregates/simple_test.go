@@ -69,6 +69,12 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -79,6 +85,12 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 									"inputFields": []interface{}{
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
@@ -155,6 +167,12 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "offset",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
 									},
 								},
 							},
@@ -223,6 +241,12 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 										},
 										map[string]interface{}{
 											"name": "limit",
+											"type": map[string]interface{}{
+												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
 											},
