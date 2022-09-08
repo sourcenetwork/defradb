@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	cid "github.com/ipfs/go-cid"
@@ -295,6 +296,9 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					return nil, err
 				}
 			} else if f.Name == parserTypes.GroupFieldName {
+				if parsed.GroupBy == nil {
+					return nil, errors.New("_group may only be referenced when within a groupBy query")
+				}
 				n.groupSelects = append(n.groupSelects, f)
 			} else {
 				//nolint:errcheck
