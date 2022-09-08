@@ -269,7 +269,7 @@ func (c *collection) updateWithFilter(
 		// Get the document, and apply the patch
 		doc := docMap.ToMap(query.Value())
 		if isPatch {
-			err = c.applyPatch(txn, doc, parsedUpdater.GetArray())
+			// todo
 		} else if isMerge { // else is fine here
 			err = c.applyMerge(ctx, txn, doc, parsedUpdater.GetObject())
 		}
@@ -295,9 +295,15 @@ func (c *collection) applyPatch(
 		if err != nil {
 			return err
 		}
-		path, err := opObject.Get("path").StringBytes()
+
+		pathVal := opObject.Get("path")
+		if pathVal == nil {
+			return fmt.Errorf("missing document field to update")
+		}
+
+		path, err := pathVal.StringBytes()
 		if err != nil {
-			return fmt.Errorf("missing document field to update: %w", err)
+			return err
 		}
 
 		targetCollection, _, err := c.getCollectionForPatchOpPath(txn, string(path))
