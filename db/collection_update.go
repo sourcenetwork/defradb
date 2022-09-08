@@ -285,7 +285,7 @@ func (c *collection) updateWithFilter(
 	return results, nil
 }
 
-func (c *collection) applyPatch(
+func (c *collection) applyPatch( //nolint:unused
 	txn datastore.Txn,
 	doc map[string]interface{},
 	patch []*fastjson.Value,
@@ -325,7 +325,7 @@ func (c *collection) applyPatch(
 	return nil
 }
 
-func (c *collection) applyPatchOp(
+func (c *collection) applyPatchOp( //nolint:unused
 	txn datastore.Txn,
 	dockey string,
 	field string,
@@ -661,7 +661,7 @@ func (c *collection) createMapping() *core.DocumentMapping {
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *collection) getCollectionForPatchOpPath(
+func (c *collection) getCollectionForPatchOpPath( //nolint:unused
 	txn datastore.Txn,
 	path string,
 ) (col *collection, isArray bool, err error) {
@@ -670,7 +670,7 @@ func (c *collection) getCollectionForPatchOpPath(
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *collection) getTargetKeyForPatchPath(
+func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 	txn datastore.Txn,
 	doc map[string]interface{},
 	path string,
@@ -683,13 +683,13 @@ func (c *collection) getTargetKeyForPatchPath(
 	return "", nil
 }
 
-func splitPatchPath(path string) ([]string, int) {
+func splitPatchPath(path string) ([]string, int) { //nolint:unused
 	path = strings.TrimPrefix(path, "/")
 	pathParts := strings.Split(path, "/")
 	return pathParts, len(pathParts)
 }
 
-func getValFromDocForPatchPath(
+func getValFromDocForPatchPath( //nolint:unused
 	doc map[string]interface{},
 	path string,
 ) (string, interface{}, bool) {
@@ -700,7 +700,7 @@ func getValFromDocForPatchPath(
 	return getMapProp(doc, pathParts, length)
 }
 
-func getMapProp(
+func getMapProp( //nolint:unused
 	doc map[string]interface{},
 	paths []string,
 	length int,
