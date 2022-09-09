@@ -784,6 +784,10 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 						Type:        gql.Int,
 						Description: "The index from which to start aggregating items.",
 					},
+					parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+						Type:        g.manager.schema.TypeMap()["Ordering"],
+						Description: "The order in which to aggregate items.",
+					},
 				},
 			})
 
