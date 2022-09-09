@@ -919,6 +919,10 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 				Type:        gql.Int,
 				Description: "The index from which to start aggregating items.",
 			},
+			parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+				Type:        g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")],
+				Description: "The order in which to aggregate items.",
+			},
 		}, nil
 	}
 

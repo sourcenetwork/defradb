@@ -235,6 +235,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												"name": "Int",
 											},
 										},
+										map[string]interface{}{
+											"name": "order",
+											"type": map[string]interface{}{
+												"name": "usersOrderArg",
+											},
+										},
 									},
 								},
 							},
@@ -345,6 +351,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 											"name": "offset",
 											"type": map[string]interface{}{
 												"name": "Int",
+											},
+										},
+										map[string]interface{}{
+											"name": "order",
+											"type": map[string]interface{}{
+												"name": "usersOrderArg",
 											},
 										},
 									},

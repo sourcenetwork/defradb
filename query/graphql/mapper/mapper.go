@@ -206,8 +206,9 @@ func resolveAggregates(
 							Index: index,
 							Name:  target.hostExternalName,
 						},
-						Filter: convertedFilter,
-						Limit:  target.limit,
+						Filter:  convertedFilter,
+						Limit:   target.limit,
+						OrderBy: toOrderBy(target.order, childMapping),
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: *childMapping,
@@ -1174,8 +1175,22 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 							},
 						},
 					}
-				}
 
+				case *ast.ObjectValue:
+					// For relations the order arg will be the complex order object as used by the host object
+					// for non-aggregate ordering
+
+					// We use the parser package parsing for convienience here
+					orderConditions, err := parser.ParseConditionsInOrder(orderArgValue)
+					if err != nil {
+						return nil, err
+					}
+
+					order = &parserTypes.OrderBy{
+						Conditions: orderConditions,
+						Statement:  orderArgValue,
+					}
+				}
 			}
 
 			targets[i] = &aggregateRequestTarget{
