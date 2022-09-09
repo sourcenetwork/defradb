@@ -121,6 +121,23 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
+	// for each built type generate query inputs
+	queryType := g.manager.schema.QueryType()
+	generatedQueryFields := make([]*gql.Field, 0)
+	for _, t := range g.typeDefs {
+		f, err := g.GenerateQueryInputForGQLType(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		queryType.AddFieldConfig(f.Name, f)
+		generatedQueryFields = append(generatedQueryFields, f)
+	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
 	if err := g.genAggregateFields(ctx); err != nil {
 		return nil, err
 	}
@@ -142,22 +159,6 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		}
 	}
 
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
-		return nil, err
-	}
-
-	// for each built type generate query inputs
-	queryType := g.manager.schema.QueryType()
-	generatedQueryFields := make([]*gql.Field, 0)
-	for _, t := range g.typeDefs {
-		f, err := g.GenerateQueryInputForGQLType(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		queryType.AddFieldConfig(f.Name, f)
-		generatedQueryFields = append(generatedQueryFields, f)
-	}
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
