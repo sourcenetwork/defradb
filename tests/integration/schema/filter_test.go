@@ -131,7 +131,6 @@ var defaultUserArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildHavingArg("users", "name"),
 		buildOrderArg("users", []argDef{
 			{
 				fieldName: "name",
@@ -279,7 +278,6 @@ var defaultBookArgsWithoutFilter = trimFields(
 		groupByArg,
 		limitArg,
 		offsetArg,
-		buildHavingArg("book", "author_id", "name"),
 		buildOrderArg("book", []argDef{
 			{
 				fieldName: "author",

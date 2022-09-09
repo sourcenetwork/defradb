@@ -25,7 +25,6 @@ enum ValueOperatorInput {
 input GenericQueryInput {
     filter: GenericFilterArg
     groupBy: [GenericGroupByArg]
-    having: GenericHavingArg
     order: GenericOrderArg
     limit: GenericLimitArg
     offset: GenericOffsetArg

@@ -353,7 +353,6 @@ func (g *Generator) createExpandedFieldList(
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"having":                 schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
 			"order":                  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
 			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
 			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
@@ -978,7 +977,6 @@ func (g *Generator) GenerateQueryInputForGQLType(
 
 	// @todo: Don't add sub fields to filter/order for object list types
 	types.groupBy = g.genTypeFieldsEnum(obj)
-	types.having = g.genTypeHavingArgInput(obj)
 	types.order = g.genTypeOrderArgInput(obj)
 
 	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
@@ -1199,44 +1197,6 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 	return selfRefType
 }
 
-// query spec - sec N
-func (g *Generator) genTypeHavingArgInput(obj *gql.Object) *gql.InputObject {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "HavingArg"),
-	}
-	fields := gql.InputObjectConfigFieldMap{}
-	havingBlock := g.genTypeHavingBlockInput(obj)
-
-	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: havingBlock,
-			}
-		}
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
-}
-
-func (g *Generator) genTypeHavingBlockInput(obj *gql.Object) *gql.InputObject {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "HavingBlock"),
-	}
-	fields := gql.InputObjectConfigFieldMap{}
-
-	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: g.manager.schema.TypeMap()["FloatOperatorBlock"],
-			}
-		}
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
-}
-
 func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 	inputCfg := gql.InputObjectConfig{
 		Name: genTypeName(obj, "OrderArg"),
@@ -1279,7 +1239,6 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 type queryInputTypeConfig struct {
 	filter  *gql.InputObject
 	groupBy *gql.Enum
-	having  *gql.InputObject
 	order   *gql.InputObject
 }
 
@@ -1309,15 +1268,6 @@ func (g *Generator) genTypeQueryableFieldList(
 		)
 	}
 
-	if err := g.manager.schema.AppendType(config.having); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema with having",
-			err,
-			logging.NewKV("SchemaItem", config.having),
-		)
-	}
-
 	if err := g.manager.schema.AppendType(config.order); err != nil {
 		log.ErrorE(
 			ctx,
@@ -1337,7 +1287,6 @@ func (g *Generator) genTypeQueryableFieldList(
 			"cid":                    schemaTypes.NewArgConfig(gql.String),
 			"filter":                 schemaTypes.NewArgConfig(config.filter),
 			"groupBy":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"having":                 schemaTypes.NewArgConfig(config.having),
 			"order":                  schemaTypes.NewArgConfig(config.order),
 			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
 			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),

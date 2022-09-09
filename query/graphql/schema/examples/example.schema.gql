@@ -147,6 +147,6 @@ input AuthorOrderArg {
 }
 
 type Query {
-    books(filter: BookFilterArg, groupBy: [BookFields!], having: BookHavingArg, order: BookOrderArg, limit: Int, offset: Int) [Book]
-    authors(filter: AuthorFilterArg, groupBy: [AuthorFields!], having: AuthorHavingArg, order: AuthorOrderArg, limit: Int, offset: Int) [Author]
+    books(filter: BookFilterArg, groupBy: [BookFields!], order: BookOrderArg, limit: Int, offset: Int) [Book]
+    authors(filter: AuthorFilterArg, groupBy: [AuthorFields!], order: AuthorOrderArg, limit: Int, offset: Int) [Author]
 }

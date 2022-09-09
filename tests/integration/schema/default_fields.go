@@ -165,29 +165,6 @@ var offsetArg = field{
 	},
 }
 
-func buildHavingArg(objectName string, fields ...string) field {
-	havingBlockName := objectName + "HavingBlock"
-	inputFields := []any{
-		makeInputObject("_avg", havingBlockName, nil),
-		makeInputObject("_count", havingBlockName, nil),
-		makeInputObject("_key", havingBlockName, nil),
-		makeInputObject("_sum", havingBlockName, nil),
-	}
-
-	for _, field := range fields {
-		inputFields = append(inputFields, makeInputObject(field, havingBlockName, nil))
-	}
-
-	return field{
-		"name": "having",
-		"type": field{
-			"name":        objectName + "HavingArg",
-			"ofType":      nil,
-			"inputFields": inputFields,
-		},
-	}
-}
-
 type argDef struct {
 	fieldName string
 	typeName  string
