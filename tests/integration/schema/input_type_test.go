@@ -172,7 +172,6 @@ var defaultGroupArgsWithoutOrder = trimFields(
 			},
 		}),
 		groupByArg,
-		buildHavingArg("author", "age", "name", "verified", "wrote_id"),
 		limitArg,
 		offsetArg,
 	},
