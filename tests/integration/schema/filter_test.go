@@ -125,7 +125,7 @@ var testFilterForSimpleSchemaArgProps = map[string]any{
 
 var defaultUserArgsWithoutFilter = trimFields(
 	fields{
-		cidArg,
+		defaults.cidArg,
 		dockeyArg,
 		dockeysArg,
 		groupByArg,

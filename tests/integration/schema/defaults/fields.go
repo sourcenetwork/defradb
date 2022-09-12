@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package schema
+package defaults
 
 import "sort"
 
@@ -113,58 +113,6 @@ var aggregateFields = fields{
 	},
 }
 
-var cidArg = field{
-	"name": "cid",
-	"type": map[string]any{
-		"name":        "String",
-		"inputFields": nil,
-	},
-}
-var dockeyArg = field{
-	"name": "dockey",
-	"type": map[string]any{
-		"name":        "String",
-		"inputFields": nil,
-	},
-}
-var dockeysArg = field{
-	"name": "dockeys",
-	"type": map[string]any{
-		"name":        nil,
-		"inputFields": nil,
-	},
-}
-
-var groupByArg = field{
-	"name": "groupBy",
-	"type": map[string]any{
-		"name":        nil,
-		"inputFields": nil,
-		"ofType": map[string]any{
-			"kind": "NON_NULL",
-			"name": nil,
-		},
-	},
-}
-
-var limitArg = field{
-	"name": "limit",
-	"type": map[string]any{
-		"name":        "Int",
-		"inputFields": nil,
-		"ofType":      nil,
-	},
-}
-
-var offsetArg = field{
-	"name": "offset",
-	"type": map[string]any{
-		"name":        "Int",
-		"inputFields": nil,
-		"ofType":      nil,
-	},
-}
-
 type argDef struct {
 	fieldName string
 	typeName  string
@@ -252,20 +200,4 @@ func trimFields(fullDefaultFields fields, properties map[string]any) fields {
 		result = append(result, trimField(field, properties))
 	}
 	return result
-}
-
-// makeInputObject retrned a properly made input field type
-// using name (outer), name of type (inner), and types ofType.
-func makeInputObject(
-	name string,
-	typeName any,
-	ofType any,
-) map[string]any {
-	return map[string]any{
-		"name": name,
-		"type": map[string]any{
-			"name":   typeName,
-			"ofType": ofType,
-		},
-	}
 }

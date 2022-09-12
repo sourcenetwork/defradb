@@ -12,6 +12,8 @@ package schema
 
 import (
 	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/integration/schema/defaults"
 )
 
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
@@ -125,7 +127,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 									},
 								},
 							},
-						).tidy(),
+						),
 					},
 				},
 			},
@@ -147,33 +149,6 @@ var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any
 	},
 }
 
-var defaultGroupArgsWithoutOrder = trimFields(
-	fields{
-		buildFilterArg("author", []argDef{
-			{
-				fieldName: "age",
-				typeName:  "IntOperatorBlock",
-			},
-			{
-				fieldName: "name",
-				typeName:  "StringOperatorBlock",
-			},
-			{
-				fieldName: "verified",
-				typeName:  "BooleanOperatorBlock",
-			},
-			{
-				fieldName: "wrote",
-				typeName:  "bookFilterArg",
-			},
-			{
-				fieldName: "wrote_id",
-				typeName:  "IDOperatorBlock",
-			},
-		}),
-		groupByArg,
-		limitArg,
-		offsetArg,
-	},
-	testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps,
+var defaultGroupArgsWithoutOrder = defaults.MakeDefaultGroupArgsWithout(
+	[]string{"order"},
 )
