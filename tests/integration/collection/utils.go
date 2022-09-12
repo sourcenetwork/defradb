@@ -22,6 +22,8 @@ import (
 )
 
 type TestCase struct {
+	Description string
+
 	// docs is a map from Collection name, to a list
 	// of docs in stringified JSON format
 	Docs map[string][]string
@@ -53,7 +55,7 @@ func ExecuteQueryTestCase(
 	db := dbi.DB()
 
 	err = db.AddSchema(ctx, schema)
-	if assertError(t, err, testCase.ExpectedError) {
+	if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 		return
 	}
 
@@ -61,20 +63,20 @@ func ExecuteQueryTestCase(
 
 	for collectionName, collectionCallSet := range testCase.CollectionCalls {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if assertError(t, err, testCase.ExpectedError) {
+		if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 			return
 		}
 
 		for _, collectionCall := range collectionCallSet {
 			err := collectionCall(col)
-			if assertError(t, err, testCase.ExpectedError) {
+			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}
 		}
 	}
 
 	if testCase.ExpectedError != "" {
-		assert.Fail(t, "Expected an error however none was raised.")
+		assert.Fail(t, "Expected an error however none was raised.", testCase.Description)
 	}
 }
 
@@ -86,30 +88,30 @@ func setupDatabase(
 ) {
 	for collectionName, docs := range testCase.Docs {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if assertError(t, err, testCase.ExpectedError) {
+		if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 			return
 		}
 
 		for _, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if assertError(t, err, testCase.ExpectedError) {
+			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}
 			err = col.Save(ctx, doc)
-			if assertError(t, err, testCase.ExpectedError) {
+			if assertError(t, testCase.Description, err, testCase.ExpectedError) {
 				return
 			}
 		}
 	}
 }
 
-func assertError(t *testing.T, err error, expectedError string) bool {
+func assertError(t *testing.T, description string, err error, expectedError string) bool {
 	if err == nil {
 		return false
 	}
 
 	if expectedError == "" {
-		assert.NoError(t, err)
+		assert.NoError(t, err, description)
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
