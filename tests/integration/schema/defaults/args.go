@@ -11,82 +11,82 @@
 package defaults
 
 var allDefaultGroupArgs = []any{
-	filterArg,
-	groupByArg,
-	limitArg,
-	offsetArg,
-	orderArg,
-	cidArg,
-	dockeyArg,
-	dockeysArg,
+	FilterArg,
+	GroupByArg,
+	LimitArg,
+	OffsetArg,
+	OrderArg,
+	CidArg,
+	DockeyArg,
+	DockeysArg,
 }
 
-var filterArg = field{
+var FilterArg = Field{
 	"name": "filter",
 	"type": filterArgType,
 }
 
-var groupByArg = field{
+var GroupByArg = Field{
 	"name": "groupBy",
 	"type": groupByArgType,
 }
 
-var limitArg = field{
+var LimitArg = Field{
 	"name": "limit",
 	"type": intArgType,
 }
 
-var offsetArg = field{
+var OffsetArg = Field{
 	"name": "offset",
 	"type": intArgType,
 }
 
-var orderArg = field{
+var OrderArg = Field{
 	"name": "order",
 	"type": orderArgType,
 }
 
-var cidArg = field{
+var CidArg = Field{
 	"name": "cid",
 	"type": stringArgType,
 }
 
-var dockeyArg = field{
+var DockeyArg = Field{
 	"name": "dockey",
 	"type": stringArgType,
 }
 
-var dockeysArg = field{
+var DockeysArg = Field{
 	"name": "dockeys",
 	"type": nilArgType,
 }
 
-var groupByArgType = field{
+var groupByArgType = Field{
 	"inputFields": nil,
 	"name":        nil,
-	"ofType": field{
+	"ofType": Field{
 		"kind": "NON_NULL",
 		"name": nil,
 	},
 }
 
-var intArgType = field{
+var intArgType = Field{
 	"inputFields": nil,
 	"name":        "Int",
 	"ofType":      nil,
 }
 
-var stringArgType = field{
+var stringArgType = Field{
 	"inputFields": nil,
 	"name":        "String",
 }
 
-var nilArgType = field{
+var nilArgType = Field{
 	"name":        nil,
 	"inputFields": nil,
 }
 
-var filterArgType = field{
+var filterArgType = Field{
 	"name":   "authorFilterArg",
 	"ofType": nil,
 	"inputFields": []any{
@@ -104,7 +104,7 @@ var filterArgType = field{
 	},
 }
 
-var orderArgType = field{
+var orderArgType = Field{
 	"name":   "authorOrderArg",
 	"ofType": nil,
 	"inputFields": []any{

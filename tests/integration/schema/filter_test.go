@@ -12,6 +12,8 @@ package schema
 
 import (
 	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/integration/schema/defaults"
 )
 
 func TestFilterForSimpleSchema(t *testing.T) {
@@ -104,7 +106,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 										},
 									},
 								},
-							).tidy(),
+							).Tidy(),
 						},
 					},
 				},
@@ -123,18 +125,18 @@ var testFilterForSimpleSchemaArgProps = map[string]any{
 	},
 }
 
-var defaultUserArgsWithoutFilter = trimFields(
-	fields{
-		defaults.cidArg,
-		dockeyArg,
-		dockeysArg,
-		groupByArg,
-		limitArg,
-		offsetArg,
-		buildOrderArg("users", []argDef{
+var defaultUserArgsWithoutFilter = defaults.TrimFields(
+	defaults.Fields{
+		defaults.CidArg,
+		defaults.DockeyArg,
+		defaults.DockeysArg,
+		defaults.GroupByArg,
+		defaults.LimitArg,
+		defaults.OffsetArg,
+		defaults.BuildOrderArg("users", []defaults.ArgDef{
 			{
-				fieldName: "name",
-				typeName:  "Ordering",
+				FieldName: "name",
+				TypeName:  "Ordering",
 			},
 		}),
 	},
@@ -251,7 +253,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 										},
 									},
 								},
-							).tidy(),
+							).Tidy(),
 						},
 					},
 				},
@@ -270,26 +272,26 @@ var testFilterForOneToOneSchemaArgProps = map[string]any{
 	},
 }
 
-var defaultBookArgsWithoutFilter = trimFields(
-	fields{
-		cidArg,
-		dockeyArg,
-		dockeysArg,
-		groupByArg,
-		limitArg,
-		offsetArg,
-		buildOrderArg("book", []argDef{
+var defaultBookArgsWithoutFilter = defaults.TrimFields(
+	defaults.Fields{
+		defaults.CidArg,
+		defaults.DockeyArg,
+		defaults.DockeysArg,
+		defaults.GroupByArg,
+		defaults.LimitArg,
+		defaults.OffsetArg,
+		defaults.BuildOrderArg("book", []defaults.ArgDef{
 			{
-				fieldName: "author",
-				typeName:  "",
+				FieldName: "author",
+				TypeName:  "",
 			},
 			{
-				fieldName: "author_id",
-				typeName:  "Ordering",
+				FieldName: "author_id",
+				TypeName:  "Ordering",
 			},
 			{
-				fieldName: "name",
-				typeName:  "Ordering",
+				FieldName: "name",
+				TypeName:  "Ordering",
 			},
 		}),
 	},

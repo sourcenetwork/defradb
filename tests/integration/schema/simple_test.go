@@ -12,6 +12,8 @@ package schema
 
 import (
 	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/integration/schema/defaults"
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
@@ -112,7 +114,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 		ExpectedData: map[string]interface{}{
 			"__type": map[string]interface{}{
 				"name":   "users",
-				"fields": defaultFields.tidy(),
+				"fields": defaults.DefaultFields.Tidy(),
 			},
 		},
 	}
@@ -168,15 +170,15 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 		ExpectedData: map[string]interface{}{
 			"__type": map[string]interface{}{
 				"name": "users",
-				"fields": defaultFields.append(
-					field{
+				"fields": defaults.DefaultFields.Append(
+					defaults.Field{
 						"name": "Name",
 						"type": map[string]interface{}{
 							"kind": "SCALAR",
 							"name": "String",
 						},
 					},
-				).tidy(),
+				).Tidy(),
 			},
 		},
 	}

@@ -16,30 +16,30 @@ func makeInputObject(
 	name string,
 	typeName any,
 	ofType any,
-) field {
-	return field{
+) Field {
+	return Field{
 		"name": name,
-		"type": field{
+		"type": Field{
 			"name":   typeName,
 			"ofType": ofType,
 		},
 	}
 }
 
-func makeAuthorOrdering(name string) field {
+func makeAuthorOrdering(name string) Field {
 	return makeInputObject(name, "Ordering", nil)
 }
 
-func MakeDefaultGroupArgsWithout(skipThese []string) []field {
+func MakeDefaultGroupArgsWithout(skipThese []string) []any {
 	defaultsWithSomeSkipped := make(
-		[]map[string]any,
+		[]any,
 		0,
 		len(allDefaultGroupArgs)-len(skipThese),
 	)
 
 ArgLoop:
 	for _, argAny := range allDefaultGroupArgs {
-		arg, ok := argAny.(field)
+		arg, ok := argAny.(Field)
 		if !ok {
 			panic("wrong usage of testing schema factory method.")
 		}
@@ -56,10 +56,8 @@ ArgLoop:
 		}
 
 		// If we make it till here we, don't want to skip this arg.
-		defaultsWithSomeSkipped = append(defaultsWithSomeSkipped, arg)
-
+		defaultsWithSomeSkipped = append(defaultsWithSomeSkipped, argAny)
 	}
 
 	return defaultsWithSomeSkipped
-
 }
