@@ -105,3 +105,35 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic ge float nil filter",
+		Query: `query {
+					users(filter: {HeightM: {_ge: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Bob",
+			},
+			{
+				"Name": "John",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

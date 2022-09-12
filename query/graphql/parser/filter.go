@@ -171,12 +171,10 @@ func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
 		return val.GetValue().(string), nil
 	case "BooleanValue":
 		return val.GetValue().(bool), nil
-	// Ignoring Null input, see:
-	// - https://github.com/graphql-go/graphql/issues/178
-	// - https://github.com/99designs/gqlgen/issues/1416
-	//
-	// case "NullValue":
-	// 	return nil, nil
+
+	case "NullValue":
+		return nil, nil
+
 	case "ListValue":
 		list := make([]interface{}, 0)
 		for _, item := range val.GetValue().([]ast.Value) {

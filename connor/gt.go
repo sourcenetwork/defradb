@@ -9,6 +9,10 @@ import (
 // gt does value comparisons to determine whether one
 // value is strictly larger than another.
 func gt(condition, data interface{}) (bool, error) {
+	if condition == nil {
+		return data != nil, nil
+	}
+
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {

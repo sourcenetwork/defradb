@@ -20,7 +20,7 @@ func TestQuerySimpleWithNotInFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with not-in filter",
 		Query: `query {
-					users(filter: {Age: {_nin: [19, 40, 55]}}) {
+					users(filter: {Age: {_nin: [19, 40, 55, null]}}) {
 						Name
 					}
 				}`,
@@ -41,6 +41,9 @@ func TestQuerySimpleWithNotInFilter(t *testing.T) {
 				`{
 					"Name": "Alice",
 					"Age": 19
+				}`,
+				`{
+					"Name": "Fred"
 				}`,
 			},
 		},
