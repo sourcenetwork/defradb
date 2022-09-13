@@ -432,37 +432,3 @@ func TestDBSchemaSaveSimpleDocument(t *testing.T) {
 	err = db.PrintDump(ctx)
 	assert.Nil(t, err)
 }
-
-func TestDBUpdateDocWithFilter(t *testing.T) {
-	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
-	assert.NoError(t, err)
-	col, err := newTestCollectionWithSchema(ctx, db)
-	assert.NoError(t, err)
-
-	testJSONObj := []byte(`{
-		"Name": "John",
-		"Age": 21
-	}`)
-
-	doc, err := client.NewDocFromJSON(testJSONObj)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	err = col.Save(ctx, doc)
-	assert.NoError(t, err)
-
-	_, err = col.UpdateWithFilter(ctx, `{Name: {_eq: "John"}}`, `{
-		"Name": "Eric"
-	}`)
-	assert.NoError(t, err)
-
-	doc, err = col.Get(ctx, doc.Key())
-	assert.NoError(t, err)
-
-	name, err := doc.Get("Name")
-	assert.NoError(t, err)
-	assert.Equal(t, "Eric", name)
-}
