@@ -31,4 +31,4 @@ jobs:
         run: ./build/defradb start &
 
       - name: Run the tests, showing name of each test
-        run: make test:names
+        run: make test:ci
