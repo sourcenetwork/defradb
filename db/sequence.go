@@ -13,10 +13,10 @@ package db
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 type sequence struct {

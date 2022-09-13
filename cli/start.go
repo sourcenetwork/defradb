@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	gonet "net"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	netapi "github.com/sourcenetwork/defradb/net/api"
 	netpb "github.com/sourcenetwork/defradb/net/api/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"

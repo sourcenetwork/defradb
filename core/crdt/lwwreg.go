@@ -17,7 +17,7 @@ import (
 	"context"
 	"fmt"
 
-	"errors"
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"

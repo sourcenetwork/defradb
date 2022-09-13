@@ -17,10 +17,9 @@ import (
 	"fmt"
 	"sort"
 
-	"errors"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 
 	cid "github.com/ipfs/go-cid"

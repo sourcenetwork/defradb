@@ -6,7 +6,6 @@ package badger
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	logger "github.com/ipfs/go-log/v2"
 	goprocess "github.com/jbenet/goprocess"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/errors"
 	"go.uber.org/zap"
 )
 

@@ -10,7 +10,7 @@
 
 package client
 
-import "errors"
+import "github.com/sourcenetwork/defradb/errors"
 
 // Errors returnable from this package.
 //

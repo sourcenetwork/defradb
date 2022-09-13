@@ -11,14 +11,13 @@
 package schema
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 

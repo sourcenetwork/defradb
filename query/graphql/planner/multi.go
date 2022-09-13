@@ -11,10 +11,10 @@
 package planner
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 /*

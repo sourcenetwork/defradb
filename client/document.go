@@ -12,10 +12,11 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"

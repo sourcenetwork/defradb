@@ -15,12 +15,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/stretchr/testify/assert"
 )

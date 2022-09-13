@@ -12,11 +12,12 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/spf13/cobra"
