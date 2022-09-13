@@ -965,7 +965,58 @@ func (f *Filter) equal(other *Filter) bool {
 		return f == nil
 	}
 
-	return reflect.DeepEqual(f.Conditions, other.Conditions)
+	if len(f.Conditions) != len(other.Conditions) {
+		return false
+	}
+
+	// Before calling DeepEqual we need to make sure the keys aren't pointers,
+	// if they are pointers then dereference them for DeepEqual to work properly.
+	// Interface pointers don't get deferenced automatically and we should
+	// probably rework the filter keys to not be stored as pointers.
+	//
+	// For example if we have this, (DeepEqual will return false):
+	// f.Conditions         :  map[0xc00069cfd0:map[0xc005eda8c0:<nil>]]
+	// other.Conditions     :  map[0xc00069cfe8:map[0xc005edaa80:<nil>]]
+	//
+	// DeepEqual works if we convert the above to it's dereferenced type:
+	// new-f.Conditions     :  map[{5}:map[{_ne}:<nil>]]
+	// new-other.Conditions :  map[{5}:map[{_ne}:<nil>]]
+	thisConditions := derefConditionsKeys(f.Conditions)
+	otherConditions := derefConditionsKeys(other.Conditions)
+
+	return reflect.DeepEqual(thisConditions, otherConditions)
+}
+
+// derefConditionsKeys dereferences underlying pointer types of interface which
+// are keys in a map. If the value of the map is also a map with pointer keys,
+// it will recursively handle them.
+//
+// This is usefull when we have : map[0xc00069cfd0:map[0xc005eda8c0:<nil>]]
+// And want to dereference it rescursively to : map[{5}:map[{_ne}:<nil>]]
+func derefConditionsKeys(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
+	resultConditions := make(map[connor.FilterKey]any)
+
+	for keyAddress, valueAddress := range conditions {
+		var defrefKey connor.FilterKey
+
+		switch key := keyAddress.(type) {
+		case *Operator:
+			defrefKey = *key
+
+		case *PropertyIndex:
+			defrefKey = *key
+		}
+
+		switch value := valueAddress.(type) {
+		case map[connor.FilterKey]any:
+			resultConditions[defrefKey] = derefConditionsKeys(value)
+
+		default:
+			resultConditions[defrefKey] = value
+		}
+	}
+
+	return resultConditions
 }
 
 // aggregateRequest is an intermediary struct defining a consumer-requested
