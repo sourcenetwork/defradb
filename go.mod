@@ -214,7 +214,7 @@ require (
 
 replace (
 	// SourceNetwork fork og graphql-go
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220715142118-2451189331c1
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220913191310-ead59e54dae4
 
 	// dev branch for ipfslite until merged
 	github.com/hsanjuan/ipfs-lite => github.com/sourcenetwork/ipfs-lite v1.2.1-0.20220516213426-71dfac7c1b6a
