@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
@@ -602,6 +603,10 @@ func (c *collection) save(
 				return cid.Undef, client.ErrFieldNotExist(k)
 			}
 
+			if c.isFieldRelationId(k) {
+				return cid.Undef, client.ErrFieldNotExist(k)
+			}
+
 			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
@@ -937,6 +942,30 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 		}
 	}
 	return uint32(0), false
+}
+
+// isFieldRelationId returns true if the given field is the id field backing a relationship.
+func (c *collection) isFieldRelationId(fieldName string) bool {
+	fieldDescription, valid := c.desc.GetField(fieldName)
+	if !valid {
+		return false
+	}
+
+	return c.isFieldRelationIdD(&fieldDescription)
+}
+
+// isFieldRelationIdD returns true if the given field is the id field backing a relationship.
+func (c *collection) isFieldRelationIdD(fieldDescription *client.FieldDescription) bool {
+	if fieldDescription.RelationType == client.Relation_Type_INTERNAL_ID {
+		relationDescription, valid := c.desc.GetField(strings.TrimSuffix(fieldDescription.Name, "_id"))
+		if !valid {
+			return false
+		}
+		if relationDescription.IsPrimaryRelation() {
+			return true
+		}
+	}
+	return false
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.
