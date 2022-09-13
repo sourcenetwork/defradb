@@ -20,26 +20,22 @@ import (
 )
 
 func TestUpdateWithKeys(t *testing.T) {
-	doc1, err := client.NewDocFromJSON(
-		[]byte(
-			`{
-				"Name": "John",
-				"Age": 21
-			}`,
-		),
-	)
+	docStr1 := `{
+		"Name": "John",
+		"Age": 21
+	}`
+
+	doc1, err := client.NewDocFromJSON([]byte(docStr1))
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
 
-	doc2, err := client.NewDocFromJSON(
-		[]byte(
-			`{
-				"Name": "Sam",
-				"Age": 32
-			}`,
-		),
-	)
+	docStr2 := `{
+		"Name": "Sam",
+		"Age": 32
+	}`
+
+	doc2, err := client.NewDocFromJSON([]byte(docStr2))
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -49,13 +45,8 @@ func TestUpdateWithKeys(t *testing.T) {
 			Description: "Test update users with keys and invalid JSON",
 			Docs: map[string][]string{
 				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`, `{
-						"Name": "Sam",
-						"Age": 32
-					}`,
+					docStr1,
+					docStr2,
 				},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
@@ -69,18 +60,13 @@ func TestUpdateWithKeys(t *testing.T) {
 					},
 				},
 			},
-			ExpectedError: "cannot parse JSON: cannot parse object: cannot find opening '\"\" for object key; unparsed tail: \"Name: \\\"Eric\\\"\\n\\t\\t\\t\\t\\t\\t}\"",
+			ExpectedError: "cannot parse JSON: cannot parse object",
 		}, {
 			Description: "Test update users with keys and invalid updator",
 			Docs: map[string][]string{
 				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`, `{
-						"Name": "Sam",
-						"Age": 32
-					}`,
+					docStr1,
+					docStr2,
 				},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
@@ -97,13 +83,8 @@ func TestUpdateWithKeys(t *testing.T) {
 			Description: "Test update users with keys and patch updator (not implemented so no change)",
 			Docs: map[string][]string{
 				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`, `{
-						"Name": "Sam",
-						"Age": 32
-					}`,
+					docStr1,
+					docStr2,
 				},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
@@ -153,13 +134,8 @@ func TestUpdateWithKeys(t *testing.T) {
 			Description: "Test update users with keys",
 			Docs: map[string][]string{
 				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`, `{
-						"Name": "Sam",
-						"Age": 32
-					}`,
+					docStr1,
+					docStr2,
 				},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{

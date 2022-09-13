@@ -20,14 +20,12 @@ import (
 )
 
 func TestUpdateWithKey(t *testing.T) {
-	doc, err := client.NewDocFromJSON(
-		[]byte(
-			`{
-				"Name": "John",
-				"Age": 21
-			}`,
-		),
-	)
+	docStr := `{
+		"Name": "John",
+		"Age": 21
+	}`
+
+	doc, err := client.NewDocFromJSON([]byte(docStr))
 	if err != nil {
 		assert.Fail(t, err.Error())
 	}
@@ -36,12 +34,7 @@ func TestUpdateWithKey(t *testing.T) {
 		{
 			Description: "Test update users with key and invalid JSON",
 			Docs: map[string][]string{
-				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
+				"users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
 				"users": []func(c client.Collection) error{
@@ -54,16 +47,11 @@ func TestUpdateWithKey(t *testing.T) {
 					},
 				},
 			},
-			ExpectedError: "cannot parse JSON: cannot parse object: cannot find opening '\"\" for object key; unparsed tail: \"Name: \\\"Eric\\\"\\n\\t\\t\\t\\t\\t\\t}\"",
+			ExpectedError: "cannot parse JSON: cannot parse object",
 		}, {
 			Description: "Test update users with key and invalid updator",
 			Docs: map[string][]string{
-				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
+				"users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
 				"users": []func(c client.Collection) error{
@@ -78,12 +66,7 @@ func TestUpdateWithKey(t *testing.T) {
 		}, {
 			Description: "Test update users with key and patch updator (not implemented so no change)",
 			Docs: map[string][]string{
-				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
+				"users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
 				"users": []func(c client.Collection) error{
@@ -119,12 +102,7 @@ func TestUpdateWithKey(t *testing.T) {
 		}, {
 			Description: "Test update users with key",
 			Docs: map[string][]string{
-				"users": {
-					`{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
+				"users": {docStr},
 			},
 			CollectionCalls: map[string][]func(client.Collection) error{
 				"users": []func(c client.Collection) error{
