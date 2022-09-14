@@ -350,7 +350,9 @@ func (g *Generator) createExpandedFieldList(
 		Name: f.Name,
 		Type: gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"filter": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"dockey":  schemaTypes.NewArgConfig(gql.String),
+			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"filter":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),

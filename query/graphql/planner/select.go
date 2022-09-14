@@ -115,6 +115,8 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
+	docKeys mapper.OptionalDocKeys
+
 	parsed       *mapper.Select
 	groupSelects []*mapper.Select
 }
@@ -147,10 +149,21 @@ func (n *selectNode) Next() (bool, error) {
 			return false, err
 		}
 
-		if passes {
-			return true, err
+		if !passes {
+			continue
 		}
-		// didn't pass, keep looping
+
+		if n.docKeys.HasValue {
+			docKey := n.currentValue.GetKey()
+			for _, key := range n.docKeys.Value {
+				if docKey == key {
+					return true, nil
+				}
+			}
+			continue
+		}
+
+		return true, err
 	}
 }
 
@@ -361,6 +374,7 @@ func (p *Planner) SelectFromSource(
 		parsed:     parsed,
 		docMapper:  docMapper{&parsed.DocumentMapping},
 		filter:     parsed.Filter,
+		docKeys:    parsed.DocKeys,
 	}
 	limit := parsed.Limit
 	orderBy := parsed.OrderBy
@@ -415,6 +429,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 	s := &selectNode{
 		p:         p,
 		filter:    parsed.Filter,
+		docKeys:   parsed.DocKeys,
 		parsed:    parsed,
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
