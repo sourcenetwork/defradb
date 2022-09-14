@@ -93,6 +93,21 @@ dev\:start:
 	@$(MAKE) build
 	DEFRA_ENV=dev ./build/defradb start
 
+# Note: In some situations `verify` can modify `go.sum` file, but until a
+#       read-only version is available we have to rely on this.
+# Here are some relevant issues:
+#   - https://github.com/golang/go/issues/31372
+#   - https://github.com/cosmos/cosmos-sdk/issues/4165
+.PHONY: verify
+verify:
+	@if go mod verify | grep -q 'all modules verified'; then \
+		echo "Success!";                                     \
+	else                                                     \
+		echo "Failure:";                                     \
+		go mod verify;                                       \
+		exit 2;                                              \
+	fi;
+
 .PHONY: tidy
 tidy:
 	go mod tidy -go=1.18
