@@ -32,6 +32,7 @@ Read the [Technical Overview](https://docsend.com/view/zwgut89ccaei7e2w/d/bx4vu9
 
 DefraDB is currently in a *Early Access Alpha* program, and is not yet ready for production deployments. Please email the [Source](https://source.network/) team at [hello@source.network](mailto:hello@source.network) for support with your use-case and deployment.
 
+DISCLAIMER: In this current *Alpha* stage, DefraDB doesn't offer access control or encryption of data and the default configuration expose the database to the network.
 
 ## Install
 
