@@ -9,4 +9,6 @@ type FilterKey interface {
 	// GetOperatorOrDefault returns either the operator that corresponds
 	// to this key, or the given default.
 	GetOperatorOrDefault(defaultOp string) string
+	// Equal returns true if other is equal, otherwise returns false.
+	Equal(other FilterKey) bool
 }

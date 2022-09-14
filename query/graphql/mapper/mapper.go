@@ -965,58 +965,48 @@ func (f *Filter) equal(other *Filter) bool {
 		return f == nil
 	}
 
-	if len(f.Conditions) != len(other.Conditions) {
+	return deepEqualConditions(f.Conditions, other.Conditions)
+}
+
+// deepEqualConditions performs a deep equality of two conditions.
+// Handles: map[0xc00069cfd0:map[0xc005eda8c0:<nil>]] -> map[{5}:map[{_ne}:<nil>]]
+func deepEqualConditions(x map[connor.FilterKey]any, y map[connor.FilterKey]any) bool {
+	if len(x) != len(y) {
 		return false
 	}
 
-	// Before calling DeepEqual we need to make sure the keys aren't pointers,
-	// if they are pointers then dereference them for DeepEqual to work properly.
-	// Interface pointers don't get deferenced automatically and we should
-	// probably rework the filter keys to not be stored as pointers.
-	//
-	// For example if we have this, (DeepEqual will return false):
-	// f.Conditions         :  map[0xc00069cfd0:map[0xc005eda8c0:<nil>]]
-	// other.Conditions     :  map[0xc00069cfe8:map[0xc005edaa80:<nil>]]
-	//
-	// DeepEqual works if we convert the above to it's dereferenced type:
-	// new-f.Conditions     :  map[{5}:map[{_ne}:<nil>]]
-	// new-other.Conditions :  map[{5}:map[{_ne}:<nil>]]
-	thisConditions := derefConditionsKeys(f.Conditions)
-	otherConditions := derefConditionsKeys(other.Conditions)
+	for xKey, xValue := range x {
+		var isFoundInY bool
 
-	return reflect.DeepEqual(thisConditions, otherConditions)
-}
+		// Ensure a matching key exists in the other map.
+		for yKey, yValue := range y {
+			if !xKey.Equal(yKey) {
+				continue
+			}
 
-// derefConditionsKeys dereferences underlying pointer types of interface which
-// are keys in a map. If the value of the map is also a map with pointer keys,
-// it will recursively handle them.
-//
-// This is usefull when we have : map[0xc00069cfd0:map[0xc005eda8c0:<nil>]]
-// And want to dereference it rescursively to : map[{5}:map[{_ne}:<nil>]]
-func derefConditionsKeys(conditions map[connor.FilterKey]any) map[connor.FilterKey]any {
-	resultConditions := make(map[connor.FilterKey]any)
-
-	for keyAddress, valueAddress := range conditions {
-		var defrefKey connor.FilterKey
-
-		switch key := keyAddress.(type) {
-		case *Operator:
-			defrefKey = *key
-
-		case *PropertyIndex:
-			defrefKey = *key
+			xValueConditions, xOk := xValue.(map[connor.FilterKey]any)
+			yValueConditions, yOk := yValue.(map[connor.FilterKey]any)
+			if xOk && yOk {
+				if deepEqualConditions(xValueConditions, yValueConditions) {
+					isFoundInY = true
+					break
+				}
+			} else if !xOk && !yOk {
+				// Both are some basic values.
+				if reflect.DeepEqual(xValue, yValue) {
+					isFoundInY = true
+					break
+				}
+			}
 		}
 
-		switch value := valueAddress.(type) {
-		case map[connor.FilterKey]any:
-			resultConditions[defrefKey] = derefConditionsKeys(value)
-
-		default:
-			resultConditions[defrefKey] = value
+		// No matching key (including matching data, of the pointer keys) found, so exit early.
+		if !isFoundInY {
+			return false
 		}
 	}
 
-	return resultConditions
+	return true
 }
 
 // aggregateRequest is an intermediary struct defining a consumer-requested
