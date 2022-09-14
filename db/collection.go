@@ -599,7 +599,7 @@ func (c *collection) save(
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 			if !fieldExists {
-				return cid.Undef, client.ErrFieldNotExist
+				return cid.Undef, client.ErrFieldNotExist(k)
 			}
 
 			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
