@@ -127,7 +127,7 @@ test:
 
 .PHONY: test\:ci
 test\:ci:
-	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true gotestsum --format pkgname -- ./... -race -shuffle=on
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
 
 .PHONY: test\:go
 test\:go:
