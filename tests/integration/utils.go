@@ -378,6 +378,8 @@ func ExecuteQueryTestCase(
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
+
+		dbi.db.Close(ctx)
 	}
 }
 

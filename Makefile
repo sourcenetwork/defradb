@@ -125,6 +125,10 @@ clean\:test:
 test:
 	gotestsum --format pkgname -- ./... -race -shuffle=on
 
+.PHONY: test\:ci
+test\:ci:
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
+
 .PHONY: test\:go
 test\:go:
 	go test ./... -race -shuffle=on
