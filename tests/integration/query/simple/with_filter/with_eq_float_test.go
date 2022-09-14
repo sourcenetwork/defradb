@@ -47,3 +47,38 @@ func TestQuerySimpleWithFloatEqualsFilterBlock(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithFloatEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic float nil filter",
+		Query: `query {
+					users(filter: {HeightM: {_eq: null}}) {
+						Name
+						HeightM
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+				`{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+				`{
+					"Name": "Fred"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name":    "Fred",
+				"HeightM": nil,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

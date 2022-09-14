@@ -105,3 +105,32 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic le float filter with null value",
+		Query: `query {
+					users(filter: {HeightM: {_le: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": "Bob",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -41,10 +41,10 @@ var booleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.Boolean,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Boolean)),
+			Type: gql.NewList(gql.Boolean),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Boolean)),
+			Type: gql.NewList(gql.Boolean),
 		},
 	},
 })
@@ -91,10 +91,10 @@ var dateTimeOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.DateTime,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.DateTime)),
+			Type: gql.NewList(gql.DateTime),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.DateTime)),
+			Type: gql.NewList(gql.DateTime),
 		},
 	},
 })
@@ -122,10 +122,10 @@ var floatOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.Float,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Float)),
+			Type: gql.NewList(gql.Float),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Float)),
+			Type: gql.NewList(gql.Float),
 		},
 	},
 })
@@ -184,10 +184,10 @@ var intOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.Int,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Int)),
+			Type: gql.NewList(gql.Int),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.Int)),
+			Type: gql.NewList(gql.Int),
 		},
 	},
 })
@@ -237,10 +237,10 @@ var stringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.String,
 		},
 		"_in": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.String)),
+			Type: gql.NewList(gql.String),
 		},
 		"_nin": &gql.InputObjectFieldConfig{
-			Type: gql.NewList(gql.NewNonNull(gql.String)),
+			Type: gql.NewList(gql.String),
 		},
 	},
 })
