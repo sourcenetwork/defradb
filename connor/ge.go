@@ -9,6 +9,11 @@ import (
 // ge does value comparisons to determine whether one
 // value is strictly larger than or equal to another.
 func ge(condition, data interface{}) (bool, error) {
+	if condition == nil {
+		// Everything is greater than or equal to nil
+		return true, nil
+	}
+
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {

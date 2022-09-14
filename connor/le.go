@@ -9,6 +9,11 @@ import (
 // le does value comparisons to determine whether one
 // value is strictly less than another.
 func le(condition, data interface{}) (bool, error) {
+	if condition == nil {
+		// Only nil is less than or equal to nil
+		return data == nil, nil
+	}
+
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {

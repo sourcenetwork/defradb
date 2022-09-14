@@ -48,6 +48,41 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic string nil filter",
+		Query: `query {
+					users(filter: {Name: {_eq: null}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Age": 60
+				}`,
+			},
+		},
+		Results: []map[string]interface{}{
+			{
+				"Name": nil,
+				"Age":  uint64(60),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{
