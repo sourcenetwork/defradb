@@ -17,7 +17,6 @@ enum ValueOperatorInput {
     _lte    # Less than or equal to
     _in     # In the list
     _nin    # Non in the list
-    _like   # sub string like
 }
 
 # Generic definition for all query input options
@@ -55,7 +54,6 @@ scalar DateTime # Formatted DateTime value RFC (TODO)
 input StringOperatorBlock {
     _eq: String
     _neq: String
-    _like: String
     _in: [String!]
     _nin: [String!]
 }
@@ -88,7 +86,6 @@ input FloatOperatorBlock {
 input BooleanOperatorBlock {
     _eq: Boolean
     _neq: Boolean
-    _like: Boolean
     _in: [Boolean!]
     _nin: [Boolean!]
 }
