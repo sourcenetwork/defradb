@@ -158,15 +158,13 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test documents undesirable behaviour and should be altered
-// with https://github.com/sourcenetwork/defradb/issues/610.
-// A document with nil fields should be returned.
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with default-value fields",
 		Query: `query {
 					users {
 						Name
+						Email
 						Age
 						HeightM
 						Verified
@@ -177,7 +175,15 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 				`{ }`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]interface{}{
+			{
+				"Name":     nil,
+				"Email":    nil,
+				"Age":      nil,
+				"HeightM":  nil,
+				"Verified": nil,
+			},
+		},
 	}
 
 	executeTestCase(t, test)

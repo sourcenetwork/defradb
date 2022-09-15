@@ -202,43 +202,33 @@ func (df *DocumentFetcher) ProcessKV(kv *core.KeyValue) error {
 // It returns true if the current doc is completed
 func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err error) {
 	// get the next kv from nextKV()
-	for {
-		spanDone, df.kv, err = df.nextKV()
-		// handle any internal errors
+	spanDone, df.kv, err = df.nextKV()
+	// handle any internal errors
+	if err != nil {
+		return false, err
+	}
+
+	if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
+		// We can only ready value values, if we escape the collection's value keys
+		// then we must be done and can stop reading
+		spanDone = true
+	}
+
+	df.kvEnd = spanDone
+	if df.kvEnd {
+		_, err := df.startNextSpan(ctx)
 		if err != nil {
 			return false, err
 		}
-
-		if df.kv != nil && df.kv.Key.InstanceType != core.ValueKey {
-			// We can only ready value values, if we escape the collection's value keys
-			// then we must be done and can stop reading
-			spanDone = true
-		}
-
-		df.kvEnd = spanDone
-		if df.kvEnd {
-			hasNextSpan, err := df.startNextSpan(ctx)
-			if err != nil {
-				return false, err
-			}
-			if hasNextSpan {
-				return true, nil
-			}
-			return true, nil
-		}
-
-		// skip object markers
-		if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
-			continue
-		}
-
-		// check if we've crossed document boundries
-		if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
-			df.isReadingDocument = false
-			return true, nil
-		}
-		return false, nil
+		return true, nil
 	}
+
+	// check if we've crossed document boundries
+	if df.doc.Key != nil && df.kv.Key.DocKey != string(df.doc.Key) {
+		df.isReadingDocument = false
+		return true, nil
+	}
+	return false, nil
 }
 
 // nextKV is a lower-level utility compared to nextKey. The differences are as follows:
@@ -279,6 +269,11 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		df.isReadingDocument = true
 		df.doc.Reset()
 		df.doc.Key = []byte(kv.Key.DocKey)
+	}
+
+	// we have to skip the object marker
+	if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
+		return nil
 	}
 
 	// extract the FieldID and update the encoded doc properties map
