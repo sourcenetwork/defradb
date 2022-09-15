@@ -220,15 +220,20 @@ func (n *sumNode) Next() (bool, error) {
 				}
 			})
 		case []int64:
-			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem int64) float64 {
-				return float64(childItem)
-			})
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessN[int64],
+				func(childItem int64) float64 {
+					return float64(childItem)
+				},
+			)
 
 		case []client.Option[int64]:
 			collectionSum, err = sumItems(
 				childCollection,
-				source.Filter,
-				source.Limit,
+				&source,
+				lessO[int64],
 				func(childItem client.Option[int64]) float64 {
 					if !childItem.HasValue() {
 						return 0
@@ -238,15 +243,20 @@ func (n *sumNode) Next() (bool, error) {
 			)
 
 		case []float64:
-			collectionSum, err = sumItems(childCollection, source.Filter, source.Limit, func(childItem float64) float64 {
-				return childItem
-			})
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessN[float64],
+				func(childItem float64) float64 {
+					return childItem
+				},
+			)
 
 		case []client.Option[float64]:
 			collectionSum, err = sumItems(
 				childCollection,
-				source.Filter,
-				source.Limit,
+				&source,
+				lessO[float64],
 				func(childItem client.Option[float64]) float64 {
 					if !childItem.HasValue() {
 						return 0
@@ -286,17 +296,30 @@ func sumDocs(docs []core.Doc, toFloat func(core.Doc) float64) float64 {
 	return sum
 }
 
-func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toFloat func(T) float64) (float64, error) {
+func sumItems[T any](
+	source []T,
+	aggregateTarget *mapper.AggregateTarget,
+	less func(T, T) bool,
+	toFloat func(T) float64,
+) (float64, error) {
 	items := enumerable.New(source)
-	if filter != nil {
+	if aggregateTarget.Filter != nil {
 		items = enumerable.Where(items, func(item T) (bool, error) {
-			return mapper.RunFilter(item, filter)
+			return mapper.RunFilter(item, aggregateTarget.Filter)
 		})
 	}
 
-	if limit != nil {
-		items = enumerable.Skip(items, limit.Offset)
-		items = enumerable.Take(items, limit.Limit)
+	if aggregateTarget.OrderBy != nil && len(aggregateTarget.OrderBy.Conditions) > 0 {
+		if aggregateTarget.OrderBy.Conditions[0].Direction == mapper.ASC {
+			items = enumerable.Sort(items, less, len(source))
+		} else {
+			items = enumerable.Sort(items, reverse(less), len(source))
+		}
+	}
+
+	if aggregateTarget.Limit != nil {
+		items = enumerable.Skip(items, aggregateTarget.Limit.Offset)
+		items = enumerable.Take(items, aggregateTarget.Limit.Limit)
 	}
 
 	var sum float64 = 0
@@ -308,3 +331,29 @@ func sumItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit, toF
 }
 
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
+
+type number interface {
+	int64 | float64
+}
+
+func lessN[T number](a T, b T) bool {
+	return a < b
+}
+
+func lessO[T number](a client.Option[T], b client.Option[T]) bool {
+	if !a.HasValue() {
+		return true
+	}
+
+	if !b.HasValue() {
+		return false
+	}
+
+	return a.Value() < b.Value()
+}
+
+func reverse[T any](original func(T, T) bool) func(T, T) bool {
+	return func(t1, t2 T) bool {
+		return !original(t1, t2)
+	}
+}
