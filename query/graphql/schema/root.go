@@ -37,9 +37,6 @@ var booleanOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 		"_ne": &gql.InputObjectFieldConfig{
 			Type: gql.Boolean,
 		},
-		"_like": &gql.InputObjectFieldConfig{
-			Type: gql.Boolean,
-		},
 		"_in": &gql.InputObjectFieldConfig{
 			Type: gql.NewList(gql.Boolean),
 		},
@@ -231,9 +228,6 @@ var stringOperatorBlock = gql.NewInputObject(gql.InputObjectConfig{
 			Type: gql.String,
 		},
 		"_ne": &gql.InputObjectFieldConfig{
-			Type: gql.String,
-		},
-		"_like": &gql.InputObjectFieldConfig{
 			Type: gql.String,
 		},
 		"_in": &gql.InputObjectFieldConfig{
