@@ -163,11 +163,13 @@ func resolveAggregates(
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
-					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[childObjectIndex])
+					childMapping := mapping.ChildMappings[childObjectIndex]
+					convertedFilter = ToFilter(target.filter, childMapping)
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
 						target.limit,
+						toOrderBy(target.order, childMapping),
 						fields,
 					)
 				}
@@ -1275,14 +1277,16 @@ func tryGetTarget(
 	name string,
 	filter *Filter,
 	limit *Limit,
+	order *OrderBy,
 	collection []Requestable,
 ) (Requestable, bool) {
 	dummyTarget := Targetable{
 		Field: Field{
 			Name: name,
 		},
-		Filter: filter,
-		Limit:  limit,
+		Filter:  filter,
+		Limit:   limit,
+		OrderBy: order,
 	}
 
 	for _, field := range collection {
