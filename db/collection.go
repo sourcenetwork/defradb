@@ -482,11 +482,13 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return err
 	}
 
-	// write value object marker
-	valueKey := c.getDatastoreFromDocKey(dockey)
-	err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
-	if err != nil {
-		return err
+	// write value object marker if we have an empty doc
+	if len(doc.Values()) == 0 {
+		valueKey := c.getDatastoreFromDocKey(dockey)
+		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		if err != nil {
+			return err
+		}
 	}
 
 	// write data to DB via MerkleClock/CRDT

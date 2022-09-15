@@ -111,7 +111,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 
 	elements := strings.Split(key, "/")
 
-	if len(elements) == 6 {
+	if isDataObjectMarker(elements) {
 		return DataStoreKey{
 			CollectionId: elements[3],
 			InstanceType: InstanceType(elements[4]),
@@ -447,4 +447,22 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
+}
+
+func isDataObjectMarker(elements []string) bool {
+	numElements := len(elements)
+	// lenght is 6 because it has no FieldID
+	if numElements != 6 {
+		return false
+	}
+	if elements[1] != "db" {
+		return false
+	}
+	if elements[2] != "data" {
+		return false
+	}
+	if elements[4] != "v" {
+		return false
+	}
+	return true
 }
