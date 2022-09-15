@@ -476,11 +476,21 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return ErrDocumentAlreadyExists
 	}
 
-	// write object marker
+	// write primary key object marker
 	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{base.ObjectMarker})
 	if err != nil {
 		return err
 	}
+
+	// write value object marker if we have an empty doc
+	if len(doc.Values()) == 0 {
+		valueKey := c.getDatastoreFromDocKey(dockey)
+		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		if err != nil {
+			return err
+		}
+	}
+
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
 
@@ -709,6 +719,14 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 		Prefix:   key.ToString(),
 		KeysOnly: true,
 	}
+
+	if key.InstanceType == core.ValueKey {
+		err := txn.Datastore().Delete(ctx, core.NewDataStoreKey(key.ToString()).ToDS())
+		if err != nil {
+			return false, err
+		}
+	}
+
 	res, err := txn.Datastore().Query(ctx, q)
 
 	for e := range res.Next() {
@@ -882,6 +900,14 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 	return core.PrimaryDataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),
+	}
+}
+
+func (c *collection) getDatastoreFromDocKey(docKey client.DocKey) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: fmt.Sprint(c.colID),
+		DocKey:       docKey.String(),
+		InstanceType: core.ValueKey,
 	}
 }
 
