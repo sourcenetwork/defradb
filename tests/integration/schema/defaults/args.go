@@ -10,7 +10,15 @@
 
 package defaults
 
-var allDefaultArgs = []any{
+var allDefaultGroupArgs = []Field{
+	FilterArg,
+	GroupByArg,
+	LimitArg,
+	OffsetArg,
+	OrderArg,
+}
+
+var allDefaultArgs = []Field{
 	FilterArg,
 	GroupByArg,
 	LimitArg,
@@ -21,12 +29,63 @@ var allDefaultArgs = []any{
 	DockeysArg,
 }
 
-var allDefaultGroupArgs = []any{
-	FilterArg,
-	GroupByArg,
-	LimitArg,
-	OffsetArg,
-	OrderArg,
+// DefaultFields contains the list of fields every
+// defra schema-object should have.
+var DefaultFields = Concat(
+	Fields{
+		keyField,
+		versionField,
+		groupField,
+	},
+	aggregateFields,
+)
+
+var keyField = Field{
+	"name": "_key",
+	"type": map[string]interface{}{
+		"kind": "SCALAR",
+		"name": "ID",
+	},
+}
+
+var versionField = Field{
+	"name": "_version",
+	"type": map[string]interface{}{
+		"kind": "LIST",
+		"name": nil,
+	},
+}
+
+var groupField = Field{
+	"name": "_group",
+	"type": map[string]interface{}{
+		"kind": "LIST",
+		"name": nil,
+	},
+}
+
+var aggregateFields = Fields{
+	map[string]interface{}{
+		"name": "_avg",
+		"type": map[string]interface{}{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
+	map[string]interface{}{
+		"name": "_count",
+		"type": map[string]interface{}{
+			"kind": "SCALAR",
+			"name": "Int",
+		},
+	},
+	map[string]interface{}{
+		"name": "_sum",
+		"type": map[string]interface{}{
+			"kind": "SCALAR",
+			"name": "Float",
+		},
+	},
 }
 
 var FilterArg = Field{
@@ -70,8 +129,8 @@ var DockeysArg = Field{
 }
 
 var groupByArgType = Field{
-	"inputFields": nil,
 	"name":        nil,
+	"inputFields": nil,
 	"ofType": Field{
 		"kind": "NON_NULL",
 		"name": nil,
@@ -98,17 +157,17 @@ var filterArgType = Field{
 	"name":   "authorFilterArg",
 	"ofType": nil,
 	"inputFields": []any{
-		makeInputObject(Yes("_and"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
-		makeInputObject(Yes("_key"), Yes("IDOperatorBlock"), Yes(nil), No()),
-		makeInputObject(Yes("_not"), Yes("authorFilterArg"), Yes(nil), No()),
-		makeInputObject(Yes("_or"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
+		makeOuterType(Yes("_and"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
+		makeOuterType(Yes("_key"), Yes("IDOperatorBlock"), Yes(nil), No()),
+		makeOuterType(Yes("_not"), Yes("authorFilterArg"), Yes(nil), No()),
+		makeOuterType(Yes("_or"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
 
 		// Following can probably reworked to be dynamically added based on the schema.
-		makeInputObject(Yes("age"), Yes("IntOperatorBlock"), Yes(nil), No()),
-		makeInputObject(Yes("name"), Yes("StringOperatorBlock"), Yes(nil), No()),
-		makeInputObject(Yes("verified"), Yes("BooleanOperatorBlock"), Yes(nil), No()),
-		makeInputObject(Yes("wrote"), Yes("bookFilterArg"), Yes(nil), No()),
-		makeInputObject(Yes("wrote_id"), Yes("IDOperatorBlock"), Yes(nil), No()),
+		makeOuterType(Yes("age"), Yes("IntOperatorBlock"), Yes(nil), No()),
+		makeOuterType(Yes("name"), Yes("StringOperatorBlock"), Yes(nil), No()),
+		makeOuterType(Yes("verified"), Yes("BooleanOperatorBlock"), Yes(nil), No()),
+		makeOuterType(Yes("wrote"), Yes("bookFilterArg"), Yes(nil), No()),
+		makeOuterType(Yes("wrote_id"), Yes("IDOperatorBlock"), Yes(nil), No()),
 	},
 }
 
@@ -124,7 +183,11 @@ var orderArgType = Field{
 		makeAuthorOrdering("verified"),
 
 		// Without the relation type we won't have the following ordering type(s).
-		makeInputObject(Yes("wrote"), Yes("bookOrderArg"), Yes(nil), No()),
+		makeOuterType(Yes("wrote"), Yes("bookOrderArg"), Yes(nil), No()),
 		makeAuthorOrdering("wrote_id"),
 	},
+}
+
+func makeAuthorOrdering(name any) Field {
+	return makeOuterType(Yes(name), Yes("Ordering"), Yes(nil), No())
 }

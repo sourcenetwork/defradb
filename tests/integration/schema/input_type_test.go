@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/integration/schema/defaults"
 )
 
-var defaultGroupArgsWithoutOrder = defaults.MakeDefaultGroupArgsWithout(
+var defaultGroupArgsWithoutOrder = defaults.MakeDefaultsWithout(
 	[]string{
 		"order",
 	},

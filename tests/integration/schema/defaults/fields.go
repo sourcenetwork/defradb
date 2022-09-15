@@ -54,65 +54,6 @@ func (fieldSet Fields) Array() []interface{} {
 	return result
 }
 
-// DefaultFields contains the list of fields every
-// defra schema-object should have.
-var DefaultFields = Concat(
-	Fields{
-		keyField,
-		versionField,
-		groupField,
-	},
-	aggregateFields,
-)
-
-var keyField = Field{
-	"name": "_key",
-	"type": map[string]interface{}{
-		"kind": "SCALAR",
-		"name": "ID",
-	},
-}
-
-var versionField = Field{
-	"name": "_version",
-	"type": map[string]interface{}{
-		"kind": "LIST",
-		"name": nil,
-	},
-}
-
-var groupField = Field{
-	"name": "_group",
-	"type": map[string]interface{}{
-		"kind": "LIST",
-		"name": nil,
-	},
-}
-
-var aggregateFields = Fields{
-	map[string]interface{}{
-		"name": "_avg",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Float",
-		},
-	},
-	map[string]interface{}{
-		"name": "_count",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Int",
-		},
-	},
-	map[string]interface{}{
-		"name": "_sum",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Float",
-		},
-	},
-}
-
 type ArgDef struct {
 	FieldName string
 	TypeName  string
