@@ -118,55 +118,6 @@ type ArgDef struct {
 	TypeName  string
 }
 
-func BuildOrderArg(objectName string, fields []ArgDef) Field {
-	inputFields := []any{
-		makeInputObject("_key", "Ordering", nil),
-	}
-
-	for _, field := range fields {
-		inputFields = append(inputFields, makeInputObject(field.FieldName, field.TypeName, nil))
-	}
-
-	return Field{
-		"name": "order",
-		"type": Field{
-			"name":        objectName + "OrderArg",
-			"ofType":      nil,
-			"inputFields": inputFields,
-		},
-	}
-}
-
-func BuildFilterArg(objectName string, fields []ArgDef) Field {
-	filterArgName := objectName + "FilterArg"
-
-	inputFields := []any{
-		makeInputObject("_and", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
-		}),
-		makeInputObject("_key", "IDOperatorBlock", nil),
-		makeInputObject("_not", "authorFilterArg", nil),
-		makeInputObject("_or", nil, map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
-		}),
-	}
-
-	for _, field := range fields {
-		inputFields = append(inputFields, makeInputObject(field.FieldName, field.TypeName, nil))
-	}
-
-	return Field{
-		"name": "filter",
-		"type": Field{
-			"name":        filterArgName,
-			"ofType":      nil,
-			"inputFields": inputFields,
-		},
-	}
-}
-
 // TrimField creates a new object using the provided defaults, but only containing
 // the provided properties. Function is recursive and will respect inner properties.
 func TrimField(fullDefault Field, properties map[string]any) Field {

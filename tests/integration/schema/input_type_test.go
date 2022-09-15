@@ -16,6 +16,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/integration/schema/defaults"
 )
 
+var defaultGroupArgsWithoutOrder = defaults.MakeDefaultGroupArgsWithout(
+	[]string{
+		"order",
+	},
+)
+
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 	test := QueryTestCase{
 		Schema: []string{
@@ -136,19 +142,3 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 
 	ExecuteQueryTestCase(t, test)
 }
-
-var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{
-	"name": struct{}{},
-	"type": map[string]any{
-		"name": struct{}{},
-		"ofType": map[string]any{
-			"kind": struct{}{},
-			"name": struct{}{},
-		},
-		"inputFields": struct{}{},
-	},
-}
-
-var defaultGroupArgsWithoutOrder = defaults.MakeDefaultGroupArgsWithout(
-	[]string{"order"},
-)

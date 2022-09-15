@@ -10,7 +10,7 @@
 
 package defaults
 
-var allDefaultGroupArgs = []any{
+var allDefaultArgs = []any{
 	FilterArg,
 	GroupByArg,
 	LimitArg,
@@ -19,6 +19,14 @@ var allDefaultGroupArgs = []any{
 	CidArg,
 	DockeyArg,
 	DockeysArg,
+}
+
+var allDefaultGroupArgs = []any{
+	FilterArg,
+	GroupByArg,
+	LimitArg,
+	OffsetArg,
+	OrderArg,
 }
 
 var FilterArg = Field{
@@ -90,17 +98,17 @@ var filterArgType = Field{
 	"name":   "authorFilterArg",
 	"ofType": nil,
 	"inputFields": []any{
-		makeInputObject("_and", nil, inputObjectAuthorFilterArg),
-		makeInputObject("_key", "IDOperatorBlock", nil),
-		makeInputObject("_not", "authorFilterArg", nil),
-		makeInputObject("_or", nil, inputObjectAuthorFilterArg),
+		makeInputObject(Yes("_and"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
+		makeInputObject(Yes("_key"), Yes("IDOperatorBlock"), Yes(nil), No()),
+		makeInputObject(Yes("_not"), Yes("authorFilterArg"), Yes(nil), No()),
+		makeInputObject(Yes("_or"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
 
 		// Following can probably reworked to be dynamically added based on the schema.
-		makeInputObject("age", "IntOperatorBlock", nil),
-		makeInputObject("name", "StringOperatorBlock", nil),
-		makeInputObject("verified", "BooleanOperatorBlock", nil),
-		makeInputObject("wrote", "bookFilterBaseArg", nil),
-		makeInputObject("wrote_id", "IDOperatorBlock", nil),
+		makeInputObject(Yes("age"), Yes("IntOperatorBlock"), Yes(nil), No()),
+		makeInputObject(Yes("name"), Yes("StringOperatorBlock"), Yes(nil), No()),
+		makeInputObject(Yes("verified"), Yes("BooleanOperatorBlock"), Yes(nil), No()),
+		makeInputObject(Yes("wrote"), Yes("bookFilterArg"), Yes(nil), No()),
+		makeInputObject(Yes("wrote_id"), Yes("IDOperatorBlock"), Yes(nil), No()),
 	},
 }
 
@@ -116,7 +124,7 @@ var orderArgType = Field{
 		makeAuthorOrdering("verified"),
 
 		// Without the relation type we won't have the following ordering type(s).
-		makeInputObject("wrote", "bookOrderArg", nil),
+		makeInputObject(Yes("wrote"), Yes("bookOrderArg"), Yes(nil), No()),
 		makeAuthorOrdering("wrote_id"),
 	},
 }

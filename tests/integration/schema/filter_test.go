@@ -127,9 +127,9 @@ var testFilterForSimpleSchemaArgProps = map[string]any{
 
 var defaultUserArgsWithoutFilter = defaults.TrimFields(
 	defaults.Fields{
-		defaults.CidArg,
 		defaults.DockeyArg,
 		defaults.DockeysArg,
+		defaults.CidArg,
 		defaults.GroupByArg,
 		defaults.LimitArg,
 		defaults.OffsetArg,
