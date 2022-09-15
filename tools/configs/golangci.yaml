@@ -334,6 +334,8 @@ linters-settings:
     rules:
       - name: superfluous-else
         severity: error
+      - name: use-any
+        severity: error
 
 
   staticcheck:
