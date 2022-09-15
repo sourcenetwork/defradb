@@ -72,11 +72,11 @@ func loggerMiddleware(next http.Handler) http.Handler {
 				lrw.statusCode,
 			),
 			logging.NewKV(
-				"Length",
+				"LengthBytes",
 				lrw.contentLength,
 			),
 			logging.NewKV(
-				"Elapsed",
+				"ElapsedSeconds",
 				elapsed,
 			),
 		)

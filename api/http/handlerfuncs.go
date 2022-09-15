@@ -36,7 +36,7 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse(
-			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
+			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database. Read the documentation at https://docs.source.network/.",
 		),
 		http.StatusOK,
 	)
