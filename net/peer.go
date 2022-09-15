@@ -162,12 +162,12 @@ func (p *Peer) Close() error {
 	// close event emitters
 	if p.server.pubSubEmitter != nil {
 		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err))
+			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 	if p.server.pushLogEmitter != nil {
 		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err))
+			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 

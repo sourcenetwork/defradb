@@ -153,7 +153,7 @@ func (di *defraInstance) close(ctx context.Context) {
 			log.FeedbackInfo(
 				ctx,
 				"The node could not be closed successfully",
-				logging.NewKV("Error", err),
+				logging.NewKV("Error", err.Error()),
 			)
 		}
 	}
@@ -162,7 +162,7 @@ func (di *defraInstance) close(ctx context.Context) {
 		log.FeedbackInfo(
 			ctx,
 			"The server could not be closed successfully",
-			logging.NewKV("Error", err),
+			logging.NewKV("Error", err.Error()),
 		)
 	}
 }

@@ -100,11 +100,11 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 	var err error
 	s.pubSubEmitter, err = s.peer.host.EventBus().Emitter(new(EvtPubSub))
 	if err != nil {
-		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err))
+		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err.Error()))
 	}
 	s.pushLogEmitter, err = s.peer.host.EventBus().Emitter(new(EvtReceivedPushLog))
 	if err != nil {
-		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err))
+		log.Info(s.peer.ctx, "could not create event emitter", logging.NewKV("Error", err.Error()))
 	}
 
 	return s, nil
@@ -198,7 +198,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		if err != nil {
 			// logging instead of returning an error because the event bus should
 			// not break the PushLog execution.
-			log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err))
+			log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
 		}
 	}
 
@@ -336,7 +336,7 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 			Peer: from,
 		})
 		if err != nil {
-			log.Info(s.peer.ctx, "could not emit pubsub event", logging.NewKV("Error", err))
+			log.Info(s.peer.ctx, "could not emit pubsub event", logging.NewKV("Error", err.Error()))
 		}
 	}
 }
