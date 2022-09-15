@@ -116,15 +116,15 @@ func NewNode(
 		rootstore,
 		libp2pOpts...,
 	)
+	if err != nil {
+		return nil, fin.Cleanup(err)
+	}
 	log.Info(
 		ctx,
 		"Created LibP2P host",
 		logging.NewKV("PeerId", h.ID()),
 		logging.NewKV("Address", options.ListenAddrs),
 	)
-	if err != nil {
-		return nil, fin.Cleanup(err)
-	}
 
 	bstore := db.Blockstore()
 	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
