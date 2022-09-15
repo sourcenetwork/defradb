@@ -136,6 +136,18 @@ func resolveAggregates(
 			if childIsMapped {
 				fieldDesc, isField := desc.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
+					var order *OrderBy
+					if target.order != nil && len(target.order.Conditions) > 0 {
+						// For inline arrays the order element will consist of just a direction
+						order = &OrderBy{
+							Conditions: []OrderCondition{
+								{
+									Direction: SortDirection(target.order.Conditions[0].Direction),
+								},
+							},
+						}
+					}
+
 					// If the hostExternalName matches a non-object field
 					// we don't have to search for it and can just construct the
 					// targeting info here.
@@ -145,16 +157,19 @@ func resolveAggregates(
 							Index: int(fieldDesc.ID),
 							Name:  target.hostExternalName,
 						},
-						Filter: ToFilter(target.filter, mapping),
-						Limit:  target.limit,
+						Filter:  ToFilter(target.filter, mapping),
+						Limit:   target.limit,
+						OrderBy: order,
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
-					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[childObjectIndex])
+					childMapping := mapping.ChildMappings[childObjectIndex]
+					convertedFilter = ToFilter(target.filter, childMapping)
 					host, hasHost = tryGetTarget(
 						target.hostExternalName,
 						convertedFilter,
 						target.limit,
+						toOrderBy(target.order, childMapping),
 						fields,
 					)
 				}
@@ -193,8 +208,9 @@ func resolveAggregates(
 							Index: index,
 							Name:  target.hostExternalName,
 						},
-						Filter: convertedFilter,
-						Limit:  target.limit,
+						Filter:  convertedFilter,
+						Limit:   target.limit,
+						OrderBy: toOrderBy(target.order, childMapping),
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: *childMapping,
@@ -925,8 +941,6 @@ func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-// Note: Currently only compares Name, Filter and Limit as that is all that is currently required,
-// but this should be extended in the future.
 func (s Targetable) equal(other Targetable) bool {
 	if s.Index != other.Index &&
 		s.Name != other.Name {
@@ -938,6 +952,10 @@ func (s Targetable) equal(other Targetable) bool {
 	}
 
 	if !s.Limit.equal(other.Limit) {
+		return false
+	}
+
+	if !s.OrderBy.equal(other.OrderBy) {
 		return false
 	}
 
@@ -1009,6 +1027,40 @@ func deepEqualConditions(x map[connor.FilterKey]any, y map[connor.FilterKey]any)
 	return true
 }
 
+func (o *OrderBy) equal(other *OrderBy) bool {
+	if o == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return o == nil
+	}
+
+	if len(o.Conditions) != len(other.Conditions) {
+		return false
+	}
+
+	for i, conditionA := range o.Conditions {
+		conditionB := other.Conditions[i]
+		if conditionA.Direction != conditionB.Direction {
+			return false
+		}
+
+		if len(conditionA.FieldIndexes) != len(conditionB.FieldIndexes) {
+			return false
+		}
+
+		for j, fieldIndexA := range conditionA.FieldIndexes {
+			fieldIndexB := conditionB.FieldIndexes[j]
+			if fieldIndexA != fieldIndexB {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 // aggregateRequest is an intermediary struct defining a consumer-requested
 // aggregate. These are defined before it can be determined as to which exact
 // fields they target and so only specify the names of the target properties
@@ -1044,6 +1096,10 @@ type aggregateRequestTarget struct {
 
 	// The aggregate limit-offset specified by the consumer for this target. Optional.
 	limit *Limit
+
+	// The order in which items should be aggregated. Affects results when used with
+	// limit. Optional.
+	order *parserTypes.OrderBy
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -1061,6 +1117,7 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 			var childExternalName string
 			var filter *parser.Filter
 			var limit *Limit
+			var order *parserTypes.OrderBy
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
 			if hasFieldArg {
@@ -1105,11 +1162,45 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 				}
 			}
 
+			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
+			if hasOrderArg {
+				switch orderArgValue := orderArg.Value.(type) {
+				case *ast.EnumValue:
+					// For inline arrays the order arg will be a simple enum declaring the order direction
+					orderDirectionString := orderArgValue.Value
+					orderDirection := parserTypes.OrderDirection(orderDirectionString)
+
+					order = &parserTypes.OrderBy{
+						Conditions: []parserTypes.OrderCondition{
+							{
+								Direction: orderDirection,
+							},
+						},
+					}
+
+				case *ast.ObjectValue:
+					// For relations the order arg will be the complex order object as used by the host object
+					// for non-aggregate ordering
+
+					// We use the parser package parsing for convienience here
+					orderConditions, err := parser.ParseConditionsInOrder(orderArgValue)
+					if err != nil {
+						return nil, err
+					}
+
+					order = &parserTypes.OrderBy{
+						Conditions: orderConditions,
+						Statement:  orderArgValue,
+					}
+				}
+			}
+
 			targets[i] = &aggregateRequestTarget{
 				hostExternalName:  hostExternalName,
 				childExternalName: childExternalName,
 				filter:            filter,
 				limit:             limit,
+				order:             order,
 			}
 		}
 	}
@@ -1186,14 +1277,16 @@ func tryGetTarget(
 	name string,
 	filter *Filter,
 	limit *Limit,
+	order *OrderBy,
 	collection []Requestable,
 ) (Requestable, bool) {
 	dummyTarget := Targetable{
 		Field: Field{
 			Name: name,
 		},
-		Filter: filter,
-		Limit:  limit,
+		Filter:  filter,
+		Limit:   limit,
+		OrderBy: order,
 	}
 
 	for _, field := range collection {
