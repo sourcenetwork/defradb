@@ -151,8 +151,12 @@ func resolveAggregates(
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
 					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[childObjectIndex])
-
-					host, hasHost = tryGetTarget(target.hostExternalName, convertedFilter, fields)
+					host, hasHost = tryGetTarget(
+						target.hostExternalName,
+						convertedFilter,
+						target.limit,
+						fields,
+					)
 				}
 			}
 
@@ -752,7 +756,7 @@ func toField(index int, parsed *parser.Select) Field {
 	}
 }
 
-// ConvertFilter converts the given `source` parser filter to a Filter using the given mapping.
+// ToFilter converts the given `source` parser filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
 func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
@@ -772,7 +776,7 @@ func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
 	}
 }
 
-// convertFilterMap converts a consumer-defined filter key-value into a filter clause
+// toFilterMap converts a consumer-defined filter key-value into a filter clause
 // keyed by field index.
 //
 // Return key will either be an int (field index), or a string (operator).
@@ -961,7 +965,48 @@ func (f *Filter) equal(other *Filter) bool {
 		return f == nil
 	}
 
-	return reflect.DeepEqual(f.Conditions, other.Conditions)
+	return deepEqualConditions(f.Conditions, other.Conditions)
+}
+
+// deepEqualConditions performs a deep equality of two conditions.
+// Handles: map[0xc00069cfd0:map[0xc005eda8c0:<nil>]] -> map[{5}:map[{_ne}:<nil>]]
+func deepEqualConditions(x map[connor.FilterKey]any, y map[connor.FilterKey]any) bool {
+	if len(x) != len(y) {
+		return false
+	}
+
+	for xKey, xValue := range x {
+		var isFoundInY bool
+
+		// Ensure a matching key exists in the other map.
+		for yKey, yValue := range y {
+			if !xKey.Equal(yKey) {
+				continue
+			}
+
+			xValueConditions, xOk := xValue.(map[connor.FilterKey]any)
+			yValueConditions, yOk := yValue.(map[connor.FilterKey]any)
+			if xOk && yOk {
+				if deepEqualConditions(xValueConditions, yValueConditions) {
+					isFoundInY = true
+					break
+				}
+			} else if !xOk && !yOk {
+				// Both are some basic values.
+				if reflect.DeepEqual(xValue, yValue) {
+					isFoundInY = true
+					break
+				}
+			}
+		}
+
+		// No matching key (including matching data, of the pointer keys) found, so exit early.
+		if !isFoundInY {
+			return false
+		}
+	}
+
+	return true
 }
 
 // aggregateRequest is an intermediary struct defining a consumer-requested
@@ -1137,12 +1182,18 @@ collectionLoop:
 //
 // If a match is found the matching field will be returned along with true. If a match is not
 // found, nil and false will be returned.
-func tryGetTarget(name string, filter *Filter, collection []Requestable) (Requestable, bool) {
+func tryGetTarget(
+	name string,
+	filter *Filter,
+	limit *Limit,
+	collection []Requestable,
+) (Requestable, bool) {
 	dummyTarget := Targetable{
 		Field: Field{
 			Name: name,
 		},
 		Filter: filter,
+		Limit:  limit,
 	}
 
 	for _, field := range collection {

@@ -71,50 +71,6 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 							},
 						},
 						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_ne": nil,
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
 							"sumNode": dataMap{
 								"sources": []dataMap{
 									{
@@ -196,52 +152,6 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 			{
 				"explain": dataMap{
 					"topLevelNode": []dataMap{
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int64(26),
-												"_ne": nil,
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							"selectTopNode": dataMap{
-								"selectNode": dataMap{
-									"filter": nil,
-									"scanNode": dataMap{
-										"collectionID":   "3",
-										"collectionName": "author",
-										"filter": dataMap{
-											"age": dataMap{
-												"_gt": int64(26),
-												"_ne": nil,
-											},
-										},
-										"spans": []dataMap{
-											{
-												"end":   "/4",
-												"start": "/3",
-											},
-										},
-									},
-								},
-							},
-						},
 						{
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{

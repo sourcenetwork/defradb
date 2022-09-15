@@ -38,6 +38,13 @@ func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {
 	return defaultOp
 }
 
+func (k *PropertyIndex) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*PropertyIndex); isOk && *k == *otherKey {
+		return true
+	}
+	return false
+}
+
 // Operator is a FilterKey that represents a filter operator.
 type Operator struct {
 	// The filter operation string that this Operator represents.
@@ -52,6 +59,13 @@ func (k *Operator) GetProp(data interface{}) interface{} {
 
 func (k *Operator) GetOperatorOrDefault(defaultOp string) string {
 	return k.Operation
+}
+
+func (k *Operator) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*Operator); isOk && *k == *otherKey {
+		return true
+	}
+	return false
 }
 
 // Filter represents a series of conditions that may reduce the number of
