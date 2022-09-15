@@ -167,6 +167,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 		Query: `query {
 					users {
 						Name
+						Email
 						Age
 						HeightM
 						Verified
@@ -177,7 +178,15 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 				`{ }`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]interface{}{
+			{
+				"Name":     nil,
+				"Email":    nil,
+				"Age":      nil,
+				"HeightM":  nil,
+				"Verified": nil,
+			},
+		},
 	}
 
 	executeTestCase(t, test)

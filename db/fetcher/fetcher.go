@@ -217,19 +217,11 @@ func (df *DocumentFetcher) nextKey(ctx context.Context) (spanDone bool, err erro
 
 		df.kvEnd = spanDone
 		if df.kvEnd {
-			hasNextSpan, err := df.startNextSpan(ctx)
+			_, err := df.startNextSpan(ctx)
 			if err != nil {
 				return false, err
 			}
-			if hasNextSpan {
-				return true, nil
-			}
 			return true, nil
-		}
-
-		// skip object markers
-		if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
-			continue
 		}
 
 		// check if we've crossed document boundries
@@ -279,6 +271,11 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 		df.isReadingDocument = true
 		df.doc.Reset()
 		df.doc.Key = []byte(kv.Key.DocKey)
+	}
+
+	// we have to skip the object marker
+	if bytes.Equal(df.kv.Value, []byte{base.ObjectMarker}) {
+		return nil
 	}
 
 	// extract the FieldID and update the encoded doc properties map

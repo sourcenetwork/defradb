@@ -110,8 +110,16 @@ func NewDataStoreKey(key string) DataStoreKey {
 	}
 
 	elements := strings.Split(key, "/")
-	numberOfElements := len(elements)
 
+	if len(elements) == 6 {
+		return DataStoreKey{
+			CollectionId: elements[3],
+			InstanceType: InstanceType(elements[4]),
+			DocKey:       elements[5],
+		}
+	}
+
+	numberOfElements := len(elements)
 	return DataStoreKey{
 		CollectionId: elements[numberOfElements-4],
 		InstanceType: InstanceType(elements[numberOfElements-3]),
