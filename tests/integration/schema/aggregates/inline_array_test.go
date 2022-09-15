@@ -499,12 +499,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 														},
 													},
 													map[string]interface{}{
-														"name": "_like",
-														"type": map[string]interface{}{
-															"name": "Boolean",
-														},
-													},
-													map[string]interface{}{
 														"name": "_ne",
 														"type": map[string]interface{}{
 															"name": "Boolean",
@@ -1330,12 +1324,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 														"name": "_in",
 														"type": map[string]interface{}{
 															"name": nil,
-														},
-													},
-													map[string]interface{}{
-														"name": "_like",
-														"type": map[string]interface{}{
-															"name": "String",
 														},
 													},
 													map[string]interface{}{
