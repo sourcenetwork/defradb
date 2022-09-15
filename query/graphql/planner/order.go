@@ -99,8 +99,8 @@ func (n *orderNode) Value() core.Doc {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *orderNode) Explain() (map[string]interface{}, error) {
-	orderings := []map[string]interface{}{}
+func (n *orderNode) Explain() (map[string]any, error) {
+	orderings := []map[string]any{}
 
 	for _, element := range n.ordering {
 		// Build the list containing the corresponding names of all the indexes.
@@ -117,14 +117,14 @@ func (n *orderNode) Explain() (map[string]interface{}, error) {
 
 		// Put it all together for this order element.
 		orderings = append(orderings,
-			map[string]interface{}{
+			map[string]any{
 				"fields":    fieldNames,
 				"direction": string(element.Direction),
 			},
 		)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"orderings": orderings,
 	}, nil
 }

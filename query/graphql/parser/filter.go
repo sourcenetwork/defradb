@@ -29,7 +29,7 @@ import (
 // evaluation.
 type Filter struct {
 	// parsed filter conditions
-	Conditions map[string]interface{}
+	Conditions map[string]any
 }
 
 // type condition
@@ -64,10 +64,10 @@ func NewFilterFromString(body string) (*Filter, error) {
 	return NewFilter(obj)
 }
 
-type parseFn func(*ast.ObjectValue) (interface{}, error)
+type parseFn func(*ast.ObjectValue) (any, error)
 
 // ParseConditionsInOrder is similar to ParseConditions, except instead
-// of returning a map[string]interface{}, we return a []interface{}. This
+// of returning a map[string]any, we return a []any. This
 // is to maintain the ordering info of the statements within the ObjectValue.
 // This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
@@ -84,7 +84,7 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition
 	return nil, errors.New("Failed to parse statement")
 }
 
-func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
+func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 	conditions := make([]parserTypes.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
@@ -128,20 +128,20 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (interface{}, error) {
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.
-func ParseConditions(stmt *ast.ObjectValue) (map[string]interface{}, error) {
+func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
 	cond, err := parseConditions(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.(map[string]interface{}); ok {
+	if v, ok := cond.(map[string]any); ok {
 		return v, nil
 	}
 	return nil, errors.New("Failed to parse statement")
 }
 
-func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
-	conditions := make(map[string]interface{})
+func parseConditions(stmt *ast.ObjectValue) (any, error) {
+	conditions := make(map[string]any)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -157,9 +157,9 @@ func parseConditions(stmt *ast.ObjectValue) (interface{}, error) {
 }
 
 // parseVal handles all the various input types, and extracts their
-// values, with the correct types, into an interface{}.
+// values, with the correct types, into an any.
 // recurses on ListValue or ObjectValue
-func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
+func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 	switch val.GetKind() {
 	case "IntValue":
 		return strconv.ParseInt(val.GetValue().(string), 10, 64)
@@ -176,7 +176,7 @@ func parseVal(val ast.Value, recurseFn parseFn) (interface{}, error) {
 		return nil, nil
 
 	case "ListValue":
-		list := make([]interface{}, 0)
+		list := make([]any, 0)
 		for _, item := range val.GetValue().([]ast.Value) {
 			v, err := parseVal(item, recurseFn)
 			if err != nil {

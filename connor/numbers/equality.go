@@ -1,6 +1,6 @@
 package numbers
 
-func Equal(condition, data interface{}) bool {
+func Equal(condition, data any) bool {
 	uc := TryUpcast(condition)
 	ud := TryUpcast(data)
 

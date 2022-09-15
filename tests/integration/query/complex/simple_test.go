@@ -59,13 +59,13 @@ func TestQueryComplex(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "The Coffee Table Book",
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "Cosmo Kramer",
 				},
-				"publisher": map[string]interface{}{
+				"publisher": map[string]any{
 					"name": "Pendant Publishing",
 				},
 			},

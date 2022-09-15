@@ -75,7 +75,7 @@ func runQueryBenchGetSync(
 		}
 
 		// leave comments for debug!!
-		// l := len(res.Data.([]map[string]interface{}))
+		// l := len(res.Data.([]map[string]any))
 		// if l != opCount {
 		// 	return fmt.Errorf(
 		// "Invalid response, returned data doesn't match length, expected %v actual %v",

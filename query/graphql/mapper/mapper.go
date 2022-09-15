@@ -596,7 +596,7 @@ func resolveFilterDependencies(
 func resolveInnerFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source map[string]interface{},
+	source map[string]any,
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
 ) ([]Requestable, error) {
@@ -659,7 +659,7 @@ func resolveInnerFilterDependencies(
 		}
 
 		childSource := source[key]
-		childFilter, isChildFilter := childSource.(map[string]interface{})
+		childFilter, isChildFilter := childSource.(map[string]any)
 		if !isChildFilter {
 			// If the filter is not a child filter then the will be no inner dependencies to add and
 			// we can continue.
@@ -779,7 +779,7 @@ func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
 	if source == nil {
 		return nil
 	}
-	conditions := make(map[connor.FilterKey]interface{}, len(source.Conditions))
+	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
 
 	for sourceKey, sourceClause := range source.Conditions {
 		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
@@ -798,22 +798,22 @@ func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
 // Return key will either be an int (field index), or a string (operator).
 func toFilterMap(
 	sourceKey string,
-	sourceClause interface{},
+	sourceClause any,
 	mapping *core.DocumentMapping,
-) (connor.FilterKey, interface{}) {
+) (connor.FilterKey, any) {
 	if strings.HasPrefix(sourceKey, "_") && sourceKey != parserTypes.DocKeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
 		switch typedClause := sourceClause.(type) {
-		case []interface{}:
+		case []any:
 			// If the clause is an array then we need to convert any inner maps.
-			returnClauses := []interface{}{}
+			returnClauses := []any{}
 			for _, innerSourceClause := range typedClause {
-				var returnClause interface{}
+				var returnClause any
 				switch typedInnerSourceClause := innerSourceClause.(type) {
-				case map[string]interface{}:
-					innerMapClause := map[connor.FilterKey]interface{}{}
+				case map[string]any:
+					innerMapClause := map[connor.FilterKey]any{}
 					for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
 						rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
 						innerMapClause[rKey] = rValue
@@ -838,12 +838,12 @@ func toFilterMap(
 			Index: index,
 		}
 		switch typedClause := sourceClause.(type) {
-		case map[string]interface{}:
-			returnClause := map[connor.FilterKey]interface{}{}
+		case map[string]any:
+			returnClause := map[connor.FilterKey]any{}
 			for innerSourceKey, innerSourceValue := range typedClause {
 				var innerMapping *core.DocumentMapping
 				switch innerSourceValue.(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					// If the innerSourceValue is also a map, then we should parse the nested clause
 					// using the child mapping, as this key must refer to a host property in a join
 					// and deeper keys must refer to properties on the child items.
@@ -932,7 +932,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 
 // RunFilter runs the given filter expression
 // using the document, and evaluates.
-func RunFilter(doc interface{}, filter *Filter) (bool, error) {
+func RunFilter(doc any, filter *Filter) (bool, error) {
 	if filter == nil {
 		return true, nil
 	}
@@ -1310,7 +1310,7 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	if field.filter.Conditions == nil {
-		field.filter.Conditions = map[string]interface{}{}
+		field.filter.Conditions = map[string]any{}
 	}
 
 	var childBlock any
@@ -1320,11 +1320,11 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	} else {
 		childBlock, hasChildBlock = field.filter.Conditions[childField]
 		if !hasChildBlock {
-			childBlock = map[string]interface{}{}
+			childBlock = map[string]any{}
 			field.filter.Conditions[childField] = childBlock
 		}
 	}
 
-	typedChildBlock := childBlock.(map[string]interface{})
+	typedChildBlock := childBlock.(map[string]any)
 	typedChildBlock["_ne"] = nil
 }

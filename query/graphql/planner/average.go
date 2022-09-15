@@ -101,6 +101,6 @@ func (n *averageNode) SetPlan(p planNode) { n.plan = p }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *averageNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (n *averageNode) Explain() (map[string]any, error) {
+	return map[string]any{}, nil
 }

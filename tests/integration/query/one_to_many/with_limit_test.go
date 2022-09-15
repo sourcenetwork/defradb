@@ -63,10 +63,10 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
@@ -75,7 +75,7 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 			},
 			{
 				"name": "Cornelia Funke",
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,
@@ -139,16 +139,16 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
-				"p1": []map[string]interface{}{
+				"p1": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
 					},
 				},
-				"p2": []map[string]interface{}{
+				"p2": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
@@ -161,13 +161,13 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 			},
 			{
 				"name": "Cornelia Funke",
-				"p1": []map[string]interface{}{
+				"p1": []map[string]any{
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,
 					},
 				},
-				"p2": []map[string]interface{}{
+				"p2": []map[string]any{
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,

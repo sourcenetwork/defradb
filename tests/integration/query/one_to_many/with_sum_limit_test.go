@@ -65,7 +65,7 @@ func TestQueryOneToManyWithSumWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// .00...1 is float math thing

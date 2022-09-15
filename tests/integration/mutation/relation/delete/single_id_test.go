@@ -56,7 +56,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},
@@ -100,7 +100,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"AliasOfKey": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},
@@ -163,7 +163,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					},
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
 				},

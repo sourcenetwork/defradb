@@ -32,7 +32,7 @@ func TestQueryAllCommitsWithUnknownDockey(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -54,7 +54,7 @@ func TestQueryAllCommitsWithDockey(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 			},
@@ -84,10 +84,10 @@ func TestQueryAllCommitsWithDockeyAndLinks(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-				"links": []map[string]interface{}{
+				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 						"name": "Age",
@@ -130,7 +130,7 @@ func TestQueryAllCommitsWithDockeyAndUpdate(t *testing.T) {
 				},
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
 				"height": int64(2),
@@ -177,10 +177,10 @@ func TestQueryAllCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 				},
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
-				"links": []map[string]interface{}{
+				"links": []map[string]any{
 					{
 						"cid":  "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
 						"name": "Age",
@@ -193,7 +193,7 @@ func TestQueryAllCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 			},
 			{
 				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-				"links": []map[string]interface{}{
+				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 						"name": "Age",

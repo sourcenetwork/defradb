@@ -90,7 +90,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
@@ -114,7 +114,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 						_count(_group: {})
 					}
 				}`,
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -148,11 +148,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -164,7 +164,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 			{
 				"Age":    uint64(19),
 				"_count": 1,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -232,7 +232,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":   uint64(32),
 				"Count": 2,
@@ -275,7 +275,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"Count1": 2,

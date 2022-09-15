@@ -65,7 +65,7 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"_sum": 9.4,

@@ -45,7 +45,7 @@ func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *tes
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Carlo",
 				"Age":  uint64(55),

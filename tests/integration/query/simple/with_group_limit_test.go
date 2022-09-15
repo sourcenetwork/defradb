@@ -43,10 +43,10 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -54,7 +54,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 			},
 			{
 				"Age": uint64(19),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -96,15 +96,15 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
-				"G1": []map[string]interface{}{
+				"G1": []map[string]any{
 					{
 						"Name": "Bob",
 					},
 				},
-				"G2": []map[string]interface{}{
+				"G2": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -115,12 +115,12 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 			},
 			{
 				"Age": uint64(19),
-				"G1": []map[string]interface{}{
+				"G1": []map[string]any{
 					{
 						"Name": "Alice",
 					},
 				},
-				"G2": []map[string]interface{}{
+				"G2": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -159,10 +159,10 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -208,10 +208,10 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -219,7 +219,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 			},
 			{
 				"Age": uint64(42),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},

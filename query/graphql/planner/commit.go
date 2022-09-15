@@ -95,8 +95,8 @@ func (n *commitSelectNode) Source() planNode {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *commitSelectNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (n *commitSelectNode) Explain() (map[string]any, error) {
+	return map[string]any{}, nil
 }
 
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {

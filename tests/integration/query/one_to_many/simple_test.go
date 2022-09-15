@@ -48,11 +48,11 @@ func TestQueryOneToMany(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -106,11 +106,11 @@ func TestQueryOneToMany(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
 					"age":  uint64(65),
-					"published": []map[string]interface{}{
+					"published": []map[string]any{
 						{
 							"name":   "Painted House",
 							"rating": 4.9,
@@ -124,7 +124,7 @@ func TestQueryOneToMany(t *testing.T) {
 				{
 					"name": "Cornelia Funke",
 					"age":  uint64(62),
-					"published": []map[string]interface{}{
+					"published": []map[string]any{
 						{
 							"name":   "Theif Lord",
 							"rating": 4.8,

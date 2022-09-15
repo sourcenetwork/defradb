@@ -8,7 +8,7 @@ import (
 
 // gt does value comparisons to determine whether one
 // value is strictly larger than another.
-func gt(condition, data interface{}) (bool, error) {
+func gt(condition, data any) (bool, error) {
 	if condition == nil {
 		return data != nil, nil
 	}

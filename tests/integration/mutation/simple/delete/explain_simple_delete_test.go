@@ -17,7 +17,7 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-type dataMap = map[string]interface{}
+type dataMap = map[string]any
 
 func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
@@ -385,7 +385,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 					"explain": dataMap{
 						"deleteNode": dataMap{
 							"filter": dataMap{
-								"_and": []interface{}{
+								"_and": []any{
 									dataMap{
 										"age": dataMap{
 											"_lt": int64(26),
@@ -406,7 +406,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 										"collectionID":   "1",
 										"collectionName": "user",
 										"filter": dataMap{
-											"_and": []interface{}{
+											"_and": []any{
 												dataMap{
 													"age": dataMap{
 														"_lt": int64(26),
@@ -650,7 +650,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 					"explain": dataMap{
 						"deleteNode": dataMap{
 							"filter": dataMap{
-								"_and": []interface{}{
+								"_and": []any{
 									dataMap{
 										"age": dataMap{
 											"_lt": int64(26),
@@ -674,7 +674,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 										"collectionID":   "1",
 										"collectionName": "user",
 										"filter": dataMap{
-											"_and": []interface{}{
+											"_and": []any{
 												dataMap{
 													"age": dataMap{
 														"_lt": int64(26),

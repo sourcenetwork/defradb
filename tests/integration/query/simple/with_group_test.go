@@ -44,7 +44,7 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
 			},
@@ -91,10 +91,10 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -105,7 +105,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 			},
 			{
 				"Age": uint64(19),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -113,7 +113,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 			},
 			{
 				"Age": uint64(55),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Carlo",
 					},
@@ -156,10 +156,10 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -167,7 +167,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 			},
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -178,7 +178,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -233,13 +233,13 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(25),
 							},
@@ -250,7 +250,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 					},
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(34),
 							},
@@ -260,10 +260,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 			},
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(19),
 							},
@@ -273,10 +273,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(55),
 							},
@@ -331,11 +331,11 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     "John",
 				"Verified": true,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(25),
 					},
@@ -347,7 +347,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 			{
 				"Name":     "John",
 				"Verified": false,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(34),
 					},
@@ -356,7 +356,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 			{
 				"Name":     "Alice",
 				"Verified": false,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -365,7 +365,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 			{
 				"Name":     "Carlo",
 				"Verified": true,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -418,11 +418,11 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     "John",
 				"Verified": true,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(25),
 					},
@@ -434,7 +434,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 			{
 				"Name":     "John",
 				"Verified": false,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(34),
 					},
@@ -443,7 +443,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 			{
 				"Name":     "Alice",
 				"Verified": false,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -452,7 +452,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 			{
 				"Name":     "Carlo",
 				"Verified": true,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -486,7 +486,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": nil,
 			},
@@ -524,10 +524,10 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": nil,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -538,7 +538,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 			},
 			{
 				"Age": uint64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "John",
 					},

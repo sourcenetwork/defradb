@@ -61,11 +61,11 @@ func (n *countNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *countNode) Explain() (map[string]interface{}, error) {
-	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
+func (n *countNode) Explain() (map[string]any, error) {
+	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]interface{}{}
+		explainerMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
@@ -80,7 +80,7 @@ func (n *countNode) Explain() (map[string]interface{}, error) {
 		sourceExplanations[i] = explainerMap
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		sourcesLabel: sourceExplanations,
 	}, nil
 }

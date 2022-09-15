@@ -41,7 +41,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
@@ -84,11 +84,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -100,7 +100,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 			{
 				"Age":    uint64(19),
 				"_count": 0,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -140,11 +140,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 1,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "John",
 					},
@@ -153,7 +153,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 			{
 				"Age":    uint64(19),
 				"_count": 0,
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 		},
 	}
@@ -189,11 +189,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "John",
 					},
@@ -202,7 +202,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 			{
 				"Age":    uint64(19),
 				"_count": 0,
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 		},
 	}
@@ -236,7 +236,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDiffe
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
 				"C1":  2,

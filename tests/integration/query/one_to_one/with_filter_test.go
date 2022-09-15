@@ -47,11 +47,11 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -93,11 +93,11 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -139,11 +139,11 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -197,11 +197,11 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},

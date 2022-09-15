@@ -40,7 +40,7 @@ type testOptions struct {
 	Body           io.Reader
 	Headers        map[string]string
 	ExpectedStatus int
-	ResponseData   interface{}
+	ResponseData   any
 	ServerOptions  serverOptions
 }
 
@@ -65,10 +65,10 @@ func TestRootHandler(t *testing.T) {
 		ResponseData:   &resp,
 	})
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database", v["response"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 
@@ -85,10 +85,10 @@ func TestPingHandler(t *testing.T) {
 	})
 
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "pong", v["response"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 
@@ -108,10 +108,10 @@ func TestDumpHandlerWithNoError(t *testing.T) {
 	})
 
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "ok", v["response"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 
@@ -591,11 +591,11 @@ type user {
 	})
 
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "success", v["result"])
 
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T\n%v", resp.Data, v)
+		t.Fatalf("data should be of type map[string]any but got %T\n%v", resp.Data, v)
 	}
 }
 
@@ -764,7 +764,7 @@ query {
 	})
 
 	switch d := resp3.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		switch val := d["val"].(type) {
 		case string:
 			assert.Equal(t, "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=", val)
@@ -772,7 +772,7 @@ query {
 			t.Fatalf("expecting string but got %T", val)
 		}
 	default:
-		t.Fatalf("expecting map[string]interface{} but got %T", d)
+		t.Fatalf("expecting map[string]any but got %T", d)
 	}
 }
 
@@ -792,10 +792,10 @@ func TestPeerIDHandler(t *testing.T) {
 	})
 
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "12D3KooWFpi6VTYKLtxUftJKEyfX8jDfKi8n15eaygH8ggfYFZbR", v["peerID"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 

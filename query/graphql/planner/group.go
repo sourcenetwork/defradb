@@ -174,8 +174,8 @@ func (n *groupNode) Next() (bool, error) {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *groupNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *groupNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Get the parent level groupBy attribute(s).
 	groupByFields := []string{}
@@ -191,13 +191,13 @@ func (n *groupNode) Explain() (map[string]interface{}, error) {
 	if len(n.childSelects) == 0 {
 		explainerMap["childSelects"] = nil
 	} else {
-		childSelects := make([]map[string]interface{}, 0, len(n.childSelects))
+		childSelects := make([]map[string]any, 0, len(n.childSelects))
 		for _, child := range n.childSelects {
 			if child == nil {
 				continue
 			}
 
-			childExplainGraph := map[string]interface{}{}
+			childExplainGraph := map[string]any{}
 
 			childExplainGraph[collectionNameLabel] = child.CollectionName
 
@@ -218,7 +218,7 @@ func (n *groupNode) Explain() (map[string]interface{}, error) {
 			}
 
 			if c.Limit != nil {
-				childExplainGraph[limitLabel] = map[string]interface{}{
+				childExplainGraph[limitLabel] = map[string]any{
 					limitLabel:  c.Limit.Limit,
 					offsetLabel: c.Limit.Offset,
 				}
@@ -227,7 +227,7 @@ func (n *groupNode) Explain() (map[string]interface{}, error) {
 			}
 
 			if c.OrderBy != nil {
-				innerOrderings := []map[string]interface{}{}
+				innerOrderings := []map[string]any{}
 				for _, condition := range c.OrderBy.Conditions {
 					orderFieldNames := []string{}
 
@@ -245,7 +245,7 @@ func (n *groupNode) Explain() (map[string]interface{}, error) {
 					}
 					// Put it all together for this order element.
 					innerOrderings = append(innerOrderings,
-						map[string]interface{}{
+						map[string]any{
 							"fields":    orderFieldNames,
 							"direction": string(condition.Direction),
 						},

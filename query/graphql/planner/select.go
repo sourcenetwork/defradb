@@ -78,7 +78,7 @@ func (n *selectTopNode) Source() planNode { return n.plan }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
-func (n *selectTopNode) Explain() (map[string]interface{}, error) {
+func (n *selectTopNode) Explain() (map[string]any, error) {
 	// No attributes are returned for selectTopNode.
 	return nil, nil
 }
@@ -166,8 +166,8 @@ func (n *selectNode) Close() error {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *selectNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *selectNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {

@@ -47,10 +47,10 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -58,7 +58,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 			},
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(25),
 					},
@@ -69,7 +69,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -112,10 +112,10 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -123,7 +123,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -131,7 +131,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 			},
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -177,10 +177,10 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(25),
 					},
@@ -191,7 +191,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -199,7 +199,7 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 			},
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -254,13 +254,13 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(32),
 							},
@@ -271,7 +271,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 					},
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(34),
 							},
@@ -281,10 +281,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(55),
 							},
@@ -294,10 +294,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescendi
 			},
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(19),
 							},
@@ -356,13 +356,13 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(34),
 							},
@@ -373,7 +373,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 					},
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(32),
 							},
@@ -383,10 +383,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 			},
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(19),
 							},
@@ -396,10 +396,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age": uint64(55),
 							},

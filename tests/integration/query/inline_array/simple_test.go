@@ -35,7 +35,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":         "John",
 					"LikedIndexes": nil,
@@ -58,7 +58,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":         "John",
 					"LikedIndexes": []bool{},
@@ -81,7 +81,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":         "John",
 					"LikedIndexes": []bool{true, true, false, true},
@@ -112,7 +112,7 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":               "John",
 				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), None[bool]()},
@@ -140,7 +140,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "John",
 					"FavouriteIntegers": nil,
@@ -163,7 +163,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "John",
 					"FavouriteIntegers": nil,
@@ -186,7 +186,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "John",
 					"FavouriteIntegers": []int64{},
@@ -209,7 +209,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "John",
 					"FavouriteIntegers": []int64{1, 2, 3, 5, 8},
@@ -232,7 +232,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "Andy",
 					"FavouriteIntegers": []int64{-1, -2, -3, -5, -8},
@@ -255,7 +255,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":              "Shahzad",
 					"FavouriteIntegers": []int64{-1, 2, -1, 1, 0},
@@ -286,7 +286,7 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":       "John",
 				"TestScores": []Option[int64]{Some[int64](-1), None[int64](), Some[int64](-1), Some[int64](2), Some[int64](0)},
@@ -315,7 +315,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":            "John",
 					"FavouriteFloats": nil,
@@ -338,7 +338,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":            "John",
 					"FavouriteFloats": []float64{},
@@ -361,7 +361,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":            "John",
 					"FavouriteFloats": []float64{3.1425, 0.00000000001, 10},
@@ -392,7 +392,7 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":        "John",
 				"PageRatings": []Option[float64]{Some(3.1425), None[float64](), Some(-0.00000000001), Some[float64](10)},
@@ -421,7 +421,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":             "John",
 					"PreferredStrings": nil,
@@ -444,7 +444,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":             "John",
 					"PreferredStrings": []string{},
@@ -467,7 +467,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name":             "John",
 					"PreferredStrings": []string{"", "the previous", "the first", "empty string"},
@@ -498,7 +498,7 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":        "John",
 				"PageHeaders": []Option[string]{Some(""), Some("the previous"), Some("the first"), Some("empty string"), None[string]()},

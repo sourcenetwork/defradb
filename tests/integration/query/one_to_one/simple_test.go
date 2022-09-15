@@ -48,11 +48,11 @@ func TestQueryOneToOne(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -89,11 +89,11 @@ func TestQueryOneToOne(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
 					"age":  uint64(65),
-					"published": map[string]interface{}{
+					"published": map[string]any{
 						"name":   "Painted House",
 						"rating": 4.9,
 					},

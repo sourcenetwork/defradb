@@ -73,11 +73,11 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "John Grisham",
 				"_count": 4,
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name": "The Pelican Brief",
 					},
@@ -89,7 +89,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 			{
 				"name":      "Cornelia Funke",
 				"_count":    1,
-				"published": []map[string]interface{}{},
+				"published": []map[string]any{},
 			},
 		},
 	}
@@ -149,11 +149,11 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "John Grisham",
 				"_count": 2,
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name": "The Associate",
 					},
@@ -165,7 +165,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 			{
 				"name":   "Cornelia Funke",
 				"_count": 0,
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name": "Theif Lord",
 					},
@@ -221,7 +221,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "John Grisham",
 				"_count": 1,

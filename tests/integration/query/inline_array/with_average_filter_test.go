@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_avg": float64(1.5),
@@ -61,7 +61,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(6.5),
@@ -89,7 +89,7 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_avg": 3.5,
@@ -117,7 +117,7 @@ func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_avg": 3.5,

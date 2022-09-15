@@ -75,7 +75,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// 4.9 + 3.2
@@ -151,7 +151,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// 4.2 + 3.2
@@ -227,7 +227,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// 4.9 + 3.2
@@ -307,7 +307,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// 4.2 + 3.2
@@ -388,12 +388,12 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				// 4.2 + 3.2
 				"_sum": 7.4,
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name": "Painted House",
 					},
@@ -405,7 +405,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 			{
 				"name":      "Cornelia Funke",
 				"_sum":      float64(0),
-				"published": []map[string]interface{}{},
+				"published": []map[string]any{},
 			},
 		},
 	}

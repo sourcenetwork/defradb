@@ -36,7 +36,7 @@ func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
 			},
@@ -69,7 +69,7 @@ func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
 			},

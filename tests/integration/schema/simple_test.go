@@ -28,8 +28,8 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name": "users",
 			},
 		},
@@ -78,8 +78,8 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name": "books",
 			},
 		},
@@ -109,8 +109,8 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name":   "users",
 				"fields": defaultFields.tidy(),
 			},
@@ -165,13 +165,13 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name": "users",
 				"fields": defaultFields.append(
 					field{
 						"name": "Name",
-						"type": map[string]interface{}{
+						"type": map[string]any{
 							"kind": "SCALAR",
 							"name": "String",
 						},

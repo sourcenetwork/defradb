@@ -12,7 +12,7 @@ package schema
 
 import "sort"
 
-type field = map[string]interface{}
+type field = map[string]any
 type fields []field
 
 func concat(fieldSets ...fields) fields {
@@ -35,7 +35,7 @@ func (fieldSet fields) append(field field) fields {
 
 // tidy sorts and casts the given fieldset into a format suitable
 // for comparing against introspection result fields.
-func (fieldSet fields) tidy() []interface{} {
+func (fieldSet fields) tidy() []any {
 	return fieldSet.sort().array()
 }
 
@@ -46,8 +46,8 @@ func (fieldSet fields) sort() fields {
 	return fieldSet
 }
 
-func (fieldSet fields) array() []interface{} {
-	result := make([]interface{}, len(fieldSet))
+func (fieldSet fields) array() []any {
+	result := make([]any, len(fieldSet))
 	for i, v := range fieldSet {
 		result[i] = v
 	}
@@ -67,7 +67,7 @@ var defaultFields = concat(
 
 var keyField = field{
 	"name": "_key",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "SCALAR",
 		"name": "ID",
 	},
@@ -75,7 +75,7 @@ var keyField = field{
 
 var versionField = field{
 	"name": "_version",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
 	},
@@ -83,30 +83,30 @@ var versionField = field{
 
 var groupField = field{
 	"name": "_group",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
 	},
 }
 
 var aggregateFields = fields{
-	map[string]interface{}{
+	map[string]any{
 		"name": "_avg",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
-	map[string]interface{}{
+	map[string]any{
 		"name": "_count",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Int",
 		},
 	},
-	map[string]interface{}{
+	map[string]any{
 		"name": "_sum",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},

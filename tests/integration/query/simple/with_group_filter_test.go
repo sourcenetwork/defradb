@@ -47,14 +47,14 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Alice",
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -62,7 +62,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -105,10 +105,10 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -116,7 +116,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
@@ -156,7 +156,7 @@ func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
@@ -214,35 +214,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group":   []map[string]interface{}{},
+						"_group":   []map[string]any{},
 					},
 					{
 						"Verified": false,
-						"_group":   []map[string]interface{}{},
+						"_group":   []map[string]any{},
 					},
 				},
 			},
 			{
 				"Name": "Alice",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
-						"_group":   []map[string]interface{}{},
+						"_group":   []map[string]any{},
 					},
 				},
 			},
 			{
 				"Name": "Carlo",
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
-						"_group":   []map[string]interface{}{},
+						"_group":   []map[string]any{},
 					},
 				},
 			},
@@ -286,11 +286,11 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
-				"G1":   []map[string]interface{}{},
-				"G2": []map[string]interface{}{
+				"G1":   []map[string]any{},
+				"G2": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -298,12 +298,12 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 			},
 			{
 				"Name": "John",
-				"G1": []map[string]interface{}{
+				"G1": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
 				},
-				"G2": []map[string]interface{}{
+				"G2": []map[string]any{
 					{
 						"Age": uint64(25),
 					},
@@ -311,12 +311,12 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 			},
 			{
 				"Name": "Carlo",
-				"G1": []map[string]interface{}{
+				"G1": []map[string]any{
 					{
 						"Age": uint64(55),
 					},
 				},
-				"G2": []map[string]interface{}{},
+				"G2": []map[string]any{},
 			},
 		},
 	}

@@ -69,7 +69,7 @@ func indentJSON(b []byte) (string, error) {
 }
 
 type graphqlErrors struct {
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 func hasGraphQLErrors(buf []byte) (bool, error) {
