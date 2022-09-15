@@ -114,7 +114,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 	if isDataObjectMarker(elements) {
 		return DataStoreKey{
 			CollectionId: elements[3],
-			InstanceType: InstanceType(elements[4]),
+			InstanceType: ValueKey,
 			DocKey:       elements[5],
 		}
 	}
