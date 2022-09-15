@@ -19,6 +19,9 @@ import (
 var defaultGroupArgsWithoutOrder = defaults.MakeDefaultsWithout(
 	[]string{
 		"order",
+		"cid",
+		"dockey",
+		"dockeys",
 	},
 )
 

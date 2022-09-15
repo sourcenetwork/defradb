@@ -133,7 +133,7 @@ var defaultUserArgsWithoutFilter = defaults.TrimFields(
 		defaults.GroupByArg,
 		defaults.LimitArg,
 		defaults.OffsetArg,
-		defaults.BuildOrderArg("users", []defaults.ArgDef{
+		defaults.BuildAllOrderInputFields("users", []defaults.ArgDef{
 			{
 				FieldName: "name",
 				TypeName:  "Ordering",
@@ -280,7 +280,7 @@ var defaultBookArgsWithoutFilter = defaults.TrimFields(
 		defaults.GroupByArg,
 		defaults.LimitArg,
 		defaults.OffsetArg,
-		defaults.BuildOrderArg("book", []defaults.ArgDef{
+		defaults.BuildAllOrderInputFields("book", []defaults.ArgDef{
 			{
 				FieldName: "author",
 				TypeName:  "",

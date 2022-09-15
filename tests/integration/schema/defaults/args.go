@@ -10,14 +10,6 @@
 
 package defaults
 
-var allDefaultGroupArgs = []Field{
-	FilterArg,
-	GroupByArg,
-	LimitArg,
-	OffsetArg,
-	OrderArg,
-}
-
 var allDefaultArgs = []Field{
 	FilterArg,
 	GroupByArg,
@@ -40,154 +32,36 @@ var DefaultFields = Concat(
 	aggregateFields,
 )
 
-var keyField = Field{
-	"name": "_key",
-	"type": map[string]interface{}{
-		"kind": "SCALAR",
-		"name": "ID",
-	},
+func makeNameTypeImplicit(name, iType any) Field {
+	return makeNameType(Yes(name), Yes(iType))
 }
 
-var versionField = Field{
-	"name": "_version",
-	"type": map[string]interface{}{
-		"kind": "LIST",
-		"name": nil,
-	},
-}
-
-var groupField = Field{
-	"name": "_group",
-	"type": map[string]interface{}{
-		"kind": "LIST",
-		"name": nil,
-	},
-}
+var keyField = makeNameTypeImplicit("_key", scalarIDKind)
+var versionField = makeNameTypeImplicit("_version", listKind)
+var groupField = makeNameTypeImplicit("_group", listKind)
 
 var aggregateFields = Fields{
-	map[string]interface{}{
-		"name": "_avg",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Float",
-		},
-	},
-	map[string]interface{}{
-		"name": "_count",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Int",
-		},
-	},
-	map[string]interface{}{
-		"name": "_sum",
-		"type": map[string]interface{}{
-			"kind": "SCALAR",
-			"name": "Float",
-		},
-	},
+	avgField,
+	countField,
+	sumField,
 }
 
-var FilterArg = Field{
-	"name": "filter",
-	"type": filterArgType,
-}
+var avgField = makeNameTypeImplicit("_avg", scalarFloatKind)
+var countField = makeNameTypeImplicit("_count", scalarIntKind)
+var sumField = makeNameTypeImplicit("_sum", scalarFloatKind)
 
-var GroupByArg = Field{
-	"name": "groupBy",
-	"type": groupByArgType,
-}
+var FilterArg = makeNameTypeImplicit("filter", filterArgType)
+var GroupByArg = makeNameTypeImplicit("groupBy", groupByArgType)
+var LimitArg = makeNameTypeImplicit("limit", intArgType)
+var OffsetArg = makeNameTypeImplicit("offset", intArgType)
+var OrderArg = makeNameTypeImplicit("order", orderArgType)
+var CidArg = makeNameTypeImplicit("cid", stringArgType)
+var DockeyArg = makeNameTypeImplicit("dockey", stringArgType)
+var DockeysArg = makeNameTypeImplicit("dockeys", nilArgType)
 
-var LimitArg = Field{
-	"name": "limit",
-	"type": intArgType,
-}
-
-var OffsetArg = Field{
-	"name": "offset",
-	"type": intArgType,
-}
-
-var OrderArg = Field{
-	"name": "order",
-	"type": orderArgType,
-}
-
-var CidArg = Field{
-	"name": "cid",
-	"type": stringArgType,
-}
-
-var DockeyArg = Field{
-	"name": "dockey",
-	"type": stringArgType,
-}
-
-var DockeysArg = Field{
-	"name": "dockeys",
-	"type": nilArgType,
-}
-
-var groupByArgType = Field{
-	"name":        nil,
-	"inputFields": nil,
-	"ofType": Field{
-		"kind": "NON_NULL",
-		"name": nil,
-	},
-}
-
-var intArgType = Field{
-	"inputFields": nil,
-	"name":        "Int",
-	"ofType":      nil,
-}
-
-var stringArgType = Field{
-	"inputFields": nil,
-	"name":        "String",
-}
-
-var nilArgType = Field{
-	"name":        nil,
-	"inputFields": nil,
-}
-
-var filterArgType = Field{
-	"name":   "authorFilterArg",
-	"ofType": nil,
-	"inputFields": []any{
-		makeOuterType(Yes("_and"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
-		makeOuterType(Yes("_key"), Yes("IDOperatorBlock"), Yes(nil), No()),
-		makeOuterType(Yes("_not"), Yes("authorFilterArg"), Yes(nil), No()),
-		makeOuterType(Yes("_or"), Yes(nil), Yes(inputObjectAuthorFilterArg), No()),
-
-		// Following can probably reworked to be dynamically added based on the schema.
-		makeOuterType(Yes("age"), Yes("IntOperatorBlock"), Yes(nil), No()),
-		makeOuterType(Yes("name"), Yes("StringOperatorBlock"), Yes(nil), No()),
-		makeOuterType(Yes("verified"), Yes("BooleanOperatorBlock"), Yes(nil), No()),
-		makeOuterType(Yes("wrote"), Yes("bookFilterArg"), Yes(nil), No()),
-		makeOuterType(Yes("wrote_id"), Yes("IDOperatorBlock"), Yes(nil), No()),
-	},
-}
-
-var orderArgType = Field{
-	"name":   "authorOrderArg",
-	"ofType": nil,
-	"inputFields": []any{
-		makeAuthorOrdering("_key"),
-
-		// Following can probably reworked to be dynamically added based on the schema.
-		makeAuthorOrdering("age"),
-		makeAuthorOrdering("name"),
-		makeAuthorOrdering("verified"),
-
-		// Without the relation type we won't have the following ordering type(s).
-		makeOuterType(Yes("wrote"), Yes("bookOrderArg"), Yes(nil), No()),
-		makeAuthorOrdering("wrote_id"),
-	},
-}
-
-func makeAuthorOrdering(name any) Field {
-	return makeOuterType(Yes(name), Yes("Ordering"), Yes(nil), No())
-}
+var intArgType = makeType(Yes("Int"), Yes(nil), Yes(nil))
+var stringArgType = makeType(Yes("String"), No(), Yes(nil))
+var groupByArgType = makeType(Yes(nil), Yes(nonNullKind), Yes(nil))
+var nilArgType = makeType(Yes(nil), No(), Yes(nil))
+var filterArgType = makeType(Yes("authorFilterArg"), Yes(nil), Yes(filterInputFieldsStatic))
+var orderArgType = makeType(Yes("authorOrderArg"), Yes(nil), Yes(orderInputFieldsStatic))

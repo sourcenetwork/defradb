@@ -12,32 +12,6 @@ package defaults
 
 import "github.com/sourcenetwork/defradb/client"
 
-func BuildFilterArg(objectName string, fields []ArgDef) Field {
-	filterArgName := objectName + "FilterArg"
-
-	inputFields := []any{
-		makeOuterType(Yes("_and"), Yes(nil), Yes(map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
-		}), No()),
-		makeOuterType(Yes("_key"), Yes("IDOperatorBlock"), Yes(nil), No()),
-		makeOuterType(Yes("_not"), Yes("authorFilterArg"), Yes(nil), No()),
-		makeOuterType(Yes("_or"), Yes(nil), Yes(map[string]any{
-			"kind": "INPUT_OBJECT",
-			"name": filterArgName,
-		}), No()),
-	}
-
-	for _, field := range fields {
-		inputFields = append(
-			inputFields,
-			makeOuterType(Yes(field.FieldName), Yes(field.TypeName), Yes(nil), No()),
-		)
-	}
-
-	return makeOuterType(Yes("filter"), Yes(filterArgName), Yes(nil), Yes(inputFields))
-}
-
 type Opt = client.Option[any]
 
 func Yes(yes any) Opt {
@@ -68,9 +42,9 @@ func makeType(name, ofType, inputFields Opt) Field {
 	return inner
 }
 
-// makeNameType returns a pair of name and pair type if both inputs have values,
-// otherwise options that are invalid (i.e. `No()`) are ignored.
-func makeNameType(name, innerType Opt) Field {
+// makeNameType returns a name, kind, and type keys if their inputs have values,
+// otherwise option(s) that are invalid (i.e. `No()`) are not going to be in result.
+func makeNameKindType(name, innerType, kind Opt) Field {
 	result := Field{}
 
 	if name.HasValue() {
@@ -81,7 +55,17 @@ func makeNameType(name, innerType Opt) Field {
 		result["type"] = innerType.Value()
 	}
 
+	if kind.HasValue() {
+		result["kind"] = kind.Value()
+	}
+
 	return result
+}
+
+// makeNameType returns a pair of name and type if both inputs have values,
+// otherwise option(s) that are invalid (i.e. `No()`) are ignored.
+func makeNameType(name, innerType Opt) Field {
+	return makeNameKindType(name, innerType, No())
 }
 
 // makeOuterType returns the outer object type where all options that HasValue() == true
@@ -92,30 +76,11 @@ func makeOuterType(name, typeName, ofType, inputFields Opt) Field {
 	return makeNameType(name, Yes(makeType(typeName, ofType, inputFields)))
 }
 
-func BuildOrderArg(objectName string, fields []ArgDef) Field {
-	inputFields := []any{
-		makeOuterType(Yes("_key"), Yes("Ordering"), Yes(nil), No()),
-	}
-
-	for _, field := range fields {
-		inputFields = append(
-			inputFields,
-			makeOuterType(Yes(field.FieldName), Yes(field.TypeName), Yes(nil), No()),
-		)
-	}
-
-	return makeOuterType(Yes("order"), Yes(objectName+"OrderArg"), Yes(nil), Yes(inputFields))
-}
-
 func MakeDefaultsWithout(skipThese []string) []any {
-	defaultsWithSomeSkipped := make(
-		[]any,
-		0,
-		len(allDefaultGroupArgs)-len(skipThese),
-	)
+	defaultsWithSomeSkipped := make([]any, 0, len(allDefaultArgs)-len(skipThese))
 
 ArgLoop:
-	for _, arg := range allDefaultGroupArgs {
+	for _, arg := range allDefaultArgs {
 		argName, found := arg["name"]
 		if !found {
 			panic("`name` not found in the default group arg.")
