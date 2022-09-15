@@ -360,8 +360,8 @@ func (p *Planner) SelectFromSource(
 		origSource: source,
 		parsed:     parsed,
 		docMapper:  docMapper{&parsed.DocumentMapping},
+		filter:     parsed.Filter,
 	}
-	s.filter = parsed.Filter
 	limit := parsed.Limit
 	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
