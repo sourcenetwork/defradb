@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
@@ -61,11 +62,16 @@ See https://docs.source.network/BSL.txt for more information.
 			return err
 		}
 
-		if defaultConfig {
-			log.FeedbackInfo(cmd.Context(), "Using default configuration")
-		} else {
-			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
-
+		stdout, err := os.Stdout.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat stdout: %w", err)
+		}
+		if !isFileInfoPipe(stdout) {
+			if defaultConfig {
+				log.FeedbackInfo(cmd.Context(), "Using default configuration")
+			} else {
+				log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
+			}
 		}
 		return nil
 	},
