@@ -149,6 +149,8 @@ var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any
 
 var defaultGroupArgsWithoutOrder = trimFields(
 	fields{
+		dockeyArg,
+		dockeysArg,
 		buildFilterArg("author", []argDef{
 			{
 				fieldName: "age",
