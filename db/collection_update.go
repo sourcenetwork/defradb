@@ -365,7 +365,7 @@ func (c *collection) applyMerge(
 		}
 
 		if c.isFieldRelationIdD(&fd) {
-			return client.ErrFieldNotExist(mfield)
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		cborVal, err := validateFieldSchema(mval, fd)
@@ -377,7 +377,7 @@ func (c *collection) applyMerge(
 		val := client.NewCBORValue(fd.Typ, cborVal)
 		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
 		if !fieldExists {
-			return client.ErrFieldNotExist(mfield)
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		c, err := c.saveDocValue(ctx, txn, fieldKey, val)

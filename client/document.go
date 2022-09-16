@@ -177,7 +177,7 @@ func (doc *Document) GetValue(field string) (Value, error) {
 	path, subPaths, hasSubPaths := parseFieldPath(field)
 	f, exists := doc.fields[path]
 	if !exists {
-		return nil, ErrFieldNotExist(path)
+		return nil, NewErrFieldNotExist(path)
 	}
 
 	val, err := doc.GetValueWithField(f)
@@ -200,7 +200,7 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 	defer doc.mu.RUnlock()
 	v, exists := doc.values[f]
 	if !exists {
-		return nil, ErrFieldNotExist(f.Name())
+		return nil, NewErrFieldNotExist(f.Name())
 	}
 	return v, nil
 }
@@ -246,7 +246,7 @@ func (doc *Document) Delete(fields ...string) error {
 	for _, f := range fields {
 		field, exists := doc.fields[f]
 		if !exists {
-			return ErrFieldNotExist(f)
+			return NewErrFieldNotExist(f)
 		}
 		doc.values[field].Delete()
 	}
@@ -432,7 +432,7 @@ func (doc *Document) toMap() (map[string]any, error) {
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
 		if !exists {
-			return nil, ErrFieldNotExist(v.Name())
+			return nil, NewErrFieldNotExist(v.Name())
 		}
 
 		if value.IsDocument() {
@@ -457,7 +457,7 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
 		if !exists {
-			return nil, ErrFieldNotExist(v.Name())
+			return nil, NewErrFieldNotExist(v.Name())
 		}
 
 		if value.IsDocument() {

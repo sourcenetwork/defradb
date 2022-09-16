@@ -600,11 +600,11 @@ func (c *collection) save(
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 			if !fieldExists {
-				return cid.Undef, client.ErrFieldNotExist(k)
+				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
 			if c.isFieldRelationId(k) {
-				return cid.Undef, client.ErrFieldNotExist(k)
+				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
 			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
