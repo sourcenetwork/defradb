@@ -189,6 +189,11 @@ func (f FieldDescription) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
+// IsPrimaryRelation returns true if this field is a relation, and is the primary side.
+func (f FieldDescription) IsPrimaryRelation() bool {
+	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary == 0
+}
+
 func (m RelationType) IsSet(target RelationType) bool {
 	return m&target > 0
 }

@@ -74,21 +74,6 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			//authorContact
-			3: {
-				// bae-41598f0c-19bc-5da6-813b-e80f14a10df3
-				`{
-					"cell": "5197212301",
-					"email": "john_grisham@example.com",
-					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
-				}`,
-				// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
-				`{
-					"cell": "5197212302",
-					"email": "cornelia_funke@example.com",
-					"author_id": "bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04"
-				}`,
-			},
 		},
 
 		// ----> selectTopNode                (explainable but no-attributes)

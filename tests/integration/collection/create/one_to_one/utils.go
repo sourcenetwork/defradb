@@ -8,15 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package one_to_one
+package create
 
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
-var bookAuthorGQLSchema = `
+var schema = `
 	type book {
 		name: String
 		rating: Float
@@ -31,6 +31,6 @@ var bookAuthorGQLSchema = `
 	}
 `
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, bookAuthorGQLSchema, []string{"book", "author"}, test)
+func executeTestCase(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteQueryTestCase(t, schema, test)
 }
