@@ -117,11 +117,10 @@ linters:
     - errorlint
     - exportloopref
     - forbidigo
-    # - gci
-    - goimports
     - goconst
     - gofmt
     - goheader
+    - goimports
     - gosimple
     - govet
     - ineffassign
@@ -218,21 +217,6 @@ linters-settings:
     # Exclude godoc examples from forbidigo checks.
     exclude_godoc_examples: false
 
-  # gci:
-  #   sections:
-  #     - standard # Standard section: captures all standard packages.
-  #     - default # Default section: contains all imports that could not be matched to another section type.
-  #     - prefix(github.com/sourcenetwork/defradb) # Custom section: groups all imports with the specified Prefix.
-  #     - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
-  #     - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
-  #   custom-order: true
-
-  goimports:
-    # Put imports beginning with prefix after 3rd-party packages.
-    # It's a comma-separated list of prefixes.
-    # Default: ""
-    local-prefixes: github.com/sourcenetwork/defradb
-
   goconst:
     # Minimal length of string constant.
     min-len: 2
@@ -279,6 +263,12 @@ linters-settings:
 
     template-path:
       # also as alternative of directive 'template' you may put the path to file with the template source
+
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages.
+    # It's a comma-separated list of prefixes.
+    # Default: ""
+    local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
     # Select the Go version to target.
