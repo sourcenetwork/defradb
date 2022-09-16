@@ -41,6 +41,7 @@ func Execute() {
 	// Silence cobra's default output to control usage and error display.
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
+	rootCmd.SetOut(os.Stdout)
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
