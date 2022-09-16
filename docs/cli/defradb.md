@@ -23,7 +23,7 @@ See https://docs.source.network/BSL.txt for more information.
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
-      --url string           URL of the target database's HTTP endpoint (default "localhost:9181")
+      --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO
