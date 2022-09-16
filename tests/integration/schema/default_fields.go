@@ -132,6 +132,10 @@ var dockeysArg = field{
 	"type": map[string]any{
 		"name":        nil,
 		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
 	},
 }
 
