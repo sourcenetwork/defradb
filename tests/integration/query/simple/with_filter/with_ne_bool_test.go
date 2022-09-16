@@ -39,7 +39,7 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Fred",
 			},
@@ -75,7 +75,7 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Fred",
 			},
@@ -111,7 +111,7 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},

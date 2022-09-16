@@ -38,7 +38,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -65,7 +65,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic filter(age), multiple results",
@@ -87,7 +87,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 					"Age":  uint64(32),
@@ -124,7 +124,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},

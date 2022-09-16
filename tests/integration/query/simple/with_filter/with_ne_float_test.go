@@ -36,7 +36,7 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},
@@ -69,7 +69,7 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},

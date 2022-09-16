@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	registeredFixtures = map[string][]interface{}{
+	registeredFixtures = map[string][]any{
 		"user_simple": {User{}},
 	}
 )
@@ -31,7 +31,7 @@ type Generator struct {
 	ctx context.Context
 
 	schema string
-	types  []interface{}
+	types  []any
 }
 
 func ForSchema(ctx context.Context, schemaName string) Generator {
@@ -43,12 +43,12 @@ func ForSchema(ctx context.Context, schemaName string) Generator {
 }
 
 // Types returns the defined types for this fixture set
-func (g Generator) Types() []interface{} {
+func (g Generator) Types() []any {
 	return g.types
 }
 
 // Type returns type at the given index in the fixture set
-func (g Generator) Type(index int) interface{} {
+func (g Generator) Type(index int) any {
 	return g.types[index]
 }
 
@@ -84,7 +84,7 @@ func (g Generator) GenerateDocs() ([]string, error) {
 
 // extractGQLFromType extracts a GraphQL SDL definition as a string
 // from a given type struct
-func ExtractGQLFromType(t interface{}) (string, error) {
+func ExtractGQLFromType(t any) (string, error) {
 	var buf bytes.Buffer
 
 	if reflect.TypeOf(t).Kind() != reflect.Struct {

@@ -34,7 +34,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -57,7 +57,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic filter (duplicate key by DocKeys arg), partial results",
@@ -79,7 +79,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -110,7 +110,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Jim",
 					"Age":  uint64(27),
@@ -145,7 +145,7 @@ func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

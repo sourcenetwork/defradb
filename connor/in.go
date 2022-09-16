@@ -4,9 +4,9 @@ import "fmt"
 
 // in will determine whether a value exists within the
 // condition's array of available values.
-func in(conditions, data interface{}) (bool, error) {
+func in(conditions, data any) (bool, error) {
 	switch cn := conditions.(type) {
-	case []interface{}:
+	case []any:
 		for _, ce := range cn {
 			if m, err := eq(ce, data); err != nil {
 				return false, err

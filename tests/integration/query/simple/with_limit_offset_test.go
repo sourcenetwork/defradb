@@ -38,7 +38,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 					"Age":  uint64(32),
@@ -73,7 +73,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 					"Age":  uint64(32),
@@ -113,7 +113,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -148,7 +148,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -188,7 +188,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -227,7 +227,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Alice",
 					"Age":  uint64(19),

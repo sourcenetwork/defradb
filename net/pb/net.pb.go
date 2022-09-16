@@ -706,7 +706,7 @@ func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
 	s.RegisterService(&_Service_serviceDesc, srv)
 }
 
-func _Service_GetDocGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetDocGraph_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetDocGraphRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -718,13 +718,13 @@ func _Service_GetDocGraph_Handler(srv interface{}, ctx context.Context, dec func
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetDocGraph",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetDocGraph(ctx, req.(*GetDocGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_PushDocGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_PushDocGraph_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(PushDocGraphRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -736,13 +736,13 @@ func _Service_PushDocGraph_Handler(srv interface{}, ctx context.Context, dec fun
 		Server:     srv,
 		FullMethod: "/net.pb.Service/PushDocGraph",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).PushDocGraph(ctx, req.(*PushDocGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_GetLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -754,13 +754,13 @@ func _Service_GetLog_Handler(srv interface{}, ctx context.Context, dec func(inte
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetLog(ctx, req.(*GetLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_PushLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_PushLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(PushLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -772,13 +772,13 @@ func _Service_PushLog_Handler(srv interface{}, ctx context.Context, dec func(int
 		Server:     srv,
 		FullMethod: "/net.pb.Service/PushLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).PushLog(ctx, req.(*PushLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetHeadLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetHeadLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -790,7 +790,7 @@ func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetHeadLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetHeadLog(ctx, req.(*GetHeadLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)

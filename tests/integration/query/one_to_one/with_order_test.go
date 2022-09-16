@@ -61,11 +61,11 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": 4.9,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(65),
 				},
@@ -73,7 +73,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 			{
 				"name":   "Theif Lord",
 				"rating": 4.8,
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "Cornelia Funke",
 					"age":  uint64(62),
 				},

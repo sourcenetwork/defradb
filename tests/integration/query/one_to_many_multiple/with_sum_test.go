@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"_sum": int64(9),

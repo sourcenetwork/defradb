@@ -60,7 +60,7 @@ func TestGetPeerIDCmd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := make(map[string]interface{})
+	r := make(map[string]any)
 	err = json.Unmarshal(out, &r)
 	if err != nil {
 		t.Fatal(err)

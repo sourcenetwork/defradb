@@ -10,7 +10,7 @@ import (
 
 // eq is an operator which performs object equality
 // tests.
-func eq(condition, data interface{}) (bool, error) {
+func eq(condition, data any) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		for _, item := range arr {
@@ -60,7 +60,7 @@ func eq(condition, data interface{}) (bool, error) {
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
-	case map[FilterKey]interface{}:
+	case map[FilterKey]any:
 		m := true
 		for prop, cond := range cn {
 			var err error

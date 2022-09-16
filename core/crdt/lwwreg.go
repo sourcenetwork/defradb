@@ -70,7 +70,7 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (delta *LWWRegDelta) Value() interface{} {
+func (delta *LWWRegDelta) Value() any {
 	return delta.Data
 }
 

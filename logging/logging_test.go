@@ -884,7 +884,7 @@ func getFirstOutputPath(outputPaths []string) string {
 
 var errloggingToConsole = errors.New("no file to open. Logging to console")
 
-func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error) {
+func getLogLines(t *testing.T, logPath string) ([]map[string]any, error) {
 	if logPath == stderr {
 		return nil, errloggingToConsole
 	}
@@ -903,14 +903,14 @@ func getLogLines(t *testing.T, logPath string) ([]map[string]interface{}, error)
 	return parseLines(file)
 }
 
-func parseLines(r io.Reader) ([]map[string]interface{}, error) {
+func parseLines(r io.Reader) ([]map[string]any, error) {
 	fileScanner := bufio.NewScanner(r)
 
 	fileScanner.Split(bufio.ScanLines)
 
-	logLines := []map[string]interface{}{}
+	logLines := []map[string]any{}
 	for fileScanner.Scan() {
-		loggedLine := make(map[string]interface{})
+		loggedLine := make(map[string]any)
 		err := json.Unmarshal(fileScanner.Bytes(), &loggedLine)
 		if err != nil {
 			return nil, err

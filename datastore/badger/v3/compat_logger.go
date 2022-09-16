@@ -10,13 +10,13 @@ type compatLogger struct {
 }
 
 // Warning is for compatibility
-// Deprecated: use Warn(args ...interface{}) instead
-func (logger *compatLogger) Warning(args ...interface{}) {
+// Deprecated: use Warn(args ...any) instead
+func (logger *compatLogger) Warning(args ...any) {
 	logger.skipLogger.Warn(args...)
 }
 
 // Warningf is for compatibility
-// Deprecated: use Warnf(format string, args ...interface{}) instead
-func (logger *compatLogger) Warningf(format string, args ...interface{}) {
+// Deprecated: use Warnf(format string, args ...any) instead
+func (logger *compatLogger) Warningf(format string, args ...any) {
 	logger.skipLogger.Warnf(format, args...)
 }

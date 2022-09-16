@@ -46,7 +46,7 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 		Query: `query {
 					_avg(users: {field: Age})
 				}`,
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_avg": float64(0),
 			},
@@ -74,7 +74,7 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_avg": float64(29),
 			},

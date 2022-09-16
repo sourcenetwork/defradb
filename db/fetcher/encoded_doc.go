@@ -30,16 +30,16 @@ type encProperty struct {
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e encProperty) Decode() (client.CType, interface{}, error) {
+func (e encProperty) Decode() (client.CType, any, error) {
 	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
-	var val interface{}
+	var val any
 	err := cbor.Unmarshal(buf, &val)
 	if err != nil {
 		return ctype, nil, err
 	}
 
-	if array, isArray := val.([]interface{}); isArray {
+	if array, isArray := val.([]any); isArray {
 		var ok bool
 		switch e.Desc.Kind {
 		case client.FieldKind_BOOL_ARRAY:

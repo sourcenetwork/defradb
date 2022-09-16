@@ -80,7 +80,7 @@ func (g *Generator) FromSDL(
 
 func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
-	typesBeforeMutation := make(map[string]interface{}, len(typeMapBeforeMutation))
+	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
 	for typeName := range typeMapBeforeMutation {
 		typesBeforeMutation[typeName] = struct{}{}

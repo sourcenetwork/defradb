@@ -37,7 +37,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 				},
@@ -62,7 +62,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic float greater than filter, multiple results",
@@ -83,7 +83,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 				},
@@ -119,7 +119,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
@@ -148,7 +148,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},

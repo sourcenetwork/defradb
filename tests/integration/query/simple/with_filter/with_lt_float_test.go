@@ -36,7 +36,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},
@@ -66,7 +66,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},
@@ -96,7 +96,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

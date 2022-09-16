@@ -26,7 +26,7 @@ type PropertyIndex struct {
 	Index int
 }
 
-func (k *PropertyIndex) GetProp(data interface{}) interface{} {
+func (k *PropertyIndex) GetProp(data any) any {
 	if data == nil {
 		return nil
 	}
@@ -53,7 +53,7 @@ type Operator struct {
 	Operation string
 }
 
-func (k *Operator) GetProp(data interface{}) interface{} {
+func (k *Operator) GetProp(data any) any {
 	return data
 }
 
@@ -72,15 +72,15 @@ func (k *Operator) Equal(other connor.FilterKey) bool {
 // records that a query returns.
 type Filter struct {
 	// The filter conditions that must pass in order for a record to be returned.
-	Conditions map[connor.FilterKey]interface{}
+	Conditions map[connor.FilterKey]any
 
 	// The filter conditions in human-readable form.
-	ExternalConditions map[string]interface{}
+	ExternalConditions map[string]any
 }
 
 func NewFilter() *Filter {
 	return &Filter{
-		Conditions: map[connor.FilterKey]interface{}{},
+		Conditions: map[connor.FilterKey]any{},
 	}
 }
 

@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"_avg": float64(2.25),

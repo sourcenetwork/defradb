@@ -76,8 +76,8 @@ func (n *deleteNode) Source() planNode {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *deleteNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *deleteNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the document id(s) that request wants to delete.
 	explainerMap[idsLabel] = n.ids

@@ -40,7 +40,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key": "bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
 				},
@@ -92,7 +92,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key": "bae-4b5b1765-560c-5843-9abc-24d21d8aa598",
 				},
@@ -159,7 +159,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"DeletedKeyByFilter": "bae-4b5b1765-560c-5843-9abc-24d21d8aa598",
 				},
@@ -218,7 +218,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"DeletedKeyByFilter": "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
 				},
@@ -267,7 +267,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 
 			ExpectedError: "",
 		},
@@ -283,7 +283,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Docs: map[int][]string{},
 
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 
 			ExpectedError: "",
 		},
@@ -312,7 +312,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},
@@ -342,7 +342,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 				},
 			},
 
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 
 			ExpectedError: "Syntax Error GraphQL request (2:53) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(filter: {name: {_eq: \"Shahzad\"}}) {\n                                                       ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},

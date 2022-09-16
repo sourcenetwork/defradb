@@ -8,7 +8,7 @@ import (
 
 // lt does value comparisons to determine whether one
 // value is strictly less than another.
-func lt(condition, data interface{}) (bool, error) {
+func lt(condition, data any) (bool, error) {
 	if condition == nil {
 		// Nothing is less than nil
 		return false, nil

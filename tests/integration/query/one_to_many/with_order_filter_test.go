@@ -66,11 +66,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"age":  uint64(65),
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
@@ -135,11 +135,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"age":  uint64(65),
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
@@ -153,7 +153,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 			{
 				"name": "Cornelia Funke",
 				"age":  uint64(62),
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,

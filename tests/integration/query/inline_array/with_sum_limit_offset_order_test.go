@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 0 + 1 + 2
@@ -62,7 +62,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 5 + 2 + 1
@@ -91,7 +91,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 0 + 1 + 2
@@ -120,7 +120,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 5 + 2 + 1
@@ -149,7 +149,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 0.577 + 2.718 + 3.1425
@@ -178,7 +178,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 6.283 + 3.1425 + 2.718
@@ -207,7 +207,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 0.577 + 2.718 + 3.1425
@@ -236,7 +236,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				// 6.283 + 3.1425 + 2.718

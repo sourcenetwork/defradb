@@ -33,7 +33,7 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 3,
@@ -61,7 +61,7 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "John",
 				"_count": 2,
@@ -89,7 +89,7 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -117,7 +117,7 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -144,7 +144,7 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 				"FavouriteIntegers": [-1, 2, -1, 1, 0, -2]
 			}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 4,
@@ -172,7 +172,7 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -200,7 +200,7 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -228,7 +228,7 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -256,7 +256,7 @@ func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,

@@ -36,7 +36,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
@@ -66,7 +66,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
@@ -96,7 +96,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
@@ -125,7 +125,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},

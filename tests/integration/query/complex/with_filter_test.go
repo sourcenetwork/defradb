@@ -55,12 +55,12 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"address": "600 Madison Ave., New York, New York"
 				}`)},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "Pendant Publishing",
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
-						"author": map[string]interface{}{
+						"author": map[string]any{
 							"age": uint64(44),
 						},
 					},

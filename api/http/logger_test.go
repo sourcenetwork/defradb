@@ -103,7 +103,7 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	assert.Equal(t, float64(28), kv["Length"])
 }
 
-func readLog(path string) (map[string]interface{}, error) {
+func readLog(path string) (map[string]any, error) {
 	// inspect the log file
 	f, err := os.Open(path)
 	if err != nil {
@@ -114,7 +114,7 @@ func readLog(path string) (map[string]interface{}, error) {
 	scanner.Scan()
 	logLine := scanner.Text()
 
-	kv := make(map[string]interface{})
+	kv := make(map[string]any)
 	err = json.Unmarshal([]byte(logLine), &kv)
 	if err != nil {
 		return nil, errors.WithStack(err)

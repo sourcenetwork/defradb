@@ -92,7 +92,7 @@ func (n *valuesNode) Less(i, j int) bool {
 
 // docValueLess extracts and compare field values of a document
 func (n *valuesNode) docValueLess(da, db core.Doc) bool {
-	var ra, rb interface{}
+	var ra, rb any
 	for _, order := range n.ordering {
 		if order.Direction == mapper.ASC {
 			ra = getDocProp(da, order.FieldIndexes)
@@ -133,14 +133,14 @@ func (n *valuesNode) Len() int {
 // case of nested objects. The key delimeter is a ".".
 // Eg.
 // prop = "author.name" -> {author: {name: ...}}
-func getDocProp(obj core.Doc, prop []int) interface{} {
+func getDocProp(obj core.Doc, prop []int) any {
 	if len(prop) == 0 {
 		return nil
 	}
 	return getMapPropList(obj, prop)
 }
 
-func getMapPropList(obj core.Doc, props []int) interface{} {
+func getMapPropList(obj core.Doc, props []int) any {
 	if len(props) == 1 {
 		return obj.Fields[props[0]]
 	}
