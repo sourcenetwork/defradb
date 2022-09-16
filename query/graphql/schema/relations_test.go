@@ -13,8 +13,9 @@ package schema
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestSimpleOneToOneFromSingle(t *testing.T) {

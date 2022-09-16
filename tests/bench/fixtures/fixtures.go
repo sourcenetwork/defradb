@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/sourcenetwork/defradb/errors"
-
 	"github.com/bxcodec/faker"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (

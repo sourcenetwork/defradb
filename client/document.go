@@ -16,11 +16,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sourcenetwork/defradb/errors"
-
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // This is the main implementation starting point for accessing the internal Document API

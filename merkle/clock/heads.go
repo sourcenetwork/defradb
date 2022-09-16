@@ -16,14 +16,14 @@ import (
 	"encoding/binary"
 	"sort"
 
+	cid "github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-
-	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 )
 
 // heads manages the current Merkle-CRDT heads.

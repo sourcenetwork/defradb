@@ -20,9 +20,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 func TestLogWritesFatalMessageToLogAndKillsProcess(t *testing.T) {

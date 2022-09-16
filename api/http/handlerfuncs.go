@@ -22,6 +22,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
+
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 )
 

@@ -22,10 +22,11 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSimpleDataResponse(t *testing.T) {

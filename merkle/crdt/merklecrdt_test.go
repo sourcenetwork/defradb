@@ -14,15 +14,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/core"
-	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/merkle/clock"
-
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+
+	"github.com/sourcenetwork/defradb/core"
+	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
 func newDS() ds.Datastore {

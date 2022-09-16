@@ -15,10 +15,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/stretchr/testify/assert"
 )
 
 type QueryTestCase struct {

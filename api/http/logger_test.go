@@ -21,8 +21,9 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 func TestNewLoggingResponseWriterLogger(t *testing.T) {

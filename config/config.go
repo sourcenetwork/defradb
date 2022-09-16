@@ -58,11 +58,12 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/spf13/viper"
+
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/spf13/viper"
 )
 
 var log = logging.MustNewLogger("defra.config")

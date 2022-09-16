@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
+
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )

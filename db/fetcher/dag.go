@@ -15,12 +15,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ipfs/go-cid"
+	dsq "github.com/ipfs/go-datastore/query"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-
-	"github.com/ipfs/go-cid"
-	dsq "github.com/ipfs/go-datastore/query"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility

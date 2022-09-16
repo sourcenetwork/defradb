@@ -15,18 +15,17 @@ import (
 	"strings"
 	"time"
 
+	cbor "github.com/fxamacker/cbor/v2"
+	"github.com/valyala/fastjson"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-
-	cbor "github.com/fxamacker/cbor/v2"
-	"github.com/valyala/fastjson"
+	"github.com/sourcenetwork/defradb/query/graphql/planner"
 )
 
 var (

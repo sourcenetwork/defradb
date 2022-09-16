@@ -14,12 +14,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
+
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/errors"
-
-	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/sourcenetwork/defradb/logging"
 )
 

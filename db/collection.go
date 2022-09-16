@@ -18,6 +18,11 @@ import (
 	"strings"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
+	mh "github.com/multiformats/go-multihash"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -25,11 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-
-	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
-	mh "github.com/multiformats/go-multihash"
 )
 
 var (

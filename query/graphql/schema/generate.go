@@ -14,16 +14,14 @@ import (
 	"context"
 	"fmt"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-
-	gql "github.com/graphql-go/graphql"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )

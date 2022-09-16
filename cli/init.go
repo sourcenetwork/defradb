@@ -14,9 +14,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/spf13/cobra"
 )
 
 var reinitialize bool
