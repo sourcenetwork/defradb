@@ -364,7 +364,7 @@ func (c *collection) applyMerge(
 			return errors.New("invalid field in Patch")
 		}
 
-		if c.isFieldRelationIdD(&fd) {
+		if c.isFieldDescriptionRelationID(&fd) {
 			return client.NewErrFieldNotExist(mfield)
 		}
 
