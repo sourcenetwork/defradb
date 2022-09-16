@@ -1,6 +1,10 @@
 package connor
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 // and is an operator which allows the evaluation of
 // of a number of conditions, matching if all of them match.
@@ -17,6 +21,6 @@ func and(condition, data any) (bool, error) {
 
 		return true, nil
 	default:
-		return false, fmt.Errorf("unknown or condition type '%#v'", cn)
+		return false, errors.New(fmt.Sprintf("unknown or condition type '%#v'", cn))
 	}
 }

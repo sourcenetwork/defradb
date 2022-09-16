@@ -34,6 +34,12 @@ type defraError struct {
 func (e *defraError) Error() string {
 	builder := strings.Builder{}
 	builder.WriteString(e.message)
+
+	if e.inner != nil {
+		builder.WriteString(": ")
+		builder.WriteString(e.inner.Error())
+	}
+
 	if len(e.kvs) > 0 {
 		builder.WriteString(".")
 	}

@@ -12,10 +12,11 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -340,7 +341,7 @@ func (doc *Document) setAndParseType(field string, value any) error {
 		}
 
 	default:
-		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
+		return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", field, val))
 	}
 	return nil
 }
@@ -527,7 +528,7 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 // 			break
 
 // 		default:
-// 			return fmt.Errorf("Unhandled type in raw JSON: %v => %T", k, v)
+// 			return errors.Wrap("Unhandled type in raw JSON: %v => %T", k, v)
 
 // 		}
 // 	}

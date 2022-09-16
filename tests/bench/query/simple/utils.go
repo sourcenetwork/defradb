@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -71,13 +72,13 @@ func runQueryBenchGetSync(
 	for i := 0; i < b.N; i++ {
 		res := db.ExecQuery(ctx, query)
 		if len(res.Errors) > 0 {
-			return fmt.Errorf("Query error: %v", res.Errors)
+			return errors.New(fmt.Sprintf("Query error: %v", res.Errors))
 		}
 
 		// leave comments for debug!!
 		// l := len(res.Data.([]map[string]any))
 		// if l != opCount {
-		// 	return fmt.Errorf(
+		// 	return errors.Wrap(
 		// "Invalid response, returned data doesn't match length, expected %v actual %v",
 		// docCount, l)
 		// }

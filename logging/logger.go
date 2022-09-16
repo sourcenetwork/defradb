@@ -12,6 +12,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	stdlog "log"
 	"os"
 	"sync"
@@ -64,7 +65,8 @@ func (l *logger) Error(ctx context.Context, message string, keyvals ...KV) {
 
 func (l *logger) ErrorE(ctx context.Context, message string, err error, keyvals ...KV) {
 	kvs := keyvals
-	kvs = append(kvs, NewKV("Error", err))
+	kvs = append(kvs, NewKV("Error", err.Error()))
+	kvs = withStackTrace(err, kvs)
 
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
@@ -81,7 +83,8 @@ func (l *logger) Fatal(ctx context.Context, message string, keyvals ...KV) {
 
 func (l *logger) FatalE(ctx context.Context, message string, err error, keyvals ...KV) {
 	kvs := keyvals
-	kvs = append(kvs, NewKV("Error", err))
+	kvs = append(kvs, NewKV("Error", err.Error()))
+	kvs = withStackTrace(err, kvs)
 
 	l.syncLock.RLock()
 	defer l.syncLock.RUnlock()
@@ -113,6 +116,9 @@ func (l *logger) FeedbackErrorE(ctx context.Context, message string, err error, 
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
 		l.consoleLogger.Println(message)
+		if stack, hasStack := getStackTrace(err); hasStack {
+			l.consoleLogger.Println(stack)
+		}
 	}
 }
 
@@ -131,6 +137,9 @@ func (l *logger) FeedbackFatalE(ctx context.Context, message string, err error, 
 	defer l.syncLock.RUnlock()
 	if l.consoleLogger != nil {
 		l.consoleLogger.Println(message)
+		if stack, hasStack := getStackTrace(err); hasStack {
+			l.consoleLogger.Println(stack)
+		}
 	}
 }
 
@@ -171,6 +180,25 @@ func (l *logger) ApplyConfig(config Config) {
 	}
 }
 
+func withStackTrace(err error, keyvals []KV) []KV {
+	if stack, hasStack := getStackTrace(err); hasStack {
+		return append(keyvals, NewKV("stacktrace", stack))
+	}
+
+	return keyvals
+}
+
+func getStackTrace(err error) (string, bool) {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
+
+	if cachedConfig.EnableStackTrace.EnableStackTrace {
+		return fmt.Sprintf("%+v", err), true
+	}
+
+	return "", false
+}
+
 func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	const (
 		encodingTypeConsole string = "console"
@@ -186,10 +214,6 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 
 	if config.Level.HasValue {
 		defaultConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Level.LogLevel))
-	}
-
-	if config.EnableStackTrace.HasValue {
-		defaultConfig.DisableStacktrace = !config.EnableStackTrace.EnableStackTrace
 	}
 
 	if config.DisableColor.HasValue && config.DisableColor.DisableColor {

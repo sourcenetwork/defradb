@@ -11,11 +11,11 @@
 package schema
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // type uint8 uint8

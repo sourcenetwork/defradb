@@ -11,14 +11,13 @@
 package schema
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	gql "github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -167,7 +166,7 @@ func (g *Generator) CreateDescriptions(
 				// let's make sure its an _id field, otherwise
 				// we might have an error here
 				if !strings.HasSuffix(fname, "_id") {
-					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())
+					return nil, errors.New(fmt.Sprintf("Error: found a duplicate field '%s' for type %s", fname, t.Name()))
 				}
 				continue
 			}
@@ -186,12 +185,12 @@ func (g *Generator) CreateDescriptions(
 				rel := g.manager.Relations.GetRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
 						fname,
 						field.Type.Name(),
 						t.Name(),
-					)
+					))
 				}
 				fd.RelationName = rel.name
 

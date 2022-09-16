@@ -12,7 +12,8 @@ package datastore
 
 import (
 	"context"
-	"errors"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"

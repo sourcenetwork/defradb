@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -53,7 +54,7 @@ func (p *Peer) processLog(
 	// check if we already have this block
 	// exists, err := txn.DAGstore().Has(ctx, c)
 	// if err != nil {
-	// 	return nil, fmt.Errorf("Failed to check for existing block %s: %w", c, err)
+	// 	return nil, errors.Wrap("Failed to check for existing block %s", c, err)
 	// }
 	// if exists {
 	// 	log.Debugf("Already have block %s locally, skipping.", c)
@@ -67,7 +68,7 @@ func (p *Peer) processLog(
 
 	delta, err := crdt.DeltaDecode(nd)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode delta object: %w", err)
+		return nil, errors.Wrap("Failed to decode delta object", err)
 	}
 
 	log.Debug(
@@ -116,7 +117,7 @@ func initCRDTForType(
 	} else {
 		fd, ok := description.GetField(field)
 		if !ok {
-			return nil, fmt.Errorf("Couldn't find field %s for doc %s", field, docKey)
+			return nil, errors.New(fmt.Sprintf("Couldn't find field %s for doc %s", field, docKey))
 		}
 		ctype = fd.Typ
 		fieldID := fd.ID.String()
@@ -129,7 +130,7 @@ func initCRDTForType(
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	blk, err := blocks.NewBlockWithCid(buf, cid)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create block: %w", err)
+		return nil, errors.Wrap("Failed to create block", err)
 	}
 	return format.Decode(blk)
 }

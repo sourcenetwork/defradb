@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // gt does value comparisons to determine whether one
@@ -33,6 +34,6 @@ func gt(condition, data any) (bool, error) {
 
 		return false, nil
 	default:
-		return false, fmt.Errorf("unknown comparison type '%#v'", condition)
+		return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 	}
 }

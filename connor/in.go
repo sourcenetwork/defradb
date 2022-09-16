@@ -1,6 +1,6 @@
 package connor
 
-import "fmt"
+import "github.com/sourcenetwork/defradb/errors"
 
 // in will determine whether a value exists within the
 // condition's array of available values.
@@ -17,6 +17,6 @@ func in(conditions, data any) (bool, error) {
 
 		return false, nil
 	default:
-		return false, fmt.Errorf("unknown value type")
+		return false, errors.New("unknown value type")
 	}
 }

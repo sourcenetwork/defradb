@@ -12,9 +12,9 @@ package planner
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
@@ -36,7 +36,7 @@ func runQueryParserBench(
 	for i := 0; i < b.N; i++ {
 		_, err := exec.ParseRequestString(query)
 		if err != nil {
-			return fmt.Errorf("Failed to parse query string: %w", err)
+			return errors.Wrap("Failed to parse query string", err)
 		}
 	}
 	b.StopTimer()
@@ -63,18 +63,18 @@ func runMakePlanBench(
 
 	q, err := exec.ParseRequestString(query)
 	if err != nil {
-		return fmt.Errorf("Failed to parse query string: %w", err)
+		return errors.Wrap("Failed to parse query string", err)
 	}
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
-		return fmt.Errorf("Failed to create txn: %w", err)
+		return errors.Wrap("Failed to create txn", err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := exec.MakePlanFromParser(ctx, db, txn, q)
 		if err != nil {
-			return fmt.Errorf("Failed to make plan: %w", err)
+			return errors.Wrap("Failed to make plan", err)
 		}
 	}
 	b.StopTimer()

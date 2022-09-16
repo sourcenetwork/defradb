@@ -12,6 +12,7 @@ package errors
 
 import (
 	"bytes"
+	"errors"
 	"runtime"
 
 	goErrors "github.com/go-errors/errors"
@@ -47,6 +48,10 @@ func Wrap(message string, inner error, keyvals ...KV) error {
 	err := newError(message, keyvals...)
 	err.inner = inner
 	return err
+}
+
+func Is(err, target error) bool {
+	return errors.Is(err, target)
 }
 
 func newError(message string, keyvals ...KV) *defraError {

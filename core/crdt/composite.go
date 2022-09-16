@@ -13,12 +13,12 @@ package crdt
 import (
 	"bytes"
 	"context"
-	"errors"
 	"sort"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"

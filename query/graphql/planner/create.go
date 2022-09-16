@@ -12,11 +12,11 @@ package planner
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -54,7 +54,7 @@ func (n *createNode) Init() error { return nil }
 func (n *createNode) Start() error {
 	// parse the doc
 	if n.newDocStr == "" {
-		return fmt.Errorf("Invalid document to create")
+		return errors.New("Invalid document to create")
 	}
 
 	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))

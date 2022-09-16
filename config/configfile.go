@@ -13,6 +13,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
@@ -28,7 +30,7 @@ func (cfg *Config) writeConfigFile(path string) error {
 		return err
 	}
 	if err := os.WriteFile(path, buffer, defaultConfigFilePerm); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+		return errors.Wrap("failed to write file", err)
 	}
 	return nil
 }

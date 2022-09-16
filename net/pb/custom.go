@@ -14,7 +14,6 @@ package net_pb
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-cid"
@@ -23,6 +22,7 @@ import (
 	"github.com/multiformats/go-varint"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // customGogoType aggregates the interfaces that custom Gogo types need to implement.

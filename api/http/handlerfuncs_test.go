@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -188,7 +189,7 @@ func TestExecGQLWithMockBody(t *testing.T) {
 	env = "dev"
 	mockReadCloser := mockReadCloser{}
 	// if Read is called, it will return error
-	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
+	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, errors.New("error reading"))
 
 	errResponse := ErrorResponse{}
 	testRequest(testOptions{
@@ -478,7 +479,7 @@ func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	env = "dev"
 	mockReadCloser := mockReadCloser{}
 	// if Read is called, it will return error
-	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, fmt.Errorf("error reading"))
+	mockReadCloser.On("Read", mock.AnythingOfType("[]uint8")).Return(0, errors.New("error reading"))
 
 	errResponse := ErrorResponse{}
 	testRequest(testOptions{
