@@ -364,6 +364,10 @@ func (c *collection) applyMerge(
 			return errors.New("invalid field in Patch")
 		}
 
+		if c.isFieldDescriptionRelationID(&fd) {
+			return client.NewErrFieldNotExist(mfield)
+		}
+
 		cborVal, err := validateFieldSchema(mval, fd)
 		if err != nil {
 			return err
@@ -373,7 +377,7 @@ func (c *collection) applyMerge(
 		val := client.NewCBORValue(fd.Typ, cborVal)
 		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
 		if !fieldExists {
-			return client.ErrFieldNotExist
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		c, err := c.saveDocValue(ctx, txn, fieldKey, val)

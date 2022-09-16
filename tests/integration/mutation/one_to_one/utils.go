@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var bookAuthorGQLSchema = `
+var bookAuthorGQLSchema = (`
 	type book {
 		name: String
 		rating: Float
@@ -29,8 +29,8 @@ var bookAuthorGQLSchema = `
 		verified: Boolean
 		published: book @primary
 	}
-`
+`)
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
+func ExecuteTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	testUtils.ExecuteQueryTestCase(t, bookAuthorGQLSchema, []string{"book", "author"}, test)
 }
