@@ -281,7 +281,7 @@ var defaultBookArgsWithoutFilter = trimFields(
 		buildOrderArg("book", []argDef{
 			{
 				fieldName: "author",
-				typeName:  "",
+				typeName:  "authorOrderArg",
 			},
 			{
 				fieldName: "author_id",
