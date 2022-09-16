@@ -67,7 +67,7 @@ func TestRootHandler(t *testing.T) {
 	})
 	switch v := resp.Data.(type) {
 	case map[string]any:
-		assert.Equal(t, "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database", v["response"])
+		assert.Equal(t, "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database. Read the documentation at https://docs.source.network/.", v["response"])
 	default:
 		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}

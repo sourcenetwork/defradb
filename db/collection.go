@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	ErrDocumentAlreadyExists = errors.New("A document with the given key already exists")
+	ErrDocumentAlreadyExists = errors.New("A document with the given dockey already exists")
 	ErrUnknownCRDTArgument   = errors.New("Invalid CRDT arguments")
 	ErrUnknownCRDT           = errors.New("")
 )
