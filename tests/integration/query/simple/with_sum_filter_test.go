@@ -38,7 +38,7 @@ func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_sum": int64(62),
 			},

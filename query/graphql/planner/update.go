@@ -98,8 +98,8 @@ func (n *updateNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *updateNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *updateNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the document id(s) that request wants to update.
 	explainerMap[idsLabel] = n.ids
@@ -112,7 +112,7 @@ func (n *updateNode) Explain() (map[string]interface{}, error) {
 	}
 
 	// Add the attribute that represents the patch to update with.
-	data := map[string]interface{}{}
+	data := map[string]any{}
 	err := json.Unmarshal([]byte(n.patch), &data)
 	if err != nil {
 		return nil, err

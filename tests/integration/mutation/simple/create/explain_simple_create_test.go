@@ -17,7 +17,7 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
-type dataMap = map[string]interface{}
+type dataMap = map[string]any
 
 func TestExplainMutationCreateSimple(t *testing.T) {
 	test := testUtils.QueryTestCase{

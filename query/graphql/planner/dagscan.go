@@ -225,8 +225,8 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *dagScanNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *dagScanNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the field attribute to the explaination if it exists.
 	if len(n.field) != 0 {
@@ -243,13 +243,13 @@ func (n *dagScanNode) Explain() (map[string]interface{}, error) {
 	}
 
 	// Build the explaination of the spans attribute.
-	spansExplainer := []map[string]interface{}{}
+	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.headset != nil && n.headset.spans.HasValue {
 		for _, span := range n.headset.spans.Value {
 			spansExplainer = append(
 				spansExplainer,
-				map[string]interface{}{
+				map[string]any{
 					"start": span.Start().ToString(),
 					"end":   span.End().ToString(),
 				},
@@ -383,7 +383,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	// @todo: Wrap delta unmarshaling into a proper typed interface.
-	var delta map[string]interface{}
+	var delta map[string]any
 	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
 		return core.Doc{}, nil, err
 	}

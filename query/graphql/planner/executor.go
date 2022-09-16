@@ -66,8 +66,8 @@ func (e *QueryExecutor) ExecQuery(
 	db client.DB,
 	txn datastore.Txn,
 	query string,
-	args ...interface{},
-) ([]map[string]interface{}, error) {
+	args ...any,
+) ([]map[string]any, error) {
 	q, err := e.ParseRequestString(query)
 	if err != nil {
 		return nil, err

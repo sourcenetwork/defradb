@@ -87,7 +87,7 @@ var peerIDCmd = &cobra.Command{
 				return fmt.Errorf("mashalling data response failed: %w", err)
 			}
 			cmd.Println(string(b))
-		} else if data, ok := r.Data.(map[string]interface{}); ok {
+		} else if data, ok := r.Data.(map[string]any); ok {
 			log.FeedbackInfo(cmd.Context(), data["peerID"].(string))
 		}
 

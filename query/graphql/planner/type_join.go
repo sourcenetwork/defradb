@@ -61,7 +61,7 @@ type typeIndexJoin struct {
 	// based on the relationship of the sub types
 	joinPlan planNode
 
-	// doc map[string]interface{}
+	// doc map[string]any
 
 	// spans core.Spans
 }
@@ -133,7 +133,7 @@ func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
+func (n *typeIndexJoin) Explain() (map[string]any, error) {
 	const (
 		joinTypeLabel               = "joinType"
 		joinDirectionLabel          = "direction"
@@ -144,7 +144,7 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 		joinRootLabel               = "rootName"
 	)
 
-	explainerMap := map[string]interface{}{}
+	explainerMap := map[string]any{}
 
 	// Add the type attribute.
 	explainerMap[joinTypeLabel] = n.joinPlan.Kind()
@@ -216,8 +216,8 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 	}
 
 	// create new splitup filter
-	// our schema ensures that if sub exists, its of type map[string]interface{}
-	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]interface{}{conditionKey: sub}}
+	// our schema ensures that if sub exists, its of type map[string]any
+	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]any{conditionKey: sub}}
 	return filter, splitF
 }
 
@@ -327,7 +327,7 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	fkIndex := &mapper.PropertyIndex{
 		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
 	}
-	filter := map[connor.FilterKey]interface{}{
+	filter := map[connor.FilterKey]any{
 		fkIndex: doc.GetKey(),
 	}
 	// using the doc._key as a filter
@@ -496,7 +496,7 @@ func (n *typeJoinMany) Next() (bool, error) {
 		fkIndex := &mapper.PropertyIndex{
 			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
 		}
-		filter := map[connor.FilterKey]interface{}{
+		filter := map[connor.FilterKey]any{
 			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
@@ -538,7 +538,7 @@ func (n *typeJoinMany) Close() error {
 
 func (n *typeJoinMany) Source() planNode { return n.root }
 
-func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]interface{}) error {
+func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]any) error {
 	switch node := plan.(type) {
 	case *scanNode:
 		filter := node.filter
@@ -567,8 +567,8 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 
 func removeConditionIndex(
 	key *mapper.PropertyIndex,
-	filterConditions map[connor.FilterKey]interface{},
-) (bool, interface{}) {
+	filterConditions map[connor.FilterKey]any,
+) (bool, any) {
 	for targetKey, clause := range filterConditions {
 		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
 			if key.Index == indexKey.Index {

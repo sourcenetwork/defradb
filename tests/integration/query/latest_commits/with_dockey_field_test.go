@@ -38,7 +38,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -66,10 +66,10 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid":   "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
-				"links": []map[string]interface{}{},
+				"links": []map[string]any{},
 			},
 		},
 	}
@@ -99,10 +99,10 @@ func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
-				"links": []map[string]interface{}{
+				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 						"name": "Age",

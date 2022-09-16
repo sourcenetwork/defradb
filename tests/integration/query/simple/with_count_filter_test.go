@@ -38,7 +38,7 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_count": 2,
 			},

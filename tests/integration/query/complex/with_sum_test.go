@@ -42,7 +42,7 @@ func TestQueryComplexWithSumOnInlineAndManyToMany(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":                        "Pendant Publishing",
 				"ThisMakesNoSenseToSumButHey": int64(1),

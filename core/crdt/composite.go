@@ -62,7 +62,7 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (delta *CompositeDAGDelta) Value() interface{} {
+func (delta *CompositeDAGDelta) Value() any {
 	return delta.Data
 }
 

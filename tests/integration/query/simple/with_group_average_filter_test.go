@@ -41,7 +41,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"_avg": float64(0),
@@ -84,11 +84,11 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"_avg": float64(0),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -97,7 +97,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 			{
 				"Name": "John",
 				"_avg": float64(33),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -140,16 +140,16 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Alice",
 				"_avg":   float64(0),
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 			{
 				"Name": "John",
 				"_avg": float64(34),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(34),
 					},
@@ -189,11 +189,11 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"_avg": float64(0),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(19),
 					},
@@ -202,7 +202,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 			{
 				"Name": "John",
 				"_avg": float64(34),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Age": uint64(32),
 					},
@@ -240,7 +240,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"A1":   float64(0),
@@ -290,7 +290,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"_avg": float64(19),

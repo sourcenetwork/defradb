@@ -73,7 +73,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":             "John Grisham",
 				"numberOfBooks":    2,
@@ -150,7 +150,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "John Grisham",
 				"_count": 4,

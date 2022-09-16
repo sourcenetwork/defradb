@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_sum": int64(3),
@@ -61,7 +61,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_sum": int64(3),
@@ -89,7 +89,7 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_sum": 3.14250000001,
@@ -117,7 +117,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_sum": float64(3.14250000001),

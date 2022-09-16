@@ -32,7 +32,7 @@ func TestQueryAllCommitsWithDockeyAndUnknownField(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -54,7 +54,7 @@ func TestQueryAllCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -78,7 +78,7 @@ func TestQueryAllCommitsWithDockeyAndField(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -102,7 +102,7 @@ func TestQueryAllCommitsWithDockeyAndFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 			},

@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithSumWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_sum": int64(1),

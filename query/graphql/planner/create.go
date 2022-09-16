@@ -129,14 +129,14 @@ func (n *createNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *createNode) Explain() (map[string]interface{}, error) {
-	data := map[string]interface{}{}
+func (n *createNode) Explain() (map[string]any, error) {
+	data := map[string]any{}
 	err := json.Unmarshal([]byte(n.newDocStr), &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		dataLabel: data,
 	}, nil
 }

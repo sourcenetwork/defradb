@@ -31,29 +31,29 @@ import (
 func TestSimpleDataResponse(t *testing.T) {
 	resp := simpleDataResponse("key", "value", "key2", "value2")
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, "value2", v["key2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 
 	resp2 := simpleDataResponse("key", "value", "key2")
 	switch v := resp2.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, nil, v["key2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 
 	resp3 := simpleDataResponse("key", "value", 2, "value2")
 	switch v := resp3.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, nil, v["2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 

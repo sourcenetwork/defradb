@@ -156,11 +156,11 @@ func (n *sumNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sumNode) Explain() (map[string]interface{}, error) {
-	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
+func (n *sumNode) Explain() (map[string]any, error) {
+	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]interface{}{}
+		explainerMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
@@ -182,7 +182,7 @@ func (n *sumNode) Explain() (map[string]interface{}, error) {
 		sourceExplanations[i] = explainerMap
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		sourcesLabel: sourceExplanations,
 	}, nil
 }
@@ -271,7 +271,7 @@ func (n *sumNode) Next() (bool, error) {
 		sum += collectionSum
 	}
 
-	var typedSum interface{}
+	var typedSum any
 	if n.isFloat {
 		typedSum = sum
 	} else {

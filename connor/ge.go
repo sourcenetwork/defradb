@@ -8,7 +8,7 @@ import (
 
 // ge does value comparisons to determine whether one
 // value is strictly larger than or equal to another.
-func ge(condition, data interface{}) (bool, error) {
+func ge(condition, data any) (bool, error) {
 	if condition == nil {
 		// Everything is greater than or equal to nil
 		return true, nil

@@ -83,12 +83,12 @@ type Collection interface {
 	//
 	// Returns an ErrInvalidUpdateTarget error if the target type is not supported.
 	// Returns an ErrInvalidUpdater error if the updater type is not supported.
-	UpdateWith(ctx context.Context, target interface{}, updater string) (*UpdateResult, error)
+	UpdateWith(ctx context.Context, target any, updater string) (*UpdateResult, error)
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
 	// else an ErrInvalidUpdater will be returned.
-	UpdateWithFilter(ctx context.Context, filter interface{}, updater string) (*UpdateResult, error)
+	UpdateWithFilter(ctx context.Context, filter any, updater string) (*UpdateResult, error)
 	// UpdateWithKey updates using a DocKey to target a single document for update.
 	//
 	// The provided updater must be a string Patch, string Merge Patch, a parsed Patch, or parsed Merge Patch
@@ -112,11 +112,11 @@ type Collection interface {
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
 	//
 	// Returns an ErrInvalidDeleteTarget if the target type is not supported.
-	DeleteWith(ctx context.Context, target interface{}) (*DeleteResult, error)
+	DeleteWith(ctx context.Context, target any) (*DeleteResult, error)
 	// DeleteWithFilter deletes documents matching the given filter.
 	//
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.
-	DeleteWithFilter(ctx context.Context, filter interface{}) (*DeleteResult, error)
+	DeleteWithFilter(ctx context.Context, filter any) (*DeleteResult, error)
 	// DeleteWithKey deletes using a DocKey to target a single document for delete.
 	//
 	// This operation will hard-delete all state relating to the given DocKey. This includes data, block, and head storage.

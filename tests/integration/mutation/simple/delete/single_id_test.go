@@ -40,7 +40,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 									_key
 								}
 							}`,
-					Results: []map[string]interface{}{
+					Results: []map[string]any{
 						{
 							"_key": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 						},
@@ -55,7 +55,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 							}`,
 
 					// explicitly empty
-					Results: []map[string]interface{}{},
+					Results: []map[string]any{},
 				},
 			},
 
@@ -81,7 +81,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						}
 					}`,
 
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"FancyKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
@@ -116,7 +116,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					},
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"MyTestKey": "bae-8ca944fd-260e-5a44-b88f-326d9faca810",
 				},
@@ -139,7 +139,7 @@ func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 					}
 				}`,
 		Docs:    map[int][]string{},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 	simpleTests.ExecuteTestCase(t, test)
 }
@@ -162,7 +162,7 @@ func TestDeleteWithUnknownId(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 	simpleTests.ExecuteTestCase(t, test)
 }
@@ -184,7 +184,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`,
 				},
 			},
-			Results:       []map[string]interface{}{},
+			Results:       []map[string]any{},
 			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
 		},
 
@@ -204,7 +204,7 @@ func TestDeletionOfADocumentUsingSingleKey_Failure(t *testing.T) {
 					}`,
 				},
 			},
-			Results:       []map[string]interface{}{},
+			Results:       []map[string]any{},
 			ExpectedError: "Syntax Error GraphQL request (2:67) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(id: \"bae-8ca944fd-260e-5a44-b88f-326d9faca810\") {\n                                                                     ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}

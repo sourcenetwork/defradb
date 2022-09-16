@@ -28,7 +28,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 						_key
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
@@ -41,7 +41,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 						_key
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
@@ -66,7 +66,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 						_key
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
@@ -79,7 +79,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 						_key
 					}
 				}`,
-				Results: []map[string]interface{}{},
+				Results: []map[string]any{},
 			},
 			{
 				TransactionId: 0,
@@ -90,7 +90,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -107,7 +107,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{},
+				Results: []map[string]any{},
 			},
 		},
 		// Map store does not support transactions
@@ -136,7 +136,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 						_key
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 					},
@@ -151,7 +151,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -188,7 +188,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -205,7 +205,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -242,7 +242,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -259,7 +259,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 						age
 					}
 				}`,
-				Results: []map[string]interface{}{
+				Results: []map[string]any{
 					{
 						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 						"name": "John",
@@ -277,7 +277,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				age
 			}
 		}`,
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
 				"name": "John",

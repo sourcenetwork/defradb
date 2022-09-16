@@ -103,7 +103,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 	}
 }
 
-func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
+func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
 	case *parser.Query:
 		if len(n.Queries) > 0 {
@@ -173,7 +173,7 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
 // an initiated plan. The caller of makePlan is also responsible of calling Close()
 // on the plan to free it's resources.
-func (p *Planner) makePlan(stmt interface{}) (planNode, error) {
+func (p *Planner) makePlan(stmt any) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
 		return nil, err
@@ -440,7 +440,7 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	if plan == nil {
 		return nil, fmt.Errorf("Can't explain request of a nil plan.")
 	}
@@ -450,7 +450,7 @@ func (p *Planner) explainRequest(
 		return nil, multiErr(err, plan.Close())
 	}
 
-	topExplainGraph := []map[string]interface{}{
+	topExplainGraph := []map[string]any{
 		{
 			parserTypes.ExplainLabel: explainGraph,
 		},
@@ -463,7 +463,7 @@ func (p *Planner) explainRequest(
 func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	if plan == nil {
 		return nil, fmt.Errorf("Can't execute request of a nil plan.")
 	}
@@ -477,7 +477,7 @@ func (p *Planner) executeRequest(
 		return nil, multiErr(err, plan.Close())
 	}
 
-	docs := []map[string]interface{}{}
+	docs := []map[string]any{}
 	docMap := plan.DocumentMap()
 
 	for next {
@@ -501,7 +501,7 @@ func (p *Planner) executeRequest(
 func (p *Planner) runRequest(
 	ctx context.Context,
 	query *parser.Query,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 
 	if err != nil {

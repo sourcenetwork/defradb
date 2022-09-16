@@ -17,7 +17,7 @@ import (
 // Value is an interface that points to a concrete Value implementation
 // May collapse this down without an interface
 type Value interface {
-	Value() interface{}
+	Value() any
 	IsDocument() bool
 	Type() CType
 	IsDirty() bool
@@ -40,17 +40,17 @@ type WriteableValue interface {
 type ReadableValue interface {
 	Value
 
-	Read() (interface{}, error)
+	Read() (any, error)
 }
 
 type simpleValue struct {
 	t       CType
-	value   interface{}
+	value   any
 	isDirty bool
 	delete  bool
 }
 
-func newValue(t CType, val interface{}) simpleValue {
+func newValue(t CType, val any) simpleValue {
 	return simpleValue{
 		t:       t,
 		value:   val,
@@ -58,9 +58,9 @@ func newValue(t CType, val interface{}) simpleValue {
 	}
 }
 
-// func (val simpleValue) Set(val interface{})
+// func (val simpleValue) Set(val any)
 
-func (val simpleValue) Value() interface{} {
+func (val simpleValue) Value() any {
 	return val.value
 }
 
@@ -96,11 +96,11 @@ type cborValue struct {
 	*simpleValue
 }
 
-func NewCBORValue(t CType, val interface{}) WriteableValue {
+func NewCBORValue(t CType, val any) WriteableValue {
 	return newCBORValue(t, val)
 }
 
-func newCBORValue(t CType, val interface{}) WriteableValue {
+func newCBORValue(t CType, val any) WriteableValue {
 	v := newValue(t, val)
 	return cborValue{&v}
 }
@@ -139,7 +139,7 @@ func (v cborValue) Bytes() ([]byte, error) {
 // 	vals []Value
 // }
 
-// func (l *listValue) Value() interface{} {
+// func (l *listValue) Value() any {
 // 	return l.vals
 // }
 // func (l *listValue) IsDocument() bool { return false }

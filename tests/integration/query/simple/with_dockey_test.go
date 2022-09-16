@@ -34,7 +34,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -57,7 +57,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic filter (key by DocKey arg), partial results",
@@ -79,7 +79,7 @@ func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),

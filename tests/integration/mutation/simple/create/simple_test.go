@@ -27,7 +27,7 @@ func TestMutationCreateSimple(t *testing.T) {
 						age
 					}
 				}`,
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key": "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 				"age":  uint64(27),

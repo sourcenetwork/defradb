@@ -17,7 +17,7 @@ import (
 	relationTests "github.com/sourcenetwork/defradb/tests/integration/mutation/relation"
 )
 
-type dataMap = map[string]interface{}
+type dataMap = map[string]any
 
 func TestExplainRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{

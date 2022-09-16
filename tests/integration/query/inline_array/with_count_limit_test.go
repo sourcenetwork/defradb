@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 2,
@@ -61,7 +61,7 @@ func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 3,

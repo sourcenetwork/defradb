@@ -70,10 +70,10 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "Theif Lord",
 							"rating": 4.8,
@@ -83,7 +83,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 							"rating": 4.5,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "A Time for Mercy",
 						},
@@ -94,13 +94,13 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				},
 				{
 					"name": "Cornelia Funke",
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "Painted House",
 							"rating": 4.9,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "Theif Lord",
 						},

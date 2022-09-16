@@ -66,7 +66,7 @@ type db struct {
 	queryExecutor *planner.QueryExecutor
 
 	// The options used to init the database
-	options interface{}
+	options any
 }
 
 // functional option type

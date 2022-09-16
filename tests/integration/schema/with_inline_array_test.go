@@ -30,8 +30,8 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name": "users",
 			},
 		},
@@ -61,8 +61,8 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedData: map[string]interface{}{
-			"__type": map[string]interface{}{
+		ExpectedData: map[string]any{
+			"__type": map[string]any{
 				"name": "books",
 			},
 		},

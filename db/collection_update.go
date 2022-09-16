@@ -45,11 +45,11 @@ var (
 // Eg: UpdateWithFilter or UpdateWithKey
 func (c *collection) UpdateWith(
 	ctx context.Context,
-	target interface{},
+	target any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
-	case string, map[string]interface{}, *parser.Filter:
+	case string, map[string]any, *parser.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocKey:
 		return c.UpdateWithKey(ctx, t, updater)
@@ -65,7 +65,7 @@ func (c *collection) UpdateWith(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithFilter(
 	ctx context.Context,
-	filter interface{},
+	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
@@ -214,7 +214,7 @@ func (c *collection) updateWithKeys(
 func (c *collection) updateWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
-	filter interface{},
+	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
 	parsedUpdater, err := fastjson.Parse(updater)
@@ -287,7 +287,7 @@ func (c *collection) updateWithFilter(
 
 func (c *collection) applyPatch( //nolint:unused
 	txn datastore.Txn,
-	doc map[string]interface{},
+	doc map[string]any,
 	patch []*fastjson.Value,
 ) error {
 	for _, op := range patch {
@@ -329,7 +329,7 @@ func (c *collection) applyPatchOp( //nolint:unused
 	txn datastore.Txn,
 	dockey string,
 	field string,
-	currentVal interface{},
+	currentVal any,
 	patchOp *fastjson.Object,
 ) error {
 	return nil
@@ -338,7 +338,7 @@ func (c *collection) applyPatchOp( //nolint:unused
 func (c *collection) applyMerge(
 	ctx context.Context,
 	txn datastore.Txn,
-	doc map[string]interface{},
+	doc map[string]any,
 	merge *fastjson.Object,
 ) error {
 	keyStr, ok := doc["_key"].(string)
@@ -431,7 +431,7 @@ func (c *collection) applyMerge(
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (interface{}, error) {
+func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (any, error) {
 	switch field.Kind {
 	case client.FieldKind_DocKey, client.FieldKind_STRING:
 		return getString(val)
@@ -564,8 +564,8 @@ func (c *collection) applyMergePatchOp( //nolint:unused
 	txn datastore.Txn,
 	docKey string,
 	field string,
-	currentVal interface{},
-	targetVal interface{}) error {
+	currentVal any,
+	targetVal any) error {
 	return nil
 }
 
@@ -576,7 +576,7 @@ func (c *collection) applyMergePatchOp( //nolint:unused
 func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
-	filter interface{},
+	filter any,
 ) (planner.Query, error) {
 	mapping := c.createMapping()
 	var f *mapper.Filter
@@ -672,7 +672,7 @@ func (c *collection) getCollectionForPatchOpPath( //nolint:unused
 // It returns the
 func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 	txn datastore.Txn,
-	doc map[string]interface{},
+	doc map[string]any,
 	path string,
 ) (string, error) {
 	_, length := splitPatchPath(path)
@@ -690,9 +690,9 @@ func splitPatchPath(path string) ([]string, int) { //nolint:unused
 }
 
 func getValFromDocForPatchPath( //nolint:unused
-	doc map[string]interface{},
+	doc map[string]any,
 	path string,
-) (string, interface{}, bool) {
+) (string, any, bool) {
 	pathParts, length := splitPatchPath(path)
 	if length == 0 {
 		return "", nil, false
@@ -701,16 +701,16 @@ func getValFromDocForPatchPath( //nolint:unused
 }
 
 func getMapProp( //nolint:unused
-	doc map[string]interface{},
+	doc map[string]any,
 	paths []string,
 	length int,
-) (string, interface{}, bool) {
+) (string, any, bool) {
 	val, ok := doc[paths[0]]
 	if !ok {
 		return "", nil, false
 	}
 	if length > 1 {
-		doc, ok := val.(map[string]interface{})
+		doc, ok := val.(map[string]any)
 		if !ok {
 			return "", nil, false
 		}

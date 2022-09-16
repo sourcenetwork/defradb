@@ -40,6 +40,6 @@ type DB interface {
 }
 
 type QueryResult struct {
-	Errors []interface{} `json:"errors,omitempty"`
-	Data   interface{}   `json:"data"`
+	Errors []any `json:"errors,omitempty"`
+	Data   any   `json:"data"`
 }

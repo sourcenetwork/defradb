@@ -64,7 +64,7 @@ type P2PTestCase struct {
 
 	// node/dockey/values
 	Updates map[int]map[int][]string
-	Results map[int]map[int]map[string]interface{}
+	Results map[int]map[int]map[string]any
 }
 
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {

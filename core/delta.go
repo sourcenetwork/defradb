@@ -20,7 +20,7 @@ type Delta interface {
 	GetPriority() uint64
 	SetPriority(uint64)
 	Marshal() ([]byte, error)
-	Value() interface{}
+	Value() any
 }
 
 type CompositeDelta interface {

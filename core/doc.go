@@ -15,7 +15,7 @@ package core
 
 const DocKeyFieldIndex int = 0
 
-type DocFields []interface{}
+type DocFields []any
 type Doc struct {
 	// If true, this Doc will not be rendered, but will still be passed through
 	// the plan graph just like any other document.
@@ -145,14 +145,14 @@ func (mapping *DocumentMapping) NewDoc() Doc {
 // SetFirstOfName overwrites the first field of this name with the given value.
 //
 // Will panic if the field does not exist.
-func (mapping *DocumentMapping) SetFirstOfName(d *Doc, name string, value interface{}) {
+func (mapping *DocumentMapping) SetFirstOfName(d *Doc, name string, value any) {
 	d.Fields[mapping.IndexesByName[name][0]] = value
 }
 
 // FirstOfName returns the value of the first field of the given name.
 //
 // Will panic if the field does not exist (but not if it's value is default).
-func (mapping *DocumentMapping) FirstOfName(d Doc, name string) interface{} {
+func (mapping *DocumentMapping) FirstOfName(d Doc, name string) any {
 	return d.Fields[mapping.FirstIndexOfName(name)]
 }
 
@@ -163,20 +163,20 @@ func (mapping *DocumentMapping) FirstIndexOfName(name string) int {
 	return mapping.IndexesByName[name][0]
 }
 
-// ToMap renders the given document to map[string]interface{} format using
+// ToMap renders the given document to map[string]any format using
 // the given mapping.
 //
 // Will not return fields without a render key, or any child documents
 // marked as Hidden.
-func (mapping *DocumentMapping) ToMap(doc Doc) map[string]interface{} {
-	mappedDoc := make(map[string]interface{}, len(mapping.RenderKeys))
+func (mapping *DocumentMapping) ToMap(doc Doc) map[string]any {
+	mappedDoc := make(map[string]any, len(mapping.RenderKeys))
 	for _, renderKey := range mapping.RenderKeys {
 		value := doc.Fields[renderKey.Index]
-		var renderValue interface{}
+		var renderValue any
 		switch innerV := value.(type) {
 		case []Doc:
 			innerMapping := mapping.ChildMappings[renderKey.Index]
-			innerArray := []map[string]interface{}{}
+			innerArray := []map[string]any{}
 			for _, innerDoc := range innerV {
 				if innerDoc.Hidden {
 					continue

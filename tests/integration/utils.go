@@ -73,7 +73,7 @@ type TransactionQuery struct {
 	// The query to run against the transaction
 	Query string
 	// The expected (data) results of the query
-	Results []map[string]interface{}
+	Results []map[string]any
 	// The expected error resulting from the query.  Also checked against the txn commit.
 	ExpectedError string
 }
@@ -93,7 +93,7 @@ type QueryTestCase struct {
 	// of changes in strinigied JSON format
 	Updates map[int]map[int][]string
 
-	Results []map[string]interface{}
+	Results []map[string]any
 	// The expected content of an expected error
 	ExpectedError string
 
@@ -613,7 +613,7 @@ func assertQueryResults(
 	t *testing.T,
 	description string,
 	result *client.QueryResult,
-	expectedResults []map[string]interface{},
+	expectedResults []map[string]any,
 	expectedError string,
 ) bool {
 	if assertErrors(t, description, result.Errors, expectedError) {
@@ -621,7 +621,7 @@ func assertQueryResults(
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.([]map[string]interface{})
+	resultantData := result.Data.([]map[string]any)
 
 	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
 
@@ -663,7 +663,7 @@ func assertError(t *testing.T, description string, err error, expectedError stri
 func assertErrors(
 	t *testing.T,
 	description string,
-	errors []interface{},
+	errors []any,
 	expectedError string,
 ) bool {
 	if expectedError == "" {

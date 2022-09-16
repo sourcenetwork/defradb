@@ -87,7 +87,7 @@ func TestConfigValidateBasic(t *testing.T) {
 
 func TestJSONSerialization(t *testing.T) {
 	cfg := DefaultConfig()
-	var m map[string]interface{}
+	var m map[string]any
 
 	b, errSerialize := cfg.ToJSON()
 	errUnmarshal := json.Unmarshal(b, &m)

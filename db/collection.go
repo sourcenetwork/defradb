@@ -590,7 +590,7 @@ func (c *collection) save(
 	//	=> 		Set/Publish new CRDT values
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
 	links := make([]core.DAGLink, 0)
-	merge := make(map[string]interface{})
+	merge := make(map[string]any)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -801,7 +801,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...interface{}) (cid.Cid, error) {
+	args ...any) (cid.Cid, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(

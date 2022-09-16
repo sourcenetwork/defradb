@@ -80,8 +80,8 @@ func (n *limitNode) Next() (bool, error) {
 
 func (n *limitNode) Source() planNode { return n.plan }
 
-func (n *limitNode) Explain() (map[string]interface{}, error) {
-	exp := map[string]interface{}{
+func (n *limitNode) Explain() (map[string]any, error) {
+	exp := map[string]any{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,
 	}

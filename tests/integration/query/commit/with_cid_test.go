@@ -112,7 +112,7 @@ func TestQueryOneCommitWithCid(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 				"height": int64(1),
@@ -164,7 +164,7 @@ func TestQueryOneCommitWithCidAndLinks(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 				"height": int64(1),
@@ -187,7 +187,7 @@ func TestQueryOneCommitWithCidAndLinks(t *testing.T) {
 					0x68,
 					0x6e,
 				},
-				"links": []map[string]interface{}{
+				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 						"name": "Age",

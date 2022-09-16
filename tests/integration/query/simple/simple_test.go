@@ -34,7 +34,7 @@ func TestQuerySimple(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 				"Name": "John",
@@ -63,7 +63,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"username": "John",
 				"age":      uint64(21),
@@ -95,7 +95,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 			}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 				"Age":  uint64(27),
@@ -144,7 +144,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     "John",
 				"Email":    nil,
@@ -175,7 +175,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 				`{ }`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     nil,
 				"Email":    nil,
