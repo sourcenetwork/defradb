@@ -100,7 +100,7 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])
 	assert.Equal(t, float64(200), kv["Status"])
-	assert.Equal(t, float64(28), kv["Length"])
+	assert.Equal(t, float64(28), kv["LengthBytes"])
 }
 
 func readLog(path string) (map[string]any, error) {
