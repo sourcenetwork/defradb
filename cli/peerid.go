@@ -12,11 +12,12 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ var peerIDCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 		if !isFileInfoPipe(stdout) {
 			log.FeedbackInfo(cmd.Context(), "Requesting peer ID...")
@@ -36,36 +37,36 @@ var peerIDCmd = &cobra.Command{
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PeerIDPath)
 		if err != nil {
-			return fmt.Errorf("failed to join endpoint: %w", err)
+			return errors.Wrap("failed to join endpoint", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed to request peer ID: %w", err)
+			return errors.Wrap("failed to request peer ID", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		if res.StatusCode == http.StatusNotFound {
 			r := httpapi.ErrorResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
-				return fmt.Errorf("parsing of response failed: %w", err)
+				return errors.Wrap("parsing of response failed", err)
 			}
 			if len(r.Errors) > 0 {
 				if isFileInfoPipe(stdout) {
 					b, err := json.Marshal(r.Errors[0])
 					if err != nil {
-						return fmt.Errorf("mashalling error response failed: %w", err)
+						return errors.Wrap("mashalling error response failed", err)
 					}
 					cmd.Println(string(b))
 				} else {
@@ -79,12 +80,12 @@ var peerIDCmd = &cobra.Command{
 		r := httpapi.DataResponse{}
 		err = json.Unmarshal(response, &r)
 		if err != nil {
-			return fmt.Errorf("parsing of response failed: %w", err)
+			return errors.Wrap("parsing of response failed", err)
 		}
 		if isFileInfoPipe(stdout) {
 			b, err := json.Marshal(r.Data)
 			if err != nil {
-				return fmt.Errorf("mashalling data response failed: %w", err)
+				return errors.Wrap("mashalling data response failed", err)
 			}
 			cmd.Println(string(b))
 		} else if data, ok := r.Data.(map[string]any); ok {

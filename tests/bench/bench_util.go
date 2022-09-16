@@ -24,6 +24,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
@@ -78,14 +79,14 @@ func SetupCollections(
 	// b.Logf("Loading schema: \n%s", schema)
 
 	if err := db.AddSchema(ctx, schema); err != nil {
-		return nil, fmt.Errorf("Couldn't load schema: %w", err)
+		return nil, errors.Wrap("Couldn't load schema", err)
 	}
 
 	// loop to get collections
 	for i := 0; i < numTypes; i++ {
 		col, err := db.GetCollectionByName(ctx, fixture.TypeName(i))
 		if err != nil {
-			return nil, fmt.Errorf("Couldn't get the collection %v: %w", fixture.TypeName(i), err)
+			return nil, errors.Wrap(fmt.Sprintf("Couldn't get the collection %v", fixture.TypeName(i)), err)
 		}
 		// b.Logf("Collection Name: %s", col.Name())
 		collections[i] = col
@@ -102,7 +103,7 @@ func ConstructSchema(fixture fixtures.Generator) (string, error) {
 	for i := 0; i < numTypes; i++ {
 		gql, err := fixtures.ExtractGQLFromType(fixture.Types()[i])
 		if err != nil {
-			return "", fmt.Errorf("failed generating GQL: %w", err)
+			return "", errors.Wrap("failed generating GQL", err)
 		}
 
 		schema += gql
@@ -169,7 +170,7 @@ func BackfillBenchmarkDB(
 				go func(index int) {
 					docs, err := fixture.GenerateDocs()
 					if err != nil {
-						errCh <- fmt.Errorf("Failed to generate document payload from fixtures: %w", err)
+						errCh <- errors.Wrap("Failed to generate document payload from fixtures", err)
 						return
 					}
 
@@ -178,7 +179,7 @@ func BackfillBenchmarkDB(
 					for j := 0; j < numTypes; j++ {
 						doc, err := client.NewDocFromJSON([]byte(docs[j]))
 						if err != nil {
-							errCh <- fmt.Errorf("Failed to create document from fixture: %w", err)
+							errCh <- errors.Wrap("Failed to create document from fixture", err)
 							return
 						}
 
@@ -196,7 +197,7 @@ func BackfillBenchmarkDB(
 								)
 								continue
 							} else if err != nil {
-								errCh <- fmt.Errorf("Failed to create document: %w", err)
+								errCh <- errors.Wrap("Failed to create document", err)
 							}
 							keys[j] = doc.Key()
 							break
@@ -253,11 +254,11 @@ func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
 	case "memorymap":
 		dbi, err = testutils.NewMapDB(ctx)
 	default:
-		return nil, fmt.Errorf("invalid storage engine backend: %s", storage)
+		return nil, errors.New(fmt.Sprintf("invalid storage engine backend: %s", storage))
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create storage backend: %w", err)
+		return nil, errors.Wrap("Failed to create storage backend", err)
 	}
 	return dbi, err
 }

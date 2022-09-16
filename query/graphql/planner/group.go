@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
@@ -235,10 +236,10 @@ func (n *groupNode) Explain() (map[string]any, error) {
 						// Try to find the name of this index.
 						fieldName, found := n.documentMapping.TryToFindNameFromIndex(orderFieldIndex)
 						if !found {
-							return nil, fmt.Errorf(
+							return nil, errors.New(fmt.Sprintf(
 								"No order field name (for grouping) was found for index =%d",
 								orderFieldIndex,
-							)
+							))
 						}
 
 						orderFieldNames = append(orderFieldNames, fieldName)

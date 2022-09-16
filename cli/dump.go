@@ -18,6 +18,7 @@ import (
 	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ var dumpCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 		if !isFileInfoPipe(stdout) {
 			log.FeedbackInfo(cmd.Context(), "Requesting the database to dump its state, server-side...")
@@ -35,23 +36,23 @@ var dumpCmd = &cobra.Command{
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.DumpPath)
 		if err != nil {
-			return fmt.Errorf("failed to join endpoint: %w", err)
+			return errors.Wrap("failed to join endpoint", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed dump request: %w", err)
+			return errors.Wrap("failed dump request", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		if isFileInfoPipe(stdout) {
@@ -66,7 +67,7 @@ var dumpCmd = &cobra.Command{
 			r := dumpResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
-				return fmt.Errorf("failed parsing of response: %w", err)
+				return errors.Wrap("failed parsing of response", err)
 			}
 			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}

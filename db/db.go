@@ -16,14 +16,13 @@ package db
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
@@ -191,11 +190,11 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 	rm := db.schema.Relations
 	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
 	if rel == nil {
-		return "", fmt.Errorf("Relation does not exists")
+		return "", errors.New("Relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
 	if !ok {
-		return "", fmt.Errorf("Relation is missing referenced field")
+		return "", errors.New("Relation is missing referenced field")
 	}
 	return subtypefieldname, nil
 }

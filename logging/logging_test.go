@@ -15,12 +15,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -102,7 +102,8 @@ func TestLogWritesFatalMessageWithStackTraceToLogAndKillsProcessGivenStackTraceE
 	assert.Equal(t, logMessage, logLines[0]["msg"])
 	assert.Equal(t, "FATAL", logLines[0]["level"])
 	assert.Equal(t, "TestLogName", logLines[0]["logger"])
-	assert.Contains(t, logLines[0], "stacktrace")
+	// no stacktrace will be present since no error was sent to the logger.
+	assert.NotContains(t, logLines[0], "stacktrace")
 	// caller is disabled by default
 	assert.NotContains(t, logLines[0], "logging_test.go")
 }
@@ -117,7 +118,7 @@ func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
 			c.OutputPaths = []string{logPath}
 		})
 
-		logger.FatalE(ctx, logMessage, fmt.Errorf("dummy error"))
+		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
 		return
 	}
 
@@ -159,7 +160,7 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 			c.EnableStackTrace = NewEnableStackTraceOption(true)
 		})
 
-		logger.FatalE(ctx, logMessage, fmt.Errorf("dummy error"))
+		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
 		return
 	}
 
@@ -201,7 +202,7 @@ type LogLevelTestCase struct {
 func logDebug(l Logger, c context.Context, m string)  { l.Debug(c, m) }
 func logInfo(l Logger, c context.Context, m string)   { l.Info(c, m) }
 func logError(l Logger, c context.Context, m string)  { l.Error(c, m) }
-func logErrorE(l Logger, c context.Context, m string) { l.ErrorE(c, m, fmt.Errorf("test error")) }
+func logErrorE(l Logger, c context.Context, m string) { l.ErrorE(c, m, errors.New("test error")) }
 
 func getLogLevelTestCase() []LogLevelTestCase {
 	return []LogLevelTestCase{
@@ -209,27 +210,27 @@ func getLogLevelTestCase() []LogLevelTestCase {
 		{Debug, logDebug, "DEBUG", false, false, false},
 		{Debug, logInfo, "INFO", false, false, false},
 		{Debug, logError, "ERROR", false, false, false},
-		{Debug, logError, "ERROR", true, true, false},
+		{Debug, logError, "ERROR", true, false, false},
 		{Debug, logErrorE, "ERROR", false, false, false},
 		{Debug, logErrorE, "ERROR", true, true, false},
 		{Info, logDebug, "", false, false, false},
 		{Info, logInfo, "INFO", false, false, true},
 		{Info, logInfo, "INFO", false, false, false},
 		{Info, logError, "ERROR", false, false, false},
-		{Info, logError, "ERROR", true, true, false},
+		{Info, logError, "ERROR", true, false, false},
 		{Info, logErrorE, "ERROR", false, false, false},
 		{Info, logErrorE, "ERROR", true, true, false},
 		{Warn, logDebug, "", false, false, false},
 		{Warn, logInfo, "", false, false, false},
 		{Warn, logError, "ERROR", false, false, false},
-		{Warn, logError, "ERROR", true, true, false},
+		{Warn, logError, "ERROR", true, false, false},
 		{Warn, logErrorE, "ERROR", false, false, false},
 		{Warn, logErrorE, "ERROR", true, true, false},
 		{Error, logDebug, "", false, false, false},
 		{Error, logInfo, "", false, false, false},
 		{Error, logError, "ERROR", false, false, true},
 		{Error, logError, "ERROR", false, false, false},
-		{Error, logError, "ERROR", true, true, false},
+		{Error, logError, "ERROR", true, false, false},
 		{Error, logErrorE, "ERROR", false, false, false},
 		{Error, logErrorE, "ERROR", true, true, false},
 		{Fatal, logDebug, "", false, false, true},
@@ -524,31 +525,31 @@ func TestLogWritesMessagesToLogGivenUpdatedLogPath(t *testing.T) {
 func logFeedbackInfo(l Logger, c context.Context, m string)  { l.FeedbackInfo(c, m) }
 func logFeedbackError(l Logger, c context.Context, m string) { l.FeedbackError(c, m) }
 func logFeedbackErrorE(l Logger, c context.Context, m string) {
-	l.FeedbackErrorE(c, m, fmt.Errorf("test error"))
+	l.FeedbackErrorE(c, m, errors.New("test error"))
 }
 
 func getFeedbackLogLevelTestCase() []LogLevelTestCase {
 	return []LogLevelTestCase{
 		{Debug, logFeedbackInfo, "INFO", false, false, false},
 		{Debug, logFeedbackError, "ERROR", false, false, false},
-		{Debug, logFeedbackError, "ERROR", true, true, false},
+		{Debug, logFeedbackError, "ERROR", true, false, false},
 		{Debug, logFeedbackErrorE, "ERROR", false, false, false},
 		{Debug, logFeedbackErrorE, "ERROR", true, true, false},
 		{Info, logFeedbackInfo, "INFO", false, false, true},
 		{Info, logFeedbackInfo, "INFO", false, false, false},
 		{Info, logFeedbackError, "ERROR", false, false, false},
-		{Info, logFeedbackError, "ERROR", true, true, false},
+		{Info, logFeedbackError, "ERROR", true, false, false},
 		{Info, logFeedbackErrorE, "ERROR", false, false, false},
 		{Info, logFeedbackErrorE, "ERROR", true, true, false},
 		{Warn, logFeedbackInfo, "", false, false, false},
 		{Warn, logFeedbackError, "ERROR", false, false, false},
-		{Warn, logFeedbackError, "ERROR", true, true, false},
+		{Warn, logFeedbackError, "ERROR", true, false, false},
 		{Warn, logFeedbackErrorE, "ERROR", false, false, false},
 		{Warn, logFeedbackErrorE, "ERROR", true, true, false},
 		{Error, logFeedbackInfo, "", false, false, false},
 		{Error, logFeedbackError, "ERROR", false, false, true},
 		{Error, logFeedbackError, "ERROR", false, false, false},
-		{Error, logFeedbackError, "ERROR", true, true, false},
+		{Error, logFeedbackError, "ERROR", true, false, false},
 		{Error, logFeedbackErrorE, "ERROR", false, false, false},
 		{Error, logFeedbackErrorE, "ERROR", true, true, false},
 		{Fatal, logFeedbackInfo, "", false, false, false},
@@ -595,7 +596,11 @@ func TestLogWritesMessagesToFeedbackLog(t *testing.T) {
 			assert.Equal(t, tc.WithCaller, hasCaller)
 		}
 
-		assert.Equal(t, logMessage+"\n", b.String())
+		if tc.ExpectStackTrace {
+			assert.Contains(t, b.String(), logMessage+"\ntest error. Stack:")
+		} else {
+			assert.Equal(t, logMessage+"\n", b.String())
+		}
 
 		clearRegistry("TestLogName")
 	}

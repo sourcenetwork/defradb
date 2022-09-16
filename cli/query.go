@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var queryCmd = &cobra.Command{
@@ -49,7 +50,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			if err = cmd.Usage(); err != nil {
 				return err
 			}
-			return fmt.Errorf("too many arguments")
+			return errors.New("too many arguments")
 		}
 
 		if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
@@ -61,16 +62,16 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		} else if len(args) == 0 {
 			err := cmd.Help()
 			if err != nil {
-				return fmt.Errorf("failed to print help: %w", err)
+				return errors.Wrap("failed to print help", err)
 			}
 			return nil
 		} else if args[0] == "-" {
 			stdin, err := readStdin()
 			if err != nil {
-				return fmt.Errorf("failed to read stdin: %w", err)
+				return errors.Wrap("failed to read stdin", err)
 			}
 			if len(stdin) == 0 {
-				return fmt.Errorf("no query in stdin provided")
+				return errors.New("no query in stdin provided")
 			} else {
 				query = stdin
 			}
@@ -79,12 +80,12 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		}
 
 		if query == "" {
-			return fmt.Errorf("query cannot be empty")
+			return errors.New("query cannot be empty")
 		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.GraphQLPath)
 		if err != nil {
-			return fmt.Errorf("joining paths failed: %w", err)
+			return errors.Wrap("joining paths failed", err)
 		}
 
 		p := url.Values{}
@@ -93,23 +94,23 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed query: %w", err)
+			return errors.Wrap("failed query", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		fi, err = os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 
 		if isFileInfoPipe(fi) {
@@ -117,11 +118,11 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		} else {
 			graphlErr, err := hasGraphQLErrors(response)
 			if err != nil {
-				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+				return errors.Wrap("failed to handle GraphQL errors", err)
 			}
 			indentedResult, err := indentJSON(response)
 			if err != nil {
-				return fmt.Errorf("failed to pretty print result: %w", err)
+				return errors.Wrap("failed to pretty print result", err)
 			}
 			if graphlErr {
 				log.FeedbackError(cmd.Context(), indentedResult)

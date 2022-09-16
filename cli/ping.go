@@ -18,6 +18,7 @@ import (
 	"os"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ var pingCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) (err error) {
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 		if !isFileInfoPipe(stdout) {
 			log.FeedbackInfo(cmd.Context(), "Sending ping...")
@@ -35,23 +36,23 @@ var pingCmd = &cobra.Command{
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.PingPath)
 		if err != nil {
-			return fmt.Errorf("failed to join endpoint: %w", err)
+			return errors.Wrap("failed to join endpoint", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed to send ping: %w", err)
+			return errors.Wrap("failed to send ping", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		if isFileInfoPipe(stdout) {
@@ -65,7 +66,7 @@ var pingCmd = &cobra.Command{
 			r := pingResponse{}
 			err = json.Unmarshal(response, &r)
 			if err != nil {
-				return fmt.Errorf("parsing of response failed: %w", err)
+				return errors.Wrap("parsing of response failed", err)
 			}
 			log.FeedbackInfo(cmd.Context(), r.Data.Response)
 		}

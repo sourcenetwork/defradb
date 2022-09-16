@@ -14,9 +14,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/bxcodec/faker"
 )

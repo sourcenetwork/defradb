@@ -13,11 +13,11 @@ package crdt
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // baseCRDT is embedded as a base layer into all

@@ -11,11 +11,11 @@
 package base
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions

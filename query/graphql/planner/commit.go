@@ -11,11 +11,11 @@
 package planner
 
 import (
-	"fmt"
 	"math"
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -111,7 +111,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	case mapper.AllCommits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
-		return nil, fmt.Errorf("Invalid CommitSelect type")
+		return nil, errors.New("Invalid CommitSelect type")
 	}
 	if err != nil {
 		return nil, err

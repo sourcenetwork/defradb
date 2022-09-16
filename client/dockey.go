@@ -13,8 +13,9 @@ package client
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"

@@ -21,10 +21,9 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-
-	"errors"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -232,7 +231,7 @@ func (db *db) GetCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, fmt.Errorf("Schema ID can't be empty")
+		return nil, errors.New("Schema ID can't be empty")
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
@@ -255,7 +254,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
+		return nil, errors.Wrap("Failed to create collection prefix query", err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
@@ -272,7 +271,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		colName := ds.NewKey(res.Key).BaseNamespace()
 		col, err := db.GetCollectionByName(ctx, colName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
+			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection (%s)", colName), err)
 		}
 		cols = append(cols, col)
 	}
@@ -464,7 +463,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	dockey := client.NewDocKeyV0(doccid)
 	key := c.getPrimaryKeyFromDocKey(dockey)
 	if key.DocKey != doc.Key().String() {
-		return fmt.Errorf("Expected %s, got %s : %w", doc.Key(), key.DocKey, ErrDocVerification)
+		return errors.Wrap(fmt.Sprintf("Expected %s, got %s ", doc.Key(), key.DocKey), ErrDocVerification)
 	}
 
 	// check if doc already exists

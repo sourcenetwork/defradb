@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -159,7 +160,7 @@ func runCollectionBenchCreateMany(
 	// CreateMany make sure numTypes == 1 since we only support that for now
 	// @todo: Add support for numTypes > 1 later
 	if numTypes != 1 {
-		return fmt.Errorf("Invalid number of types for create many, have %v but max is 1", numTypes)
+		return errors.New(fmt.Sprintf("Invalid number of types for create many, have %v but max is 1", numTypes))
 	}
 
 	// run benchmark

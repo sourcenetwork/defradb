@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
@@ -111,12 +112,12 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, fmt.Errorf("Query is missing query or mutation statements")
+			return nil, errors.New("Query is missing query or mutation statements")
 		}
 
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, fmt.Errorf("OperationDefinition is missing selections")
+			return nil, errors.New("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -151,7 +152,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 		return p.newObjectMutationPlan(m)
 	}
-	return nil, fmt.Errorf("Unknown statement type %T", stmt)
+	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
@@ -166,7 +167,7 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 		return p.DeleteDocs(stmt)
 
 	default:
-		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
+		return nil, errors.New(fmt.Sprintf("Unknown mutation action %T", stmt.Type))
 	}
 }
 
@@ -317,7 +318,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return fmt.Errorf("Unknown type index join plan")
+	return errors.New("Unknown type index join plan")
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -412,7 +413,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
-		return fmt.Errorf("Unknown plan node type to replace: %T", node)
+		return errors.New(fmt.Sprintf("Unknown plan node type to replace: %T", node))
 	}
 
 	return nil
@@ -442,7 +443,7 @@ func (p *Planner) explainRequest(
 	plan planNode,
 ) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, fmt.Errorf("Can't explain request of a nil plan.")
+		return nil, errors.New("Can't explain request of a nil plan.")
 	}
 
 	explainGraph, err := buildExplainGraph(plan)
@@ -465,7 +466,7 @@ func (p *Planner) executeRequest(
 	plan planNode,
 ) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, fmt.Errorf("Can't execute request of a nil plan.")
+		return nil, errors.New("Can't execute request of a nil plan.")
 	}
 
 	if err := plan.Start(); err != nil {
@@ -533,10 +534,10 @@ func multiErr(errorsToWrap ...error) error {
 			continue
 		}
 		if errs == nil {
-			errs = fmt.Errorf("%w", err)
+			errs = errors.New(err.Error())
 			continue
 		}
-		errs = fmt.Errorf("%s: %w", errs, err)
+		errs = errors.Wrap(fmt.Sprintf("%s", errs), err)
 	}
 	return errs
 }

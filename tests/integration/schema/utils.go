@@ -12,11 +12,11 @@ package schema
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/assert"
 )
@@ -158,7 +158,7 @@ func assertError(t *testing.T, err error, expectedError string) bool {
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, fmt.Errorf(expectedError))
+			assert.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
@@ -167,18 +167,18 @@ func assertError(t *testing.T, err error, expectedError string) bool {
 
 func assertErrors(
 	t *testing.T,
-	errors []any,
+	errs []any,
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		assert.Empty(t, errors)
+		assert.Empty(t, errs)
 	} else {
-		for _, e := range errors {
+		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
-				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(expectedError))
+				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
 			return true

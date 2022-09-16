@@ -14,13 +14,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"fmt"
 	"sort"
-
-	"errors"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 
 	cid "github.com/ipfs/go-cid"
@@ -162,7 +160,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, fmt.Errorf("Failed to get next query result : %w", r.Error)
+			return nil, 0, errors.Wrap("Failed to get next query result ", r.Error)
 		}
 
 		headKey, err := core.NewHeadStoreKey(r.Key)

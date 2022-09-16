@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +58,7 @@ func readStdin() (string, error) {
 		s.Write(scanner.Bytes())
 	}
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("reading standard input: %w", err)
+		return "", errors.Wrap("reading standard input", err)
 	}
 	return s.String(), nil
 }
@@ -76,7 +77,7 @@ func hasGraphQLErrors(buf []byte) (bool, error) {
 	errs := graphqlErrors{}
 	err := json.Unmarshal(buf, &errs)
 	if err != nil {
-		return false, fmt.Errorf("couldn't parse GraphQL response %w", err)
+		return false, errors.Wrap("couldn't parse GraphQL response %w", err)
 	}
 	if errs.Errors != nil {
 		return true, nil
@@ -100,7 +101,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 	// handle --logger <name>,<field>=<value>,... --logger <name2>,<field>=<value>,..
 	loggerKVs, err := cmd.Flags().GetStringArray("logger")
 	if err != nil {
-		return fmt.Errorf("can't get logger flag: %w", err)
+		return errors.Wrap("can't get logger flag", err)
 	}
 
 	for _, kvs := range loggerKVs {
@@ -111,7 +112,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 
 	loggingConfig, err := cfg.ToLoggerConfig()
 	if err != nil {
-		return fmt.Errorf("could not get logging config: %w", err)
+		return errors.Wrap("could not get logging config", err)
 	}
 	logging.SetConfig(loggingConfig)
 
@@ -125,7 +126,7 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 
 	parsed := strings.Split(kvs, ",")
 	if len(parsed) <= 1 {
-		return fmt.Errorf("logger was not provided as comma-separated pairs of <name>=<value>: %s", kvs)
+		return errors.New(fmt.Sprintf("logger was not provided as comma-separated pairs of <name>=<value>: %s", kvs))
 	}
 	name := parsed[0]
 
@@ -134,12 +135,12 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 	for _, kv := range parsed[1:] {
 		parsedKV := strings.Split(kv, "=")
 		if len(parsedKV) != 2 {
-			return fmt.Errorf("level was not provided as <key>=<value> pair: %s", kv)
+			return errors.New(fmt.Sprintf("level was not provided as <key>=<value> pair: %s", kv))
 		}
 
 		logcfg, err := cfg.GetOrCreateNamedLogger(name)
 		if err != nil {
-			return fmt.Errorf("could not get named logger config: %w", err)
+			return errors.Wrap("could not get named logger config", err)
 		}
 
 		// handle field
@@ -153,23 +154,23 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 		case "stacktrace": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.Stacktrace = boolValue
 		case "nocolor": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.NoColor = boolValue
 		case "caller": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.Caller = boolValue
 		default:
-			return fmt.Errorf("unknown parameter for logger: %s", param)
+			return errors.New(fmt.Sprintf("unknown parameter for logger: %s", param))
 		}
 	}
 	return nil
@@ -197,12 +198,12 @@ func parseAndConfigLogStringParam(
 	for _, kv := range parsed[1:] {
 		parsedKV := strings.Split(kv, "=")
 		if len(parsedKV) != 2 {
-			return fmt.Errorf("level was not provided as <key>=<value> pair: %s", kv)
+			return errors.New(fmt.Sprintf("level was not provided as <key>=<value> pair: %s", kv))
 		}
 
 		logcfg, err := cfg.GetOrCreateNamedLogger(parsedKV[0])
 		if err != nil {
-			return fmt.Errorf("could not get named logger config: %w", err)
+			return errors.Wrap("could not get named logger config", err)
 		}
 
 		paramSetterFn(&logcfg.LoggingConfig, parsedKV[1])

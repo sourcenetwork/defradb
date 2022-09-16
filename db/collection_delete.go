@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	block "github.com/ipfs/go-block-format"
@@ -25,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -293,7 +293,7 @@ func (c *collection) applyFullDelete(
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to get document heads: %w", err)
+		return errors.Wrap("Failed to get document heads", err)
 	}
 
 	dagDel := newDagDeleter(txn.DAGstore())

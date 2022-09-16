@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
@@ -78,10 +79,10 @@ func (p *Planner) isValueFloat(
 
 		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
 		if !fieldDescriptionFound {
-			return false, fmt.Errorf(
+			return false, errors.New(fmt.Sprintf(
 				"Unable to find field description for field: %s",
 				source.Name,
-			)
+			))
 		}
 		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
 			fieldDescription.Kind == client.FieldKind_FLOAT ||
@@ -96,7 +97,7 @@ func (p *Planner) isValueFloat(
 
 	child, isChildSelect := parent.FieldAt(source.Index).AsSelect()
 	if !isChildSelect {
-		return false, fmt.Errorf("Expected child select but none was found")
+		return false, errors.New("Expected child select but none was found")
 	}
 
 	if _, isAggregate := parserTypes.Aggregates[source.ChildTarget.Name]; isAggregate {
@@ -130,7 +131,7 @@ func (p *Planner) isValueFloat(
 	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
 		return false,
-			fmt.Errorf("Unable to find child field description for field: %s", source.ChildTarget.Name)
+			errors.New(fmt.Sprintf("Unable to find child field description for field: %s", source.ChildTarget.Name))
 	}
 
 	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||

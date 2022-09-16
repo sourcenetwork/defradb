@@ -33,11 +33,11 @@ package planner
 
 import (
 	"container/list"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	"github.com/fxamacker/cbor/v2"
@@ -268,7 +268,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)
 		if !ok {
-			return false, fmt.Errorf("Queued value in DAGScan isn't a CID")
+			return false, errors.New("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
 		n.cid = &cid
@@ -280,7 +280,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		val := n.headset.Value()
 		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(cid.Cid)
 		if !ok {
-			return false, fmt.Errorf("Headset scan node returned an invalid cid")
+			return false, errors.New("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
 	} else if n.cid == nil {
@@ -390,7 +390,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return core.Doc{}, nil, fmt.Errorf("Commit Delta missing priority key")
+		return core.Doc{}, nil, errors.New("Commit Delta missing priority key")
 	}
 
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
