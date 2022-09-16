@@ -17,6 +17,7 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 func ParsePeers(addrs []string) ([]peer.AddrInfo, error) {
@@ -34,7 +35,7 @@ func ParsePeers(addrs []string) ([]peer.AddrInfo, error) {
 func TCPAddrFromMultiAddr(maddr ma.Multiaddr) (string, error) {
 	var addr string
 	if maddr == nil {
-		return addr, fmt.Errorf("address can't be empty")
+		return addr, errors.New("address can't be empty")
 	}
 	ip4, err := maddr.ValueForProtocol(ma.P_IP4)
 	if err != nil {

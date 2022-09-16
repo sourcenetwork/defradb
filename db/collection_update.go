@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -298,7 +297,7 @@ func (c *collection) applyPatch( //nolint:unused
 
 		pathVal := opObject.Get("path")
 		if pathVal == nil {
-			return fmt.Errorf("missing document field to update")
+			return errors.New("missing document field to update")
 		}
 
 		path, err := pathVal.StringBytes()

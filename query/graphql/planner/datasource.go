@@ -12,10 +12,10 @@ package planner
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -38,7 +38,7 @@ func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 // @todo: Add field selection
 func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, error) {
 	if parsed.CollectionName == "" {
-		return planSource{}, fmt.Errorf("collection name cannot be empty")
+		return planSource{}, errors.New("collection name cannot be empty")
 	}
 	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
 	if err != nil {
@@ -64,7 +64,7 @@ func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, 
 	var desc client.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
-		return desc, fmt.Errorf("Failed to get collection description: %w", err)
+		return desc, errors.Wrap("Failed to get collection description", err)
 	}
 
 	err = json.Unmarshal(buf, &desc)

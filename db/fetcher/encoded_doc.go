@@ -16,6 +16,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 type EPTuple []encProperty
@@ -47,11 +48,11 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to bool.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = boolArray
@@ -83,11 +84,11 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to float64.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = floatArray
@@ -103,11 +104,11 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to string.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = stringArray
@@ -146,12 +147,12 @@ func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
 		}
 		value, ok := untypedValue.(T)
 		if !ok {
-			return nil, fmt.Errorf(
+			return nil, errors.New(fmt.Sprintf(
 				"Could not convert type: %T, value: %v to %T.",
 				untypedValue,
 				untypedValue,
 				*new(T),
-			)
+			))
 		}
 		resultArray[i] = client.Some(value)
 	}
@@ -186,11 +187,11 @@ func convertToInt(untypedValue any) (int64, error) {
 	case float64:
 		return int64(value), nil
 	default:
-		return 0, fmt.Errorf(
+		return 0, errors.New(fmt.Sprintf(
 			"Could not convert type: %T, value: %v to int64.",
 			untypedValue,
 			untypedValue,
-		)
+		))
 	}
 }
 

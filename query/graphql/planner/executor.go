@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
@@ -40,7 +41,7 @@ type QueryExecutor struct {
 
 func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 	if manager == nil {
-		return nil, fmt.Errorf("SchemaManager cannot be nil")
+		return nil, errors.New("SchemaManager cannot be nil")
 	}
 
 	return &QueryExecutor{
@@ -55,7 +56,7 @@ func (e *QueryExecutor) MakeSelectQuery(
 	selectStmt *mapper.Select,
 ) (Query, error) {
 	if selectStmt == nil {
-		return nil, fmt.Errorf("Cannot create query without a selection")
+		return nil, errors.New("Cannot create query without a selection")
 	}
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)
@@ -101,7 +102,7 @@ func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error
 	schema := e.SchemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
-		return nil, fmt.Errorf("%v", validationResult.Errors)
+		return nil, errors.New(fmt.Sprintf("%v", validationResult.Errors))
 	}
 
 	return parser.ParseQuery(ast)

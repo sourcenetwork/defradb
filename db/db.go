@@ -16,7 +16,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -191,11 +190,11 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 	rm := db.schema.Relations
 	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
 	if rel == nil {
-		return "", fmt.Errorf("Relation does not exists")
+		return "", errors.New("Relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
 	if !ok {
-		return "", fmt.Errorf("Relation is missing referenced field")
+		return "", errors.New("Relation is missing referenced field")
 	}
 	return subtypefieldname, nil
 }

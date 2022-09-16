@@ -241,16 +241,16 @@ func resolveAggregates(
 				hostSelect, isHostSelectable := host.AsSelect()
 				if !isHostSelectable {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, fmt.Errorf(
+					return nil, errors.New(
 						"Aggregate target host must be selectable, but was not",
 					)
 				}
 
 				if len(hostSelect.IndexesByName[target.childExternalName]) == 0 {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"Unable to identify aggregate child: %s", target.childExternalName,
-					)
+					))
 				}
 
 				childTarget = OptionalChildTarget{
@@ -460,10 +460,10 @@ func getRequestables(
 
 			mapping.Add(index, f.Name)
 		default:
-			return nil, nil, fmt.Errorf(
+			return nil, nil, errors.New(fmt.Sprintf(
 				"Unexpected field type: %T",
 				field,
-			)
+			))
 		}
 	}
 	return
@@ -476,7 +476,7 @@ func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest
 	}
 
 	if len(aggregateTargets) == 0 {
-		return aggregateRequest{}, fmt.Errorf(
+		return aggregateRequest{}, errors.New(
 			"Aggregate must be provided with a property to aggregate.",
 		)
 	}

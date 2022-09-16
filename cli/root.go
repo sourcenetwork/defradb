@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -37,18 +38,18 @@ See https://docs.source.network/BSL.txt for more information.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
-			return fmt.Errorf("failed to get root dir: %w", err)
+			return errors.Wrap("failed to get root dir", err)
 		}
 		defaultConfig := false
 		if exists {
 			err := cfg.Load(rootDir)
 			if err != nil {
-				return fmt.Errorf("failed to load config: %w", err)
+				return errors.Wrap("failed to load config", err)
 			}
 		} else {
 			err := cfg.LoadWithoutRootDir()
 			if err != nil {
-				return fmt.Errorf("failed to load config: %w", err)
+				return errors.Wrap("failed to load config", err)
 			}
 			defaultConfig = true
 		}

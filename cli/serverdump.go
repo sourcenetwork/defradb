@@ -18,6 +18,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
 )
@@ -40,23 +41,23 @@ var serverDumpCmd = &cobra.Command{
 			info, err := os.Stat(cfg.Datastore.Badger.Path)
 			exists := (err == nil && info.IsDir())
 			if !exists {
-				return fmt.Errorf(
+				return errors.New(fmt.Sprintf(
 					"badger store does not exist at %s. Try with an existing directory",
 					cfg.Datastore.Badger.Path,
-				)
+				))
 			}
 			log.FeedbackInfo(cmd.Context(), "Opening badger store", logging.NewKV("Path", cfg.Datastore.Badger.Path))
 			rootstore, err = badgerds.NewDatastore(cfg.Datastore.Badger.Path, cfg.Datastore.Badger.Options)
 			if err != nil {
-				return fmt.Errorf("could not open badger datastore: %w", err)
+				return errors.Wrap("could not open badger datastore", err)
 			}
 		} else {
-			return fmt.Errorf("server-side dump is only supported for the Badger datastore")
+			return errors.New("server-side dump is only supported for the Badger datastore")
 		}
 
 		db, err := db.NewDB(cmd.Context(), rootstore)
 		if err != nil {
-			return fmt.Errorf("failed to initialize database: %w", err)
+			return errors.Wrap("failed to initialize database", err)
 		}
 
 		log.FeedbackInfo(cmd.Context(), "Dumping DB state...")

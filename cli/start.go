@@ -51,17 +51,17 @@ var startCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		rootDir, exists, err := config.GetRootDir(rootDirParam)
 		if err != nil {
-			return fmt.Errorf("failed to get root dir: %w", err)
+			return errors.Wrap("failed to get root dir", err)
 		}
 		if !exists {
 			err = config.CreateRootDirWithDefaultConfig(rootDir)
 			if err != nil {
-				return fmt.Errorf("failed to create root dir: %w", err)
+				return errors.Wrap("failed to create root dir", err)
 			}
 		}
 		err = cfg.Load(rootDir)
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return errors.Wrap("failed to load config", err)
 		}
 
 		// parse loglevel overrides
@@ -190,7 +190,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to open datastore: %w", err)
+		return nil, errors.Wrap("failed to open datastore", err)
 	}
 
 	var options []db.Option
@@ -204,7 +204,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	db, err := db.NewDB(ctx, rootstore, options...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create database: %w", err)
+		return nil, errors.Wrap("failed to create database", err)
 	}
 
 	// init the p2p node
@@ -219,7 +219,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		)
 		if err != nil {
 			db.Close(ctx)
-			return nil, fmt.Errorf("failed to start P2P node: %w", err)
+			return nil, errors.Wrap("failed to start P2P node", err)
 		}
 
 		// parse peers and bootstrap
@@ -227,7 +227,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 			log.Debug(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
 			addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
+				return nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 			}
 			log.Debug(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 			n.Boostrap(addrs)
@@ -235,24 +235,24 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 		if err := n.Start(); err != nil {
 			if e := n.Close(); e != nil {
-				err = fmt.Errorf("failed to close node: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to close node: %v", e.Error()), err)
 			}
 			db.Close(ctx)
-			return nil, fmt.Errorf("failed to start P2P listeners: %w", err)
+			return nil, errors.Wrap("failed to start P2P listeners", err)
 		}
 
 		MtcpAddr, err := ma.NewMultiaddr(cfg.Net.TCPAddress)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse multiaddress: %w", err)
+			return nil, errors.Wrap("failed to parse multiaddress", err)
 		}
 		addr, err := netutils.TCPAddrFromMultiAddr(MtcpAddr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse TCP address: %w", err)
+			return nil, errors.Wrap("failed to parse TCP address", err)
 		}
 
 		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse RPC timeout duration: %w", err)
+			return nil, errors.Wrap("failed to parse RPC timeout duration", err)
 		}
 
 		server := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -260,7 +260,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}))
 		tcplistener, err := gonet.Listen("tcp", addr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to listen on TCP address %v: %w", addr, err)
+			return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", addr), err)
 		}
 
 		netService := netapi.NewService(n.Peer)
@@ -282,7 +282,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	}
 	s := httpapi.NewServer(db, sOpt...)
 	if err := s.Listen(ctx); err != nil {
-		return nil, fmt.Errorf("failed to listen on TCP address %v: %w", s.Addr, err)
+		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
 	}
 
 	// run the server in a separate goroutine

@@ -34,6 +34,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 	"github.com/textileio/go-threads/broadcast"
@@ -248,7 +249,7 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for peer connection timed out")
+			return errors.New("waiting for peer connection timed out")
 		}
 	}
 }
@@ -263,7 +264,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for pubsub timed out")
+			return errors.New("waiting for pubsub timed out")
 		}
 	}
 }
@@ -278,7 +279,7 @@ func (n *Node) WaitForPushLogEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for pushlog timed out")
+			return errors.New("waiting for pushlog timed out")
 		}
 	}
 }

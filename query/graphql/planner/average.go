@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -42,7 +43,7 @@ func (p *Planner) Average(
 		case parserTypes.SumFieldName:
 			sumField = dependency
 		default:
-			return nil, fmt.Errorf("Unknown dependency, name: %s", dependency.Name)
+			return nil, errors.New(fmt.Sprintf("Unknown dependency, name: %s", dependency.Name))
 		}
 	}
 
@@ -75,7 +76,7 @@ func (n *averageNode) Next() (bool, error) {
 	countProp := n.currentValue.Fields[n.countFieldIndex]
 	typedCount, isInt := countProp.(int)
 	if !isInt {
-		return false, fmt.Errorf("Expected count to be int but was: %T", countProp)
+		return false, errors.New(fmt.Sprintf("Expected count to be int but was: %T", countProp))
 	}
 	count := typedCount
 
@@ -91,7 +92,7 @@ func (n *averageNode) Next() (bool, error) {
 	case int64:
 		n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
 	default:
-		return false, fmt.Errorf("Expected sum to be either float64 or int64 or int but was: %T", sumProp)
+		return false, errors.New(fmt.Sprintf("Expected sum to be either float64 or int64 or int but was: %T", sumProp))
 	}
 
 	return true, nil

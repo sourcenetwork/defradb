@@ -293,7 +293,7 @@ func (c *collection) applyFullDelete(
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to get document heads: %w", err)
+		return errors.Wrap("Failed to get document heads", err)
 	}
 
 	dagDel := newDagDeleter(txn.DAGstore())

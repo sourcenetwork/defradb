@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -144,7 +145,7 @@ func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	elements := strings.Split(key, "/")
 	if len(elements) != 4 {
-		return HeadStoreKey{}, fmt.Errorf("Given headstore key string is not in expected format: %s", key)
+		return HeadStoreKey{}, errors.New(fmt.Sprintf("Given headstore key string is not in expected format: %s", key))
 	}
 
 	cid, err := cid.Decode(elements[3])
@@ -430,7 +431,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {
-		return 0, fmt.Errorf("Failed to get FieldID of Key: %w", err)
+		return 0, errors.Wrap("Failed to get FieldID of Key", err)
 	}
 	return uint32(fieldID), nil
 }

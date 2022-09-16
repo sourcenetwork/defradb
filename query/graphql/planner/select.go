@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -212,8 +210,8 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		if n.parsed.Cid != "" {
 			c, err := cid.Decode(n.parsed.Cid)
 			if err != nil {
-				return nil, fmt.Errorf(
-					"Failed to propagate VersionFetcher span, invalid CID: %w",
+				return nil, errors.Wrap(
+					"Failed to propagate VersionFetcher span, invalid CID",
 					err,
 				)
 			}

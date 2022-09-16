@@ -303,11 +303,11 @@ func (g *Generator) createExpandedFieldAggregate(
 					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				return fmt.Errorf(
+				return errors.New(fmt.Sprintf(
 					"Aggregate target not found. HostObject: {%s}, Target: {%s}",
 					obj.Name(),
 					target,
-				)
+				))
 			}
 		}
 
@@ -384,7 +384,7 @@ func (g *Generator) buildTypesFromAST(
 		case *ast.ObjectDefinition:
 			// check if type exists
 			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
-				return nil, fmt.Errorf("Schema type already exists: %s", defType.Name.Value)
+				return nil, errors.New(fmt.Sprintf("Schema type already exists: %s", defType.Name.Value))
 			}
 
 			objconf := gql.ObjectConfig{}
@@ -485,10 +485,10 @@ func (g *Generator) buildTypesFromAST(
 
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"object not found whilst executing fields thunk: %s",
 						defType.Name.Value,
-					)
+					))
 				}
 
 				fields[parserTypes.GroupFieldName] = &gql.Field{
@@ -528,10 +528,10 @@ func getRelationshipName(
 				if argument.Name.Value == "name" {
 					name, isString := argument.Value.GetValue().(string)
 					if !isString {
-						return "", fmt.Errorf(
+						return "", errors.New(fmt.Sprintf(
 							"Relationship name must be of type string, but was: %v",
 							argument.Value.GetKind(),
-						)
+						))
 					}
 					return name, nil
 				}
@@ -965,7 +965,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	name := t.(*ast.Named).Name.Value
 	ttype, ok := typeMap[name]
 	if !ok {
-		return nil, fmt.Errorf("No type found for given name: %s", name)
+		return nil, errors.New(fmt.Sprintf("No type found for given name: %s", name))
 	}
 
 	return ttype, nil

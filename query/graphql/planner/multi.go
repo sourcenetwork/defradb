@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -394,14 +392,14 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			m.addChild(fieldIndex, plan)
 			s.source = m
 		default:
-			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
+			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 
 	// source is a mergeNode, like a TypeJoin
 	case mergeNode:
 		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
 		if origScan == nil {
-			return fmt.Errorf("Failed to find original scan node in plan graph")
+			return errors.New("Failed to find original scan node in plan graph")
 		}
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
@@ -448,7 +446,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			// add our newly updated plan to the multinode
 			node.addChild(fieldIndex, plan)
 		default:
-			return fmt.Errorf("Sub plan needs to be either a MergeNode or an AppendNode")
+			return errors.New("Sub plan needs to be either a MergeNode or an AppendNode")
 		}
 	}
 	return nil

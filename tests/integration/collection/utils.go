@@ -12,11 +12,11 @@ package collection
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/assert"
 )
@@ -115,7 +115,7 @@ func assertError(t *testing.T, description string, err error, expectedError stri
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, fmt.Errorf(expectedError))
+			assert.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true

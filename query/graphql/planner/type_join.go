@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
@@ -83,8 +84,8 @@ func (p *Planner) makeTypeIndexJoin(
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, fmt.Errorf("Unknown field on sub selection")
-		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
+		// return nil, errors.Wrap("Unknown field on sub selection")
+		return nil, errors.New(fmt.Sprintf("Unknown field %s on sub selection", subType.Name))
 	}
 
 	meta := typeFieldDesc.RelationType
@@ -93,7 +94,7 @@ func (p *Planner) makeTypeIndexJoin(
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, fmt.Errorf("Failed sub selection, unknown relation type")
+		return nil, errors.New("Failed sub selection, unknown relation type")
 	}
 	if err != nil {
 		return nil, err
@@ -184,7 +185,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	default:
-		return explainerMap, fmt.Errorf("Unknown type of an index join to explain.")
+		return explainerMap, errors.New("Unknown type of an index join to explain.")
 	}
 
 	return explainerMap, nil
@@ -269,7 +270,7 @@ func (p *Planner) makeTypeJoinOne(
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
 	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
 
 	// determine relation direction (primary or secondary?)

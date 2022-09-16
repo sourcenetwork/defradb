@@ -28,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -73,7 +74,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		log.Debug(p.ctx, "Getting all existing DocKey...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get DocKeys for pubsub topic registration: %w", err)
+			return nil, errors.Wrap("Failed to get DocKeys for pubsub topic registration", err)
 		}
 
 		i := 0
@@ -151,7 +152,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
 	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get collection from schemaID %s: %w", schemaID, err)
+		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 	}
 
 	var getter format.NodeGetter = s.peer.ds
@@ -163,7 +164,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// handleComposite
 	nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to decode block to ipld.Node: %w", err)
+		return nil, errors.Wrap("Failed to decode block to ipld.Node", err)
 	}
 	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {
@@ -277,16 +278,16 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	t, ok := s.topics[dockey]
 	s.mu.Unlock()
 	if !ok {
-		return fmt.Errorf("No pubsub topic found for doc %s", dockey)
+		return errors.New(fmt.Sprintf("No pubsub topic found for doc %s", dockey))
 	}
 
 	data, err := req.Marshal()
 	if err != nil {
-		return fmt.Errorf("failed marshling pubsub message: %w", err)
+		return errors.Wrap("failed marshling pubsub message", err)
 	}
 
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
-		return fmt.Errorf("failed publishing to thread %s: %w", dockey, err)
+		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", dockey), err)
 	}
 	log.Debug(
 		ctx,
@@ -316,7 +317,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	})
 	if _, err := s.PushLog(ctx, req); err != nil {
 		log.ErrorE(ctx, "Failed pushing log for doc", err, logging.NewKV("Topic", topic))
-		return nil, fmt.Errorf("Failed pushing log for doc %s: %w", topic, err)
+		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
 }
@@ -396,11 +397,11 @@ func (a addr) String() string { return a.id.Pretty() }
 func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	ctxPeer, ok := grpcpeer.FromContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("unable to identify stream peer")
+		return "", errors.New("unable to identify stream peer")
 	}
 	pid, err := libpeer.Decode(ctxPeer.Addr.String())
 	if err != nil {
-		return "", fmt.Errorf("parsing stream peer id: %w", err)
+		return "", errors.Wrap("parsing stream peer id", err)
 	}
 	return pid, nil
 }

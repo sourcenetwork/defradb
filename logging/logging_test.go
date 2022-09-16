@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -119,7 +118,7 @@ func TestLogWritesFatalEMessageToLogAndKillsProcess(t *testing.T) {
 			c.OutputPaths = []string{logPath}
 		})
 
-		logger.FatalE(ctx, logMessage, fmt.Errorf("dummy error"))
+		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
 		return
 	}
 
@@ -161,7 +160,7 @@ func TestLogWritesFatalEMessageWithStackTraceToLogAndKillsProcessGivenStackTrace
 			c.EnableStackTrace = NewEnableStackTraceOption(true)
 		})
 
-		logger.FatalE(ctx, logMessage, fmt.Errorf("dummy error"))
+		logger.FatalE(ctx, logMessage, errors.New("dummy error"))
 		return
 	}
 

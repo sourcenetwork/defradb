@@ -19,13 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -141,8 +141,8 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
 		return errors.Wrap(
-			err,
 			fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey),
+			err,
 		)
 	}
 
@@ -164,7 +164,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	}
 
 	if err := vf.seekTo(vf.version); err != nil {
-		return fmt.Errorf("Failed seeking state to %v: %w", c, err)
+		return errors.Wrap(fmt.Sprintf("failed seeking state to %v", c), err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
@@ -244,7 +244,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		}
 		err := vf.merge(cc)
 		if err != nil {
-			return fmt.Errorf("Failed merging state: %w", err)
+			return errors.Wrap("Failed merging state", err)
 		}
 	}
 
@@ -280,7 +280,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
 	if err != nil {
-		return fmt.Errorf("(version fetcher) failed to find block in blockstore: %w", err)
+		return errors.Wrap("(version fetcher) failed to find block in blockstore", err)
 	}
 	// skip if we already have it locally
 	if hasLocalBlock {
@@ -289,12 +289,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return fmt.Errorf("(version fetcher) failed to get block in blockstore: %w", err)
+		return errors.Wrap("(version fetcher) failed to get block in blockstore", err)
 	}
 
 	// store the block in the local (transient store)
 	if err := vf.store.DAGstore().Put(vf.ctx, blk); err != nil {
-		return fmt.Errorf("(version fetcher) failed to write block to blockstore : %w", err)
+		return errors.Wrap("(version fetcher) failed to write block to blockstore ", err)
 	}
 
 	// add the CID to the queuedCIDs list
@@ -305,14 +305,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// decode the block
 	nd, err := dag.DecodeProtobuf(blk.RawData())
 	if err != nil {
-		return fmt.Errorf("(version fetcher) failed to decode protobuf: %w", err)
+		return errors.Wrap("(version fetcher) failed to decode protobuf", err)
 	}
 
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
 	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
-		return fmt.Errorf("(version fetcher) failed to get node link from DAG: %w", err)
+		return errors.Wrap("(version fetcher) failed to get node link from DAG", err)
 	}
 
 	// only seekNext on parent if we have a HEAD link
@@ -375,7 +375,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 		fieldID := vf.col.Schema.GetFieldKey(l.Name)
 		if fieldID == uint32(0) {
-			return fmt.Errorf("Invalid sub graph field name: %s", l.Name)
+			return errors.New(fmt.Sprintf("Invalid sub graph field name: %s", l.Name))
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
@@ -422,7 +422,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get DAG Node: %w", err)
+		return nil, errors.Wrap("Failed to get DAG Node", err)
 	}
 
 	// get node

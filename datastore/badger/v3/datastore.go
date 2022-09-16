@@ -6,7 +6,6 @@ package badger
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"strings"
 	"sync"
@@ -155,7 +154,7 @@ func NewDatastore(path string, options *Options) (*Datastore, error) {
 	kv, err := badger.Open(opt)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "manifest has unsupported version:") {
-			err = fmt.Errorf("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %w", err)
+			err = errors.Wrap("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade", err)
 		}
 		return nil, err
 	}
