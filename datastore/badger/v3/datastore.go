@@ -16,9 +16,10 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	logger "github.com/ipfs/go-log/v2"
 	goprocess "github.com/jbenet/goprocess"
+	"go.uber.org/zap"
+
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"github.com/sourcenetwork/defradb/errors"
-	"go.uber.org/zap"
 )
 
 var log = logger.Logger("badger")

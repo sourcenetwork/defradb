@@ -18,10 +18,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/config"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // setTestingAddresses overrides the config addresses to be the ones reserved for testing.

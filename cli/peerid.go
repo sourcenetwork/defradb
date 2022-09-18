@@ -17,10 +17,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/spf13/cobra"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var peerIDCmd = &cobra.Command{

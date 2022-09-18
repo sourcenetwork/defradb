@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"

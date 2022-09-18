@@ -24,12 +24,13 @@ import (
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-cid"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 type testOptions struct {

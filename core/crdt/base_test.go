@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 )

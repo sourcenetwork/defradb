@@ -18,9 +18,10 @@ import (
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/stretchr/testify/assert"
 )
 
 var envVarsDifferentThanDefault = map[string]string{

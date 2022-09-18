@@ -15,17 +15,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
+	format "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-
-	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
-	format "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
 )
 
 var (

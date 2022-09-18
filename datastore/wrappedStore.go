@@ -17,6 +17,7 @@ import (
 	ktds "github.com/ipfs/go-datastore/keytransform"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
+
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 

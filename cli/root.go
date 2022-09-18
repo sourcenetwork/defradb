@@ -14,10 +14,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var rootDirParam string

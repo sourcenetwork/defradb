@@ -35,16 +35,16 @@ import (
 	"container/list"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
-
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 

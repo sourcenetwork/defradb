@@ -18,12 +18,12 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
-
-	"github.com/sourcenetwork/defradb/core"
 )
 
 var (

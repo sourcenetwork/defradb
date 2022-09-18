@@ -14,6 +14,7 @@ import (
 	"math"
 
 	cid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"

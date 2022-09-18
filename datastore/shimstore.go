@@ -12,6 +12,7 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 

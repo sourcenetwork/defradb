@@ -14,10 +14,10 @@ import (
 	"context"
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-
-	gql "github.com/graphql-go/graphql"
 )
 
 func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {

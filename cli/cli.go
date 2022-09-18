@@ -23,10 +23,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/spf13/cobra"
 )
 
 const badgerDatastoreName = "badger"

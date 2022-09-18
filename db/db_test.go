@@ -14,17 +14,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-
-	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/merkle/clock"
-
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
+	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
 func newMemoryDB(ctx context.Context) (*db, error) {

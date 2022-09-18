@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 

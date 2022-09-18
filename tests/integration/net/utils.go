@@ -18,6 +18,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/textileio/go-threads/broadcast"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
@@ -26,8 +29,6 @@ import (
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
 )
 
 var (

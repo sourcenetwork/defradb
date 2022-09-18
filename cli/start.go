@@ -19,26 +19,26 @@ import (
 	"os/signal"
 	"strings"
 
+	badger "github.com/dgraph-io/badger/v3"
+	ds "github.com/ipfs/go-datastore"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/textileio/go-threads/broadcast"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
+
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 	netapi "github.com/sourcenetwork/defradb/net/api"
 	netpb "github.com/sourcenetwork/defradb/net/api/pb"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
-
-	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/logging"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/textileio/go-threads/broadcast"
 )
 
 const busBufferSize = 100

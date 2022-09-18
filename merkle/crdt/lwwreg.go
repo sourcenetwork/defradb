@@ -13,16 +13,14 @@ package crdt
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-
-	// "github.com/sourcenetwork/defradb/datastore"
-
-	"github.com/ipfs/go-cid"
 )
 
 var (
