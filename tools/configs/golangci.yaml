@@ -112,7 +112,6 @@ linters:
   disable-all: true
 
   enable:
-    - deadcode
     - errcheck
     - errorlint
     - exportloopref
@@ -130,7 +129,6 @@ linters:
     - staticcheck
     - typecheck
     - unused
-    - varcheck
     - whitespace
 
   # https://github.com/golangci/golangci-lint/issues/2649
