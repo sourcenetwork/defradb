@@ -267,7 +267,6 @@ linters-settings:
   goimports:
     # Put imports beginning with prefix after 3rd-party packages.
     # It's a comma-separated list of prefixes.
-    # Default: ""
     local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
