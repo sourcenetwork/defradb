@@ -63,7 +63,7 @@ datastore:
   #    size: {{ .Datastore.Memory.Size }}
 
 api:
-  # Listening address of the (HTTP API) GraphQL query endpoint
+  # Address of the HTTP API to listen on or connect to
   address: {{ .API.Address }}
 
 net:

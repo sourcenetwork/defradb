@@ -1,15 +1,15 @@
-## defradb client blocks get
+## defradb client peerid
 
-Get a block by its CID from the blockstore.
+Get the peer ID of the DefraDB node
 
 ```
-defradb client blocks get [CID] [flags]
+defradb client peerid [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for get
+  -h, --help   help for peerid
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,5 @@ defradb client blocks get [CID] [flags]
 
 ### SEE ALSO
 
-* [defradb client blocks](defradb_client_blocks.md)	 - Interact with the database's blockstore
+* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
 

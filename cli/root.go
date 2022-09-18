@@ -129,7 +129,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String(
 		"url", cfg.API.Address,
-		"URL of the target database's HTTP endpoint",
+		"URL of HTTP endpoint to listen on or connect to",
 	)
 	err = viper.BindPFlag("api.address", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
