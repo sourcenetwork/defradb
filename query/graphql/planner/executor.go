@@ -14,16 +14,16 @@ import (
 	"context"
 	"fmt"
 
+	gql "github.com/graphql-go/graphql"
+	gqlp "github.com/graphql-go/graphql/language/parser"
+	"github.com/graphql-go/graphql/language/source"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
-
-	gql "github.com/graphql-go/graphql"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
 )
 
 // Query is an external hook into the planNode

@@ -12,10 +12,12 @@ package cli
 
 import (
 	"bytes"
+
 	"encoding/json"
 
-	"github.com/sourcenetwork/defradb/version"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/version"
 )
 
 var format string

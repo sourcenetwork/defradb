@@ -14,9 +14,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestUpdateWithFilter(t *testing.T) {

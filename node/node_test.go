@@ -15,11 +15,12 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
+	"github.com/stretchr/testify/assert"
+	"github.com/textileio/go-threads/broadcast"
+
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
-	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
 )
 
 // Node.Boostrap is not tested because the underlying, *ipfslite.Peer.Bootstrap is a best-effort function.

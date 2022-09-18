@@ -11,13 +11,13 @@
 package planner
 
 import (
+	cid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
-
-	cid "github.com/ipfs/go-cid"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 

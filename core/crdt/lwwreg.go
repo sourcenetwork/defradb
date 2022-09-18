@@ -16,16 +16,14 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/sourcenetwork/defradb/errors"
+	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
+	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-
-	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
-
-	"github.com/ugorji/go/codec"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (

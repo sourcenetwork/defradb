@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
@@ -25,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 

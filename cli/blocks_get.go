@@ -16,9 +16,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/spf13/cobra"
 )
 
 var getCmd = &cobra.Command{

@@ -15,6 +15,7 @@ import (
 	"encoding/binary"
 
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"

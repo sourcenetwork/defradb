@@ -13,10 +13,10 @@ package client
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
-
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type DB interface {

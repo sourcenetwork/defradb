@@ -13,10 +13,10 @@ package db
 import (
 	"context"
 
-	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/sourcenetwork/defradb/core"
-
 	"github.com/graphql-go/graphql/language/ast"
+	dsq "github.com/ipfs/go-datastore/query"
+
+	"github.com/sourcenetwork/defradb/core"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,

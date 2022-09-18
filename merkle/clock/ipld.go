@@ -13,13 +13,13 @@ package clock
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/core"
-
-	mh "github.com/multiformats/go-multihash"
 	// pb "github.com/ipfs/go-ds-crdt/pb"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/core"
 )
 
 // Credit: This file is from github.com/ipfs/go-ds-crdt
