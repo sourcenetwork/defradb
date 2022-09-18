@@ -65,7 +65,6 @@ See https://docs.source.network/BSL.txt for more information.
 			log.FeedbackInfo(cmd.Context(), "Using default configuration")
 		} else {
 			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
-
 		}
 		return nil
 	},
