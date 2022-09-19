@@ -21,7 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/logging"
+
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
@@ -1133,8 +1133,12 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						Type: operatorType,
 					}
 				} else { // objects (relations)
+					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")]
+					if !isFilterable {
+						filterType = &gql.InputObjectField{}
+					}
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")],
+						Type: filterType,
 					}
 				}
 			}
@@ -1259,32 +1263,9 @@ func (g *Generator) genTypeQueryableFieldList(
 	name := obj.Name()
 
 	// add the generated types to the type map
-	if err := g.manager.schema.AppendType(config.filter); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema with filter",
-			err,
-			logging.NewKV("SchemaItem", config.filter),
-		)
-	}
-
-	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema with groupBy",
-			err,
-			logging.NewKV("SchemaItem", config.groupBy),
-		)
-	}
-
-	if err := g.manager.schema.AppendType(config.order); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema with order",
-			err,
-			logging.NewKV("SchemaItem", config.order),
-		)
-	}
+	g.manager.schema.TypeMap()[config.filter.Name()] = config.filter
+	g.manager.schema.TypeMap()[config.groupBy.Name()] = config.groupBy
+	g.manager.schema.TypeMap()[config.order.Name()] = config.order
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
