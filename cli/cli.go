@@ -34,11 +34,12 @@ const badgerDatastoreName = "badger"
 
 // List of cobra errors indicating an error occurred in the way the command was invoked.
 // They are subject to change with new versions of cobra.
-var cobraErrors = []string{
+var usageErrors = []string{
 	"flag needs an argument",
 	"invalid syntax",
 	"unknown flag",
 	"unknown shorthand flag",
+	"missing argument", // custom to defradb
 }
 
 var log = logging.MustNewLogger("defra.cli")
@@ -54,14 +55,16 @@ func Execute() {
 	rootCmd.SetOut(os.Stdout)
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
-		for _, cobraError := range cobraErrors {
+		for _, cobraError := range usageErrors {
 			if strings.HasPrefix(err.Error(), cobraError) {
+				log.FeedbackErrorE(ctx, "Usage error", err)
 				if usageErr := rootCmd.Usage(); usageErr != nil {
 					log.FeedbackFatalE(ctx, "error displaying usage help", usageErr)
 				}
+				os.Exit(1)
 			}
 		}
-		log.FeedbackErrorE(ctx, "DefraDB error", err)
+		log.FeedbackFatalE(ctx, "Execution error", err)
 	}
 }
 

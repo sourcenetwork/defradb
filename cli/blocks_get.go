@@ -27,10 +27,7 @@ var getCmd = &cobra.Command{
 	Short: "Get a block by its CID from the blockstore.",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		if len(args) != 1 {
-			if err = cmd.Usage(); err != nil {
-				return err
-			}
-			return errors.New("get requires a CID argument")
+			return errors.New("missing argument: CID")
 		}
 		cid := args[0]
 
