@@ -331,6 +331,13 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	filter := map[connor.FilterKey]any{
 		fkIndex: doc.GetKey(),
 	}
+
+	// We have to reset the scan node after appending the new key-filter
+	if err := n.subType.Init(); err != nil {
+		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
+		return doc
+	}
+
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
