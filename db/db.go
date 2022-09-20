@@ -25,9 +25,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql/planner"
@@ -59,7 +59,7 @@ type db struct {
 
 	crdtFactory *crdt.Factory
 
-	broadcaster corenet.Broadcaster
+	events client.Events
 
 	schema        *schema.SchemaManager
 	queryExecutor *planner.QueryExecutor
@@ -71,9 +71,13 @@ type db struct {
 // functional option type
 type Option func(*db)
 
-func WithBroadcaster(bs corenet.Broadcaster) Option {
+const updateEventBufferSize = 100
+
+func WithUpdateEvents() Option {
 	return func(db *db) {
-		db.broadcaster = bs
+		db.events = client.Events{
+			Updates: client.Some(events.New[client.Update](0, updateEventBufferSize)),
+		}
 	}
 }
 
@@ -178,6 +182,10 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
+func (db *db) Events() client.Events {
+	return db.events
+}
+
 func (db *db) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.multistore.Rootstore())
 }
@@ -203,6 +211,10 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Closing DefraDB process...")
+	if db.events.Updates.HasValue() {
+		db.events.Updates.Value().Close()
+	}
+
 	err := db.rootstore.Close()
 	if err != nil {
 		log.ErrorE(ctx, "Failure closing running process", err)

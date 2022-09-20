@@ -16,7 +16,6 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
 
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
@@ -25,27 +24,24 @@ import (
 
 // Node.Boostrap is not tested because the underlying, *ipfslite.Peer.Bootstrap is a best-effort function.
 
-func FixtureNewMemoryDBWithBroadcaster(t *testing.T) (client.DB, *broadcast.Broadcaster) {
+func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
 	var database client.DB
 	var options []db.Option
-	var busBufferSize = 100
 	ctx := context.Background()
-	bs := broadcast.NewBroadcaster(busBufferSize)
-	options = append(options, db.WithBroadcaster(bs))
+	options = append(options, db.WithUpdateEvents())
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	assert.NoError(t, err)
 	database, err = db.NewDB(ctx, rootstore, options...)
 	assert.NoError(t, err)
-	return database, bs
+	return database
 }
 
 func TestNewNode(t *testing.T) {
-	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	db := FixtureNewMemoryDBWithBroadcaster(t)
 	_, err := NewNode(
 		context.Background(),
 		db,
-		bs,
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
@@ -53,11 +49,10 @@ func TestNewNode(t *testing.T) {
 }
 
 func TestNewNodeNoPubSub(t *testing.T) {
-	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
 		context.Background(),
 		db,
-		bs,
 		WithPubSub(false),
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
@@ -67,12 +62,11 @@ func TestNewNodeNoPubSub(t *testing.T) {
 }
 
 func TestNewNodeWithPubSub(t *testing.T) {
-	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	db := FixtureNewMemoryDBWithBroadcaster(t)
 	ctx := context.Background()
 	n, err := NewNode(
 		ctx,
 		db,
-		bs,
 		WithPubSub(true),
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
@@ -83,23 +77,21 @@ func TestNewNodeWithPubSub(t *testing.T) {
 }
 
 func TestNewNodeWithPubSubFailsWithoutDataPath(t *testing.T) {
-	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	db := FixtureNewMemoryDBWithBroadcaster(t)
 	ctx := context.Background()
 	_, err := NewNode(
 		ctx,
 		db,
-		bs,
 		WithPubSub(true),
 	)
 	assert.EqualError(t, err, "1 error occurred:\n\t* mkdir : no such file or directory\n\n")
 }
 
 func TestNodeClose(t *testing.T) {
-	db, bs := FixtureNewMemoryDBWithBroadcaster(t)
+	db := FixtureNewMemoryDBWithBroadcaster(t)
 	n, err := NewNode(
 		context.Background(),
 		db,
-		bs,
 		// DataPath() is a required option with the current implementation of key management
 		DataPath(t.TempDir()),
 	)
