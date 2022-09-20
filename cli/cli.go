@@ -57,14 +57,22 @@ func Execute() {
 	if err != nil {
 		for _, cobraError := range usageErrors {
 			if strings.HasPrefix(err.Error(), cobraError) {
-				log.FeedbackErrorE(ctx, "Usage error", err)
+				if cfg.Log.Stacktrace {
+					log.FeedbackError(ctx, fmt.Sprintf("%+v", err))
+				} else {
+					log.FeedbackError(ctx, err.Error())
+				}
 				if usageErr := rootCmd.Usage(); usageErr != nil {
 					log.FeedbackFatalE(ctx, "error displaying usage help", usageErr)
 				}
 				os.Exit(1)
 			}
 		}
-		log.FeedbackFatalE(ctx, "Execution error", err)
+		if cfg.Log.Stacktrace {
+			log.FeedbackFatal(ctx, fmt.Sprintf("%+v", err))
+		} else {
+			log.FeedbackFatal(ctx, err.Error())
+		}
 	}
 }
 
