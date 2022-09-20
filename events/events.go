@@ -12,7 +12,7 @@ package events
 
 type EventChannel[T any] interface {
 	// Subscribe subscribes to the EventChannel, returning a channel by which events can
-	// be read from, or an error should one occur (e.g. if this ojbect is closed).
+	// be read from, or an error should one occur (e.g. if this object is closed).
 	//
 	// This function is non-blocking unless the subscription-buffer is full.
 	Subscribe() (chan T, error)

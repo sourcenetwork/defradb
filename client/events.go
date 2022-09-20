@@ -25,7 +25,7 @@ type Events struct {
 	Updates UpdateChannel
 }
 
-// Log represents a new DAG node added to the
+// Update represents a new DAG node added to the
 // append-only MerkleCRDT Clock graph of a
 // document or sub-field.
 type Update struct {
