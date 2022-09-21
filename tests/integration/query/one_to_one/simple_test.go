@@ -168,3 +168,63 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToOneWithNilChild(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "One-to-one relation primary direction, nil child",
+		Query: `query {
+			author {
+				name
+				published {
+					name
+				}
+			}
+		}`,
+		Docs: map[int][]string{
+			//authors
+			1: {
+				`{
+					"name": "John Grisham"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"name":      "John Grisham",
+				"published": nil,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToOneWithNilParent(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "One-to-one relation primary direction, nil parent",
+		Query: `query {
+			book {
+				name
+				author {
+					name
+				}
+			}
+		}`,
+		Docs: map[int][]string{
+			//books
+			0: {
+				`{
+					"name": "Painted House"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"name":   "Painted House",
+				"author": nil,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
