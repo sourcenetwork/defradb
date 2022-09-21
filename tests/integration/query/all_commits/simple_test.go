@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits).
 func TestQueryAllCommits(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query",
@@ -34,7 +32,62 @@ func TestQueryAllCommits(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+		Results: []map[string]any{
+			{
+				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			},
+			{
+				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+			},
+			{
+				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryAllCommitsMultipleDocs(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple all commits query, multiple docs",
+		Query: `query {
+					allCommits {
+						cid
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Shahzad",
+					"Age": 28
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid": "bafybeidsa74vl7xvw6tzgt5gmux5ts7lxldxculzgpxl5xura45ckf7e5i",
+			},
+			{
+				"cid": "bafybeibek4lmrb5gtmahgsv33njmk3efty53n7z2rac7fuup7mwpho5zqa",
+			},
+			{
+				"cid": "bafybeidj2zxpwsfbqtny2svdpyan7vu4njfhydzrgpvupv3o673a3dpfku",
+			},
+			{
+				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			},
+			{
+				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+			},
+			{
+				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+			},
+		},
 	}
 
 	executeTestCase(t, test)

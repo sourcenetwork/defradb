@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -38,15 +39,21 @@ type HeadFetcher struct {
 	// key core.Key
 	// curSpanIndex int
 
-	spans core.Spans
-	cid   *cid.Cid
+	spans   core.Spans
+	cid     *cid.Cid
+	fieldId client.Option[string]
 
 	kv     *core.HeadKeyValue
 	kvIter dsq.Results
 	kvEnd  bool
 }
 
-func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
+func (hf *HeadFetcher) Start(
+	ctx context.Context,
+	txn datastore.Txn,
+	spans core.Spans,
+	fieldId client.Option[string],
+) error {
 	numspans := len(spans.Value)
 	if numspans == 0 {
 		return errors.New("HeadFetcher must have at least one span")
@@ -61,6 +68,7 @@ func (hf *HeadFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.
 		})
 	}
 	hf.spans = spans
+	hf.fieldId = fieldId
 
 	q := dsq.Query{
 		Prefix: hf.spans.Value[0].Start().ToString(),
@@ -128,6 +136,15 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 
 	if hf.kv == nil {
 		return nil, errors.New("Failed to get head, fetcher hasn't been initialized or started")
+	}
+
+	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
+		// FieldIds do not match, continue to next row
+		_, err := hf.nextKey()
+		if err != nil {
+			return nil, err
+		}
+		return hf.FetchNext()
 	}
 
 	hf.processKV(hf.kv)

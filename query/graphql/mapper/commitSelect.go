@@ -10,6 +10,8 @@
 
 package mapper
 
+import "github.com/sourcenetwork/defradb/client"
+
 // CommitType represents a type of [CommitSelect]
 type CommitType int
 
@@ -34,7 +36,7 @@ type CommitSelect struct {
 	DocKey string
 
 	// The field for which commits have been requested.
-	FieldName string
+	FieldName client.Option[string]
 
 	// The parent Cid for which commit information has been requested.
 	Cid string

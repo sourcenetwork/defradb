@@ -134,44 +134,6 @@ func TestExplainAllCommitsDagScanWithoutField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainAllCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
-	test := testUtils.QueryTestCase{
-
-		Description: "Explain allCommits query without the dockey.",
-
-		Query: `query @explain {
-			allCommits (field: "1") {
-				links {
-					cid
-				}
-			}
-		}`,
-
-		ExpectedError: "[Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.]",
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainAllCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
-	test := testUtils.QueryTestCase{
-
-		Description: "Explain allCommits query without any arguments.",
-
-		Query: `query @explain {
-			allCommits {
-				links {
-					cid
-				}
-			}
-		}`,
-
-		ExpectedError: "[Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.]",
-	}
-
-	executeTestCase(t, test)
-}
-
 func TestExplainLatestCommitsDagScan(t *testing.T) {
 	test := testUtils.QueryTestCase{
 

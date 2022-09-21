@@ -17,7 +17,7 @@ import (
 )
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for field).
+// desired behaviour (should return all commits for dockey-field).
 func TestQueryAllCommitsWithField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with field",
@@ -34,14 +34,14 @@ func TestQueryAllCommitsWithField(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
 }
 
 // This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for field).
+// desired behaviour (users should not be specifying field ids).
 func TestQueryAllCommitsWithFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with field id",
@@ -58,7 +58,11 @@ func TestQueryAllCommitsWithFieldId(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"allCommits\" argument \"dockey\" of type \"ID!\" is required but not provided.",
+		Results: []map[string]any{
+			{
+				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			},
+		},
 	}
 
 	executeTestCase(t, test)
