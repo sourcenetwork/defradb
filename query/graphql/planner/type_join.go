@@ -344,7 +344,6 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 		return core.Doc{}
 	}
 
-	doc.Fields[n.subSelect.Index] = n.subSelect.DocumentMapping.NewDoc()
 	next, err := n.subType.Next()
 	if !next || err != nil {
 		return doc
