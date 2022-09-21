@@ -170,6 +170,7 @@ func defaultTypes() []gql.Type {
 		schemaTypes.StringOperatorBlock,
 		schemaTypes.NotNullstringOperatorBlock,
 
+		schemaTypes.AllCommitsOrderArg,
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 		schemaTypes.DeltaObject,

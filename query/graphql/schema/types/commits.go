@@ -87,12 +87,27 @@ var (
 		},
 	})
 
+	AllCommitsOrderArg = gql.NewInputObject(
+		gql.InputObjectConfig{
+			Name: "allCommitsOrderArg",
+			Fields: gql.InputObjectConfigFieldMap{
+				"height": &gql.InputObjectFieldConfig{
+					Type: OrderingEnum,
+				},
+				"cid": &gql.InputObjectFieldConfig{
+					Type: OrderingEnum,
+				},
+			},
+		},
+	)
+
 	QueryAllCommits = &gql.Field{
 		Name: "allCommits",
 		Type: gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
 			"dockey": NewArgConfig(gql.NewNonNull(gql.ID)),
 			"field":  NewArgConfig(gql.String),
+			"order":  NewArgConfig(AllCommitsOrderArg),
 		},
 	}
 
