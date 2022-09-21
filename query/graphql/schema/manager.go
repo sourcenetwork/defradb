@@ -156,7 +156,7 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		orderingEnum,
+		schemaTypes.OrderingEnum,
 
 		// Filter scalar blocks
 		schemaTypes.BooleanOperatorBlock,

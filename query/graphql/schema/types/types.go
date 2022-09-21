@@ -21,6 +21,19 @@ const (
 )
 
 var (
+	// OrderingEnum is an enum for the Ordering argument.
+	OrderingEnum = gql.NewEnum(gql.EnumConfig{
+		Name: "Ordering",
+		Values: gql.EnumValueConfigMap{
+			"ASC": &gql.EnumValueConfig{
+				Value: 0,
+			},
+			"DESC": &gql.EnumValueConfig{
+				Value: 1,
+			},
+		},
+	})
+
 	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
 		Name: ExplainLabel,
 		Args: gql.FieldConfigArgument{
