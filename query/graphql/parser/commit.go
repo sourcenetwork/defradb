@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"strconv"
+
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -98,6 +100,16 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				Conditions: cond,
 				Statement:  obj,
 			}
+		} else if prop == parserTypes.LimitClause {
+			val := argument.Value.(*ast.IntValue)
+			limit, err := strconv.ParseInt(val.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			if commit.Limit == nil {
+				commit.Limit = &parserTypes.Limit{}
+			}
+			commit.Limit.Limit = limit
 		}
 	}
 
