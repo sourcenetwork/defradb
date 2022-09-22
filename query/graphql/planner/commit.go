@@ -173,6 +173,18 @@ func (p *Planner) commitSelectBlock(parsed *mapper.CommitSelect) (*commitSelectN
 func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan(parsed)
 	headset := p.HeadScan(parsed)
+
+	if parsed.Cid != "" {
+		c, err := cid.Decode(parsed.Cid)
+		if err != nil {
+			return nil, err
+		}
+		dag.cid = &c
+	} else {
+		// only set this if a cid has not been provided
+		dag.depthLimit = math.MaxUint32 // infinite depth
+	}
+
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
 		parsed.FieldName = core.COMPOSITE_NAMESPACE
@@ -183,7 +195,6 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 		headset.key = key
 	}
 	dag.headset = headset
-	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:      p,
