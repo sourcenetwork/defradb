@@ -12,6 +12,8 @@ package types
 
 import (
 	gql "github.com/graphql-go/graphql"
+
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -105,9 +107,10 @@ var (
 		Name: "allCommits",
 		Type: gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey": NewArgConfig(gql.NewNonNull(gql.ID)),
-			"field":  NewArgConfig(gql.String),
-			"order":  NewArgConfig(AllCommitsOrderArg),
+			"dockey":                NewArgConfig(gql.NewNonNull(gql.ID)),
+			"field":                 NewArgConfig(gql.String),
+			"order":                 NewArgConfig(AllCommitsOrderArg),
+			parserTypes.LimitClause: NewArgConfig(gql.Int),
 		},
 	}
 
