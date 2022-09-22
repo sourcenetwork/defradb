@@ -110,6 +110,16 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				commit.Limit = &parserTypes.Limit{}
 			}
 			commit.Limit.Limit = limit
+		} else if prop == parserTypes.OffsetClause {
+			val := argument.Value.(*ast.IntValue)
+			offset, err := strconv.ParseInt(val.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			if commit.Limit == nil {
+				commit.Limit = &parserTypes.Limit{}
+			}
+			commit.Limit.Offset = offset
 		}
 	}
 
