@@ -76,7 +76,7 @@ const updateEventBufferSize = 100
 func WithUpdateEvents() Option {
 	return func(db *db) {
 		db.events = client.Events{
-			Updates: client.Some(events.New[client.Update](0, updateEventBufferSize)),
+			Updates: client.Some(events.New[client.UpdateEvent](0, updateEventBufferSize)),
 		}
 	}
 }

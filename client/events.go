@@ -17,18 +17,19 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 )
 
-type UpdateChannel = Option[events.EventChannel[Update]]
+type UpdateChannel = Option[events.Channel[UpdateEvent]]
 
-var EmptyUpdateChannel = None[events.EventChannel[Update]]()
+var EmptyUpdateChannel = None[events.Channel[UpdateEvent]]()
 
 type Events struct {
+	// Updates publishes an `UpdateEvent` for each document written to in the database.
 	Updates UpdateChannel
 }
 
 // Update represents a new DAG node added to the
 // append-only MerkleCRDT Clock graph of a
 // document or sub-field.
-type Update struct {
+type UpdateEvent struct {
 	DocKey   string
 	Cid      cid.Cid
 	SchemaID string

@@ -18,16 +18,16 @@ import (
 )
 
 func TestSimplePushIsNotBlockedWithoutSubscribers(t *testing.T) {
-	s := NewSimpleEventChannel[int](0, 0)
+	s := NewSimpleChannel[int](0, 0)
 
-	s.Push(1)
+	s.Publish(1)
 
 	// just assert that we reach this line, for the sake of having an assert
 	assert.True(t, true)
 }
 
 func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
-	s := NewSimpleEventChannel[int](0, 0)
+	s := NewSimpleChannel[int](0, 0)
 	ch, err := s.Subscribe()
 	assert.Nil(t, err)
 
@@ -40,7 +40,7 @@ func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
-	s := NewSimpleEventChannel[int](0, 0)
+	s := NewSimpleChannel[int](0, 0)
 	input1 := 1
 	input2 := 2
 
@@ -49,12 +49,12 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 	ch2, err := s.Subscribe()
 	assert.Nil(t, err)
 
-	s.Push(input1)
+	s.Publish(input1)
 
 	output1Ch1 := <-ch1
 	output1Ch2 := <-ch2
 
-	s.Push(input2)
+	s.Publish(input2)
 
 	output2Ch1 := <-ch1
 	output2Ch2 := <-ch2
@@ -67,7 +67,7 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 }
 
 func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
-	s := NewSimpleEventChannel[int](0, 2)
+	s := NewSimpleChannel[int](0, 2)
 	input1 := 1
 	input2 := 2
 
@@ -77,8 +77,8 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 	assert.Nil(t, err)
 
 	// both inputs are added first before read, using the internal chan buffer
-	s.Push(input1)
-	s.Push(input2)
+	s.Publish(input1)
+	s.Publish(input2)
 
 	output1Ch1 := <-ch1
 	output1Ch2 := <-ch2
@@ -94,12 +94,12 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 }
 
 func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
-	s := NewSimpleEventChannel[int](0, 0)
+	s := NewSimpleChannel[int](0, 0)
 	ch, err := s.Subscribe()
 	assert.Nil(t, err)
 	s.Unsubscribe(ch)
 
-	s.Push(1)
+	s.Publish(1)
 
 	// tiny delay to try and make sure the internal logic would have had time
 	// to do its thing with the pushed item.

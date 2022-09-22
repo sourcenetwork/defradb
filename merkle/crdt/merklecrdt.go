@@ -94,8 +94,8 @@ func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta c
 		return errors.New("Can't broadcast a delta payload that doesn't implement core.NetDelta")
 	}
 
-	base.updateChannel.Value().Push(
-		client.Update{
+	base.updateChannel.Value().Publish(
+		client.UpdateEvent{
 			DocKey:   dockey,
 			Cid:      c,
 			SchemaID: netdelta.GetSchemaID(),

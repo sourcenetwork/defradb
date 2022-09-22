@@ -12,7 +12,7 @@ package events
 
 import "github.com/sourcenetwork/defradb/errors"
 
-type simpleEventChannel[T any] struct {
+type simpleChannel[T any] struct {
 	subscribers         []chan T
 	subscriptionChannel chan chan T
 	unsubscribeChannel  chan chan T
@@ -22,57 +22,57 @@ type simpleEventChannel[T any] struct {
 	isClosed            bool
 }
 
-// NewSimpleEventChannel creates a new simpleEventChannel with the given subscriberBufferSize and
+// NewSimpleChannel creates a new simpleChannel with the given subscriberBufferSize and
 // eventBufferSize.
 //
 // Should the buffers be filled subsequent calls to functions on this object may start to block.
-func NewSimpleEventChannel[T any](subscriberBufferSize int, eventBufferSize int) EventChannel[T] {
-	c := simpleEventChannel[T]{
+func NewSimpleChannel[T any](subscriberBufferSize int, eventBufferSize int) Channel[T] {
+	c := simpleChannel[T]{
 		subscriptionChannel: make(chan chan T, subscriberBufferSize),
 		unsubscribeChannel:  make(chan chan T, subscriberBufferSize),
 		eventChannel:        make(chan T, eventBufferSize),
 		closeChannel:        make(chan struct{}),
 	}
 
-	go c.handleSelf()
+	go c.handleChannel()
 
 	return &c
 }
 
-func (c *simpleEventChannel[T]) Subscribe() (chan T, error) {
+func (c *simpleChannel[T]) Subscribe() (Subscription[T], error) {
 	if c.isClosed {
 		return nil, errors.New("cannot subscribe to a closed channel")
 	}
 
-	// It is important to set this buffer size too, else we may end up blocked in the handleSelf func
+	// It is important to set this buffer size too, else we may end up blocked in the handleChannel func
 	ch := make(chan T, c.eventBufferSize)
 
 	c.subscriptionChannel <- ch
 	return ch, nil
 }
 
-func (c *simpleEventChannel[T]) Unsubscribe(ch chan T) {
+func (c *simpleChannel[T]) Unsubscribe(ch Subscription[T]) {
 	if c.isClosed {
 		return
 	}
 	c.unsubscribeChannel <- ch
 }
 
-func (c *simpleEventChannel[T]) Push(item T) {
+func (c *simpleChannel[T]) Publish(item T) {
 	if c.isClosed {
 		return
 	}
 	c.eventChannel <- item
 }
 
-func (c *simpleEventChannel[T]) Close() {
+func (c *simpleChannel[T]) Close() {
 	if c.isClosed {
 		return
 	}
 	c.closeChannel <- struct{}{}
 }
 
-func (c *simpleEventChannel[T]) handleSelf() {
+func (c *simpleChannel[T]) handleChannel() {
 	for {
 		select {
 		case <-c.closeChannel:

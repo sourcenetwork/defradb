@@ -33,7 +33,7 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(ctx context.Context, lg client.Update, pid peer.ID) error {
+func (s *server) pushLog(ctx context.Context, lg client.UpdateEvent, pid peer.ID) error {
 	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)

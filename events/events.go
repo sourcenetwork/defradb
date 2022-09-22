@@ -10,31 +10,34 @@
 
 package events
 
-type EventChannel[T any] interface {
-	// Subscribe subscribes to the EventChannel, returning a channel by which events can
+type Subscription[T any] chan T
+
+// Channel represents a subscribable type that will expose inputted items to subscribers.
+type Channel[T any] interface {
+	// Subscribe subscribes to the Channel, returning a channel by which events can
 	// be read from, or an error should one occur (e.g. if this object is closed).
 	//
 	// This function is non-blocking unless the subscription-buffer is full.
-	Subscribe() (chan T, error)
+	Subscribe() (Subscription[T], error)
 
-	// Unsubscribe unsubscribes from the EventChannel, closing the provided channel.
+	// Unsubscribe unsubscribes from the Channel, closing the provided channel.
 	//
 	// Will do nothing if this object is already closed.
-	Unsubscribe(chan T)
+	Unsubscribe(Subscription[T])
 
-	// Push pushes the given item into this channel. Non-blocking.
-	Push(item T)
+	// Publish pushes the given item into this channel. Non-blocking.
+	Publish(item T)
 
-	// Close closes this EventChannel, and any owned or subscribing channels.
+	// Close closes this Channel, and any owned or subscribing channels.
 	Close()
 }
 
-var _ EventChannel[int] = (*simpleEventChannel[int])(nil)
+var _ Channel[int] = (*simpleChannel[int])(nil)
 
-// New creates and returns a new EventChannel instance.
+// New creates and returns a new Channel instance.
 //
-// At the moment this will always return a new simpleEventChannel, however that may change in
+// At the moment this will always return a new simpleChannel, however that may change in
 // the future as this feature gets fleshed out.
-func New[T any](subscriberBufferSize int, eventBufferSize int) EventChannel[T] {
-	return NewSimpleEventChannel[T](subscriberBufferSize, eventBufferSize)
+func New[T any](subscriberBufferSize int, eventBufferSize int) Channel[T] {
+	return NewSimpleChannel[T](subscriberBufferSize, eventBufferSize)
 }

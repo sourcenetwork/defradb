@@ -48,7 +48,7 @@ type Peer struct {
 	//config??
 
 	db            client.DB
-	updateChannel chan client.Update
+	updateChannel chan client.UpdateEvent
 
 	host host.Host
 	ps   *pubsub.PubSub
@@ -374,7 +374,7 @@ func (p *Peer) AddReplicator(
 					continue
 				}
 
-				lg := client.Update{
+				lg := client.UpdateEvent{
 					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
@@ -397,7 +397,7 @@ func (p *Peer) AddReplicator(
 	return pid, nil
 }
 
-func (p *Peer) handleDocCreateLog(lg client.Update) error {
+func (p *Peer) handleDocCreateLog(lg client.UpdateEvent) error {
 	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
@@ -409,7 +409,7 @@ func (p *Peer) handleDocCreateLog(lg client.Update) error {
 	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.Block, lg.SchemaID)
 }
 
-func (p *Peer) handleDocUpdateLog(lg client.Update) error {
+func (p *Peer) handleDocUpdateLog(lg client.UpdateEvent) error {
 	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
@@ -442,7 +442,7 @@ func (p *Peer) handleDocUpdateLog(lg client.Update) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.Update) {
+func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.UpdateEvent) {
 	// push to each peer (replicator)
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {
