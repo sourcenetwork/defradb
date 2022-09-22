@@ -22,6 +22,7 @@ var gqlSchemaOneToManyToOne = (`
 		name: String
 		age: Int
 		verified: Boolean
+		favouritePageNumbers: [Int!]
 		book: [Book]
 	}
 
