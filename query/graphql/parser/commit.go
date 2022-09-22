@@ -88,6 +88,16 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 		} else if prop == parserTypes.Field {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = raw.Value
+		} else if prop == parserTypes.OrderClause {
+			obj := argument.Value.(*ast.ObjectValue)
+			cond, err := ParseConditionsInOrder(obj)
+			if err != nil {
+				return nil, err
+			}
+			commit.OrderBy = &parserTypes.OrderBy{
+				Conditions: cond,
+				Statement:  obj,
+			}
 		}
 	}
 

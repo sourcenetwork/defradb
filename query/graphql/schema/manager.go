@@ -156,20 +156,21 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		orderingEnum,
+		schemaTypes.OrderingEnum,
 
 		// Filter scalar blocks
-		booleanOperatorBlock,
-		notNullBooleanOperatorBlock,
-		dateTimeOperatorBlock,
-		floatOperatorBlock,
-		notNullFloatOperatorBlock,
-		idOperatorBlock,
-		intOperatorBlock,
-		notNullIntOperatorBlock,
-		stringOperatorBlock,
-		notNullstringOperatorBlock,
+		schemaTypes.BooleanOperatorBlock,
+		schemaTypes.NotNullBooleanOperatorBlock,
+		schemaTypes.DateTimeOperatorBlock,
+		schemaTypes.FloatOperatorBlock,
+		schemaTypes.NotNullFloatOperatorBlock,
+		schemaTypes.IdOperatorBlock,
+		schemaTypes.IntOperatorBlock,
+		schemaTypes.NotNullIntOperatorBlock,
+		schemaTypes.StringOperatorBlock,
+		schemaTypes.NotNullstringOperatorBlock,
 
+		schemaTypes.AllCommitsOrderArg,
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 		schemaTypes.DeltaObject,
