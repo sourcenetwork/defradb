@@ -1,6 +1,6 @@
 package numbers
 
-func TryUpcast(n interface{}) interface{} {
+func TryUpcast(n any) any {
 	switch nn := n.(type) {
 	case int8:
 		return int64(nn)

@@ -52,10 +52,10 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -105,10 +105,10 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -164,10 +164,10 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 				},
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "Painted House",
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 					"age":  uint64(22),
 				},
@@ -220,11 +220,11 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 				},
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": float64(4.9),
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 				},
 			},
@@ -276,11 +276,11 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 				},
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name":   "Painted House",
 				"rating": float64(4.5),
-				"author": map[string]interface{}{
+				"author": map[string]any{
 					"name": "John Grisham",
 				},
 			},

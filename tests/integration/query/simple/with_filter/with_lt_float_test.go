@@ -36,7 +36,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},
@@ -66,11 +66,37 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 			},
 		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic lt float filter with null value",
+		Query: `query {
+					users(filter: {HeightM: {_lt: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+				`{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

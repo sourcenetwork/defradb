@@ -14,12 +14,12 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 
+	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/api/pb"
 )
 
@@ -52,17 +52,17 @@ func (c *Client) AddReplicator(
 	paddr ma.Multiaddr,
 ) (peer.ID, error) {
 	if len(collection) == 0 {
-		return "", fmt.Errorf("Collection can't be empty")
+		return "", errors.New("Collection can't be empty")
 	}
 	if paddr == nil {
-		return "", fmt.Errorf("target address can't be empty")
+		return "", errors.New("target address can't be empty")
 	}
 	resp, err := c.c.AddReplicator(ctx, &pb.AddReplicatorRequest{
 		Collection: []byte(collection),
 		Addr:       paddr.Bytes(),
 	})
 	if err != nil {
-		return "", fmt.Errorf("AddReplicator request failed: %w", err)
+		return "", errors.Wrap("AddReplicator request failed", err)
 	}
 	return peer.IDFromBytes(resp.PeerID)
 }

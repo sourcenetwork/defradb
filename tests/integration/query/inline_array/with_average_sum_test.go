@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(2),

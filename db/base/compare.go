@@ -25,7 +25,7 @@ import (
 // The only possible values for a and b is a concrete field type
 // and they are always the same type as each other.
 // @todo: Handle list/slice/array fields
-func Compare(a, b interface{}) int {
+func Compare(a, b any) int {
 	switch v := a.(type) {
 	case bool:
 		return compareBool(v, b.(bool))

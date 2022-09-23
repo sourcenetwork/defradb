@@ -19,11 +19,11 @@ var log = MustNewLogger("defra.logging")
 // KV is a key-value pair used to pass structured data to loggers.
 type KV struct {
 	key   string
-	value interface{}
+	value any
 }
 
 // NewKV creates a new KV key-value pair.
-func NewKV(key string, value interface{}) KV {
+func NewKV(key string, value any) KV {
 	return KV{
 		key:   key,
 		value: value,

@@ -14,9 +14,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 var testDefaultIndex = []client.IndexDescription{

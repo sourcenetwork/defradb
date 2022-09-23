@@ -40,14 +40,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"Age":  uint64(21),
-				"_version": []map[string]interface{}{
+				"_version": []map[string]any{
 					{
 						"cid": "bafybeigriq4rcvsugsqiohxvtov2kvcmtqtldesobtx7vsjl556dhpliau",
-						"links": []map[string]interface{}{
+						"links": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 								"name": "Age",
@@ -93,14 +93,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"Age":  uint64(21),
-				"_version": []map[string]interface{}{
+				"_version": []map[string]any{
 					{
 						"cid": "bafybeigriq4rcvsugsqiohxvtov2kvcmtqtldesobtx7vsjl556dhpliau",
-						"L1": []map[string]interface{}{
+						"L1": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 								"name": "Age",
@@ -110,7 +110,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 								"name": "Name",
 							},
 						},
-						"L2": []map[string]interface{}{
+						"L2": []map[string]any{
 							{
 								"name": "Age",
 							},

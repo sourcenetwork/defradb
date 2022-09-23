@@ -15,8 +15,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func newTestCollectionWithSchema(ctx context.Context, db client.DB) (client.Collection, error) {

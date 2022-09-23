@@ -16,8 +16,10 @@ import (
 	"net/http"
 	"os"
 
-	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/spf13/cobra"
+
+	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var getCmd = &cobra.Command{
@@ -25,48 +27,45 @@ var getCmd = &cobra.Command{
 	Short: "Get a block by its CID from the blockstore.",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		if len(args) != 1 {
-			if err = cmd.Usage(); err != nil {
-				return err
-			}
-			return fmt.Errorf("get requires a CID argument")
+			return errors.New("missing argument: CID")
 		}
 		cid := args[0]
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.BlocksPath, cid)
 		if err != nil {
-			return fmt.Errorf("failed to join endpoint: %w", err)
+			return errors.Wrap("failed to join endpoint", err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return fmt.Errorf("failed to send get request: %w", err)
+			return errors.Wrap("failed to send get request", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 		if isFileInfoPipe(stdout) {
 			cmd.Println(string(response))
 		} else {
 			graphlErr, err := hasGraphQLErrors(response)
 			if err != nil {
-				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+				return errors.Wrap("failed to handle GraphQL errors", err)
 			}
 			indentedResult, err := indentJSON(response)
 			if err != nil {
-				return fmt.Errorf("failed to pretty print response: %w", err)
+				return errors.Wrap("failed to pretty print response", err)
 			}
 			if graphlErr {
 				log.FeedbackError(cmd.Context(), indentedResult)

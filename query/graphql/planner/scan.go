@@ -118,10 +118,10 @@ func (n *scanNode) Close() error {
 func (n *scanNode) Source() planNode { return nil }
 
 // explainSpans explains the spans attribute.
-func (n *scanNode) explainSpans() []map[string]interface{} {
-	spansExplainer := []map[string]interface{}{}
+func (n *scanNode) explainSpans() []map[string]any {
+	spansExplainer := []map[string]any{}
 	for _, span := range n.spans.Value {
-		spanExplainer := map[string]interface{}{
+		spanExplainer := map[string]any{
 			"start": span.Start().ToString(),
 			"end":   span.End().ToString(),
 		}
@@ -134,8 +134,8 @@ func (n *scanNode) explainSpans() []map[string]interface{} {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *scanNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *scanNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {

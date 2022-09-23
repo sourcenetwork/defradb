@@ -22,6 +22,7 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
+
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 )
 
@@ -36,7 +37,8 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse(
-			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database",
+			"response", "Welcome to the DefraDB HTTP API. Use /graphql to send queries to the database."+
+				" Read the documentation at https://docs.source.network/.",
 		),
 		http.StatusOK,
 	)
@@ -57,7 +59,12 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	db.PrintDump(req.Context())
+
+	err = db.PrintDump(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
 
 	sendJSON(
 		req.Context(),
@@ -228,6 +235,23 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 			"block", string(buf),
 			"delta", string(data),
 			"val", delta.Value(),
+		),
+		http.StatusOK,
+	)
+}
+
+func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
+	peerID, ok := req.Context().Value(ctxPeerID{}).(string)
+	if !ok || peerID == "" {
+		handleErr(req.Context(), rw, errors.New("no peer ID available. P2P might be disabled"), http.StatusNotFound)
+		return
+	}
+
+	sendJSON(
+		req.Context(),
+		rw,
+		simpleDataResponse(
+			"peerID", peerID,
 		),
 		http.StatusOK,
 	)

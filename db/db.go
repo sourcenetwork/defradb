@@ -16,23 +16,22 @@ package db
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
+	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/merkle/crdt"
+	"github.com/sourcenetwork/defradb/query/graphql/planner"
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
 var (
@@ -66,7 +65,7 @@ type db struct {
 	queryExecutor *planner.QueryExecutor
 
 	// The options used to init the database
-	options interface{}
+	options any
 }
 
 // functional option type
@@ -179,8 +178,8 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *db) PrintDump(ctx context.Context) {
-	printStore(ctx, db.multistore.Rootstore())
+func (db *db) PrintDump(ctx context.Context) error {
+	return printStore(ctx, db.multistore.Rootstore())
 }
 
 func (db *db) Executor() *planner.QueryExecutor {
@@ -191,11 +190,11 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 	rm := db.schema.Relations
 	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
 	if rel == nil {
-		return "", fmt.Errorf("Relation does not exists")
+		return "", errors.New("Relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
 	if !ok {
-		return "", fmt.Errorf("Relation is missing referenced field")
+		return "", errors.New("Relation is missing referenced field")
 	}
 	return subtypefieldname, nil
 }
@@ -211,7 +210,7 @@ func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.DSReaderWriter) {
+func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
 	q := query.Query{
 		Prefix:   "",
 		KeysOnly: false,
@@ -219,19 +218,13 @@ func printStore(ctx context.Context, store datastore.DSReaderWriter) {
 	}
 
 	results, err := store.Query(ctx, q)
-
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	defer func() {
-		err := results.Close()
-		if err != nil {
-			log.ErrorE(ctx, "Failure closing set of query store results", err)
-		}
-	}()
 
 	for r := range results.Next() {
 		log.Info(ctx, "", logging.NewKV(r.Key, r.Value))
 	}
+
+	return results.Close()
 }

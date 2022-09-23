@@ -11,11 +11,12 @@
 package planner
 
 import (
-	"fmt"
 	"math"
 
 	cid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -95,8 +96,8 @@ func (n *commitSelectNode) Source() planNode {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *commitSelectNode) Explain() (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (n *commitSelectNode) Explain() (map[string]any, error) {
+	return map[string]any{}, nil
 }
 
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
@@ -111,7 +112,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	case mapper.AllCommits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
-		return nil, fmt.Errorf("Invalid CommitSelect type")
+		return nil, errors.New("Invalid CommitSelect type")
 	}
 	if err != nil {
 		return nil, err
@@ -172,6 +173,18 @@ func (p *Planner) commitSelectBlock(parsed *mapper.CommitSelect) (*commitSelectN
 func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan(parsed)
 	headset := p.HeadScan(parsed)
+
+	if parsed.Cid != "" {
+		c, err := cid.Decode(parsed.Cid)
+		if err != nil {
+			return nil, err
+		}
+		dag.cid = &c
+	} else {
+		// only set this if a cid has not been provided
+		dag.depthLimit = math.MaxUint32 // infinite depth
+	}
+
 	// @todo: Get Collection field ID
 	if parsed.FieldName == "" {
 		parsed.FieldName = core.COMPOSITE_NAMESPACE
@@ -182,7 +195,6 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 		headset.key = key
 	}
 	dag.headset = headset
-	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:      p,

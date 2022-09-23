@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var schemaFile string
@@ -51,13 +52,13 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			if err = cmd.Usage(); err != nil {
 				return err
 			}
-			return fmt.Errorf("too many arguments")
+			return errors.New("too many arguments")
 		}
 
 		if schemaFile != "" {
 			buf, err := os.ReadFile(schemaFile)
 			if err != nil {
-				return fmt.Errorf("failed to read schema file: %w", err)
+				return errors.Wrap("failed to read schema file", err)
 			}
 			schema = string(buf)
 		} else if isFileInfoPipe(fi) && (len(args) == 0 || args[0] != "-") {
@@ -70,16 +71,16 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		} else if len(args) == 0 {
 			err := cmd.Help()
 			if err != nil {
-				return fmt.Errorf("failed to print help: %w", err)
+				return errors.Wrap("failed to print help", err)
 			}
 			return nil
 		} else if args[0] == "-" {
 			stdin, err := readStdin()
 			if err != nil {
-				return fmt.Errorf("failed to read stdin: %w", err)
+				return errors.Wrap("failed to read stdin", err)
 			}
 			if len(stdin) == 0 {
-				return fmt.Errorf("no schema in stdin provided")
+				return errors.New("no schema in stdin provided")
 			} else {
 				schema = stdin
 			}
@@ -88,45 +89,45 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 		}
 
 		if schema == "" {
-			return fmt.Errorf("empty schema provided")
+			return errors.New("empty schema provided")
 		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.SchemaLoadPath)
 		if err != nil {
-			return fmt.Errorf("join paths failed: %w", err)
+			return errors.Wrap("join paths failed", err)
 		}
 
 		res, err := http.Post(endpoint.String(), "text", strings.NewReader(schema))
 		if err != nil {
-			return fmt.Errorf("failed to post schema: %w", err)
+			return errors.Wrap("failed to post schema", err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = fmt.Errorf("failed to read response body: %v: %w", e.Error(), err)
+				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			return errors.Wrap("failed to read response body", err)
 		}
 
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return fmt.Errorf("failed to stat stdout: %w", err)
+			return errors.Wrap("failed to stat stdout", err)
 		}
 		if isFileInfoPipe(stdout) {
 			cmd.Println(string(response))
 		} else {
 			graphlErr, err := hasGraphQLErrors(response)
 			if err != nil {
-				return fmt.Errorf("failed to handle GraphQL errors: %w", err)
+				return errors.Wrap("failed to handle GraphQL errors", err)
 			}
 			if graphlErr {
 				indentedResult, err := indentJSON(response)
 				if err != nil {
-					return fmt.Errorf("failed to pretty print result: %w", err)
+					return errors.Wrap("failed to pretty print result", err)
 				}
 				log.FeedbackError(cmd.Context(), indentedResult)
 			} else {
@@ -138,7 +139,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				r := schemaResponse{}
 				err = json.Unmarshal(response, &r)
 				if err != nil {
-					return fmt.Errorf("failed to unmarshal response: %w", err)
+					return errors.Wrap("failed to unmarshal response", err)
 				}
 				log.FeedbackInfo(cmd.Context(), r.Data.Result)
 			}

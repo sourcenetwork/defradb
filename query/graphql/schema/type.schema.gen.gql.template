@@ -74,5 +74,5 @@ input {TYPE_NAME}OrderArg {
 }
 
 extend type Query {
-    {collection_name}(filter: {TYPE_NAME}FilterArg, groupBy: [{TYPE_NAME}Fields!], having: {TYPE_NAME}HavingArg, order: {TYPE_NAME}OrderArg, limit: Int, offset: Int) [{TYPE_NAME}]
+    {collection_name}(filter: {TYPE_NAME}FilterArg, groupBy: [{TYPE_NAME}Fields!], order: {TYPE_NAME}OrderArg, limit: Int, offset: Int) [{TYPE_NAME}]
 }

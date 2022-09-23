@@ -13,16 +13,16 @@ package crdt
 import (
 	"bytes"
 	"context"
-	"errors"
 	"sort"
 	"strings"
-
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
 
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -62,7 +62,7 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (delta *CompositeDAGDelta) Value() interface{} {
+func (delta *CompositeDAGDelta) Value() any {
 	return delta.Data
 }
 

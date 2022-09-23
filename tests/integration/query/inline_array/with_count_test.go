@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "John",
 				"_count": 0,
@@ -61,7 +61,7 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "John",
 				"_count": 0,
@@ -89,10 +89,38 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":   "Shahzad",
 				"_count": 5,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, count of nillable bool array",
+		Query: `query {
+					users {
+						Name
+						_count(IndexLikesDislikes: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"IndexLikesDislikes": [true, true, false, null]
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name":   "John",
+				"_count": 4,
 			},
 		},
 	}

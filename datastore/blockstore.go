@@ -12,7 +12,6 @@ package datastore
 
 import (
 	"context"
-	"errors"
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -21,6 +20,8 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // Blockstore implementation taken from:

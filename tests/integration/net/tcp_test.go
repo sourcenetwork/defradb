@@ -50,7 +50,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				},
 			},
 		},
-		Results: map[int]map[int]map[string]interface{}{
+		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
 					"Age": uint64(45),
@@ -113,7 +113,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				},
 			},
 		},
-		Results: map[int]map[int]map[string]interface{}{
+		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
 					"Age": uint64(47),

@@ -11,9 +11,11 @@
 package parser
 
 import (
-	"errors"
+	"strconv"
 
 	"github.com/graphql-go/graphql/language/ast"
+
+	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -88,6 +90,36 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 		} else if prop == parserTypes.Field {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = raw.Value
+		} else if prop == parserTypes.OrderClause {
+			obj := argument.Value.(*ast.ObjectValue)
+			cond, err := ParseConditionsInOrder(obj)
+			if err != nil {
+				return nil, err
+			}
+			commit.OrderBy = &parserTypes.OrderBy{
+				Conditions: cond,
+				Statement:  obj,
+			}
+		} else if prop == parserTypes.LimitClause {
+			val := argument.Value.(*ast.IntValue)
+			limit, err := strconv.ParseInt(val.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			if commit.Limit == nil {
+				commit.Limit = &parserTypes.Limit{}
+			}
+			commit.Limit.Limit = limit
+		} else if prop == parserTypes.OffsetClause {
+			val := argument.Value.(*ast.IntValue)
+			offset, err := strconv.ParseInt(val.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			if commit.Limit == nil {
+				commit.Limit = &parserTypes.Limit{}
+			}
+			commit.Limit.Offset = offset
 		}
 	}
 

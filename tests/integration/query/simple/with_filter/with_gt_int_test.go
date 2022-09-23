@@ -38,7 +38,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 					"Age":  uint64(21),
@@ -65,7 +65,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic filter(age), multiple results",
@@ -87,7 +87,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 					"Age":  uint64(32),
@@ -103,4 +103,33 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 	for _, test := range tests {
 		executeTestCase(t, test)
 	}
+}
+
+func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic int greater than filter, with null filter value",
+		Query: `query {
+					users(filter: {Age: {_gt: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }

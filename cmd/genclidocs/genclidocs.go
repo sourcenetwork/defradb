@@ -18,10 +18,10 @@ import (
 	"flag"
 	"os"
 
+	"github.com/spf13/cobra/doc"
+
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/logging"
-
-	"github.com/spf13/cobra/doc"
 )
 
 var log = logging.MustNewLogger("defra.genclidocs")

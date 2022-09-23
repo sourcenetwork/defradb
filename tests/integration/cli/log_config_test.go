@@ -19,9 +19,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/stretchr/testify/assert"
 )
 
 const (

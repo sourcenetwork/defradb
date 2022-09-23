@@ -830,7 +830,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter": dataMap{
-									"_and": []interface{}{
+									"_and": []any{
 										dataMap{
 											"Age": dataMap{
 												"_gt": int64(20),
@@ -899,7 +899,7 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 								"collectionID":   "1",
 								"collectionName": "users",
 								"filter": dataMap{
-									"_or": []interface{}{
+									"_or": []any{
 										dataMap{
 											"Age": dataMap{
 												"_eq": int64(55),
@@ -969,7 +969,7 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Age": dataMap{
-										"_in": []interface{}{
+										"_in": []any{
 											int64(19),
 											int64(40),
 											int64(55),

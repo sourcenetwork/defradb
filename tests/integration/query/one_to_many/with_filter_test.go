@@ -64,11 +64,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"age":  uint64(65),
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
@@ -128,7 +128,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 			},
@@ -186,11 +186,11 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"age":  uint64(65),
-				"published": []map[string]interface{}{
+				"published": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
@@ -255,17 +255,17 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"name": "John Grisham",
 				"age":  uint64(65),
-				"p1": []map[string]interface{}{
+				"p1": []map[string]any{
 					{
 						"name":   "Painted House",
 						"rating": 4.9,
 					},
 				},
-				"p2": []map[string]interface{}{
+				"p2": []map[string]any{
 					{
 						"name":   "A Time for Mercy",
 						"rating": 4.5,
@@ -275,13 +275,13 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 			{
 				"name": "Cornelia Funke",
 				"age":  uint64(62),
-				"p1": []map[string]interface{}{
+				"p1": []map[string]any{
 					{
 						"name":   "Theif Lord",
 						"rating": 4.8,
 					},
 				},
-				"p2": []map[string]interface{}{},
+				"p2": []map[string]any{},
 			},
 		},
 	}

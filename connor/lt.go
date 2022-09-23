@@ -4,11 +4,17 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // lt does value comparisons to determine whether one
 // value is strictly less than another.
-func lt(condition, data interface{}) (bool, error) {
+func lt(condition, data any) (bool, error) {
+	if condition == nil {
+		// Nothing is less than nil
+		return false, nil
+	}
+
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {
@@ -29,6 +35,6 @@ func lt(condition, data interface{}) (bool, error) {
 
 		return false, nil
 	default:
-		return false, fmt.Errorf("unknown comparison type '%#v'", condition)
+		return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 	}
 }

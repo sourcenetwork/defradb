@@ -14,7 +14,6 @@ package net
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -34,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -86,7 +86,7 @@ func NewPeer(
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {
 	if db == nil {
-		return nil, fmt.Errorf("Database object can't be empty")
+		return nil, errors.New("Database object can't be empty")
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -162,12 +162,12 @@ func (p *Peer) Close() error {
 	// close event emitters
 	if p.server.pubSubEmitter != nil {
 		if err := p.server.pubSubEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err))
+			log.Info(p.ctx, "Could not close pubsub event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 	if p.server.pushLogEmitter != nil {
 		if err := p.server.pushLogEmitter.Close(); err != nil {
-			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err))
+			log.Info(p.ctx, "Could not close push log event emitter", logging.NewKV("Error", err.Error()))
 		}
 	}
 
@@ -261,7 +261,7 @@ func (p *Peer) AddReplicator(
 	// verify collection
 	col, err := p.db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return pid, fmt.Errorf("Failed to get collection for replicator: %w", err)
+		return pid, errors.Wrap("Failed to get collection for replicator", err)
 	}
 
 	// extra peerID
@@ -277,7 +277,7 @@ func (p *Peer) AddReplicator(
 
 	// make sure it's not ourselves
 	if pid == p.host.ID() {
-		return pid, fmt.Errorf("Can't target ourselves as a replicator")
+		return pid, errors.New("Can't target ourselves as a replicator")
 	}
 
 	// make sure we're not duplicating things
@@ -285,11 +285,11 @@ func (p *Peer) AddReplicator(
 	defer p.mu.Unlock()
 	if reps, exists := p.replicators[col.SchemaID()]; exists {
 		if _, exists := reps[pid]; exists {
-			return pid, fmt.Errorf(
+			return pid, errors.New(fmt.Sprintf(
 				"Replicator already exists for %s with ID %s",
 				collectionName,
 				pid,
-			)
+			))
 		}
 	} else {
 		p.replicators[col.SchemaID()] = make(map[peer.ID]struct{})
@@ -299,7 +299,7 @@ func (p *Peer) AddReplicator(
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(paddr)
 	if err != nil {
-		return pid, fmt.Errorf("Failed to address info from %s: %w", paddr, err)
+		return pid, errors.Wrap(fmt.Sprintf("Failed to address info from %s", paddr), err)
 	}
 
 	// Add the destination's peer multiaddress in the peerstore.
@@ -312,7 +312,7 @@ func (p *Peer) AddReplicator(
 	// create read only txn and assign to col
 	txn, err := p.db.NewTxn(ctx, true)
 	if err != nil {
-		return pid, fmt.Errorf("Failed to get txn: %w", err)
+		return pid, errors.Wrap("Failed to get txn", err)
 	}
 	col = col.WithTxn(txn)
 
@@ -320,10 +320,12 @@ func (p *Peer) AddReplicator(
 	keysCh, err := col.GetAllDocKeys(ctx)
 	if err != nil {
 		txn.Discard(ctx)
-		return pid, fmt.Errorf(
-			"Failed to get dockey for replicator %s on %s: %w",
-			pid,
-			collectionName,
+		return pid, errors.Wrap(
+			fmt.Sprintf(
+				"Failed to get dockey for replicator %s on %s",
+				pid,
+				collectionName,
+			),
 			err,
 		)
 	}
@@ -399,7 +401,7 @@ func (p *Peer) AddReplicator(
 func (p *Peer) handleDocCreateLog(lg core.Log) error {
 	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
-		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
+		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
 
 	// push to each peer (replicator)
@@ -411,7 +413,7 @@ func (p *Peer) handleDocCreateLog(lg core.Log) error {
 func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 	dockey, err := client.NewDocKeyFromString(lg.DocKey)
 	if err != nil {
-		return fmt.Errorf("Failed to get DocKey from broadcast message: %w", err)
+		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
 	log.Debug(
 		p.ctx,
@@ -436,7 +438,7 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 	p.pushLogToReplicators(p.ctx, lg)
 
 	if err := p.server.publishLog(p.ctx, lg.DocKey, req); err != nil {
-		return fmt.Errorf("Error publishing log %s for %s: %w", lg.Cid, lg.DocKey, err)
+		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", lg.Cid, lg.DocKey), err)
 	}
 	return nil
 }

@@ -17,7 +17,9 @@ package planner
 import (
 	"reflect"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -59,11 +61,11 @@ func (n *countNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *countNode) Explain() (map[string]interface{}, error) {
-	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
+func (n *countNode) Explain() (map[string]any, error) {
+	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]interface{}{}
+		explainerMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
@@ -78,7 +80,7 @@ func (n *countNode) Explain() (map[string]interface{}, error) {
 		sourceExplanations[i] = explainerMap
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		sourcesLabel: sourceExplanations,
 	}, nil
 }
@@ -98,71 +100,84 @@ func (n *countNode) Next() (bool, error) {
 		switch v.Kind() {
 		// v.Len will panic if v is not one of these types, we don't want it to panic
 		case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
-			if source.Filter != nil {
+			if source.Filter == nil && source.Limit == nil {
+				count = count + v.Len()
+			} else {
+				var arrayCount int
+				var err error
 				switch array := property.(type) {
 				case []core.Doc:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount = countDocs(array)
 
 				case []bool:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+				case []client.Option[bool]:
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []int64:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+				case []client.Option[int64]:
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []float64:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+				case []client.Option[float64]:
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []string:
-					for _, doc := range array {
-						passed, err := mapper.RunFilter(doc, source.Filter)
-						if err != nil {
-							return false, err
-						}
-						if passed {
-							count += 1
-						}
-					}
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+				case []client.Option[string]:
+					arrayCount, err = countItems(array, source.Filter, source.Limit)
 				}
-			} else {
-				count = count + v.Len()
+				if err != nil {
+					return false, err
+				}
+				count += arrayCount
 			}
 		}
 	}
 
 	n.currentValue.Fields[n.virtualFieldIndex] = count
 	return true, nil
+}
+
+// countDocs counts the number of documents in a slice, skipping over hidden items
+// (a grouping mechanic). Docs should be counted with this function to avoid applying
+// offsets twice (once in the select, then once here).
+func countDocs(docs []core.Doc) int {
+	count := 0
+	for _, doc := range docs {
+		if !doc.Hidden {
+			count += 1
+		}
+	}
+
+	return count
+}
+
+func countItems[T any](source []T, filter *mapper.Filter, limit *mapper.Limit) (int, error) {
+	items := enumerable.New(source)
+	if filter != nil {
+		items = enumerable.Where(items, func(item T) (bool, error) {
+			return mapper.RunFilter(item, filter)
+		})
+	}
+
+	if limit != nil {
+		items = enumerable.Skip(items, limit.Offset)
+		items = enumerable.Take(items, limit.Limit)
+	}
+
+	count := 0
+	err := enumerable.OnEach(items, func() {
+		count += 1
+	})
+
+	return count, err
 }
 
 func (n *countNode) SetPlan(p planNode) { n.plan = p }

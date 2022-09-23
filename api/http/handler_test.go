@@ -13,7 +13,7 @@ package http
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -22,38 +22,39 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSimpleDataResponse(t *testing.T) {
 	resp := simpleDataResponse("key", "value", "key2", "value2")
 	switch v := resp.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, "value2", v["key2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 
 	resp2 := simpleDataResponse("key", "value", "key2")
 	switch v := resp2.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, nil, v["key2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 
 	resp3 := simpleDataResponse("key", "value", 2, "value2")
 	switch v := resp3.Data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		assert.Equal(t, "value", v["key"])
 		assert.Equal(t, nil, v["2"])
 	default:
-		t.Fatalf("data should be of type map[string]interface{} but got %T", resp.Data)
+		t.Fatalf("data should be of type map[string]any but got %T", resp.Data)
 	}
 }
 
@@ -141,7 +142,7 @@ func TestSendJSONWithNoErrors(t *testing.T) {
 
 	sendJSON(context.Background(), rec, obj, 200)
 
-	body, err := ioutil.ReadAll(rec.Result().Body)
+	body, err := io.ReadAll(rec.Result().Body)
 	if err != nil {
 		t.Fatal(err)
 	}

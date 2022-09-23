@@ -16,6 +16,55 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query without group by, no children, count on non-existant group",
+		Query: `query {
+					users {
+						Age
+						_count(_group: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+		},
+		ExpectedError: "_group may only be referenced when within a groupBy query",
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query without group by, no children, count on inner non-existant group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_group {
+							Name
+							_count(_group: {})
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+		},
+		ExpectedError: "_group may only be referenced when within a groupBy query",
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by number, no children, count on non-rendered group",
@@ -41,7 +90,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
@@ -65,7 +114,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 						_count(_group: {})
 					}
 				}`,
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -99,11 +148,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"_count": 2,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -115,7 +164,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 			{
 				"Age":    uint64(19),
 				"_count": 1,
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -183,7 +232,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":   uint64(32),
 				"Count": 2,
@@ -226,7 +275,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":    uint64(32),
 				"Count1": 2,

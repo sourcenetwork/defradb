@@ -10,14 +10,18 @@
 
 package client
 
-import "errors"
+import "github.com/sourcenetwork/defradb/errors"
+
+const (
+	errFieldNotExist string = "The given field does not exist"
+)
 
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist       = errors.New("The given field does not exist")
+	ErrFieldNotExist       = errors.New(errFieldNotExist)
 	ErrFieldNotObject      = errors.New("Trying to access field on a non object type")
 	ErrValueTypeMismatch   = errors.New("Value does not match indicated type")
 	ErrIndexNotFound       = errors.New("No index found for given ID")
@@ -26,3 +30,7 @@ var (
 	ErrInvalidUpdater      = errors.New("The updater of a document is of invalid type")
 	ErrInvalidDeleteTarget = errors.New("The target document to delete is of invalid type")
 )
+
+func NewErrFieldNotExist(name string) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
+}

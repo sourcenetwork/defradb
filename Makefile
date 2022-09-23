@@ -17,7 +17,8 @@ VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
 endif
-BUILD_FLAGS=-ldflags "\
+
+BUILD_FLAGS=-trimpath -ldflags "\
 -X 'github.com/sourcenetwork/defradb/version.GoInfo=$(VERSION_GOINFO)'\
 -X 'github.com/sourcenetwork/defradb/version.GitRelease=$(VERSION_GITRELEASE)'\
 -X 'github.com/sourcenetwork/defradb/version.GitCommit=$(VERSION_GITCOMMIT)'\
@@ -46,11 +47,6 @@ cross-build:
 start:
 	@$(MAKE) build
 	./build/defradb start
-
-.PHONY: dev\:start
-dev\:start:
-	@$(MAKE) build
-	DEFRA_ENV=dev ./build/defradb start
 
 .PHONY: client\:dump
 client\:dump:
@@ -84,18 +80,38 @@ deps\:chglog:
 deps\:modules:
 	go mod download
 
-.PHONY: deps\:ci
-deps\:ci:
-	curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=${HOME}/bin bash
-
 .PHONY: deps
 deps:
-	@$(MAKE) deps:lint && $(MAKE) deps:coverage && $(MAKE) deps:bench && $(MAKE) deps:chglog && \
-	$(MAKE) deps:modules && $(MAKE) deps:ci && $(MAKE) deps:test
+	@$(MAKE) deps:modules && \
+	$(MAKE) deps:bench && \
+	$(MAKE) deps:chglog && \
+	$(MAKE) deps:coverage && \
+	$(MAKE) deps:lint && \
+	$(MAKE) deps:test
+
+.PHONY: dev\:start
+dev\:start:
+	@$(MAKE) build
+	DEFRA_ENV=dev ./build/defradb start
+
+# Note: In some situations `verify` can modify `go.sum` file, but until a
+#       read-only version is available we have to rely on this.
+# Here are some relevant issues:
+#   - https://github.com/golang/go/issues/31372
+#   - https://github.com/cosmos/cosmos-sdk/issues/4165
+.PHONY: verify
+verify:
+	@if go mod verify | grep -q 'all modules verified'; then \
+		echo "Success!";                                     \
+	else                                                     \
+		echo "Failure:";                                     \
+		go mod verify;                                       \
+		exit 2;                                              \
+	fi;
 
 .PHONY: tidy
 tidy:
-	go mod tidy
+	go mod tidy -go=1.18
 
 .PHONY: clean
 clean:
@@ -110,13 +126,21 @@ clean\:test:
 test:
 	gotestsum --format pkgname -- ./... -race -shuffle=on
 
+.PHONY: test\:ci
+test\:ci:
+	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
+
 .PHONY: test\:go
 test\:go:
 	go test ./... -race -shuffle=on
 
+.PHONY: test\:names
+test\:names:
+	gotestsum --format testname -- ./... -race -shuffle=on
+
 .PHONY: test\:verbose
 test\:verbose:
-	gotestsum --format testname --junitfile /tmp/defradb-dev/test.xml -- ./... -race -shuffle=on
+	gotestsum --format standard-verbose -- ./... -race -shuffle=on
 
 .PHONY: test\:watch
 test\:watch:
@@ -133,6 +157,10 @@ test\:bench:
 .PHONY: test\:bench-short
 test\:bench-short:
 	@$(MAKE) -C ./tests/bench/ bench:short
+
+.PHONY: test\:scripts
+test\:scripts:
+	@$(MAKE) -C ./tools/scripts/ test
 
 # Using go-acc to ensure integration tests are included.
 # Usage: `make test:coverage` or `make test:coverage path="{pathToPackage}"`
@@ -160,7 +188,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum --junitfile /tmp/defradb-dev/changes.xml -- ./... -shuffle=on -p 1
+	env DEFRA_DETECT_DATABASE_CHANGES=true gotestsum -- ./... -shuffle=on -p 1
 
 .PHONY: validate\:codecov
 validate\:codecov:

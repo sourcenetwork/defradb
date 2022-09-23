@@ -55,6 +55,11 @@ run:
   # If false (default) - golangci-lint acquires file lock on start.
   allow-parallel-runners: false
 
+  # Define the Go version limit.
+  # Mainly related to generics support since go1.18.
+  # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`, fallback on 1.18
+  go: "1.18"
+
 #=====================================================================================[ Output Configuration Options ]
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
@@ -115,6 +120,7 @@ linters:
     - goconst
     - gofmt
     - goheader
+    - goimports
     - gosimple
     - govet
     - ineffassign
@@ -122,11 +128,14 @@ linters:
     - nolintlint
     - revive
     - staticcheck
-    - structcheck
     - typecheck
     - unused
     - varcheck
     - whitespace
+
+  # https://github.com/golangci/golangci-lint/issues/2649
+  # Linters below are disabled for now because of go1.18 issue above^
+  # - structcheck
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
@@ -183,8 +192,6 @@ issues:
 
 #==================================================================[ All Settings Of Specific Linters We Have Enabled]
 linters-settings:
-
-
   errcheck:
     # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
@@ -201,14 +208,14 @@ linters-settings:
       # - io.Copy(*bytes.Buffer)
       # - io.Copy(os.Stdout)
 
-
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):
     forbid:
       - 'fmt\.Print.*'
+      - 'ioutil\.*'
+
     # Exclude godoc examples from forbidigo checks.
     exclude_godoc_examples: false
-
 
   goconst:
     # Minimal length of string constant.
@@ -229,10 +236,8 @@ linters-settings:
     # @todo: perhaps in the near future set this to false and resolve the warnings.
     ignore-calls: true
 
-
   gofmt:
     simplify: true
-
 
   goheader:
     values:
@@ -259,16 +264,19 @@ linters-settings:
     template-path:
       # also as alternative of directive 'template' you may put the path to file with the template source
 
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages.
+    # It's a comma-separated list of prefixes.
+    local-prefixes: github.com/sourcenetwork/defradb
 
   gosimple:
     # Select the Go version to target.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
     # - S1038 - Unnecessarily complex way of printing formatted string. Which said
     #   instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...).
-
 
   govet:
     # report about shadowed variables
@@ -295,14 +303,12 @@ linters-settings:
 
     disable-all: false
 
-
   lll:
     # max line length, lines longer will be reported.
     # '\t' is counted as 1 character.
     line-length: 120
     # tab width in spaces.
     tab-width: 1
-
 
   nolintlint:
     # Disable to ensure that all nolint directives actually have an effect.
@@ -316,7 +322,6 @@ linters-settings:
     # Enable to require nolint directives to mention the specific linter being suppressed.
     require-specific: true
 
-
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true
@@ -324,26 +329,24 @@ linters-settings:
     rules:
       - name: superfluous-else
         severity: error
-
+      - name: use-any
+        severity: error
 
   staticcheck:
     # Select the Go version to target.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
-
   unused:
     # Select the Go version to target.
-    go: "1.17"
-
+    go: "1.18"
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.
     multi-if: false
     # Enforces newlines (or comments) after every multi-line function signature.
     multi-func: false
-
 
   # The custom section can be used to define linter plugins to be loaded at runtime.
   # See README doc for more info.

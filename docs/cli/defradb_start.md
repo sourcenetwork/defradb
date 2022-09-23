@@ -13,12 +13,13 @@ defradb start [flags]
 ### Options
 
 ```
-  -h, --help             help for start
-      --no-p2p           Disable the peer-to-peer network synchronization system
-      --p2paddr string   Listener address for the p2p network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
-      --peers string     List of peers to connect to
-      --store string     Specify the datastore to use (supported: badger, memory) (default "badger")
-      --tcpaddr string   Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9161")
+  -h, --help                        help for start
+      --no-p2p                      Disable the peer-to-peer network synchronization system
+      --p2paddr string              Listener address for the p2p network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
+      --peers string                List of peers to connect to
+      --store string                Specify the datastore to use (supported: badger, memory) (default "badger")
+      --tcpaddr string              Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9161")
+      --valuelogfilesize ByteSize   Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1GiB)
 ```
 
 ### Options inherited from parent commands
@@ -31,7 +32,7 @@ defradb start [flags]
       --logoutput string     Log output path (default "stderr")
       --logtrace             Include stacktrace in error and fatal logs
       --rootdir string       Directory for data and configuration to use (default "$HOME/.defradb")
-      --url string           URL of the target database's HTTP endpoint (default "localhost:9181")
+      --url string           URL of HTTP endpoint to listen on or connect to (default "localhost:9181")
 ```
 
 ### SEE ALSO

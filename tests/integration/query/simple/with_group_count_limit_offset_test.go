@@ -1,0 +1,117 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package simple
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitAndOffset(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children, count with limit and offset on non-rendered group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_count(_group: {offset: 1, limit: 1})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Age":    uint64(32),
+				"_count": 1,
+			},
+			{
+				"Age":    uint64(19),
+				"_count": 0,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimitAndOffset(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, child limit, count with limit and offset on rendered group",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						_count(_group: {offset: 1, limit: 1})
+						_group (limit: 2) {
+							Name
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Shahzad",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Age":    uint64(32),
+				"_count": 1,
+				"_group": []map[string]any{
+					{
+						"Name": "Bob",
+					},
+					{
+						"Name": "John",
+					},
+				},
+			},
+			{
+				"Age":    uint64(19),
+				"_count": 0,
+				"_group": []map[string]any{
+					{
+						"Name": "Alice",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

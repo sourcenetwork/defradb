@@ -33,10 +33,38 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_avg": float64(1.5),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with filter, average of populated nillable integer array",
+		Query: `query {
+					users {
+						Name
+						_avg(TestScores: {filter: {_gt: -1}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"TestScores": [-1, null, 13, 0]
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_avg": float64(6.5),
 			},
 		},
 	}
@@ -61,7 +89,35 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
+			{
+				"Name": "Shahzad",
+				"_avg": 3.5,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array, filtered average of nillable float array",
+		Query: `query {
+					users {
+						Name
+						_avg(PageRatings: {filter: {_lt: 9}})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Shahzad",
+					"PageRatings": [3.4, 3.6, 10, null]
+				}`,
+			},
+		},
+		Results: []map[string]any{
 			{
 				"Name": "Shahzad",
 				"_avg": 3.5,

@@ -48,7 +48,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 						_sum(_group: {field: Age})
 					}
 				}`,
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
@@ -80,7 +80,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": int64(70),
@@ -120,7 +120,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"_sum": int64(19),
@@ -177,11 +177,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": int64(91),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
 						"_sum":     int64(57),
@@ -195,7 +195,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 			{
 				"Name": "Alice",
 				"_sum": int64(19),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
 						"_sum":     int64(19),
@@ -205,7 +205,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 			{
 				"Name": "Carlo",
 				"_sum": int64(55),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
 						"_sum":     int64(55),
@@ -242,7 +242,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": float64(3.71),
@@ -282,7 +282,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": float64(3.71),
@@ -339,11 +339,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": float64(5.65),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
 						"_sum":     float64(2.22),
@@ -357,7 +357,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 			{
 				"Name": "Alice",
 				"_sum": float64(2.04),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
 						"_sum":     float64(2.04),
@@ -367,7 +367,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 			{
 				"Name": "Carlo",
 				"_sum": float64(1.74),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
 						"_sum":     float64(1.74),
@@ -431,15 +431,15 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_sum": float64(5.65),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
 						"_sum":     float64(2.22),
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age":  uint64(34),
 								"_sum": float64(2.22),
@@ -449,7 +449,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					{
 						"Verified": true,
 						"_sum":     float64(3.43),
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age":  uint64(32),
 								"_sum": float64(1.61),
@@ -465,11 +465,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 			{
 				"Name": "Alice",
 				"_sum": float64(2.04),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": false,
 						"_sum":     float64(2.04),
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age":  uint64(19),
 								"_sum": float64(2.04),
@@ -481,11 +481,11 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 			{
 				"Name": "Carlo",
 				"_sum": float64(1.74),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Verified": true,
 						"_sum":     float64(1.74),
-						"_group": []map[string]interface{}{
+						"_group": []map[string]any{
 							{
 								"Age":  uint64(55),
 								"_sum": float64(1.74),

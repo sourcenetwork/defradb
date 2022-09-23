@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	block "github.com/ipfs/go-block-format"
@@ -25,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -40,10 +40,10 @@ var (
 // Eg: DeleteWithFilter or DeleteWithKey
 func (c *collection) DeleteWith(
 	ctx context.Context,
-	target interface{},
+	target any,
 ) (*client.DeleteResult, error) {
 	switch t := target.(type) {
-	case string, map[string]interface{}, *parser.Filter:
+	case string, map[string]any, *parser.Filter:
 		return c.DeleteWithFilter(ctx, t)
 	case client.DocKey:
 		return c.DeleteWithKey(ctx, t)
@@ -98,7 +98,7 @@ func (c *collection) DeleteWithKeys(
 // DeleteWithFilter deletes using a filter to target documents for delete.
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
-	filter interface{},
+	filter any,
 ) (*client.DeleteResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -186,7 +186,7 @@ func (c *collection) deleteWithKeys(
 func (c *collection) deleteWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
-	filter interface{},
+	filter any,
 ) (*client.DeleteResult, error) {
 	// Do a selection query to scan through documents using the given filter.
 	query, err := c.makeSelectionQuery(ctx, txn, filter)
@@ -293,7 +293,7 @@ func (c *collection) applyFullDelete(
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to get document heads: %w", err)
+		return errors.Wrap("Failed to get document heads", err)
 	}
 
 	dagDel := newDagDeleter(txn.DAGstore())

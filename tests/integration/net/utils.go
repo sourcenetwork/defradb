@@ -18,15 +18,17 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/textileio/go-threads/broadcast"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 	coreDB "github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
 )
 
 var (
@@ -64,7 +66,7 @@ type P2PTestCase struct {
 
 	// node/dockey/values
 	Updates map[int]map[int][]string
-	Results map[int]map[int]map[string]interface{}
+	Results map[int]map[int]map[string]any
 }
 
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
@@ -104,7 +106,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		cfg.NodeConfig(),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to start P2P node: %w", err)
+		return nil, nil, errors.Wrap("failed to start P2P node", err)
 	}
 
 	// parse peers and bootstrap
@@ -112,7 +114,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		log.Info(ctx, "Parsing bootstrap peers", logging.NewKV("Peers", cfg.Net.Peers))
 		addrs, err := netutils.ParsePeers(strings.Split(cfg.Net.Peers, ","))
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse bootstrap peers %v: %w", cfg.Net.Peers, err)
+			return nil, nil, errors.Wrap(fmt.Sprintf("failed to parse bootstrap peers %v", cfg.Net.Peers), err)
 		}
 		log.Info(ctx, "Bootstrapping with peers", logging.NewKV("Addresses", addrs))
 		n.Boostrap(addrs)
@@ -121,9 +123,9 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	if err := n.Start(); err != nil {
 		closeErr := n.Close()
 		if closeErr != nil {
-			return nil, nil, fmt.Errorf("unable to start P2P listeners: %v: problem closing node: %w", err, closeErr)
+			return nil, nil, errors.Wrap(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
 		}
-		return nil, nil, fmt.Errorf("unable to start P2P listeners: %w", err)
+		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
 	return n, dockeys, nil
@@ -293,7 +295,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	for _, n := range nodes {
 		n.DB.Close(ctx)
 		if err := n.Close(); err != nil {
-			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err))
+			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -99,8 +100,8 @@ func (n *orderNode) Value() core.Doc {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *orderNode) Explain() (map[string]interface{}, error) {
-	orderings := []map[string]interface{}{}
+func (n *orderNode) Explain() (map[string]any, error) {
+	orderings := []map[string]any{}
 
 	for _, element := range n.ordering {
 		// Build the list containing the corresponding names of all the indexes.
@@ -109,7 +110,7 @@ func (n *orderNode) Explain() (map[string]interface{}, error) {
 			// Try to find the name of this index.
 			fieldName, found := n.documentMapping.TryToFindNameFromIndex(fieldIndex)
 			if !found {
-				return nil, fmt.Errorf("No corresponding name was found for index=%d", fieldIndex)
+				return nil, errors.New(fmt.Sprintf("No corresponding name was found for index=%d", fieldIndex))
 			}
 
 			fieldNames = append(fieldNames, fieldName)
@@ -117,14 +118,14 @@ func (n *orderNode) Explain() (map[string]interface{}, error) {
 
 		// Put it all together for this order element.
 		orderings = append(orderings,
-			map[string]interface{}{
+			map[string]any{
 				"fields":    fieldNames,
 				"direction": string(element.Direction),
 			},
 		)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"orderings": orderings,
 	}, nil
 }
@@ -196,8 +197,8 @@ func newAllSortStrategy(v *valuesNode) *allSortStrategy {
 
 // Add adds a new document to underlying valueNode
 func (s *allSortStrategy) Add(doc core.Doc) error {
-	err := s.valueNode.docs.AddDoc(doc)
-	return err
+	s.valueNode.docs.AddDoc(doc)
+	return nil
 }
 
 // Finish finalizes and sorts the underling valueNode

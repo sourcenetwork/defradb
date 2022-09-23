@@ -14,12 +14,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
-
 	cid "github.com/ipfs/go-cid"
 	dshelp "github.com/ipfs/go-ipfs-ds-help"
 	ipld "github.com/ipfs/go-ipld-format"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -62,7 +63,7 @@ func (mc *MerkleClock) putBlock(
 
 	node, err := makeNode(delta, heads)
 	if err != nil {
-		return nil, fmt.Errorf("error creating block : %w", err)
+		return nil, errors.Wrap("error creating block ", err)
 	}
 
 	// @todo Add a DagSyncer instance to the MerkleCRDT structure
@@ -73,11 +74,11 @@ func (mc *MerkleClock) putBlock(
 	// ctx := context.Background()
 	// err = mc.store.dagSyncer.Add(ctx, node)
 	// if err != nil {
-	// 	return nil, fmt.Errorf("error writing new block %s : %w", node.Cid(), err)
+	// 	return nil, errors.Wrap("error writing new block %s ", node.Cid(), err)
 	// }
 	err = mc.dagstore.Put(ctx, node)
 	if err != nil {
-		return nil, fmt.Errorf("error writing new block %s : %w", node.Cid(), err)
+		return nil, errors.Wrap(fmt.Sprintf("error writing new block %s ", node.Cid()), err)
 	}
 
 	return node, nil
@@ -94,7 +95,7 @@ func (mc *MerkleClock) AddDAGNode(
 ) (cid.Cid, ipld.Node, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
-		return cid.Undef, nil, fmt.Errorf("error getting heads : %w", err)
+		return cid.Undef, nil, errors.Wrap("error getting heads ", err)
 	}
 	height = height + 1
 
@@ -103,7 +104,7 @@ func (mc *MerkleClock) AddDAGNode(
 	// write the delta and heads to a new block
 	nd, err := mc.putBlock(ctx, heads, height, delta)
 	if err != nil {
-		return cid.Undef, nil, fmt.Errorf("Error adding block : %w", err)
+		return cid.Undef, nil, errors.Wrap("Error adding block ", err)
 	}
 
 	// apply the new node and merge the delta with state
@@ -118,7 +119,7 @@ func (mc *MerkleClock) AddDAGNode(
 	)
 
 	if err != nil {
-		return cid.Undef, nil, fmt.Errorf("error processing new block : %w", err)
+		return cid.Undef, nil, errors.Wrap("error processing new block ", err)
 	}
 	return nd.Cid(), nd, nil //@todo: Include raw block data in return
 }
@@ -137,7 +138,7 @@ func (mc *MerkleClock) ProcessNode(
 	log.Debug(ctx, "Running ProcessNode", logging.NewKV("CID", current))
 	err := mc.crdt.Merge(ctx, delta, dshelp.MultihashToDsKey(current.Hash()).String())
 	if err != nil {
-		return nil, fmt.Errorf("error merging delta from %s : %w", current, err)
+		return nil, errors.Wrap(fmt.Sprintf("error merging delta from %s ", current), err)
 	}
 
 	links := node.Links()
@@ -155,7 +156,7 @@ func (mc *MerkleClock) ProcessNode(
 		log.Debug(ctx, "No heads found")
 		err := mc.headset.Add(ctx, root, rootPrio)
 		if err != nil {
-			return nil, fmt.Errorf("error adding head (when reached the bottom) %s : %w", root, err)
+			return nil, errors.Wrap(fmt.Sprintf("error adding head (when reached the bottom) %s ", root), err)
 		}
 	}
 
@@ -166,7 +167,7 @@ func (mc *MerkleClock) ProcessNode(
 		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", child))
 		isHead, _, err := mc.headset.IsHead(ctx, child)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if %s is head : %w", child, err)
+			return nil, errors.Wrap(fmt.Sprintf("error checking if %s is head ", child), err)
 		}
 
 		if isHead {
@@ -175,7 +176,7 @@ func (mc *MerkleClock) ProcessNode(
 			// of current branch
 			err = mc.headset.Replace(ctx, child, root, rootPrio)
 			if err != nil {
-				return nil, fmt.Errorf("error replacing head: %s->%s : %w", child, root, err)
+				return nil, errors.Wrap(fmt.Sprintf("error replacing head: %s->%s ", child, root), err)
 			}
 
 			continue
@@ -183,7 +184,7 @@ func (mc *MerkleClock) ProcessNode(
 
 		known, err := mc.dagstore.Has(ctx, child)
 		if err != nil {
-			return nil, fmt.Errorf("error checking for known block %s : %w", child, err)
+			return nil, errors.Wrap(fmt.Sprintf("error checking for known block %s ", child), err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
@@ -198,7 +199,7 @@ func (mc *MerkleClock) ProcessNode(
 					logging.NewKV("Root", root),
 				)
 				// OR should this also return like below comment??
-				// return nil, fmt.Errorf("error adding head (when root is new head): %s : %w", root, err)
+				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)
 			}
 			continue
 		}

@@ -71,14 +71,14 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
@@ -86,10 +86,10 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name":   "Theif Lord",
 					"rating": 4.8,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "Cornelia Funke",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
@@ -97,10 +97,10 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name":   "A Time for Mercy",
 					"rating": 4.5,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
@@ -160,17 +160,17 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
 					"age":  uint64(65),
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "Theif Lord",
 							"rating": 4.8,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "Painted House",
 						},
@@ -182,7 +182,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 				{
 					"name": "Cornelia Funke",
 					"age":  uint64(62),
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "Painted House",
 							"rating": 4.9,
@@ -192,7 +192,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 							"rating": 4.5,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "Theif Lord",
 						},
@@ -281,18 +281,18 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name":   "Theif Lord",
 					"rating": 4.8,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "Cornelia Funke",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "John Grisham",
 						"age":  uint64(65),
 					},
-					"price": map[string]interface{}{
+					"price": map[string]any{
 						"currency": "GBP",
 						"value":    12.99,
 					},
@@ -300,14 +300,14 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name":   "A Time for Mercy",
 					"rating": 4.5,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
-					"price": map[string]interface{}{
+					"price": map[string]any{
 						"currency": "SEK",
 						"value":    float64(129),
 					},
@@ -315,14 +315,14 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name":   "Painted House",
 					"rating": 4.9,
-					"author": map[string]interface{}{
+					"author": map[string]any{
 						"name": "John Grisham",
 					},
-					"reviewedBy": map[string]interface{}{
+					"reviewedBy": map[string]any{
 						"name": "Cornelia Funke",
 						"age":  uint64(62),
 					},
-					"price": map[string]interface{}{
+					"price": map[string]any{
 						"currency": "GBP",
 						"value":    12.99,
 					},
@@ -400,26 +400,26 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
 					"age":  uint64(65),
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "Theif Lord",
 							"rating": 4.8,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "A Time for Mercy",
-							"price": map[string]interface{}{
+							"price": map[string]any{
 								"value": float64(129),
 							},
 						},
 						{
 							"name": "Painted House",
-							"price": map[string]interface{}{
+							"price": map[string]any{
 								"value": 12.99,
 							},
 						},
@@ -428,7 +428,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				{
 					"name": "Cornelia Funke",
 					"age":  uint64(62),
-					"reviewed": []map[string]interface{}{
+					"reviewed": []map[string]any{
 						{
 							"name":   "A Time for Mercy",
 							"rating": 4.5,
@@ -438,10 +438,10 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 							"rating": 4.9,
 						},
 					},
-					"written": []map[string]interface{}{
+					"written": []map[string]any{
 						{
 							"name": "Theif Lord",
-							"price": map[string]interface{}{
+							"price": map[string]any{
 								"value": 12.99,
 							},
 						},

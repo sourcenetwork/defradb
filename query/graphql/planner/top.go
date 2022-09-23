@@ -11,12 +11,13 @@
 package planner
 
 import (
-	"errors"
-
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
+
+const topLevelNodeKind string = "topLevelNode"
 
 // topLevelNode is a special node that represents the very top of the
 // plan graph. It has no source, and will only yield a single item
@@ -50,7 +51,7 @@ func (n *topLevelNode) Spans(spans core.Spans) {
 }
 
 func (n *topLevelNode) Kind() string {
-	return "topLevelNode"
+	return topLevelNodeKind
 }
 
 func (n *topLevelNode) Init() error {
@@ -113,6 +114,15 @@ func (n *topLevelNode) Close() error {
 
 func (n *topLevelNode) Source() planNode {
 	return nil
+}
+
+// Children() makes topLevelNode into a MultiNode.
+func (p *topLevelNode) Children() []planNode {
+	return p.children
+}
+
+func (n *topLevelNode) Explain() (map[string]any, error) {
+	return map[string]any{}, nil
 }
 
 func (n *topLevelNode) Next() (bool, error) {

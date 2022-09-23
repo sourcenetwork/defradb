@@ -33,18 +33,18 @@ package planner
 
 import (
 	"container/list"
-	"fmt"
 	"strings"
-
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -225,8 +225,8 @@ func (n *dagScanNode) Source() planNode { return n.headset }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *dagScanNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *dagScanNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the field attribute to the explaination if it exists.
 	if len(n.field) != 0 {
@@ -243,13 +243,13 @@ func (n *dagScanNode) Explain() (map[string]interface{}, error) {
 	}
 
 	// Build the explaination of the spans attribute.
-	spansExplainer := []map[string]interface{}{}
+	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.headset != nil && n.headset.spans.HasValue {
 		for _, span := range n.headset.spans.Value {
 			spansExplainer = append(
 				spansExplainer,
-				map[string]interface{}{
+				map[string]any{
 					"start": span.Start().ToString(),
 					"end":   span.End().ToString(),
 				},
@@ -268,11 +268,11 @@ func (n *dagScanNode) Next() (bool, error) {
 		c := n.queuedCids.Front()
 		cid, ok := c.Value.(cid.Cid)
 		if !ok {
-			return false, fmt.Errorf("Queued value in DAGScan isn't a CID")
+			return false, errors.New("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
 		n.cid = &cid
-	} else if n.headset != nil {
+	} else if n.cid == nil && n.headset != nil {
 		if next, err := n.headset.Next(); !next {
 			return false, err
 		}
@@ -280,7 +280,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		val := n.headset.Value()
 		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(cid.Cid)
 		if !ok {
-			return false, fmt.Errorf("Headset scan node returned an invalid cid")
+			return false, errors.New("Headset scan node returned an invalid cid")
 		}
 		n.cid = &cid
 	} else if n.cid == nil {
@@ -383,14 +383,14 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	}
 
 	// @todo: Wrap delta unmarshaling into a proper typed interface.
-	var delta map[string]interface{}
+	var delta map[string]any
 	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
 		return core.Doc{}, nil, err
 	}
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return core.Doc{}, nil, fmt.Errorf("Commit Delta missing priority key")
+		return core.Doc{}, nil, errors.New("Commit Delta missing priority key")
 	}
 
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))

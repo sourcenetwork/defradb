@@ -23,12 +23,24 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/config"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 const badgerDatastoreName = "badger"
+
+// List of cobra errors indicating an error occurred in the way the command was invoked.
+// They are subject to change with new versions of cobra.
+var usageErrors = []string{
+	"flag needs an argument",
+	"invalid syntax",
+	"unknown flag",
+	"unknown shorthand flag",
+	"missing argument", // custom to defradb
+}
 
 var log = logging.MustNewLogger("defra.cli")
 
@@ -40,9 +52,19 @@ func Execute() {
 	// Silence cobra's default output to control usage and error display.
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
+	rootCmd.SetOut(os.Stdout)
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
-		log.FeedbackError(ctx, fmt.Sprintf("%s", err))
+		for _, cobraError := range usageErrors {
+			if strings.HasPrefix(err.Error(), cobraError) {
+				log.FeedbackErrorE(ctx, "Usage error", err)
+				if usageErr := rootCmd.Usage(); usageErr != nil {
+					log.FeedbackFatalE(ctx, "error displaying usage help", usageErr)
+				}
+				os.Exit(1)
+			}
+		}
+		log.FeedbackFatalE(ctx, "Execution error", err)
 	}
 }
 
@@ -57,7 +79,7 @@ func readStdin() (string, error) {
 		s.Write(scanner.Bytes())
 	}
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("reading standard input: %w", err)
+		return "", errors.Wrap("reading standard input", err)
 	}
 	return s.String(), nil
 }
@@ -69,14 +91,14 @@ func indentJSON(b []byte) (string, error) {
 }
 
 type graphqlErrors struct {
-	Errors interface{} `json:"errors"`
+	Errors any `json:"errors"`
 }
 
 func hasGraphQLErrors(buf []byte) (bool, error) {
 	errs := graphqlErrors{}
 	err := json.Unmarshal(buf, &errs)
 	if err != nil {
-		return false, fmt.Errorf("couldn't parse GraphQL response %w", err)
+		return false, errors.Wrap("couldn't parse GraphQL response %w", err)
 	}
 	if errs.Errors != nil {
 		return true, nil
@@ -100,7 +122,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 	// handle --logger <name>,<field>=<value>,... --logger <name2>,<field>=<value>,..
 	loggerKVs, err := cmd.Flags().GetStringArray("logger")
 	if err != nil {
-		return fmt.Errorf("can't get logger flag: %w", err)
+		return errors.Wrap("can't get logger flag", err)
 	}
 
 	for _, kvs := range loggerKVs {
@@ -111,7 +133,7 @@ func parseAndConfigLog(ctx context.Context, cfg *config.LoggingConfig, cmd *cobr
 
 	loggingConfig, err := cfg.ToLoggerConfig()
 	if err != nil {
-		return fmt.Errorf("could not get logging config: %w", err)
+		return errors.Wrap("could not get logging config", err)
 	}
 	logging.SetConfig(loggingConfig)
 
@@ -125,7 +147,7 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 
 	parsed := strings.Split(kvs, ",")
 	if len(parsed) <= 1 {
-		return fmt.Errorf("logger was not provided as comma-separated pairs of <name>=<value>: %s", kvs)
+		return errors.New(fmt.Sprintf("logger was not provided as comma-separated pairs of <name>=<value>: %s", kvs))
 	}
 	name := parsed[0]
 
@@ -134,12 +156,12 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 	for _, kv := range parsed[1:] {
 		parsedKV := strings.Split(kv, "=")
 		if len(parsedKV) != 2 {
-			return fmt.Errorf("level was not provided as <key>=<value> pair: %s", kv)
+			return errors.New(fmt.Sprintf("level was not provided as <key>=<value> pair: %s", kv))
 		}
 
 		logcfg, err := cfg.GetOrCreateNamedLogger(name)
 		if err != nil {
-			return fmt.Errorf("could not get named logger config: %w", err)
+			return errors.Wrap("could not get named logger config", err)
 		}
 
 		// handle field
@@ -149,27 +171,27 @@ func parseAndConfigLogAllParams(ctx context.Context, cfg *config.LoggingConfig, 
 		case "format": // string
 			logcfg.Format = parsedKV[1]
 		case "output": // string
-			logcfg.OutputPath = parsedKV[1]
+			logcfg.Output = parsedKV[1]
 		case "stacktrace": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.Stacktrace = boolValue
 		case "nocolor": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.NoColor = boolValue
 		case "caller": // bool
 			boolValue, err := strconv.ParseBool(parsedKV[1])
 			if err != nil {
-				return fmt.Errorf("couldn't parse kv bool: %w", err)
+				return errors.Wrap("couldn't parse kv bool", err)
 			}
 			logcfg.Caller = boolValue
 		default:
-			return fmt.Errorf("unknown parameter for logger: %s", param)
+			return errors.New(fmt.Sprintf("unknown parameter for logger: %s", param))
 		}
 	}
 	return nil
@@ -197,12 +219,12 @@ func parseAndConfigLogStringParam(
 	for _, kv := range parsed[1:] {
 		parsedKV := strings.Split(kv, "=")
 		if len(parsedKV) != 2 {
-			return fmt.Errorf("level was not provided as <key>=<value> pair: %s", kv)
+			return errors.New(fmt.Sprintf("level was not provided as <key>=<value> pair: %s", kv))
 		}
 
 		logcfg, err := cfg.GetOrCreateNamedLogger(parsedKV[0])
 		if err != nil {
-			return fmt.Errorf("could not get named logger config: %w", err)
+			return errors.Wrap("could not get named logger config", err)
 		}
 
 		paramSetterFn(&logcfg.LoggingConfig, parsedKV[1])

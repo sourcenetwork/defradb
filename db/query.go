@@ -14,10 +14,10 @@ import (
 	"context"
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-
-	gql "github.com/graphql-go/graphql"
 )
 
 func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
@@ -29,19 +29,19 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
-		res.Errors = []interface{}{err.Error()}
+		res.Errors = []any{err.Error()}
 		return res
 	}
 	defer txn.Discard(ctx)
 
 	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
 	if err != nil {
-		res.Errors = []interface{}{err.Error()}
+		res.Errors = []any{err.Error()}
 		return res
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		res.Errors = []interface{}{err.Error()}
+		res.Errors = []any{err.Error()}
 		return res
 	}
 
@@ -62,7 +62,7 @@ func (db *db) ExecTransactionalQuery(
 
 	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
 	if err != nil {
-		res.Errors = []interface{}{err.Error()}
+		res.Errors = []any{err.Error()}
 		return res
 	}
 
@@ -79,7 +79,7 @@ func (db *db) ExecIntrospection(query string) *client.QueryResult {
 
 	res := &client.QueryResult{
 		Data:   r.Data,
-		Errors: make([]interface{}, len(r.Errors)),
+		Errors: make([]any, len(r.Errors)),
 	}
 
 	for i, err := range r.Errors {

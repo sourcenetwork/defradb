@@ -14,8 +14,10 @@ import (
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 type EPTuple []encProperty
@@ -30,16 +32,16 @@ type encProperty struct {
 }
 
 // Decode returns the decoded value and CRDT type for the given property.
-func (e encProperty) Decode() (client.CType, interface{}, error) {
+func (e encProperty) Decode() (client.CType, any, error) {
 	ctype := client.CType(e.Raw[0])
 	buf := e.Raw[1:]
-	var val interface{}
+	var val any
 	err := cbor.Unmarshal(buf, &val)
 	if err != nil {
 		return ctype, nil, err
 	}
 
-	if array, isArray := val.([]interface{}); isArray {
+	if array, isArray := val.([]any); isArray {
 		var ok bool
 		switch e.Desc.Kind {
 		case client.FieldKind_BOOL_ARRAY:
@@ -47,59 +49,76 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to bool.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = boolArray
+
+		case client.FieldKind_NILLABLE_BOOL_ARRAY:
+			val, err = convertNillableArray[bool](array)
+			if err != nil {
+				return ctype, nil, err
+			}
+
 		case client.FieldKind_INT_ARRAY:
 			intArray := make([]int64, len(array))
 			for i, untypedValue := range array {
-				switch value := untypedValue.(type) {
-				case uint64:
-					intArray[i] = int64(value)
-				case int64:
-					intArray[i] = value
-				case float64:
-					intArray[i] = int64(value)
-				default:
-					return ctype, nil, fmt.Errorf(
-						"Could not convert type: %T, value: %v to int64.",
-						untypedValue,
-						untypedValue,
-					)
+				intArray[i], err = convertToInt(untypedValue)
+				if err != nil {
+					return ctype, nil, err
 				}
 			}
 			val = intArray
+
+		case client.FieldKind_NILLABLE_INT_ARRAY:
+			val, err = convertNillableArrayWithConverter(array, convertToInt)
+			if err != nil {
+				return ctype, nil, err
+			}
+
 		case client.FieldKind_FLOAT_ARRAY:
 			floatArray := make([]float64, len(array))
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to float64.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = floatArray
+
+		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+			val, err = convertNillableArray[float64](array)
+			if err != nil {
+				return ctype, nil, err
+			}
+
 		case client.FieldKind_STRING_ARRAY:
 			stringArray := make([]string, len(array))
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, fmt.Errorf(
+					return ctype, nil, errors.New(fmt.Sprintf(
 						"Could not convert type: %T, value: %v to string.",
 						untypedValue,
 						untypedValue,
-					)
+					))
 				}
 			}
 			val = stringArray
+
+		case client.FieldKind_NILLABLE_STRING_ARRAY:
+			val, err = convertNillableArray[string](array)
+			if err != nil {
+				return ctype, nil, err
+			}
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch e.Desc.Kind {
@@ -118,6 +137,63 @@ func (e encProperty) Decode() (client.CType, interface{}, error) {
 	}
 
 	return ctype, val, nil
+}
+
+func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
+	resultArray := make([]client.Option[T], len(items))
+	for i, untypedValue := range items {
+		if untypedValue == nil {
+			resultArray[i] = client.None[T]()
+			continue
+		}
+		value, ok := untypedValue.(T)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(
+				"Could not convert type: %T, value: %v to %T.",
+				untypedValue,
+				untypedValue,
+				*new(T),
+			))
+		}
+		resultArray[i] = client.Some(value)
+	}
+	return resultArray, nil
+}
+
+func convertNillableArrayWithConverter[TOut any](
+	items []any,
+	converter func(in any) (TOut, error),
+) ([]client.Option[TOut], error) {
+	resultArray := make([]client.Option[TOut], len(items))
+	for i, untypedValue := range items {
+		if untypedValue == nil {
+			resultArray[i] = client.None[TOut]()
+			continue
+		}
+		value, err := converter(untypedValue)
+		if err != nil {
+			return nil, err
+		}
+		resultArray[i] = client.Some(value)
+	}
+	return resultArray, nil
+}
+
+func convertToInt(untypedValue any) (int64, error) {
+	switch value := untypedValue.(type) {
+	case uint64:
+		return int64(value), nil
+	case int64:
+		return value, nil
+	case float64:
+		return int64(value), nil
+	default:
+		return 0, errors.New(fmt.Sprintf(
+			"Could not convert type: %T, value: %v to int64.",
+			untypedValue,
+			untypedValue,
+		))
+	}
 }
 
 // @todo: Implement Encoded Document type

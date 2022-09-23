@@ -14,15 +14,18 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -62,11 +65,16 @@ func toSelect(
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
-	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping)
+	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
 	fields = append(fields, filterDependencies...)
+
+	// Resolve order dependencies that may have been missed due to not being rendered.
+	if err := resolveOrderDependencies(descriptionsRepo, collectionName, parsed.OrderBy, mapping, &fields); err != nil {
+		return nil, err
+	}
 
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
@@ -96,6 +104,48 @@ func toSelect(
 		CollectionName:  collectionName,
 		Fields:          fields,
 	}, nil
+}
+
+// resolveOrderDependencies will map fields that were missed due to them not being requested.
+// Modifies the consumed existingFields and mapping accordingly.
+func resolveOrderDependencies(
+	descriptionsRepo *DescriptionsRepo,
+	descName string,
+	source *parserTypes.OrderBy,
+	mapping *core.DocumentMapping,
+	existingFields *[]Requestable,
+) error {
+	if source == nil {
+		return nil
+	}
+
+	// If there is orderby, and any one of the condition fields that are join fields and have not been
+	// requested, we need to map them here.
+	for _, condition := range source.Conditions {
+		fieldNames := strings.Split(condition.Field, ".")
+		if len(fieldNames) <= 1 {
+			continue
+		}
+
+		joinField := fieldNames[0]
+
+		// Check if the join field is already mapped, if not then map it.
+		if isOrderJoinFieldMapped := len(mapping.IndexesByName[joinField]) != 0; !isOrderJoinFieldMapped {
+			index := mapping.GetNextIndex()
+			mapping.Add(index, joinField)
+
+			// Resolve the inner child fields and get it's mapping.
+			dummyJoinFieldSelect := parser.Select{Name: joinField}
+			innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
+			if err != nil {
+				return err
+			}
+			*existingFields = append(*existingFields, innerSelect)
+			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+		}
+	}
+
+	return nil
 }
 
 // resolveAggregates figures out which fields the given aggregates are targeting
@@ -133,6 +183,18 @@ func resolveAggregates(
 			if childIsMapped {
 				fieldDesc, isField := desc.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
+					var order *OrderBy
+					if target.order != nil && len(target.order.Conditions) > 0 {
+						// For inline arrays the order element will consist of just a direction
+						order = &OrderBy{
+							Conditions: []OrderCondition{
+								{
+									Direction: SortDirection(target.order.Conditions[0].Direction),
+								},
+							},
+						}
+					}
+
 					// If the hostExternalName matches a non-object field
 					// we don't have to search for it and can just construct the
 					// targeting info here.
@@ -142,13 +204,21 @@ func resolveAggregates(
 							Index: int(fieldDesc.ID),
 							Name:  target.hostExternalName,
 						},
-						Filter: ToFilter(target.filter, mapping),
+						Filter:  ToFilter(target.filter, mapping),
+						Limit:   target.limit,
+						OrderBy: order,
 					}
 				} else {
 					childObjectIndex := mapping.FirstIndexOfName(target.hostExternalName)
-					convertedFilter = ToFilter(target.filter, &mapping.ChildMappings[childObjectIndex])
-
-					host, hasHost = tryGetTarget(target.hostExternalName, convertedFilter, fields)
+					childMapping := mapping.ChildMappings[childObjectIndex]
+					convertedFilter = ToFilter(target.filter, childMapping)
+					host, hasHost = tryGetTarget(
+						target.hostExternalName,
+						convertedFilter,
+						target.limit,
+						toOrderBy(target.order, childMapping),
+						fields,
+					)
 				}
 			}
 
@@ -171,12 +241,12 @@ func resolveAggregates(
 					return nil, err
 				}
 				childMapping = childMapping.CloneWithoutRender()
-				mapping.SetChildAt(index, *childMapping)
+				mapping.SetChildAt(index, childMapping)
 
 				if !childIsMapped {
 					// If the child was not mapped, the filter will not have been converted yet
 					// so we must do that now.
-					convertedFilter = ToFilter(target.filter, &mapping.ChildMappings[index])
+					convertedFilter = ToFilter(target.filter, mapping.ChildMappings[index])
 				}
 
 				dummyJoin := &Select{
@@ -185,7 +255,9 @@ func resolveAggregates(
 							Index: index,
 							Name:  target.hostExternalName,
 						},
-						Filter: convertedFilter,
+						Filter:  convertedFilter,
+						Limit:   target.limit,
+						OrderBy: toOrderBy(target.order, childMapping),
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: *childMapping,
@@ -216,16 +288,16 @@ func resolveAggregates(
 				hostSelect, isHostSelectable := host.AsSelect()
 				if !isHostSelectable {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, fmt.Errorf(
+					return nil, errors.New(
 						"Aggregate target host must be selectable, but was not",
 					)
 				}
 
 				if len(hostSelect.IndexesByName[target.childExternalName]) == 0 {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"Unable to identify aggregate child: %s", target.childExternalName,
-					)
+					))
 				}
 
 				childTarget = OptionalChildTarget{
@@ -307,13 +379,15 @@ func appendUnderlyingAggregates(
 
 		for _, target := range aggregate.targets {
 			if target.childExternalName != "" {
-				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; !isAggregate {
-					// Append a not-nil filter if the target is not an aggregate.
-					// Aggregate-targets are excluded here as they are assumed to always have a value and
-					// amending the filter introduces significant complexity for both machine and developer.
-					appendNotNilFilter(target, target.childExternalName)
+				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; isAggregate {
+					continue
 				}
 			}
+			// Append a not-nil filter if the target is not an aggregate.
+			// If the target has no childExternalName we assume it is an inline-array (and thus not an aggregate).
+			// Aggregate-targets are excluded here as they are assumed to always have a value and
+			// amending the filter introduces significant complexity for both machine and developer.
+			appendNotNilFilter(target, target.childExternalName)
 		}
 
 		for _, dependencyName := range dependencies {
@@ -361,7 +435,8 @@ func appendIfNotExists(
 }
 
 // getRequestables returns a converted slice of consumer-requested Requestables
-// and aggregateRequests from the given parsed.Fields slice.
+// and aggregateRequests from the given parsed.Fields slice. It also mutates the
+// consumed mapping data.
 func getRequestables(
 	parsed *parser.Select,
 	mapping *core.DocumentMapping,
@@ -423,7 +498,7 @@ func getRequestables(
 					return nil, nil, err
 				}
 				fields = append(fields, innerSelect)
-				mapping.SetChildAt(index, innerSelect.DocumentMapping)
+				mapping.SetChildAt(index, &innerSelect.DocumentMapping)
 			}
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
@@ -433,10 +508,10 @@ func getRequestables(
 
 			mapping.Add(index, f.Name)
 		default:
-			return nil, nil, fmt.Errorf(
+			return nil, nil, errors.New(fmt.Sprintf(
 				"Unexpected field type: %T",
 				field,
-			)
+			))
 		}
 	}
 	return
@@ -449,7 +524,7 @@ func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest
 	}
 
 	if len(aggregateTargets) == 0 {
-		return aggregateRequest{}, fmt.Errorf(
+		return aggregateRequest{}, errors.New(
 			"Aggregate must be provided with a property to aggregate.",
 		)
 	}
@@ -551,6 +626,7 @@ func resolveFilterDependencies(
 	parentCollectionName string,
 	source *parser.Filter,
 	mapping *core.DocumentMapping,
+	existingFields []Requestable,
 ) ([]Requestable, error) {
 	if source == nil {
 		return nil, nil
@@ -561,14 +637,16 @@ func resolveFilterDependencies(
 		parentCollectionName,
 		source.Conditions,
 		mapping,
+		existingFields,
 	)
 }
 
 func resolveInnerFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source map[string]interface{},
+	source map[string]any,
 	mapping *core.DocumentMapping,
+	existingFields []Requestable,
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
@@ -579,14 +657,62 @@ func resolveInnerFilterDependencies(
 
 		propertyMapped := len(mapping.IndexesByName[key]) != 0
 
-		if propertyMapped {
-			// Inner properties should be recursively checked here, however at the moment
-			// filters do not support querying any deeper anyway.
-			// https://github.com/sourcenetwork/defradb/issues/509
+		if !propertyMapped {
+			index := mapping.GetNextIndex()
+
+			dummyParsed := &parser.Select{
+				Name: key,
+			}
+
+			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
+			if err != nil {
+				return nil, err
+			}
+
+			childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+			if err != nil {
+				return nil, err
+			}
+			childMapping = childMapping.CloneWithoutRender()
+			mapping.SetChildAt(index, childMapping)
+
+			dummyJoin := &Select{
+				Targetable: Targetable{
+					Field: Field{
+						Index: index,
+						Name:  key,
+					},
+				},
+				CollectionName:  childCollectionName,
+				DocumentMapping: *childMapping,
+			}
+
+			newFields = append(newFields, dummyJoin)
+			mapping.Add(index, key)
+		}
+
+		keyIndex := mapping.FirstIndexOfName(key)
+
+		if keyIndex >= len(mapping.ChildMappings) {
+			// If the key index is outside the bounds of the child mapping array, then
+			// this is not a relation/join and we can continue (no child props to process)
 			continue
 		}
 
-		index := mapping.GetNextIndex()
+		childMap := mapping.ChildMappings[keyIndex]
+		if childMap == nil {
+			// If childMap is nil, then this is not a relation/join and we can continue
+			// (no child props to process)
+			continue
+		}
+
+		childSource := source[key]
+		childFilter, isChildFilter := childSource.(map[string]any)
+		if !isChildFilter {
+			// If the filter is not a child filter then the will be no inner dependencies to add and
+			// we can continue.
+			continue
+		}
 
 		dummyParsed := &parser.Select{
 			Name: key,
@@ -597,26 +723,45 @@ func resolveInnerFilterDependencies(
 			return nil, err
 		}
 
-		childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+		allFields := enumerable.Concat(
+			enumerable.New(newFields),
+			enumerable.New(existingFields),
+		)
+
+		matchingFields := enumerable.Where(allFields, func(existingField Requestable) (bool, error) {
+			return existingField.GetIndex() == keyIndex, nil
+		})
+
+		matchingHosts := enumerable.Select(matchingFields, func(existingField Requestable) (*Select, error) {
+			host, isSelect := existingField.AsSelect()
+			if !isSelect {
+				// This should never be possible
+				return nil, errors.New("Host must be a Select, but was not")
+			}
+			return host, nil
+		})
+
+		host, hasHost, err := enumerable.TryGetFirst(matchingHosts)
 		if err != nil {
 			return nil, err
 		}
-		childMapping = childMapping.CloneWithoutRender()
-		mapping.SetChildAt(index, *childMapping)
-
-		dummyJoin := &Select{
-			Targetable: Targetable{
-				Field: Field{
-					Index: index,
-					Name:  key,
-				},
-			},
-			CollectionName:  childCollectionName,
-			DocumentMapping: *childMapping,
+		if !hasHost {
+			// This should never be possible
+			return nil, errors.New("Failed to find host field")
 		}
 
-		newFields = append(newFields, dummyJoin)
-		mapping.Add(index, key)
+		childFields, err := resolveInnerFilterDependencies(
+			descriptionsRepo,
+			childCollectionName,
+			childFilter,
+			childMap,
+			host.Fields,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		host.Fields = append(host.Fields, childFields...)
 	}
 
 	return newFields, nil
@@ -675,14 +820,14 @@ func toField(index int, parsed *parser.Select) Field {
 	}
 }
 
-// ConvertFilter converts the given `source` parser filter to a Filter using the given mapping.
+// ToFilter converts the given `source` parser filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
 func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
 	if source == nil {
 		return nil
 	}
-	conditions := make(map[connor.FilterKey]interface{}, len(source.Conditions))
+	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
 
 	for sourceKey, sourceClause := range source.Conditions {
 		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
@@ -695,28 +840,28 @@ func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
 	}
 }
 
-// convertFilterMap converts a consumer-defined filter key-value into a filter clause
+// toFilterMap converts a consumer-defined filter key-value into a filter clause
 // keyed by field index.
 //
 // Return key will either be an int (field index), or a string (operator).
 func toFilterMap(
 	sourceKey string,
-	sourceClause interface{},
+	sourceClause any,
 	mapping *core.DocumentMapping,
-) (connor.FilterKey, interface{}) {
+) (connor.FilterKey, any) {
 	if strings.HasPrefix(sourceKey, "_") && sourceKey != parserTypes.DocKeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
 		switch typedClause := sourceClause.(type) {
-		case []interface{}:
+		case []any:
 			// If the clause is an array then we need to convert any inner maps.
-			returnClauses := []interface{}{}
+			returnClauses := []any{}
 			for _, innerSourceClause := range typedClause {
-				var returnClause interface{}
+				var returnClause any
 				switch typedInnerSourceClause := innerSourceClause.(type) {
-				case map[string]interface{}:
-					innerMapClause := map[connor.FilterKey]interface{}{}
+				case map[string]any:
+					innerMapClause := map[connor.FilterKey]any{}
 					for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
 						rKey, rValue := toFilterMap(innerSourceKey, innerSourceValue, mapping)
 						innerMapClause[rKey] = rValue
@@ -741,16 +886,16 @@ func toFilterMap(
 			Index: index,
 		}
 		switch typedClause := sourceClause.(type) {
-		case map[string]interface{}:
-			returnClause := map[connor.FilterKey]interface{}{}
+		case map[string]any:
+			returnClause := map[connor.FilterKey]any{}
 			for innerSourceKey, innerSourceValue := range typedClause {
 				var innerMapping *core.DocumentMapping
 				switch innerSourceValue.(type) {
-				case map[string]interface{}:
+				case map[string]any:
 					// If the innerSourceValue is also a map, then we should parse the nested clause
 					// using the child mapping, as this key must refer to a host property in a join
 					// and deeper keys must refer to properties on the child items.
-					innerMapping = &mapping.ChildMappings[index]
+					innerMapping = mapping.ChildMappings[index]
 				default:
 					innerMapping = mapping
 				}
@@ -818,7 +963,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 			fieldIndexes[fieldIndex] = firstFieldIndex
 			if fieldIndex != len(fields)-1 {
 				// no need to do this for the last (and will panic)
-				currentMapping = &currentMapping.ChildMappings[firstFieldIndex]
+				currentMapping = currentMapping.ChildMappings[firstFieldIndex]
 			}
 		}
 
@@ -835,7 +980,7 @@ func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *Orde
 
 // RunFilter runs the given filter expression
 // using the document, and evaluates.
-func RunFilter(doc interface{}, filter *Filter) (bool, error) {
+func RunFilter(doc any, filter *Filter) (bool, error) {
 	if filter == nil {
 		return true, nil
 	}
@@ -844,23 +989,124 @@ func RunFilter(doc interface{}, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-// Note: Currently only compares Name and Filter as that is all that is currently required,
-// but this should be extended in the future.
 func (s Targetable) equal(other Targetable) bool {
 	if s.Index != other.Index &&
 		s.Name != other.Name {
 		return false
 	}
 
-	if s.Filter == nil {
-		return other.Filter == nil
+	if !s.Filter.equal(other.Filter) {
+		return false
 	}
 
-	if other.Filter == nil {
-		return s.Filter == nil
+	if !s.Limit.equal(other.Limit) {
+		return false
 	}
 
-	return reflect.DeepEqual(s.Filter.Conditions, other.Filter.Conditions)
+	if !s.OrderBy.equal(other.OrderBy) {
+		return false
+	}
+
+	return true
+}
+
+func (l *Limit) equal(other *Limit) bool {
+	if l == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return l == nil
+	}
+
+	return l.Limit == other.Limit && l.Offset == other.Offset
+}
+
+func (f *Filter) equal(other *Filter) bool {
+	if f == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return f == nil
+	}
+
+	return deepEqualConditions(f.Conditions, other.Conditions)
+}
+
+// deepEqualConditions performs a deep equality of two conditions.
+// Handles: map[0xc00069cfd0:map[0xc005eda8c0:<nil>]] -> map[{5}:map[{_ne}:<nil>]]
+func deepEqualConditions(x map[connor.FilterKey]any, y map[connor.FilterKey]any) bool {
+	if len(x) != len(y) {
+		return false
+	}
+
+	for xKey, xValue := range x {
+		var isFoundInY bool
+
+		// Ensure a matching key exists in the other map.
+		for yKey, yValue := range y {
+			if !xKey.Equal(yKey) {
+				continue
+			}
+
+			xValueConditions, xOk := xValue.(map[connor.FilterKey]any)
+			yValueConditions, yOk := yValue.(map[connor.FilterKey]any)
+			if xOk && yOk {
+				if deepEqualConditions(xValueConditions, yValueConditions) {
+					isFoundInY = true
+					break
+				}
+			} else if !xOk && !yOk {
+				// Both are some basic values.
+				if reflect.DeepEqual(xValue, yValue) {
+					isFoundInY = true
+					break
+				}
+			}
+		}
+
+		// No matching key (including matching data, of the pointer keys) found, so exit early.
+		if !isFoundInY {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (o *OrderBy) equal(other *OrderBy) bool {
+	if o == nil {
+		return other == nil
+	}
+
+	if other == nil {
+		return o == nil
+	}
+
+	if len(o.Conditions) != len(other.Conditions) {
+		return false
+	}
+
+	for i, conditionA := range o.Conditions {
+		conditionB := other.Conditions[i]
+		if conditionA.Direction != conditionB.Direction {
+			return false
+		}
+
+		if len(conditionA.FieldIndexes) != len(conditionB.FieldIndexes) {
+			return false
+		}
+
+		for j, fieldIndexA := range conditionA.FieldIndexes {
+			fieldIndexB := conditionB.FieldIndexes[j]
+			if fieldIndexA != fieldIndexB {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 // aggregateRequest is an intermediary struct defining a consumer-requested
@@ -895,6 +1141,13 @@ type aggregateRequestTarget struct {
 
 	// The aggregate filter specified by the consumer for this target. Optional.
 	filter *parser.Filter
+
+	// The aggregate limit-offset specified by the consumer for this target. Optional.
+	limit *Limit
+
+	// The order in which items should be aggregated. Affects results when used with
+	// limit. Optional.
+	order *parserTypes.OrderBy
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -911,6 +1164,8 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 			hostExternalName := argument.Name.Value
 			var childExternalName string
 			var filter *parser.Filter
+			var limit *Limit
+			var order *parserTypes.OrderBy
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
 			if hasFieldArg {
@@ -928,10 +1183,72 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 				}
 			}
 
+			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
+			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
+			var limitValue int64
+			var offsetValue int64
+			if hasLimitArg {
+				var err error
+				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if hasOffsetArg {
+				var err error
+				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if hasLimitArg || hasOffsetArg {
+				limit = &Limit{
+					Limit:  limitValue,
+					Offset: offsetValue,
+				}
+			}
+
+			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
+			if hasOrderArg {
+				switch orderArgValue := orderArg.Value.(type) {
+				case *ast.EnumValue:
+					// For inline arrays the order arg will be a simple enum declaring the order direction
+					orderDirectionString := orderArgValue.Value
+					orderDirection := parserTypes.OrderDirection(orderDirectionString)
+
+					order = &parserTypes.OrderBy{
+						Conditions: []parserTypes.OrderCondition{
+							{
+								Direction: orderDirection,
+							},
+						},
+					}
+
+				case *ast.ObjectValue:
+					// For relations the order arg will be the complex order object as used by the host object
+					// for non-aggregate ordering
+
+					// We use the parser package parsing for convienience here
+					orderConditions, err := parser.ParseConditionsInOrder(orderArgValue)
+					if err != nil {
+						return nil, err
+					}
+
+					order = &parserTypes.OrderBy{
+						Conditions: orderConditions,
+						Statement:  orderArgValue,
+					}
+				}
+			}
+
 			targets[i] = &aggregateRequestTarget{
 				hostExternalName:  hostExternalName,
 				childExternalName: childExternalName,
 				filter:            filter,
+				limit:             limit,
+				order:             order,
 			}
 		}
 	}
@@ -1004,12 +1321,20 @@ collectionLoop:
 //
 // If a match is found the matching field will be returned along with true. If a match is not
 // found, nil and false will be returned.
-func tryGetTarget(name string, filter *Filter, collection []Requestable) (Requestable, bool) {
+func tryGetTarget(
+	name string,
+	filter *Filter,
+	limit *Limit,
+	order *OrderBy,
+	collection []Requestable,
+) (Requestable, bool) {
 	dummyTarget := Targetable{
 		Field: Field{
 			Name: name,
 		},
-		Filter: filter,
+		Filter:  filter,
+		Limit:   limit,
+		OrderBy: order,
 	}
 
 	for _, field := range collection {
@@ -1033,15 +1358,21 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	if field.filter.Conditions == nil {
-		field.filter.Conditions = map[string]interface{}{}
+		field.filter.Conditions = map[string]any{}
 	}
 
-	childBlock, hasChildBlock := field.filter.Conditions[childField]
-	if !hasChildBlock {
-		childBlock = map[string]interface{}{}
-		field.filter.Conditions[childField] = childBlock
+	var childBlock any
+	var hasChildBlock bool
+	if childField == "" {
+		childBlock = field.filter.Conditions
+	} else {
+		childBlock, hasChildBlock = field.filter.Conditions[childField]
+		if !hasChildBlock {
+			childBlock = map[string]any{}
+			field.filter.Conditions[childField] = childBlock
+		}
 	}
 
-	typedChildBlock := childBlock.(map[string]interface{})
+	typedChildBlock := childBlock.(map[string]any)
 	typedChildBlock["_ne"] = nil
 }

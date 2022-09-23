@@ -26,7 +26,7 @@ type PropertyIndex struct {
 	Index int
 }
 
-func (k *PropertyIndex) GetProp(data interface{}) interface{} {
+func (k *PropertyIndex) GetProp(data any) any {
 	if data == nil {
 		return nil
 	}
@@ -38,6 +38,13 @@ func (k *PropertyIndex) GetOperatorOrDefault(defaultOp string) string {
 	return defaultOp
 }
 
+func (k *PropertyIndex) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*PropertyIndex); isOk && *k == *otherKey {
+		return true
+	}
+	return false
+}
+
 // Operator is a FilterKey that represents a filter operator.
 type Operator struct {
 	// The filter operation string that this Operator represents.
@@ -46,7 +53,7 @@ type Operator struct {
 	Operation string
 }
 
-func (k *Operator) GetProp(data interface{}) interface{} {
+func (k *Operator) GetProp(data any) any {
 	return data
 }
 
@@ -54,19 +61,26 @@ func (k *Operator) GetOperatorOrDefault(defaultOp string) string {
 	return k.Operation
 }
 
+func (k *Operator) Equal(other connor.FilterKey) bool {
+	if otherKey, isOk := other.(*Operator); isOk && *k == *otherKey {
+		return true
+	}
+	return false
+}
+
 // Filter represents a series of conditions that may reduce the number of
 // records that a query returns.
 type Filter struct {
 	// The filter conditions that must pass in order for a record to be returned.
-	Conditions map[connor.FilterKey]interface{}
+	Conditions map[connor.FilterKey]any
 
 	// The filter conditions in human-readable form.
-	ExternalConditions map[string]interface{}
+	ExternalConditions map[string]any
 }
 
 func NewFilter() *Filter {
 	return &Filter{
-		Conditions: map[connor.FilterKey]interface{}{},
+		Conditions: map[connor.FilterKey]any{},
 	}
 }
 

@@ -1,0 +1,34 @@
+name: Run Tests Workflow
+
+on: [push]
+
+jobs:
+  run-tests:
+    name: Run tests job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.18"
+          check-latest: true
+
+      - name: Build dependencies
+        run: |
+          make deps:modules
+          make deps:test
+
+      - name: Build binary
+        run: make build
+
+        # This is to ensure tests pass with a running server.
+      - name: Start server from binary
+        run: ./build/defradb start &
+
+      - name: Run the tests, showing name of each test
+        run: make test:ci
