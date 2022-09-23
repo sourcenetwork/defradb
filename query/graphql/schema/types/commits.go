@@ -107,10 +107,11 @@ var (
 		Name: "allCommits",
 		Type: gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey":                NewArgConfig(gql.NewNonNull(gql.ID)),
-			"field":                 NewArgConfig(gql.String),
-			"order":                 NewArgConfig(AllCommitsOrderArg),
-			parserTypes.LimitClause: NewArgConfig(gql.Int),
+			"dockey":                 NewArgConfig(gql.NewNonNull(gql.ID)),
+			"field":                  NewArgConfig(gql.String),
+			"order":                  NewArgConfig(AllCommitsOrderArg),
+			parserTypes.LimitClause:  NewArgConfig(gql.Int),
+			parserTypes.OffsetClause: NewArgConfig(gql.Int),
 		},
 	}
 
