@@ -71,6 +71,11 @@ func toSelect(
 	}
 	fields = append(fields, filterDependencies...)
 
+	// Resolve order dependencies that may have been missed due to not being rendered.
+	if err := resolveOrderDependencies(descriptionsRepo, collectionName, parsed.OrderBy, mapping, &fields); err != nil {
+		return nil, err
+	}
+
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
 		parsed,
@@ -99,6 +104,48 @@ func toSelect(
 		CollectionName:  collectionName,
 		Fields:          fields,
 	}, nil
+}
+
+// resolveOrderDependencies will map fields that were missed due to them not being requested.
+// Modifies the consumed existingFields and mapping accordingly.
+func resolveOrderDependencies(
+	descriptionsRepo *DescriptionsRepo,
+	descName string,
+	source *parserTypes.OrderBy,
+	mapping *core.DocumentMapping,
+	existingFields *[]Requestable,
+) error {
+	if source == nil {
+		return nil
+	}
+
+	// If there is orderby, and any one of the condition fields that are join fields and have not been
+	// requested, we need to map them here.
+	for _, condition := range source.Conditions {
+		fieldNames := strings.Split(condition.Field, ".")
+		if len(fieldNames) <= 1 {
+			continue
+		}
+
+		joinField := fieldNames[0]
+
+		// Check if the join field is already mapped, if not then map it.
+		if isOrderJoinFieldMapped := len(mapping.IndexesByName[joinField]) != 0; !isOrderJoinFieldMapped {
+			index := mapping.GetNextIndex()
+			mapping.Add(index, joinField)
+
+			// Resolve the inner child fields and get it's mapping.
+			dummyJoinFieldSelect := parser.Select{Name: joinField}
+			innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
+			if err != nil {
+				return err
+			}
+			*existingFields = append(*existingFields, innerSelect)
+			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+		}
+	}
+
+	return nil
 }
 
 // resolveAggregates figures out which fields the given aggregates are targeting
@@ -388,7 +435,8 @@ func appendIfNotExists(
 }
 
 // getRequestables returns a converted slice of consumer-requested Requestables
-// and aggregateRequests from the given parsed.Fields slice.
+// and aggregateRequests from the given parsed.Fields slice. It also mutates the
+// consumed mapping data.
 func getRequestables(
 	parsed *parser.Select,
 	mapping *core.DocumentMapping,
