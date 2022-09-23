@@ -272,7 +272,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 		n.queuedCids.Remove(c)
 		n.cid = &cid
-	} else if n.headset != nil {
+	} else if n.cid == nil && n.headset != nil {
 		if next, err := n.headset.Next(); !next {
 			return false, err
 		}

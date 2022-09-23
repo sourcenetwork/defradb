@@ -110,6 +110,7 @@ var (
 			"dockey":                 NewArgConfig(gql.NewNonNull(gql.ID)),
 			"field":                  NewArgConfig(gql.String),
 			"order":                  NewArgConfig(AllCommitsOrderArg),
+			"cid":                    NewArgConfig(gql.ID),
 			parserTypes.LimitClause:  NewArgConfig(gql.Int),
 			parserTypes.OffsetClause: NewArgConfig(gql.Int),
 		},
