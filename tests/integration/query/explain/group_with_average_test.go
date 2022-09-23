@@ -95,30 +95,6 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 											{
 												"collectionName": "author",
 												"docKeys":        nil,
-												"filter": dataMap{
-													"age": dataMap{
-														"_ne": nil,
-													},
-												},
-												"groupBy": nil,
-												"limit":   nil,
-												"orderBy": nil,
-											},
-											{
-												"collectionName": "author",
-												"docKeys":        nil,
-												"filter": dataMap{
-													"age": dataMap{
-														"_ne": nil,
-													},
-												},
-												"groupBy": nil,
-												"limit":   nil,
-												"orderBy": nil,
-											},
-											{
-												"collectionName": "author",
-												"docKeys":        nil,
 												"groupBy":        nil,
 												"limit":          nil,
 												"orderBy":        nil,

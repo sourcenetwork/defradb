@@ -3,13 +3,14 @@ package connor
 import (
 	"reflect"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor/numbers"
 	"github.com/sourcenetwork/defradb/core"
 )
 
 // eq is an operator which performs object equality
 // tests.
-func eq(condition, data interface{}) (bool, error) {
+func eq(condition, data any) (bool, error) {
 	switch arr := data.(type) {
 	case []core.Doc:
 		for _, item := range arr {
@@ -23,6 +24,30 @@ func eq(condition, data interface{}) (bool, error) {
 			}
 		}
 		return false, nil
+
+	case client.Option[bool]:
+		if !arr.HasValue() {
+			return condition == nil, nil
+		}
+		data = arr.Value()
+
+	case client.Option[int64]:
+		if !arr.HasValue() {
+			return condition == nil, nil
+		}
+		data = arr.Value()
+
+	case client.Option[float64]:
+		if !arr.HasValue() {
+			return condition == nil, nil
+		}
+		data = arr.Value()
+
+	case client.Option[string]:
+		if !arr.HasValue() {
+			return condition == nil, nil
+		}
+		data = arr.Value()
 	}
 
 	switch cn := condition.(type) {
@@ -35,7 +60,7 @@ func eq(condition, data interface{}) (bool, error) {
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
-	case map[FilterKey]interface{}:
+	case map[FilterKey]any:
 		m := true
 		for prop, cond := range cn {
 			var err error

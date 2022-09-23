@@ -37,7 +37,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 				},
@@ -62,7 +62,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 		{
 			Description: "Simple query with basic float greater than filter, multiple results",
@@ -83,7 +83,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "Bob",
 				},
@@ -119,7 +119,36 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
+			{
+				"Name": "John",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic float greater than filter, with null filter value",
+		Query: `query {
+					users(filter: {HeightM: {_gt: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+			},
+		},
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},

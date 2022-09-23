@@ -48,14 +48,14 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
-										"filter":    nil,
+										"filter":    dataMap{"_ne": nil},
 										"fieldName": "chapterPages",
 									},
 								},
 								"sumNode": dataMap{
 									"sources": []dataMap{
 										{
-											"filter":         nil,
+											"filter":         dataMap{"_ne": nil},
 											"fieldName":      "chapterPages",
 											"childFieldName": nil,
 										},
@@ -86,8 +86,6 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This a documentation only test, and is most likely a bug:
-// ISSUE: https://github.com/sourcenetwork/defradb/issues/640
 func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a average query on joined field.",
@@ -172,127 +170,39 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 									},
 									"selectNode": dataMap{
 										"filter": nil,
-										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "books",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "2",
-																	"collectionName": "book",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/2",
-																			"end":   "/3",
-																		},
-																	},
-																},
-															},
+										"typeIndexJoin": dataMap{
+											"joinType": "typeJoinMany",
+											"rootName": "author",
+											"root": dataMap{
+												"scanNode": dataMap{
+													"collectionID":   "3",
+													"collectionName": "author",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"start": "/3",
+															"end":   "/4",
 														},
 													},
 												},
 											},
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
+											"subTypeName": "books",
+											"subType": dataMap{
+												"selectTopNode": dataMap{
+													"selectNode": dataMap{
+														"filter": nil,
 														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
+															"collectionID":   "2",
+															"collectionName": "book",
+															"filter": dataMap{
+																"pages": dataMap{
+																	"_ne": nil,
+																},
+															},
 															"spans": []dataMap{
 																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "books",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "2",
-																	"collectionName": "book",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/2",
-																			"end":   "/3",
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "books",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "2",
-																	"collectionName": "book",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/2",
-																			"end":   "/3",
-																		},
-																	},
+																	"start": "/2",
+																	"end":   "/3",
 																},
 															},
 														},
@@ -313,8 +223,6 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This a documentation only test, and is most likely a bug:
-// ISSUE: https://github.com/sourcenetwork/defradb/issues/640
 func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a average query on multiple joined fields with filter.",
@@ -445,176 +353,6 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 									"selectNode": dataMap{
 										"filter": nil,
 										"parallelNode": []dataMap{
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "books",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "2",
-																	"collectionName": "book",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/2",
-																			"end":   "/3",
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "articles",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "1",
-																	"collectionName": "article",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_gt": int64(3),
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/1",
-																			"end":   "/2",
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "books",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "2",
-																	"collectionName": "book",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/2",
-																			"end":   "/3",
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
-											{
-												"typeIndexJoin": dataMap{
-													"joinType": "typeJoinMany",
-													"rootName": "author",
-													"root": dataMap{
-														"scanNode": dataMap{
-															"collectionID":   "3",
-															"collectionName": "author",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/3",
-																	"end":   "/4",
-																},
-															},
-														},
-													},
-													"subTypeName": "articles",
-													"subType": dataMap{
-														"selectTopNode": dataMap{
-															"selectNode": dataMap{
-																"filter": nil,
-																"scanNode": dataMap{
-																	"collectionID":   "1",
-																	"collectionName": "article",
-																	"filter": dataMap{
-																		"pages": dataMap{
-																			"_gt": int64(3),
-																			"_ne": nil,
-																		},
-																	},
-																	"spans": []dataMap{
-																		{
-																			"start": "/1",
-																			"end":   "/2",
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-											},
 											{
 												"typeIndexJoin": dataMap{
 													"joinType": "typeJoinMany",

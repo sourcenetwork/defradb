@@ -45,7 +45,58 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
+			{
+				"Name": "Alice",
+				"Age":  uint64(19),
+			},
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with special filter (or)",
+		Query: `query {
+					users(filter: {Age: {_in: [19, 40, 55, null]}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+				`{
+					"Name": "Fred"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Fred",
+				"Age":  nil,
+			},
 			{
 				"Name": "Alice",
 				"Age":  uint64(19),

@@ -12,6 +12,7 @@ package schema
 
 import (
 	gql "github.com/graphql-go/graphql"
+
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
@@ -128,6 +129,19 @@ func defaultDirectivesType() []*gql.Directive {
 	}
 }
 
+func inlineArrayTypes() []gql.Type {
+	return []gql.Type{
+		gql.Boolean,
+		gql.Float,
+		gql.Int,
+		gql.String,
+		gql.NewNonNull(gql.Boolean),
+		gql.NewNonNull(gql.Float),
+		gql.NewNonNull(gql.Int),
+		gql.NewNonNull(gql.String),
+	}
+}
+
 // default type map includes all the native scalar types
 func defaultTypes() []gql.Type {
 	return []gql.Type{
@@ -142,20 +156,21 @@ func defaultTypes() []gql.Type {
 		// Base Query types
 
 		// Sort/Order enum
-		orderingEnum,
+		schemaTypes.OrderingEnum,
 
 		// Filter scalar blocks
-		booleanOperatorBlock,
-		notNullBooleanOperatorBlock,
-		dateTimeOperatorBlock,
-		floatOperatorBlock,
-		notNullFloatOperatorBlock,
-		idOperatorBlock,
-		intOperatorBlock,
-		notNullIntOperatorBlock,
-		stringOperatorBlock,
-		notNullstringOperatorBlock,
+		schemaTypes.BooleanOperatorBlock,
+		schemaTypes.NotNullBooleanOperatorBlock,
+		schemaTypes.DateTimeOperatorBlock,
+		schemaTypes.FloatOperatorBlock,
+		schemaTypes.NotNullFloatOperatorBlock,
+		schemaTypes.IdOperatorBlock,
+		schemaTypes.IntOperatorBlock,
+		schemaTypes.NotNullIntOperatorBlock,
+		schemaTypes.StringOperatorBlock,
+		schemaTypes.NotNullstringOperatorBlock,
 
+		schemaTypes.AllCommitsOrderArg,
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 		schemaTypes.DeltaObject,

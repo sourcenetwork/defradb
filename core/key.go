@@ -17,7 +17,9 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -110,8 +112,16 @@ func NewDataStoreKey(key string) DataStoreKey {
 	}
 
 	elements := strings.Split(key, "/")
-	numberOfElements := len(elements)
 
+	if isDataObjectMarker(elements) {
+		return DataStoreKey{
+			CollectionId: elements[3],
+			InstanceType: ValueKey,
+			DocKey:       elements[5],
+		}
+	}
+
+	numberOfElements := len(elements)
 	return DataStoreKey{
 		CollectionId: elements[numberOfElements-4],
 		InstanceType: InstanceType(elements[numberOfElements-3]),
@@ -136,7 +146,7 @@ func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	elements := strings.Split(key, "/")
 	if len(elements) != 4 {
-		return HeadStoreKey{}, fmt.Errorf("Given headstore key string is not in expected format: %s", key)
+		return HeadStoreKey{}, errors.New(fmt.Sprintf("Given headstore key string is not in expected format: %s", key))
 	}
 
 	cid, err := cid.Decode(elements[3])
@@ -422,7 +432,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {
-		return 0, fmt.Errorf("Failed to get FieldID of Key: %w", err)
+		return 0, errors.Wrap("Failed to get FieldID of Key", err)
 	}
 	return uint32(fieldID), nil
 }
@@ -439,4 +449,22 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
+}
+
+func isDataObjectMarker(elements []string) bool {
+	numElements := len(elements)
+	// lenght is 6 because it has no FieldID
+	if numElements != 6 {
+		return false
+	}
+	if elements[1] != "db" {
+		return false
+	}
+	if elements[2] != "data" {
+		return false
+	}
+	if elements[4] != "v" {
+		return false
+	}
+	return true
 }

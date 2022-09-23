@@ -72,14 +72,14 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"name": "John Grisham",
 					"age":  uint64(65),
-					"published": []map[string]interface{}{
+					"published": []map[string]any{
 						{
 							"rating": 4.5,
-							"_group": []map[string]interface{}{
+							"_group": []map[string]any{
 								{
 									"name": "The Client",
 								},
@@ -90,7 +90,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						},
 						{
 							"rating": 4.9,
-							"_group": []map[string]interface{}{
+							"_group": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -101,10 +101,10 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 				{
 					"name": "Cornelia Funke",
 					"age":  uint64(62),
-					"published": []map[string]interface{}{
+					"published": []map[string]any{
 						{
 							"rating": 4.8,
-							"_group": []map[string]interface{}{
+							"_group": []map[string]any{
 								{
 									"name": "Theif Lord",
 								},
@@ -193,13 +193,13 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"age": uint64(327),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name": "Simon Pelloutier",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": float64(2),
@@ -208,7 +208,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						},
 						{
 							"name": "Voltaire",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -223,10 +223,10 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 				},
 				{
 					"age": uint64(65),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name": "John Grisham",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "The Client",
 									"rating": 4.5,

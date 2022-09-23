@@ -12,16 +12,16 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/stretchr/testify/assert"
 )
 
 var envVarsDifferentThanDefault = map[string]string{
@@ -88,7 +88,7 @@ func TestConfigValidateBasic(t *testing.T) {
 
 func TestJSONSerialization(t *testing.T) {
 	cfg := DefaultConfig()
-	var m map[string]interface{}
+	var m map[string]any
 
 	b, errSerialize := cfg.ToJSON()
 	errUnmarshal := json.Unmarshal(b, &m)
@@ -183,11 +183,16 @@ func TestLoadNonExistingConfigFile(t *testing.T) {
 func TestLoadInvalidConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	dir := t.TempDir()
-	ioutil.WriteFile(filepath.Join(dir, DefaultDefraDBConfigFileName), []byte("{"), 0644)
 
-	err := cfg.Load(dir)
+	errWrite := os.WriteFile(
+		filepath.Join(dir, DefaultDefraDBConfigFileName),
+		[]byte("{"),
+		0644,
+	)
+	assert.NoError(t, errWrite)
 
-	assert.Error(t, err)
+	errLoad := cfg.Load(dir)
+	assert.Error(t, errLoad)
 }
 
 func TestInvalidEnvVars(t *testing.T) {
@@ -242,7 +247,6 @@ func TestValidRPCTimeoutDuration(t *testing.T) {
 	_, err := cfg.Net.RPCTimeoutDuration()
 
 	assert.NoError(t, err)
-	assert.NoError(t, err)
 }
 
 func TestInvalidRPCTimeoutDuration(t *testing.T) {
@@ -278,7 +282,7 @@ func TestGetLoggingConfig(t *testing.T) {
 	cfg.Log.Level = "debug"
 	cfg.Log.Format = "json"
 	cfg.Log.Stacktrace = true
-	cfg.Log.OutputPath = "stdout"
+	cfg.Log.Output = "stdout"
 
 	loggingConfig, err := cfg.GetLoggingConfig()
 
@@ -337,4 +341,123 @@ func TestNodeConfig(t *testing.T) {
 	assert.Equal(t, expectedOptions.DataPath, options.DataPath)
 	assert.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	assert.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
+}
+
+func TestUnmarshalByteSize(t *testing.T) {
+	var bs ByteSize
+
+	b := []byte("10")
+	err := bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	b = []byte("10B")
+	err = bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	b = []byte("10 B")
+	err = bs.UnmarshalText(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*B, bs)
+
+	kb := []byte("10KB")
+	err = bs.UnmarshalText(kb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*KiB, bs)
+
+	kb = []byte("10KiB")
+	err = bs.UnmarshalText(kb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*KiB, bs)
+
+	kb = []byte("10 kb")
+	err = bs.UnmarshalText(kb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*KiB, bs)
+
+	mb := []byte("10MB")
+	err = bs.UnmarshalText(mb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*MiB, bs)
+
+	mb = []byte("10MiB")
+	err = bs.UnmarshalText(mb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*MiB, bs)
+
+	gb := []byte("10GB")
+	err = bs.UnmarshalText(gb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*GiB, bs)
+
+	gb = []byte("10GiB")
+	err = bs.UnmarshalText(gb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*GiB, bs)
+
+	tb := []byte("10TB")
+	err = bs.UnmarshalText(tb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*TiB, bs)
+
+	tb = []byte("10TiB")
+	err = bs.UnmarshalText(tb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*TiB, bs)
+
+	pb := []byte("10PB")
+	err = bs.UnmarshalText(pb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*PiB, bs)
+
+	pb = []byte("10PiB")
+	err = bs.UnmarshalText(pb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10*PiB, bs)
+
+	eb := []byte("१")
+	err = bs.UnmarshalText(eb)
+	assert.Error(t, err)
+}
+
+func TestByteSizeType(t *testing.T) {
+	var bs ByteSize
+	assert.Equal(t, "ByteSize", bs.Type())
+}
+
+func TestByteSizeToString(t *testing.T) {
+	b := 999 * B
+	assert.Equal(t, "999", b.String())
+
+	mb := 10 * MiB
+	assert.Equal(t, "10MiB", mb.String())
 }

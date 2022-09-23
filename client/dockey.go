@@ -13,12 +13,13 @@ package client
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"strings"
 
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // DocKey versions.

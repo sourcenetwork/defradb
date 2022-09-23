@@ -6,8 +6,6 @@ package badger
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"runtime"
 	"strings"
 	"sync"
@@ -18,8 +16,10 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	logger "github.com/ipfs/go-log/v2"
 	goprocess "github.com/jbenet/goprocess"
-	"github.com/sourcenetwork/defradb/datastore/iterable"
 	"go.uber.org/zap"
+
+	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var log = logger.Logger("badger")
@@ -155,7 +155,7 @@ func NewDatastore(path string, options *Options) (*Datastore, error) {
 	kv, err := badger.Open(opt)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "manifest has unsupported version:") {
-			err = fmt.Errorf("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade: %w", err)
+			err = errors.Wrap("unsupported badger version, use github.com/ipfs/badgerds-upgrade to upgrade", err)
 		}
 		return nil, err
 	}

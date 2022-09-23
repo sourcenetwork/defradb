@@ -21,8 +21,9 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 func TestNewLoggingResponseWriterLogger(t *testing.T) {
@@ -100,10 +101,10 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 	assert.Equal(t, "GET", kv["Method"])
 	assert.Equal(t, "/ping", kv["Path"])
 	assert.Equal(t, float64(200), kv["Status"])
-	assert.Equal(t, float64(28), kv["Length"])
+	assert.Equal(t, float64(28), kv["LengthBytes"])
 }
 
-func readLog(path string) (map[string]interface{}, error) {
+func readLog(path string) (map[string]any, error) {
 	// inspect the log file
 	f, err := os.Open(path)
 	if err != nil {
@@ -114,7 +115,7 @@ func readLog(path string) (map[string]interface{}, error) {
 	scanner.Scan()
 	logLine := scanner.Text()
 
-	kv := make(map[string]interface{})
+	kv := make(map[string]any)
 	err = json.Unmarshal([]byte(logLine), &kv)
 	if err != nil {
 		return nil, errors.WithStack(err)

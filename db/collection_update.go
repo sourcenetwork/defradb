@@ -12,22 +12,20 @@ package db
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"strings"
 	"time"
+
+	cbor "github.com/fxamacker/cbor/v2"
+	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-
-	cbor "github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/defradb/query/graphql/planner"
 )
 
 var (
@@ -45,11 +43,11 @@ var (
 // Eg: UpdateWithFilter or UpdateWithKey
 func (c *collection) UpdateWith(
 	ctx context.Context,
-	target interface{},
-	updater interface{},
+	target any,
+	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
-	case string, map[string]interface{}, *parser.Filter:
+	case string, map[string]any, *parser.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocKey:
 		return c.UpdateWithKey(ctx, t, updater)
@@ -65,8 +63,8 @@ func (c *collection) UpdateWith(
 // or a parsed Patch, or parsed Merge Patch.
 func (c *collection) UpdateWithFilter(
 	ctx context.Context,
-	filter interface{},
-	updater interface{},
+	filter any,
+	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -86,7 +84,7 @@ func (c *collection) UpdateWithFilter(
 func (c *collection) UpdateWithKey(
 	ctx context.Context,
 	key client.DocKey,
-	updater interface{},
+	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -107,7 +105,7 @@ func (c *collection) UpdateWithKey(
 func (c *collection) UpdateWithKeys(
 	ctx context.Context,
 	keys []client.DocKey,
-	updater interface{},
+	updater string,
 ) (*client.UpdateResult, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -126,20 +124,17 @@ func (c *collection) updateWithKey(
 	ctx context.Context,
 	txn datastore.Txn,
 	key client.DocKey,
-	updater interface{},
+	updater string,
 ) (*client.UpdateResult, error) {
-	patch, err := parseUpdater(updater)
+	parsedUpdater, err := fastjson.Parse(updater)
 	if err != nil {
 		return nil, err
 	}
 
 	isPatch := false
-	switch patch.(type) {
-	case []map[string]interface{}:
+	if parsedUpdater.Type() == fastjson.TypeArray {
 		isPatch = true
-	case map[string]interface{}:
-		isPatch = false
-	default:
+	} else if parsedUpdater.Type() != fastjson.TypeObject {
 		return nil, client.ErrInvalidUpdater
 	}
 
@@ -155,7 +150,7 @@ func (c *collection) updateWithKey(
 	if isPatch {
 		// todo
 	} else {
-		err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
+		err = c.applyMerge(ctx, txn, v, parsedUpdater.GetObject())
 	}
 	if err != nil {
 		return nil, err
@@ -172,20 +167,17 @@ func (c *collection) updateWithKeys(
 	ctx context.Context,
 	txn datastore.Txn,
 	keys []client.DocKey,
-	updater interface{},
+	updater string,
 ) (*client.UpdateResult, error) {
-	patch, err := parseUpdater(updater)
+	parsedUpdater, err := fastjson.Parse(updater)
 	if err != nil {
 		return nil, err
 	}
 
 	isPatch := false
-	switch patch.(type) {
-	case []map[string]interface{}:
+	if parsedUpdater.Type() == fastjson.TypeArray {
 		isPatch = true
-	case map[string]interface{}:
-		isPatch = false
-	default:
+	} else if parsedUpdater.Type() != fastjson.TypeObject {
 		return nil, client.ErrInvalidUpdater
 	}
 
@@ -205,7 +197,7 @@ func (c *collection) updateWithKeys(
 		if isPatch {
 			// todo
 		} else {
-			err = c.applyMerge(ctx, txn, v, patch.(map[string]interface{}))
+			err = c.applyMerge(ctx, txn, v, parsedUpdater.GetObject())
 		}
 		if err != nil {
 			return nil, err
@@ -220,20 +212,20 @@ func (c *collection) updateWithKeys(
 func (c *collection) updateWithFilter(
 	ctx context.Context,
 	txn datastore.Txn,
-	filter interface{},
-	updater interface{},
+	filter any,
+	updater string,
 ) (*client.UpdateResult, error) {
-	patch, err := parseUpdater(updater)
+	parsedUpdater, err := fastjson.Parse(updater)
 	if err != nil {
 		return nil, err
 	}
 
 	isPatch := false
 	isMerge := false
-	switch patch.(type) {
-	case []map[string]interface{}:
+	switch parsedUpdater.Type() {
+	case fastjson.TypeArray:
 		isPatch = true
-	case map[string]interface{}:
+	case fastjson.TypeObject:
 		isMerge = true
 	default:
 		return nil, client.ErrInvalidUpdater
@@ -275,9 +267,9 @@ func (c *collection) updateWithFilter(
 		// Get the document, and apply the patch
 		doc := docMap.ToMap(query.Value())
 		if isPatch {
-			err = c.applyPatch(txn, doc, patch.([]map[string]interface{}))
+			// todo
 		} else if isMerge { // else is fine here
-			err = c.applyMerge(ctx, txn, doc, patch.(map[string]interface{}))
+			err = c.applyMerge(ctx, txn, doc, parsedUpdater.GetObject())
 		}
 		if err != nil {
 			return nil, err
@@ -291,28 +283,38 @@ func (c *collection) updateWithFilter(
 	return results, nil
 }
 
-func (c *collection) applyPatch(
+func (c *collection) applyPatch( //nolint:unused
 	txn datastore.Txn,
-	doc map[string]interface{},
-	patch []map[string]interface{},
+	doc map[string]any,
+	patch []*fastjson.Value,
 ) error {
 	for _, op := range patch {
-		path, ok := op["path"].(string)
-		if !ok {
-			return errors.New("Missing document field to update")
-		}
-
-		targetCollection, _, err := c.getCollectionForPatchOpPath(txn, path)
+		opObject, err := op.Object()
 		if err != nil {
 			return err
 		}
 
-		key, err := c.getTargetKeyForPatchPath(txn, doc, path)
+		pathVal := opObject.Get("path")
+		if pathVal == nil {
+			return errors.New("missing document field to update")
+		}
+
+		path, err := pathVal.StringBytes()
 		if err != nil {
 			return err
 		}
-		field, val, _ := getValFromDocForPatchPath(doc, path)
-		if err := targetCollection.applyPatchOp(txn, key, field, val, op); err != nil {
+
+		targetCollection, _, err := c.getCollectionForPatchOpPath(txn, string(path))
+		if err != nil {
+			return err
+		}
+
+		key, err := c.getTargetKeyForPatchPath(txn, doc, string(path))
+		if err != nil {
+			return err
+		}
+		field, val, _ := getValFromDocForPatchPath(doc, string(path))
+		if err := targetCollection.applyPatchOp(txn, key, field, val, opObject); err != nil {
 			return err
 		}
 	}
@@ -321,12 +323,12 @@ func (c *collection) applyPatch(
 	return nil
 }
 
-func (c *collection) applyPatchOp(
+func (c *collection) applyPatchOp( //nolint:unused
 	txn datastore.Txn,
 	dockey string,
 	field string,
-	currentVal interface{},
-	patchOp map[string]interface{},
+	currentVal any,
+	patchOp *fastjson.Object,
 ) error {
 	return nil
 }
@@ -334,45 +336,47 @@ func (c *collection) applyPatchOp(
 func (c *collection) applyMerge(
 	ctx context.Context,
 	txn datastore.Txn,
-	doc map[string]interface{},
-	merge map[string]interface{},
+	doc map[string]any,
+	merge *fastjson.Object,
 ) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
-		return errors.New("Document is missing key")
+		return errors.New("document is missing key")
 	}
 	key := c.getPrimaryKey(keyStr)
 	links := make([]core.DAGLink, 0)
-	for mfield, mval := range merge {
-		if _, ok := mval.(map[string]interface{}); ok {
+
+	mergeMap := make(map[string]*fastjson.Value)
+	merge.Visit(func(k []byte, v *fastjson.Value) {
+		mergeMap[string(k)] = v
+	})
+
+	mergeCBOR := make(map[string]any)
+
+	for mfield, mval := range mergeMap {
+		if mval.Type() == fastjson.TypeObject {
 			return ErrInvalidMergeValueType
 		}
 
 		fd, valid := c.desc.GetField(mfield)
 		if !valid {
-			return errors.New("Invalid field in Patch")
+			return errors.New("invalid field in Patch")
 		}
 
-		cval, err := validateFieldSchema(mval, fd)
+		if c.isFieldDescriptionRelationID(&fd) {
+			return client.NewErrFieldNotExist(mfield)
+		}
+
+		cborVal, err := validateFieldSchema(mval, fd)
 		if err != nil {
 			return err
 		}
+		mergeCBOR[mfield] = cborVal
 
-		// handle Int/Float case
-		// JSON is annoying in that it represents all numbers
-		// as Float64s. So our merge object contains float64s
-		// even for fields defined as Ints, which causes issues
-		// when we serialize that in CBOR. To generate the delta
-		// payload.
-		// So let's just make sure ints are ints ref: https://play.golang.org/p/djThEqGXtvR
-		if fd.Kind == client.FieldKind_INT {
-			merge[mfield] = int64(mval.(float64))
-		}
-
-		val := client.NewCBORValue(fd.Typ, cval)
+		val := client.NewCBORValue(fd.Typ, cborVal)
 		fieldKey, fieldExists := c.tryGetFieldKey(key, mfield)
 		if !fieldExists {
-			return client.ErrFieldNotExist
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
@@ -391,7 +395,7 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
-	buf, err := em.Marshal(merge)
+	buf, err := em.Marshal(mergeCBOR)
 	if err != nil {
 		return err
 	}
@@ -429,131 +433,141 @@ func (c *collection) applyMerge(
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val interface{}, field client.FieldDescription) (interface{}, error) {
-	var cval interface{}
-	var err error
-	var ok bool
+func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (any, error) {
 	switch field.Kind {
 	case client.FieldKind_DocKey, client.FieldKind_STRING:
-		cval, ok = val.(string)
+		return getString(val)
+
 	case client.FieldKind_STRING_ARRAY:
-		if val == nil {
-			ok = true
-			cval = nil
-			break
-		}
-		untypedCollection := val.([]interface{})
-		stringArray := make([]string, len(untypedCollection))
-		for i, value := range untypedCollection {
-			if value == nil {
-				stringArray[i] = ""
-				continue
-			}
-			stringArray[i], ok = value.(string)
-			if !ok {
-				return nil, fmt.Errorf(
-					"Failed to cast value: %v of type: %T to string",
-					value,
-					value,
-				)
-			}
-		}
-		ok = true
-		cval = stringArray
+		return getArray(val, getString)
+
+	case client.FieldKind_NILLABLE_STRING_ARRAY:
+		return getNillableArray(val, getString)
+
 	case client.FieldKind_BOOL:
-		cval, ok = val.(bool)
+		return getBool(val)
+
 	case client.FieldKind_BOOL_ARRAY:
-		if val == nil {
-			ok = true
-			cval = nil
-			break
-		}
-		untypedCollection := val.([]interface{})
-		boolArray := make([]bool, len(untypedCollection))
-		for i, value := range untypedCollection {
-			boolArray[i], ok = value.(bool)
-			if !ok {
-				return nil, fmt.Errorf("Failed to cast value: %v of type: %T to bool", value, value)
-			}
-		}
-		ok = true
-		cval = boolArray
+		return getArray(val, getBool)
+
+	case client.FieldKind_NILLABLE_BOOL_ARRAY:
+		return getNillableArray(val, getBool)
+
 	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
-		cval, ok = val.(float64)
+		return getFloat64(val)
+
 	case client.FieldKind_FLOAT_ARRAY:
-		if val == nil {
-			ok = true
-			cval = nil
-			break
-		}
-		untypedCollection := val.([]interface{})
-		floatArray := make([]float64, len(untypedCollection))
-		for i, value := range untypedCollection {
-			floatArray[i], ok = value.(float64)
-			if !ok {
-				return nil, fmt.Errorf(
-					"Failed to cast value: %v of type: %T to float64",
-					value,
-					value,
-				)
-			}
-		}
-		ok = true
-		cval = floatArray
+		return getArray(val, getFloat64)
+
+	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+		return getNillableArray(val, getFloat64)
 
 	case client.FieldKind_DATE:
-		var sval string
-		sval, ok = val.(string)
-		cval, err = time.Parse(time.RFC3339, sval)
+		return getDate(val)
+
 	case client.FieldKind_INT:
-		var fval float64
-		fval, ok = val.(float64)
-		if !ok {
-			return nil, ErrInvalidMergeValueType
-		}
-		cval = int64(fval)
+		return getInt64(val)
+
 	case client.FieldKind_INT_ARRAY:
-		if val == nil {
-			ok = true
-			cval = nil
-			break
-		}
-		untypedCollection := val.([]interface{})
-		intArray := make([]int64, len(untypedCollection))
-		for i, value := range untypedCollection {
-			valueAsFloat, castOk := value.(float64)
-			if !castOk {
-				return nil, fmt.Errorf(
-					"Failed to cast value: %v of type: %T to float64",
-					value,
-					value,
-				)
-			}
-			intArray[i] = int64(valueAsFloat)
-		}
-		ok = true
-		cval = intArray
+		return getArray(val, getInt64)
+
+	case client.FieldKind_NILLABLE_INT_ARRAY:
+		return getNillableArray(val, getInt64)
+
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		err = errors.New("Merge doesn't support sub types yet")
+		return nil, errors.New("merge doesn't support sub types yet")
 	}
 
-	if !ok {
-		return nil, ErrInvalidMergeValueType
+	return nil, errors.New("unsupported field kind")
+}
+
+func getString(v *fastjson.Value) (string, error) {
+	b, err := v.StringBytes()
+	return string(b), err
+}
+
+func getBool(v *fastjson.Value) (bool, error) {
+	return v.Bool()
+}
+
+func getFloat64(v *fastjson.Value) (float64, error) {
+	return v.Float64()
+}
+
+func getInt64(v *fastjson.Value) (int64, error) {
+	return v.Int64()
+}
+
+func getDate(v *fastjson.Value) (time.Time, error) {
+	s, err := getString(v)
+	if err != nil {
+		return time.Time{}, err
 	}
+	return time.Parse(time.RFC3339, s)
+}
+
+func getArray[T any](
+	val *fastjson.Value,
+	typeGetter func(*fastjson.Value) (T, error),
+) ([]T, error) {
+	if val.Type() == fastjson.TypeNull {
+		return nil, nil
+	}
+
+	valArray, err := val.Array()
 	if err != nil {
 		return nil, err
 	}
 
-	return cval, err
+	arr := make([]T, len(valArray))
+	for i, arrItem := range valArray {
+		if arrItem.Type() == fastjson.TypeNull {
+			continue
+		}
+		arr[i], err = typeGetter(arrItem)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return arr, nil
+}
+
+func getNillableArray[T any](
+	val *fastjson.Value,
+	typeGetter func(*fastjson.Value) (T, error),
+) ([]*T, error) {
+	if val.Type() == fastjson.TypeNull {
+		return nil, nil
+	}
+
+	valArray, err := val.Array()
+	if err != nil {
+		return nil, err
+	}
+
+	arr := make([]*T, len(valArray))
+	for i, arrItem := range valArray {
+		if arrItem.Type() == fastjson.TypeNull {
+			continue
+		}
+		v, err := typeGetter(arrItem)
+		if err != nil {
+			return nil, err
+		}
+		arr[i] = &v
+	}
+
+	return arr, nil
 }
 
 func (c *collection) applyMergePatchOp( //nolint:unused
 	txn datastore.Txn,
 	docKey string,
 	field string,
-	currentVal interface{},
-	targetVal interface{}) error {
+	currentVal any,
+	targetVal any) error {
 	return nil
 }
 
@@ -564,7 +578,7 @@ func (c *collection) applyMergePatchOp( //nolint:unused
 func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
-	filter interface{},
+	filter any,
 ) (planner.Query, error) {
 	mapping := c.createMapping()
 	var f *mapper.Filter
@@ -649,7 +663,7 @@ func (c *collection) createMapping() *core.DocumentMapping {
 // May need to query the database for other schema types
 // which requires a db transaction. It is recommended
 // to use collection.WithTxn(txn) for this function call.
-func (c *collection) getCollectionForPatchOpPath(
+func (c *collection) getCollectionForPatchOpPath( //nolint:unused
 	txn datastore.Txn,
 	path string,
 ) (col *collection, isArray bool, err error) {
@@ -658,9 +672,9 @@ func (c *collection) getCollectionForPatchOpPath(
 
 // getTargetKeyForPatchPath walks through the given doc and Patch path.
 // It returns the
-func (c *collection) getTargetKeyForPatchPath(
+func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 	txn datastore.Txn,
-	doc map[string]interface{},
+	doc map[string]any,
 	path string,
 ) (string, error) {
 	_, length := splitPatchPath(path)
@@ -671,16 +685,16 @@ func (c *collection) getTargetKeyForPatchPath(
 	return "", nil
 }
 
-func splitPatchPath(path string) ([]string, int) {
+func splitPatchPath(path string) ([]string, int) { //nolint:unused
 	path = strings.TrimPrefix(path, "/")
 	pathParts := strings.Split(path, "/")
 	return pathParts, len(pathParts)
 }
 
-func getValFromDocForPatchPath(
-	doc map[string]interface{},
+func getValFromDocForPatchPath( //nolint:unused
+	doc map[string]any,
 	path string,
-) (string, interface{}, bool) {
+) (string, any, bool) {
 	pathParts, length := splitPatchPath(path)
 	if length == 0 {
 		return "", nil, false
@@ -688,70 +702,23 @@ func getValFromDocForPatchPath(
 	return getMapProp(doc, pathParts, length)
 }
 
-func getMapProp(
-	doc map[string]interface{},
+func getMapProp( //nolint:unused
+	doc map[string]any,
 	paths []string,
 	length int,
-) (string, interface{}, bool) {
+) (string, any, bool) {
 	val, ok := doc[paths[0]]
 	if !ok {
 		return "", nil, false
 	}
 	if length > 1 {
-		doc, ok := val.(map[string]interface{})
+		doc, ok := val.(map[string]any)
 		if !ok {
 			return "", nil, false
 		}
 		return getMapProp(doc, paths[1:], length-1)
 	}
 	return paths[0], val, true
-}
-
-type patcher interface{}
-
-func parseUpdater(updater interface{}) (patcher, error) {
-	switch v := updater.(type) {
-	case string:
-		return parseUpdaterString(v)
-	case []interface{}:
-		return parseUpdaterSlice(v)
-	case []map[string]interface{}, map[string]interface{}:
-		return patcher(v), nil
-	case nil:
-		return nil, ErrUpdateEmpty
-	default:
-		return nil, client.ErrInvalidUpdater
-	}
-}
-
-func parseUpdaterString(v string) (patcher, error) {
-	if v == "" {
-		return nil, ErrUpdateEmpty
-	}
-	var i interface{}
-	if err := json.Unmarshal([]byte(v), &i); err != nil {
-		return nil, err
-	}
-	return parseUpdater(i)
-}
-
-// converts an []interface{} to []map[string]interface{}
-// which is required to be an array of Patch Ops
-func parseUpdaterSlice(v []interface{}) (patcher, error) {
-	if len(v) == 0 {
-		return nil, ErrUpdateEmpty
-	}
-
-	patches := make([]map[string]interface{}, len(v))
-	for i, patch := range v {
-		p, ok := patch.(map[string]interface{})
-		if !ok {
-			return nil, client.ErrInvalidUpdater
-		}
-		patches[i] = p
-	}
-
-	return parseUpdater(patches)
 }
 
 /*

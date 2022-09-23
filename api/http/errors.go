@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,13 +21,20 @@ import (
 
 var env = os.Getenv("DEFRA_ENV")
 
-type errorResponse struct {
-	Errors []errorItem `json:"errors"`
+var (
+	errNoListener = errors.New("cannot serve with no listener")
+	errSchema     = errors.New("base must start with the http or https scheme")
+)
+
+// ErrorResponse is the GQL top level object holding error items for the response payload.
+type ErrorResponse struct {
+	Errors []ErrorItem `json:"errors"`
 }
 
-type errorItem struct {
-	Message    string      `json:"message"`
-	Extensions *extensions `json:"extensions,omitempty"`
+// ErrorItem hold an error message and extensions that might be pertinent to the request
+type ErrorItem struct {
+	Message    string     `json:"message"`
+	Extensions extensions `json:"extensions,omitempty"`
 }
 
 type extensions struct {
@@ -43,11 +51,11 @@ func handleErr(ctx context.Context, rw http.ResponseWriter, err error, status in
 	sendJSON(
 		ctx,
 		rw,
-		errorResponse{
-			Errors: []errorItem{
+		ErrorResponse{
+			Errors: []ErrorItem{
 				{
 					Message: err.Error(),
-					Extensions: &extensions{
+					Extensions: extensions{
 						Status:    status,
 						HTTPError: http.StatusText(status),
 						Stack:     formatError(err),

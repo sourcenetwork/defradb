@@ -33,7 +33,7 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -61,7 +61,7 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -89,7 +89,7 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -117,10 +117,38 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(2),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, average of populated nillable integer array",
+		Query: `query {
+					users {
+						Name
+						_avg(TestScores: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"TestScores": [-1, null, 13, 0]
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_avg": float64(4),
 			},
 		},
 	}
@@ -145,7 +173,7 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -173,7 +201,7 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -201,7 +229,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0),
@@ -229,7 +257,35 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_avg": float64(0.2),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple inline array with no filter, average of populated nillable float array",
+		Query: `query {
+					users {
+						Name
+						_avg(PageRatings: {})
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"PageRatings": [-0.1, 0, 0.9, 0, null]
+				}`,
+			},
+		},
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"_avg": float64(0.2),

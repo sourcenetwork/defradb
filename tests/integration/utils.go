@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -73,7 +74,7 @@ type TransactionQuery struct {
 	// The query to run against the transaction
 	Query string
 	// The expected (data) results of the query
-	Results []map[string]interface{}
+	Results []map[string]any
 	// The expected error resulting from the query.  Also checked against the txn commit.
 	ExpectedError string
 }
@@ -93,7 +94,7 @@ type QueryTestCase struct {
 	// of changes in strinigied JSON format
 	Updates map[int]map[int][]string
 
-	Results []map[string]interface{}
+	Results []map[string]any
 	// The expected content of an expected error
 	ExpectedError string
 
@@ -378,6 +379,8 @@ func ExecuteQueryTestCase(
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
+
+		dbi.db.Close(ctx)
 	}
 }
 
@@ -611,13 +614,15 @@ func assertQueryResults(
 	t *testing.T,
 	description string,
 	result *client.QueryResult,
-	expectedResults []map[string]interface{},
+	expectedResults []map[string]any,
 	expectedError string,
 ) bool {
 	if assertErrors(t, description, result.Errors, expectedError) {
 		return true
 	}
-	resultantData := result.Data.([]map[string]interface{})
+
+	// Note: if result.Data == nil this panics (the panic seems useful while testing).
+	resultantData := result.Data.([]map[string]any)
 
 	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
 
@@ -647,7 +652,7 @@ func assertError(t *testing.T, description string, err error, expectedError stri
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, fmt.Errorf(expectedError))
+			assert.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
@@ -659,18 +664,18 @@ func assertError(t *testing.T, description string, err error, expectedError stri
 func assertErrors(
 	t *testing.T,
 	description string,
-	errors []interface{},
+	errs []any,
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		assert.Empty(t, errors, description)
+		assert.Empty(t, errs, description)
 	} else {
-		for _, e := range errors {
+		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
-				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(expectedError))
+				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
 			return true

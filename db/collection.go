@@ -15,25 +15,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/merkle/crdt"
-
-	"errors"
-
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
 var (
-	ErrDocumentAlreadyExists = errors.New("A document with the given key already exists")
+	ErrDocumentAlreadyExists = errors.New("A document with the given dockey already exists")
 	ErrUnknownCRDTArgument   = errors.New("Invalid CRDT arguments")
 	ErrUnknownCRDT           = errors.New("")
 )
@@ -232,7 +232,7 @@ func (db *db) GetCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, fmt.Errorf("Schema ID can't be empty")
+		return nil, errors.New("Schema ID can't be empty")
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
@@ -255,7 +255,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create collection prefix query: %w", err)
+		return nil, errors.Wrap("Failed to create collection prefix query", err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
@@ -272,7 +272,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		colName := ds.NewKey(res.Key).BaseNamespace()
 		col, err := db.GetCollectionByName(ctx, colName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get collection (%s): %w", colName, err)
+			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection (%s)", colName), err)
 		}
 		cols = append(cols, col)
 	}
@@ -464,7 +464,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	dockey := client.NewDocKeyV0(doccid)
 	key := c.getPrimaryKeyFromDocKey(dockey)
 	if key.DocKey != doc.Key().String() {
-		return fmt.Errorf("Expected %s, got %s : %w", doc.Key(), key.DocKey, ErrDocVerification)
+		return errors.Wrap(fmt.Sprintf("Expected %s, got %s ", doc.Key(), key.DocKey), ErrDocVerification)
 	}
 
 	// check if doc already exists
@@ -476,11 +476,21 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return ErrDocumentAlreadyExists
 	}
 
-	// write object marker
+	// write primary key object marker
 	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{base.ObjectMarker})
 	if err != nil {
 		return err
 	}
+
+	// write value object marker if we have an empty doc
+	if len(doc.Values()) == 0 {
+		valueKey := c.getDatastoreFromDocKey(dockey)
+		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		if err != nil {
+			return err
+		}
+	}
+
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
 
@@ -580,7 +590,7 @@ func (c *collection) save(
 	//	=> 		Set/Publish new CRDT values
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
 	links := make([]core.DAGLink, 0)
-	merge := make(map[string]interface{})
+	merge := make(map[string]any)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -590,7 +600,11 @@ func (c *collection) save(
 		if val.IsDirty() {
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 			if !fieldExists {
-				return cid.Undef, client.ErrFieldNotExist
+				return cid.Undef, client.NewErrFieldNotExist(k)
+			}
+
+			if c.isFieldNameRelationID(k) {
+				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
 			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
@@ -691,10 +705,32 @@ func (c *collection) delete(
 		return false, err
 	}
 
+	// delete value instance
+	keyDS := key.ToDataStoreKey()
+	keyDS.InstanceType = core.ValueKey
+	if _, err = c.deleteWithPrefix(ctx, txn, keyDS); err != nil {
+		return false, err
+	}
+
+	// delete priority instance
+	keyDS.InstanceType = core.PriorityKey
+	return c.deleteWithPrefix(ctx, txn, keyDS)
+}
+
+// deleteWithPrefix will delete all the keys using a prefix query set as the given key.
+func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, key core.DataStoreKey) (bool, error) {
 	q := query.Query{
-		Prefix:   key.ToDataStoreKey().ToString(),
+		Prefix:   key.ToString(),
 		KeysOnly: true,
 	}
+
+	if key.InstanceType == core.ValueKey {
+		err := txn.Datastore().Delete(ctx, core.NewDataStoreKey(key.ToString()).ToDS())
+		if err != nil {
+			return false, err
+		}
+	}
+
 	res, err := txn.Datastore().Query(ctx, q)
 
 	for e := range res.Next() {
@@ -769,7 +805,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...interface{}) (cid.Cid, error) {
+	args ...any) (cid.Cid, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
@@ -871,6 +907,14 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 	}
 }
 
+func (c *collection) getDatastoreFromDocKey(docKey client.DocKey) core.DataStoreKey {
+	return core.DataStoreKey{
+		CollectionId: fmt.Sprint(c.colID),
+		DocKey:       docKey.String(),
+		InstanceType: core.ValueKey,
+	}
+}
+
 func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName string) (core.DataStoreKey, bool) {
 	fieldId, hasField := c.tryGetSchemaFieldID(fieldName)
 	if !hasField {
@@ -898,6 +942,30 @@ func (c *collection) tryGetSchemaFieldID(fieldName string) (uint32, bool) {
 		}
 	}
 	return uint32(0), false
+}
+
+// isFieldNameRelationID returns true if the given field is the id field backing a relationship.
+func (c *collection) isFieldNameRelationID(fieldName string) bool {
+	fieldDescription, valid := c.desc.GetField(fieldName)
+	if !valid {
+		return false
+	}
+
+	return c.isFieldDescriptionRelationID(&fieldDescription)
+}
+
+// isFieldDescriptionRelationID returns true if the given field is the id field backing a relationship.
+func (c *collection) isFieldDescriptionRelationID(fieldDescription *client.FieldDescription) bool {
+	if fieldDescription.RelationType == client.Relation_Type_INTERNAL_ID {
+		relationDescription, valid := c.desc.GetField(strings.TrimSuffix(fieldDescription.Name, "_id"))
+		if !valid {
+			return false
+		}
+		if relationDescription.IsPrimaryRelation() {
+			return true
+		}
+	}
+	return false
 }
 
 // makeCollectionKey returns a formatted collection key for the system data store.

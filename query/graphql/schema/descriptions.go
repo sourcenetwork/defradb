@@ -11,14 +11,14 @@
 package schema
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	gql "github.com/graphql-go/graphql"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -45,18 +45,22 @@ var (
 
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
-		client.FieldKind_DocKey:               client.LWW_REGISTER,
-		client.FieldKind_BOOL:                 client.LWW_REGISTER,
-		client.FieldKind_BOOL_ARRAY:           client.LWW_REGISTER,
-		client.FieldKind_INT:                  client.LWW_REGISTER,
-		client.FieldKind_INT_ARRAY:            client.LWW_REGISTER,
-		client.FieldKind_FLOAT:                client.LWW_REGISTER,
-		client.FieldKind_FLOAT_ARRAY:          client.LWW_REGISTER,
-		client.FieldKind_DATE:                 client.LWW_REGISTER,
-		client.FieldKind_STRING:               client.LWW_REGISTER,
-		client.FieldKind_STRING_ARRAY:         client.LWW_REGISTER,
-		client.FieldKind_FOREIGN_OBJECT:       client.NONE_CRDT,
-		client.FieldKind_FOREIGN_OBJECT_ARRAY: client.NONE_CRDT,
+		client.FieldKind_DocKey:                client.LWW_REGISTER,
+		client.FieldKind_BOOL:                  client.LWW_REGISTER,
+		client.FieldKind_BOOL_ARRAY:            client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_BOOL_ARRAY:   client.LWW_REGISTER,
+		client.FieldKind_INT:                   client.LWW_REGISTER,
+		client.FieldKind_INT_ARRAY:             client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_INT_ARRAY:    client.LWW_REGISTER,
+		client.FieldKind_FLOAT:                 client.LWW_REGISTER,
+		client.FieldKind_FLOAT_ARRAY:           client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_FLOAT_ARRAY:  client.LWW_REGISTER,
+		client.FieldKind_DATE:                  client.LWW_REGISTER,
+		client.FieldKind_STRING:                client.LWW_REGISTER,
+		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
+		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
+		client.FieldKind_FOREIGN_OBJECT:        client.NONE_CRDT,
+		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
 
@@ -104,6 +108,16 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 			case typeNotNullString:
 				return client.FieldKind_STRING_ARRAY
 			}
+		}
+		switch v.OfType.Name() {
+		case typeBoolean:
+			return client.FieldKind_NILLABLE_BOOL_ARRAY
+		case typeInt:
+			return client.FieldKind_NILLABLE_INT_ARRAY
+		case typeFloat:
+			return client.FieldKind_NILLABLE_FLOAT_ARRAY
+		case typeString:
+			return client.FieldKind_NILLABLE_STRING_ARRAY
 		}
 		return client.FieldKind_FOREIGN_OBJECT_ARRAY
 	}
@@ -153,7 +167,7 @@ func (g *Generator) CreateDescriptions(
 				// let's make sure its an _id field, otherwise
 				// we might have an error here
 				if !strings.HasSuffix(fname, "_id") {
-					return nil, fmt.Errorf("Error: found a duplicate field '%s' for type %s", fname, t.Name())
+					return nil, errors.New(fmt.Sprintf("Error: found a duplicate field '%s' for type %s", fname, t.Name()))
 				}
 				continue
 			}
@@ -172,12 +186,12 @@ func (g *Generator) CreateDescriptions(
 				rel := g.manager.Relations.GetRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
 						fname,
 						field.Type.Name(),
 						t.Name(),
-					)
+					))
 				}
 				fd.RelationName = rel.name
 

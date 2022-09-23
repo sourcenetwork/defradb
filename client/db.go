@@ -13,10 +13,10 @@ package client
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
-
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type DB interface {
@@ -36,10 +36,10 @@ type DB interface {
 	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
 	Close(context.Context)
 
-	PrintDump(ctx context.Context)
+	PrintDump(ctx context.Context) error
 }
 
 type QueryResult struct {
-	Errors []interface{} `json:"errors,omitempty"`
-	Data   interface{}   `json:"data"`
+	Errors []any `json:"errors,omitempty"`
+	Data   any   `json:"data"`
 }

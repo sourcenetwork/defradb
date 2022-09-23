@@ -18,10 +18,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -103,7 +103,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 	}
 }
 
-func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
+func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
 	case *parser.Query:
 		if len(n.Queries) > 0 {
@@ -111,12 +111,12 @@ func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, fmt.Errorf("Query is missing query or mutation statements")
+			return nil, errors.New("Query is missing query or mutation statements")
 		}
 
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, fmt.Errorf("OperationDefinition is missing selections")
+			return nil, errors.New("OperationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -151,7 +151,7 @@ func (p *Planner) newPlan(stmt interface{}) (planNode, error) {
 		}
 		return p.newObjectMutationPlan(m)
 	}
-	return nil, fmt.Errorf("Unknown statement type %T", stmt)
+	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
@@ -166,14 +166,14 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 		return p.DeleteDocs(stmt)
 
 	default:
-		return nil, fmt.Errorf("Unknown mutation action %T", stmt.Type)
+		return nil, errors.New(fmt.Sprintf("Unknown mutation action %T", stmt.Type))
 	}
 }
 
 // makePlan creates a new plan from the parsed data, optimizes the plan and returns
 // an initiated plan. The caller of makePlan is also responsible of calling Close()
 // on the plan to free it's resources.
-func (p *Planner) makePlan(stmt interface{}) (planNode, error) {
+func (p *Planner) makePlan(stmt any) (planNode, error) {
 	plan, err := p.newPlan(stmt)
 	if err != nil {
 		return nil, err
@@ -219,17 +219,6 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 			}
 		}
 		return nil
-	case MultiNode:
-		return p.expandMultiNode(n, parentPlan)
-
-	case *updateNode:
-		return p.expandPlan(n.results, parentPlan)
-
-	case *createNode:
-		return p.expandPlan(n.results, parentPlan)
-
-	case *deleteNode:
-		return p.expandPlan(n.source, parentPlan)
 
 	case *topLevelNode:
 		for _, child := range n.children {
@@ -247,6 +236,18 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 			}
 		}
 		return nil
+
+	case MultiNode:
+		return p.expandMultiNode(n, parentPlan)
+
+	case *updateNode:
+		return p.expandPlan(n.results, parentPlan)
+
+	case *createNode:
+		return p.expandPlan(n.results, parentPlan)
+
+	case *deleteNode:
+		return p.expandPlan(n.source, parentPlan)
 
 	default:
 		return nil
@@ -279,10 +280,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.limit != nil {
-		err := p.expandLimitPlan(plan, parentPlan)
-		if err != nil {
-			return err
-		}
+		p.expandLimitPlan(plan, parentPlan)
 	}
 
 	return nil
@@ -319,7 +317,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return fmt.Errorf("Unknown type index join plan")
+	return errors.New("Unknown type index join plan")
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -371,51 +369,20 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	return nil
 }
 
-func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) error {
-	switch l := plan.limit.(type) {
-	case *hardLimitNode:
-		if l == nil {
-			return nil
-		}
-
-		// Limits get more complicated with groups and have to be handled internally, so we ensure
-		// any limit plan is disabled here
-		if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
-			plan.limit = nil
-			return nil
-		}
-
-		// if this is a child node, and the parent select has an aggregate then we need to
-		// replace the hard limit with a render limit to allow the full set of child records
-		// to be aggregated
-		if parentPlan != nil && len(parentPlan.aggregates) > 0 {
-			renderLimit, err := p.RenderLimit(
-				parentPlan.documentMapping,
-				&parserTypes.Limit{
-					Offset: l.offset,
-					Limit:  l.limit,
-				},
-			)
-			if err != nil {
-				return err
-			}
-			plan.limit = renderLimit
-
-			renderLimit.plan = plan.plan
-			plan.plan = plan.limit
-		} else {
-			l.plan = plan.plan
-			plan.plan = plan.limit
-		}
-	case *renderLimitNode:
-		if l == nil {
-			return nil
-		}
-
-		l.plan = plan.plan
-		plan.plan = plan.limit
+func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) {
+	if plan.limit == nil {
+		return
 	}
-	return nil
+
+	// Limits get more complicated with groups and have to be handled internally, so we ensure
+	// any limit plan is disabled here
+	if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
+		plan.limit = nil
+		return
+	}
+
+	plan.limit.plan = plan.plan
+	plan.plan = plan.limit
 }
 
 // walkAndReplace walks through the provided plan, and searches for an instance
@@ -445,7 +412,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
-		return fmt.Errorf("Unknown plan node type to replace: %T", node)
+		return errors.New(fmt.Sprintf("Unknown plan node type to replace: %T", node))
 	}
 
 	return nil
@@ -473,9 +440,9 @@ func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
 func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, fmt.Errorf("Can't explain request of a nil plan.")
+		return nil, errors.New("Can't explain request of a nil plan.")
 	}
 
 	explainGraph, err := buildExplainGraph(plan)
@@ -483,7 +450,7 @@ func (p *Planner) explainRequest(
 		return nil, multiErr(err, plan.Close())
 	}
 
-	topExplainGraph := []map[string]interface{}{
+	topExplainGraph := []map[string]any{
 		{
 			parserTypes.ExplainLabel: explainGraph,
 		},
@@ -496,9 +463,9 @@ func (p *Planner) explainRequest(
 func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, fmt.Errorf("Can't execute request of a nil plan.")
+		return nil, errors.New("Can't execute request of a nil plan.")
 	}
 
 	if err := plan.Start(); err != nil {
@@ -510,7 +477,7 @@ func (p *Planner) executeRequest(
 		return nil, multiErr(err, plan.Close())
 	}
 
-	docs := []map[string]interface{}{}
+	docs := []map[string]any{}
 	docMap := plan.DocumentMap()
 
 	for next {
@@ -534,7 +501,7 @@ func (p *Planner) executeRequest(
 func (p *Planner) runRequest(
 	ctx context.Context,
 	query *parser.Query,
-) ([]map[string]interface{}, error) {
+) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 
 	if err != nil {
@@ -566,10 +533,10 @@ func multiErr(errorsToWrap ...error) error {
 			continue
 		}
 		if errs == nil {
-			errs = fmt.Errorf("%w", err)
+			errs = errors.New(err.Error())
 			continue
 		}
-		errs = fmt.Errorf("%s: %w", errs, err)
+		errs = errors.Wrap(fmt.Sprintf("%s", errs), err)
 	}
 	return errs
 }

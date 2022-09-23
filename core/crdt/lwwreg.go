@@ -15,18 +15,15 @@ import (
 
 	"bytes"
 	"context"
-	"fmt"
 
-	"errors"
+	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
+	"github.com/ugorji/go/codec"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-
-	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
-
-	"github.com/ugorji/go/codec"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -70,7 +67,7 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (delta *LWWRegDelta) Value() interface{} {
+func (delta *LWWRegDelta) Value() any {
 	return delta.Data
 }
 
@@ -142,7 +139,7 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) e
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(ctx, reg.key)
 	if err != nil {
-		return fmt.Errorf("Failed to get priority for Set : %w", err)
+		return errors.Wrap("Failed to get priority for Set ", err)
 	}
 
 	// if the current priority is higher ignore put
@@ -162,7 +159,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
 	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
-		return fmt.Errorf("Failed to store new value : %w", err)
+		return errors.Wrap("Failed to store new value ", err)
 	}
 
 	return reg.setPriority(ctx, reg.key, priority)

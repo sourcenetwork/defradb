@@ -12,7 +12,7 @@ package schema
 
 import "sort"
 
-type field = map[string]interface{}
+type field = map[string]any
 type fields []field
 
 func concat(fieldSets ...fields) fields {
@@ -35,7 +35,7 @@ func (fieldSet fields) append(field field) fields {
 
 // tidy sorts and casts the given fieldset into a format suitable
 // for comparing against introspection result fields.
-func (fieldSet fields) tidy() []interface{} {
+func (fieldSet fields) tidy() []any {
 	return fieldSet.sort().array()
 }
 
@@ -46,8 +46,8 @@ func (fieldSet fields) sort() fields {
 	return fieldSet
 }
 
-func (fieldSet fields) array() []interface{} {
-	result := make([]interface{}, len(fieldSet))
+func (fieldSet fields) array() []any {
+	result := make([]any, len(fieldSet))
 	for i, v := range fieldSet {
 		result[i] = v
 	}
@@ -67,7 +67,7 @@ var defaultFields = concat(
 
 var keyField = field{
 	"name": "_key",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "SCALAR",
 		"name": "ID",
 	},
@@ -75,7 +75,7 @@ var keyField = field{
 
 var versionField = field{
 	"name": "_version",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
 	},
@@ -83,32 +83,193 @@ var versionField = field{
 
 var groupField = field{
 	"name": "_group",
-	"type": map[string]interface{}{
+	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
 	},
 }
 
 var aggregateFields = fields{
-	map[string]interface{}{
+	map[string]any{
 		"name": "_avg",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
-	map[string]interface{}{
+	map[string]any{
 		"name": "_count",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Int",
 		},
 	},
-	map[string]interface{}{
+	map[string]any{
 		"name": "_sum",
-		"type": map[string]interface{}{
+		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
+}
+
+var cidArg = field{
+	"name": "cid",
+	"type": map[string]any{
+		"name":        "String",
+		"inputFields": nil,
+	},
+}
+var dockeyArg = field{
+	"name": "dockey",
+	"type": map[string]any{
+		"name":        "String",
+		"inputFields": nil,
+	},
+}
+var dockeysArg = field{
+	"name": "dockeys",
+	"type": map[string]any{
+		"name":        nil,
+		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
+	},
+}
+
+var groupByArg = field{
+	"name": "groupBy",
+	"type": map[string]any{
+		"name":        nil,
+		"inputFields": nil,
+		"ofType": map[string]any{
+			"kind": "NON_NULL",
+			"name": nil,
+		},
+	},
+}
+
+var limitArg = field{
+	"name": "limit",
+	"type": map[string]any{
+		"name":        "Int",
+		"inputFields": nil,
+		"ofType":      nil,
+	},
+}
+
+var offsetArg = field{
+	"name": "offset",
+	"type": map[string]any{
+		"name":        "Int",
+		"inputFields": nil,
+		"ofType":      nil,
+	},
+}
+
+type argDef struct {
+	fieldName string
+	typeName  string
+}
+
+func buildOrderArg(objectName string, fields []argDef) field {
+	inputFields := []any{
+		makeInputObject("_key", "Ordering", nil),
+	}
+
+	for _, field := range fields {
+		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
+	}
+
+	return field{
+		"name": "order",
+		"type": field{
+			"name":        objectName + "OrderArg",
+			"ofType":      nil,
+			"inputFields": inputFields,
+		},
+	}
+}
+
+func buildFilterArg(objectName string, fields []argDef) field {
+	filterArgName := objectName + "FilterArg"
+
+	inputFields := []any{
+		makeInputObject("_and", nil, map[string]any{
+			"kind": "INPUT_OBJECT",
+			"name": filterArgName,
+		}),
+		makeInputObject("_key", "IDOperatorBlock", nil),
+		makeInputObject("_not", "authorFilterArg", nil),
+		makeInputObject("_or", nil, map[string]any{
+			"kind": "INPUT_OBJECT",
+			"name": filterArgName,
+		}),
+	}
+
+	for _, field := range fields {
+		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
+	}
+
+	return field{
+		"name": "filter",
+		"type": field{
+			"name":        filterArgName,
+			"ofType":      nil,
+			"inputFields": inputFields,
+		},
+	}
+}
+
+// trimField creates a new object using the provided defaults, but only containing
+// the provided properties. Function is recursive and will respect inner properties.
+func trimField(fullDefault field, properties map[string]any) field {
+	result := field{}
+	for key, children := range properties {
+		switch childProps := children.(type) {
+		case map[string]any:
+			fullValue := fullDefault[key]
+			var value any
+			if fullValue == nil {
+				value = nil
+			} else if fullField, isField := fullValue.(field); isField {
+				value = trimField(fullField, childProps)
+			} else {
+				value = fullValue
+			}
+			result[key] = value
+
+		default:
+			result[key] = fullDefault[key]
+		}
+	}
+	return result
+}
+
+// trimFields creates a new slice of new objects using the provided defaults, but only containing
+// the provided properties. Function is recursive and will respect inner prop properties.
+func trimFields(fullDefaultFields fields, properties map[string]any) fields {
+	result := fields{}
+	for _, field := range fullDefaultFields {
+		result = append(result, trimField(field, properties))
+	}
+	return result
+}
+
+// makeInputObject retrned a properly made input field type
+// using name (outer), name of type (inner), and types ofType.
+func makeInputObject(
+	name string,
+	typeName any,
+	ofType any,
+) map[string]any {
+	return map[string]any{
+		"name": name,
+		"type": map[string]any{
+			"name":   typeName,
+			"ofType": ofType,
+		},
+	}
 }

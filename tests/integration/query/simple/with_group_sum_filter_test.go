@@ -41,7 +41,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":  uint64(32),
 				"_sum": int64(64),
@@ -84,11 +84,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":  uint64(32),
 				"_sum": int64(64),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Bob",
 					},
@@ -100,7 +100,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 			{
 				"Age":  uint64(19),
 				"_sum": int64(0),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "Alice",
 					},
@@ -140,11 +140,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":  uint64(32),
 				"_sum": int64(32),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "John",
 					},
@@ -153,7 +153,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 			{
 				"Age":    uint64(19),
 				"_sum":   int64(0),
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 		},
 	}
@@ -189,11 +189,11 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age":  uint64(32),
 				"_sum": int64(64),
-				"_group": []map[string]interface{}{
+				"_group": []map[string]any{
 					{
 						"Name": "John",
 					},
@@ -202,7 +202,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 			{
 				"Age":    uint64(19),
 				"_sum":   int64(0),
-				"_group": []map[string]interface{}{},
+				"_group": []map[string]any{},
 			},
 		},
 	}
@@ -236,7 +236,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDiffere
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Age": uint64(32),
 				"S1":  int64(64),

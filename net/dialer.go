@@ -14,7 +14,6 @@ package net
 
 import (
 	"context"
-	"fmt"
 	gonet "net"
 	"time"
 
@@ -26,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	corenet "github.com/sourcenetwork/defradb/core/net"
+	"github.com/sourcenetwork/defradb/errors"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
 
@@ -64,12 +64,12 @@ func (s *server) getLibp2pDialer() grpc.DialOption {
 	return grpc.WithContextDialer(func(ctx context.Context, peerIDStr string) (gonet.Conn, error) {
 		id, err := libpeer.Decode(peerIDStr)
 		if err != nil {
-			return nil, fmt.Errorf("grpc tried to dial non peerID: %w", err)
+			return nil, errors.Wrap("grpc tried to dial non peerID", err)
 		}
 
 		conn, err := gostream.Dial(ctx, s.peer.host, id, corenet.Protocol)
 		if err != nil {
-			return nil, fmt.Errorf("gostream dial failed: %w", err)
+			return nil, errors.Wrap("gostream dial failed", err)
 		}
 
 		return conn, nil

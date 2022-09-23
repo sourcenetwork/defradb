@@ -12,15 +12,15 @@ package fetcher
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
-
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // @todo: Generalize all Fetchers into an shared Fetcher utility
@@ -166,12 +166,12 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, fmt.Errorf("Failed to get next query result : %w", err)
+			return nil, 0, errors.Wrap("Failed to get next query result ", err)
 		}
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, fmt.Errorf("Failed to get CID from key : %w", err)
+			return nil, 0, errors.Wrap("Failed to get CID from key ", err)
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {

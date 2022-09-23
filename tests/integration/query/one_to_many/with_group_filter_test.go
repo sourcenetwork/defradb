@@ -88,17 +88,17 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"age": uint64(327),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name":      "Simon Pelloutier",
-							"published": []map[string]interface{}{},
+							"published": []map[string]any{},
 						},
 						{
 							"name": "Voltaire",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -113,10 +113,10 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				},
 				{
 					"age": uint64(65),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name": "John Grisham",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -206,13 +206,13 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"age": uint64(327),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name": "Voltaire",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -227,10 +227,10 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 				},
 				{
 					"age": uint64(65),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name": "John Grisham",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "The Client",
 									"rating": 4.5,
@@ -328,17 +328,17 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"age": uint64(327),
-					"_group": []map[string]interface{}{
+					"_group": []map[string]any{
 						{
 							"name":      "Simon Pelloutier",
-							"published": []map[string]interface{}{},
+							"published": []map[string]any{},
 						},
 						{
 							"name": "Voltaire",
-							"published": []map[string]interface{}{
+							"published": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,

@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
@@ -61,7 +62,7 @@ type typeIndexJoin struct {
 	// based on the relationship of the sub types
 	joinPlan planNode
 
-	// doc map[string]interface{}
+	// doc map[string]any
 
 	// spans core.Spans
 }
@@ -83,8 +84,8 @@ func (p *Planner) makeTypeIndexJoin(
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, fmt.Errorf("Unknown field on sub selection")
-		return nil, fmt.Errorf("Unknown field %s on sub selection", subType.Name)
+		// return nil, errors.Wrap("Unknown field on sub selection")
+		return nil, errors.New(fmt.Sprintf("Unknown field %s on sub selection", subType.Name))
 	}
 
 	meta := typeFieldDesc.RelationType
@@ -93,7 +94,7 @@ func (p *Planner) makeTypeIndexJoin(
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, fmt.Errorf("Failed sub selection, unknown relation type")
+		return nil, errors.New("Failed sub selection, unknown relation type")
 	}
 	if err != nil {
 		return nil, err
@@ -133,7 +134,7 @@ func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
+func (n *typeIndexJoin) Explain() (map[string]any, error) {
 	const (
 		joinTypeLabel               = "joinType"
 		joinDirectionLabel          = "direction"
@@ -144,7 +145,7 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 		joinRootLabel               = "rootName"
 	)
 
-	explainerMap := map[string]interface{}{}
+	explainerMap := map[string]any{}
 
 	// Add the type attribute.
 	explainerMap[joinTypeLabel] = n.joinPlan.Kind()
@@ -184,7 +185,7 @@ func (n *typeIndexJoin) Explain() (map[string]interface{}, error) {
 		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	default:
-		return explainerMap, fmt.Errorf("Unknown type of an index join to explain.")
+		return explainerMap, errors.New("Unknown type of an index join to explain.")
 	}
 
 	return explainerMap, nil
@@ -216,8 +217,8 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 	}
 
 	// create new splitup filter
-	// our schema ensures that if sub exists, its of type map[string]interface{}
-	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]interface{}{conditionKey: sub}}
+	// our schema ensures that if sub exists, its of type map[string]any
+	splitF := &mapper.Filter{Conditions: map[connor.FilterKey]any{conditionKey: sub}}
 	return filter, splitF
 }
 
@@ -269,7 +270,7 @@ func (p *Planner) makeTypeJoinOne(
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
 	if !ok {
-		return nil, fmt.Errorf("couldn't find subtype field description for typeJoin node")
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
 
 	// determine relation direction (primary or secondary?)
@@ -327,16 +328,22 @@ func (n *typeJoinOne) valuesSecondary(doc core.Doc) core.Doc {
 	fkIndex := &mapper.PropertyIndex{
 		Index: n.subType.DocumentMap().FirstIndexOfName(n.subTypeFieldName + "_id"),
 	}
-	filter := map[connor.FilterKey]interface{}{
+	filter := map[connor.FilterKey]any{
 		fkIndex: doc.GetKey(),
 	}
+
+	// We have to reset the scan node after appending the new key-filter
+	if err := n.subType.Init(); err != nil {
+		log.ErrorE(n.p.ctx, "Sub-type initialization error at scan node reset", err)
+		return doc
+	}
+
 	// using the doc._key as a filter
 	err := appendFilterToScanNode(n.subType, filter)
 	if err != nil {
 		return core.Doc{}
 	}
 
-	doc.Fields[n.subSelect.Index] = n.subSelect.DocumentMapping.NewDoc()
 	next, err := n.subType.Next()
 	if !next || err != nil {
 		return doc
@@ -496,7 +503,7 @@ func (n *typeJoinMany) Next() (bool, error) {
 		fkIndex := &mapper.PropertyIndex{
 			Index: n.subSelect.FirstIndexOfName(n.rootName + "_id"),
 		}
-		filter := map[connor.FilterKey]interface{}{
+		filter := map[connor.FilterKey]any{
 			fkIndex: n.currentValue.GetKey(), // user_id: "bae-ALICE" |  user_id: "bae-CHARLIE"
 		}
 		// using the doc._key as a filter
@@ -538,7 +545,7 @@ func (n *typeJoinMany) Close() error {
 
 func (n *typeJoinMany) Source() planNode { return n.root }
 
-func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]interface{}) error {
+func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]any) error {
 	switch node := plan.(type) {
 	case *scanNode:
 		filter := node.filter
@@ -567,8 +574,8 @@ func appendFilterToScanNode(plan planNode, filterCondition map[connor.FilterKey]
 
 func removeConditionIndex(
 	key *mapper.PropertyIndex,
-	filterConditions map[connor.FilterKey]interface{},
-) (bool, interface{}) {
+	filterConditions map[connor.FilterKey]any,
+) (bool, any) {
 	for targetKey, clause := range filterConditions {
 		if indexKey, isIndexKey := targetKey.(*mapper.PropertyIndex); isIndexKey {
 			if key.Index == indexKey.Index {

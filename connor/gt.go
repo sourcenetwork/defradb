@@ -4,11 +4,16 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // gt does value comparisons to determine whether one
 // value is strictly larger than another.
-func gt(condition, data interface{}) (bool, error) {
+func gt(condition, data any) (bool, error) {
+	if condition == nil {
+		return data != nil, nil
+	}
+
 	switch cn := numbers.TryUpcast(condition).(type) {
 	case float64:
 		switch dn := numbers.TryUpcast(data).(type) {
@@ -29,6 +34,6 @@ func gt(condition, data interface{}) (bool, error) {
 
 		return false, nil
 	default:
-		return false, fmt.Errorf("unknown comparison type '%#v'", condition)
+		return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 	}
 }

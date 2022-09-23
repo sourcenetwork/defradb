@@ -12,7 +12,6 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -20,6 +19,8 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -75,7 +76,7 @@ func newEmptyDoc() *Document {
 	}
 }
 
-func NewDocFromMap(data map[string]interface{}) (*Document, error) {
+func NewDocFromMap(data map[string]any) (*Document, error) {
 	var err error
 	doc := &Document{
 		fields: make(map[string]Field),
@@ -127,7 +128,7 @@ func NewDocFromMap(data map[string]interface{}) (*Document, error) {
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array
 func NewDocFromJSON(obj []byte) (*Document, error) {
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	err := json.Unmarshal(obj, &data)
 	if err != nil {
 		return nil, err
@@ -161,7 +162,7 @@ func (doc *Document) Key() DocKey {
 // a field C
 // If no matching field exists then return an empty interface
 // and an error.
-func (doc *Document) Get(field string) (interface{}, error) {
+func (doc *Document) Get(field string) (any, error) {
 	val, err := doc.GetValue(field)
 	if err != nil {
 		return nil, err
@@ -176,7 +177,7 @@ func (doc *Document) GetValue(field string) (Value, error) {
 	path, subPaths, hasSubPaths := parseFieldPath(field)
 	f, exists := doc.fields[path]
 	if !exists {
-		return nil, ErrFieldNotExist
+		return nil, NewErrFieldNotExist(path)
 	}
 
 	val, err := doc.GetValueWithField(f)
@@ -199,7 +200,7 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 	defer doc.mu.RUnlock()
 	v, exists := doc.values[f]
 	if !exists {
-		return nil, ErrFieldNotExist
+		return nil, NewErrFieldNotExist(f.Name())
 	}
 	return v, nil
 }
@@ -209,7 +210,7 @@ func (doc *Document) GetValueWithField(f Field) (Value, error) {
 // Patch are to be deleted
 // @todo: Handle sub documents for SetWithJSON
 func (doc *Document) SetWithJSON(patch []byte) error {
-	var patchObj map[string]interface{}
+	var patchObj map[string]any
 	err := json.Unmarshal(patch, &patchObj)
 	if err != nil {
 		return err
@@ -229,12 +230,12 @@ func (doc *Document) SetWithJSON(patch []byte) error {
 }
 
 // Set the value of a field
-func (doc *Document) Set(field string, value interface{}) error {
+func (doc *Document) Set(field string, value any) error {
 	return doc.setAndParseType(field, value)
 }
 
 // SetAs is the same as set, but you can manually set the CRDT type
-func (doc *Document) SetAs(field string, value interface{}, t CType) error {
+func (doc *Document) SetAs(field string, value any, t CType) error {
 	return doc.setCBOR(t, field, value)
 }
 
@@ -245,7 +246,7 @@ func (doc *Document) Delete(fields ...string) error {
 	for _, f := range fields {
 		field, exists := doc.fields[f]
 		if !exists {
-			return ErrFieldNotExist
+			return NewErrFieldNotExist(f)
 		}
 		doc.values[field].Delete()
 	}
@@ -253,7 +254,7 @@ func (doc *Document) Delete(fields ...string) error {
 }
 
 // SetAsType Sets the value of a field along with a specific type
-// func (doc *Document) SetAsType(t client.CType, field string, value interface{}) error {
+// func (doc *Document) SetAsType(t client.CType, field string, value any) error {
 // 	return doc.set(t, field, value)
 // }
 
@@ -272,7 +273,7 @@ func (doc *Document) set(t CType, field string, value Value) error {
 	return nil
 }
 
-func (doc *Document) setCBOR(t CType, field string, val interface{}) error {
+func (doc *Document) setCBOR(t CType, field string, val any) error {
 	value := newCBORValue(t, val)
 	return doc.set(t, field, value)
 }
@@ -283,7 +284,7 @@ func (doc *Document) setObject(t CType, field string, val *Document) error {
 }
 
 // @todo: Update with document schemas
-func (doc *Document) setAndParseType(field string, value interface{}) error {
+func (doc *Document) setAndParseType(field string, value any) error {
 	if value == nil {
 		return nil
 	}
@@ -312,7 +313,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 
 	// string, bool, and more
-	case string, bool, []interface{}:
+	case string, bool, []any:
 		err := doc.setCBOR(LWW_REGISTER, field, val)
 		if err != nil {
 			return err
@@ -327,7 +328,7 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 	//			- which is parsed as an int
 	// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
 	//			- Which is parsed as an uint64
-	case map[string]interface{}:
+	case map[string]any:
 		subDoc := newEmptyDoc()
 		err := subDoc.setAndParseObjectType(val)
 		if err != nil {
@@ -340,12 +341,12 @@ func (doc *Document) setAndParseType(field string, value interface{}) error {
 		}
 
 	default:
-		return fmt.Errorf("Unhandled type in raw JSON: %v => %T", field, val)
+		return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", field, val))
 	}
 	return nil
 }
 
-func (doc *Document) setAndParseObjectType(value map[string]interface{}) error {
+func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	for k, v := range value {
 		err := doc.setAndParseType(k, v)
 		if err != nil {
@@ -404,9 +405,9 @@ func (doc *Document) String() string {
 	return string(j)
 }
 
-// ToMap returns the document as a map[string]interface{}
+// ToMap returns the document as a map[string]any
 // object.
-func (doc *Document) ToMap() (map[string]interface{}, error) {
+func (doc *Document) ToMap() (map[string]any, error) {
 	return doc.toMapWithKey()
 }
 
@@ -422,16 +423,16 @@ func (doc *Document) Clean() {
 	}
 }
 
-// converts the document into a map[string]interface{}
+// converts the document into a map[string]any
 // including any sub documents
-func (doc *Document) toMap() (map[string]interface{}, error) {
+func (doc *Document) toMap() (map[string]any, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
-	docMap := make(map[string]interface{})
+	docMap := make(map[string]any)
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
 		if !exists {
-			return nil, ErrFieldNotExist
+			return nil, NewErrFieldNotExist(v.Name())
 		}
 
 		if value.IsDocument() {
@@ -449,14 +450,14 @@ func (doc *Document) toMap() (map[string]interface{}, error) {
 	return docMap, nil
 }
 
-func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
+func (doc *Document) toMapWithKey() (map[string]any, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
-	docMap := make(map[string]interface{})
+	docMap := make(map[string]any)
 	for k, v := range doc.fields {
 		value, exists := doc.values[v]
 		if !exists {
-			return nil, ErrFieldNotExist
+			return nil, NewErrFieldNotExist(v.Name())
 		}
 
 		if value.IsDocument() {
@@ -475,13 +476,13 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 	return docMap, nil
 }
 
-// loops through an object of the form map[string]interface{}
+// loops through an object of the form map[string]any
 // and fills in the Document with each field it finds in the object.
 // Automatically handles sub objects and arrays.
 // Does not allow anonymous fields, error is thrown in this case
 // Eg. The JSON value [1,2,3,4] by itself is a valid JSON Object, but has no
 // field name.
-// func parseJSONObject(doc *Document, data map[string]interface{}) error {
+// func parseJSONObject(doc *Document, data map[string]any) error {
 // 	for k, v := range data {
 // 		switch v.(type) {
 
@@ -504,7 +505,7 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 // 			break
 
 // 		// array
-// 		case []interface{}:
+// 		case []any:
 // 			break
 
 // 		// sub object, recurse down.
@@ -516,9 +517,9 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 // 		//			- which is parsed as an int
 // 		// Use { "Timestamp" : { "_Type": "uint64", "_Value": 123 } }
 // 		//			- Which is parsed as an uint64
-// 		case map[string]interface{}:
+// 		case map[string]any:
 // 			subDoc := newEmptyDoc()
-// 			err := parseJSONObject(subDoc, v.(map[string]interface{}))
+// 			err := parseJSONObject(subDoc, v.(map[string]any))
 // 			if err != nil {
 // 				return err
 // 			}
@@ -527,7 +528,7 @@ func (doc *Document) toMapWithKey() (map[string]interface{}, error) {
 // 			break
 
 // 		default:
-// 			return fmt.Errorf("Unhandled type in raw JSON: %v => %T", k, v)
+// 			return errors.Wrap("Unhandled type in raw JSON: %v => %T", k, v)
 
 // 		}
 // 	}
@@ -547,7 +548,7 @@ func parseFieldPath(path string) (string, string, bool) {
 obj := `{
 	Hello: "World"
 }`
-objData := make(map[string]interface{})
+objData := make(map[string]any)
 err := json.Unmarshal(&objData, obj)
 
 docA := document.NewFromJSON(objData)

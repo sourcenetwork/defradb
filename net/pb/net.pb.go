@@ -6,14 +6,15 @@ package net_pb
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -706,7 +707,7 @@ func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
 	s.RegisterService(&_Service_serviceDesc, srv)
 }
 
-func _Service_GetDocGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetDocGraph_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetDocGraphRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -718,13 +719,13 @@ func _Service_GetDocGraph_Handler(srv interface{}, ctx context.Context, dec func
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetDocGraph",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetDocGraph(ctx, req.(*GetDocGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_PushDocGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_PushDocGraph_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(PushDocGraphRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -736,13 +737,13 @@ func _Service_PushDocGraph_Handler(srv interface{}, ctx context.Context, dec fun
 		Server:     srv,
 		FullMethod: "/net.pb.Service/PushDocGraph",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).PushDocGraph(ctx, req.(*PushDocGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_GetLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -754,13 +755,13 @@ func _Service_GetLog_Handler(srv interface{}, ctx context.Context, dec func(inte
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetLog(ctx, req.(*GetLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_PushLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_PushLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(PushLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -772,13 +773,13 @@ func _Service_PushLog_Handler(srv interface{}, ctx context.Context, dec func(int
 		Server:     srv,
 		FullMethod: "/net.pb.Service/PushLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).PushLog(ctx, req.(*PushLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetHeadLog_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetHeadLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -790,7 +791,7 @@ func _Service_GetHeadLog_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/net.pb.Service/GetHeadLog",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(ServiceServer).GetHeadLog(ctx, req.(*GetHeadLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)

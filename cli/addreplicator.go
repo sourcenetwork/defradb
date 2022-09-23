@@ -12,13 +12,13 @@ package cli
 
 import (
 	"context"
-	"fmt"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
@@ -33,15 +33,15 @@ for the p2p data sync system.`,
 			if err := cmd.Usage(); err != nil {
 				return err
 			}
-			return fmt.Errorf("must specify two arguments: collection and peer")
+			return errors.New("must specify two arguments: collection and peer")
 		}
 		collection := args[0]
 		peerAddr, err := ma.NewMultiaddr(args[1])
 		if err != nil {
-			return fmt.Errorf("could not parse peer address: %w", err)
+			return errors.Wrap("could not parse peer address", err)
 		}
 
-		log.Info(
+		log.FeedbackInfo(
 			cmd.Context(),
 			"Adding replicator for collection",
 			logging.NewKV("PeerAddress", peerAddr),
@@ -52,12 +52,12 @@ for the p2p data sync system.`,
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 		if err != nil {
-			return fmt.Errorf("failed to create RPC client: %w", err)
+			return errors.Wrap("failed to create RPC client", err)
 		}
 
 		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
 		if err != nil {
-			return fmt.Errorf("failed to parse RPC timeout duration: %w", err)
+			return errors.Wrap("failed to parse RPC timeout duration", err)
 		}
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
@@ -65,9 +65,9 @@ for the p2p data sync system.`,
 
 		pid, err := client.AddReplicator(ctx, collection, peerAddr)
 		if err != nil {
-			return fmt.Errorf("failed to add replicator, request failed: %w", err)
+			return errors.Wrap("failed to add replicator, request failed", err)
 		}
-		log.Info(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
+		log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
 		return nil
 	},
 }

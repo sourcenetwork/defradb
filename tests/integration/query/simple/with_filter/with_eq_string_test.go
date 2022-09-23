@@ -37,10 +37,45 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 				"Age":  uint64(21),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic string nil filter",
+		Query: `query {
+					users(filter: {Name: {_eq: null}}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+				`{
+					"Age": 60
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": nil,
+				"Age":  uint64(60),
 			},
 		},
 	}
@@ -69,7 +104,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Name": "John",
 				},
@@ -94,7 +129,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"Age": uint64(21),
 				},
@@ -116,7 +151,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{},
+			Results: []map[string]any{},
 		},
 	}
 

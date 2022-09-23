@@ -12,17 +12,15 @@ package schema
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/logging"
-
-	gql "github.com/graphql-go/graphql"
-	gqlp "github.com/graphql-go/graphql/language/parser"
+	"github.com/sourcenetwork/defradb/errors"
 
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
@@ -80,7 +78,7 @@ func (g *Generator) FromSDL(
 
 func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
-	typesBeforeMutation := make(map[string]interface{}, len(typeMapBeforeMutation))
+	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
 	for typeName := range typeMapBeforeMutation {
 		typesBeforeMutation[typeName] = struct{}{}
@@ -121,37 +119,7 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		return nil, err
 	}
 
-	if err := g.genAggregateFields(ctx); err != nil {
-		return nil, err
-	}
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
-		return nil, err
-	}
-
-	generatedFilterBaseArgs := []*gql.InputObject{}
-	for _, t := range g.typeDefs {
-		generatedFilterBaseArg, hasFilter := g.tryGenTypeFilterBaseArgInput(t)
-		if !hasFilter {
-			continue
-		}
-		generatedFilterBaseArgs = append(generatedFilterBaseArgs, generatedFilterBaseArg)
-	}
-
-	for _, t := range generatedFilterBaseArgs {
-		err := g.appendIfNotExists(t)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
-		return nil, err
-	}
-
-	// for each built type
-	// 		generate query inputs
+	// for each built type generate query inputs
 	queryType := g.manager.schema.QueryType()
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
@@ -162,6 +130,33 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		queryType.AddFieldConfig(f.Name, f)
 		generatedQueryFields = append(generatedQueryFields, f)
 	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	if err := g.genAggregateFields(ctx); err != nil {
+		return nil, err
+	}
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	generatedFilterLeafArgs := []*gql.InputObject{}
+	for _, defaultType := range inlineArrayTypes() {
+		leafFilterArg := g.genLeafFilterArgInput(defaultType)
+		generatedFilterLeafArgs = append(generatedFilterLeafArgs, leafFilterArg)
+	}
+
+	for _, t := range generatedFilterLeafArgs {
+		err := g.appendIfNotExists(t)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -246,8 +241,6 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				return err
 			}
 
-			// obj.AddFieldConfig(f, expandedField)
-			// obj := g.manager.schema.Type(obj.Name()).(*gql.Object)
 			obj.AddFieldConfig(f, expandedField)
 
 		case *gql.List: // new field object with arguments (list)
@@ -270,7 +263,9 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 			}
 		case *gql.Scalar:
 			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
-				g.createExpandedFieldAggregate(obj, def)
+				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
+					return err
+				}
 			}
 			// @todo: check if NonNull is possible here
 			//case *gql.NonNull:
@@ -284,26 +279,33 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 func (g *Generator) createExpandedFieldAggregate(
 	obj *gql.Object,
 	f *gql.FieldDefinition,
-) {
+) error {
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var filterTypeName string
 		if target == parserTypes.GroupFieldName {
 			filterTypeName = obj.Name() + "FilterArg"
 		} else {
-			filterType := obj.Fields()[target].Type
-			if list, isList := filterType.(*gql.List); isList && gql.IsLeafType(list.OfType) {
-				// If it is a list of leaf types - the filter is just the set of OperatorBlocks
-				// that are supported by this type - there can be no field selections.
-				if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
-					// GQL does not support '!' in type names, and so we have to manipulate the
-					// underlying name like this if it is a nullable type.
-					filterTypeName = fmt.Sprintf("NotNull%sOperatorBlock", notNull.OfType.Name())
+			if targeted := obj.Fields()[target]; targeted != nil {
+				if list, isList := targeted.Type.(*gql.List); isList && gql.IsLeafType(list.OfType) {
+					// If it is a list of leaf types - the filter is just the set of OperatorBlocks
+					// that are supported by this type - there can be no field selections.
+					if notNull, isNotNull := list.OfType.(*gql.NonNull); isNotNull {
+						// GQL does not support '!' in type names, and so we have to manipulate the
+						// underlying name like this if it is a nullable type.
+						filterTypeName = fmt.Sprintf("NotNull%sFilterArg", notNull.OfType.Name())
+					} else {
+						filterTypeName = genTypeName(list.OfType, "FilterArg")
+					}
 				} else {
-					filterTypeName = genTypeName(list.OfType, "OperatorBlock")
+					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				filterTypeName = filterType.Name() + "FilterArg"
+				return errors.New(fmt.Sprintf(
+					"Aggregate target not found. HostObject: {%s}, Target: {%s}",
+					obj.Name(),
+					target,
+				))
 			}
 		}
 
@@ -315,6 +317,8 @@ func (g *Generator) createExpandedFieldAggregate(
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
 		}
 	}
+
+	return nil
 }
 
 func (g *Generator) createExpandedFieldSingle(
@@ -344,14 +348,15 @@ func (g *Generator) createExpandedFieldList(
 		Name: f.Name,
 		Type: gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			"filter": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
+			"dockey":  schemaTypes.NewArgConfig(gql.String),
+			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"filter":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"FilterArg"]),
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"having": schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"HavingArg"]),
-			"order":  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			"limit":  schemaTypes.NewArgConfig(gql.Int),
-			"offset": schemaTypes.NewArgConfig(gql.Int),
+			"order":                  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -379,7 +384,7 @@ func (g *Generator) buildTypesFromAST(
 		case *ast.ObjectDefinition:
 			// check if type exists
 			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
-				return nil, fmt.Errorf("Schema type already exists: %s", defType.Name.Value)
+				return nil, errors.New(fmt.Sprintf("Schema type already exists: %s", defType.Name.Value))
 			}
 
 			objconf := gql.ObjectConfig{}
@@ -480,10 +485,10 @@ func (g *Generator) buildTypesFromAST(
 
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
-					return nil, fmt.Errorf(
+					return nil, errors.New(fmt.Sprintf(
 						"object not found whilst executing fields thunk: %s",
 						defType.Name.Value,
-					)
+					))
 				}
 
 				fields[parserTypes.GroupFieldName] = &gql.Field{
@@ -523,10 +528,10 @@ func getRelationshipName(
 				if argument.Name.Value == "name" {
 					name, isString := argument.Value.GetValue().(string)
 					if !isString {
-						return "", fmt.Errorf(
+						return "", errors.New(fmt.Sprintf(
 							"Relationship name must be of type string, but was: %v",
 							argument.Value.GetKind(),
-						)
+						))
 					}
 					return name, nil
 				}
@@ -771,9 +776,17 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
-					"_": &gql.InputObjectFieldConfig{
+					parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
-						Description: "Placeholder - empty object not permitted, but will have fields shortly",
+						Description: "The maximum number of child items to aggregate.",
+					},
+					parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+						Type:        gql.Int,
+						Description: "The index from which to start aggregating items.",
+					},
+					parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+						Type:        g.manager.schema.TypeMap()["Ordering"],
+						Description: "The order in which to aggregate items.",
 					},
 				},
 			})
@@ -796,9 +809,13 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
 		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
-			"_": &gql.InputObjectFieldConfig{
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
-				Description: "Placeholder - empty object not permitted, but will have fields shortly",
+				Description: "The maximum number of child items to count.",
+			},
+			parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The index from which to start counting items.",
 			},
 		},
 	})
@@ -820,9 +837,13 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 			Name: genNumericInlineArrayCountName(obj.Name(), field.Name),
 			Fields: gql.InputObjectConfigFieldMap{
-				"_": &gql.InputObjectFieldConfig{
+				parserTypes.LimitClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
-					Description: "Placeholder - empty object not permitted, but will have fields shortly",
+					Description: "The maximum number of child items to count.",
+				},
+				parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+					Type:        gql.Int,
+					Description: "The index from which to start counting items.",
 				},
 			},
 		})
@@ -888,7 +909,19 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 
 		return gql.InputObjectConfigFieldMap{
 			"field": &gql.InputObjectFieldConfig{
-				Type: fieldsEnum,
+				Type: gql.NewNonNull(fieldsEnum),
+			},
+			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The maximum number of child items to aggregate.",
+			},
+			parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+				Type:        gql.Int,
+				Description: "The index from which to start aggregating items.",
+			},
+			parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+				Type:        g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")],
+				Description: "The order in which to aggregate items.",
 			},
 		}, nil
 	}
@@ -932,7 +965,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	name := t.(*ast.Named).Name.Value
 	ttype, ok := typeMap[name]
 	if !ok {
-		return nil, fmt.Errorf("No type found for given name: %s", name)
+		return nil, errors.New(fmt.Sprintf("No type found for given name: %s", name))
 	}
 
 	return ttype, nil
@@ -953,7 +986,6 @@ func (g *Generator) GenerateQueryInputForGQLType(
 
 	// @todo: Don't add sub fields to filter/order for object list types
 	types.groupBy = g.genTypeFieldsEnum(obj)
-	types.having = g.genTypeHavingArgInput(obj)
 	types.order = g.genTypeOrderArgInput(obj)
 
 	queryField := g.genTypeQueryableFieldList(ctx, obj, types)
@@ -1089,6 +1121,10 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 				}
 				// scalars (leafs)
 				if gql.IsLeafType(field.Type) {
+					if _, isList := field.Type.(*gql.List); isList {
+						// Filtering by inline array value is currently not supported
+						continue
+					}
 					operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
 					if !isFilterable {
 						continue
@@ -1097,8 +1133,12 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 						Type: operatorType,
 					}
 				} else { // objects (relations)
+					filterType, isFilterable := g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterArg")]
+					if !isFilterable {
+						filterType = &gql.InputObjectField{}
+					}
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "FilterBaseArg")],
+						Type: filterType,
 					}
 				}
 			}
@@ -1113,67 +1153,61 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 	return selfRefType
 }
 
-// input {Type.Name}FilterBaseArg { ... }
-func (g *Generator) tryGenTypeFilterBaseArgInput(obj *gql.Object) (*gql.InputObject, bool) {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "FilterBaseArg"),
+func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
+	var selfRefType *gql.InputObject
+
+	var filterTypeName string
+	if notNull, isNotNull := obj.(*gql.NonNull); isNotNull {
+		// GQL does not support '!' in type names, and so we have to manipulate the
+		// underlying name like this if it is a nullable type.
+		filterTypeName = fmt.Sprintf("NotNull%s", notNull.OfType.Name())
+	} else {
+		filterTypeName = obj.Name()
 	}
-	fields := gql.InputObjectConfigFieldMap{}
-	// generate basic filter operator blocks for all the Leaf types
-	// (scalars + enums)
-	for _, field := range obj.Fields() {
-		operatorType, isFilterable := g.manager.schema.TypeMap()[field.Type.Name()+"OperatorBlock"]
-		if isFilterable {
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: operatorType,
+
+	inputCfg := gql.InputObjectConfig{
+		Name: fmt.Sprintf("%s%s", filterTypeName, "FilterArg"),
+	}
+
+	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		compoundListType := &gql.InputObjectFieldConfig{
+			Type: gql.NewList(selfRefType),
+		}
+
+		fields["_and"] = compoundListType
+		fields["_or"] = compoundListType
+
+		operatorBlockName := fmt.Sprintf("%s%s", filterTypeName, "OperatorBlock")
+		operatorType, hasOperatorType := g.manager.schema.TypeMap()[operatorBlockName]
+		if !hasOperatorType {
+			// This should be impossible
+			return nil, errors.New("Operator block not found", errors.NewKV("Name", operatorBlockName))
+		}
+
+		operatorObject, isInputObj := operatorType.(*gql.InputObject)
+		if !isInputObj {
+			// This should be impossible
+			return nil, errors.New(
+				"Invalid cast",
+				errors.NewKV("Expected type", "*gql.InputObject"),
+				errors.NewKV("Actual type", fmt.Sprintf("%T", operatorType)),
+			)
+		}
+
+		for f, field := range operatorObject.Fields() {
+			fields[f] = &gql.InputObjectFieldConfig{
+				Type: field.Type,
 			}
 		}
+
+		return fields, nil
 	}
 
-	if len(fields) == 0 {
-		return nil, false
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg), true
-}
-
-// query spec - sec N
-func (g *Generator) genTypeHavingArgInput(obj *gql.Object) *gql.InputObject {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "HavingArg"),
-	}
-	fields := gql.InputObjectConfigFieldMap{}
-	havingBlock := g.genTypeHavingBlockInput(obj)
-
-	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: havingBlock,
-			}
-		}
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
-}
-
-func (g *Generator) genTypeHavingBlockInput(obj *gql.Object) *gql.InputObject {
-	inputCfg := gql.InputObjectConfig{
-		Name: genTypeName(obj, "HavingBlock"),
-	}
-	fields := gql.InputObjectConfigFieldMap{}
-
-	for _, field := range obj.Fields() {
-		if gql.IsLeafType(field.Type) { // only Scalars, and enums
-			fields[field.Name] = &gql.InputObjectFieldConfig{
-				Type: g.manager.schema.TypeMap()["FloatOperatorBlock"],
-			}
-		}
-	}
-
-	inputCfg.Fields = fields
-	return gql.NewInputObject(inputCfg)
+	inputCfg.Fields = fieldThunk
+	selfRefType = gql.NewInputObject(inputCfg)
+	return selfRefType
 }
 
 func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
@@ -1188,13 +1222,21 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
 					continue
 				}
+				typeMap := g.manager.schema.TypeMap()
 				if gql.IsLeafType(field.Type) { // only Scalars, and enums
 					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()["Ordering"],
+						Type: typeMap["Ordering"],
 					}
 				} else { // sub objects
-					fields[field.Name] = &gql.InputObjectFieldConfig{
-						Type: g.manager.schema.TypeMap()[genTypeName(field.Type, "OrderArg")],
+					configType, isOrderable := typeMap[genTypeName(field.Type, "OrderArg")]
+					if !isOrderable {
+						fields[field.Name] = &gql.InputObjectFieldConfig{
+							Type: &gql.InputObjectField{},
+						}
+					} else {
+						fields[field.Name] = &gql.InputObjectFieldConfig{
+							Type: configType,
+						}
 					}
 				}
 			}
@@ -1210,7 +1252,6 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 type queryInputTypeConfig struct {
 	filter  *gql.InputObject
 	groupBy *gql.Enum
-	having  *gql.InputObject
 	order   *gql.InputObject
 }
 
@@ -1222,56 +1263,23 @@ func (g *Generator) genTypeQueryableFieldList(
 	name := obj.Name()
 
 	// add the generated types to the type map
-	if err := g.manager.schema.AppendType(config.filter); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema",
-			err,
-			logging.NewKV("SchemaItem", config.filter),
-		)
-	}
-
-	if err := g.manager.schema.AppendType(config.groupBy); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema",
-			err,
-			logging.NewKV("SchemaItem", config.groupBy),
-		)
-	}
-
-	if err := g.manager.schema.AppendType(config.having); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema",
-			err,
-			logging.NewKV("SchemaItem", config.having),
-		)
-	}
-
-	if err := g.manager.schema.AppendType(config.order); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to append runtime schema",
-			err,
-			logging.NewKV("SchemaItem", config.order),
-		)
-	}
+	g.manager.schema.TypeMap()[config.filter.Name()] = config.filter
+	g.manager.schema.TypeMap()[config.groupBy.Name()] = config.groupBy
+	g.manager.schema.TypeMap()[config.order.Name()] = config.order
 
 	field := &gql.Field{
 		// @todo: Handle collection name from @collection directive
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":  schemaTypes.NewArgConfig(gql.String),
-			"dockeys": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":     schemaTypes.NewArgConfig(gql.String),
-			"filter":  schemaTypes.NewArgConfig(config.filter),
-			"groupBy": schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"having":  schemaTypes.NewArgConfig(config.having),
-			"order":   schemaTypes.NewArgConfig(config.order),
-			"limit":   schemaTypes.NewArgConfig(gql.Int),
-			"offset":  schemaTypes.NewArgConfig(gql.Int),
+			"dockey":                 schemaTypes.NewArgConfig(gql.String),
+			"dockeys":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"cid":                    schemaTypes.NewArgConfig(gql.String),
+			"filter":                 schemaTypes.NewArgConfig(config.filter),
+			"groupBy":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"order":                  schemaTypes.NewArgConfig(config.order),
+			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -1304,7 +1312,9 @@ func isNumericArray(list *gql.List) bool {
 	// We have to compare the names here, as the gql lib we use
 	// does not have an easier way to compare non-nullable types
 	return list.OfType.Name() == gql.NewNonNull(gql.Float).Name() ||
-		list.OfType.Name() == gql.NewNonNull(gql.Int).Name()
+		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
+		list.OfType == gql.Int ||
+		list.OfType == gql.Float
 }
 
 // find a given directive

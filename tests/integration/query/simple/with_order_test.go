@@ -45,7 +45,7 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Alice",
 				"Age":  uint64(19),
@@ -97,7 +97,7 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Carlo",
 				"Age":  uint64(55),
@@ -154,7 +154,7 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     "Carlo",
 				"Age":      uint64(55),

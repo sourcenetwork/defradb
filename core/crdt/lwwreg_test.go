@@ -17,14 +17,13 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/datastore"
-
-	"github.com/ugorji/go/codec"
-
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/ugorji/go/codec"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newMockStore() datastore.DSReaderWriter {

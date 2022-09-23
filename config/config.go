@@ -50,15 +50,20 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
+	"unicode"
 
+	"github.com/mitchellh/mapstructure"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/spf13/viper"
+
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/spf13/viper"
 )
 
 var log = logging.MustNewLogger("defra.config")
@@ -94,11 +99,13 @@ func (cfg *Config) Load(rootDirPath string) error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg); err != nil {
+	err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
+
 	cfg.handleParams(rootDirPath)
-	err := cfg.validate()
+	err = cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -124,13 +131,15 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if err := viper.Unmarshal(cfg); err != nil {
+	err = viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
+	if err != nil {
 		return err
 	}
 	rootDir, err := DefaultRootDir()
 	if err != nil {
 		log.FatalE(context.Background(), "Could not get home directory", err)
 	}
+
 	cfg.handleParams(rootDir)
 	err = cfg.validate()
 	if err != nil {
@@ -151,16 +160,16 @@ func DefaultConfig() *Config {
 
 func (cfg *Config) validate() error {
 	if err := cfg.Datastore.validate(); err != nil {
-		return fmt.Errorf("failed to validate Datastore config: %w", err)
+		return errors.Wrap("failed to validate Datastore config", err)
 	}
 	if err := cfg.API.validate(); err != nil {
-		return fmt.Errorf("failed to validate API config: %w", err)
+		return errors.Wrap("failed to validate API config", err)
 	}
 	if err := cfg.Net.validate(); err != nil {
-		return fmt.Errorf("failed to validate Net config: %w", err)
+		return errors.Wrap("failed to validate Net config", err)
 	}
 	if err := cfg.Log.validate(); err != nil {
-		return fmt.Errorf("failed to validate Log config: %w", err)
+		return errors.Wrap("failed to validate Log config", err)
 	}
 	return nil
 }
@@ -170,6 +179,11 @@ func (cfg *Config) handleParams(rootDir string) {
 	if !filepath.IsAbs(cfg.Datastore.Badger.Path) {
 		cfg.Datastore.Badger.Path = filepath.Join(rootDir, cfg.Datastore.Badger.Path)
 	}
+	cfg.setBadgerVLogMaxSize()
+}
+
+func (cfg *Config) setBadgerVLogMaxSize() {
+	cfg.Datastore.Badger.Options.ValueLogFileSize = int64(cfg.Datastore.Badger.ValueLogFileSize)
 }
 
 // DatastoreConfig configures datastores.
@@ -181,8 +195,81 @@ type DatastoreConfig struct {
 
 // BadgerConfig configures Badger's on-disk / filesystem mode.
 type BadgerConfig struct {
-	Path string
+	Path             string
+	ValueLogFileSize ByteSize
 	*badgerds.Options
+}
+
+type ByteSize uint64
+
+const (
+	B   ByteSize = 1
+	KiB          = B << 10
+	MiB          = KiB << 10
+	GiB          = MiB << 10
+	TiB          = GiB << 10
+	PiB          = TiB << 10
+)
+
+// UnmarshalText calls Set on ByteSize with the given text
+func (bs *ByteSize) UnmarshalText(text []byte) error {
+	return bs.Set(string(text))
+}
+
+// Set parses a string into ByteSize
+func (bs *ByteSize) Set(s string) error {
+	digitString := ""
+	unit := ""
+	for _, char := range s {
+		if unicode.IsDigit(char) {
+			digitString += string(char)
+		} else {
+			unit += string(char)
+		}
+	}
+	digits, err := strconv.Atoi(digitString)
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToUpper(strings.Trim(unit, " ")) {
+	case "B":
+		*bs = ByteSize(digits) * B
+	case "KB", "KIB":
+		*bs = ByteSize(digits) * KiB
+	case "MB", "MIB":
+		*bs = ByteSize(digits) * MiB
+	case "GB", "GIB":
+		*bs = ByteSize(digits) * GiB
+	case "TB", "TIB":
+		*bs = ByteSize(digits) * TiB
+	case "PB", "PIB":
+		*bs = ByteSize(digits) * PiB
+	default:
+		*bs = ByteSize(digits)
+	}
+
+	return nil
+}
+
+// String returns the string formatted output of ByteSize
+func (bs *ByteSize) String() string {
+	const unit = 1024
+	bsInt := int64(*bs)
+	if bsInt < unit {
+		return fmt.Sprintf("%d", bsInt)
+	}
+	div, exp := int64(unit), 0
+	for n := bsInt / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%d%ciB", bsInt/div, "KMGTP"[exp])
+}
+
+// Type returns the type as a string.
+func (bs *ByteSize) Type() string {
+	return "ByteSize"
 }
 
 // MemoryConfig configures of Badger's memory mode.
@@ -191,10 +278,14 @@ type MemoryConfig struct {
 }
 
 func defaultDatastoreConfig() *DatastoreConfig {
+	// create a copy of the default badger options
+	opts := badgerds.DefaultOptions
 	return &DatastoreConfig{
 		Store: "badger",
 		Badger: BadgerConfig{
-			Path: "data",
+			Path:             "data",
+			ValueLogFileSize: 1 * GiB,
+			Options:          &opts,
 		},
 	}
 }
@@ -203,7 +294,7 @@ func (dbcfg DatastoreConfig) validate() error {
 	switch dbcfg.Store {
 	case "badger", "memory":
 	default:
-		return fmt.Errorf("invalid store type: %s", dbcfg.Store)
+		return errors.New(fmt.Sprintf("invalid store type: %s", dbcfg.Store))
 	}
 	return nil
 }
@@ -221,11 +312,11 @@ func defaultAPIConfig() *APIConfig {
 
 func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
-		return fmt.Errorf("no database URL provided")
+		return errors.New("no database URL provided")
 	}
 	_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
 	if err != nil {
-		return fmt.Errorf("invalid database URL: %w", err)
+		return errors.Wrap("invalid database URL", err)
 	}
 	return nil
 }
@@ -265,19 +356,19 @@ func defaultNetConfig() *NetConfig {
 func (netcfg *NetConfig) validate() error {
 	_, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
-		return fmt.Errorf("invalid RPC timeout: %s", netcfg.RPCTimeout)
+		return errors.New(fmt.Sprintf("invalid RPC timeout: %s", netcfg.RPCTimeout))
 	}
 	_, err = time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
-		return fmt.Errorf("invalid RPC MaxConnectionIdle: %s", netcfg.RPCMaxConnectionIdle)
+		return errors.New(fmt.Sprintf("invalid RPC MaxConnectionIdle: %s", netcfg.RPCMaxConnectionIdle))
 	}
 	_, err = ma.NewMultiaddr(netcfg.P2PAddress)
 	if err != nil {
-		return fmt.Errorf("invalid P2P address: %s", netcfg.P2PAddress)
+		return errors.New(fmt.Sprintf("invalid P2P address: %s", netcfg.P2PAddress))
 	}
 	_, err = net.ResolveTCPAddr("tcp", netcfg.RPCAddress)
 	if err != nil {
-		return fmt.Errorf("invalid RPC address: %w", err)
+		return errors.Wrap("invalid RPC address", err)
 	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
@@ -285,7 +376,7 @@ func (netcfg *NetConfig) validate() error {
 		for i, addr := range peers {
 			maddrs[i], err = ma.NewMultiaddr(addr)
 			if err != nil {
-				return fmt.Errorf("failed to parse bootstrap peers: %s", netcfg.Peers)
+				return errors.New(fmt.Sprintf("failed to parse bootstrap peers: %s", netcfg.Peers))
 			}
 		}
 	}
@@ -338,7 +429,7 @@ type LoggingConfig struct {
 	Level          string
 	Stacktrace     bool
 	Format         string
-	OutputPath     string // logging actually supports multiple output paths, but here only one is supported
+	Output         string // logging actually supports multiple output paths, but here only one is supported
 	Caller         bool
 	NoColor        bool
 	NamedOverrides map[string]*NamedLoggingConfig
@@ -354,7 +445,7 @@ func defaultLogConfig() *LoggingConfig {
 		Level:          logLevelInfo,
 		Stacktrace:     false,
 		Format:         "csv",
-		OutputPath:     "stderr",
+		Output:         "stderr",
 		Caller:         false,
 		NoColor:        false,
 		NamedOverrides: make(map[string]*NamedLoggingConfig),
@@ -377,7 +468,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	case logLevelFatal:
 		loglvl = logging.Fatal
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log level: %s", logcfg.Level)
+		return logging.Config{}, errors.New(fmt.Sprintf("invalid log level: %s", logcfg.Level))
 	}
 	var encfmt logging.EncoderFormat
 	switch logcfg.Format {
@@ -386,14 +477,14 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	case "csv":
 		encfmt = logging.CSV
 	default:
-		return logging.Config{}, fmt.Errorf("invalid log format: %s", logcfg.Format)
+		return logging.Config{}, errors.New(fmt.Sprintf("invalid log format: %s", logcfg.Format))
 	}
 	// handle named overrides
 	overrides := make(map[string]logging.Config)
 	for name, cfg := range logcfg.NamedOverrides {
 		c, err := cfg.ToLoggerConfig()
 		if err != nil {
-			return logging.Config{}, fmt.Errorf("couldn't convert override config: %w", err)
+			return logging.Config{}, errors.Wrap("couldn't convert override config", err)
 		}
 		overrides[name] = c
 	}
@@ -402,7 +493,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
 		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
-		OutputPaths:           []string{logcfg.OutputPath},
+		OutputPaths:           []string{logcfg.Output},
 		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
 	}, nil
@@ -417,7 +508,7 @@ func (logcfg LoggingConfig) copy() LoggingConfig {
 
 func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
 	if name == "" {
-		return nil, fmt.Errorf("provided name can't be empty for named config")
+		return nil, errors.New("provided name can't be empty for named config")
 	}
 	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
 		return namedCfg, nil
@@ -441,7 +532,7 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 func (c *Config) ToJSON() ([]byte, error) {
 	jsonbytes, err := json.Marshal(c)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to marshal Config to JSON: %w", err)
+		return []byte{}, errors.Wrap("failed to marshal Config to JSON", err)
 	}
 	return jsonbytes, nil
 }
@@ -451,10 +542,10 @@ func (c *Config) toBytes() ([]byte, error) {
 	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse config template: %w", err)
+		return nil, errors.Wrap("could not parse config template", err)
 	}
 	if err := configTemplate.Execute(&buffer, c); err != nil {
-		return nil, fmt.Errorf("could not execute config template: %w", err)
+		return nil, errors.Wrap("could not execute config template", err)
 	}
 	return buffer.Bytes(), nil
 }

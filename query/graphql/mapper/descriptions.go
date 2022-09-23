@@ -13,11 +13,11 @@ package mapper
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // DescriptionsRepo is a cache of previously requested collection descriptions
@@ -50,7 +50,7 @@ func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDesc
 	key := core.NewCollectionKey(name)
 	buf, err := r.txn.Systemstore().Get(r.ctx, key.ToDS())
 	if err != nil {
-		return client.CollectionDescription{}, fmt.Errorf("Failed to get collection description: %w", err)
+		return client.CollectionDescription{}, errors.Wrap("Failed to get collection description", err)
 	}
 
 	desc := client.CollectionDescription{}

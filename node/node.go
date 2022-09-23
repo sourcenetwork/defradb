@@ -26,7 +26,7 @@ import (
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/namespace"
-	"github.com/libp2p/go-libp2p"
+	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -34,11 +34,12 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 	"github.com/textileio/go-threads/broadcast"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/net"
 )
 
@@ -115,15 +116,15 @@ func NewNode(
 		rootstore,
 		libp2pOpts...,
 	)
+	if err != nil {
+		return nil, fin.Cleanup(err)
+	}
 	log.Info(
 		ctx,
 		"Created LibP2P host",
 		logging.NewKV("PeerId", h.ID()),
 		logging.NewKV("Address", options.ListenAddrs),
 	)
-	if err != nil {
-		return nil, fin.Cleanup(err)
-	}
 
 	bstore := db.Blockstore()
 	lite, err := ipfslite.New(ctx, rootstore, bstore, h, d, nil)
@@ -248,7 +249,7 @@ func (n *Node) WaitForPeerConnectionEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for peer connection timed out")
+			return errors.New("waiting for peer connection timed out")
 		}
 	}
 }
@@ -263,7 +264,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for pubsub timed out")
+			return errors.New("waiting for pubsub timed out")
 		}
 	}
 }
@@ -278,7 +279,7 @@ func (n *Node) WaitForPushLogEvent(id peer.ID) error {
 			}
 			return nil
 		case <-time.After(evtWaitTimeout):
-			return fmt.Errorf("waiting for pushlog timed out")
+			return errors.New("waiting for pushlog timed out")
 		}
 	}
 }

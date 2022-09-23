@@ -12,13 +12,14 @@ package schema
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-	testutils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 type QueryTestCase struct {
@@ -34,7 +35,7 @@ type QueryTestCase struct {
 	IntrospectionQuery string
 
 	// The data expected to be returned from the introspection query.
-	ExpectedData map[string]interface{}
+	ExpectedData map[string]any
 
 	// If [ExpectedData] is nil and this is populated, the test framework will assert
 	// that the value given exists in the actual results.
@@ -44,7 +45,7 @@ type QueryTestCase struct {
 	// it will assert that the items in the expected-array have exact matches in the
 	// corresponding result-array (inner maps are not traversed beyond the array,
 	// the full array-item must match exactly).
-	ContainsData map[string]interface{}
+	ContainsData map[string]any
 
 	// Any error expected to be returned by database calls.
 	//
@@ -96,7 +97,7 @@ func assertSchemaResults(
 	if assertErrors(t, result.Errors, testCase.ExpectedError) {
 		return true
 	}
-	resultantData := result.Data.(map[string]interface{})
+	resultantData := result.Data.(map[string]any)
 
 	if len(testCase.ExpectedData) == 0 && len(testCase.ContainsData) == 0 {
 		assert.Equal(t, testCase.ExpectedData, resultantData)
@@ -117,21 +118,21 @@ func assertSchemaResults(
 
 // Asserts that the `actual` contains the given `contains` value according to the logic
 // described on the [QueryTestCase.ContainsData] property.
-func assertContains(t *testing.T, contains map[string]interface{}, actual map[string]interface{}) {
+func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
 	for k, expected := range contains {
 		innerActual := actual[k]
-		if innerExpected, innerIsMap := expected.(map[string]interface{}); innerIsMap {
+		if innerExpected, innerIsMap := expected.(map[string]any); innerIsMap {
 			if innerActual == nil {
 				assert.Equal(t, innerExpected, innerActual)
-			} else if innerActualMap, isMap := innerActual.(map[string]interface{}); isMap {
+			} else if innerActualMap, isMap := innerActual.(map[string]any); isMap {
 				// If the inner is another map then we continue down the chain
 				assertContains(t, innerExpected, innerActualMap)
 			} else {
 				// If the types don't match then we use assert.Equal for a clean failure message
 				assert.Equal(t, innerExpected, innerActual)
 			}
-		} else if innerExpected, innerIsArray := expected.([]interface{}); innerIsArray {
-			if actualArray, isActualArray := innerActual.([]interface{}); isActualArray {
+		} else if innerExpected, innerIsArray := expected.([]any); innerIsArray {
+			if actualArray, isActualArray := innerActual.([]any); isActualArray {
 				// If the inner is an array/slice, then assert that each expected item is present
 				// in the actual.  Note how the actual may contain additional items - this should
 				// not result in a test failure.
@@ -158,7 +159,7 @@ func assertError(t *testing.T, err error, expectedError string) bool {
 		return false
 	} else {
 		if !strings.Contains(err.Error(), expectedError) {
-			assert.ErrorIs(t, err, fmt.Errorf(expectedError))
+			assert.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
@@ -167,18 +168,18 @@ func assertError(t *testing.T, err error, expectedError string) bool {
 
 func assertErrors(
 	t *testing.T,
-	errors []interface{},
+	errs []any,
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		assert.Empty(t, errors)
+		assert.Empty(t, errs)
 	} else {
-		for _, e := range errors {
+		for _, e := range errs {
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
 			if !strings.Contains(errorString, expectedError) {
 				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
-				assert.ErrorIs(t, fmt.Errorf(errorString), fmt.Errorf(expectedError))
+				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
 			return true

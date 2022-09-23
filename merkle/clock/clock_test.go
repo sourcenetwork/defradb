@@ -14,13 +14,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/crdt"
-	"github.com/sourcenetwork/defradb/datastore"
-
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	mh "github.com/multiformats/go-multihash"
+
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func newDS() ds.Datastore {

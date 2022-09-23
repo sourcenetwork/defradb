@@ -11,14 +11,13 @@
 package planner
 
 import (
-	"fmt"
+	cid "github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
-
-	cid "github.com/ipfs/go-cid"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -51,7 +50,7 @@ type selectTopNode struct {
 
 	group      *groupNode
 	order      *orderNode
-	limit      planNode
+	limit      *limitNode
 	aggregates []aggregateNode
 
 	// selectnode is used pre-wiring of the plan (before expansion and all).
@@ -77,7 +76,7 @@ func (n *selectTopNode) Source() planNode { return n.plan }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
-func (n *selectTopNode) Explain() (map[string]interface{}, error) {
+func (n *selectTopNode) Explain() (map[string]any, error) {
 	// No attributes are returned for selectTopNode.
 	return nil, nil
 }
@@ -116,6 +115,8 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
+	docKeys mapper.OptionalDocKeys
+
 	parsed       *mapper.Select
 	groupSelects []*mapper.Select
 }
@@ -148,10 +149,21 @@ func (n *selectNode) Next() (bool, error) {
 			return false, err
 		}
 
-		if passes {
-			return true, err
+		if !passes {
+			continue
 		}
-		// didn't pass, keep looping
+
+		if n.docKeys.HasValue {
+			docKey := n.currentValue.GetKey()
+			for _, key := range n.docKeys.Value {
+				if docKey == key {
+					return true, nil
+				}
+			}
+			continue
+		}
+
+		return true, err
 	}
 }
 
@@ -165,8 +177,8 @@ func (n *selectNode) Close() error {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *selectNode) Explain() (map[string]interface{}, error) {
-	explainerMap := map[string]interface{}{}
+func (n *selectNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
 
 	// Add the filter attribute if it exists.
 	if n.filter == nil || n.filter.ExternalConditions == nil {
@@ -211,8 +223,8 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		if n.parsed.Cid != "" {
 			c, err := cid.Decode(n.parsed.Cid)
 			if err != nil {
-				return nil, fmt.Errorf(
-					"Failed to propagate VersionFetcher span, invalid CID: %w",
+				return nil, errors.Wrap(
+					"Failed to propagate VersionFetcher span, invalid CID",
 					err,
 				)
 			}
@@ -295,6 +307,9 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					return nil, err
 				}
 			} else if f.Name == parserTypes.GroupFieldName {
+				if parsed.GroupBy == nil {
+					return nil, errors.New("_group may only be referenced when within a groupBy query")
+				}
 				n.groupSelects = append(n.groupSelects, f)
 			} else {
 				//nolint:errcheck
@@ -358,8 +373,9 @@ func (p *Planner) SelectFromSource(
 		origSource: source,
 		parsed:     parsed,
 		docMapper:  docMapper{&parsed.DocumentMapping},
+		filter:     parsed.Filter,
+		docKeys:    parsed.DocKeys,
 	}
-	s.filter = parsed.Filter
 	limit := parsed.Limit
 	orderBy := parsed.OrderBy
 	groupBy := parsed.GroupBy
@@ -387,7 +403,7 @@ func (p *Planner) SelectFromSource(
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(parsed, limit)
+	limitPlan, err := p.Limit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -413,6 +429,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 	s := &selectNode{
 		p:         p,
 		filter:    parsed.Filter,
+		docKeys:   parsed.DocKeys,
 		parsed:    parsed,
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
@@ -430,7 +447,7 @@ func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
 		return nil, err
 	}
 
-	limitPlan, err := p.HardLimit(parsed, limit)
+	limitPlan, err := p.Limit(parsed, limit)
 	if err != nil {
 		return nil, err
 	}

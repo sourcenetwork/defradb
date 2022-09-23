@@ -15,7 +15,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-
+	"github.com/sourcenetwork/defradb/core/enumerable"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -77,13 +78,14 @@ func (p *Planner) isValueFloat(
 
 		fieldDescription, fieldDescriptionFound := parentDescription.GetField(source.Name)
 		if !fieldDescriptionFound {
-			return false, fmt.Errorf(
+			return false, errors.New(fmt.Sprintf(
 				"Unable to find field description for field: %s",
 				source.Name,
-			)
+			))
 		}
 		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-			fieldDescription.Kind == client.FieldKind_FLOAT, nil
+			fieldDescription.Kind == client.FieldKind_FLOAT ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 	}
 
 	// If path length is two, we are summing a group or a child relationship
@@ -94,7 +96,7 @@ func (p *Planner) isValueFloat(
 
 	child, isChildSelect := parent.FieldAt(source.Index).AsSelect()
 	if !isChildSelect {
-		return false, fmt.Errorf("Expected child select but none was found")
+		return false, errors.New("Expected child select but none was found")
 	}
 
 	if _, isAggregate := parserTypes.Aggregates[source.ChildTarget.Name]; isAggregate {
@@ -128,11 +130,12 @@ func (p *Planner) isValueFloat(
 	fieldDescription, fieldDescriptionFound := childCollectionDescription.GetField(source.ChildTarget.Name)
 	if !fieldDescriptionFound {
 		return false,
-			fmt.Errorf("Unable to find child field description for field: %s", source.ChildTarget.Name)
+			errors.New(fmt.Sprintf("Unable to find child field description for field: %s", source.ChildTarget.Name))
 	}
 
 	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-		fieldDescription.Kind == client.FieldKind_FLOAT, nil
+		fieldDescription.Kind == client.FieldKind_FLOAT ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
 }
 
 func (n *sumNode) Kind() string {
@@ -153,11 +156,11 @@ func (n *sumNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sumNode) Explain() (map[string]interface{}, error) {
-	sourceExplanations := make([]map[string]interface{}, len(n.aggregateMapping))
+func (n *sumNode) Explain() (map[string]any, error) {
+	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {
-		explainerMap := map[string]interface{}{}
+		explainerMap := map[string]any{}
 
 		// Add the filter attribute if it exists.
 		if source.Filter == nil || source.Filter.ExternalConditions == nil {
@@ -179,7 +182,7 @@ func (n *sumNode) Explain() (map[string]interface{}, error) {
 		sourceExplanations[i] = explainerMap
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		sourcesLabel: sourceExplanations,
 	}, nil
 }
@@ -196,57 +199,79 @@ func (n *sumNode) Next() (bool, error) {
 
 	for _, source := range n.aggregateMapping {
 		child := n.currentValue.Fields[source.Index]
+		var collectionSum float64
+		var err error
 		switch childCollection := child.(type) {
 		case []core.Doc:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-
+			collectionSum = sumDocs(childCollection, func(childItem core.Doc) float64 {
 				childProperty := childItem.Fields[source.ChildTarget.Index]
 				switch v := childProperty.(type) {
 				case int:
-					sum += float64(v)
+					return float64(v)
 				case int64:
-					sum += float64(v)
+					return float64(v)
 				case uint64:
-					sum += float64(v)
+					return float64(v)
 				case float64:
-					sum += v
+					return v
 				default:
-					// do nothing, cannot be summed
+					// return nothing, cannot be summed
+					return 0
 				}
-			}
+			})
 		case []int64:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-				sum += float64(childItem)
-			}
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessN[int64],
+				func(childItem int64) float64 {
+					return float64(childItem)
+				},
+			)
+
+		case []client.Option[int64]:
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessO[int64],
+				func(childItem client.Option[int64]) float64 {
+					if !childItem.HasValue() {
+						return 0
+					}
+					return float64(childItem.Value())
+				},
+			)
+
 		case []float64:
-			for _, childItem := range childCollection {
-				passed, err := mapper.RunFilter(childItem, source.Filter)
-				if err != nil {
-					return false, err
-				}
-				if !passed {
-					continue
-				}
-				sum += childItem
-			}
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessN[float64],
+				func(childItem float64) float64 {
+					return childItem
+				},
+			)
+
+		case []client.Option[float64]:
+			collectionSum, err = sumItems(
+				childCollection,
+				&source,
+				lessO[float64],
+				func(childItem client.Option[float64]) float64 {
+					if !childItem.HasValue() {
+						return 0
+					}
+					return childItem.Value()
+				},
+			)
 		}
+		if err != nil {
+			return false, err
+		}
+		sum += collectionSum
 	}
 
-	var typedSum interface{}
+	var typedSum any
 	if n.isFloat {
 		typedSum = sum
 	} else {
@@ -257,4 +282,78 @@ func (n *sumNode) Next() (bool, error) {
 	return true, nil
 }
 
+// offsets sums the documents in a slice, skipping over hidden items (a grouping mechanic).
+// Docs should be counted with this function to avoid applying offsets twice (once in the
+// select, then once here).
+func sumDocs(docs []core.Doc, toFloat func(core.Doc) float64) float64 {
+	var sum float64 = 0
+	for _, doc := range docs {
+		if !doc.Hidden {
+			sum += toFloat(doc)
+		}
+	}
+
+	return sum
+}
+
+func sumItems[T any](
+	source []T,
+	aggregateTarget *mapper.AggregateTarget,
+	less func(T, T) bool,
+	toFloat func(T) float64,
+) (float64, error) {
+	items := enumerable.New(source)
+	if aggregateTarget.Filter != nil {
+		items = enumerable.Where(items, func(item T) (bool, error) {
+			return mapper.RunFilter(item, aggregateTarget.Filter)
+		})
+	}
+
+	if aggregateTarget.OrderBy != nil && len(aggregateTarget.OrderBy.Conditions) > 0 {
+		if aggregateTarget.OrderBy.Conditions[0].Direction == mapper.ASC {
+			items = enumerable.Sort(items, less, len(source))
+		} else {
+			items = enumerable.Sort(items, reverse(less), len(source))
+		}
+	}
+
+	if aggregateTarget.Limit != nil {
+		items = enumerable.Skip(items, aggregateTarget.Limit.Offset)
+		items = enumerable.Take(items, aggregateTarget.Limit.Limit)
+	}
+
+	var sum float64 = 0
+	err := enumerable.ForEach(items, func(item T) {
+		sum += toFloat(item)
+	})
+
+	return sum, err
+}
+
 func (n *sumNode) SetPlan(p planNode) { n.plan = p }
+
+type number interface {
+	int64 | float64
+}
+
+func lessN[T number](a T, b T) bool {
+	return a < b
+}
+
+func lessO[T number](a client.Option[T], b client.Option[T]) bool {
+	if !a.HasValue() {
+		return true
+	}
+
+	if !b.HasValue() {
+		return false
+	}
+
+	return a.Value() < b.Value()
+}
+
+func reverse[T any](original func(T, T) bool) func(T, T) bool {
+	return func(t1, t2 T) bool {
+		return !original(t1, t2)
+	}
+}

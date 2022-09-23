@@ -2,18 +2,20 @@ package connor
 
 import (
 	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
-func Match(conditions map[FilterKey]interface{}, data interface{}) (bool, error) {
+func Match(conditions map[FilterKey]any, data any) (bool, error) {
 	return eq(conditions, data)
 }
 
 // matchWith can be used to specify the exact operator to use when performing
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.
-func matchWith(op string, conditions, data interface{}) (bool, error) {
+func matchWith(op string, conditions, data any) (bool, error) {
 	switch op {
 	case "_and":
 		return and(conditions, data)
@@ -36,6 +38,6 @@ func matchWith(op string, conditions, data interface{}) (bool, error) {
 	case "_or":
 		return or(conditions, data)
 	default:
-		return false, fmt.Errorf("unknown operator '%s'", op)
+		return false, errors.New(fmt.Sprintf("unknown operator '%s'", op))
 	}
 }

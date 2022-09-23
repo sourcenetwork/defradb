@@ -36,11 +36,36 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "John",
 			},
 		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithIntLessThanFilterBlockWithNullValue(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic lt int filter with null value",
+		Query: `query {
+					users(filter: {Age: {_lt: null}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Bob"
+				}`,
+			},
+		},
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)

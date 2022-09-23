@@ -34,7 +34,7 @@ func TestQuerySimple(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 				"Name": "John",
@@ -63,7 +63,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"username": "John",
 				"age":      uint64(21),
@@ -95,7 +95,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 			}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name": "Bob",
 				"Age":  uint64(27),
@@ -144,7 +144,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"Name":     "John",
 				"Email":    nil,
@@ -158,15 +158,13 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test documents undesirable behaviour and should be altered
-// with https://github.com/sourcenetwork/defradb/issues/610.
-// A document with nil fields should be returned.
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with default-value fields",
 		Query: `query {
 					users {
 						Name
+						Email
 						Age
 						HeightM
 						Verified
@@ -177,7 +175,15 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 				`{ }`,
 			},
 		},
-		Results: []map[string]interface{}{},
+		Results: []map[string]any{
+			{
+				"Name":     nil,
+				"Email":    nil,
+				"Age":      nil,
+				"HeightM":  nil,
+				"Verified": nil,
+			},
+		},
 	}
 
 	executeTestCase(t, test)

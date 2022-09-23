@@ -38,7 +38,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 					"name":   "John",
@@ -71,7 +71,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 					"name":   "John",
@@ -104,7 +104,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 					}`,
 				},
 			},
-			Results: []map[string]interface{}{
+			Results: []map[string]any{
 				{
 					"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 					"name":   "John",
@@ -150,7 +150,7 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 				"name":   "John",
@@ -193,7 +193,7 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 				}`,
 			},
 		},
-		Results: []map[string]interface{}{
+		Results: []map[string]any{
 			{
 				"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
 				"name":   "John",

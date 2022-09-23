@@ -13,6 +13,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
@@ -28,7 +30,7 @@ func (cfg *Config) writeConfigFile(path string) error {
 		return err
 	}
 	if err := os.WriteFile(path, buffer, defaultConfigFilePerm); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+		return errors.Wrap("failed to write file", err)
 	}
 	return nil
 }
@@ -54,11 +56,14 @@ datastore:
   store: {{ .Datastore.Store }}
   badger:
     path: {{ .Datastore.Badger.Path }}
+    # Maximum file size of the value log files. The in-memory file size will be 2*valuelogfilesize.
+    # Human friendly units can be used (ex: 500MB).
+    valuelogfilesize: {{ .Datastore.Badger.ValueLogFileSize }}
   # memory:
   #    size: {{ .Datastore.Memory.Size }}
 
 api:
-  # Listening address of the (HTTP API) GraphQL query endpoint
+  # Address of the HTTP API to listen on or connect to
   address: {{ .API.Address }}
 
 net:
@@ -89,7 +94,7 @@ log:
   # Supported log formats are json, csv
   format: {{ .Log.Format }}
   # Where the log output is written to
-  output: {{ .Log.OutputPath }}
+  output: {{ .Log.Output }}
   # Disable colored log output
   nocolor: {{ .Log.NoColor }}
   # Caller location in log output
