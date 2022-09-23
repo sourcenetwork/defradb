@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package complex
+package one_to_many_to_many
 
 import (
 	"testing"
@@ -16,34 +16,43 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var bookAuthorPublisherGQLSchema = (`
-	type book {
-		name: String
-		rating: Float
-		author: author
-		publisher: publisher
-	}
+var gqlSchemaOneToManyToMany = (`
 
-	type author {
+	type Author {
 		name: String
 		age: Int
 		verified: Boolean
-		wrote: book @primary
+		book: [Book]
 	}
 
-	type publisher {
+	type Book {
 		name: String
-		address: String
-		favouritePageNumbers: [Int!]
-		published: [book]
+		rating: Float
+		author: Author
+        publisher: [Publisher]
 	}
+
+    type Publisher {
+        name: String
+        address: String
+        yearOpened: Int
+        book: Book
+    }
+
 `)
 
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
+func executeTestCase(
+	t *testing.T,
+	test testUtils.QueryTestCase,
+) {
 	testUtils.ExecuteQueryTestCase(
 		t,
-		bookAuthorPublisherGQLSchema,
-		[]string{"book", "author", "publisher"},
+		gqlSchemaOneToManyToMany,
+		[]string{
+			"Author",
+			"Book",
+			"Publisher",
+		},
 		test,
 	)
 }
