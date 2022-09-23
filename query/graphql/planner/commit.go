@@ -182,9 +182,6 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 			return nil, err
 		}
 		dag.cid = &c
-	} else {
-		// only set this if a cid has not been provided
-		dag.depthLimit = math.MaxUint32 // infinite depth
 	}
 
 	// @todo: Get Collection field ID
@@ -199,6 +196,7 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 		headset.key = key
 	}
 	dag.headset = headset
+	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:      p,

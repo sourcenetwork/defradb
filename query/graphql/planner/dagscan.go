@@ -137,9 +137,10 @@ type dagScanNode struct {
 	documentIterator
 	docMapper
 
-	p     *Planner
-	cid   *cid.Cid
-	field string
+	p          *Planner
+	cid        *cid.Cid
+	currentCid *cid.Cid
+	field      string
 
 	// used for tracking traversal
 	// note: depthLimit of 0 or 1 are equivalent
@@ -274,8 +275,8 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, errors.New("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
-		n.cid = &cid
-	} else if n.cid == nil && n.headset != nil {
+		n.currentCid = &cid
+	} else if n.currentCid == nil && n.headset != nil {
 		if next, err := n.headset.Next(); !next {
 			return false, err
 		}
@@ -285,8 +286,14 @@ func (n *dagScanNode) Next() (bool, error) {
 		if !ok {
 			return false, errors.New("Headset scan node returned an invalid cid")
 		}
-		n.cid = &cid
-	} else if n.cid == nil {
+		n.currentCid = &cid
+	} else if n.cid != nil {
+		if n.visitedNodes[n.cid.String()] {
+			// If the requested cid has been visited, we are done and should return false
+			return false, nil
+		}
+		n.currentCid = n.cid
+	} else if n.currentCid == nil {
 		// add this final elseif case in case another function
 		// manually sets the CID. Should prob migrate any remote CID
 		// updates to use the queuedCids.
@@ -298,15 +305,15 @@ func (n *dagScanNode) Next() (bool, error) {
 	// as it will reset and scan through the headset/queue
 	// and eventually return a value, or false if we've
 	// visited everything
-	if _, ok := n.visitedNodes[n.cid.String()]; ok {
-		n.cid = nil
+	if _, ok := n.visitedNodes[n.currentCid.String()]; ok {
+		n.currentCid = nil
 		return n.Next()
 	}
 
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
 	store := n.p.txn.DAGstore()
-	block, err := store.Get(n.p.ctx, *n.cid)
+	block, err := store.Get(n.p.ctx, *n.currentCid)
 	if err != nil { // handle error?
 		return false, err
 	}
@@ -325,7 +332,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// until there are no more links, and no more explored
 	// HEAD paths.
 	n.depthVisited++
-	n.visitedNodes[n.cid.String()] = true // mark the current node as "visited"
+	n.visitedNodes[n.currentCid.String()] = true // mark the current node as "visited"
 	if n.depthVisited < n.depthLimit {
 		// look for HEAD links
 		for _, h := range heads {
@@ -333,7 +340,13 @@ func (n *dagScanNode) Next() (bool, error) {
 			n.queuedCids.PushFront(h.Cid)
 		}
 	}
-	n.cid = nil // clear cid for next round
+
+	if n.cid != nil && *n.currentCid != *n.cid {
+		n.currentCid = nil
+		return n.Next()
+	}
+
+	n.currentCid = nil // clear cid for next round
 	return true, nil
 }
 
