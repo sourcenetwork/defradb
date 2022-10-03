@@ -374,14 +374,14 @@ func (p *Peer) AddReplicator(
 					continue
 				}
 
-				lg := client.UpdateEvent{
+				evt := client.UpdateEvent{
 					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
 					Block:    nd,
 					Priority: priority,
 				}
-				if err := p.server.pushLog(ctx, lg, pid); err != nil {
+				if err := p.server.pushLog(ctx, evt, pid); err != nil {
 					log.ErrorE(
 						p.ctx,
 						"Failed to replicate log",
@@ -397,20 +397,20 @@ func (p *Peer) AddReplicator(
 	return pid, nil
 }
 
-func (p *Peer) handleDocCreateLog(lg client.UpdateEvent) error {
-	dockey, err := client.NewDocKeyFromString(lg.DocKey)
+func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
 
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, lg)
+	p.pushLogToReplicators(p.ctx, evt)
 
-	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.Block, lg.SchemaID)
+	return p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
 }
 
-func (p *Peer) handleDocUpdateLog(lg client.UpdateEvent) error {
-	dockey, err := client.NewDocKeyFromString(lg.DocKey)
+func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
@@ -418,15 +418,15 @@ func (p *Peer) handleDocUpdateLog(lg client.UpdateEvent) error {
 		p.ctx,
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", lg.Cid),
-		logging.NewKV("SchemaId", lg.SchemaID))
+		logging.NewKV("CID", evt.Cid),
+		logging.NewKV("SchemaId", evt.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: lg.Cid},
-		SchemaID: []byte(lg.SchemaID),
+		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		SchemaID: []byte(evt.SchemaID),
 		Log: &pb.Document_Log{
-			Block: lg.Block.RawData(),
+			Block: evt.Block.RawData(),
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -434,10 +434,10 @@ func (p *Peer) handleDocUpdateLog(lg client.UpdateEvent) error {
 	}
 
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, lg)
+	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishLog(p.ctx, lg.DocKey, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", lg.Cid, lg.DocKey), err)
+	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
+		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
 	}
 	return nil
 }

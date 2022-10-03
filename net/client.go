@@ -33,8 +33,8 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(ctx context.Context, lg client.UpdateEvent, pid peer.ID) error {
-	dockey, err := client.NewDocKeyFromString(lg.DocKey)
+func (s *server) pushLog(ctx context.Context, evt client.UpdateEvent, pid peer.ID) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
@@ -42,15 +42,15 @@ func (s *server) pushLog(ctx context.Context, lg client.UpdateEvent, pid peer.ID
 		ctx,
 		"Preparing pushLog request",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", lg.Cid),
-		logging.NewKV("SchemaId", lg.SchemaID))
+		logging.NewKV("CID", evt.Cid),
+		logging.NewKV("SchemaId", evt.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: lg.Cid},
-		SchemaID: []byte(lg.SchemaID),
+		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		SchemaID: []byte(evt.SchemaID),
 		Log: &pb.Document_Log{
-			Block: lg.Block.RawData(),
+			Block: evt.Block.RawData(),
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -60,7 +60,7 @@ func (s *server) pushLog(ctx context.Context, lg client.UpdateEvent, pid peer.ID
 	log.Debug(
 		ctx, "Pushing log",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", lg.Cid),
+		logging.NewKV("CID", evt.Cid),
 		logging.NewKV("PID", pid))
 
 	client, err := s.dial(pid) // grpc dial over p2p stream
@@ -72,7 +72,7 @@ func (s *server) pushLog(ctx context.Context, lg client.UpdateEvent, pid peer.ID
 	defer cancel()
 
 	if _, err := client.PushLog(cctx, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("Failed PushLog RPC request %s for %s to %s", lg.Cid, dockey, pid), err)
+		return errors.Wrap(fmt.Sprintf("Failed PushLog RPC request %s for %s to %s", evt.Cid, dockey, pid), err)
 	}
 	return nil
 }

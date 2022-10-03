@@ -93,6 +93,7 @@ func (c *simpleChannel[T]) handleChannel() {
 				if ch == subscriber {
 					index = i
 					isFound = true
+					break
 				}
 			}
 			if !isFound {
