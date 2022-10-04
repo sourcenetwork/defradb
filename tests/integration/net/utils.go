@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
@@ -39,8 +38,6 @@ var (
 )
 
 const (
-	busBufferSize = 100
-
 	userCollectionGQLSchema = `
 		type users {
 			Name: String
@@ -74,8 +71,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	var err error
 
 	log.Info(ctx, "Building new memory store")
-	bs := broadcast.NewBroadcaster(busBufferSize)
-	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithBroadcaster(bs))
+	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -102,7 +98,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	n, err = node.NewNode(
 		ctx,
 		db,
-		bs,
 		cfg.NodeConfig(),
 	)
 	if err != nil {

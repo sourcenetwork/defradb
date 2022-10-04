@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
@@ -28,7 +27,7 @@ var (
 		func(
 			mstore datastore.MultiStore,
 			schemaID string,
-			bs corenet.Broadcaster,
+			uCh client.UpdateChannel,
 		) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleCompositeDAG(
@@ -36,7 +35,7 @@ var (
 					mstore.Headstore(),
 					mstore.DAGstore(),
 					schemaID,
-					bs,
+					uCh,
 					core.DataStoreKey{},
 					key,
 				)
@@ -66,7 +65,7 @@ func NewMerkleCompositeDAG(
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
 	schemaID string,
-	bs corenet.Broadcaster,
+	uCh client.UpdateChannel,
 	ns,
 	key core.DataStoreKey,
 ) *MerkleCompositeDAG {
@@ -78,7 +77,7 @@ func NewMerkleCompositeDAG(
 	)
 
 	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)
-	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, broadcaster: bs}
+	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, updateChannel: uCh}
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,

@@ -811,7 +811,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			c.schemaID,
-			c.db.broadcaster,
+			c.db.events.Updates,
 			ctype,
 			key,
 		)
@@ -836,7 +836,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			c.SchemaID(),
-			c.db.broadcaster,
+			c.db.events.Updates,
 			ctype,
 			key,
 		)

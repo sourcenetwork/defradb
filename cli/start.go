@@ -24,7 +24,6 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/textileio/go-threads/broadcast"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
@@ -40,8 +39,6 @@ import (
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
-
-const busBufferSize = 100
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -196,10 +193,8 @@ func start(ctx context.Context) (*defraInstance, error) {
 	var options []db.Option
 
 	// check for p2p
-	var bs *broadcast.Broadcaster
 	if !cfg.Net.P2PDisabled {
-		bs = broadcast.NewBroadcaster(busBufferSize)
-		options = append(options, db.WithBroadcaster(bs))
+		options = append(options, db.WithUpdateEvents())
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)
@@ -214,7 +209,6 @@ func start(ctx context.Context) (*defraInstance, error) {
 		n, err = node.NewNode(
 			ctx,
 			db,
-			bs,
 			cfg.NodeConfig(),
 		)
 		if err != nil {

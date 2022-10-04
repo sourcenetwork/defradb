@@ -35,7 +35,6 @@ import (
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
-	"github.com/textileio/go-threads/broadcast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -75,7 +74,6 @@ type Node struct {
 func NewNode(
 	ctx context.Context,
 	db client.DB,
-	bs *broadcast.Broadcaster,
 	opts ...NodeOpt,
 ) (*Node, error) {
 	options, err := NewMergedOptions(opts...)
@@ -150,7 +148,6 @@ func NewNode(
 		db,
 		h,
 		ps,
-		bs,
 		lite,
 		options.TCPAddr,
 		options.GRPCServerOptions,

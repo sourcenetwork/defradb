@@ -124,7 +124,7 @@ func initCRDTForType(
 		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
+	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), client.EmptyUpdateChannel, ctype, key)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {

@@ -27,7 +27,6 @@ import (
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/textileio/go-threads/broadcast"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -48,7 +47,8 @@ var (
 type Peer struct {
 	//config??
 
-	db client.DB
+	db            client.DB
+	updateChannel chan client.UpdateEvent
 
 	host host.Host
 	ps   *pubsub.PubSub
@@ -56,8 +56,6 @@ type Peer struct {
 
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
-
-	bus *broadcast.Broadcaster
 
 	jobQueue chan *dagJob
 	sendJobs chan *dagJob
@@ -79,7 +77,6 @@ func NewPeer(
 	db client.DB,
 	h host.Host,
 	ps *pubsub.PubSub,
-	bs *broadcast.Broadcaster,
 	ds DAGSyncer,
 	tcpAddr ma.Multiaddr,
 	serverOptions []grpc.ServerOption,
@@ -95,7 +92,6 @@ func NewPeer(
 		ps:             ps,
 		db:             db,
 		ds:             ds,
-		bus:            bs,
 		p2pRPC:         grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
@@ -122,6 +118,16 @@ func (p *Peer) Start() error {
 	}
 
 	if p.ps != nil {
+		if !p.db.Events().Updates.HasValue() {
+			return errors.New("tried to subscribe to update channel, but update channel is nil")
+		}
+
+		updateChannel, err := p.db.Events().Updates.Value().Subscribe()
+		if err != nil {
+			return err
+		}
+		p.updateChannel = updateChannel
+
 		log.Info(p.ctx, "Starting internal broadcaster for pubsub network")
 		go p.handleBroadcastLoop()
 	}
@@ -171,7 +177,9 @@ func (p *Peer) Close() error {
 		}
 	}
 
-	p.bus.Discard()
+	if p.db.Events().Updates.HasValue() {
+		p.db.Events().Updates.Value().Unsubscribe(p.updateChannel)
+	}
 	p.cancel()
 	return nil
 }
@@ -179,33 +187,24 @@ func (p *Peer) Close() error {
 // handleBroadcast loop manages the transition of messages
 // from the internal broadcaster to the external pubsub network
 func (p *Peer) handleBroadcastLoop() {
-	if p.bus == nil {
-		log.Info(p.ctx, "Tried to start internal broadcaster with none defined")
-		return
-	}
-
-	l := p.bus.Listen()
 	log.Debug(p.ctx, "Waiting for messages on internal broadcaster")
-	for v := range l.Channel() {
+	for {
 		log.Debug(p.ctx, "Handling internal broadcast bus message")
-		// filter for only messages intended for the pubsub network
-		switch msg := v.(type) {
-		case core.Log:
+		update := <-p.updateChannel
 
-			// check log priority, 1 is new doc log
-			// 2 is update log
-			var err error
-			if msg.Priority == 1 {
-				err = p.handleDocCreateLog(msg)
-			} else if msg.Priority > 1 {
-				err = p.handleDocUpdateLog(msg)
-			} else {
-				log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", msg.Cid))
-			}
+		// check log priority, 1 is new doc log
+		// 2 is update log
+		var err error
+		if update.Priority == 1 {
+			err = p.handleDocCreateLog(update)
+		} else if update.Priority > 1 {
+			err = p.handleDocUpdateLog(update)
+		} else {
+			log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
+		}
 
-			if err != nil {
-				log.ErrorE(p.ctx, "Error while handling broadcast log", err)
-			}
+		if err != nil {
+			log.ErrorE(p.ctx, "Error while handling broadcast log", err)
 		}
 	}
 }
@@ -375,14 +374,14 @@ func (p *Peer) AddReplicator(
 					continue
 				}
 
-				lg := core.Log{
+				evt := client.UpdateEvent{
 					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
 					Block:    nd,
 					Priority: priority,
 				}
-				if err := p.server.pushLog(ctx, lg, pid); err != nil {
+				if err := p.server.pushLog(ctx, evt, pid); err != nil {
 					log.ErrorE(
 						p.ctx,
 						"Failed to replicate log",
@@ -398,20 +397,20 @@ func (p *Peer) AddReplicator(
 	return pid, nil
 }
 
-func (p *Peer) handleDocCreateLog(lg core.Log) error {
-	dockey, err := client.NewDocKeyFromString(lg.DocKey)
+func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
 
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, lg)
+	p.pushLogToReplicators(p.ctx, evt)
 
-	return p.RegisterNewDocument(p.ctx, dockey, lg.Cid, lg.Block, lg.SchemaID)
+	return p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
 }
 
-func (p *Peer) handleDocUpdateLog(lg core.Log) error {
-	dockey, err := client.NewDocKeyFromString(lg.DocKey)
+func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("Failed to get DocKey from broadcast message", err)
 	}
@@ -419,15 +418,15 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 		p.ctx,
 		"Preparing pubsub pushLog request from broadcast",
 		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", lg.Cid),
-		logging.NewKV("SchemaId", lg.SchemaID))
+		logging.NewKV("CID", evt.Cid),
+		logging.NewKV("SchemaId", evt.SchemaID))
 
 	body := &pb.PushLogRequest_Body{
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
-		Cid:      &pb.ProtoCid{Cid: lg.Cid},
-		SchemaID: []byte(lg.SchemaID),
+		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		SchemaID: []byte(evt.SchemaID),
 		Log: &pb.Document_Log{
-			Block: lg.Block.RawData(),
+			Block: evt.Block.RawData(),
 		},
 	}
 	req := &pb.PushLogRequest{
@@ -435,15 +434,15 @@ func (p *Peer) handleDocUpdateLog(lg core.Log) error {
 	}
 
 	// push to each peer (replicator)
-	p.pushLogToReplicators(p.ctx, lg)
+	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishLog(p.ctx, lg.DocKey, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", lg.Cid, lg.DocKey), err)
+	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
+		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
 	}
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(ctx context.Context, lg core.Log) {
+func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.UpdateEvent) {
 	// push to each peer (replicator)
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {
