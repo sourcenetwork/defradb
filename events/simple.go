@@ -31,6 +31,7 @@ func NewSimpleChannel[T any](subscriberBufferSize int, eventBufferSize int) Chan
 		subscriptionChannel: make(chan chan T, subscriberBufferSize),
 		unsubscribeChannel:  make(chan chan T, subscriberBufferSize),
 		eventChannel:        make(chan T, eventBufferSize),
+		eventBufferSize:     eventBufferSize,
 		closeChannel:        make(chan struct{}),
 	}
 
