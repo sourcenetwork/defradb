@@ -493,6 +493,9 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
 
 	// If this a Batch masked as a Transaction
 	// commit our writes so we can see them.
