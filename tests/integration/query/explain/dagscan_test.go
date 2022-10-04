@@ -118,8 +118,8 @@ func TestExplainAllCommitsDagScanWithoutField(t *testing.T) {
 									"field": "C",
 									"spans": []dataMap{
 										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
+											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
 										},
 									},
 								},

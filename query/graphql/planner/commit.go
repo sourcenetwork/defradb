@@ -192,7 +192,14 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 	}
 
 	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(dag.field)
+		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey)
+
+		if parsed.FieldName.HasValue() {
+			field := parsed.FieldName.Value()
+			key = key.WithFieldId(field)
+			dag.field = field
+		}
+
 		headset.key = key
 	}
 	dag.headset = headset
