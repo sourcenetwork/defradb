@@ -399,15 +399,33 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
-	if _, _, err := c.saveValueToMerkleCRDT(
+
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		key.ToDataStoreKey(),
 		client.COMPOSITE,
 		buf,
 		links,
-	); err != nil {
+	)
+	if err != nil {
 		return err
+	}
+
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					client.UpdateEvent{
+						DocKey:   keyStr,
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
 	}
 
 	// If this a a Batch masked as a Transaction

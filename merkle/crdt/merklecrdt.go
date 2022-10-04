@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -78,30 +77,4 @@ func (base *baseMerkleCRDT) Publish(
 		return nil, err
 	}
 	return nd, nil
-}
-
-func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {
-	if !base.updateChannel.HasValue() {
-		return nil
-	}
-
-	dockey := core.NewDataStoreKey(base.crdt.ID()).DocKey
-
-	c := nd.Cid()
-	netdelta, ok := delta.(core.NetDelta)
-	if !ok {
-		return errors.New("Can't broadcast a delta payload that doesn't implement core.NetDelta")
-	}
-
-	base.updateChannel.Value().Publish(
-		client.UpdateEvent{
-			DocKey:   dockey,
-			Cid:      c,
-			SchemaID: netdelta.GetSchemaID(),
-			Block:    nd,
-			Priority: netdelta.GetPriority(),
-		},
-	)
-
-	return nil
 }

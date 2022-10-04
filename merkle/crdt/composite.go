@@ -100,7 +100,7 @@ func (m *MerkleCompositeDAG) Set(
 		return nil, 0, err
 	}
 
-	return nd, delta.GetPriority(), m.Broadcast(ctx, nd, delta)
+	return nd, delta.GetPriority(), nil
 }
 
 // Value is a no-op for a CompositeDAG.

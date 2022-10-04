@@ -647,7 +647,7 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
-	headNode, _, err := c.saveValueToMerkleCRDT(
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
@@ -657,6 +657,22 @@ func (c *collection) save(
 	)
 	if err != nil {
 		return cid.Undef, err
+	}
+
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					client.UpdateEvent{
+						DocKey:   doc.Key().String(),
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
 	}
 
 	txn.OnSuccess(func() {
