@@ -13,7 +13,7 @@ package crdt
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -75,12 +75,12 @@ func NewMerkleLWWRegister(
 }
 
 // Set the value of the register.
-func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Cid, error) {
+func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (ipld.Node, uint64, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	c, _, err := mlwwreg.Publish(ctx, delta)
-	return c, err
+	nd, err := mlwwreg.Publish(ctx, delta)
+	return nd, delta.GetPriority(), err
 }
 
 // Value will retrieve the current value from the db.

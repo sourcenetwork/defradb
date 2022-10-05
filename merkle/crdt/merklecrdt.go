@@ -13,12 +13,10 @@ package crdt
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -72,37 +70,11 @@ func (base *baseMerkleCRDT) ID() string {
 func (base *baseMerkleCRDT) Publish(
 	ctx context.Context,
 	delta core.Delta,
-) (cid.Cid, ipld.Node, error) {
+) (ipld.Node, error) {
 	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
-	c, nd, err := base.clock.AddDAGNode(ctx, delta)
+	nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
-		return cid.Undef, nil, err
+		return nil, err
 	}
-	return c, nd, nil
-}
-
-func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {
-	if !base.updateChannel.HasValue() {
-		return nil
-	}
-
-	dockey := core.NewDataStoreKey(base.crdt.ID()).DocKey
-
-	c := nd.Cid()
-	netdelta, ok := delta.(core.NetDelta)
-	if !ok {
-		return errors.New("Can't broadcast a delta payload that doesn't implement core.NetDelta")
-	}
-
-	base.updateChannel.Value().Publish(
-		client.UpdateEvent{
-			DocKey:   dockey,
-			Cid:      c,
-			SchemaID: netdelta.GetSchemaID(),
-			Block:    nd,
-			Priority: netdelta.GetPriority(),
-		},
-	)
-
-	return nil
+	return nd, nil
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -493,6 +494,9 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
+	if err != nil {
+		return err
+	}
 
 	// If this a Batch masked as a Transaction
 	// commit our writes so we can see them.
@@ -607,7 +611,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+			c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -628,7 +632,7 @@ func (c *collection) save(
 
 			link := core.DAGLink{
 				Name: k,
-				Cid:  c,
+				Cid:  c.Cid(),
 			}
 			links = append(links, link)
 		}
@@ -643,7 +647,7 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
-	headCID, err := c.saveValueToMerkleCRDT(
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
@@ -655,11 +659,27 @@ func (c *collection) save(
 		return cid.Undef, err
 	}
 
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					client.UpdateEvent{
+						DocKey:   doc.Key().String(),
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
+	}
+
 	txn.OnSuccess(func() {
-		doc.SetHead(headCID)
+		doc.SetHead(headNode.Cid())
 	})
 
-	return headCID, nil
+	return headNode.Cid(), nil
 }
 
 // Delete will attempt to delete a document by key
@@ -777,12 +797,12 @@ func (c *collection) saveDocValue(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	val client.Value,
-) (cid.Cid, error) {
+) (ipld.Node, uint64, error) {
 	switch val.Type() {
 	case client.LWW_REGISTER:
 		wval, ok := val.(client.WriteableValue)
 		if !ok {
-			return cid.Cid{}, client.ErrValueTypeMismatch
+			return nil, 0, client.ErrValueTypeMismatch
 		}
 		var bytes []byte
 		var err error
@@ -791,12 +811,12 @@ func (c *collection) saveDocValue(
 		} else {
 			bytes, err = wval.Bytes()
 			if err != nil {
-				return cid.Cid{}, err
+				return nil, 0, err
 			}
 		}
 		return c.saveValueToMerkleCRDT(ctx, txn, key, client.LWW_REGISTER, bytes)
 	default:
-		return cid.Cid{}, ErrUnknownCRDT
+		return nil, 0, ErrUnknownCRDT
 	}
 }
 
@@ -805,7 +825,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...any) (cid.Cid, error) {
+	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
@@ -816,18 +836,18 @@ func (c *collection) saveValueToMerkleCRDT(
 			key,
 		)
 		if err != nil {
-			return cid.Cid{}, err
+			return nil, 0, err
 		}
 
 		var bytes []byte
 		var ok bool
 		// parse args
 		if len(args) != 1 {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
@@ -841,27 +861,27 @@ func (c *collection) saveValueToMerkleCRDT(
 			key,
 		)
 		if err != nil {
-			return cid.Cid{}, err
+			return nil, 0, err
 		}
 		var bytes []byte
 		var links []core.DAGLink
 		var ok bool
 		// parse args
 		if len(args) != 2 {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		links, ok = args[1].([]core.DAGLink)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		comp := datatype.(*crdt.MerkleCompositeDAG)
 		return comp.Set(ctx, bytes, links)
 	}
-	return cid.Cid{}, ErrUnknownCRDT
+	return nil, 0, ErrUnknownCRDT
 }
 
 // getTxn gets or creates a new transaction from the underlying db.
