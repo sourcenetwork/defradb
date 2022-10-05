@@ -92,10 +92,10 @@ func (mc *MerkleClock) putBlock(
 func (mc *MerkleClock) AddDAGNode(
 	ctx context.Context,
 	delta core.Delta,
-) (cid.Cid, ipld.Node, error) {
+) (ipld.Node, error) {
 	heads, height, err := mc.headset.List(ctx)
 	if err != nil {
-		return cid.Undef, nil, errors.Wrap("error getting heads ", err)
+		return nil, errors.Wrap("error getting heads ", err)
 	}
 	height = height + 1
 
@@ -104,7 +104,7 @@ func (mc *MerkleClock) AddDAGNode(
 	// write the delta and heads to a new block
 	nd, err := mc.putBlock(ctx, heads, height, delta)
 	if err != nil {
-		return cid.Undef, nil, errors.Wrap("Error adding block ", err)
+		return nil, errors.Wrap("Error adding block ", err)
 	}
 
 	// apply the new node and merge the delta with state
@@ -119,9 +119,9 @@ func (mc *MerkleClock) AddDAGNode(
 	)
 
 	if err != nil {
-		return cid.Undef, nil, errors.Wrap("error processing new block ", err)
+		return nil, errors.Wrap("error processing new block ", err)
 	}
-	return nd.Cid(), nd, nil //@todo: Include raw block data in return
+	return nd, nil //@todo: Include raw block data in return
 }
 
 // ProcessNode processes an already merged delta into a crdt

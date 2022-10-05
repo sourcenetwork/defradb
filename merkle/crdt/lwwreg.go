@@ -79,8 +79,8 @@ func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (cid.Ci
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
-	c, _, err := mlwwreg.Publish(ctx, delta)
-	return c, err
+	nd, err := mlwwreg.Publish(ctx, delta)
+	return nd.Cid(), err
 }
 
 // Value will retrieve the current value from the db.

@@ -13,7 +13,6 @@ package crdt
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -72,13 +71,13 @@ func (base *baseMerkleCRDT) ID() string {
 func (base *baseMerkleCRDT) Publish(
 	ctx context.Context,
 	delta core.Delta,
-) (cid.Cid, ipld.Node, error) {
+) (ipld.Node, error) {
 	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
-	c, nd, err := base.clock.AddDAGNode(ctx, delta)
+	nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
-		return cid.Undef, nil, err
+		return nil, err
 	}
-	return c, nd, nil
+	return nd, nil
 }
 
 func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {

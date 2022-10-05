@@ -95,12 +95,12 @@ func (m *MerkleCompositeDAG) Set(
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	c, nd, err := m.Publish(ctx, delta)
+	nd, err := m.Publish(ctx, delta)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	return c, m.Broadcast(ctx, nd, delta)
+	return nd.Cid(), m.Broadcast(ctx, nd, delta)
 }
 
 // Value is a no-op for a CompositeDAG.
