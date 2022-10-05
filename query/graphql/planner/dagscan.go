@@ -41,7 +41,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
@@ -57,7 +56,6 @@ type headsetScanNode struct {
 	key core.DataStoreKey
 
 	spans           core.Spans
-	fieldId         client.Option[string]
 	scanInitialized bool
 
 	cid *cid.Cid
@@ -87,7 +85,7 @@ func (h *headsetScanNode) initScan() error {
 		h.spans = core.NewSpans(core.NewSpan(h.key, h.key.PrefixEnd()))
 	}
 
-	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans, h.fieldId)
+	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans, h.parsed.FieldName)
 	if err != nil {
 		return err
 	}
@@ -128,7 +126,6 @@ func (p *Planner) HeadScan(parsed *mapper.CommitSelect) *headsetScanNode {
 	return &headsetScanNode{
 		p:         p,
 		parsed:    parsed,
-		fieldId:   parsed.FieldName,
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 }
