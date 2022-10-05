@@ -75,12 +75,12 @@ func NewMerkleLWWRegister(
 }
 
 // Set the value of the register.
-func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (ipld.Node, error) {
+func (mlwwreg *MerkleLWWRegister) Set(ctx context.Context, value []byte) (ipld.Node, uint64, error) {
 	// Set() call on underlying LWWRegister CRDT
 	// persist/publish delta
 	delta := mlwwreg.reg.Set(value)
 	nd, err := mlwwreg.Publish(ctx, delta)
-	return nd, err
+	return nd, delta.GetPriority(), err
 }
 
 // Value will retrieve the current value from the db.

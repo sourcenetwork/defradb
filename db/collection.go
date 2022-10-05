@@ -611,7 +611,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+			c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -647,7 +647,7 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
-	headNode, err := c.saveValueToMerkleCRDT(
+	headNode, _, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
@@ -781,12 +781,12 @@ func (c *collection) saveDocValue(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	val client.Value,
-) (ipld.Node, error) {
+) (ipld.Node, uint64, error) {
 	switch val.Type() {
 	case client.LWW_REGISTER:
 		wval, ok := val.(client.WriteableValue)
 		if !ok {
-			return nil, client.ErrValueTypeMismatch
+			return nil, 0, client.ErrValueTypeMismatch
 		}
 		var bytes []byte
 		var err error
@@ -795,12 +795,12 @@ func (c *collection) saveDocValue(
 		} else {
 			bytes, err = wval.Bytes()
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 		}
 		return c.saveValueToMerkleCRDT(ctx, txn, key, client.LWW_REGISTER, bytes)
 	default:
-		return nil, ErrUnknownCRDT
+		return nil, 0, ErrUnknownCRDT
 	}
 }
 
@@ -809,7 +809,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...any) (ipld.Node, error) {
+	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
@@ -820,18 +820,18 @@ func (c *collection) saveValueToMerkleCRDT(
 			key,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		var bytes []byte
 		var ok bool
 		// parse args
 		if len(args) != 1 {
-			return nil, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return nil, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
@@ -845,27 +845,27 @@ func (c *collection) saveValueToMerkleCRDT(
 			key,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		var bytes []byte
 		var links []core.DAGLink
 		var ok bool
 		// parse args
 		if len(args) != 2 {
-			return nil, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return nil, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		links, ok = args[1].([]core.DAGLink)
 		if !ok {
-			return nil, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		comp := datatype.(*crdt.MerkleCompositeDAG)
 		return comp.Set(ctx, bytes, links)
 	}
-	return nil, ErrUnknownCRDT
+	return nil, 0, ErrUnknownCRDT
 }
 
 // getTxn gets or creates a new transaction from the underlying db.

@@ -90,17 +90,17 @@ func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
 	links []core.DAGLink,
-) (ipld.Node, error) {
+) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
 	nd, err := m.Publish(ctx, delta)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return nd, m.Broadcast(ctx, nd, delta)
+	return nd, delta.GetPriority(), m.Broadcast(ctx, nd, delta)
 }
 
 // Value is a no-op for a CompositeDAG.

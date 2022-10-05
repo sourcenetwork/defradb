@@ -190,7 +190,7 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
 
-	_, err := lwwreg.Set(ctx, []byte("hi"))
+	_, _, err := lwwreg.Set(ctx, []byte("hi"))
 	assert.NoError(t, err)
 }
 
@@ -203,6 +203,6 @@ func TestCompositeRegisterFactoryFn(t *testing.T) {
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)
 
-	_, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{})
+	_, _, err := merkleReg.Set(ctx, []byte("hi"), []core.DAGLink{})
 	assert.NoError(t, err)
 }

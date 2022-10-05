@@ -379,7 +379,7 @@ func (c *collection) applyMerge(
 			return client.NewErrFieldNotExist(mfield)
 		}
 
-		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+		c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 		if err != nil {
 			return err
 		}
@@ -399,7 +399,7 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(
+	if _, _, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		key.ToDataStoreKey(),
