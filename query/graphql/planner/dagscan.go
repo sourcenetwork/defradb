@@ -134,8 +134,10 @@ type dagScanNode struct {
 	documentIterator
 	docMapper
 
-	p          *Planner
-	cid        *cid.Cid
+	p *Planner
+	// The cid requested by the user
+	cid *cid.Cid
+	// The cid of the current value
 	currentCid *cid.Cid
 	field      string
 
