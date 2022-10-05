@@ -54,6 +54,10 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+func WithStack(err error, keyvals ...KV) error {
+	return withStackTrace(err.Error(), keyvals...)
+}
+
 func newError(message string, keyvals ...KV) *defraError {
 	return withStackTrace(message, keyvals...)
 }
