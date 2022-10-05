@@ -379,14 +379,14 @@ func (c *collection) applyMerge(
 			return client.NewErrFieldNotExist(mfield)
 		}
 
-		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+		c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 		if err != nil {
 			return err
 		}
 		// links[mfield] = c
 		links = append(links, core.DAGLink{
 			Name: mfield,
-			Cid:  c,
+			Cid:  c.Cid(),
 		})
 	}
 
@@ -399,15 +399,33 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(
+
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		key.ToDataStoreKey(),
 		client.COMPOSITE,
 		buf,
 		links,
-	); err != nil {
+	)
+	if err != nil {
 		return err
+	}
+
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					client.UpdateEvent{
+						DocKey:   keyStr,
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
 	}
 
 	// If this a a Batch masked as a Transaction

@@ -13,7 +13,7 @@ package crdt
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -90,17 +90,17 @@ func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
 	links []core.DAGLink,
-) (cid.Cid, error) {
+) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	c, nd, err := m.Publish(ctx, delta)
+	nd, err := m.Publish(ctx, delta)
 	if err != nil {
-		return cid.Undef, err
+		return nil, 0, err
 	}
 
-	return c, m.Broadcast(ctx, nd, delta)
+	return nd, delta.GetPriority(), nil
 }
 
 // Value is a no-op for a CompositeDAG.

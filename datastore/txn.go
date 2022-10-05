@@ -138,45 +138,9 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 	}
 }
 
-/*
-// Systemstore returns the txn wrapped as a systemstore under the /system namespace
-func (t *txn) Systemstore() DSReaderWriter {
-	return t.systemstore
-}
-
-// Datastore returns the txn wrapped as a datastore under the /data namespace
-func (t *txn) Datastore() DSReaderWriter {
-	return t.datastore
-}
-
-// Headstore returns the txn wrapped as a headstore under the /heads namespace
-func (t *txn) Headstore() DSReaderWriter {
-	return t.headstore
-}
-
-// DAGstore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
-func (t *txn) DAGstore() DAGStore {
-	return t.dagstore
-}
-
-// Rootstore returns the underlying txn as a DSReaderWriter to implement
-// the MultiStore interface
-func (t *txn) Rootstore() DSReaderWriter {
-	return t.IterableTxn
-}*/
-
 func (txn *txn) IsBatch() bool {
 	return txn.isBatch
 }
-
-// func (txn *txn) Commit(ctx context.Context) error {
-// 	if err := txn.IterableTxn.Commit(ctx); err != nil {
-// 		txn.runErrorFns(ctx)
-// 		return err
-// 	}
-// 	txn.runSuccessFns(ctx)
-// 	return nil
-// }
 
 // Shim to make ds.Txn support ds.Datastore
 type ShimTxnStore struct {
