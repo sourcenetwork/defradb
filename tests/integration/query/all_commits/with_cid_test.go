@@ -16,11 +16,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommits(t *testing.T) {
+func TestQueryAllCommitsWithCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query",
+		Description: "Simple all commits query with cid",
 		Query: `query {
-					allCommits {
+					allCommits(
+						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
+					) {
 						cid
 					}
 				}`,
@@ -32,15 +34,18 @@ func TestQueryAllCommits(t *testing.T) {
 				}`,
 			},
 		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+						"Age": 22
+					}`,
+				},
+			},
+		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
-			},
-			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-			},
-			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
 			},
 		},
 	}
@@ -48,11 +53,14 @@ func TestQueryAllCommits(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsMultipleDocs(t *testing.T) {
+func TestQueryAllCommitsWithCidForFieldCommit(t *testing.T) {
+	// cid is for a field commit, see TestQueryAllCommitsWithDockeyAndFieldId
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query, multiple docs",
+		Description: "Simple all commits query with cid",
 		Query: `query {
-					allCommits {
+					allCommits(
+						cid: "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a"
+					) {
 						cid
 					}
 				}`,
@@ -62,30 +70,11 @@ func TestQueryAllCommitsMultipleDocs(t *testing.T) {
 					"Name": "John",
 					"Age": 21
 				}`,
-				`{
-					"Name": "Shahzad",
-					"Age": 28
-				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeidsa74vl7xvw6tzgt5gmux5ts7lxldxculzgpxl5xura45ckf7e5i",
-			},
-			{
-				"cid": "bafybeibek4lmrb5gtmahgsv33njmk3efty53n7z2rac7fuup7mwpho5zqa",
-			},
-			{
-				"cid": "bafybeidj2zxpwsfbqtny2svdpyan7vu4njfhydzrgpvupv3o673a3dpfku",
-			},
-			{
 				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
-			},
-			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
-			},
-			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 			},
 		},
 	}
