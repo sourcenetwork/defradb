@@ -133,12 +133,14 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 	dag := p.DAGScan(parsed)
 	headset := p.HeadScan(parsed)
 	// @todo: Get Collection field ID
-	if parsed.FieldName == "" {
-		parsed.FieldName = core.COMPOSITE_NAMESPACE
+	if !parsed.FieldName.HasValue() {
+		dag.field = core.COMPOSITE_NAMESPACE
+	} else {
+		dag.field = parsed.FieldName.Value()
 	}
-	dag.field = parsed.FieldName
+
 	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(parsed.FieldName)
+		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(dag.field)
 		headset.key = key
 	}
 	dag.headset = headset
@@ -180,21 +182,28 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 			return nil, err
 		}
 		dag.cid = &c
-	} else {
-		// only set this if a cid has not been provided
-		dag.depthLimit = math.MaxUint32 // infinite depth
 	}
 
 	// @todo: Get Collection field ID
-	if parsed.FieldName == "" {
-		parsed.FieldName = core.COMPOSITE_NAMESPACE
+	if !parsed.FieldName.HasValue() {
+		dag.field = core.COMPOSITE_NAMESPACE
+	} else {
+		dag.field = parsed.FieldName.Value()
 	}
-	dag.field = parsed.FieldName
+
 	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(parsed.FieldName)
+		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey)
+
+		if parsed.FieldName.HasValue() {
+			field := parsed.FieldName.Value()
+			key = key.WithFieldId(field)
+			dag.field = field
+		}
+
 		headset.key = key
 	}
 	dag.headset = headset
+	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:      p,

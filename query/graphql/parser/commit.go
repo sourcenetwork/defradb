@@ -15,6 +15,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -44,7 +45,7 @@ type CommitSelect struct {
 
 	Type      CommitType
 	DocKey    string
-	FieldName string
+	FieldName client.Option[string]
 	Cid       string
 
 	Limit   *parserTypes.Limit
@@ -89,7 +90,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			commit.Cid = raw.Value
 		} else if prop == parserTypes.Field {
 			raw := argument.Value.(*ast.StringValue)
-			commit.FieldName = raw.Value
+			commit.FieldName = client.Some(raw.Value)
 		} else if prop == parserTypes.OrderClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)

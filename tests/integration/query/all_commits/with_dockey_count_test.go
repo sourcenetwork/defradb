@@ -35,6 +35,14 @@ func TestQueryAllCommitsWithDockeyAndLinkCount(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
+				"cid":    "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"_count": 0,
+			},
+			{
+				"cid":    "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+				"_count": 0,
+			},
+			{
 				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 				"_count": 2,
 			},
