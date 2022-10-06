@@ -33,7 +33,7 @@ func TestSimpleSubscribersAreNotBlockedAfterClose(t *testing.T) {
 
 	s.Close()
 
-	<-ch
+	<-ch.Channel
 
 	// just assert that we reach this line, for the sake of having an assert
 	assert.True(t, true)
@@ -51,13 +51,13 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 
 	s.Publish(input1)
 
-	output1Ch1 := <-ch1
-	output1Ch2 := <-ch2
+	output1Ch1 := <-ch1.Channel
+	output1Ch2 := <-ch2.Channel
 
 	s.Publish(input2)
 
-	output2Ch1 := <-ch1
-	output2Ch2 := <-ch2
+	output2Ch1 := <-ch1.Channel
+	output2Ch2 := <-ch2.Channel
 
 	assert.Equal(t, input1, output1Ch1)
 	assert.Equal(t, input1, output1Ch2)
@@ -80,11 +80,11 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 	s.Publish(input1)
 	s.Publish(input2)
 
-	output1Ch1 := <-ch1
-	output1Ch2 := <-ch2
+	output1Ch1 := <-ch1.Channel
+	output1Ch2 := <-ch2.Channel
 
-	output2Ch1 := <-ch1
-	output2Ch2 := <-ch2
+	output2Ch1 := <-ch1.Channel
+	output2Ch2 := <-ch2.Channel
 
 	assert.Equal(t, input1, output1Ch1)
 	assert.Equal(t, input1, output1Ch2)
@@ -106,5 +106,5 @@ func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
 	time.Sleep(5 * time.Millisecond)
 
 	// closing the channel will result in reads yielding the default value
-	assert.Equal(t, 0, <-ch)
+	assert.Equal(t, 0, <-ch.Channel)
 }
