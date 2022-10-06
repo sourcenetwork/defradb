@@ -13,9 +13,9 @@ package events
 import "github.com/sourcenetwork/defradb/errors"
 
 type simpleChannel[T any] struct {
-	subscribers         []chan T
-	subscriptionChannel chan chan T
-	unsubscribeChannel  chan chan T
+	subscribers         []Subscription[T]
+	subscriptionChannel chan Subscription[T]
+	unsubscribeChannel  chan Subscription[T]
 	eventChannel        chan T
 	eventBufferSize     int
 	closeChannel        chan struct{}
@@ -28,8 +28,8 @@ type simpleChannel[T any] struct {
 // Should the buffers be filled subsequent calls to functions on this object may start to block.
 func NewSimpleChannel[T any](subscriberBufferSize int, eventBufferSize int) Channel[T] {
 	c := simpleChannel[T]{
-		subscriptionChannel: make(chan chan T, subscriberBufferSize),
-		unsubscribeChannel:  make(chan chan T, subscriberBufferSize),
+		subscriptionChannel: make(chan Subscription[T], subscriberBufferSize),
+		unsubscribeChannel:  make(chan Subscription[T], subscriberBufferSize),
 		eventChannel:        make(chan T, eventBufferSize),
 		eventBufferSize:     eventBufferSize,
 		closeChannel:        make(chan struct{}),
@@ -46,7 +46,7 @@ func (c *simpleChannel[T]) Subscribe() (Subscription[T], error) {
 	}
 
 	// It is important to set this buffer size too, else we may end up blocked in the handleChannel func
-	ch := make(chan T, c.eventBufferSize)
+	ch := make(chan Notification[T], c.eventBufferSize)
 
 	c.subscriptionChannel <- ch
 	return ch, nil
@@ -70,6 +70,7 @@ func (c *simpleChannel[T]) Close() {
 	if c.isClosed {
 		return
 	}
+	c.isClosed = true
 	c.closeChannel <- struct{}{}
 }
 
@@ -77,7 +78,6 @@ func (c *simpleChannel[T]) handleChannel() {
 	for {
 		select {
 		case <-c.closeChannel:
-			c.isClosed = true
 			close(c.closeChannel)
 			for _, subscriber := range c.subscribers {
 				close(subscriber)
@@ -112,7 +112,7 @@ func (c *simpleChannel[T]) handleChannel() {
 
 		case item := <-c.eventChannel:
 			for _, subscriber := range c.subscribers {
-				subscriber <- item
+				subscriber <- NewNotification(item)
 			}
 		}
 	}

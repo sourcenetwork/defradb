@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -48,7 +49,7 @@ type Peer struct {
 	//config??
 
 	db            client.DB
-	updateChannel chan client.UpdateEvent
+	updateChannel events.Subscription[client.UpdateEvent]
 
 	host host.Host
 	ps   *pubsub.PubSub
@@ -189,8 +190,13 @@ func (p *Peer) Close() error {
 func (p *Peer) handleBroadcastLoop() {
 	log.Debug(p.ctx, "Waiting for messages on internal broadcaster")
 	for {
+		notification := <-p.updateChannel
+		if notification.Closed() {
+			return
+		}
+
+		update := notification.Value()
 		log.Debug(p.ctx, "Handling internal broadcast bus message")
-		update := <-p.updateChannel
 
 		// check log priority, 1 is new doc log
 		// 2 is update log

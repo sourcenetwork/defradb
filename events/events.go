@@ -10,8 +10,6 @@
 
 package events
 
-type Subscription[T any] chan T
-
 // Channel represents a subscribable type that will expose inputted items to subscribers.
 type Channel[T any] interface {
 	// Subscribe subscribes to the Channel, returning a channel by which events can

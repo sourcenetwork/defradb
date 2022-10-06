@@ -59,11 +59,11 @@ func TestSimpleEachSubscribersRecievesEachItem(t *testing.T) {
 	output2Ch1 := <-ch1
 	output2Ch2 := <-ch2
 
-	assert.Equal(t, input1, output1Ch1)
-	assert.Equal(t, input1, output1Ch2)
+	assert.Equal(t, input1, output1Ch1.Value())
+	assert.Equal(t, input1, output1Ch2.Value())
 
-	assert.Equal(t, input2, output2Ch1)
-	assert.Equal(t, input2, output2Ch2)
+	assert.Equal(t, input2, output2Ch1.Value())
+	assert.Equal(t, input2, output2Ch2.Value())
 }
 
 func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.T) {
@@ -86,11 +86,11 @@ func TestSimpleEachSubscribersRecievesEachItemGivenBufferedEventChan(t *testing.
 	output2Ch1 := <-ch1
 	output2Ch2 := <-ch2
 
-	assert.Equal(t, input1, output1Ch1)
-	assert.Equal(t, input1, output1Ch2)
+	assert.Equal(t, input1, output1Ch1.Value())
+	assert.Equal(t, input1, output1Ch2.Value())
 
-	assert.Equal(t, input2, output2Ch1)
-	assert.Equal(t, input2, output2Ch2)
+	assert.Equal(t, input2, output2Ch1.Value())
+	assert.Equal(t, input2, output2Ch2.Value())
 }
 
 func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
@@ -105,6 +105,8 @@ func TestSimpleSubscribersDontRecieveItemsAfterUnsubscribing(t *testing.T) {
 	// to do its thing with the pushed item.
 	time.Sleep(5 * time.Millisecond)
 
+	result := <-ch
+
 	// closing the channel will result in reads yielding the default value
-	assert.Equal(t, 0, <-ch)
+	assert.True(t, result.Closed())
 }
