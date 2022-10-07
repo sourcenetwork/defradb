@@ -13,8 +13,6 @@ package one_to_many
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -62,15 +60,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 		},
 	}
 
-	if testUtils.IsDetectingDbChanges() {
-		// The `assert.Panics` call will falsely fail if this test is executed during
-		// a detect changes test run
-		t.Skip()
-	}
-
-	assert.Panics(t, func() {
-		executeTestCase(t, test)
-	})
+	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 }
 
 func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {

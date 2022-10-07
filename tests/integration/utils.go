@@ -181,6 +181,19 @@ func IsDetectingDbChanges() bool {
 	return detectDbChanges
 }
 
+// AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
+//  also ensures the change detection is skipped so no false fails happen.
+//
+//  Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
+	if IsDetectingDbChanges() {
+		// The `assert.Panics` call will falsely fail if this test is executed during
+		// a detect changes test run
+		t.Skip()
+	}
+	return assert.Panics(t, f, "expected a panic, but none found.")
+}
+
 func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
