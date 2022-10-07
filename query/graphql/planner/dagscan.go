@@ -156,12 +156,13 @@ type dagScanNode struct {
 	parsed  *mapper.CommitSelect
 }
 
-func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
+func (p *Planner) DAGScan(parsed *mapper.CommitSelect, headset *headsetScanNode) *dagScanNode {
 	return &dagScanNode{
 		p:            p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   list.New(),
 		parsed:       parsed,
+		headset:      headset,
 		docMapper:    docMapper{&parsed.DocumentMapping},
 	}
 }
@@ -171,17 +172,11 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	if n.headset != nil {
-		return n.headset.Init()
-	}
-	return nil
+	return n.headset.Init()
 }
 
 func (n *dagScanNode) Start() error {
-	if n.headset != nil {
-		return n.headset.Start()
-	}
-	return nil
+	return n.headset.Start()
 }
 
 // Spans needs to parse the given span set. dagScanNode only
@@ -194,33 +189,20 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 		return
 	}
 
-	// if we have a headset, pass along
-	// otherwise, try to parse as a CID
-	if n.headset != nil {
-		// make sure we have the correct field suffix
-		headSetSpans := core.Spans{
-			HasValue: spans.HasValue,
-			Value:    make([]core.Span, len(spans.Value)),
-		}
-		copy(headSetSpans.Value, spans.Value)
-		span := headSetSpans.Value[0].Start()
-		if !strings.HasSuffix(span.ToString(), n.field) {
-			headSetSpans.Value[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
-		}
-		n.headset.Spans(headSetSpans)
-	} else {
-		data := spans.Value[0].Start().ToString()
-		c, err := cid.Decode(data)
-		if err == nil {
-			n.cid = &c
-		}
+	// make sure we have the correct field suffix
+	headSetSpans := core.Spans{
+		HasValue: spans.HasValue,
+		Value:    make([]core.Span, len(spans.Value)),
 	}
+	copy(headSetSpans.Value, spans.Value)
+	span := headSetSpans.Value[0].Start()
+	if !strings.HasSuffix(span.ToString(), n.field) {
+		headSetSpans.Value[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
+	}
+	n.headset.Spans(headSetSpans)
 }
 
 func (n *dagScanNode) Close() error {
-	if n.headset == nil {
-		return nil
-	}
 	return n.headset.Close()
 }
 
@@ -275,7 +257,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 		n.queuedCids.Remove(c)
 		n.currentCid = &cid
-	} else if n.currentCid == nil && n.headset != nil {
+	} else if n.currentCid == nil {
 		if next, err := n.headset.Next(); !next {
 			return false, err
 		}
@@ -292,11 +274,6 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, nil
 		}
 		n.currentCid = n.cid
-	} else if n.currentCid == nil {
-		// add this final elseif case in case another function
-		// manually sets the CID. Should prob migrate any remote CID
-		// updates to use the queuedCids.
-		return false, nil // no queued CIDs and no headset available
 	}
 
 	// skip already visited CIDs
@@ -379,7 +356,6 @@ blocks of the MerkleCRDTs.
 The current available endpoints are:
  - latestCommit: Given a docid, and optionally a field name, return the latest dag commit
  - allCommits: Given a docid, and optionally a field name, return all the dag commits
- - oneCommit: Given a cid, return the specific commit
 
 Additionally, theres a subselection available on the Document query called _version,
 which returns the current dag commit for the stored CRDT value.

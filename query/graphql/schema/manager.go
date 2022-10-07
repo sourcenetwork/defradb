@@ -105,7 +105,6 @@ func defaultQueryType() *gql.Object {
 			// database API queries
 			schemaTypes.QueryAllCommits.Name:    schemaTypes.QueryAllCommits,
 			schemaTypes.QueryLatestCommits.Name: schemaTypes.QueryLatestCommits,
-			schemaTypes.QueryCommit.Name:        schemaTypes.QueryCommit,
 		},
 	})
 }
