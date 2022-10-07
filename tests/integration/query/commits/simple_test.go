@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommits(t *testing.T) {
+func TestQueryCommits(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query",
 		Query: `query {
-					allCommits {
+					commits {
 						cid
 					}
 				}`,
@@ -48,11 +48,11 @@ func TestQueryAllCommits(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsMultipleDocs(t *testing.T) {
+func TestQueryCommitsMultipleDocs(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query, multiple docs",
 		Query: `query {
-					allCommits {
+					commits {
 						cid
 					}
 				}`,

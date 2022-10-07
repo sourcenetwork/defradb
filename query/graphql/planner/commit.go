@@ -107,7 +107,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	switch parsed.Type {
 	case mapper.LatestCommits:
 		commit, err = p.commitSelectLatest(parsed)
-	case mapper.AllCommits:
+	case mapper.Commits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
 		return nil, errors.New("Invalid CommitSelect type")

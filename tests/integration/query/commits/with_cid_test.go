@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithCid(t *testing.T) {
+func TestQueryCommitsWithCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with cid",
 		Query: `query {
-					allCommits(
+					commits(
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
 					) {
 						cid
@@ -53,12 +53,12 @@ func TestQueryAllCommitsWithCid(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithCidForFieldCommit(t *testing.T) {
-	// cid is for a field commit, see TestQueryAllCommitsWithDockeyAndFieldId
+func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
+	// cid is for a field commit, see TestQueryCommitsWithDockeyAndFieldId
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with cid",
 		Query: `query {
-					allCommits(
+					commits(
 						cid: "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a"
 					) {
 						cid
@@ -84,11 +84,11 @@ func TestQueryAllCommitsWithCidForFieldCommit(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (error message could be better, or empty result).
-func TestQueryAllCommitsWithInvalidCid(t *testing.T) {
+func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by invalid CID",
 		Query: `query {
-					allCommits(cid: "fhbnjfahfhfhanfhga") {
+					commits(cid: "fhbnjfahfhfhanfhga") {
 						cid
 						height
 						delta
@@ -110,11 +110,11 @@ func TestQueryAllCommitsWithInvalidCid(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (error message could be better, or empty result).
-func TestQueryAllCommitsWithInvalidShortCid(t *testing.T) {
+func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by invalid, short CID",
 		Query: `query {
-					allCommits(cid: "bafybeidfhbnjfahfhfhanfhga") {
+					commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
 						cid
 						height
 						delta
@@ -134,11 +134,11 @@ func TestQueryAllCommitsWithInvalidShortCid(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithUnknownCid(t *testing.T) {
+func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by unknown CID",
 		Query: `query {
-					allCommits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
+					commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
 						cid
 						height
 						delta

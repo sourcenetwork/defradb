@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
+func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, order height desc",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: DESC}) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: DESC}) {
 						cid
 						height
 					}
@@ -69,11 +69,11 @@ func TestQueryAllCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
+func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, order height asc",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}) {
 						cid
 						height
 					}
@@ -122,11 +122,11 @@ func TestQueryAllCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
+func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, order cid desc",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: DESC}) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: DESC}) {
 						cid
 						height
 					}
@@ -175,11 +175,11 @@ func TestQueryAllCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
+func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, order cid asc",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: ASC}) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: ASC}) {
 						cid
 						height
 					}

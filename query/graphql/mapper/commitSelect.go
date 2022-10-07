@@ -18,12 +18,12 @@ type CommitType int
 const (
 	NoneCommitType = CommitType(iota)
 	LatestCommits
-	AllCommits
+	Commits
 )
 
 // CommitSelect represents a commit request from a consumer.
 //
-// E.g. allCommits, or latestCommits.
+// E.g. commits, or latestCommits.
 type CommitSelect struct {
 	// The underlying Select, defining the information requested.
 	Select
