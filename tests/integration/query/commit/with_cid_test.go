@@ -16,32 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should be empty result).
-func TestQueryOneCommitWithUnknownCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "query for a single block by unknown CID",
-		Query: `query {
-					commit(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
-						cid
-						height
-						delta
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		ExpectedError: "ipld: could not find",
-	}
-
-	executeTestCase(t, test)
-}
-
 func TestQueryOneCommitWithCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by CID",

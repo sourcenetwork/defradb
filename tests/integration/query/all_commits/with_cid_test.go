@@ -133,3 +133,27 @@ func TestQueryAllCommitsWithInvalidShortCid(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryAllCommitsWithUnknownCid(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "query for a single block by unknown CID",
+		Query: `query {
+					allCommits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
+						cid
+						height
+						delta
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{},
+	}
+
+	executeTestCase(t, test)
+}
