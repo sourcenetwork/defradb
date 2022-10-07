@@ -787,7 +787,6 @@ func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Commi
 	return &CommitSelect{
 		Select:    *underlyingSelect,
 		DocKey:    parsed.DocKey,
-		Type:      CommitType(parsed.Type),
 		FieldName: parsed.FieldName,
 		Cid:       parsed.Cid,
 	}, nil

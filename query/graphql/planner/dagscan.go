@@ -141,13 +141,6 @@ type dagScanNode struct {
 	currentCid *cid.Cid
 	field      string
 
-	// used for tracking traversal
-	// note: depthLimit of 0 or 1 are equivalent
-	// since the depth check is done after the
-	// block scan.
-	// If we need an infinite depth, use math.MaxUint32
-	depthLimit   uint32
-	depthVisited uint32
 	visitedNodes map[string]bool
 
 	queuedCids *list.List
@@ -299,22 +292,11 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	// the dagscan node can traverse into the merkle dag
-	// based on the specified depth limit.
-	// The default query 'latestCommit' only cares about
-	// the current latest heads, so it has a depth limit
-	// of 1. The query 'commits' doesn't have a depth
-	// limit, so it will continue to traverse the graph
-	// until there are no more links, and no more explored
-	// HEAD paths.
-	n.depthVisited++
 	n.visitedNodes[n.currentCid.String()] = true // mark the current node as "visited"
-	if n.depthVisited < n.depthLimit {
-		// look for HEAD links
-		for _, h := range heads {
-			// queue our found heads
-			n.queuedCids.PushFront(h.Cid)
-		}
+	// traverse the merkle dag to fetch related commits
+	for _, h := range heads {
+		// queue our found heads
+		n.queuedCids.PushFront(h.Cid)
 	}
 
 	if n.cid != nil && *n.currentCid != *n.cid {
