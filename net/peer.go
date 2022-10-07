@@ -190,7 +190,10 @@ func (p *Peer) handleBroadcastLoop() {
 	log.Debug(p.ctx, "Waiting for messages on internal broadcaster")
 	for {
 		log.Debug(p.ctx, "Handling internal broadcast bus message")
-		update := <-p.updateChannel
+		update, isOpen := <-p.updateChannel
+		if !isOpen {
+			return
+		}
 
 		// check log priority, 1 is new doc log
 		// 2 is update log
