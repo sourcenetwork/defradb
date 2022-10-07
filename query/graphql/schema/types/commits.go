@@ -37,7 +37,7 @@ var (
 	// Any self referential type needs to be initalized
 	// inside the init() func
 	CommitObject = gql.NewObject(gql.ObjectConfig{
-		Name: "Commit",
+		Name: parserTypes.CommitTypeName,
 		Fields: gql.Fields{
 			"height": &gql.Field{
 				Type: gql.Int,

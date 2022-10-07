@@ -605,14 +605,22 @@ func getTopLevelInfo(
 			mapping.Add(int(f.ID), f.Name)
 		}
 
+		// Setting the type name must be done after adding the fields, as
+		// the typeName index is dynamic, but the field indexes are not
+		mapping.SetTypeName(collectionName)
+
 		return mapping, &desc, nil
 	}
 
 	if parsed.Name == parserTypes.LinksFieldName {
+		mapping.SetTypeName(parserTypes.LinksFieldName)
+
 		for f := range parserTypes.LinksFields {
 			mapping.Add(mapping.GetNextIndex(), f)
 		}
 	} else {
+		mapping.SetTypeName(parserTypes.CommitTypeName)
+
 		for f := range parserTypes.VersionFields {
 			mapping.Add(mapping.GetNextIndex(), f)
 		}
