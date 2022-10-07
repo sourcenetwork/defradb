@@ -354,7 +354,7 @@ func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {
 	switch field.Name.Value {
-	case "latestCommits", "allCommits", "commit":
+	case "latestCommits", "allCommits":
 		return parseCommitSelect(field)
 	default:
 		return nil, errors.New("Unknown query")

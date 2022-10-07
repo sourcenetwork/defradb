@@ -124,12 +124,4 @@ var (
 			"field":  NewArgConfig(gql.String),
 		},
 	}
-
-	QueryCommit = &gql.Field{
-		Name: "commit",
-		Type: CommitObject,
-		Args: gql.FieldConfigArgument{
-			"cid": NewArgConfig(gql.NewNonNull(gql.ID)),
-		},
-	}
 )

@@ -19,7 +19,6 @@ const (
 	NoneCommitType = CommitType(iota)
 	LatestCommits
 	AllCommits
-	OneCommit
 )
 
 // CommitSelect represents a commit request from a consumer.
