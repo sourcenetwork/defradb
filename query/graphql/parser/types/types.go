@@ -56,6 +56,10 @@ type (
 )
 
 const (
+	// GQL special field, returns the host object's type name
+	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
+	TypeNameFieldName = "__typename"
+
 	Cid     = "cid"
 	Data    = "data"
 	DocKey  = "dockey"
@@ -79,6 +83,7 @@ const (
 
 	ExplainLabel = "explain"
 
+	CommitTypeName  = "Commit"
 	LinksFieldName  = "links"
 	HeightFieldName = "height"
 	CidFieldName    = "cid"
@@ -109,12 +114,13 @@ var (
 	}
 
 	ReservedFields = map[string]bool{
-		VersionFieldName: true,
-		GroupFieldName:   true,
-		CountFieldName:   true,
-		SumFieldName:     true,
-		AverageFieldName: true,
-		DocKeyFieldName:  true,
+		TypeNameFieldName: true,
+		VersionFieldName:  true,
+		GroupFieldName:    true,
+		CountFieldName:    true,
+		SumFieldName:      true,
+		AverageFieldName:  true,
+		DocKeyFieldName:   true,
 	}
 
 	Aggregates = map[string]struct{}{
