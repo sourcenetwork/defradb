@@ -13,8 +13,6 @@ package one_to_many_to_one
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -134,9 +132,5 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 		Results: []map[string]any{},
 	}
 
-	assert.Panics(
-		t,
-		func() { executeTestCase(t, test) },
-		"expected a panic, but none found.",
-	)
+	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 }
