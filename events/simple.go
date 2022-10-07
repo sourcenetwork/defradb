@@ -70,6 +70,7 @@ func (c *simpleChannel[T]) Close() {
 	if c.isClosed {
 		return
 	}
+	c.isClosed = true
 	c.closeChannel <- struct{}{}
 }
 
@@ -77,7 +78,6 @@ func (c *simpleChannel[T]) handleChannel() {
 	for {
 		select {
 		case <-c.closeChannel:
-			c.isClosed = true
 			close(c.closeChannel)
 			for _, subscriber := range c.subscribers {
 				close(subscriber)
