@@ -392,17 +392,18 @@ func (doc *Document) Bytes() ([]byte, error) {
 // cryptographic operations, such as signatures, or hashes
 // as it does not guarantee canonical representation or
 // ordering.
-func (doc *Document) String() string {
+func (doc *Document) String() (string, error) {
 	docMap, err := doc.toMap()
 	if err != nil {
-		panic(err) //should we return (string, error)?
+		return "", err
 	}
 
 	j, err := json.MarshalIndent(docMap, "", "\t")
 	if err != nil {
-		panic(err) // same as above
+		return "", err
 	}
-	return string(j)
+
+	return string(j), nil
 }
 
 // ToMap returns the document as a map[string]any
