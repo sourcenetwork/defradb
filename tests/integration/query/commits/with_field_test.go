@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -18,11 +18,11 @@ import (
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for dockey-field).
-func TestQueryAllCommitsWithField(t *testing.T) {
+func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with field",
 		Query: `query {
-					allCommits (field: "Age") {
+					commits (field: "Age") {
 						cid
 					}
 				}`,
@@ -42,11 +42,11 @@ func TestQueryAllCommitsWithField(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
-func TestQueryAllCommitsWithFieldId(t *testing.T) {
+func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with field id",
 		Query: `query {
-					allCommits (field: "1") {
+					commits (field: "1") {
 						cid
 					}
 				}`,
@@ -70,11 +70,11 @@ func TestQueryAllCommitsWithFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
-func TestQueryAllCommitsWithCompositeFieldId(t *testing.T) {
+func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and field id",
 		Query: `query {
-					allCommits(field: "C") {
+					commits(field: "C") {
 						cid
 					}
 				}`,

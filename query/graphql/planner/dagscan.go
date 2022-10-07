@@ -303,7 +303,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// based on the specified depth limit.
 	// The default query 'latestCommit' only cares about
 	// the current latest heads, so it has a depth limit
-	// of 1. The query 'allCommits' doesn't have a depth
+	// of 1. The query 'commits' doesn't have a depth
 	// limit, so it will continue to traverse the graph
 	// until there are no more links, and no more explored
 	// HEAD paths.
@@ -355,7 +355,7 @@ blocks of the MerkleCRDTs.
 
 The current available endpoints are:
  - latestCommit: Given a docid, and optionally a field name, return the latest dag commit
- - allCommits: Given a docid, and optionally a field name, return all the dag commits
+ - commits: Given a docid, and optionally a field name, return all the dag commits
 
 Additionally, theres a subselection available on the Document query called _version,
 which returns the current dag commit for the stored CRDT value.

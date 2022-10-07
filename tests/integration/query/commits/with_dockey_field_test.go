@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndUnknownField(t *testing.T) {
+func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and unknown field",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
 						cid
 					}
 				}`,
@@ -38,11 +38,11 @@ func TestQueryAllCommitsWithDockeyAndUnknownField(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
+func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and unknown field id",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
 						cid
 					}
 				}`,
@@ -62,11 +62,11 @@ func TestQueryAllCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for dockey-field).
-func TestQueryAllCommitsWithDockeyAndField(t *testing.T) {
+func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and field",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
 						cid
 					}
 				}`,
@@ -86,11 +86,11 @@ func TestQueryAllCommitsWithDockeyAndField(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
-func TestQueryAllCommitsWithDockeyAndFieldId(t *testing.T) {
+func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and field id",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
 						cid
 					}
 				}`,
@@ -114,11 +114,11 @@ func TestQueryAllCommitsWithDockeyAndFieldId(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
-func TestQueryAllCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
+func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and field id",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
 						cid
 					}
 				}`,

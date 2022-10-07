@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
+func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
-					allCommits(
+					commits(
 						dockey: "bae-not-this-doc",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
 					) {
@@ -41,11 +41,11 @@ func TestQueryAllCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
+func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
-					allCommits(
+					commits(
 						dockey: "bae-not-this-doc",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
 					) {
@@ -75,11 +75,11 @@ func TestQueryAllCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) 
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndCid(t *testing.T) {
+func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
-					allCommits(
+					commits(
 						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
 					) {

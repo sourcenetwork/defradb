@@ -16,13 +16,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainAllCommitsDagScan(t *testing.T) {
+func TestExplainCommitsDagScan(t *testing.T) {
 	test := testUtils.QueryTestCase{
 
-		Description: "Explain allCommits query.",
+		Description: "Explain commits query.",
 
 		Query: `query @explain {
-			allCommits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
+			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
 				links {
 					cid
 				}
@@ -75,13 +75,13 @@ func TestExplainAllCommitsDagScan(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainAllCommitsDagScanWithoutField(t *testing.T) {
+func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 
-		Description: "Explain allCommits query with only dockey (no field).",
+		Description: "Explain commits query with only dockey (no field).",
 
 		Query: `query @explain {
-			allCommits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
+			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 				links {
 					cid
 				}

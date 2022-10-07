@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithUnknownDockey(t *testing.T) {
+func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with unknown dockey",
 		Query: `query {
-					allCommits(dockey: "unknown dockey") {
+					commits(dockey: "unknown dockey") {
 						cid
 					}
 				}`,
@@ -38,11 +38,11 @@ func TestQueryAllCommitsWithUnknownDockey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockey(t *testing.T) {
+func TestQueryCommitsWithDockey(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 					}
 				}`,
@@ -70,11 +70,11 @@ func TestQueryAllCommitsWithDockey(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndLinks(t *testing.T) {
+func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, with links",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {
 							cid
@@ -118,11 +118,11 @@ func TestQueryAllCommitsWithDockeyAndLinks(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndUpdate(t *testing.T) {
+func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, multiple results",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						height
 					}
@@ -174,11 +174,11 @@ func TestQueryAllCommitsWithDockeyAndUpdate(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
-func TestQueryAllCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
+func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple all commits query with dockey, multiple results and links",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {
 							cid
