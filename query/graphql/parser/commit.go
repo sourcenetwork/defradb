@@ -16,7 +16,6 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
@@ -70,12 +69,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	commit := &CommitSelect{
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
-	}
-
-	var ok bool
-	commit.Type, ok = commitNameToType[commit.Name]
-	if !ok {
-		return nil, errors.New("Unknown Database query")
+		Type:  Commits,
 	}
 
 	for _, argument := range field.Arguments {
@@ -119,6 +113,28 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				commit.Limit = &parserTypes.Limit{}
 			}
 			commit.Limit.Offset = offset
+		}
+	}
+
+	// latestCommits is just syntax sugar around a commits query
+	if commit.Name == parserTypes.LatestCommitsQueryName {
+		// Limit is not exposed as an input parameter for latestCommits,
+		// so we can blindly set it here without worrying about existing
+		// values
+		commit.Limit = &parserTypes.Limit{
+			Limit: 1,
+		}
+
+		// OrderBy is not exposed as an input parameter for latestCommits,
+		// so we can blindly set it here without worrying about existing
+		// values
+		commit.OrderBy = &parserTypes.OrderBy{
+			Conditions: []parserTypes.OrderCondition{
+				{
+					Field:     parserTypes.HeightFieldName,
+					Direction: parserTypes.DESC,
+				},
+			},
 		}
 	}
 

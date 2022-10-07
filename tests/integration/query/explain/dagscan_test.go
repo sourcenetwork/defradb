@@ -170,16 +170,28 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "1",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
+						"limitNode": dataMap{
+							"limit":  int64(1),
+							"offset": int64(0),
+							"orderNode": dataMap{
+								"orderings": []dataMap{
+									{
+										"direction": "DESC",
+										"fields":    []string{"height"},
+									},
+								},
+								"selectNode": dataMap{
+									"filter": nil,
+									"commitSelectNode": dataMap{
+										"dagScanNode": dataMap{
+											"cid":   nil,
+											"field": "1",
+											"spans": []dataMap{
+												{
+													"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
+													"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
+												},
+											},
 										},
 									},
 								},
@@ -230,16 +242,28 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "C",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
+						"limitNode": dataMap{
+							"limit":  int64(1),
+							"offset": int64(0),
+							"orderNode": dataMap{
+								"orderings": []dataMap{
+									{
+										"direction": "DESC",
+										"fields":    []string{"height"},
+									},
+								},
+								"selectNode": dataMap{
+									"filter": nil,
+									"commitSelectNode": dataMap{
+										"dagScanNode": dataMap{
+											"cid":   nil,
+											"field": "C",
+											"spans": []dataMap{
+												{
+													"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
+													"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+												},
+											},
 										},
 									},
 								},

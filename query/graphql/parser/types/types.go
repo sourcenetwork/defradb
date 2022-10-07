@@ -83,6 +83,8 @@ const (
 
 	ExplainLabel = "explain"
 
+	LatestCommitsQueryName = "latestCommits"
+
 	CommitTypeName  = "Commit"
 	LinksFieldName  = "links"
 	HeightFieldName = "height"
