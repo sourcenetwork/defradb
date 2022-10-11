@@ -13,7 +13,6 @@ package planner
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -322,9 +321,9 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	// Find the first scan node in the plan, we assume that it will be for the correct collection
-	scanNode := p.walkAndFindPlanType(plan.plan, &scanNode{}).(*scanNode)
+	scanNode, _ := walkAndFindPlanType[*scanNode](plan.plan)
 	// Check for any existing pipe nodes in the plan, we should use it if there is one
-	pipe, hasPipe := p.walkAndFindPlanType(plan.plan, &pipeNode{}).(*pipeNode)
+	pipe, hasPipe := walkAndFindPlanType[*pipeNode](plan.plan)
 
 	if !hasPipe {
 		newPipeNode := newPipeNode(scanNode.DocumentMap())
@@ -419,20 +418,20 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 }
 
 // walkAndFindPlanType walks through the plan graph, and returns the first
-// instance of a plan, that matches the same type as the target plan
-func (p *Planner) walkAndFindPlanType(plan, target planNode) planNode {
+// instance of a plan, that matches the given type.
+func walkAndFindPlanType[T planNode](plan planNode) (T, bool) {
 	src := plan
 	if src == nil {
-		return nil
+		var defaultT T
+		return defaultT, false
 	}
 
-	srcType := reflect.TypeOf(src)
-	targetType := reflect.TypeOf(target)
-	if srcType != targetType {
-		return p.walkAndFindPlanType(plan.Source(), target)
+	targetType, isTargetType := src.(T)
+	if !isTargetType {
+		return walkAndFindPlanType[T](plan.Source())
 	}
 
-	return src
+	return targetType, true
 }
 
 // explainRequest walks through the plan graph, and outputs the concrete planNodes that should
