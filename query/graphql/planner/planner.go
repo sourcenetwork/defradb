@@ -320,15 +320,26 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
-	// Find the first scan node in the plan, we assume that it will be for the correct collection
-	scanNode, _ := walkAndFindPlanType[*scanNode](plan.plan)
+	var sourceNode planNode
+	var hasScanNode bool
+	// Find the first scan node in the plan, we assume that it will be for the correct collection.
+	// This may be a commit node.
+	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](plan.plan)
+	if !hasScanNode {
+		commitNode, hasCommitNode := walkAndFindPlanType[*commitSelectNode](plan.plan)
+		if !hasCommitNode {
+			return errors.New("Failed to identify group source")
+		}
+		sourceNode = commitNode
+	}
+
 	// Check for any existing pipe nodes in the plan, we should use it if there is one
 	pipe, hasPipe := walkAndFindPlanType[*pipeNode](plan.plan)
 
 	if !hasPipe {
-		newPipeNode := newPipeNode(scanNode.DocumentMap())
+		newPipeNode := newPipeNode(sourceNode.DocumentMap())
 		pipe = &newPipeNode
-		pipe.source = scanNode
+		pipe.source = sourceNode
 	}
 
 	if len(plan.group.childSelects) == 0 {
@@ -354,7 +365,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		dataSource.pipeNode = pipe
 	}
 
-	if err := p.walkAndReplacePlan(plan.group, scanNode, pipe); err != nil {
+	if err := p.walkAndReplacePlan(plan.group, sourceNode, pipe); err != nil {
 		return err
 	}
 
