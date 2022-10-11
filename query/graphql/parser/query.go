@@ -21,7 +21,7 @@ import (
 
 var dbAPIQueryNames = map[string]bool{
 	"latestCommits": true,
-	"allCommits":    true,
+	"commits":       true,
 	"commit":        true,
 }
 
@@ -354,7 +354,7 @@ func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {
 	switch field.Name.Value {
-	case "latestCommits", "allCommits", "commit":
+	case "latestCommits", "commits":
 		return parseCommitSelect(field)
 	default:
 		return nil, errors.New("Unknown query")

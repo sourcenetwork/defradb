@@ -107,9 +107,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	switch parsed.Type {
 	case mapper.LatestCommits:
 		commit, err = p.commitSelectLatest(parsed)
-	case mapper.OneCommit:
-		commit, err = p.commitSelectBlock(parsed)
-	case mapper.AllCommits:
+	case mapper.Commits:
 		commit, err = p.commitSelectAll(parsed)
 	default:
 		return nil, errors.New("Invalid CommitSelect type")
@@ -130,8 +128,8 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 
 // commitSelectLatest is a CommitSelect node initalized with a headsetScanNode and a DocKey
 func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan(parsed)
 	headset := p.HeadScan(parsed)
+	dag := p.DAGScan(parsed, headset)
 	// @todo: Get Collection field ID
 	if !parsed.FieldName.HasValue() {
 		dag.field = core.COMPOSITE_NAMESPACE
@@ -143,7 +141,7 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(dag.field)
 		headset.key = key
 	}
-	dag.headset = headset
+
 	commit := &commitSelectNode{
 		p:      p,
 		source: dag,
@@ -152,29 +150,11 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 	return commit, nil
 }
 
-// commitSelectBlock is a CommitSelect node initialized without a headsetScanNode, and is expected
-// to be given a target CID in the parser.CommitSelect object. It returns a single commit if found.
-func (p *Planner) commitSelectBlock(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan(parsed)
-	if parsed.Cid != "" {
-		c, err := cid.Decode(parsed.Cid)
-		if err != nil {
-			return nil, err
-		}
-		dag.cid = &c
-	} // @todo: handle error if no CID is given
-
-	return &commitSelectNode{
-		p:      p,
-		source: dag,
-	}, nil
-}
-
 // commitSelectAll is a CommitSelect initialized with a headsetScanNode, and will
 // recursively return all graph commits in order.
 func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan(parsed)
 	headset := p.HeadScan(parsed)
+	dag := p.DAGScan(parsed, headset)
 
 	if parsed.Cid != "" {
 		c, err := cid.Decode(parsed.Cid)
@@ -202,7 +182,7 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 
 		headset.key = key
 	}
-	dag.headset = headset
+
 	dag.depthLimit = math.MaxUint32 // infinite depth
 	// dag.key = &key
 	commit := &commitSelectNode{

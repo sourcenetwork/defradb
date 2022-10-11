@@ -25,15 +25,13 @@ type CommitType int
 const (
 	NoneCommitType = CommitType(iota)
 	LatestCommits
-	AllCommits
-	OneCommit
+	Commits
 )
 
 var (
 	commitNameToType = map[string]CommitType{
 		"latestCommits": LatestCommits,
-		"allCommits":    AllCommits,
-		"commit":        OneCommit,
+		"commits":       Commits,
 	}
 
 	_ Selection = (*CommitSelect)(nil)

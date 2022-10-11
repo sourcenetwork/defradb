@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package commit
+package commits
 
 import (
 	"testing"
@@ -16,16 +16,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits).
-func TestQueryOneCommit(t *testing.T) {
+func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "query for a single block by CID",
+		Description: "Simple all commits query with dockey and limit",
 		Query: `query {
-					commit {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2) {
 						cid
-						height
-						delta
 					}
 				}`,
 		Docs: map[int][]string{
@@ -36,7 +32,26 @@ func TestQueryOneCommit(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "Field \"commit\" argument \"cid\" of type \"ID!\" is required but not provided.",
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+						"Age": 22
+					}`,
+					`{
+						"Age": 23
+					}`,
+				},
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid": "bafybeiaxjhz6dna7fyf7tqo5hooilwvaezswd5xfsmb2lfgcy7tpzklikm",
+			},
+			{
+				"cid": "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
+			},
+		},
 	}
 
 	executeTestCase(t, test)

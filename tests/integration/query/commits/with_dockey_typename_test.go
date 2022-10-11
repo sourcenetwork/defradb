@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,12 +16,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndLimitAndOffset(t *testing.T) {
+func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query with dockey, limit and offset",
+		Description: "Simple all commits query with dockey and typename",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2, offset: 1) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
+						__typename
 					}
 				}`,
 		Docs: map[int][]string{
@@ -32,27 +33,18 @@ func TestQueryAllCommitsWithDockeyAndLimitAndOffset(t *testing.T) {
 				}`,
 			},
 		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
-					}`,
-					`{
-						"Age": 23
-					}`,
-					`{
-						"Age": 24
-					}`,
-				},
-			},
-		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeiaxjhz6dna7fyf7tqo5hooilwvaezswd5xfsmb2lfgcy7tpzklikm",
+				"cid":        "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"__typename": "Commit",
 			},
 			{
-				"cid": "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
+				"cid":        "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+				"__typename": "Commit",
+			},
+			{
+				"cid":        "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"__typename": "Commit",
 			},
 		},
 	}
