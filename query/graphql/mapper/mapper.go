@@ -613,17 +613,21 @@ func getTopLevelInfo(
 	}
 
 	if parsed.Name == parserTypes.LinksFieldName {
+		for i, f := range parserTypes.LinksFields {
+			mapping.Add(i, f)
+		}
+
+		// Setting the type name must be done after adding the fields, as
+		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(parserTypes.LinksFieldName)
-
-		for f := range parserTypes.LinksFields {
-			mapping.Add(mapping.GetNextIndex(), f)
-		}
 	} else {
-		mapping.SetTypeName(parserTypes.CommitTypeName)
-
-		for f := range parserTypes.VersionFields {
-			mapping.Add(mapping.GetNextIndex(), f)
+		for i, f := range parserTypes.VersionFields {
+			mapping.Add(i, f)
 		}
+
+		// Setting the type name must be done after adding the fields, as
+		// the typeName index is dynamic, but the field indexes are not
+		mapping.SetTypeName(parserTypes.CommitTypeName)
 	}
 
 	return mapping, &client.CollectionDescription{}, nil
