@@ -143,8 +143,9 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 	}
 
 	commit := &commitSelectNode{
-		p:      p,
-		source: dag,
+		p:         p,
+		source:    dag,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	return commit, nil
@@ -191,8 +192,9 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 	}
 	// dag.key = &key
 	commit := &commitSelectNode{
-		p:      p,
-		source: dag,
+		p:         p,
+		source:    dag,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	return commit, nil
