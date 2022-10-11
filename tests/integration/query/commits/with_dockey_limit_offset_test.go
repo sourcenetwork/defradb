@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndLimit(t *testing.T) {
+func TestQueryCommitsWithDockeyAndLimitAndOffset(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query with dockey and limit",
+		Description: "Simple all commits query with dockey, limit and offset",
 		Query: `query {
-					allCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2) {
+					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2, offset: 1) {
 						cid
 					}
 				}`,
@@ -40,6 +40,9 @@ func TestQueryAllCommitsWithDockeyAndLimit(t *testing.T) {
 					}`,
 					`{
 						"Age": 23
+					}`,
+					`{
+						"Age": 24
 					}`,
 				},
 			},

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package all_commits
+package commits
 
 import (
 	"testing"
@@ -16,14 +16,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryAllCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
+// This test is for documentation reasons only. This is not
+// desired behaviour (should return all commits for dockey-field).
+func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query with dockey and cid",
+		Description: "Simple all commits query with field",
 		Query: `query {
-					allCommits(
-						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
+					commits (field: "Age") {
 						cid
 					}
 				}`,
@@ -41,14 +40,13 @@ func TestQueryAllCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryAllCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
+// This test is for documentation reasons only. This is not
+// desired behaviour (users should not be specifying field ids).
+func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query with dockey and cid",
+		Description: "Simple all commits query with field id",
 		Query: `query {
-					allCommits(
-						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
+					commits (field: "1") {
 						cid
 					}
 				}`,
@@ -58,54 +56,39 @@ func TestQueryAllCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) 
 					"Name": "John",
 					"Age": 21
 				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
-					}`,
-				},
-			},
-		},
-		Results: []map[string]any{},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQueryAllCommitsWithDockeyAndCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
-					allCommits(
-						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
-					) {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
-					}`,
-				},
 			},
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// This test is for documentation reasons only. This is not
+// desired behaviour (users should not be specifying field ids).
+func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple all commits query with dockey and field id",
+		Query: `query {
+					commits(field: "C") {
+						cid
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
 			},
 		},
 	}
