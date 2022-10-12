@@ -56,12 +56,6 @@ type dagScanNode struct {
 	field string
 	key   core.DataStoreKey
 
-	// used for tracking traversal
-	// note: depthLimit of 0 or 1 are equivalent
-	// since the depth check is done after the
-	// block scan.
-	// If we need an infinite depth, use math.MaxUint32
-	depthLimit   uint64
 	depthVisited uint64
 	visitedNodes map[string]bool
 
@@ -238,7 +232,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// HEAD paths.
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-	if n.depthVisited < n.depthLimit {
+	if !n.parsed.Depth.HasValue() || n.depthVisited < n.parsed.Depth.Value() {
 		// traverse the merkle dag to fetch related commits
 		for _, h := range heads {
 			// queue our found heads

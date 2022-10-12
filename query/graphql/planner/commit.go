@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"math"
-
 	cid "github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -142,13 +140,6 @@ func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSel
 		}
 
 		dag.key = key
-	}
-
-	if parsed.Depth.HasValue() {
-		dag.depthLimit = parsed.Depth.Value()
-	} else {
-		// infinite depth
-		dag.depthLimit = math.MaxUint64
 	}
 
 	// dag.key = &key
