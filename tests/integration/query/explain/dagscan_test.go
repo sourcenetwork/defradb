@@ -115,7 +115,7 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 							"commitSelectNode": dataMap{
 								"dagScanNode": dataMap{
 									"cid":   nil,
-									"field": "C",
+									"field": nil,
 									"spans": []dataMap{
 										{
 											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",

@@ -33,7 +33,6 @@ package planner
 
 import (
 	"container/list"
-	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
@@ -52,8 +51,7 @@ type dagScanNode struct {
 	documentIterator
 	docMapper
 
-	p     *Planner
-	field string
+	p *Planner
 
 	depthVisited uint64
 	visitedNodes map[string]bool
@@ -88,7 +86,6 @@ func (n *dagScanNode) Init() error {
 			if n.parsed.FieldName.HasValue() {
 				field := n.parsed.FieldName.Value()
 				key = key.WithFieldId(field)
-				n.field = field
 			}
 		}
 		n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
@@ -117,10 +114,20 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 		Value:    make([]core.Span, len(spans.Value)),
 	}
 	copy(headSetSpans.Value, spans.Value)
-	span := headSetSpans.Value[0].Start()
-	if !strings.HasSuffix(span.ToString(), n.field) {
-		headSetSpans.Value[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
+
+	var fieldId string
+	if !n.parsed.FieldName.HasValue() {
+		fieldId = core.COMPOSITE_NAMESPACE
+	} else {
+		fieldId = n.parsed.FieldName.Value()
 	}
+
+	for i, span := range headSetSpans.Value {
+		if span.Start().FieldId != fieldId {
+			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldId(fieldId), core.DataStoreKey{})
+		}
+	}
+
 	n.spans = headSetSpans
 }
 
@@ -136,8 +143,8 @@ func (n *dagScanNode) Explain() (map[string]any, error) {
 	explainerMap := map[string]any{}
 
 	// Add the field attribute to the explaination if it exists.
-	if len(n.field) != 0 {
-		explainerMap["field"] = n.field
+	if n.parsed.FieldName.HasValue() {
+		explainerMap["field"] = n.parsed.FieldName.Value()
 	} else {
 		explainerMap["field"] = nil
 	}
