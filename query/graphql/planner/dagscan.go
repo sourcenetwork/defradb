@@ -232,8 +232,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	var heads []*ipld.Link
-	n.currentValue, heads, err = n.dagBlockToNodeDoc(block)
+	currentValue, heads, err := n.dagBlockToNodeDoc(block)
 	if err != nil {
 		return false, err
 	}
@@ -260,6 +259,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return n.Next()
 	}
 
+	n.currentValue = currentValue
 	return true, nil
 }
 
