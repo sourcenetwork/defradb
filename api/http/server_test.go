@@ -22,7 +22,7 @@ import (
 
 func TestNewServerAndRunWithoutListener(t *testing.T) {
 	ctx := context.Background()
-	s := NewServer(nil, WithAddress(":3131"))
+	s := NewServer(nil, WithAddress(":0"))
 	if ok := assert.NotNil(t, s); ok {
 		assert.Equal(t, errNoListener, s.Run(ctx))
 	}
@@ -40,7 +40,7 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 	ctx := context.Background()
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
-	s := NewServer(nil, WithAddress(":3131"))
+	s := NewServer(nil, WithAddress(":0"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -85,7 +85,7 @@ func TestNewServerAndRunWithSelfSignedCertAndNoKeyFiles(t *testing.T) {
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, WithAddress("localhost:9181"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -167,7 +167,7 @@ func TestNewServerAndRunWithSelfSignedCert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewServer(nil, WithAddress("localhost:9181"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
+	s := NewServer(nil, WithAddress("localhost:0"), WithSelfSignedCert(dir+"/server.crt", dir+"/server.key"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
