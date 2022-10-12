@@ -98,10 +98,10 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	copy(headSetSpans.Value, spans.Value)
 
 	var fieldId string
-	if !n.parsed.FieldName.HasValue() {
-		fieldId = core.COMPOSITE_NAMESPACE
-	} else {
+	if n.parsed.FieldName.HasValue() {
 		fieldId = n.parsed.FieldName.Value()
+	} else {
+		fieldId = core.COMPOSITE_NAMESPACE
 	}
 
 	for i, span := range headSetSpans.Value {
