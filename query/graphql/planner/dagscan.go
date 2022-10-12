@@ -108,7 +108,7 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 		return
 	}
 
-	// make sure we have the correct field suffix
+	// copy the input spans so that we may mutate freely
 	headSetSpans := core.Spans{
 		HasValue: spans.HasValue,
 		Value:    make([]core.Span, len(spans.Value)),
