@@ -32,8 +32,6 @@ package planner
 */
 
 import (
-	"container/list"
-
 	"github.com/fxamacker/cbor/v2"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
@@ -56,7 +54,7 @@ type dagScanNode struct {
 	depthVisited uint64
 	visitedNodes map[string]bool
 
-	queuedCids *list.List
+	queuedCids []*cid.Cid
 
 	fetcher fetcher.HeadFetcher
 	spans   core.Spans
@@ -67,7 +65,7 @@ func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
 	return &dagScanNode{
 		p:            p,
 		visitedNodes: make(map[string]bool),
-		queuedCids:   list.New(),
+		queuedCids:   []*cid.Cid{},
 		parsed:       parsed,
 		docMapper:    docMapper{&parsed.DocumentMapping},
 	}
@@ -181,14 +179,9 @@ func (n *dagScanNode) Next() (bool, error) {
 	store := n.p.txn.DAGstore()
 
 	// find target CID either through headset or direct cid.
-	if n.queuedCids.Len() > 0 {
-		c := n.queuedCids.Front()
-		cid, ok := c.Value.(cid.Cid)
-		if !ok {
-			return false, errors.New("Queued value in DAGScan isn't a CID")
-		}
-		n.queuedCids.Remove(c)
-		currentCid = &cid
+	if len(n.queuedCids) > 0 {
+		currentCid = n.queuedCids[0]
+		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
 	} else if n.parsed.Cid.HasValue() && n.parsed.DocKey == "" {
 		if n.visitedNodes[n.parsed.Cid.Value()] {
 			// If the requested cid has been visited, we are done and should return false
@@ -248,10 +241,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
 	if !n.parsed.Depth.HasValue() || n.depthVisited < n.parsed.Depth.Value() {
-		// traverse the merkle dag to fetch related commits
-		for _, h := range heads {
-			// queue our found heads
-			n.queuedCids.PushFront(h.Cid)
+		// Insert the newly fetched cids into the slice of queued items, in reverse order
+		// so that the last new cid will be at the front of the slice
+		newqueue := make([]*cid.Cid, len(heads)+len(n.queuedCids))
+		copy(newqueue[len(heads):], n.queuedCids)
+		n.queuedCids = newqueue
+
+		for i, h := range heads {
+			n.queuedCids[len(heads)-i-1] = &h.Cid
 		}
 	}
 
