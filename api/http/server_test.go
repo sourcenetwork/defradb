@@ -63,6 +63,7 @@ func TestNewServerAndRunWithAutocert(t *testing.T) {
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
 	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir))
+	s.options.tlsTest = true
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)

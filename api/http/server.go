@@ -50,8 +50,10 @@ type serverOptions struct {
 	email string
 	// The domain to associate the certificate.
 	domain string
-	// root directory for the node config
+	// root directory for the node config.
 	rootDir string
+	// used only for testing.
+	tlsTest bool
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -173,6 +175,12 @@ func (s *Server) Listen(ctx context.Context) error {
 
 		if s.options.domain != "" {
 			addr = ":443"
+			// Port 443 requires root privilege and can cause issues when
+			// running tests. Unit test should set tlsTest to true to
+			// ensure we use a non restricted port.
+			if s.options.tlsTest {
+				addr = ":3131"
+			}
 
 			certCache := path.Join(s.options.rootDir, "autocerts")
 
