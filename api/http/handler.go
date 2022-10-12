@@ -74,6 +74,9 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if h.options.tls {
+			rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		}
 		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
 		if h.options.peerID != "" {
 			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
