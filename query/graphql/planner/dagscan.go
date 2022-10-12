@@ -41,6 +41,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
@@ -53,10 +54,8 @@ type dagScanNode struct {
 	docMapper
 
 	p *Planner
-	// The cid requested by the user
-	cid *cid.Cid
 	// The cid of the current value
-	currentCid *cid.Cid
+	currentCid client.Option[*cid.Cid]
 	field      string
 	key        core.DataStoreKey
 
@@ -144,8 +143,8 @@ func (n *dagScanNode) Explain() (map[string]any, error) {
 	}
 
 	// Add the cid attribute to the explaination if it exists.
-	if n.cid != nil && n.cid.Defined() {
-		explainerMap["cid"] = n.cid.Bytes()
+	if n.parsed.Cid.HasValue() {
+		explainerMap["cid"] = n.parsed.Cid.Value()
 	} else {
 		explainerMap["cid"] = nil
 	}
@@ -179,22 +178,27 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, errors.New("Queued value in DAGScan isn't a CID")
 		}
 		n.queuedCids.Remove(c)
-		n.currentCid = &cid
-	} else if n.currentCid == nil {
+		n.currentCid = client.Some(&cid)
+	} else if n.parsed.Cid.HasValue() {
+		if n.visitedNodes[n.parsed.Cid.Value()] {
+			// If the requested cid has been visited, we are done and should return false
+			return false, nil
+		}
+
+		cid, err := cid.Decode(n.parsed.Cid.Value())
+		if err != nil {
+			return false, err
+		}
+		n.currentCid = client.Some(&cid)
+	} else if !n.currentCid.HasValue() {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
 		}
 
-		n.currentCid = cid
+		n.currentCid = client.Some(cid)
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
-	} else if n.cid != nil {
-		if n.visitedNodes[n.cid.String()] {
-			// If the requested cid has been visited, we are done and should return false
-			return false, nil
-		}
-		n.currentCid = n.cid
 	}
 
 	// skip already visited CIDs
@@ -202,15 +206,15 @@ func (n *dagScanNode) Next() (bool, error) {
 	// as it will reset and scan through the headset/queue
 	// and eventually return a value, or false if we've
 	// visited everything
-	if _, ok := n.visitedNodes[n.currentCid.String()]; ok {
-		n.currentCid = nil
+	if _, ok := n.visitedNodes[n.currentCid.Value().String()]; ok {
+		n.currentCid = client.None[*cid.Cid]()
 		return n.Next()
 	}
 
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
 	store := n.p.txn.DAGstore()
-	block, err := store.Get(n.p.ctx, *n.currentCid)
+	block, err := store.Get(n.p.ctx, *n.currentCid.Value())
 	if err != nil { // handle error?
 		return false, err
 	}
@@ -229,7 +233,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// until there are no more links, and no more explored
 	// HEAD paths.
 	n.depthVisited++
-	n.visitedNodes[n.currentCid.String()] = true // mark the current node as "visited"
+	n.visitedNodes[n.currentCid.Value().String()] = true // mark the current node as "visited"
 	if n.depthVisited < n.depthLimit {
 		// traverse the merkle dag to fetch related commits
 		for _, h := range heads {
@@ -238,12 +242,12 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 	}
 
-	if n.cid != nil && *n.currentCid != *n.cid {
-		n.currentCid = nil
+	if n.parsed.Cid.HasValue() && n.currentCid.Value().String() != n.parsed.Cid.Value() {
+		n.currentCid = client.None[*cid.Cid]()
 		return n.Next()
 	}
 
-	n.currentCid = nil // clear cid for next round
+	n.currentCid = client.None[*cid.Cid]() // clear cid for next round
 	return true, nil
 }
 

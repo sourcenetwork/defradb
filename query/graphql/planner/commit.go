@@ -125,14 +125,6 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
 	dag := p.DAGScan(parsed)
 
-	if parsed.Cid.HasValue() {
-		c, err := cid.Decode(parsed.Cid.Value())
-		if err != nil {
-			return nil, err
-		}
-		dag.cid = &c
-	}
-
 	// @todo: Get Collection field ID
 	if !parsed.FieldName.HasValue() {
 		dag.field = core.COMPOSITE_NAMESPACE
