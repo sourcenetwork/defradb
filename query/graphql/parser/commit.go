@@ -131,7 +131,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			commit.Depth = client.Some(depth)
 		} else if prop == parserTypes.GroupByClause {
 			obj := argument.Value.(*ast.ListValue)
-			fields := make([]string, 0)
+			fields := []string{}
 			for _, v := range obj.Values {
 				fields = append(fields, v.GetValue().(string))
 			}
