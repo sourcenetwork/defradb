@@ -49,6 +49,7 @@ type CommitSelect struct {
 
 	Limit   *parserTypes.Limit
 	OrderBy *parserTypes.OrderBy
+	GroupBy *parserTypes.GroupBy
 
 	Fields []Selection
 }
@@ -62,6 +63,7 @@ func (c CommitSelect) ToSelect() *Select {
 		Alias:   c.Alias,
 		Limit:   c.Limit,
 		OrderBy: c.OrderBy,
+		GroupBy: c.GroupBy,
 		Fields:  c.Fields,
 		Root:    parserTypes.CommitSelection,
 	}
@@ -127,6 +129,16 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				return nil, err
 			}
 			commit.Depth = client.Some(depth)
+		} else if prop == parserTypes.GroupByClause {
+			obj := argument.Value.(*ast.ListValue)
+			fields := []string{}
+			for _, v := range obj.Values {
+				fields = append(fields, v.GetValue().(string))
+			}
+
+			commit.GroupBy = &parserTypes.GroupBy{
+				Fields: fields,
+			}
 		}
 	}
 

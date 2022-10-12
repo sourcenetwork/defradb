@@ -103,14 +103,31 @@ var (
 		},
 	)
 
+	commitFields = gql.NewEnum(
+		gql.EnumConfig{
+			Name: "commitFields",
+			Values: gql.EnumValueConfigMap{
+				"height": &gql.EnumValueConfig{Value: "height"},
+				"cid":    &gql.EnumValueConfig{Value: "cid"},
+			},
+		},
+	)
+
 	QueryCommits = &gql.Field{
 		Name: "commits",
 		Type: gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey":                 NewArgConfig(gql.ID),
-			"field":                  NewArgConfig(gql.String),
-			"order":                  NewArgConfig(CommitsOrderArg),
-			"cid":                    NewArgConfig(gql.ID),
+			"dockey": NewArgConfig(gql.ID),
+			"field":  NewArgConfig(gql.String),
+			"order":  NewArgConfig(CommitsOrderArg),
+			"cid":    NewArgConfig(gql.ID),
+			"groupBy": NewArgConfig(
+				gql.NewList(
+					gql.NewNonNull(
+						commitFields,
+					),
+				),
+			),
 			parserTypes.LimitClause:  NewArgConfig(gql.Int),
 			parserTypes.OffsetClause: NewArgConfig(gql.Int),
 			parserTypes.DepthClause:  NewArgConfig(gql.Int),

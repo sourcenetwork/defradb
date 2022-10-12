@@ -397,7 +397,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 
 	// source is a mergeNode, like a TypeJoin
 	case mergeNode:
-		origScan := s.p.walkAndFindPlanType(plan, &scanNode{}).(*scanNode)
+		origScan, _ := walkAndFindPlanType[*scanNode](plan)
 		if origScan == nil {
 			return errors.New("Failed to find original scan node in plan graph")
 		}
