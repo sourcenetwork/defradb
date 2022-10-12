@@ -148,8 +148,34 @@ func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 func (s *Server) Listen(ctx context.Context) error {
 	var err error
 	if s.options.tls {
+		config := &tls.Config{
+			// We are being explicit here but those are the
+			// same as the tls package defaults.
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP521,
+				tls.CurveP384,
+				tls.CurveP256,
+				tls.X25519,
+			},
+			MinVersion: tls.VersionTLS12,
+			// We only allow cipher suites that are marked secure
+			// by ssllabs
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+		}
+		addr := s.Addr
+
 		if s.options.domain != "" {
+			addr = ":443"
+
 			certCache := path.Join(s.options.rootDir, "autocerts")
+
 			log.FeedbackInfo(
 				ctx,
 				"Generating auto certificate",
@@ -164,35 +190,29 @@ func (s *Server) Listen(ctx context.Context) error {
 				HostPolicy: autocert.HostWhitelist(s.options.domain),
 			}
 
-			s.listener = m.Listener()
+			config.GetCertificate = m.GetCertificate
+
+			// We set manager on the server instance to later start
+			// a redirection server.
 			s.manager = m
 
-			return nil
+		} else {
+			// When not using auto cert, we create a self signed certificate
+			// with the provided public and prive keys.
+			log.FeedbackInfo(ctx, "Generating self signed certificate")
+
+			cert, err := tls.LoadX509KeyPair(
+				path.Join(s.options.rootDir, s.options.privKey),
+				path.Join(s.options.rootDir, s.options.pubKey),
+			)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			config.Certificates = []tls.Certificate{cert}
 		}
 
-		// When not using auto cert, we create a self signed certificate
-		// with the provided public and prive keys
-		log.FeedbackInfo(ctx, "Generating self signed certificate")
-
-		cer, err := tls.LoadX509KeyPair(
-			path.Join(s.options.rootDir, s.options.privKey),
-			path.Join(s.options.rootDir, s.options.pubKey),
-		)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		config := &tls.Config{
-			Certificates: []tls.Certificate{cer},
-			// Only use curves which have assembly implementations
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP256,
-				tls.X25519,
-			},
-			MinVersion: tls.VersionTLS12,
-		}
-
-		s.listener, err = tls.Listen("tcp", s.Addr, config)
+		s.listener, err = tls.Listen("tcp", addr, config)
 		if err != nil {
 			return errors.WithStack(err)
 		}
