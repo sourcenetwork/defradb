@@ -146,8 +146,8 @@ type dagScanNode struct {
 	// since the depth check is done after the
 	// block scan.
 	// If we need an infinite depth, use math.MaxUint32
-	depthLimit   uint32
-	depthVisited uint32
+	depthLimit   uint64
+	depthVisited uint64
 	visitedNodes map[string]bool
 
 	queuedCids *list.List
@@ -312,7 +312,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.depthVisited++
 	n.visitedNodes[n.currentCid.String()] = true // mark the current node as "visited"
 	if n.depthVisited < n.depthLimit {
-		// look for HEAD links
+		// traverse the merkle dag to fetch related commits
 		for _, h := range heads {
 			// queue our found heads
 			n.queuedCids.PushFront(h.Cid)

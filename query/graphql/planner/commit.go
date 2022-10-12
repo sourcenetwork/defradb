@@ -16,7 +16,6 @@ import (
 	cid "github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
 
@@ -107,20 +106,11 @@ func (n *commitSelectNode) Explain() (map[string]any, error) {
 }
 
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
-	// check type of commit select (all, latest, one)
-	var commit *commitSelectNode
-	var err error
-	switch parsed.Type {
-	case mapper.LatestCommits:
-		commit, err = p.commitSelectLatest(parsed)
-	case mapper.Commits:
-		commit, err = p.commitSelectAll(parsed)
-	default:
-		return nil, errors.New("Invalid CommitSelect type")
-	}
+	commit, err := p.buildCommitSelectNode(parsed)
 	if err != nil {
 		return nil, err
 	}
+
 	plan, err := p.SelectFromSource(&parsed.Select, commit, false, nil)
 	if err != nil {
 		return nil, err
@@ -132,34 +122,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 	}, nil
 }
 
-// commitSelectLatest is a CommitSelect node initalized with a headsetScanNode and a DocKey
-func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	headset := p.HeadScan(parsed)
-	dag := p.DAGScan(parsed, headset)
-	// @todo: Get Collection field ID
-	if !parsed.FieldName.HasValue() {
-		dag.field = core.COMPOSITE_NAMESPACE
-	} else {
-		dag.field = parsed.FieldName.Value()
-	}
-
-	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey).WithFieldId(dag.field)
-		headset.key = key
-	}
-
-	commit := &commitSelectNode{
-		p:         p,
-		source:    dag,
-		docMapper: docMapper{&parsed.DocumentMapping},
-	}
-
-	return commit, nil
-}
-
-// commitSelectAll is a CommitSelect initialized with a headsetScanNode, and will
-// recursively return all graph commits in order.
-func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
+func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
 	headset := p.HeadScan(parsed)
 	dag := p.DAGScan(parsed, headset)
 
@@ -191,11 +154,12 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 	}
 
 	if parsed.Depth.HasValue() {
-		dag.depthLimit = uint32(parsed.Depth.Value())
+		dag.depthLimit = parsed.Depth.Value()
 	} else {
 		// infinite depth
-		dag.depthLimit = math.MaxUint32
+		dag.depthLimit = math.MaxUint64
 	}
+
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:         p,

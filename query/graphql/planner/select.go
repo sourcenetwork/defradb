@@ -294,10 +294,8 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					// a OneCommit subquery, with the supplied parameters.
 					commitSlct.DocKey = parsed.DocKeys.Value[0] // @todo check length
 					commitSlct.Cid = parsed.Cid
-					commitSlct.Type = mapper.Commits
-				} else {
-					commitSlct.Type = mapper.LatestCommits
 				}
+
 				commitPlan, err := n.p.CommitSelect(commitSlct)
 				if err != nil {
 					return nil, err
