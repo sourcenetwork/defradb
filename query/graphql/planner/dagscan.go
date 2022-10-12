@@ -268,6 +268,8 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, errors.New("Headset scan node returned an invalid cid")
 		}
 		n.currentCid = &cid
+		// Reset the depthVisited for each head yielded by headset
+		n.depthVisited = 0
 	} else if n.cid != nil {
 		if n.visitedNodes[n.cid.String()] {
 			// If the requested cid has been visited, we are done and should return false
