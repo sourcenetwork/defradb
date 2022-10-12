@@ -48,88 +48,6 @@ import (
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
-type headsetScanNode struct {
-	documentIterator
-	docMapper
-
-	p   *Planner
-	key core.DataStoreKey
-
-	spans           core.Spans
-	scanInitialized bool
-
-	cid *cid.Cid
-
-	fetcher fetcher.HeadFetcher
-	parsed  *mapper.CommitSelect
-}
-
-func (n *headsetScanNode) Kind() string {
-	return "headsetScanNode"
-}
-
-func (h *headsetScanNode) Init() error {
-	return h.initScan()
-}
-
-func (h *headsetScanNode) Spans(spans core.Spans) {
-	h.spans = spans
-}
-
-func (h *headsetScanNode) Start() error {
-	return nil
-}
-
-func (h *headsetScanNode) initScan() error {
-	if len(h.spans.Value) == 0 {
-		h.spans = core.NewSpans(core.NewSpan(h.key, h.key.PrefixEnd()))
-	}
-
-	err := h.fetcher.Start(h.p.ctx, h.p.txn, h.spans, h.parsed.FieldName)
-	if err != nil {
-		return err
-	}
-
-	h.scanInitialized = true
-	return nil
-}
-
-func (h *headsetScanNode) Next() (bool, error) {
-	if !h.scanInitialized {
-		if err := h.initScan(); err != nil {
-			return false, err
-		}
-	}
-
-	var err error
-	h.cid, err = h.fetcher.FetchNext()
-	if err != nil {
-		return false, err
-	}
-	if h.cid == nil {
-		return false, nil
-	}
-
-	h.currentValue = h.parsed.DocumentMapping.NewDoc()
-	h.parsed.DocumentMapping.SetFirstOfName(&h.currentValue, "cid", h.cid)
-
-	return true, nil
-}
-
-func (h *headsetScanNode) Close() error {
-	return h.fetcher.Close()
-}
-
-func (h *headsetScanNode) Source() planNode { return nil }
-
-func (p *Planner) HeadScan(parsed *mapper.CommitSelect) *headsetScanNode {
-	return &headsetScanNode{
-		p:         p,
-		parsed:    parsed,
-		docMapper: docMapper{&parsed.DocumentMapping},
-	}
-}
-
 type dagScanNode struct {
 	documentIterator
 	docMapper
@@ -140,6 +58,7 @@ type dagScanNode struct {
 	// The cid of the current value
 	currentCid *cid.Cid
 	field      string
+	key        core.DataStoreKey
 
 	// used for tracking traversal
 	// note: depthLimit of 0 or 1 are equivalent
@@ -152,17 +71,17 @@ type dagScanNode struct {
 
 	queuedCids *list.List
 
-	headset *headsetScanNode
+	fetcher fetcher.HeadFetcher
+	spans   core.Spans
 	parsed  *mapper.CommitSelect
 }
 
-func (p *Planner) DAGScan(parsed *mapper.CommitSelect, headset *headsetScanNode) *dagScanNode {
+func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
 	return &dagScanNode{
 		p:            p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   list.New(),
 		parsed:       parsed,
-		headset:      headset,
 		docMapper:    docMapper{&parsed.DocumentMapping},
 	}
 }
@@ -172,11 +91,15 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	return n.headset.Init()
+	if len(n.spans.Value) == 0 {
+		n.spans = core.NewSpans(core.NewSpan(n.key, n.key.PrefixEnd()))
+	}
+
+	return n.fetcher.Start(n.p.ctx, n.p.txn, n.spans, n.parsed.FieldName)
 }
 
 func (n *dagScanNode) Start() error {
-	return n.headset.Start()
+	return nil
 }
 
 // Spans needs to parse the given span set. dagScanNode only
@@ -199,14 +122,14 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	if !strings.HasSuffix(span.ToString(), n.field) {
 		headSetSpans.Value[0] = core.NewSpan(span.WithFieldId(n.field), core.DataStoreKey{})
 	}
-	n.headset.Spans(headSetSpans)
+	n.spans = headSetSpans
 }
 
 func (n *dagScanNode) Close() error {
-	return n.headset.Close()
+	return n.fetcher.Close()
 }
 
-func (n *dagScanNode) Source() planNode { return n.headset }
+func (n *dagScanNode) Source() planNode { return nil }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
@@ -230,8 +153,8 @@ func (n *dagScanNode) Explain() (map[string]any, error) {
 	// Build the explaination of the spans attribute.
 	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
-	if n.headset != nil && n.headset.spans.HasValue {
-		for _, span := range n.headset.spans.Value {
+	if n.spans.HasValue {
+		for _, span := range n.spans.Value {
 			spansExplainer = append(
 				spansExplainer,
 				map[string]any{
@@ -258,15 +181,11 @@ func (n *dagScanNode) Next() (bool, error) {
 		n.queuedCids.Remove(c)
 		n.currentCid = &cid
 	} else if n.currentCid == nil {
-		if next, err := n.headset.Next(); !next {
+		cid, err := n.fetcher.FetchNext()
+		if err != nil || cid == nil {
 			return false, err
 		}
 
-		val := n.headset.Value()
-		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(*cid.Cid)
-		if !ok {
-			return false, errors.New("Headset scan node returned an invalid cid")
-		}
 		n.currentCid = cid
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0

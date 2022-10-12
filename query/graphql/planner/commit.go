@@ -123,8 +123,7 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 }
 
 func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	headset := p.HeadScan(parsed)
-	dag := p.DAGScan(parsed, headset)
+	dag := p.DAGScan(parsed)
 
 	if parsed.Cid != "" {
 		c, err := cid.Decode(parsed.Cid)
@@ -150,7 +149,7 @@ func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSel
 			dag.field = field
 		}
 
-		headset.key = key
+		dag.key = key
 	}
 
 	if parsed.Depth.HasValue() {

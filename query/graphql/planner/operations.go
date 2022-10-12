@@ -20,7 +20,6 @@ var (
 	_ planNode = (*deleteNode)(nil)
 	_ planNode = (*groupNode)(nil)
 	_ planNode = (*limitNode)(nil)
-	_ planNode = (*headsetScanNode)(nil)
 	_ planNode = (*multiScanNode)(nil)
 	_ planNode = (*orderNode)(nil)
 	_ planNode = (*parallelNode)(nil)
