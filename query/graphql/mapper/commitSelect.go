@@ -37,6 +37,9 @@ type CommitSelect struct {
 	// The field for which commits have been requested.
 	FieldName client.Option[string]
 
+	// The maximum depth to yield results for.
+	Depth client.Option[uint64]
+
 	// The parent Cid for which commit information has been requested.
 	Cid string
 }
