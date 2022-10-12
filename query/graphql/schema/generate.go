@@ -185,6 +185,8 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 		}
 	}
 
+	appendCommitChildGroupField()
+
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -930,6 +932,13 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 		Name:   genNumericObjectSelectorName(obj.Name()),
 		Fields: fieldThunk,
 	})
+}
+
+func appendCommitChildGroupField() {
+	schemaTypes.CommitObject.Fields()[parserTypes.GroupFieldName] = &gql.FieldDefinition{
+		Name: parserTypes.GroupFieldName,
+		Type: gql.NewList(schemaTypes.CommitObject),
+	}
 }
 
 // Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there

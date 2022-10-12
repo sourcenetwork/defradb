@@ -111,7 +111,7 @@ func (h *headsetScanNode) Next() (bool, error) {
 	}
 
 	h.currentValue = h.parsed.DocumentMapping.NewDoc()
-	h.parsed.DocumentMapping.SetFirstOfName(&h.currentValue, "cid", *h.cid)
+	h.parsed.DocumentMapping.SetFirstOfName(&h.currentValue, "cid", h.cid)
 
 	return true, nil
 }
@@ -263,11 +263,11 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		val := n.headset.Value()
-		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(cid.Cid)
+		cid, ok := n.parsed.DocumentMapping.FirstOfName(val, "cid").(*cid.Cid)
 		if !ok {
 			return false, errors.New("Headset scan node returned an invalid cid")
 		}
-		n.currentCid = &cid
+		n.currentCid = cid
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
 	} else if n.cid != nil {
@@ -367,7 +367,8 @@ All the dagScanNode endpoints use similar structures
 
 func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
 	commit := n.parsed.DocumentMapping.NewDoc()
-	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", block.Cid().String())
+	cid := block.Cid()
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", &cid)
 
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())

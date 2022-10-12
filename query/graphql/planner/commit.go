@@ -79,6 +79,12 @@ func (n *commitSelectNode) Next() (bool, error) {
 	}
 
 	n.currentValue = n.source.Value()
+	cid, hasCid := n.docMapper.DocumentMap().FirstOfName(n.currentValue, "cid").(*cid.Cid)
+	if hasCid {
+		// dagScanNode yields cids, but we want to yield strings
+		n.docMapper.DocumentMap().SetFirstOfName(&n.currentValue, "cid", cid.String())
+	}
+
 	return true, nil
 }
 
@@ -143,8 +149,9 @@ func (p *Planner) commitSelectLatest(parsed *mapper.CommitSelect) (*commitSelect
 	}
 
 	commit := &commitSelectNode{
-		p:      p,
-		source: dag,
+		p:         p,
+		source:    dag,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	return commit, nil
@@ -191,8 +198,9 @@ func (p *Planner) commitSelectAll(parsed *mapper.CommitSelect) (*commitSelectNod
 	}
 	// dag.key = &key
 	commit := &commitSelectNode{
-		p:      p,
-		source: dag,
+		p:         p,
+		source:    dag,
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	return commit, nil

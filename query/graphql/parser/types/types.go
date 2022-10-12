@@ -130,14 +130,14 @@ var (
 		AverageFieldName: {},
 	}
 
-	VersionFields = map[string]struct{}{
-		HeightFieldName: {},
-		CidFieldName:    {},
-		DeltaFieldName:  {},
+	VersionFields = []string{
+		HeightFieldName,
+		CidFieldName,
+		DeltaFieldName,
 	}
 
-	LinksFields = map[string]struct{}{
-		LinksNameFieldName: {},
-		LinksCidFieldName:  {},
+	LinksFields = []string{
+		LinksNameFieldName,
+		LinksCidFieldName,
 	}
 )
