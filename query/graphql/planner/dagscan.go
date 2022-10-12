@@ -218,9 +218,10 @@ func (n *dagScanNode) Next() (bool, error) {
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
 	block, err := store.Get(n.p.ctx, *currentCid)
-	if err != nil { // handle error?
+	if err != nil {
 		return false, err
 	}
+
 	var heads []*ipld.Link
 	n.currentValue, heads, err = n.dagBlockToNodeDoc(block)
 	if err != nil {
