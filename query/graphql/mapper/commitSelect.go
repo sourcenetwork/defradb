@@ -29,7 +29,7 @@ type CommitSelect struct {
 	Depth client.Option[uint64]
 
 	// The parent Cid for which commit information has been requested.
-	Cid string
+	Cid client.Option[string]
 }
 
 func (s *CommitSelect) CloneTo(index int) Requestable {
