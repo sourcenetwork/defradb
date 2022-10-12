@@ -16,6 +16,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -139,6 +140,19 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			commit.GroupBy = &parserTypes.GroupBy{
 				Fields: fields,
 			}
+		}
+	}
+
+	// latestCommits is just syntax sugar around a commits query
+	if commit.Name == parserTypes.LatestCommitsQueryName {
+		// Depth is not exposed as an input parameter for latestCommits,
+		// so we can blindly set it here without worrying about existing
+		// values
+		commit.Depth = client.Some(uint64(1))
+
+		if !commit.FieldName.HasValue() {
+			// latest commits defaults to composite commits only at the moment
+			commit.FieldName = client.Some(core.COMPOSITE_NAMESPACE)
 		}
 	}
 
