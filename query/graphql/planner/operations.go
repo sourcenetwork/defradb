@@ -12,7 +12,6 @@ package planner
 
 var (
 	_ planNode = (*averageNode)(nil)
-	_ planNode = (*commitSelectTopNode)(nil)
 	_ planNode = (*countNode)(nil)
 	_ planNode = (*createNode)(nil)
 	_ planNode = (*dagScanNode)(nil)

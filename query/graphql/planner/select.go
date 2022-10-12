@@ -296,10 +296,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					commitSlct.Cid = parsed.Cid
 				}
 
-				commitPlan, err := n.p.CommitSelect(commitSlct)
-				if err != nil {
-					return nil, err
-				}
+				commitPlan := n.p.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
 					return nil, err

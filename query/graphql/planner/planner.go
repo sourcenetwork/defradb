@@ -199,9 +199,6 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
 
-	case *commitSelectTopNode:
-		return p.expandPlan(n.plan, parentPlan)
-
 	case *selectNode:
 		return p.expandPlan(n.source, parentPlan)
 
