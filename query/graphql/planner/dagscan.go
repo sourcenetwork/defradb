@@ -256,6 +256,8 @@ func (n *dagScanNode) Next() (bool, error) {
 	}
 
 	if n.parsed.Cid.HasValue() && currentCid.String() != n.parsed.Cid.Value() {
+		// If a specific cid has been requested, and the current item does not
+		// match, keep searching.
 		return n.Next()
 	}
 
