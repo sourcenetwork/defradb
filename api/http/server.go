@@ -13,6 +13,7 @@ package http
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"path"
@@ -40,8 +41,13 @@ type serverOptions struct {
 	allowedOrigins []string
 	// ID of the server node.
 	peerID string
-	// Whether to run the server with TLS or not.
-	tls bool
+	// a non nil value means the server should run with TLS
+	tls *tlsOptions
+	// root directory for the node config.
+	rootDir string
+}
+
+type tlsOptions struct {
 	// Public key for TLS. Ignored if domain is set.
 	pubKey string
 	// Private key for TLS. Ignored if domain is set.
@@ -50,10 +56,14 @@ type serverOptions struct {
 	email string
 	// The domain to associate the certificate.
 	domain string
-	// root directory for the node config.
-	rootDir string
-	// used only for testing.
-	tlsTest bool
+	// specify the tls port
+	port string
+}
+
+func newTLS() *tlsOptions {
+	return &tlsOptions{
+		port: ":443",
+	}
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -113,8 +123,10 @@ func WithAddress(addr string) func(*Server) {
 		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
 			ip := net.ParseIP(addr)
 			if ip == nil {
-				s.options.tls = true
-				s.options.domain = addr
+				if s.options.tls == nil {
+					s.options.tls = newTLS()
+				}
+				s.options.tls.domain = addr
 			}
 		}
 	}
@@ -122,7 +134,10 @@ func WithAddress(addr string) func(*Server) {
 
 func WithCAEmail(email string) func(*Server) {
 	return func(s *Server) {
-		s.options.email = email
+		if s.options.tls == nil {
+			s.options.tls = newTLS()
+		}
+		s.options.tls.email = email
 	}
 }
 
@@ -140,95 +155,105 @@ func WithRootDir(rootDir string) func(*Server) {
 
 func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 	return func(s *Server) {
-		s.options.tls = true
-		s.options.pubKey = pubKey
-		s.options.privKey = privKey
+		if s.options.tls == nil {
+			s.options.tls = newTLS()
+		}
+		s.options.tls.pubKey = pubKey
+		s.options.tls.privKey = privKey
+	}
+}
+
+func WithTLSPort(port int) func(*Server) {
+	return func(s *Server) {
+		if s.options.tls == nil {
+			s.options.tls = newTLS()
+		}
+		s.options.tls.port = fmt.Sprintf(":%d", port)
 	}
 }
 
 // Listen creates a new net.Listener and saves it on the receiver.
 func (s *Server) Listen(ctx context.Context) error {
 	var err error
-	if s.options.tls {
-		config := &tls.Config{
-			// We are being explicit here but those are the
-			// same as the tls package defaults.
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP521,
-				tls.CurveP384,
-				tls.CurveP256,
-				tls.X25519,
-			},
-			MinVersion: tls.VersionTLS12,
-			// We only allow cipher suites that are marked secure
-			// by ssllabs
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-		}
-		addr := s.Addr
-
-		if s.options.domain != "" {
-			addr = ":443"
-			// Port 443 requires root privilege and can cause issues when
-			// running tests. Unit test should set tlsTest to true to
-			// ensure we use a non restricted port.
-			if s.options.tlsTest {
-				addr = ":3131"
-			}
-
-			certCache := path.Join(s.options.rootDir, "autocerts")
-
-			log.FeedbackInfo(
-				ctx,
-				"Generating auto certificate",
-				logging.NewKV("Domain", s.options.domain),
-				logging.NewKV("Cert cache", certCache),
-			)
-
-			m := &autocert.Manager{
-				Cache:      autocert.DirCache(certCache),
-				Prompt:     autocert.AcceptTOS,
-				Email:      s.options.email,
-				HostPolicy: autocert.HostWhitelist(s.options.domain),
-			}
-
-			config.GetCertificate = m.GetCertificate
-
-			// We set manager on the server instance to later start
-			// a redirection server.
-			s.manager = m
-		} else {
-			// When not using auto cert, we create a self signed certificate
-			// with the provided public and prive keys.
-			log.FeedbackInfo(ctx, "Generating self signed certificate")
-
-			cert, err := tls.LoadX509KeyPair(
-				path.Join(s.options.rootDir, s.options.privKey),
-				path.Join(s.options.rootDir, s.options.pubKey),
-			)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			config.Certificates = []tls.Certificate{cert}
-		}
-
-		s.listener, err = tls.Listen("tcp", addr, config)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		return nil
+	if s.options.tls != nil {
+		return s.listenWithTLS(ctx)
 	}
 
 	lc := net.ListenConfig{}
 	s.listener, err = lc.Listen(ctx, "tcp", s.Addr)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (s *Server) listenWithTLS(ctx context.Context) error {
+	config := &tls.Config{
+		// We are being explicit here but those are the
+		// same as the tls package defaults.
+		CurvePreferences: []tls.CurveID{
+			tls.CurveP521,
+			tls.CurveP384,
+			tls.CurveP256,
+			tls.X25519,
+		},
+		MinVersion: tls.VersionTLS12,
+		// We only allow cipher suites that are marked secure
+		// by ssllabs
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+	}
+	addr := s.Addr
+
+	if s.options.tls.domain != "" {
+		addr = s.options.tls.port
+
+		certCache := path.Join(s.options.rootDir, "autocerts")
+
+		log.FeedbackInfo(
+			ctx,
+			"Generating auto certificate",
+			logging.NewKV("Domain", s.options.tls.domain),
+			logging.NewKV("Cert cache", certCache),
+		)
+
+		m := &autocert.Manager{
+			Cache:      autocert.DirCache(certCache),
+			Prompt:     autocert.AcceptTOS,
+			Email:      s.options.tls.email,
+			HostPolicy: autocert.HostWhitelist(s.options.tls.domain),
+		}
+
+		config.GetCertificate = m.GetCertificate
+
+		// We set manager on the server instance to later start
+		// a redirection server.
+		s.manager = m
+	} else {
+		// When not using auto cert, we create a self signed certificate
+		// with the provided public and prive keys.
+		log.FeedbackInfo(ctx, "Generating self signed certificate")
+
+		cert, err := tls.LoadX509KeyPair(
+			path.Join(s.options.rootDir, s.options.tls.privKey),
+			path.Join(s.options.rootDir, s.options.tls.pubKey),
+		)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		config.Certificates = []tls.Certificate{cert}
+	}
+
+	var err error
+	s.listener, err = tls.Listen("tcp", addr, config)
 	if err != nil {
 		return errors.WithStack(err)
 	}

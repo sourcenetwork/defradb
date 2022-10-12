@@ -74,7 +74,7 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		if h.options.tls {
+		if h.options.tls != nil {
 			rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		}
 		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
