@@ -54,7 +54,6 @@ type dagScanNode struct {
 
 	p     *Planner
 	field string
-	key   core.DataStoreKey
 
 	depthVisited uint64
 	visitedNodes map[string]bool
@@ -82,7 +81,17 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if len(n.spans.Value) == 0 {
-		n.spans = core.NewSpans(core.NewSpan(n.key, n.key.PrefixEnd()))
+		key := core.DataStoreKey{}
+		if n.parsed.DocKey != "" {
+			key = key.WithDocKey(n.parsed.DocKey)
+
+			if n.parsed.FieldName.HasValue() {
+				field := n.parsed.FieldName.Value()
+				key = key.WithFieldId(field)
+				n.field = field
+			}
+		}
+		n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
 	}
 
 	return n.fetcher.Start(n.p.ctx, n.p.txn, n.spans, n.parsed.FieldName)

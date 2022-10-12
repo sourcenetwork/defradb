@@ -130,18 +130,6 @@ func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSel
 		dag.field = parsed.FieldName.Value()
 	}
 
-	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey)
-
-		if parsed.FieldName.HasValue() {
-			field := parsed.FieldName.Value()
-			key = key.WithFieldId(field)
-			dag.field = field
-		}
-
-		dag.key = key
-	}
-
 	// dag.key = &key
 	commit := &commitSelectNode{
 		p:         p,
