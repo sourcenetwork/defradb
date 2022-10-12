@@ -11,8 +11,6 @@
 package planner
 
 import (
-	cid "github.com/ipfs/go-cid"
-
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
 )
@@ -49,68 +47,10 @@ func (n *commitSelectTopNode) Close() error {
 
 func (n *commitSelectTopNode) Append() bool { return true }
 
-type commitSelectNode struct {
-	documentIterator
-	docMapper
-
-	p *Planner
-
-	source *dagScanNode
-}
-
-func (n *commitSelectNode) Kind() string {
-	return "commitSelectNode"
-}
-
-func (n *commitSelectNode) Init() error {
-	return n.source.Init()
-}
-
-func (n *commitSelectNode) Start() error {
-	return n.source.Start()
-}
-
-func (n *commitSelectNode) Next() (bool, error) {
-	if next, err := n.source.Next(); !next {
-		return false, err
-	}
-
-	n.currentValue = n.source.Value()
-	cid, hasCid := n.docMapper.DocumentMap().FirstOfName(n.currentValue, "cid").(*cid.Cid)
-	if hasCid {
-		// dagScanNode yields cids, but we want to yield strings
-		n.docMapper.DocumentMap().SetFirstOfName(&n.currentValue, "cid", cid.String())
-	}
-
-	return true, nil
-}
-
-func (n *commitSelectNode) Spans(spans core.Spans) {
-	n.source.Spans(spans)
-}
-
-func (n *commitSelectNode) Close() error {
-	return n.source.Close()
-}
-
-func (n *commitSelectNode) Source() planNode {
-	return n.source
-}
-
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *commitSelectNode) Explain() (map[string]any, error) {
-	return map[string]any{}, nil
-}
-
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
-	commit := &commitSelectNode{
-		p:         p,
-		source:    p.DAGScan(parsed),
-		docMapper: docMapper{&parsed.DocumentMapping},
-	}
+	dagScan := p.DAGScan(parsed)
 
-	plan, err := p.SelectFromSource(&parsed.Select, commit, false, nil)
+	plan, err := p.SelectFromSource(&parsed.Select, dagScan, false, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -326,7 +326,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	// This may be a commit node.
 	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](plan.plan)
 	if !hasScanNode {
-		commitNode, hasCommitNode := walkAndFindPlanType[*commitSelectNode](plan.plan)
+		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
 		if !hasCommitNode {
 			return errors.New("Failed to identify group source")
 		}

@@ -301,7 +301,7 @@ All the dagScanNode endpoints use similar structures
 func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
 	commit := n.parsed.DocumentMapping.NewDoc()
 	cid := block.Cid()
-	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", &cid)
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", cid.String())
 
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())
