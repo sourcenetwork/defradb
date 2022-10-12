@@ -178,7 +178,6 @@ func (n *dagScanNode) Next() (bool, error) {
 	var currentCid *cid.Cid
 	store := n.p.txn.DAGstore()
 
-	// find target CID either through headset or direct cid.
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
