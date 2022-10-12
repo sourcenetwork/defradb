@@ -104,9 +104,10 @@ func (n *commitSelectNode) Explain() (map[string]any, error) {
 }
 
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
-	commit, err := p.buildCommitSelectNode(parsed)
-	if err != nil {
-		return nil, err
+	commit := &commitSelectNode{
+		p:         p,
+		source:    p.DAGScan(parsed),
+		docMapper: docMapper{&parsed.DocumentMapping},
 	}
 
 	plan, err := p.SelectFromSource(&parsed.Select, commit, false, nil)
@@ -118,17 +119,4 @@ func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
 		plan:      plan,
 		docMapper: docMapper{&parsed.DocumentMapping},
 	}, nil
-}
-
-func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	dag := p.DAGScan(parsed)
-
-	// dag.key = &key
-	commit := &commitSelectNode{
-		p:         p,
-		source:    dag,
-		docMapper: docMapper{&parsed.DocumentMapping},
-	}
-
-	return commit, nil
 }
