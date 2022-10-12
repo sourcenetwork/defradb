@@ -113,6 +113,7 @@ var (
 			"cid":                    NewArgConfig(gql.ID),
 			parserTypes.LimitClause:  NewArgConfig(gql.Int),
 			parserTypes.OffsetClause: NewArgConfig(gql.Int),
+			parserTypes.DepthClause:  NewArgConfig(gql.Int),
 		},
 	}
 

@@ -45,6 +45,7 @@ type CommitSelect struct {
 	DocKey    string
 	FieldName client.Option[string]
 	Cid       string
+	Depth     client.Option[uint64]
 
 	Limit   *parserTypes.Limit
 	OrderBy *parserTypes.OrderBy
@@ -119,6 +120,13 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				commit.Limit = &parserTypes.Limit{}
 			}
 			commit.Limit.Offset = offset
+		} else if prop == parserTypes.DepthClause {
+			raw := argument.Value.(*ast.IntValue)
+			depth, err := strconv.ParseUint(raw.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			commit.Depth = client.Some(depth)
 		}
 	}
 

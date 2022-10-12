@@ -73,6 +73,7 @@ const (
 	LimitClause   = "limit"
 	OffsetClause  = "offset"
 	OrderClause   = "order"
+	DepthClause   = "depth"
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
