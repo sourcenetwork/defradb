@@ -17,24 +17,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
-type CommitType int
-
-const (
-	NoneCommitType = CommitType(iota)
-	LatestCommits
-	Commits
-)
-
 var (
-	commitNameToType = map[string]CommitType{
-		"latestCommits": LatestCommits,
-		"commits":       Commits,
-	}
-
 	_ Selection = (*CommitSelect)(nil)
 )
 
@@ -42,7 +28,6 @@ type CommitSelect struct {
 	Alias string
 	Name  string
 
-	Type      CommitType
 	DocKey    string
 	FieldName client.Option[string]
 	Cid       string
@@ -74,12 +59,6 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	commit := &CommitSelect{
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
-	}
-
-	var ok bool
-	commit.Type, ok = commitNameToType[commit.Name]
-	if !ok {
-		return nil, errors.New("Unknown Database query")
 	}
 
 	for _, argument := range field.Arguments {

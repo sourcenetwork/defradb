@@ -12,24 +12,12 @@ package mapper
 
 import "github.com/sourcenetwork/defradb/client"
 
-// CommitType represents a type of [CommitSelect]
-type CommitType int
-
-const (
-	NoneCommitType = CommitType(iota)
-	LatestCommits
-	Commits
-)
-
 // CommitSelect represents a commit request from a consumer.
 //
 // E.g. commits, or latestCommits.
 type CommitSelect struct {
 	// The underlying Select, defining the information requested.
 	Select
-
-	// The type of commit select request.
-	Type CommitType
 
 	// The key of the target document for which to get commits for.
 	DocKey string
@@ -52,7 +40,6 @@ func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
 		Select:    *s.Select.cloneTo(index),
 		DocKey:    s.DocKey,
-		Type:      s.Type,
 		FieldName: s.FieldName,
 		Cid:       s.Cid,
 	}
