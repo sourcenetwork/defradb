@@ -159,7 +159,7 @@ func (n *scanNode) Merge() bool { return true }
 
 func (p *Planner) Scan(parsed *mapper.Select) *scanNode {
 	var f fetcher.Fetcher
-	if parsed.Cid != "" {
+	if parsed.Cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = new(fetcher.DocumentFetcher)

@@ -53,15 +53,13 @@ func TestExplainCommitsDagScan(t *testing.T) {
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "1",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
-										},
+							"dagScanNode": dataMap{
+								"cid":   nil,
+								"field": "1",
+								"spans": []dataMap{
+									{
+										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
+										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
 									},
 								},
 							},
@@ -112,15 +110,13 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "C",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
-										},
+							"dagScanNode": dataMap{
+								"cid":   nil,
+								"field": nil,
+								"spans": []dataMap{
+									{
+										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3",
+										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df4",
 									},
 								},
 							},
@@ -172,15 +168,13 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "1",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
-										},
+							"dagScanNode": dataMap{
+								"cid":   nil,
+								"field": "1",
+								"spans": []dataMap{
+									{
+										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/1",
+										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/2",
 									},
 								},
 							},
@@ -232,15 +226,13 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 					"selectTopNode": dataMap{
 						"selectNode": dataMap{
 							"filter": nil,
-							"commitSelectNode": dataMap{
-								"dagScanNode": dataMap{
-									"cid":   nil,
-									"field": "C",
-									"spans": []dataMap{
-										{
-											"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
-											"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
-										},
+							"dagScanNode": dataMap{
+								"cid":   nil,
+								"field": "C",
+								"spans": []dataMap{
+									{
+										"start": "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/C",
+										"end":   "/bae-41598f0c-19bc-5da6-813b-e80f14a10df3/D",
 									},
 								},
 							},

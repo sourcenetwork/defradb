@@ -30,7 +30,7 @@ type CommitSelect struct {
 
 	DocKey    string
 	FieldName client.Option[string]
-	Cid       string
+	Cid       client.Option[string]
 	Depth     client.Option[uint64]
 
 	Limit   *parserTypes.Limit
@@ -68,7 +68,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			commit.DocKey = raw.Value
 		} else if prop == parserTypes.Cid {
 			raw := argument.Value.(*ast.StringValue)
-			commit.Cid = raw.Value
+			commit.Cid = client.Some(raw.Value)
 		} else if prop == parserTypes.Field {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = client.Some(raw.Value)

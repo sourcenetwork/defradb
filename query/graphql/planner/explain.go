@@ -22,7 +22,6 @@ type explainablePlanNode interface {
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
 var (
 	_ explainablePlanNode = (*averageNode)(nil)
-	_ explainablePlanNode = (*commitSelectNode)(nil)
 	_ explainablePlanNode = (*countNode)(nil)
 	_ explainablePlanNode = (*createNode)(nil)
 	_ explainablePlanNode = (*dagScanNode)(nil)

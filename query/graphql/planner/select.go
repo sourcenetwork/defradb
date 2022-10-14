@@ -220,8 +220,8 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		// If we have both a DocKey and a CID, then we need to run
 		// a TimeTravel (History-Traversing Versioned) query, which means
 		// we need to propagate the values to the underlying VersionedFetcher
-		if n.parsed.Cid != "" {
-			c, err := cid.Decode(n.parsed.Cid)
+		if n.parsed.Cid.HasValue() {
+			c, err := cid.Decode(n.parsed.Cid.Value())
 			if err != nil {
 				return nil, errors.Wrap(
 					"Failed to propagate VersionFetcher span, invalid CID",
@@ -286,7 +286,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				// handle _version sub selection query differently
 				// if we are executing a regular Scan query
 				// or a TimeTravel query.
-				if parsed.Cid != "" {
+				if parsed.Cid.HasValue() {
 					// for a TimeTravel query, we don't need the Latest
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
@@ -296,10 +296,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					commitSlct.Cid = parsed.Cid
 				}
 
-				commitPlan, err := n.p.CommitSelect(commitSlct)
-				if err != nil {
-					return nil, err
-				}
+				commitPlan := n.p.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
 					return nil, err
