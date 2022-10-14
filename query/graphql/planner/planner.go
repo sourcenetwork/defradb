@@ -199,9 +199,6 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
 
-	case *commitSelectTopNode:
-		return p.expandPlan(n.plan, parentPlan)
-
 	case *selectNode:
 		return p.expandPlan(n.source, parentPlan)
 
@@ -326,7 +323,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	// This may be a commit node.
 	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](plan.plan)
 	if !hasScanNode {
-		commitNode, hasCommitNode := walkAndFindPlanType[*commitSelectNode](plan.plan)
+		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
 		if !hasCommitNode {
 			return errors.New("Failed to identify group source")
 		}

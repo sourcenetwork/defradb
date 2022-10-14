@@ -15,6 +15,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -57,7 +58,7 @@ type Select struct {
 	Alias string
 
 	DocKeys parserTypes.OptionalDocKeys
-	CID     string
+	CID     client.Option[string]
 
 	// QueryType indicates what kind of query this is
 	// Currently supports: ScanQuery, VersionedScanQuery
@@ -238,7 +239,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 		} else if prop == parserTypes.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
-			slct.CID = val.Value
+			slct.CID = client.Some(val.Value)
 		} else if prop == parserTypes.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			i, err := strconv.ParseInt(val.Value, 10, 64)
@@ -281,7 +282,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 		}
 
-		if len(slct.DocKeys.Value) != 0 && len(slct.CID) != 0 {
+		if len(slct.DocKeys.Value) != 0 && slct.CID.HasValue() {
 			slct.QueryType = parserTypes.VersionedScanQuery
 		} else {
 			slct.QueryType = parserTypes.ScanQuery

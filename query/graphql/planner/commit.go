@@ -11,161 +11,327 @@
 package planner
 
 import (
-	"math"
-
+	"github.com/fxamacker/cbor/v2"
+	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
+	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/db/fetcher"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
-// commitSelectTopNode is a wrapper for the selectTopNode
-// in the case where the select is actually a CommitSelect
-type commitSelectTopNode struct {
-	docMapper
-
-	p    *Planner
-	plan planNode
-}
-
-func (n *commitSelectTopNode) Kind() string { return "commitSelectTopNode" }
-
-func (n *commitSelectTopNode) Init() error { return n.plan.Init() }
-
-func (n *commitSelectTopNode) Start() error { return n.plan.Start() }
-
-func (n *commitSelectTopNode) Next() (bool, error) { return n.plan.Next() }
-
-func (n *commitSelectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
-
-func (n *commitSelectTopNode) Value() core.Doc { return n.plan.Value() }
-
-func (n *commitSelectTopNode) Source() planNode { return n.plan }
-
-func (n *commitSelectTopNode) Close() error {
-	if n.plan == nil {
-		return nil
-	}
-	return n.plan.Close()
-}
-
-func (n *commitSelectTopNode) Append() bool { return true }
-
-type commitSelectNode struct {
+type dagScanNode struct {
 	documentIterator
 	docMapper
 
 	p *Planner
 
-	source *dagScanNode
+	depthVisited uint64
+	visitedNodes map[string]bool
+
+	queuedCids []*cid.Cid
+
+	fetcher fetcher.HeadFetcher
+	spans   core.Spans
+	parsed  *mapper.CommitSelect
 }
 
-func (n *commitSelectNode) Kind() string {
-	return "commitSelectNode"
-}
-
-func (n *commitSelectNode) Init() error {
-	return n.source.Init()
-}
-
-func (n *commitSelectNode) Start() error {
-	return n.source.Start()
-}
-
-func (n *commitSelectNode) Next() (bool, error) {
-	if next, err := n.source.Next(); !next {
-		return false, err
+func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
+	return &dagScanNode{
+		p:            p,
+		visitedNodes: make(map[string]bool),
+		queuedCids:   []*cid.Cid{},
+		parsed:       parsed,
+		docMapper:    docMapper{&parsed.DocumentMapping},
 	}
-
-	n.currentValue = n.source.Value()
-	cid, hasCid := n.docMapper.DocumentMap().FirstOfName(n.currentValue, "cid").(*cid.Cid)
-	if hasCid {
-		// dagScanNode yields cids, but we want to yield strings
-		n.docMapper.DocumentMap().SetFirstOfName(&n.currentValue, "cid", cid.String())
-	}
-
-	return true, nil
-}
-
-func (n *commitSelectNode) Spans(spans core.Spans) {
-	n.source.Spans(spans)
-}
-
-func (n *commitSelectNode) Close() error {
-	return n.source.Close()
-}
-
-func (n *commitSelectNode) Source() planNode {
-	return n.source
-}
-
-// Explain method returns a map containing all attributes of this node that
-// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *commitSelectNode) Explain() (map[string]any, error) {
-	return map[string]any{}, nil
 }
 
 func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
-	commit, err := p.buildCommitSelectNode(parsed)
-	if err != nil {
-		return nil, err
-	}
-
-	plan, err := p.SelectFromSource(&parsed.Select, commit, false, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &commitSelectTopNode{
-		p:         p,
-		plan:      plan,
-		docMapper: docMapper{&parsed.DocumentMapping},
-	}, nil
+	dagScan := p.DAGScan(parsed)
+	return p.SelectFromSource(&parsed.Select, dagScan, false, nil)
 }
 
-func (p *Planner) buildCommitSelectNode(parsed *mapper.CommitSelect) (*commitSelectNode, error) {
-	headset := p.HeadScan(parsed)
-	dag := p.DAGScan(parsed, headset)
+func (n *dagScanNode) Kind() string {
+	return "dagScanNode"
+}
 
-	if parsed.Cid != "" {
-		c, err := cid.Decode(parsed.Cid)
+func (n *dagScanNode) Init() error {
+	if len(n.spans.Value) == 0 {
+		key := core.DataStoreKey{}
+		if n.parsed.DocKey != "" {
+			key = key.WithDocKey(n.parsed.DocKey)
+
+			if n.parsed.FieldName.HasValue() {
+				field := n.parsed.FieldName.Value()
+				key = key.WithFieldId(field)
+			}
+		}
+		n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
+	}
+
+	return n.fetcher.Start(n.p.ctx, n.p.txn, n.spans, n.parsed.FieldName)
+}
+
+func (n *dagScanNode) Start() error {
+	return nil
+}
+
+// Spans needs to parse the given span set. dagScanNode only
+// cares about the first value in the span set. The value is
+// either a CID or a DocKey.
+// If its a CID, set the node CID val
+// if its a DocKey, set the node Key val (headset)
+func (n *dagScanNode) Spans(spans core.Spans) {
+	if len(spans.Value) == 0 {
+		return
+	}
+
+	// copy the input spans so that we may mutate freely
+	headSetSpans := core.Spans{
+		HasValue: spans.HasValue,
+		Value:    make([]core.Span, len(spans.Value)),
+	}
+	copy(headSetSpans.Value, spans.Value)
+
+	var fieldId string
+	if n.parsed.FieldName.HasValue() {
+		fieldId = n.parsed.FieldName.Value()
+	} else {
+		fieldId = core.COMPOSITE_NAMESPACE
+	}
+
+	for i, span := range headSetSpans.Value {
+		if span.Start().FieldId != fieldId {
+			headSetSpans.Value[i] = core.NewSpan(span.Start().WithFieldId(fieldId), core.DataStoreKey{})
+		}
+	}
+
+	n.spans = headSetSpans
+}
+
+func (n *dagScanNode) Close() error {
+	return n.fetcher.Close()
+}
+
+func (n *dagScanNode) Source() planNode { return nil }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *dagScanNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
+
+	// Add the field attribute to the explaination if it exists.
+	if n.parsed.FieldName.HasValue() {
+		explainerMap["field"] = n.parsed.FieldName.Value()
+	} else {
+		explainerMap["field"] = nil
+	}
+
+	// Add the cid attribute to the explaination if it exists.
+	if n.parsed.Cid.HasValue() {
+		explainerMap["cid"] = n.parsed.Cid.Value()
+	} else {
+		explainerMap["cid"] = nil
+	}
+
+	// Build the explaination of the spans attribute.
+	spansExplainer := []map[string]any{}
+	// Note: n.headset is `nil` for single commit selection query, so must check for it.
+	if n.spans.HasValue {
+		for _, span := range n.spans.Value {
+			spansExplainer = append(
+				spansExplainer,
+				map[string]any{
+					"start": span.Start().ToString(),
+					"end":   span.End().ToString(),
+				},
+			)
+		}
+	}
+	// Add the built spans attribute, if it was valid.
+	explainerMap[spansLabel] = spansExplainer
+
+	return explainerMap, nil
+}
+
+func (n *dagScanNode) Next() (bool, error) {
+	var currentCid *cid.Cid
+	store := n.p.txn.DAGstore()
+
+	if len(n.queuedCids) > 0 {
+		currentCid = n.queuedCids[0]
+		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
+	} else if n.parsed.Cid.HasValue() && n.parsed.DocKey == "" {
+		if n.visitedNodes[n.parsed.Cid.Value()] {
+			// If the requested cid has been visited, we are done and should return false
+			return false, nil
+		}
+
+		cid, err := cid.Decode(n.parsed.Cid.Value())
 		if err != nil {
-			return nil, err
-		}
-		dag.cid = &c
-	}
-
-	// @todo: Get Collection field ID
-	if !parsed.FieldName.HasValue() {
-		dag.field = core.COMPOSITE_NAMESPACE
-	} else {
-		dag.field = parsed.FieldName.Value()
-	}
-
-	if parsed.DocKey != "" {
-		key := core.DataStoreKey{}.WithDocKey(parsed.DocKey)
-
-		if parsed.FieldName.HasValue() {
-			field := parsed.FieldName.Value()
-			key = key.WithFieldId(field)
-			dag.field = field
+			return false, err
 		}
 
-		headset.key = key
-	}
+		if hasCid, err := store.Has(n.p.ctx, cid); !hasCid || err != nil {
+			return false, err
+		}
 
-	if parsed.Depth.HasValue() {
-		dag.depthLimit = parsed.Depth.Value()
+		currentCid = &cid
 	} else {
-		// infinite depth
-		dag.depthLimit = math.MaxUint64
+		cid, err := n.fetcher.FetchNext()
+		if err != nil || cid == nil {
+			return false, err
+		}
+
+		currentCid = cid
+		// Reset the depthVisited for each head yielded by headset
+		n.depthVisited = 0
 	}
 
-	// dag.key = &key
-	commit := &commitSelectNode{
-		p:         p,
-		source:    dag,
-		docMapper: docMapper{&parsed.DocumentMapping},
+	// skip already visited CIDs
+	// we only need to call Next() again
+	// as it will reset and scan through the headset/queue
+	// and eventually return a value, or false if we've
+	// visited everything
+	if _, ok := n.visitedNodes[currentCid.String()]; ok {
+		return n.Next()
 	}
 
-	return commit, nil
+	// use the stored cid to scan through the blockstore
+	// clear the cid after
+	block, err := store.Get(n.p.ctx, *currentCid)
+	if err != nil {
+		return false, err
+	}
+
+	currentValue, heads, err := n.dagBlockToNodeDoc(block)
+	if err != nil {
+		return false, err
+	}
+
+	// the dagscan node can traverse into the merkle dag
+	// based on the specified depth limit.
+	// The default query 'latestCommit' only cares about
+	// the current latest heads, so it has a depth limit
+	// of 1. The query 'commits' doesn't have a depth
+	// limit, so it will continue to traverse the graph
+	// until there are no more links, and no more explored
+	// HEAD paths.
+	n.depthVisited++
+	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
+	if !n.parsed.Depth.HasValue() || n.depthVisited < n.parsed.Depth.Value() {
+		// Insert the newly fetched cids into the slice of queued items, in reverse order
+		// so that the last new cid will be at the front of the slice
+		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
+
+		for i, h := range heads {
+			n.queuedCids[len(heads)-i-1] = &h.Cid
+		}
+	}
+
+	if n.parsed.Cid.HasValue() && currentCid.String() != n.parsed.Cid.Value() {
+		// If a specific cid has been requested, and the current item does not
+		// match, keep searching.
+		return n.Next()
+	}
+
+	n.currentValue = currentValue
+	return true, nil
 }
+
+//			   -> D1 -> E1 -> F1
+// A -> B -> C |
+//			   -> D2 -> E2 -> F2
+
+/*
+
+/db/blocks/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => IPLD_BLOCK_BYTE_ARRAY
+/db/blocks/QmHLSHDFLHJSDFLHJFSLDKSH => IPLD_BLOCK_BYTE_ARRAY  => []byte("hello")
+/db/blocks/QmSFHLSDHLHJSDLFHJLSD => IPLD_BLOCK_BYTE_ARRAY	=> []byte("goodbye")
+/db/data/1/0/bae-ALICE/1:v => "hello"
+/db/data/1/0/bae-ALICE/C:v => []byte...
+/db/heads/bae-ALICE/C/QmJSDHGFKJSHGDKKSDGHJKFGHKSD => [priority=1]
+/db/heads/bae-ALICE/C/QmKJHSDLFKJHSLDFKJHSFLDFDJKSDF => [priority=1]
+/db/heads/bae-ALICE/1/QmHLSHDFLHJSDFLHJFSLDKSH => [priority=1]
+/db/heads/bae-ALICE/1/QmSFHLSDHLHJSDLFHJLSD => [priority=1]
+
+*/
+
+// func (n *dagScanNode) nextHead() (cid.Cid, error) {
+
+// }
+
+/*
+dagScanNode is the query plan graph node responsible for scanning through the dag
+blocks of the MerkleCRDTs.
+
+The current available endpoints are:
+ - latestCommit: Given a docid, and optionally a field name, return the latest dag commit
+ - commits: Given a docid, and optionally a field name, return all the dag commits
+
+Additionally, theres a subselection available on the Document query called _version,
+which returns the current dag commit for the stored CRDT value.
+
+All the dagScanNode endpoints use similar structures
+*/
+
+func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
+	commit := n.parsed.DocumentMapping.NewDoc()
+	cid := block.Cid()
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", cid.String())
+
+	// decode the delta, get the priority and payload
+	nd, err := dag.DecodeProtobuf(block.RawData())
+	if err != nil {
+		return core.Doc{}, nil, err
+	}
+
+	// @todo: Wrap delta unmarshaling into a proper typed interface.
+	var delta map[string]any
+	if err := cbor.Unmarshal(nd.Data(), &delta); err != nil {
+		return core.Doc{}, nil, err
+	}
+
+	prio, ok := delta["Priority"].(uint64)
+	if !ok {
+		return core.Doc{}, nil, errors.New("Commit Delta missing priority key")
+	}
+
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
+	n.parsed.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
+
+	heads := make([]*ipld.Link, 0)
+
+	// links
+	linksIndexes := n.parsed.DocumentMapping.IndexesByName[parserTypes.LinksFieldName]
+
+	for _, linksIndex := range linksIndexes {
+		links := make([]core.Doc, len(nd.Links()))
+		linksMapping := n.parsed.DocumentMapping.ChildMappings[linksIndex]
+
+		for i, l := range nd.Links() {
+			link := linksMapping.NewDoc()
+			linksMapping.SetFirstOfName(&link, "name", l.Name)
+			linksMapping.SetFirstOfName(&link, "cid", l.Cid.String())
+
+			links[i] = link
+		}
+
+		commit.Fields[linksIndex] = links
+	}
+
+	for _, l := range nd.Links() {
+		if l.Name == "_head" {
+			heads = append(heads, l)
+		}
+	}
+
+	return commit, heads, nil
+}
+
+func (n *dagScanNode) Append() bool { return true }

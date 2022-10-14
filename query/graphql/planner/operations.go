@@ -12,15 +12,12 @@ package planner
 
 var (
 	_ planNode = (*averageNode)(nil)
-	_ planNode = (*commitSelectNode)(nil)
-	_ planNode = (*commitSelectTopNode)(nil)
 	_ planNode = (*countNode)(nil)
 	_ planNode = (*createNode)(nil)
 	_ planNode = (*dagScanNode)(nil)
 	_ planNode = (*deleteNode)(nil)
 	_ planNode = (*groupNode)(nil)
 	_ planNode = (*limitNode)(nil)
-	_ planNode = (*headsetScanNode)(nil)
 	_ planNode = (*multiScanNode)(nil)
 	_ planNode = (*orderNode)(nil)
 	_ planNode = (*parallelNode)(nil)
