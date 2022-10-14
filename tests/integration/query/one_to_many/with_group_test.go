@@ -251,3 +251,30 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
+	tests := []testUtils.QueryTestCase{
+		{
+			Description: "One-to-many relation query from many side with group inside of join and invalid field",
+			Query: `query {
+				author {
+					name
+					age
+					published (groupBy: [rating]){
+						rating
+						name
+						_group {
+							name
+						}
+					}
+				}
+			}`,
+			Docs:          map[int][]string{},
+			ExpectedError: "Cannot select a non-group-by field at group-level",
+		},
+	}
+
+	for _, test := range tests {
+		executeTestCase(t, test)
+	}
+}

@@ -105,5 +105,10 @@ func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error
 		return nil, errors.New(fmt.Sprintf("%v", validationResult.Errors))
 	}
 
-	return parser.ParseQuery(ast)
+	query, parsingErrors := parser.ParseQuery(ast)
+	if len(parsingErrors) > 0 {
+		return nil, errors.New(fmt.Sprintf("%v", parsingErrors))
+	}
+
+	return query, nil
 }

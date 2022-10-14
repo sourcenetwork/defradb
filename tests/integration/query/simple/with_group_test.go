@@ -549,3 +549,19 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						Name
+					}
+				}`,
+		Docs:          map[int][]string{},
+		ExpectedError: "Cannot select a non-group-by field at group-level",
+	}
+
+	executeTestCase(t, test)
+}
