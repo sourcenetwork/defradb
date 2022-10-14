@@ -18,37 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
-	var query = (`
-	mutation {
-		dostuff_Book(data: "") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	_, err = ParseQuery(doc)
-	assert.Error(t, err)
-
-	// createMutation, ok := q.Mutations[0].Selections[0].(*Mutation)
-	// assert.True(t, ok)
-	// assert.NotNil(t, createMutation)
-	// assert.Equal(t, "create_Book", createMutation.Name)
-	// assert.Equal(t, CreateObjects, createMutation.Type)
-	// assert.Equal(t, "Book", createMutation.Schema)
-	// assert.Equal(t, map[string]any{
-	// 	"a": float64(1), // json numbers are always floats
-	// }, createMutation.Data.Object)
-	// assert.Len(t, createMutation.Fields, 1)
-}
-
 func TestMutationParse_Update_Simple_Array(t *testing.T) {
 	var query = (`
 	mutation {
