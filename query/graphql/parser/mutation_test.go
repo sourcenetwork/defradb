@@ -18,37 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMutationParse_Create_Simple(t *testing.T) {
-	var query = (`
-	mutation {
-		create_Book(data: "{\"a\": 1}") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	q, err := ParseQuery(doc)
-	assert.NoError(t, err)
-
-	createMutation, ok := q.Mutations[0].Selections[0].(*Mutation)
-	assert.True(t, ok)
-	assert.NotNil(t, createMutation)
-	assert.Equal(t, "create_Book", createMutation.Name)
-	assert.Equal(t, CreateObjects, createMutation.Type)
-	assert.Equal(t, "Book", createMutation.Schema)
-	// assert.Equal(t, map[string]any{
-	// 	"a": float64(1), // json numbers are always floats
-	// }, createMutation.Data.Object)
-	assert.Len(t, createMutation.Fields, 1)
-}
-
 func TestMutationParse_Create_Error_Missing_Data(t *testing.T) {
 	var query = (`
 	mutation {
@@ -111,37 +80,6 @@ func TestMutationParse_Error_Invalid_Mutation(t *testing.T) {
 	// assert.Len(t, createMutation.Fields, 1)
 }
 
-func TestMutationParse_Update_Simple_Object(t *testing.T) {
-	var query = (`
-	mutation {
-		update_Book(data: "{\"a\": 1}") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	q, err := ParseQuery(doc)
-	assert.NoError(t, err)
-
-	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
-	assert.True(t, ok)
-	assert.NotNil(t, mut)
-	assert.Equal(t, "update_Book", mut.Name)
-	assert.Equal(t, UpdateObjects, mut.Type)
-	assert.Equal(t, "Book", mut.Schema)
-	// assert.Equal(t, map[string]any{
-	// 	"a": float64(1), // json numbers are always floats
-	// }, mut.Data.Object)
-	assert.Len(t, mut.Fields, 1)
-}
-
 func TestMutationParse_Update_Simple_Array(t *testing.T) {
 	var query = (`
 	mutation {
@@ -176,43 +114,6 @@ func TestMutationParse_Update_Simple_Array(t *testing.T) {
 	// assert.Len(t, mut.Fields, 1)
 }
 
-func TestMutationParse_Update_Filter(t *testing.T) {
-	var query = (`
-	mutation {
-		update_Book(filter: {rating: {_gt: 4.5}}, data: "{\"a\": 1}") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	q, err := ParseQuery(doc)
-	assert.NoError(t, err)
-
-	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
-	assert.True(t, ok)
-	assert.NotNil(t, mut)
-	assert.Equal(t, "update_Book", mut.Name)
-	assert.Equal(t, UpdateObjects, mut.Type)
-	assert.Equal(t, "Book", mut.Schema)
-	// assert.Equal(t, map[string]any{
-	// 	"a": float64(1), // json numbers are always floats
-	// }, mut.Data.Object)
-	assert.Len(t, mut.Fields, 1)
-	assert.NotNil(t, mut.Filter)
-	assert.Equal(t, map[string]any{
-		"rating": map[string]any{
-			"_gt": 4.5,
-		},
-	}, mut.Filter.Conditions)
-}
-
 func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 	var query = (`
 	mutation {
@@ -238,37 +139,6 @@ func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 	assert.Equal(t, "update_my_book", mut.Name)
 	assert.Equal(t, UpdateObjects, mut.Type)
 	assert.Equal(t, "my_book", mut.Schema)
-	// assert.Equal(t, map[string]any{
-	// 	"a": float64(1), // json numbers are always floats
-	// }, mut.Data.Object)
-	assert.Len(t, mut.Fields, 1)
-}
-
-func TestMutationParse_Delete_Simple(t *testing.T) {
-	var query = (`
-	mutation {
-		delete_Book(data: "{\"a\": 1}") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	q, err := ParseQuery(doc)
-	assert.NoError(t, err)
-
-	mut, ok := q.Mutations[0].Selections[0].(*Mutation)
-	assert.True(t, ok)
-	assert.NotNil(t, mut)
-	assert.Equal(t, "delete_Book", mut.Name)
-	assert.Equal(t, DeleteObjects, mut.Type)
-	assert.Equal(t, "Book", mut.Schema)
 	// assert.Equal(t, map[string]any{
 	// 	"a": float64(1), // json numbers are always floats
 	// }, mut.Data.Object)
