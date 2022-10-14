@@ -226,9 +226,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	if !n.parsed.Depth.HasValue() || n.depthVisited < n.parsed.Depth.Value() {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
-		newqueue := make([]*cid.Cid, len(heads)+len(n.queuedCids))
-		copy(newqueue[len(heads):], n.queuedCids)
-		n.queuedCids = newqueue
+		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
 
 		for i, h := range heads {
 			n.queuedCids[len(heads)-i-1] = &h.Cid
