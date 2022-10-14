@@ -18,40 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMutationParse_Update_Simple_Array(t *testing.T) {
-	var query = (`
-	mutation {
-		update_Book(data: "[{\"a\": 1}]") {
-			_key
-		}
-	}`)
-
-	source := source.NewSource(&source.Source{
-		Body: []byte(query),
-		Name: "",
-	})
-
-	doc, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	assert.NoError(t, err)
-
-	_, err = ParseQuery(doc)
-	assert.NoError(t, err)
-
-	// mut, ok := q.Mutations[0].Selections[0].(*Mutation)
-	// assert.True(t, ok)
-	// assert.NotNil(t, mut)
-	// assert.Equal(t, "update_Book", mut.Name)
-	// assert.Equal(t, UpdateObjects, mut.Type)
-	// assert.Equal(t, "Book", mut.Schema)
-	// assert.Empty(t, mut.Data)
-	// assert.Equal(t, []any{
-	// 	map[string]any{
-	// 		"a": float64(1), // json numbers are always floats
-	// 	},
-	// }, mut.Data.Array)
-	// assert.Len(t, mut.Fields, 1)
-}
-
 func TestMutationParse_Update_Simple_UnderscoreName(t *testing.T) {
 	var query = (`
 	mutation {
