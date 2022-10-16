@@ -18,12 +18,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-bitswap"
+	"github.com/ipfs/go-bitswap/network"
+	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
+	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-merkledag"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p-core/routing"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	ma "github.com/multiformats/go-multiaddr"
@@ -51,8 +57,8 @@ type Peer struct {
 	updateChannel chan client.UpdateEvent
 
 	host host.Host
+	dht  routing.Routing
 	ps   *pubsub.PubSub
-	ds   DAGSyncer
 
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
@@ -67,6 +73,11 @@ type Peer struct {
 	replicators map[string]map[peer.ID]struct{}
 	mu          sync.Mutex
 
+	// peer DAG service
+	ipld.DAGService
+	exch  exchange.Interface
+	bserv blockservice.BlockService
+
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -76,8 +87,8 @@ func NewPeer(
 	ctx context.Context,
 	db client.DB,
 	h host.Host,
+	dht routing.Routing,
 	ps *pubsub.PubSub,
-	ds DAGSyncer,
 	tcpAddr ma.Multiaddr,
 	serverOptions []grpc.ServerOption,
 	dialOptions []grpc.DialOption,
@@ -89,9 +100,9 @@ func NewPeer(
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Peer{
 		host:           h,
+		dht:            dht,
 		ps:             ps,
 		db:             db,
-		ds:             ds,
 		p2pRPC:         grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
@@ -103,6 +114,20 @@ func NewPeer(
 	var err error
 	p.server, err = newServer(p, db, dialOptions...)
 	if err != nil {
+		return nil, err
+	}
+
+	err = p.setupBlockService()
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.setupDAGService()
+	if err != nil {
+		e := p.bserv.Close()
+		if e != nil {
+			return nil, errors.WithStack(e, errors.NewKV("Previous error", err))
+		}
 		return nil, err
 	}
 
@@ -180,6 +205,11 @@ func (p *Peer) Close() error {
 	if p.db.Events().Updates.HasValue() {
 		p.db.Events().Updates.Value().Unsubscribe(p.updateChannel)
 	}
+
+	if err := p.bserv.Close(); err != nil {
+		log.ErrorE(p.ctx, "Error closing block service", err)
+	}
+
 	p.cancel()
 	return nil
 }
@@ -462,6 +492,28 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.UpdateEvent) 
 			}(pid)
 		}
 	}
+}
+
+func (p *Peer) setupBlockService() error {
+	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
+	bswap := bitswap.New(p.ctx, bswapnet, p.db.Blockstore())
+	p.bserv = blockservice.New(p.db.Blockstore(), bswap)
+	p.exch = bswap
+	return nil
+}
+
+func (p *Peer) setupDAGService() error {
+	p.DAGService = merkledag.NewDAGService(p.bserv)
+	return nil
+}
+
+// Session returns a session-based NodeGetter.
+func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
+	ng := merkledag.NewSession(ctx, p.DAGService)
+	if ng == p.DAGService {
+		log.Info(ctx, "DAGService does not support sessions")
+	}
+	return ng
 }
 
 func stopGRPCServer(ctx context.Context, server *grpc.Server) {
