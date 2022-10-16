@@ -331,6 +331,8 @@ linters-settings:
         severity: error
       - name: use-any
         severity: error
+      - name: error-strings
+        severity: error
 
   staticcheck:
     # Select the Go version to target.

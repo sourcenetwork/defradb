@@ -525,7 +525,7 @@ func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest
 
 	if len(aggregateTargets) == 0 {
 		return aggregateRequest{}, errors.New(
-			"Aggregate must be provided with a property to aggregate.",
+			"aggregate must be provided with a property to aggregate",
 		)
 	}
 

@@ -185,7 +185,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	default:
-		return explainerMap, errors.New("Unknown type of an index join to explain.")
+		return explainerMap, errors.New("unknown type of an index join to explain")
 	}
 
 	return explainerMap, nil

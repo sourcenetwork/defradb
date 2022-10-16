@@ -449,7 +449,7 @@ func (p *Planner) explainRequest(
 	plan planNode,
 ) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, errors.New("Can't explain request of a nil plan.")
+		return nil, errors.New("can't explain request of a nil plan")
 	}
 
 	explainGraph, err := buildExplainGraph(plan)
@@ -472,7 +472,7 @@ func (p *Planner) executeRequest(
 	plan planNode,
 ) ([]map[string]any, error) {
 	if plan == nil {
-		return nil, errors.New("Can't execute request of a nil plan.")
+		return nil, errors.New("can't execute request of a nil plan")
 	}
 
 	if err := plan.Start(); err != nil {
