@@ -24,7 +24,6 @@ import (
 	"github.com/ipfs/go-cid"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	ipld "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-merkledag"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -503,13 +502,13 @@ func (p *Peer) setupBlockService() error {
 }
 
 func (p *Peer) setupDAGService() error {
-	p.DAGService = merkledag.NewDAGService(p.bserv)
+	p.DAGService = dag.NewDAGService(p.bserv)
 	return nil
 }
 
 // Session returns a session-based NodeGetter.
 func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
-	ng := merkledag.NewSession(ctx, p.DAGService)
+	ng := dag.NewSession(ctx, p.DAGService)
 	if ng == p.DAGService {
 		log.Info(ctx, "DAGService does not support sessions")
 	}
