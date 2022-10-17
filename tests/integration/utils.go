@@ -149,47 +149,38 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
-	badgerFileValue, badgerFileSpecified := os.LookupEnv(fileBadgerEnvName)
-	badgerInMemoryValue, badgerInMemorySpecified := os.LookupEnv(memoryBadgerEnvName)
-	databaseDirValue, databaseDirSpecified := os.LookupEnv(fileBadgerPathEnvName)
-	detectDbChangesValue, detectDbChangesSpecified := os.LookupEnv(detectDbChangesEnvName)
-	mapStoreValue, mapStoreSpecified := os.LookupEnv(memoryMapEnvName)
+	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
+	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
+	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
+	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
+	mapStoreValue, _ := os.LookupEnv(memoryMapEnvName)
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
-	setupOnlyValue, setupOnlySpecified := os.LookupEnv(setupOnlyEnvName)
+	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
 
-	if badgerFileSpecified {
-		badgerFile = getBool(badgerFileValue)
-	}
-
-	badgerInMemory = true // default to true
-	if badgerInMemorySpecified {
-		badgerInMemory = getBool(badgerInMemoryValue)
-	}
-
-	if databaseDirSpecified {
-		databaseDir = databaseDirValue
-	}
-
-	mapStore = true // default to true
-	if mapStoreSpecified {
-		mapStore = getBool(mapStoreValue)
-	}
+	badgerFile = getBool(badgerFileValue)
+	badgerInMemory = getBool(badgerInMemoryValue)
+	detectDbChanges = getBool(detectDbChangesValue)
+	mapStore = getBool(mapStoreValue)
+	setupOnly = getBool(setupOnlyValue)
 
 	if !repositorySpecified {
 		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
-	}
-
-	if setupOnlySpecified {
-		setupOnly = getBool(setupOnlyValue)
 	}
 
 	if !targetBranchSpecified {
 		targetBranchValue = "develop"
 	}
 
-	if detectDbChangesSpecified && getBool(detectDbChangesValue) {
-		detectDbChanges = true
+	// default is to run against all
+	if !badgerInMemory && !badgerFile && !mapStore && !detectDbChanges {
+		badgerInMemory = true
+		// Testing against the file system is off by default
+		badgerFile = false
+		mapStore = true
+	}
+
+	if detectDbChanges {
 		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
 }
