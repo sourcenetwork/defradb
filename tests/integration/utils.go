@@ -149,19 +149,27 @@ var previousTestCaseTestName string
 func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	//  that don't have the flag defined
-	_, badgerInMemory = os.LookupEnv(memoryBadgerEnvName)
-	_, badgerFile = os.LookupEnv(fileBadgerEnvName)
+	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
+	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
-	_, mapStore = os.LookupEnv(memoryMapEnvName)
-	_, setupOnly = os.LookupEnv(setupOnlyEnvName)
-	_, detectDbChanges = os.LookupEnv(detectDbChangesEnvName)
-	repository, repositorySpecified := os.LookupEnv(repositoryEnvName)
+	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
+	mapStoreValue, _ := os.LookupEnv(memoryMapEnvName)
+	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
+	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
+	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+
+	badgerFile = getBool(badgerFileValue)
+	badgerInMemory = getBool(badgerInMemoryValue)
+	detectDbChanges = getBool(detectDbChangesValue)
+	mapStore = getBool(mapStoreValue)
+	setupOnly = getBool(setupOnlyValue)
+
 	if !repositorySpecified {
-		repository = "git@github.com:sourcenetwork/defradb.git"
+		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
 	}
-	targetBranch, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+
 	if !targetBranchSpecified {
-		targetBranch = "develop"
+		targetBranchValue = "develop"
 	}
 
 	// default is to run against all
@@ -173,7 +181,16 @@ func init() {
 	}
 
 	if detectDbChanges {
-		detectDbChangesInit(repository, targetBranch)
+		detectDbChangesInit(repositoryValue, targetBranchValue)
+	}
+}
+
+func getBool(val string) bool {
+	switch strings.ToLower(val) {
+	case "true":
+		return true
+	default:
+		return false
 	}
 }
 
