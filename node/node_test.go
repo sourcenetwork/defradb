@@ -15,11 +15,13 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
+	netutils "github.com/sourcenetwork/defradb/net/utils"
 )
 
 // Node.Boostrap is not tested because the underlying, *ipfslite.Peer.Bootstrap is a best-effort function.
@@ -98,6 +100,77 @@ func TestNodeClose(t *testing.T) {
 	assert.NoError(t, err)
 	err = n.Close()
 	assert.NoError(t, err)
+}
+
+func TestNewNodeBootstrapWithNoPeer(t *testing.T) {
+	db := FixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	n1, err := NewNode(
+		ctx,
+		db,
+		ListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		// DataPath() is a required option with the current implementation of key management
+		DataPath(t.TempDir()),
+	)
+	assert.NoError(t, err)
+	n1.Boostrap([]peer.AddrInfo{})
+}
+
+func TestNewNodeBootstrapWithOnePeer(t *testing.T) {
+	db := FixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	n1, err := NewNode(
+		ctx,
+		db,
+		ListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		// DataPath() is a required option with the current implementation of key management
+		DataPath(t.TempDir()),
+	)
+	assert.NoError(t, err)
+	n2, err := NewNode(
+		ctx,
+		db,
+		ListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		// DataPath() is a required option with the current implementation of key management
+		DataPath(t.TempDir()),
+	)
+	assert.NoError(t, err)
+	addrs, err := netutils.ParsePeers([]string{n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	n2.Boostrap(addrs)
+}
+
+func TestNewNodeBootstrapWithOneValidPeerAndManyInvalidPeers(t *testing.T) {
+	db := FixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	n1, err := NewNode(
+		ctx,
+		db,
+		ListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		// DataPath() is a required option with the current implementation of key management
+		DataPath(t.TempDir()),
+	)
+	assert.NoError(t, err)
+	n2, err := NewNode(
+		ctx,
+		db,
+		ListenP2PAddrStrings("/ip4/0.0.0.0/tcp/0"),
+		// DataPath() is a required option with the current implementation of key management
+		DataPath(t.TempDir()),
+	)
+	assert.NoError(t, err)
+	addrs, err := netutils.ParsePeers([]string{
+		n1.host.Addrs()[0].String() + "/p2p/" + n1.PeerID().String(),
+		"/ip4/0.0.0.0/tcp/1234/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci6",
+		"/ip4/0.0.0.0/tcp/1235/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci5",
+		"/ip4/0.0.0.0/tcp/1236/p2p/" + "12D3KooWC8YY6Tx3uAeHsdBmoy7PJPwqXAHE4HkCZ5veankKWci4",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	n2.Boostrap(addrs)
 }
 
 func mergeOptions(nodeOpts ...NodeOpt) (Options, error) {
