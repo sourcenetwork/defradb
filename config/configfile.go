@@ -68,10 +68,10 @@ api:
   # Whether the API server should listen over HTTPS
   tls: {{ .API.TLS }}
   # The path to the public key file. Ignored if domains is set.
-  pubkey: {{ .API.PubKey }}
+  pubkeypath: {{ .API.PubKeyPath }}
   # The path to the private key file. Ignored if domains is set.
-  privkey: {{ .API.PrivKey }}
-  # Email address for the CA to send problem notifications (optional).
+  privkeypath: {{ .API.PrivKeyPath }}
+  # Email address to let the CA (Let's Encrypt) send notifications via email when there are issues (optional).
   # email: {{ .API.Email }}
 
 net:

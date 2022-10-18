@@ -145,21 +145,21 @@ func init() {
 	}
 
 	startCmd.Flags().String(
-		"pubkey", cfg.API.PubKey,
+		"pubkeypath", cfg.API.PubKeyPath,
 		"Path to the public key for tls",
 	)
-	err = viper.BindPFlag("api.pubkey", startCmd.Flags().Lookup("pubkey"))
+	err = viper.BindPFlag("api.pubkeypath", startCmd.Flags().Lookup("pubkeypath"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkey", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkeypath", err)
 	}
 
 	startCmd.Flags().String(
-		"privkey", cfg.API.PrivKey,
+		"privkeypath", cfg.API.PrivKeyPath,
 		"Path to the private key for tls",
 	)
-	err = viper.BindPFlag("api.privkey", startCmd.Flags().Lookup("privkey"))
+	err = viper.BindPFlag("api.privkeypath", startCmd.Flags().Lookup("privkeypath"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind api.privkey", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind api.privkeypath", err)
 	}
 
 	startCmd.Flags().String(
@@ -321,7 +321,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if cfg.API.TLS {
 		sOpt = append(
 			sOpt,
-			httpapi.WithSelfSignedCert(cfg.API.PubKey, cfg.API.PrivKey),
+			httpapi.WithSelfSignedCert(cfg.API.PubKeyPath, cfg.API.PrivKeyPath),
 			httpapi.WithCAEmail(cfg.API.Email),
 		)
 	}

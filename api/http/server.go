@@ -27,11 +27,19 @@ import (
 	"github.com/sourcenetwork/defradb/logging"
 )
 
+const (
+	// these constants are best effort durations that fit our current API
+	// and possibly prevent from running out of file descriptors.
+	readTimeout  = 5 * time.Second
+	writeTimeout = 10 * time.Second
+	idleTimeout  = 120 * time.Second
+)
+
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	options  serverOptions
-	listener net.Listener
-	manager  *autocert.Manager
+	options     serverOptions
+	listener    net.Listener
+	certManager *autocert.Manager
 
 	http.Server
 }
@@ -70,9 +78,9 @@ func newTLS() *tlsOptions {
 func NewServer(db client.DB, options ...func(*Server)) *Server {
 	srv := &Server{
 		Server: http.Server{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  120 * time.Second,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
 		},
 	}
 
@@ -88,9 +96,9 @@ func NewServer(db client.DB, options ...func(*Server)) *Server {
 func newHTTPRedirServer(m *autocert.Manager) *Server {
 	srv := &Server{
 		Server: http.Server{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  120 * time.Second,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
 		},
 	}
 
@@ -190,14 +198,6 @@ func (s *Server) Listen(ctx context.Context) error {
 
 func (s *Server) listenWithTLS(ctx context.Context) error {
 	config := &tls.Config{
-		// We are being explicit here but those are the
-		// same as the tls package defaults.
-		CurvePreferences: []tls.CurveID{
-			tls.CurveP521,
-			tls.CurveP384,
-			tls.CurveP256,
-			tls.X25519,
-		},
 		MinVersion: tls.VersionTLS12,
 		// We only allow cipher suites that are marked secure
 		// by ssllabs
@@ -235,7 +235,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 
 		// We set manager on the server instance to later start
 		// a redirection server.
-		s.manager = m
+		s.certManager = m
 	} else {
 		// When not using auto cert, we create a self signed certificate
 		// with the provided public and prive keys.
@@ -266,10 +266,10 @@ func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
 		return errNoListener
 	}
-	if s.manager != nil {
+	if s.certManager != nil {
 		// When using TLS it's important to redirect http requests to https
 		go func() {
-			srv := newHTTPRedirServer(s.manager)
+			srv := newHTTPRedirServer(s.certManager)
 			err := srv.ListenAndServe()
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Info(ctx, "Something went wrong with the redirection server", logging.NewKV("Error", err))
