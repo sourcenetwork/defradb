@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,9 +30,6 @@ import (
 
 var (
 	log = logging.MustNewLogger("defra.test.net")
-
-	usedPorts    = make(map[int]bool)
-	portSyncLock sync.Mutex
 )
 
 const (
