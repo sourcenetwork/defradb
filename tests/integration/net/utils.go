@@ -296,10 +296,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	}
 }
 
+const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
+
 func randomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+	cfg.Net.P2PAddress = randomMultiaddr
 	cfg.Net.RPCAddress = "0.0.0.0:0"
-	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/0"
+	cfg.Net.TCPAddress = randomMultiaddr
 	return cfg
 }
