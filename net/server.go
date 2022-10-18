@@ -155,7 +155,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 	}
 
-	var getter format.NodeGetter = s.peer.ds
+	var getter format.NodeGetter = s.peer
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
 		log.Debug(ctx, "Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
