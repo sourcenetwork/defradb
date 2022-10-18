@@ -27,10 +27,10 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 						limit: 1,
 						offset: 1
 					) {
-                         age
-						 _group {
-                             name
-                         }
+						name
+						_group {
+							age
+						}
                      }
                  }`,
 
@@ -121,10 +121,10 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 
 		Query: `query @explain {
                      author(groupBy: [name]) {
-                         age
-						 _group(limit: 2, offset: 1) {
-                             name
-                         }
+						name
+						_group(limit: 2, offset: 1) {
+							age
+						}
                      }
                  }`,
 
