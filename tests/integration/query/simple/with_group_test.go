@@ -560,7 +560,7 @@ func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
 					}
 				}`,
 		Docs:          map[int][]string{},
-		ExpectedError: "Cannot select a non-group-by field at group-level",
+		ExpectedError: "cannot select a non-group-by field at group-level",
 	}
 
 	executeTestCase(t, test)

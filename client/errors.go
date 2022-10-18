@@ -14,7 +14,7 @@ import "github.com/sourcenetwork/defradb/errors"
 
 const (
 	errFieldNotExist         string = "The given field does not exist"
-	errSelectOfNonGroupField string = "Cannot select a non-group-by field at group-level"
+	errSelectOfNonGroupField string = "cannot select a non-group-by field at group-level"
 )
 
 // Errors returnable from this package.
