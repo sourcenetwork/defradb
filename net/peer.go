@@ -116,19 +116,8 @@ func NewPeer(
 		return nil, err
 	}
 
-	err = p.setupBlockService()
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.setupDAGService()
-	if err != nil {
-		e := p.bserv.Close()
-		if e != nil {
-			return nil, errors.WithStack(e, errors.NewKV("Previous error", err))
-		}
-		return nil, err
-	}
+	p.setupBlockService()
+	p.setupDAGService()
 
 	return p, nil
 }
@@ -493,17 +482,15 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.UpdateEvent) 
 	}
 }
 
-func (p *Peer) setupBlockService() error {
+func (p *Peer) setupBlockService() {
 	bswapnet := network.NewFromIpfsHost(p.host, p.dht)
 	bswap := bitswap.New(p.ctx, bswapnet, p.db.Blockstore())
 	p.bserv = blockservice.New(p.db.Blockstore(), bswap)
 	p.exch = bswap
-	return nil
 }
 
-func (p *Peer) setupDAGService() error {
+func (p *Peer) setupDAGService() {
 	p.DAGService = dag.NewDAGService(p.bserv)
-	return nil
 }
 
 // Session returns a session-based NodeGetter.
