@@ -13,7 +13,6 @@ package net
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
 	"sync"
 	"testing"
@@ -122,6 +121,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		}
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
+
+	cfg.Net.P2PAddress = n.ListenAddrs()[0].String()
 
 	return n, dockeys, nil
 }
@@ -296,26 +297,9 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 }
 
 func randomNetworkingConfig() *config.Config {
-	p2pPort := newPort()
-	tcpPort := newPort()
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort)
-	cfg.Net.RPCAddress = fmt.Sprintf("0.0.0.0:%d", tcpPort)
-	cfg.Net.TCPAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", tcpPort)
+	cfg.Net.P2PAddress = "/ip4/0.0.0.0/tcp/0"
+	cfg.Net.RPCAddress = "0.0.0.0:0"
+	cfg.Net.TCPAddress = "/ip4/0.0.0.0/tcp/0"
 	return cfg
-}
-
-// newPort returns a port number between 9000 and 9999 and ensures
-// it hasn't already been used by the test suite.
-func newPort() int {
-	portSyncLock.Lock()
-	defer portSyncLock.Unlock()
-
-	p := rand.Intn(1000) + 9000
-	for usedPorts[p] {
-		p = rand.Intn(1000) + 9000
-	}
-	usedPorts[p] = true
-
-	return p
 }
