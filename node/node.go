@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
@@ -186,7 +187,7 @@ func NewNode(
 }
 
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
-	connected := make(chan struct{})
+	var connected uint64
 
 	var wg sync.WaitGroup
 	for _, pinfo := range addrs {
@@ -199,21 +200,14 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 				return
 			}
 			log.Info(n.ctx, "Connected", logging.NewKV("Peer ID", pinfo.ID))
-			connected <- struct{}{}
+			atomic.AddUint64(&connected, 1)
 		}(pinfo)
 	}
 
-	go func() {
-		wg.Wait()
-		close(connected)
-	}()
+	wg.Wait()
 
-	i := 0
-	for range connected {
-		i++
-	}
-	if nPeers := len(addrs); i < nPeers/2 {
-		log.Info(n.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", i, nPeers))
+	if nPeers := len(addrs); int(connected) < nPeers/2 {
+		log.Info(n.ctx, fmt.Sprintf("Only connected to %d bootstrap peers out of %d", connected, nPeers))
 	}
 
 	err := n.dht.Bootstrap(n.ctx)
