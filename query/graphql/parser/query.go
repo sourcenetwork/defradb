@@ -85,6 +85,64 @@ func (s Select) GetRoot() parserTypes.SelectionType {
 	return s.Root
 }
 
+func (s Select) validate() []error {
+	result := []error{}
+
+	result = append(result, s.validateShallow()...)
+
+	for _, childSelection := range s.Fields {
+		switch typedChildSelection := childSelection.(type) {
+		case *Select:
+			result = append(result, typedChildSelection.validateShallow()...)
+		default:
+			// Do nothing
+		}
+	}
+
+	return result
+}
+
+func (s Select) validateShallow() []error {
+	result := []error{}
+
+	result = append(result, s.validateGroupBy()...)
+
+	return result
+}
+
+func (s Select) validateGroupBy() []error {
+	result := []error{}
+
+	if s.GroupBy == nil {
+		return result
+	}
+
+	for _, childSelection := range s.Fields {
+		switch typedChildSelection := childSelection.(type) {
+		case *Field:
+			if typedChildSelection.Name == parserTypes.TypeNameFieldName {
+				// _typeName is permitted
+				continue
+			}
+
+			var fieldExistsInGroupBy bool
+			for _, groupByField := range s.GroupBy.Fields {
+				if typedChildSelection.Name == groupByField {
+					fieldExistsInGroupBy = true
+					break
+				}
+			}
+			if !fieldExistsInGroupBy {
+				result = append(result, client.NewErrSelectOfNonGroupField(typedChildSelection.Name))
+			}
+		default:
+			// Do nothing
+		}
+	}
+
+	return result
+}
+
 // Field implements Selection
 type Field struct {
 	Name  string
@@ -100,9 +158,9 @@ func (c Field) GetRoot() parserTypes.SelectionType {
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
 // Requires a non-nil doc, will error if given a nil doc.
-func ParseQuery(doc *ast.Document) (*Query, error) {
+func ParseQuery(doc *ast.Document) (*Query, []error) {
 	if doc == nil {
-		return nil, errors.New("ParseQuery requires a non-nil ast.Document")
+		return nil, []error{errors.New("ParseQuery requires a non-nil ast.Document")}
 	}
 	q := &Query{
 		Statement: doc,
@@ -124,11 +182,11 @@ func ParseQuery(doc *ast.Document) (*Query, error) {
 				// parse mutation operation definition.
 				mdef, err := parseMutationOperationDefinition(node)
 				if err != nil {
-					return nil, err
+					return nil, []error{err}
 				}
 				q.Mutations = append(q.Mutations, mdef)
 			} else {
-				return nil, errors.New("Unknown GraphQL operation type")
+				return nil, []error{errors.New("Unknown GraphQL operation type")}
 			}
 		}
 	}
@@ -155,7 +213,7 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
-func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
+func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, []error) {
 	qdef := &OperationDefinition{
 		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
@@ -168,25 +226,36 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
 	for i, selection := range qdef.Statement.SelectionSet.Selections {
-		var parsed Selection
-		var err error
+		var parsedSelection Selection
 		switch node := selection.(type) {
 		case *ast.Field:
 			// which query type is this database API query object query etc.
 			_, exists := dbAPIQueryNames[node.Name.Value]
 			if exists {
 				// the query matches a reserved DB API query name
-				parsed, err = parseAPIQuery(node)
+				parsed, err := parseAPIQuery(node)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				parsedSelection = parsed
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err = parseSelect(parserTypes.ObjectSelection, node, i)
-			}
-			if err != nil {
-				return nil, err
+				parsed, err := parseSelect(parserTypes.ObjectSelection, node, i)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				errors := parsed.validate()
+				if len(errors) > 0 {
+					return nil, errors
+				}
+
+				parsedSelection = parsed
 			}
 
-			qdef.Selections[i] = parsed
+			qdef.Selections[i] = parsedSelection
 		}
 	}
 	return qdef, nil
