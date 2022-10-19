@@ -28,7 +28,6 @@ var dbAPIQueryNames = map[string]bool{
 type Query struct {
 	Queries   []*OperationDefinition
 	Mutations []*OperationDefinition
-	Statement *ast.Document
 }
 
 type OperationDefinition struct {
@@ -158,12 +157,11 @@ func ParseQuery(doc *ast.Document) (*Query, []error) {
 		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
 	q := &Query{
-		Statement: doc,
 		Queries:   make([]*OperationDefinition, 0),
 		Mutations: make([]*OperationDefinition, 0),
 	}
 
-	for _, def := range q.Statement.Definitions {
+	for _, def := range doc.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
 			if node.Operation == "query" {
