@@ -82,10 +82,19 @@ var startCmd = &cobra.Command{
 
 func init() {
 	startCmd.Flags().String(
+		"address", cfg.API.Address,
+		"Specify the HTTP API endpoint address",
+	)
+	err := viper.BindPFlag("api.address", startCmd.Flags().Lookup("address"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
+	}
+
+	startCmd.Flags().String(
 		"peers", cfg.Net.Peers,
 		"List of peers to connect to",
 	)
-	err := viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
+	err = viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
 	}
