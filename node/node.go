@@ -29,17 +29,18 @@ import (
 	"github.com/ipfs/go-datastore/namespace"
 	"github.com/ipfs/go-ipns"
 	libp2p "github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/event"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/event"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/routing"
+	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -108,6 +109,7 @@ func NewNode(
 
 	libp2pOpts := []libp2p.Option{
 		libp2p.ConnectionManager(options.ConnManager),
+		libp2p.Security(libp2ptls.ID, libp2ptls.New),
 		libp2p.DefaultTransports,
 		libp2p.Identity(hostKey),
 		libp2p.ListenAddrs(options.ListenAddrs...),
