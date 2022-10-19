@@ -216,6 +216,20 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 				}
 
 				parsedSelection = parsed
+			} else if _, isAggregate := parserTypes.Aggregates[node.Name.Value]; isAggregate {
+				parsed, err := parseAggregate(node, i)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				// Top-level aggregates must be wrapped in a top-level Select for now
+				parsedSelection = &Select{
+					Name:  parsed.Name,
+					Alias: parsed.Alias,
+					Fields: []Selection{
+						parsed,
+					},
+				}
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
@@ -351,7 +365,7 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isAggregate := parserTypes.Aggregates[node.Name.Value]; isAggregate {
-				s, err := parseSelect(root, node, i)
+				s, err := parseAggregate(node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -383,6 +397,139 @@ func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
 	}
+}
+
+type Aggregate struct {
+	Name  string
+	Alias string
+
+	Targets []*AggregateTarget
+}
+
+type AggregateTarget struct {
+	HostName  string
+	ChildName client.Option[string]
+
+	Limit   *parserTypes.Limit
+	OrderBy *parserTypes.OrderBy
+	Filter  *Filter
+}
+
+func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
+	targets := make([]*AggregateTarget, len(field.Arguments))
+
+	for i, argument := range field.Arguments {
+		switch argumentValue := argument.Value.GetValue().(type) {
+		case string:
+			targets[i] = &AggregateTarget{
+				HostName: argumentValue,
+			}
+		case []*ast.ObjectField:
+			hostName := argument.Name.Value
+			var childName string
+			var filter *Filter
+			var limit *parserTypes.Limit
+			var order *parserTypes.OrderBy
+
+			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
+			if hasFieldArg {
+				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
+					childName = innerPathStringValue
+				}
+			}
+
+			filterArg, hasFilterArg := tryGet(argumentValue, parserTypes.FilterClause)
+			if hasFilterArg {
+				var err error
+				filter, err = NewFilter(filterArg.Value.(*ast.ObjectValue))
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
+			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
+			var limitValue int64
+			var offsetValue int64
+			if hasLimitArg {
+				var err error
+				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if hasOffsetArg {
+				var err error
+				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if hasLimitArg || hasOffsetArg {
+				limit = &parserTypes.Limit{
+					Limit:  limitValue,
+					Offset: offsetValue,
+				}
+			}
+
+			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
+			if hasOrderArg {
+				switch orderArgValue := orderArg.Value.(type) {
+				case *ast.EnumValue:
+					// For inline arrays the order arg will be a simple enum declaring the order direction
+					orderDirectionString := orderArgValue.Value
+					orderDirection := parserTypes.OrderDirection(orderDirectionString)
+
+					order = &parserTypes.OrderBy{
+						Conditions: []parserTypes.OrderCondition{
+							{
+								Direction: orderDirection,
+							},
+						},
+					}
+
+				case *ast.ObjectValue:
+					// For relations the order arg will be the complex order object as used by the host object
+					// for non-aggregate ordering
+
+					// We use the parser package parsing for convienience here
+					orderConditions, err := ParseConditionsInOrder(orderArgValue)
+					if err != nil {
+						return nil, err
+					}
+
+					order = &parserTypes.OrderBy{
+						Conditions: orderConditions,
+					}
+				}
+			}
+
+			targets[i] = &AggregateTarget{
+				HostName:  hostName,
+				ChildName: client.Some(childName),
+				Filter:    filter,
+				Limit:     limit,
+				OrderBy:   order,
+			}
+		}
+	}
+
+	return &Aggregate{
+		Alias:   getFieldAlias(field),
+		Name:    field.Name.Value,
+		Targets: targets,
+	}, nil
+}
+
+func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
+	for _, field := range fields {
+		if field.Name.Value == name {
+			return field, true
+		}
+	}
+	return nil, false
 }
 
 func parseAPIQuery(field *ast.Field) (Selection, error) {

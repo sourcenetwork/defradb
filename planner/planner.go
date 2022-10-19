@@ -133,6 +133,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 
 		return p.Select(m)
+
 	case *mapper.Select:
 		return p.Select(n)
 

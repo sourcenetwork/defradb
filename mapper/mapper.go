@@ -14,10 +14,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
-
-	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
@@ -443,24 +440,6 @@ func getRequestables(
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
-	// If this parser.Select is itself an aggregate, we need to append the
-	// relevent info here as if it was a field of its own (due to a quirk of
-	// the parser package).
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
-		index := mapping.GetNextIndex()
-		aggregateReq, err := getAggregateRequests(index, parsed)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
-			Index: index,
-			Key:   parsed.Alias,
-		})
-		mapping.Add(index, parsed.Name)
-		aggregates = append(aggregates, &aggregateReq)
-	}
-
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
 		case *parser.Field:
@@ -481,25 +460,27 @@ func getRequestables(
 		case *parser.Select:
 			index := mapping.GetNextIndex()
 
-			// Aggregate targets are not known at this point, and must be evaluated
-			// after all requested fields have been evaluated - so we note which
-			// aggregates have been requested and their targets here, before finalizing
-			// their evaluation later.
-			if _, isAggregate := parserTypes.Aggregates[f.Name]; isAggregate {
-				aggregateRequest, err := getAggregateRequests(index, f)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				aggregates = append(aggregates, &aggregateRequest)
-			} else {
-				innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
-				if err != nil {
-					return nil, nil, err
-				}
-				fields = append(fields, innerSelect)
-				mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+			innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
+			if err != nil {
+				return nil, nil, err
 			}
+			fields = append(fields, innerSelect)
+			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   f.Alias,
+			})
+
+			mapping.Add(index, f.Name)
+		case *parser.Aggregate:
+			index := mapping.GetNextIndex()
+			aggregateRequest, err := getAggregateRequests(index, f)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			aggregates = append(aggregates, &aggregateRequest)
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
@@ -517,7 +498,7 @@ func getRequestables(
 	return
 }
 
-func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest, error) {
+func getAggregateRequests(index int, aggregate *parser.Aggregate) (aggregateRequest, error) {
 	aggregateTargets, err := getAggregateSources(aggregate)
 	if err != nil {
 		return aggregateRequest{}, err
@@ -1163,117 +1144,20 @@ type aggregateRequestTarget struct {
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error) {
-	targets := make([]*aggregateRequestTarget, len(field.Statement.Arguments))
+func getAggregateSources(field *parser.Aggregate) ([]*aggregateRequestTarget, error) {
+	targets := make([]*aggregateRequestTarget, len(field.Targets))
 
-	for i, argument := range field.Statement.Arguments {
-		switch argumentValue := argument.Value.GetValue().(type) {
-		case string:
-			targets[i] = &aggregateRequestTarget{
-				hostExternalName: argumentValue,
-			}
-		case []*ast.ObjectField:
-			hostExternalName := argument.Name.Value
-			var childExternalName string
-			var filter *parser.Filter
-			var limit *Limit
-			var order *parserTypes.OrderBy
-
-			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
-			if hasFieldArg {
-				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
-					childExternalName = innerPathStringValue
-				}
-			}
-
-			filterArg, hasFilterArg := tryGet(argumentValue, parserTypes.FilterClause)
-			if hasFilterArg {
-				var err error
-				filter, err = parser.NewFilter(filterArg.Value.(*ast.ObjectValue))
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
-			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
-			var limitValue int64
-			var offsetValue int64
-			if hasLimitArg {
-				var err error
-				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if hasOffsetArg {
-				var err error
-				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if hasLimitArg || hasOffsetArg {
-				limit = &Limit{
-					Limit:  limitValue,
-					Offset: offsetValue,
-				}
-			}
-
-			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
-			if hasOrderArg {
-				switch orderArgValue := orderArg.Value.(type) {
-				case *ast.EnumValue:
-					// For inline arrays the order arg will be a simple enum declaring the order direction
-					orderDirectionString := orderArgValue.Value
-					orderDirection := parserTypes.OrderDirection(orderDirectionString)
-
-					order = &parserTypes.OrderBy{
-						Conditions: []parserTypes.OrderCondition{
-							{
-								Direction: orderDirection,
-							},
-						},
-					}
-
-				case *ast.ObjectValue:
-					// For relations the order arg will be the complex order object as used by the host object
-					// for non-aggregate ordering
-
-					// We use the parser package parsing for convienience here
-					orderConditions, err := parser.ParseConditionsInOrder(orderArgValue)
-					if err != nil {
-						return nil, err
-					}
-
-					order = &parserTypes.OrderBy{
-						Conditions: orderConditions,
-					}
-				}
-			}
-
-			targets[i] = &aggregateRequestTarget{
-				hostExternalName:  hostExternalName,
-				childExternalName: childExternalName,
-				filter:            filter,
-				limit:             limit,
-				order:             order,
-			}
+	for i, target := range field.Targets {
+		targets[i] = &aggregateRequestTarget{
+			hostExternalName:  target.HostName,
+			childExternalName: target.ChildName.Value(),
+			filter:            target.Filter,
+			limit:             (*Limit)(target.Limit),
+			order:             target.OrderBy,
 		}
 	}
 
 	return targets, nil
-}
-
-func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
-	for _, field := range fields {
-		if field.Name.Value == name {
-			return field, true
-		}
-	}
-	return nil, false
 }
 
 // tryGetMatchingAggregate scans the given collection for aggregates with the given name and targets.
