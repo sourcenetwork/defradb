@@ -20,9 +20,6 @@ type (
 
 	SelectionType int
 
-	// Enum for different types of read Select queries
-	SelectQueryType int
-
 	OrderCondition struct {
 		// field may be a compound field statement
 		// since the order statement allows ordering on
@@ -97,11 +94,6 @@ const (
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
-)
-
-const (
-	ScanQuery = iota
-	VersionedScanQuery
 )
 
 const (

@@ -60,10 +60,6 @@ type Select struct {
 	DocKeys parserTypes.OptionalDocKeys
 	CID     client.Option[string]
 
-	// QueryType indicates what kind of query this is
-	// Currently supports: ScanQuery, VersionedScanQuery
-	QueryType parserTypes.SelectQueryType
-
 	// Root is the top level query parsed type
 	Root parserTypes.SelectionType
 
@@ -349,12 +345,6 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			slct.GroupBy = &parserTypes.GroupBy{
 				Fields: fields,
 			}
-		}
-
-		if len(slct.DocKeys.Value) != 0 && slct.CID.HasValue() {
-			slct.QueryType = parserTypes.VersionedScanQuery
-		} else {
-			slct.QueryType = parserTypes.ScanQuery
 		}
 	}
 
