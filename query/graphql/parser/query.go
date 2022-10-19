@@ -64,9 +64,6 @@ type Select struct {
 	Filter *Filter
 
 	Fields []Selection
-
-	// Raw graphql statement
-	Statement *ast.Field
 }
 
 func (s Select) validate() []error {
@@ -261,10 +258,9 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // filters, limits, orders, etc..
 func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
 	slct := &Select{
-		Alias:     getFieldAlias(field),
-		Name:      field.Name.Value,
-		Root:      rootType,
-		Statement: field,
+		Alias: getFieldAlias(field),
+		Name:  field.Name.Value,
+		Root:  rootType,
 	}
 
 	// parse arguments
