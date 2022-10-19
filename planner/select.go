@@ -13,6 +13,7 @@ package planner
 import (
 	cid "github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -115,7 +116,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
-	docKeys mapper.OptionalDocKeys
+	docKeys client.Option[[]string]
 
 	parsed       *mapper.Select
 	groupSelects []*mapper.Select
@@ -153,9 +154,9 @@ func (n *selectNode) Next() (bool, error) {
 			continue
 		}
 
-		if n.docKeys.HasValue {
+		if n.docKeys.HasValue() {
 			docKey := n.currentValue.GetKey()
-			for _, key := range n.docKeys.Value {
+			for _, key := range n.docKeys.Value() {
 				if docKey == key {
 					return true, nil
 				}
@@ -229,19 +230,19 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				)
 			}
 			spans := fetcher.NewVersionedSpan(
-				core.DataStoreKey{DocKey: n.parsed.DocKeys.Value[0]},
+				core.DataStoreKey{DocKey: n.parsed.DocKeys.Value()[0]},
 				c,
 			) // @todo check len
 			origScan.Spans(spans)
-		} else if n.parsed.DocKeys.HasValue {
+		} else if n.parsed.DocKeys.HasValue() {
 			// If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _key equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			spans := make([]core.Span, len(n.parsed.DocKeys.Value))
-			for i, docKey := range n.parsed.DocKeys.Value {
+			spans := make([]core.Span, len(n.parsed.DocKeys.Value()))
+			for i, docKey := range n.parsed.DocKeys.Value() {
 				dockeyIndexKey := base.MakeDocKey(sourcePlan.info.collectionDescription, docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
@@ -292,7 +293,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
 					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocKey = parsed.DocKeys.Value[0] // @todo check length
+					commitSlct.DocKey = parsed.DocKeys.Value()[0] // @todo check length
 					commitSlct.Cid = parsed.Cid
 				}
 

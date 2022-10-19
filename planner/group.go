@@ -205,7 +205,7 @@ func (n *groupNode) Explain() (map[string]any, error) {
 
 			// Get targetable attribute(s) of this child.
 
-			if c.DocKeys.HasValue {
+			if c.DocKeys.HasValue() {
 				childExplainGraph["docKeys"] = c.DocKeys.Value
 			} else {
 				childExplainGraph["docKeys"] = nil

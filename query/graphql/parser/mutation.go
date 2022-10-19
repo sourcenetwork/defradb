@@ -15,6 +15,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -55,7 +56,7 @@ type Mutation struct {
 	// if this mutation is on an object.
 	Schema string
 
-	IDs    parserTypes.OptionalDocKeys
+	IDs    client.Option[[]string]
 	Filter *Filter
 	Data   string
 
@@ -165,10 +166,7 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 			mut.Filter = filter
 		} else if prop == parserTypes.Id {
 			raw := argument.Value.(*ast.StringValue)
-			mut.IDs = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    []string{raw.Value},
-			}
+			mut.IDs = client.Some([]string{raw.Value})
 		} else if prop == parserTypes.Ids {
 			raw := argument.Value.(*ast.ListValue)
 			ids := make([]string, len(raw.Values))
@@ -179,10 +177,7 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 				}
 				ids[i] = id.Value
 			}
-			mut.IDs = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    ids,
-			}
+			mut.IDs = client.Some(ids)
 		}
 	}
 

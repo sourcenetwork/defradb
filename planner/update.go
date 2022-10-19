@@ -126,7 +126,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	update := &updateNode{
 		p:          p,
 		filter:     parsed.Filter,
-		ids:        parsed.DocKeys.Value,
+		ids:        parsed.DocKeys.Value(),
 		isUpdating: true,
 		patch:      parsed.Data,
 		docMapper:  docMapper{&parsed.DocumentMapping},

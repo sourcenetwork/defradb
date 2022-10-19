@@ -42,11 +42,6 @@ type (
 		Limit  int64
 		Offset int64
 	}
-
-	OptionalDocKeys struct {
-		HasValue bool
-		Value    []string
-	}
 )
 
 const (
