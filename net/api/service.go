@@ -15,7 +15,7 @@ package api
 import (
 	"context"
 
-	libpeer "github.com/libp2p/go-libp2p-core/peer"
+	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

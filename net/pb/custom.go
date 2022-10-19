@@ -17,7 +17,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-varint"
 
