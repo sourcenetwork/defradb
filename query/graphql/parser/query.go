@@ -41,9 +41,7 @@ func (q OperationDefinition) GetStatement() ast.Node {
 	return q.Statement
 }
 
-type Selection interface {
-	GetRoot() parserTypes.SelectionType
-}
+type Selection any
 
 // Select is a complex Field with strong typing
 // It used for sub types in a query. Includes
@@ -73,10 +71,6 @@ type Select struct {
 
 	// Raw graphql statement
 	Statement *ast.Field
-}
-
-func (s Select) GetRoot() parserTypes.SelectionType {
-	return s.Root
 }
 
 func (s Select) validate() []error {
@@ -143,10 +137,6 @@ type Field struct {
 	Alias string
 
 	Root parserTypes.SelectionType
-}
-
-func (c Field) GetRoot() parserTypes.SelectionType {
-	return c.Root
 }
 
 // ParseQuery parses a root ast.Document, and returns a
