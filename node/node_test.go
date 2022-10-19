@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
