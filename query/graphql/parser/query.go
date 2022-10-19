@@ -135,8 +135,6 @@ func (s Select) validateGroupBy() []error {
 type Field struct {
 	Name  string
 	Alias string
-
-	Root parserTypes.SelectionType
 }
 
 // ParseQuery parses a root ast.Document, and returns a
@@ -386,7 +384,6 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 // into a Field type
 func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
 	return &Field{
-		Root:  root,
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
 	}
