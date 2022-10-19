@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	"github.com/sourcenetwork/defradb/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 

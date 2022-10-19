@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	"github.com/sourcenetwork/defradb/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
