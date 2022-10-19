@@ -231,6 +231,26 @@ Read the full DefraDB Query Language documentation on [docs.source.network](http
 Doing so, you will discover about filtering, ordering, limiting, relationships, variables, aggregate functions, and further useful features.
 
 
+## Securing the HTTP API with TLS
+
+By default, DefraDB will expose the HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self signed certificates or Let's Encrypt.
+
+In the case of self signed certificates, the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be defined and `tls` set to `true` either via the config file or via the CLI.
+```shell
+defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
+```
+
+The keys can be generated with your generator of choice or with `make tls-certs`.
+
+Note that the keys should be saved in `~/.defradb/certs`
+
+Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
+
+```shell
+defradb start --address="example.com"
+```
+
+
 ## Peer-to-peer data synchronization
 DefraDB uses peer-to-peer networking for nodes to exchange, synchronize, and replicate documents and commits.
 
