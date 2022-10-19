@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
+	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
