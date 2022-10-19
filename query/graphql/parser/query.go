@@ -37,10 +37,6 @@ type OperationDefinition struct {
 	IsExplain  bool
 }
 
-func (q OperationDefinition) GetStatement() ast.Node {
-	return q.Statement
-}
-
 type Selection any
 
 // Select is a complex Field with strong typing
