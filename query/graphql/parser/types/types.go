@@ -13,8 +13,6 @@ Package types defines the GraphQL types used by the query service.
 */
 package types
 
-import "github.com/graphql-go/graphql/language/ast"
-
 type (
 	OrderDirection string
 
@@ -38,7 +36,6 @@ type (
 
 	OrderBy struct {
 		Conditions []OrderCondition
-		Statement  *ast.ObjectValue
 	}
 
 	Limit struct {

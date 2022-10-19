@@ -1250,7 +1250,6 @@ func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error
 
 					order = &parserTypes.OrderBy{
 						Conditions: orderConditions,
-						Statement:  orderArgValue,
 					}
 				}
 			}

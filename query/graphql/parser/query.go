@@ -333,7 +333,6 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 			slct.OrderBy = &parserTypes.OrderBy{
 				Conditions: cond,
-				Statement:  obj,
 			}
 		} else if prop == parserTypes.GroupByClause {
 			obj := astValue.(*ast.ListValue)

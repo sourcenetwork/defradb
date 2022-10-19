@@ -80,7 +80,6 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			}
 			commit.OrderBy = &parserTypes.OrderBy{
 				Conditions: cond,
-				Statement:  obj,
 			}
 		} else if prop == parserTypes.LimitClause {
 			val := argument.Value.(*ast.IntValue)
