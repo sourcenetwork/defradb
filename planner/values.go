@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/container"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
+	"github.com/sourcenetwork/defradb/mapper"
 )
 
 // valuesNode contains a collection
