@@ -89,7 +89,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		delete(data, "_key") // remove the key so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
-			return nil, errors.New("Provided _key in document must be a string type")
+			return nil, errors.New("provided _key in document must be a string type")
 		}
 		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err

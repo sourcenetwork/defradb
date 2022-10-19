@@ -47,7 +47,7 @@ func (rm *RelationManager) GetRelations() {}
 func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	rel, ok := rm.relations[name]
 	if !ok {
-		return nil, errors.New("No relation found")
+		return nil, errors.New("no relation found")
 	}
 	return rel, nil
 }
@@ -105,12 +105,12 @@ func (rm *RelationManager) RegisterSingle(
 	relType client.RelationType,
 ) (bool, error) {
 	if name == "" {
-		return false, errors.New("Relation name must be non empty")
+		return false, errors.New("relation name must be non empty")
 	}
 
 	// make sure the relation type is ONLY One or Many, not both
 	if relType.IsSet(client.Relation_Type_ONE) == relType.IsSet(client.Relation_Type_MANY) {
-		return false, errors.New("Relation type can only be either One or Many, not both")
+		return false, errors.New("relation type can only be either One or Many, not both")
 	}
 
 	// make a copy of rel type, one goes to the relation.relType, and the other goes into the []types.
@@ -200,14 +200,14 @@ type Relation struct {
 func (r *Relation) finalize() error {
 	// make sure all the types/fields are set
 	if len(r.types) != 2 || len(r.schemaTypes) != 2 || len(r.fields) != 2 {
-		return errors.New("Relation is missing its defined types and fields")
+		return errors.New("relation is missing its defined types and fields")
 	}
 
 	// make sure its one of One-to-One, One-to-Many, Many-to-Many
 	if !r.relType.IsSet(client.Relation_Type_ONEONE) &&
 		!r.relType.IsSet(client.Relation_Type_ONEMANY) &&
 		!r.relType.IsSet(client.Relation_Type_MANYMANY) {
-		return errors.New("Relation has an invalid type to be finalize")
+		return errors.New("relation has an invalid type to be finalize")
 	}
 
 	// make sure we have a primary set if its a one-to-one or many-to-many

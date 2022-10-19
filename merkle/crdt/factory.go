@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
+	ErrFactoryTypeNoExist = errors.New("no such factory for the given type exists")
 )
 
 // MerkleCRDTInitFn instantiates a MerkleCRDT with a given key.

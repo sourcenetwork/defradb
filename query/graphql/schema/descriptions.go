@@ -197,7 +197,7 @@ func (g *Generator) CreateDescriptions(
 
 				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {
-					return nil, errors.New("Relation is missing field")
+					return nil, errors.New("relation is missing field")
 				}
 
 				fd.RelationType = rel.Kind() | fieldRelationType

@@ -110,12 +110,12 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, errors.New("Query is missing query or mutation statements")
+			return nil, errors.New("query is missing query or mutation statements")
 		}
 
 	case *parser.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, errors.New("OperationDefinition is missing selections")
+			return nil, errors.New("operationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -313,7 +313,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return errors.New("Unknown type index join plan")
+	return errors.New("unknown type index join plan")
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -325,7 +325,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	if !hasScanNode {
 		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
 		if !hasCommitNode {
-			return errors.New("Failed to identify group source")
+			return errors.New("failed to identify group source")
 		}
 		sourceNode = commitNode
 	}

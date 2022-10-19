@@ -71,7 +71,7 @@ func (df *DocumentFetcher) Init(
 	reverse bool,
 ) error {
 	if col.Schema.IsEmpty() {
-		return errors.New("DocumentFetcher must be given a schema")
+		return errors.New("documentFetcher must be given a schema")
 	}
 
 	df.col = col
@@ -104,11 +104,11 @@ func (df *DocumentFetcher) Init(
 // Start implements DocumentFetcher
 func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if df.col == nil {
-		return errors.New("DocumentFetcher cannot be started without a CollectionDescription")
+		return errors.New("documentFetcher cannot be started without a CollectionDescription")
 	}
 	if df.doc == nil {
 		return errors.New(
-			"DocumentFetcher cannot be started without an initialized document object",
+			"documentFetcher cannot be started without an initialized document object",
 		)
 	}
 
@@ -262,7 +262,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	// 	return nil
 	// }
 	if df.doc == nil {
-		return errors.New("Failed to process KV, uninitialized document object")
+		return errors.New("failed to process KV, uninitialized document object")
 	}
 
 	if !df.isReadingDocument {
@@ -283,7 +283,7 @@ func (df *DocumentFetcher) processKV(kv *core.KeyValue) error {
 	}
 	fieldDesc, exists := df.schemaFields[fieldID]
 	if !exists {
-		return errors.New("Found field with no matching FieldDescription")
+		return errors.New("found field with no matching FieldDescription")
 	}
 
 	// @todo: Secondary Index might not have encoded FieldIDs
@@ -307,7 +307,7 @@ func (df *DocumentFetcher) FetchNext(ctx context.Context) (*encodedDocument, err
 	}
 
 	if df.kv == nil {
-		return nil, errors.New("Failed to get document, fetcher hasn't been initalized or started")
+		return nil, errors.New("failed to get document, fetcher hasn't been initalized or started")
 	}
 	// save the DocKey of the current kv pair so we can track when we cross the doc pair boundries
 	// keyparts := df.kv.Key.List()

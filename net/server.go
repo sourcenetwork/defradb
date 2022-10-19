@@ -74,7 +74,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		log.Debug(p.ctx, "Getting all existing DocKey...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
-			return nil, errors.Wrap("Failed to get DocKeys for pubsub topic registration", err)
+			return nil, errors.Wrap("failed to get DocKeys for pubsub topic registration", err)
 		}
 
 		i := 0
@@ -164,7 +164,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// handleComposite
 	nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
 	if err != nil {
-		return nil, errors.Wrap("Failed to decode block to ipld.Node", err)
+		return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 	}
 	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {

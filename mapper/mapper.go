@@ -289,7 +289,7 @@ func resolveAggregates(
 				if !isHostSelectable {
 					// I believe this is dead code as the gql library should always catch this error first
 					return nil, errors.New(
-						"Aggregate target host must be selectable, but was not",
+						"aggregate target host must be selectable, but was not",
 					)
 				}
 
@@ -748,7 +748,7 @@ func resolveInnerFilterDependencies(
 			host, isSelect := existingField.AsSelect()
 			if !isSelect {
 				// This should never be possible
-				return nil, errors.New("Host must be a Select, but was not")
+				return nil, errors.New("host must be a Select, but was not")
 			}
 			return host, nil
 		})
@@ -759,7 +759,7 @@ func resolveInnerFilterDependencies(
 		}
 		if !hasHost {
 			// This should never be possible
-			return nil, errors.New("Failed to find host field")
+			return nil, errors.New("failed to find host field")
 		}
 
 		childFields, err := resolveInnerFilterDependencies(

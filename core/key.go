@@ -432,7 +432,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {
-		return 0, errors.Wrap("Failed to get FieldID of Key", err)
+		return 0, errors.Wrap("failed to get FieldID of Key", err)
 	}
 	return uint32(fieldID), nil
 }

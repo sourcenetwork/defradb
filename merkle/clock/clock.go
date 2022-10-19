@@ -104,7 +104,7 @@ func (mc *MerkleClock) AddDAGNode(
 	// write the delta and heads to a new block
 	nd, err := mc.putBlock(ctx, heads, height, delta)
 	if err != nil {
-		return nil, errors.Wrap("Error adding block ", err)
+		return nil, errors.Wrap("could not add block ", err)
 	}
 
 	// apply the new node and merge the delta with state

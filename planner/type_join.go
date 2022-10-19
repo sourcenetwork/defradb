@@ -94,7 +94,7 @@ func (p *Planner) makeTypeIndexJoin(
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, errors.New("Failed sub selection, unknown relation type")
+		return nil, errors.New("failed sub selection, unknown relation type")
 	}
 	if err != nil {
 		return nil, err

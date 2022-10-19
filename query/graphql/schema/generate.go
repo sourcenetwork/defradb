@@ -1013,7 +1013,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	typeName := obj.Name()
 	filter, ok := g.manager.schema.TypeMap()[typeName+"FilterArg"].(*gql.InputObject)
 	if !ok {
-		return nil, errors.New("Missing filter arg for mutation type generation " + typeName)
+		return nil, errors.New("missing filter arg for mutation type generation " + typeName)
 	}
 
 	return g.genTypeMutationFields(obj, filter)
@@ -1192,14 +1192,14 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 		operatorType, hasOperatorType := g.manager.schema.TypeMap()[operatorBlockName]
 		if !hasOperatorType {
 			// This should be impossible
-			return nil, errors.New("Operator block not found", errors.NewKV("Name", operatorBlockName))
+			return nil, errors.New("operator block not found", errors.NewKV("Name", operatorBlockName))
 		}
 
 		operatorObject, isInputObj := operatorType.(*gql.InputObject)
 		if !isInputObj {
 			// This should be impossible
 			return nil, errors.New(
-				"Invalid cast",
+				"invalid cast",
 				errors.NewKV("Expected type", "*gql.InputObject"),
 				errors.NewKV("Actual type", fmt.Sprintf("%T", operatorType)),
 			)

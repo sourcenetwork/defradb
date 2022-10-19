@@ -38,9 +38,9 @@ var (
 	log = logging.MustNewLogger("defra.db")
 	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
 	// call against the supplied Document Key.
-	ErrDocVerification = errors.New("The document verification failed")
+	ErrDocVerification = errors.New("the document verification failed")
 
-	ErrOptionsEmpty = errors.New("Empty options configuration provided")
+	ErrOptionsEmpty = errors.New("empty options configuration provided")
 )
 
 // make sure we match our client interface
@@ -198,11 +198,11 @@ func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (st
 	rm := db.schema.Relations
 	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
 	if rel == nil {
-		return "", errors.New("Relation does not exists")
+		return "", errors.New("relation does not exists")
 	}
 	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
 	if !ok {
-		return "", errors.New("Relation is missing referenced field")
+		return "", errors.New("relation is missing referenced field")
 	}
 	return subtypefieldname, nil
 }
