@@ -23,7 +23,6 @@ import (
 var dbAPIQueryNames = map[string]bool{
 	"latestCommits": true,
 	"commits":       true,
-	"commit":        true,
 }
 
 type Query struct {
