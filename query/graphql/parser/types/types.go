@@ -26,7 +26,7 @@ type (
 		// Given the statement: {order: {author: {birthday: DESC}}}
 		// The field value would be "author.birthday"
 		// and the direction would be "DESC"
-		Field     string
+		Fields    []string
 		Direction OrderDirection
 	}
 

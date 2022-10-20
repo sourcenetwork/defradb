@@ -119,12 +119,11 @@ func resolveOrderDependencies(
 	// If there is orderby, and any one of the condition fields that are join fields and have not been
 	// requested, we need to map them here.
 	for _, condition := range source.Value().Conditions {
-		fieldNames := strings.Split(condition.Field, ".")
-		if len(fieldNames) <= 1 {
+		if len(condition.Fields) <= 1 {
 			continue
 		}
 
-		joinField := fieldNames[0]
+		joinField := condition.Fields[0]
 
 		// Check if the join field is already mapped, if not then map it.
 		if isOrderJoinFieldMapped := len(mapping.IndexesByName[joinField]) != 0; !isOrderJoinFieldMapped {
@@ -971,17 +970,16 @@ func toOrderBy(source client.Option[parserTypes.OrderBy], mapping *core.Document
 
 	conditions := make([]OrderCondition, len(source.Value().Conditions))
 	for conditionIndex, condition := range source.Value().Conditions {
-		fields := strings.Split(condition.Field, ".")
-		fieldIndexes := make([]int, len(fields))
+		fieldIndexes := make([]int, len(condition.Fields))
 		currentMapping := mapping
-		for fieldIndex, field := range fields {
+		for fieldIndex, field := range condition.Fields {
 			// If there are multiple properties of the same name we can just take the first as
 			// we have no other reasonable way of identifying which property they mean if multiple
 			// consumer specified requestables are available.  Aggregate dependencies should not
 			// impact this as they are added after selects.
 			firstFieldIndex := currentMapping.FirstIndexOfName(field)
 			fieldIndexes[fieldIndex] = firstFieldIndex
-			if fieldIndex != len(fields)-1 {
+			if fieldIndex != len(condition.Fields)-1 {
 				// no need to do this for the last (and will panic)
 				currentMapping = currentMapping.ChildMappings[firstFieldIndex]
 			}

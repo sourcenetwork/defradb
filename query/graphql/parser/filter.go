@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -103,7 +102,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 				return nil, errors.New("invalid order direction string")
 			}
 			conditions = append(conditions, parserTypes.OrderCondition{
-				Field:     name,
+				Fields:    []string{name},
 				Direction: dir,
 			})
 
@@ -114,7 +113,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].
 				// etc.
-				cond.Field = fmt.Sprintf("%s.%s", name, cond.Field)
+				cond.Fields = append([]string{name}, cond.Fields...)
 				conditions = append(conditions, cond)
 			}
 
