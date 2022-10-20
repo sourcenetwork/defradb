@@ -34,7 +34,7 @@ type CommitSelect struct {
 
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
-	OrderBy *parserTypes.OrderBy
+	OrderBy client.Option[parserTypes.OrderBy]
 	GroupBy *parserTypes.GroupBy
 
 	Fields []Selection
@@ -84,9 +84,11 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			if err != nil {
 				return nil, err
 			}
-			commit.OrderBy = &parserTypes.OrderBy{
-				Conditions: cond,
-			}
+			commit.OrderBy = client.Some(
+				parserTypes.OrderBy{
+					Conditions: cond,
+				},
+			)
 		} else if prop == parserTypes.LimitClause {
 			val := argument.Value.(*ast.IntValue)
 			limit, err := strconv.ParseUint(val.Value, 10, 64)

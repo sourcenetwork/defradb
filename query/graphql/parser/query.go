@@ -50,10 +50,9 @@ type Select struct {
 	// Root is the top level query parsed type
 	Root parserTypes.SelectionType
 
-	Limit  client.Option[uint64]
-	Offset client.Option[uint64]
-
-	OrderBy *parserTypes.OrderBy
+	Limit   client.Option[uint64]
+	Offset  client.Option[uint64]
+	OrderBy client.Option[parserTypes.OrderBy]
 
 	GroupBy *parserTypes.GroupBy
 
@@ -305,9 +304,11 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			if err != nil {
 				return nil, err
 			}
-			slct.OrderBy = &parserTypes.OrderBy{
-				Conditions: cond,
-			}
+			slct.OrderBy = client.Some(
+				parserTypes.OrderBy{
+					Conditions: cond,
+				},
+			)
 		} else if prop == parserTypes.GroupByClause {
 			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
@@ -396,7 +397,7 @@ type AggregateTarget struct {
 
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
-	OrderBy *parserTypes.OrderBy
+	OrderBy client.Option[parserTypes.OrderBy]
 	Filter  *Filter
 }
 
@@ -415,7 +416,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 			var filter *Filter
 			var limit client.Option[uint64]
 			var offset client.Option[uint64]
-			var order *parserTypes.OrderBy
+			var order client.Option[parserTypes.OrderBy]
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
 			if hasFieldArg {
@@ -459,13 +460,15 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 					orderDirectionString := orderArgValue.Value
 					orderDirection := parserTypes.OrderDirection(orderDirectionString)
 
-					order = &parserTypes.OrderBy{
-						Conditions: []parserTypes.OrderCondition{
-							{
-								Direction: orderDirection,
+					order = client.Some(
+						parserTypes.OrderBy{
+							Conditions: []parserTypes.OrderCondition{
+								{
+									Direction: orderDirection,
+								},
 							},
 						},
-					}
+					)
 
 				case *ast.ObjectValue:
 					// For relations the order arg will be the complex order object as used by the host object
@@ -477,9 +480,11 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 						return nil, err
 					}
 
-					order = &parserTypes.OrderBy{
-						Conditions: orderConditions,
-					}
+					order = client.Some(
+						parserTypes.OrderBy{
+							Conditions: orderConditions,
+						},
+					)
 				}
 			}
 

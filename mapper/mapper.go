@@ -108,17 +108,17 @@ func toSelect(
 func resolveOrderDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	descName string,
-	source *parserTypes.OrderBy,
+	source client.Option[parserTypes.OrderBy],
 	mapping *core.DocumentMapping,
 	existingFields *[]Requestable,
 ) error {
-	if source == nil {
+	if !source.HasValue() {
 		return nil
 	}
 
 	// If there is orderby, and any one of the condition fields that are join fields and have not been
 	// requested, we need to map them here.
-	for _, condition := range source.Conditions {
+	for _, condition := range source.Value().Conditions {
 		fieldNames := strings.Split(condition.Field, ".")
 		if len(fieldNames) <= 1 {
 			continue
@@ -185,12 +185,12 @@ func resolveAggregates(
 				fieldDesc, isField := desc.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
-					if target.order != nil && len(target.order.Conditions) > 0 {
+					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
 						// For inline arrays the order element will consist of just a direction
 						order = &OrderBy{
 							Conditions: []OrderCondition{
 								{
-									Direction: SortDirection(target.order.Conditions[0].Direction),
+									Direction: SortDirection(target.order.Value().Conditions[0].Direction),
 								},
 							},
 						}
@@ -964,13 +964,13 @@ func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *Grou
 	}
 }
 
-func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *OrderBy {
-	if source == nil {
+func toOrderBy(source client.Option[parserTypes.OrderBy], mapping *core.DocumentMapping) *OrderBy {
+	if !source.HasValue() {
 		return nil
 	}
 
-	conditions := make([]OrderCondition, len(source.Conditions))
-	for conditionIndex, condition := range source.Conditions {
+	conditions := make([]OrderCondition, len(source.Value().Conditions))
+	for conditionIndex, condition := range source.Value().Conditions {
 		fields := strings.Split(condition.Field, ".")
 		fieldIndexes := make([]int, len(fields))
 		currentMapping := mapping
@@ -1167,7 +1167,7 @@ type aggregateRequestTarget struct {
 
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
-	order *parserTypes.OrderBy
+	order client.Option[parserTypes.OrderBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
