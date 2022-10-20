@@ -40,10 +40,6 @@ type CommitSelect struct {
 	Fields []Selection
 }
 
-func (c CommitSelect) GetRoot() parserTypes.SelectionType {
-	return parserTypes.CommitSelection
-}
-
 func (c CommitSelect) ToSelect() *Select {
 	return &Select{
 		Field: Field{
@@ -144,7 +140,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	}
 
 	var err error
-	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
+	commit.Fields, err = parseSelectFields(parserTypes.CommitSelection, field.SelectionSet)
 
 	return commit, err
 }
