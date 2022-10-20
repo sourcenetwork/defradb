@@ -15,13 +15,13 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	Cid     = "cid"
-	Data    = "data"
-	DocKey  = "dockey"
-	DocKeys = "dockeys"
-	Field   = "field"
-	Id      = "id"
-	Ids     = "ids"
+	Cid       = "cid"
+	Data      = "data"
+	DocKey    = "dockey"
+	DocKeys   = "dockeys"
+	FieldName = "field"
+	Id        = "id"
+	Ids       = "ids"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"

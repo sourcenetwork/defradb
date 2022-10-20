@@ -23,14 +23,13 @@ import (
 	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 // ToSelect converts the given [parser.Select] into a [Select].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
-func ToSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Select) (*Select, error) {
+func ToSelect(ctx context.Context, txn datastore.Txn, parsed *request.Select) (*Select, error) {
 	descriptionsRepo := NewDescriptionsRepo(ctx, txn)
 	// the top-level select will always have index=0, and no parent collection name
 	return toSelect(descriptionsRepo, 0, parsed, "")
@@ -43,7 +42,7 @@ func ToSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Select) (*S
 func toSelect(
 	descriptionsRepo *DescriptionsRepo,
 	thisIndex int,
-	parsed *parser.Select,
+	parsed *request.Select,
 	parentCollectionName string,
 ) (*Select, error) {
 	collectionName, err := getCollectionName(descriptionsRepo, parsed, parentCollectionName)
@@ -131,8 +130,8 @@ func resolveOrderDependencies(
 			mapping.Add(index, joinField)
 
 			// Resolve the inner child fields and get it's mapping.
-			dummyJoinFieldSelect := parser.Select{
-				Field: parser.Field{
+			dummyJoinFieldSelect := request.Select{
+				Field: request.Field{
 					Name: joinField,
 				},
 			}
@@ -156,7 +155,7 @@ func resolveOrderDependencies(
 // append the new target field as well as the aggregate.  The mapping will also be
 // updated with any new fields/aggregates.
 func resolveAggregates(
-	parsed *parser.Select,
+	parsed *request.Select,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
@@ -226,9 +225,9 @@ func resolveAggregates(
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
 
-				dummyParsed := &parser.Select{
+				dummyParsed := &request.Select{
 					Root: parsed.Root,
-					Field: parser.Field{
+					Field: request.Field{
 						Name: target.hostExternalName,
 					},
 				}
@@ -440,14 +439,14 @@ func appendIfNotExists(
 // and aggregateRequests from the given parsed.Fields slice. It also mutates the
 // consumed mapping data.
 func getRequestables(
-	parsed *parser.Select,
+	parsed *request.Select,
 	mapping *core.DocumentMapping,
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
-		case *parser.Field:
+		case *request.Field:
 			// We can map all fields to the first (and only index)
 			// as they support no value modifiers (such as filters/limits/etc).
 			// All fields should have already been mapped by getTopLevelInfo
@@ -462,7 +461,7 @@ func getRequestables(
 				Index: index,
 				Key:   getRenderKey(f),
 			})
-		case *parser.Select:
+		case *request.Select:
 			index := mapping.GetNextIndex()
 
 			innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
@@ -478,7 +477,7 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
-		case *parser.Aggregate:
+		case *request.Aggregate:
 			index := mapping.GetNextIndex()
 			aggregateRequest, err := getAggregateRequests(index, f)
 			if err != nil {
@@ -503,14 +502,14 @@ func getRequestables(
 	return
 }
 
-func getRenderKey(field *parser.Field) string {
+func getRenderKey(field *request.Field) string {
 	if field.Alias.HasValue() {
 		return field.Alias.Value()
 	}
 	return field.Name
 }
 
-func getAggregateRequests(index int, aggregate *parser.Aggregate) (aggregateRequest, error) {
+func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateRequest, error) {
 	aggregateTargets, err := getAggregateSources(aggregate)
 	if err != nil {
 		return aggregateRequest{}, err
@@ -535,7 +534,7 @@ func getAggregateRequests(index int, aggregate *parser.Aggregate) (aggregateRequ
 // if this is a commit request.
 func getCollectionName(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *parser.Select,
+	parsed *request.Select,
 	parentCollectionName string,
 ) (string, error) {
 	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
@@ -569,7 +568,7 @@ func getCollectionName(
 // getTopLevelInfo returns the collection description and maps the fields directly on the object.
 func getTopLevelInfo(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *parser.Select,
+	parsed *request.Select,
 	collectionName string,
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
@@ -629,7 +628,7 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source client.Option[parser.Filter],
+	source client.Option[request.Filter],
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
 ) ([]Requestable, error) {
@@ -665,8 +664,8 @@ func resolveInnerFilterDependencies(
 		if !propertyMapped {
 			index := mapping.GetNextIndex()
 
-			dummyParsed := &parser.Select{
-				Field: parser.Field{
+			dummyParsed := &request.Select{
+				Field: request.Field{
 					Name: key,
 				},
 			}
@@ -721,8 +720,8 @@ func resolveInnerFilterDependencies(
 			continue
 		}
 
-		dummyParsed := &parser.Select{
-			Field: parser.Field{
+		dummyParsed := &request.Select{
+			Field: request.Field{
 				Name: key,
 			},
 		}
@@ -776,11 +775,11 @@ func resolveInnerFilterDependencies(
 	return newFields, nil
 }
 
-// ToCommitSelect converts the given [parser.CommitSelect] into a [CommitSelect].
+// ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [CommitSelect].
-func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *parser.CommitSelect) (*CommitSelect, error) {
+func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *request.CommitSelect) (*CommitSelect, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
 	if err != nil {
 		return nil, err
@@ -794,11 +793,11 @@ func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Commi
 	}, nil
 }
 
-// ToMutation converts the given [parser.Mutation] into a [Mutation].
+// ToMutation converts the given [request.Mutation] into a [Mutation].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, txn datastore.Txn, parsed *parser.Mutation) (*Mutation, error) {
+func ToMutation(ctx context.Context, txn datastore.Txn, parsed *request.Mutation) (*Mutation, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
 	if err != nil {
 		return nil, err
@@ -811,7 +810,7 @@ func ToMutation(ctx context.Context, txn datastore.Txn, parsed *parser.Mutation)
 	}, nil
 }
 
-func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping) Targetable {
+func toTargetable(index int, parsed *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
 		Field:   toField(index, parsed),
 		DocKeys: parsed.DocKeys,
@@ -822,17 +821,17 @@ func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping
 	}
 }
 
-func toField(index int, parsed *parser.Select) Field {
+func toField(index int, parsed *request.Select) Field {
 	return Field{
 		Index: index,
 		Name:  parsed.Name,
 	}
 }
 
-// ToFilter converts the given `source` parser filter to a Filter using the given mapping.
+// ToFilter converts the given `source` request filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
-func ToFilter(source client.Option[parser.Filter], mapping *core.DocumentMapping) *Filter {
+func ToFilter(source client.Option[request.Filter], mapping *core.DocumentMapping) *Filter {
 	if !source.HasValue() {
 		return nil
 	}
@@ -1158,7 +1157,7 @@ type aggregateRequestTarget struct {
 	childExternalName string
 
 	// The aggregate filter specified by the consumer for this target. Optional.
-	filter client.Option[parser.Filter]
+	filter client.Option[request.Filter]
 
 	// The aggregate limit-offset specified by the consumer for this target. Optional.
 	limit *Limit
@@ -1169,7 +1168,7 @@ type aggregateRequestTarget struct {
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func getAggregateSources(field *parser.Aggregate) ([]*aggregateRequestTarget, error) {
+func getAggregateSources(field *request.Aggregate) ([]*aggregateRequestTarget, error) {
 	targets := make([]*aggregateRequestTarget, len(field.Targets))
 
 	for i, target := range field.Targets {
@@ -1275,7 +1274,7 @@ func tryGetTarget(
 func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	if !field.filter.HasValue() || field.filter.Value().Conditions == nil {
 		field.filter = client.Some(
-			parser.Filter{
+			request.Filter{
 				Conditions: map[string]any{},
 			},
 		)

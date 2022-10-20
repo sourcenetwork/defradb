@@ -23,42 +23,33 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-// Filter contains the parsed condition map to be
-// run by the Filter Evaluator.
-// @todo: Cache filter structure for faster condition
-// evaluation.
-type Filter struct {
-	// parsed filter conditions
-	Conditions map[string]any
-}
-
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue) (client.Option[Filter], error) {
+func NewFilter(stmt *ast.ObjectValue) (client.Option[request.Filter], error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
-		return client.None[Filter](), err
+		return client.None[request.Filter](), err
 	}
-	return client.Some(Filter{
+	return client.Some(request.Filter{
 		Conditions: conditions,
 	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(body string) (client.Option[Filter], error) {
+func NewFilterFromString(body string) (client.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return client.None[Filter](), err
+		return client.None[request.Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return client.None[Filter](), err
+		return client.None[request.Filter](), err
 	}
 
 	return NewFilter(obj)

@@ -47,7 +47,7 @@ func (c *collection) UpdateWith(
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
-	case string, map[string]any, *parser.Filter:
+	case string, map[string]any, *request.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocKey:
 		return c.UpdateWithKey(ctx, t, updater)
@@ -606,7 +606,7 @@ func (c *collection) makeSelectionQuery(
 		if fval == "" {
 			return nil, errors.New("invalid filter")
 		}
-		var p client.Option[parser.Filter]
+		var p client.Option[request.Filter]
 		p, err = parser.NewFilterFromString(fval)
 		if err != nil {
 			return nil, err

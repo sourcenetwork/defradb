@@ -20,67 +20,23 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-type MutationType int
-
-const (
-	NoneMutationType = MutationType(iota)
-	CreateObjects
-	UpdateObjects
-	DeleteObjects
-)
-
-var (
-	mutationNameToType = map[string]MutationType{
-		"create": CreateObjects,
-		"update": UpdateObjects,
-		"delete": DeleteObjects,
-	}
-)
-
 var (
 	ErrEmptyDataPayload = errors.New("given data payload is empty")
 )
 
-// Mutation is a field on the MutationType
-// of a graphql query. It includes all the possible
-// arguments and all
-//
-// @todo: Change name to ObjectMutation to indicate
-// generated object mutation actions
-type Mutation struct {
-	Field
-	Type MutationType
-
-	// Schema is the target schema/collection
-	// if this mutation is on an object.
-	Schema string
-
-	IDs    client.Option[[]string]
-	Filter client.Option[Filter]
-	Data   string
-
-	Fields []Selection
-}
-
-// ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
-// the Mutation object. Used to create a Select planNode for the mutation return objects.
-func (m Mutation) ToSelect() *Select {
-	return &Select{
-		Field: Field{
-			Name:  m.Schema,
-			Alias: m.Alias,
-		},
-		Fields:  m.Fields,
-		DocKeys: m.IDs,
-		Filter:  m.Filter,
+var (
+	mutationNameToType = map[string]request.MutationType{
+		"create": request.CreateObjects,
+		"update": request.UpdateObjects,
+		"delete": request.DeleteObjects,
 	}
-}
+)
 
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
-func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
-	qdef := &OperationDefinition{
-		Selections: make([]Selection, len(def.SelectionSet.Selections)),
+func parseMutationOperationDefinition(def *ast.OperationDefinition) (*request.OperationDefinition, error) {
+	qdef := &request.OperationDefinition{
+		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)
@@ -106,9 +62,9 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(field *ast.Field) (*Mutation, error) {
-	mut := &Mutation{
-		Field: Field{
+func parseMutation(field *ast.Field) (*request.Mutation, error) {
+	mut := &request.Mutation{
+		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},

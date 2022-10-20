@@ -20,44 +20,9 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-var (
-	_ Selection = (*CommitSelect)(nil)
-)
-
-type CommitSelect struct {
-	Field
-
-	DocKey    client.Option[string]
-	FieldName client.Option[string]
-	Cid       client.Option[string]
-	Depth     client.Option[uint64]
-
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[request.OrderBy]
-	GroupBy client.Option[request.GroupBy]
-
-	Fields []Selection
-}
-
-func (c CommitSelect) ToSelect() *Select {
-	return &Select{
-		Field: Field{
-			Name:  c.Name,
-			Alias: c.Alias,
-		},
-		Limit:   c.Limit,
-		Offset:  c.Offset,
-		OrderBy: c.OrderBy,
-		GroupBy: c.GroupBy,
-		Fields:  c.Fields,
-		Root:    request.CommitSelection,
-	}
-}
-
-func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
-	commit := &CommitSelect{
-		Field: Field{
+func parseCommitSelect(field *ast.Field) (*request.CommitSelect, error) {
+	commit := &request.CommitSelect{
+		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
@@ -71,7 +36,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 		} else if prop == request.Cid {
 			raw := argument.Value.(*ast.StringValue)
 			commit.Cid = client.Some(raw.Value)
-		} else if prop == request.Field {
+		} else if prop == request.FieldName {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = client.Some(raw.Value)
 		} else if prop == request.OrderClause {

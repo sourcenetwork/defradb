@@ -20,114 +20,16 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-type Request struct {
-	Queries   []*OperationDefinition
-	Mutations []*OperationDefinition
-}
-
-type OperationDefinition struct {
-	Selections []Selection
-	IsExplain  bool
-}
-
-type Selection any
-
-// Select is a complex Field with strong typing
-// It used for sub types in a query. Includes
-// fields, and query arguments like filters,
-// limits, etc.
-type Select struct {
-	Field
-
-	DocKeys client.Option[[]string]
-	CID     client.Option[string]
-
-	// Root is the top level query parsed type
-	Root request.SelectionType
-
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[request.OrderBy]
-	GroupBy client.Option[request.GroupBy]
-	Filter  client.Option[Filter]
-
-	Fields []Selection
-}
-
-func (s Select) validate() []error {
-	result := []error{}
-
-	result = append(result, s.validateShallow()...)
-
-	for _, childSelection := range s.Fields {
-		switch typedChildSelection := childSelection.(type) {
-		case *Select:
-			result = append(result, typedChildSelection.validateShallow()...)
-		default:
-			// Do nothing
-		}
-	}
-
-	return result
-}
-
-func (s Select) validateShallow() []error {
-	result := []error{}
-
-	result = append(result, s.validateGroupBy()...)
-
-	return result
-}
-
-func (s Select) validateGroupBy() []error {
-	result := []error{}
-
-	if !s.GroupBy.HasValue() {
-		return result
-	}
-
-	for _, childSelection := range s.Fields {
-		switch typedChildSelection := childSelection.(type) {
-		case *Field:
-			if typedChildSelection.Name == request.TypeNameFieldName {
-				// _typeName is permitted
-				continue
-			}
-
-			var fieldExistsInGroupBy bool
-			for _, groupByField := range s.GroupBy.Value().Fields {
-				if typedChildSelection.Name == groupByField {
-					fieldExistsInGroupBy = true
-					break
-				}
-			}
-			if !fieldExistsInGroupBy {
-				result = append(result, client.NewErrSelectOfNonGroupField(typedChildSelection.Name))
-			}
-		default:
-			// Do nothing
-		}
-	}
-
-	return result
-}
-
-// Field implements Selection
-type Field struct {
-	Name  string
-	Alias client.Option[string]
-}
-
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
 // Requires a non-nil doc, will error if given a nil doc.
-func ParseQuery(doc *ast.Document) (*Request, []error) {
+func ParseQuery(doc *ast.Document) (*request.Request, []error) {
 	if doc == nil {
 		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
-	r := &Request{
-		Queries:   make([]*OperationDefinition, 0),
-		Mutations: make([]*OperationDefinition, 0),
+	r := &request.Request{
+		Queries:   make([]*request.OperationDefinition, 0),
+		Mutations: make([]*request.OperationDefinition, 0),
 	}
 
 	for _, def := range doc.Definitions {
@@ -175,15 +77,15 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
-func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, []error) {
-	qdef := &OperationDefinition{
-		Selections: make([]Selection, len(def.SelectionSet.Selections)),
+func parseQueryOperationDefinition(def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
+	qdef := &request.OperationDefinition{
+		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
 	for i, selection := range def.SelectionSet.Selections {
-		var parsedSelection Selection
+		var parsedSelection request.Selection
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
@@ -200,12 +102,12 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 				}
 
 				// Top-level aggregates must be wrapped in a top-level Select for now
-				parsedSelection = &Select{
-					Field: Field{
+				parsedSelection = &request.Select{
+					Field: request.Field{
 						Name:  parsed.Name,
 						Alias: parsed.Alias,
 					},
-					Fields: []Selection{
+					Fields: []request.Selection{
 						parsed,
 					},
 				}
@@ -217,7 +119,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 					return nil, []error{err}
 				}
 
-				errors := parsed.validate()
+				errors := parsed.Validate()
 				if len(errors) > 0 {
 					return nil, errors
 				}
@@ -238,9 +140,9 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*Select, error) {
-	slct := &Select{
-		Field: Field{
+func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*request.Select, error) {
+	slct := &request.Select{
+		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
@@ -336,8 +238,8 @@ func getFieldAlias(field *ast.Field) client.Option[string] {
 	return client.Some(field.Alias.Value)
 }
 
-func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
-	selections := make([]Selection, len(fields.Selections))
+func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]request.Selection, error) {
+	selections := make([]request.Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
@@ -370,47 +272,31 @@ func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(field *ast.Field) *Field {
-	return &Field{
+func parseField(field *ast.Field) *request.Field {
+	return &request.Field{
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
 	}
 }
 
-type Aggregate struct {
-	Field
-
-	Targets []*AggregateTarget
-}
-
-type AggregateTarget struct {
-	HostName  string
-	ChildName client.Option[string]
-
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[request.OrderBy]
-	Filter  client.Option[Filter]
-}
-
-func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
-	targets := make([]*AggregateTarget, len(field.Arguments))
+func parseAggregate(field *ast.Field, index int) (*request.Aggregate, error) {
+	targets := make([]*request.AggregateTarget, len(field.Arguments))
 
 	for i, argument := range field.Arguments {
 		switch argumentValue := argument.Value.GetValue().(type) {
 		case string:
-			targets[i] = &AggregateTarget{
+			targets[i] = &request.AggregateTarget{
 				HostName: argumentValue,
 			}
 		case []*ast.ObjectField:
 			hostName := argument.Name.Value
 			var childName string
-			var filter client.Option[Filter]
+			var filter client.Option[request.Filter]
 			var limit client.Option[uint64]
 			var offset client.Option[uint64]
 			var order client.Option[request.OrderBy]
 
-			fieldArg, hasFieldArg := tryGet(argumentValue, request.Field)
+			fieldArg, hasFieldArg := tryGet(argumentValue, request.FieldName)
 			if hasFieldArg {
 				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
 					childName = innerPathStringValue
@@ -480,7 +366,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 				}
 			}
 
-			targets[i] = &AggregateTarget{
+			targets[i] = &request.AggregateTarget{
 				HostName:  hostName,
 				ChildName: client.Some(childName),
 				Filter:    filter,
@@ -491,8 +377,8 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 		}
 	}
 
-	return &Aggregate{
-		Field: Field{
+	return &request.Aggregate{
+		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
