@@ -20,11 +20,6 @@ import (
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
-var dbAPIQueryNames = map[string]bool{
-	"latestCommits": true,
-	"commits":       true,
-}
-
 type Query struct {
 	Queries   []*OperationDefinition
 	Mutations []*OperationDefinition
@@ -191,11 +186,8 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 		var parsedSelection Selection
 		switch node := selection.(type) {
 		case *ast.Field:
-			// which query type is this database API query object query etc.
-			_, exists := dbAPIQueryNames[node.Name.Value]
-			if exists {
-				// the query matches a reserved DB API query name
-				parsed, err := parseAPIQuery(node)
+			if _, isCommitQuery := parserTypes.CommitQueries[node.Name.Value]; isCommitQuery {
+				parsed, err := parseCommitSelect(node)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -515,13 +507,4 @@ func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
 		}
 	}
 	return nil, false
-}
-
-func parseAPIQuery(field *ast.Field) (Selection, error) {
-	switch field.Name.Value {
-	case "latestCommits", "commits":
-		return parseCommitSelect(field)
-	default:
-		return nil, errors.New("unknown query")
-	}
 }
