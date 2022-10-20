@@ -35,7 +35,7 @@ type CommitSelect struct {
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
 	OrderBy client.Option[parserTypes.OrderBy]
-	GroupBy *parserTypes.GroupBy
+	GroupBy client.Option[parserTypes.GroupBy]
 
 	Fields []Selection
 }
@@ -117,9 +117,11 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			commit.GroupBy = &parserTypes.GroupBy{
-				Fields: fields,
-			}
+			commit.GroupBy = client.Some(
+				parserTypes.GroupBy{
+					Fields: fields,
+				},
+			)
 		}
 	}
 

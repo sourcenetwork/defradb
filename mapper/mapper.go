@@ -87,7 +87,7 @@ func toSelect(
 	}
 
 	// If there is a groupby, and no inner group has been requested, we need to map the property here
-	if parsed.GroupBy != nil {
+	if parsed.GroupBy.HasValue() {
 		if _, isGroupFieldMapped := mapping.IndexesByName[parserTypes.GroupFieldName]; !isGroupFieldMapped {
 			index := mapping.GetNextIndex()
 			mapping.Add(index, parserTypes.GroupFieldName)
@@ -939,13 +939,13 @@ func toLimit(limit client.Option[uint64], offset client.Option[uint64]) *Limit {
 	}
 }
 
-func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *GroupBy {
-	if source == nil {
+func toGroupBy(source client.Option[parserTypes.GroupBy], mapping *core.DocumentMapping) *GroupBy {
+	if !source.HasValue() {
 		return nil
 	}
 
-	fields := make([]Field, len(source.Fields))
-	for i, fieldName := range source.Fields {
+	fields := make([]Field, len(source.Value().Fields))
+	for i, fieldName := range source.Value().Fields {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not

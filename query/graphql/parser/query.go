@@ -53,8 +53,7 @@ type Select struct {
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
 	OrderBy client.Option[parserTypes.OrderBy]
-
-	GroupBy *parserTypes.GroupBy
+	GroupBy client.Option[parserTypes.GroupBy]
 
 	Filter *Filter
 
@@ -89,7 +88,7 @@ func (s Select) validateShallow() []error {
 func (s Select) validateGroupBy() []error {
 	result := []error{}
 
-	if s.GroupBy == nil {
+	if !s.GroupBy.HasValue() {
 		return result
 	}
 
@@ -102,7 +101,7 @@ func (s Select) validateGroupBy() []error {
 			}
 
 			var fieldExistsInGroupBy bool
-			for _, groupByField := range s.GroupBy.Fields {
+			for _, groupByField := range s.GroupBy.Value().Fields {
 				if typedChildSelection.Name == groupByField {
 					fieldExistsInGroupBy = true
 					break
@@ -316,9 +315,11 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			slct.GroupBy = &parserTypes.GroupBy{
-				Fields: fields,
-			}
+			slct.GroupBy = client.Some(
+				parserTypes.GroupBy{
+					Fields: fields,
+				},
+			)
 		}
 	}
 
