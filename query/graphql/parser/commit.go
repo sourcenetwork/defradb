@@ -32,7 +32,8 @@ type CommitSelect struct {
 	Cid       client.Option[string]
 	Depth     client.Option[uint64]
 
-	Limit   *parserTypes.Limit
+	Limit   client.Option[uint64]
+	Offset  client.Option[uint64]
 	OrderBy *parserTypes.OrderBy
 	GroupBy *parserTypes.GroupBy
 
@@ -50,6 +51,7 @@ func (c CommitSelect) ToSelect() *Select {
 			Alias: c.Alias,
 		},
 		Limit:   c.Limit,
+		Offset:  c.Offset,
 		OrderBy: c.OrderBy,
 		GroupBy: c.GroupBy,
 		Fields:  c.Fields,
@@ -87,24 +89,18 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 			}
 		} else if prop == parserTypes.LimitClause {
 			val := argument.Value.(*ast.IntValue)
-			limit, err := strconv.ParseInt(val.Value, 10, 64)
+			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
-			}
-			commit.Limit.Limit = limit
+			commit.Limit = client.Some(limit)
 		} else if prop == parserTypes.OffsetClause {
 			val := argument.Value.(*ast.IntValue)
-			offset, err := strconv.ParseInt(val.Value, 10, 64)
+			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
-			}
-			commit.Limit.Offset = offset
+			commit.Offset = client.Some(offset)
 		} else if prop == parserTypes.DepthClause {
 			raw := argument.Value.(*ast.IntValue)
 			depth, err := strconv.ParseUint(raw.Value, 10, 64)

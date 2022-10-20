@@ -147,10 +147,10 @@ func (n *groupNode) Next() (bool, error) {
 
 				childDocs := subSelect.([]core.Doc)
 				if childSelect.Limit != nil {
-					l := int64(len(childDocs))
+					l := uint64(len(childDocs))
 
 					// We must hide all child documents before the offset
-					for i := int64(0); i < childSelect.Limit.Offset && i < l; i++ {
+					for i := uint64(0); i < childSelect.Limit.Offset && i < l; i++ {
 						childDocs[i].Hidden = true
 					}
 

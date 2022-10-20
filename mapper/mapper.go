@@ -817,7 +817,7 @@ func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping
 		Field:   toField(index, parsed),
 		DocKeys: parsed.DocKeys,
 		Filter:  ToFilter(parsed.Filter, docMap),
-		Limit:   toLimit(parsed.Limit),
+		Limit:   toLimit(parsed.Limit, parsed.Offset),
 		GroupBy: toGroupBy(parsed.GroupBy, docMap),
 		OrderBy: toOrderBy(parsed.OrderBy, docMap),
 	}
@@ -919,14 +919,24 @@ func toFilterMap(
 	}
 }
 
-func toLimit(source *parserTypes.Limit) *Limit {
-	if source == nil {
+func toLimit(limit client.Option[uint64], offset client.Option[uint64]) *Limit {
+	var limitValue uint64
+	var offsetValue uint64
+	if !limit.HasValue() && !offset.HasValue() {
 		return nil
 	}
 
+	if limit.HasValue() {
+		limitValue = limit.Value()
+	}
+
+	if offset.HasValue() {
+		offsetValue = offset.Value()
+	}
+
 	return &Limit{
-		Limit:  source.Limit,
-		Offset: source.Offset,
+		Limit:  limitValue,
+		Offset: offsetValue,
 	}
 }
 
@@ -1169,7 +1179,7 @@ func getAggregateSources(field *parser.Aggregate) ([]*aggregateRequestTarget, er
 			hostExternalName:  target.HostName,
 			childExternalName: target.ChildName.Value(),
 			filter:            target.Filter,
-			limit:             (*Limit)(target.Limit),
+			limit:             toLimit(target.Limit, target.Offset),
 			order:             target.OrderBy,
 		}
 	}

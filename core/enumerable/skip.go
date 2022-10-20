@@ -12,14 +12,14 @@ package enumerable
 
 type enumerableSkip[T any] struct {
 	source Enumerable[T]
-	offset int64
-	count  int64
+	offset uint64
+	count  uint64
 }
 
 // Skip creates an `Enumerable` from the given `Enumerable` and offset. The returned
 // `Enumerable` will skip through items until the number of items yielded from source
 // excedes the give offset.
-func Skip[T any](source Enumerable[T], offset int64) Enumerable[T] {
+func Skip[T any](source Enumerable[T], offset uint64) Enumerable[T] {
 	return &enumerableSkip[T]{
 		source: source,
 		offset: offset,

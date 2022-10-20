@@ -37,11 +37,6 @@ type (
 	OrderBy struct {
 		Conditions []OrderCondition
 	}
-
-	Limit struct {
-		Limit  int64
-		Offset int64
-	}
 )
 
 const (

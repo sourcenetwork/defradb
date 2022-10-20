@@ -50,7 +50,8 @@ type Select struct {
 	// Root is the top level query parsed type
 	Root parserTypes.SelectionType
 
-	Limit *parserTypes.Limit
+	Limit  client.Option[uint64]
+	Offset client.Option[uint64]
 
 	OrderBy *parserTypes.OrderBy
 
@@ -286,24 +287,18 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			slct.CID = client.Some(val.Value)
 		} else if prop == parserTypes.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
-			i, err := strconv.ParseInt(val.Value, 10, 64)
+			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
-				return slct, err
+				return nil, err
 			}
-			if slct.Limit == nil {
-				slct.Limit = &parserTypes.Limit{}
-			}
-			slct.Limit.Limit = i
+			slct.Limit = client.Some(limit)
 		} else if prop == parserTypes.OffsetClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
-			i, err := strconv.ParseInt(val.Value, 10, 64)
+			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
-				return slct, err
+				return nil, err
 			}
-			if slct.Limit == nil {
-				slct.Limit = &parserTypes.Limit{}
-			}
-			slct.Limit.Offset = i
+			slct.Offset = client.Some(offset)
 		} else if prop == parserTypes.OrderClause { // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
@@ -399,7 +394,8 @@ type AggregateTarget struct {
 	HostName  string
 	ChildName client.Option[string]
 
-	Limit   *parserTypes.Limit
+	Limit   client.Option[uint64]
+	Offset  client.Option[uint64]
 	OrderBy *parserTypes.OrderBy
 	Filter  *Filter
 }
@@ -417,7 +413,8 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 			hostName := argument.Name.Value
 			var childName string
 			var filter *Filter
-			var limit *parserTypes.Limit
+			var limit client.Option[uint64]
+			var offset client.Option[uint64]
 			var order *parserTypes.OrderBy
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
@@ -437,30 +434,21 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 			}
 
 			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
-			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
-			var limitValue int64
-			var offsetValue int64
 			if hasLimitArg {
-				var err error
-				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				limitValue, err := strconv.ParseUint(limitArg.Value.(*ast.IntValue).Value, 10, 64)
 				if err != nil {
 					return nil, err
 				}
+				limit = client.Some(limitValue)
 			}
 
+			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
 			if hasOffsetArg {
-				var err error
-				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
+				offsetValue, err := strconv.ParseUint(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
 				if err != nil {
 					return nil, err
 				}
-			}
-
-			if hasLimitArg || hasOffsetArg {
-				limit = &parserTypes.Limit{
-					Limit:  limitValue,
-					Offset: offsetValue,
-				}
+				offset = client.Some(offsetValue)
 			}
 
 			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
@@ -500,6 +488,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 				ChildName: client.Some(childName),
 				Filter:    filter,
 				Limit:     limit,
+				Offset:    offset,
 				OrderBy:   order,
 			}
 		}
