@@ -629,18 +629,18 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source *parser.Filter,
+	source client.Option[parser.Filter],
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
 ) ([]Requestable, error) {
-	if source == nil {
+	if !source.HasValue() {
 		return nil, nil
 	}
 
 	return resolveInnerFilterDependencies(
 		descriptionsRepo,
 		parentCollectionName,
-		source.Conditions,
+		source.Value().Conditions,
 		mapping,
 		existingFields,
 	)
@@ -832,20 +832,20 @@ func toField(index int, parsed *parser.Select) Field {
 // ToFilter converts the given `source` parser filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
-func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
-	if source == nil {
+func ToFilter(source client.Option[parser.Filter], mapping *core.DocumentMapping) *Filter {
+	if !source.HasValue() {
 		return nil
 	}
-	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
+	conditions := make(map[connor.FilterKey]any, len(source.Value().Conditions))
 
-	for sourceKey, sourceClause := range source.Conditions {
+	for sourceKey, sourceClause := range source.Value().Conditions {
 		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
 		conditions[key] = clause
 	}
 
 	return &Filter{
 		Conditions:         conditions,
-		ExternalConditions: source.Conditions,
+		ExternalConditions: source.Value().Conditions,
 	}
 }
 
@@ -1158,7 +1158,7 @@ type aggregateRequestTarget struct {
 	childExternalName string
 
 	// The aggregate filter specified by the consumer for this target. Optional.
-	filter *parser.Filter
+	filter client.Option[parser.Filter]
 
 	// The aggregate limit-offset specified by the consumer for this target. Optional.
 	limit *Limit
@@ -1213,20 +1213,20 @@ collectionLoop:
 				continue collectionLoop
 			}
 
-			if target.filter == nil && potentialMatchingTarget.filter != nil {
+			if !target.filter.HasValue() && potentialMatchingTarget.filter.HasValue() {
 				continue collectionLoop
 			}
 
-			if potentialMatchingTarget.filter == nil && target.filter != nil {
+			if !potentialMatchingTarget.filter.HasValue() && target.filter.HasValue() {
 				continue collectionLoop
 			}
 
-			if target.filter == nil && potentialMatchingTarget.filter == nil {
+			if !target.filter.HasValue() && !potentialMatchingTarget.filter.HasValue() {
 				// target matches, so continue the `target` loop and check the remaining.
 				continue
 			}
 
-			if !reflect.DeepEqual(target.filter.Conditions, potentialMatchingTarget.filter.Conditions) {
+			if !reflect.DeepEqual(target.filter.Value().Conditions, potentialMatchingTarget.filter.Value().Conditions) {
 				continue collectionLoop
 			}
 		}
@@ -1273,23 +1273,23 @@ func tryGetTarget(
 // appendNotNilFilter appends a not nil filter for the given child field
 // to the given Select.
 func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
-	if field.filter == nil {
-		field.filter = &parser.Filter{}
-	}
-
-	if field.filter.Conditions == nil {
-		field.filter.Conditions = map[string]any{}
+	if !field.filter.HasValue() || field.filter.Value().Conditions == nil {
+		field.filter = client.Some(
+			parser.Filter{
+				Conditions: map[string]any{},
+			},
+		)
 	}
 
 	var childBlock any
 	var hasChildBlock bool
 	if childField == "" {
-		childBlock = field.filter.Conditions
+		childBlock = field.filter.Value().Conditions
 	} else {
-		childBlock, hasChildBlock = field.filter.Conditions[childField]
+		childBlock, hasChildBlock = field.filter.Value().Conditions[childField]
 		if !hasChildBlock {
 			childBlock = map[string]any{}
-			field.filter.Conditions[childField] = childBlock
+			field.filter.Value().Conditions[childField] = childBlock
 		}
 	}
 

@@ -56,7 +56,7 @@ type Mutation struct {
 	Schema string
 
 	IDs    client.Option[[]string]
-	Filter *Filter
+	Filter client.Option[Filter]
 	Data   string
 
 	Fields []Selection

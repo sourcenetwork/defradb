@@ -18,6 +18,7 @@ import (
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
@@ -35,29 +36,29 @@ type Filter struct {
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
+func NewFilter(stmt *ast.ObjectValue) (client.Option[Filter], error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
-		return nil, err
+		return client.None[Filter](), err
 	}
-	return &Filter{
+	return client.Some(Filter{
 		Conditions: conditions,
-	}, nil
+	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(body string) (*Filter, error) {
+func NewFilterFromString(body string) (client.Option[Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return nil, err
+		return client.None[Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return nil, err
+		return client.None[Filter](), err
 	}
 
 	return NewFilter(obj)

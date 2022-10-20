@@ -54,8 +54,7 @@ type Select struct {
 	Offset  client.Option[uint64]
 	OrderBy client.Option[parserTypes.OrderBy]
 	GroupBy client.Option[parserTypes.GroupBy]
-
-	Filter *Filter
+	Filter  client.Option[Filter]
 
 	Fields []Selection
 }
@@ -399,7 +398,7 @@ type AggregateTarget struct {
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
 	OrderBy client.Option[parserTypes.OrderBy]
-	Filter  *Filter
+	Filter  client.Option[Filter]
 }
 
 func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
@@ -414,7 +413,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 		case []*ast.ObjectField:
 			hostName := argument.Name.Value
 			var childName string
-			var filter *Filter
+			var filter client.Option[Filter]
 			var limit client.Option[uint64]
 			var offset client.Option[uint64]
 			var order client.Option[parserTypes.OrderBy]
@@ -428,11 +427,11 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 
 			filterArg, hasFilterArg := tryGet(argumentValue, parserTypes.FilterClause)
 			if hasFilterArg {
-				var err error
-				filter, err = NewFilter(filterArg.Value.(*ast.ObjectValue))
+				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue))
 				if err != nil {
 					return nil, err
 				}
+				filter = filterValue
 			}
 
 			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)

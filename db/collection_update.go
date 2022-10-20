@@ -606,7 +606,7 @@ func (c *collection) makeSelectionQuery(
 		if fval == "" {
 			return nil, errors.New("invalid filter")
 		}
-		var p *parser.Filter
+		var p client.Option[parser.Filter]
 		p, err = parser.NewFilterFromString(fval)
 		if err != nil {
 			return nil, err
