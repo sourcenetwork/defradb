@@ -48,9 +48,8 @@ var (
 // @todo: Change name to ObjectMutation to indicate
 // generated object mutation actions
 type Mutation struct {
-	Name  string
-	Alias string
-	Type  MutationType
+	Field
+	Type MutationType
 
 	// Schema is the target schema/collection
 	// if this mutation is on an object.
@@ -71,8 +70,10 @@ func (m Mutation) GetRoot() parserTypes.SelectionType {
 // the Mutation object. Used to create a Select planNode for the mutation return objects.
 func (m Mutation) ToSelect() *Select {
 	return &Select{
-		Name:    m.Schema,
-		Alias:   m.Alias,
+		Field: Field{
+			Name:  m.Schema,
+			Alias: m.Alias,
+		},
 		Fields:  m.Fields,
 		DocKeys: m.IDs,
 		Filter:  m.Filter,
@@ -110,10 +111,11 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
 func parseMutation(field *ast.Field) (*Mutation, error) {
-	mut := &Mutation{}
-	mut.Name = field.Name.Value
-	if field.Alias != nil {
-		mut.Alias = field.Alias.Value
+	mut := &Mutation{
+		Field: Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 	}
 
 	// parse the mutation type

@@ -42,10 +42,7 @@ type Selection any
 // fields, and query arguments like filters,
 // limits, etc.
 type Select struct {
-	Name string
-	// The identifier to be used in the rendered results, typically specified by
-	// the user.
-	Alias string
+	Field
 
 	DocKeys client.Option[[]string]
 	CID     client.Option[string]
@@ -125,7 +122,7 @@ func (s Select) validateGroupBy() []error {
 // Field implements Selection
 type Field struct {
 	Name  string
-	Alias string
+	Alias client.Option[string]
 }
 
 // ParseQuery parses a root ast.Document, and returns a
@@ -214,8 +211,10 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 
 				// Top-level aggregates must be wrapped in a top-level Select for now
 				parsedSelection = &Select{
-					Name:  parsed.Name,
-					Alias: parsed.Alias,
+					Field: Field{
+						Name:  parsed.Name,
+						Alias: parsed.Alias,
+					},
 					Fields: []Selection{
 						parsed,
 					},
@@ -251,9 +250,11 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // filters, limits, orders, etc..
 func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
 	slct := &Select{
-		Alias: getFieldAlias(field),
-		Name:  field.Name.Value,
-		Root:  rootType,
+		Field: Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
+		Root: rootType,
 	}
 
 	// parse arguments
@@ -340,11 +341,11 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 	return slct, err
 }
 
-func getFieldAlias(field *ast.Field) string {
+func getFieldAlias(field *ast.Field) client.Option[string] {
 	if field.Alias == nil {
-		return field.Name.Value
+		return client.None[string]()
 	}
-	return field.Alias.Value
+	return client.Some(field.Alias.Value)
 }
 
 func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
@@ -389,8 +390,7 @@ func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
 }
 
 type Aggregate struct {
-	Name  string
-	Alias string
+	Field
 
 	Targets []*AggregateTarget
 }
@@ -506,8 +506,10 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 	}
 
 	return &Aggregate{
-		Alias:   getFieldAlias(field),
-		Name:    field.Name.Value,
+		Field: Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 		Targets: targets,
 	}, nil
 }

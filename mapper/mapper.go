@@ -132,7 +132,11 @@ func resolveOrderDependencies(
 			mapping.Add(index, joinField)
 
 			// Resolve the inner child fields and get it's mapping.
-			dummyJoinFieldSelect := parser.Select{Name: joinField}
+			dummyJoinFieldSelect := parser.Select{
+				Field: parser.Field{
+					Name: joinField,
+				},
+			}
 			innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
 			if err != nil {
 				return err
@@ -225,7 +229,9 @@ func resolveAggregates(
 
 				dummyParsed := &parser.Select{
 					Root: parsed.Root,
-					Name: target.hostExternalName,
+					Field: parser.Field{
+						Name: target.hostExternalName,
+					},
 				}
 
 				childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, desc.Name)
@@ -455,7 +461,7 @@ func getRequestables(
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   f.Alias,
+				Key:   getRenderKey(f),
 			})
 		case *parser.Select:
 			index := mapping.GetNextIndex()
@@ -469,7 +475,7 @@ func getRequestables(
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   f.Alias,
+				Key:   getRenderKey(&f.Field),
 			})
 
 			mapping.Add(index, f.Name)
@@ -484,7 +490,7 @@ func getRequestables(
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   f.Alias,
+				Key:   getRenderKey(&f.Field),
 			})
 
 			mapping.Add(index, f.Name)
@@ -496,6 +502,13 @@ func getRequestables(
 		}
 	}
 	return
+}
+
+func getRenderKey(field *parser.Field) string {
+	if field.Alias.HasValue() {
+		return field.Alias.Value()
+	}
+	return field.Name
 }
 
 func getAggregateRequests(index int, aggregate *parser.Aggregate) (aggregateRequest, error) {
@@ -654,7 +667,9 @@ func resolveInnerFilterDependencies(
 			index := mapping.GetNextIndex()
 
 			dummyParsed := &parser.Select{
-				Name: key,
+				Field: parser.Field{
+					Name: key,
+				},
 			}
 
 			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
@@ -708,7 +723,9 @@ func resolveInnerFilterDependencies(
 		}
 
 		dummyParsed := &parser.Select{
-			Name: key,
+			Field: parser.Field{
+				Name: key,
+			},
 		}
 
 		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)

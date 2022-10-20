@@ -25,8 +25,7 @@ var (
 )
 
 type CommitSelect struct {
-	Alias string
-	Name  string
+	Field
 
 	DocKey    string
 	FieldName client.Option[string]
@@ -46,7 +45,10 @@ func (c CommitSelect) GetRoot() parserTypes.SelectionType {
 
 func (c CommitSelect) ToSelect() *Select {
 	return &Select{
-		Alias:   c.Alias,
+		Field: Field{
+			Name:  c.Name,
+			Alias: c.Alias,
+		},
 		Limit:   c.Limit,
 		OrderBy: c.OrderBy,
 		GroupBy: c.GroupBy,
@@ -57,8 +59,10 @@ func (c CommitSelect) ToSelect() *Select {
 
 func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	commit := &CommitSelect{
-		Name:  field.Name.Value,
-		Alias: getFieldAlias(field),
+		Field: Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 	}
 
 	for _, argument := range field.Arguments {
