@@ -293,7 +293,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
 					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocKey = parsed.DocKeys.Value()[0] // @todo check length
+					commitSlct.DocKey = client.Some(parsed.DocKeys.Value()[0]) // @todo check length
 					commitSlct.Cid = parsed.Cid
 				}
 
