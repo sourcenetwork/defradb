@@ -19,13 +19,13 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -276,7 +276,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc[parserTypes.DocKeyFieldName].(string))
+		results.DocKeys = append(results.DocKeys, doc[request.DocKeyFieldName].(string))
 		results.Count++
 	}
 
@@ -656,7 +656,7 @@ func (c *collection) makeSelectLocal(filter *mapper.Filter, mapping *core.Docume
 
 func (c *collection) createMapping() *core.DocumentMapping {
 	mapping := core.NewDocumentMapping()
-	mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
+	mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
 	for _, fd := range c.Schema().Fields {
 		if fd.IsObject() {
 			continue

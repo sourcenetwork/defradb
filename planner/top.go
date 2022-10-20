@@ -11,10 +11,10 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 const topLevelNodeKind string = "topLevelNode"
@@ -189,11 +189,11 @@ func (p *Planner) Top(m *mapper.Select) (*topLevelNode, error) {
 			var child planNode
 			var err error
 			switch field.GetName() {
-			case parserTypes.CountFieldName:
+			case request.CountFieldName:
 				child, err = p.Count(f, m)
-			case parserTypes.SumFieldName:
+			case request.SumFieldName:
 				child, err = p.Sum(f, m)
-			case parserTypes.AverageFieldName:
+			case request.AverageFieldName:
 				child, err = p.Average(f)
 			}
 			if err != nil {

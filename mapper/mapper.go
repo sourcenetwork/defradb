@@ -17,13 +17,13 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // ToSelect converts the given [parser.Select] into a [Select].
@@ -88,9 +88,9 @@ func toSelect(
 
 	// If there is a groupby, and no inner group has been requested, we need to map the property here
 	if parsed.GroupBy.HasValue() {
-		if _, isGroupFieldMapped := mapping.IndexesByName[parserTypes.GroupFieldName]; !isGroupFieldMapped {
+		if _, isGroupFieldMapped := mapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
 			index := mapping.GetNextIndex()
-			mapping.Add(index, parserTypes.GroupFieldName)
+			mapping.Add(index, request.GroupFieldName)
 		}
 	}
 
@@ -108,7 +108,7 @@ func toSelect(
 func resolveOrderDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	descName string,
-	source client.Option[parserTypes.OrderBy],
+	source client.Option[request.OrderBy],
 	mapping *core.DocumentMapping,
 	existingFields *[]Requestable,
 ) error {
@@ -350,9 +350,9 @@ func fieldAt(fields []Requestable, index int) Requestable {
 // aggregateDependencies maps aggregate names to the names of any aggregates
 // that they may be dependent on.
 var aggregateDependencies = map[string][]string{
-	parserTypes.AverageFieldName: {
-		parserTypes.CountFieldName,
-		parserTypes.SumFieldName,
+	request.AverageFieldName: {
+		request.CountFieldName,
+		request.SumFieldName,
 	},
 }
 
@@ -381,7 +381,7 @@ func appendUnderlyingAggregates(
 
 		for _, target := range aggregate.targets {
 			if target.childExternalName != "" {
-				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; isAggregate {
+				if _, isAggregate := request.Aggregates[target.childExternalName]; isAggregate {
 					continue
 				}
 			}
@@ -538,14 +538,14 @@ func getCollectionName(
 	parsed *parser.Select,
 	parentCollectionName string,
 ) (string, error) {
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
 		// This string is not used or referenced, its value is only there to aid debugging
 		return "_topLevel", nil
 	}
 
-	if parsed.Name == parserTypes.GroupFieldName {
+	if parsed.Name == request.GroupFieldName {
 		return parentCollectionName, nil
-	} else if parsed.Root == parserTypes.CommitSelection {
+	} else if parsed.Root == request.CommitSelection {
 		return parentCollectionName, nil
 	}
 
@@ -574,14 +574,14 @@ func getTopLevelInfo(
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
 
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
 		return mapping, &client.CollectionDescription{}, nil
 	}
 
-	if parsed.Root == parserTypes.ObjectSelection {
-		mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
+	if parsed.Root == request.ObjectSelection {
+		mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
 
 		desc, err := descriptionsRepo.getCollectionDesc(collectionName)
 		if err != nil {
@@ -605,22 +605,22 @@ func getTopLevelInfo(
 		return mapping, &desc, nil
 	}
 
-	if parsed.Name == parserTypes.LinksFieldName {
-		for i, f := range parserTypes.LinksFields {
+	if parsed.Name == request.LinksFieldName {
+		for i, f := range request.LinksFields {
 			mapping.Add(i, f)
 		}
 
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(parserTypes.LinksFieldName)
+		mapping.SetTypeName(request.LinksFieldName)
 	} else {
-		for i, f := range parserTypes.VersionFields {
+		for i, f := range request.VersionFields {
 			mapping.Add(i, f)
 		}
 
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(parserTypes.CommitTypeName)
+		mapping.SetTypeName(request.CommitTypeName)
 	}
 
 	return mapping, &client.CollectionDescription{}, nil
@@ -656,7 +656,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if strings.HasPrefix(key, "_") && key != parserTypes.DocKeyFieldName {
+		if strings.HasPrefix(key, "_") && key != request.DocKeyFieldName {
 			continue
 		}
 
@@ -858,7 +858,7 @@ func toFilterMap(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != parserTypes.DocKeyFieldName {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocKeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
@@ -939,7 +939,7 @@ func toLimit(limit client.Option[uint64], offset client.Option[uint64]) *Limit {
 	}
 }
 
-func toGroupBy(source client.Option[parserTypes.GroupBy], mapping *core.DocumentMapping) *GroupBy {
+func toGroupBy(source client.Option[request.GroupBy], mapping *core.DocumentMapping) *GroupBy {
 	if !source.HasValue() {
 		return nil
 	}
@@ -963,7 +963,7 @@ func toGroupBy(source client.Option[parserTypes.GroupBy], mapping *core.Document
 	}
 }
 
-func toOrderBy(source client.Option[parserTypes.OrderBy], mapping *core.DocumentMapping) *OrderBy {
+func toOrderBy(source client.Option[request.OrderBy], mapping *core.DocumentMapping) *OrderBy {
 	if !source.HasValue() {
 		return nil
 	}
@@ -1165,7 +1165,7 @@ type aggregateRequestTarget struct {
 
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
-	order client.Option[parserTypes.OrderBy]
+	order client.Option[request.OrderBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer

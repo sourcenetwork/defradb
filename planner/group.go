@@ -13,10 +13,10 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // A node responsible for the grouping of documents by a given selection of fields.
@@ -55,7 +55,7 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		dataSources = append(
 			dataSources,
 			// If there are no child selects, then we just take the first field index of name _group
-			newDataSource(parsed.DocumentMapping.FirstIndexOfName(parserTypes.GroupFieldName)),
+			newDataSource(parsed.DocumentMapping.FirstIndexOfName(request.GroupFieldName)),
 		)
 	}
 

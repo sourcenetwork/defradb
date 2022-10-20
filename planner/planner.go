@@ -15,13 +15,13 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/mapper"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -125,7 +125,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 			return nil, err
 		}
 
-		if _, isAgg := parserTypes.Aggregates[n.Name]; isAgg {
+		if _, isAgg := request.Aggregates[n.Name]; isAgg {
 			// If this Select is an aggregate, then it must be a top-level
 			// aggregate and we need to resolve it within the context of a
 			// top-level node.
@@ -460,7 +460,7 @@ func (p *Planner) explainRequest(
 
 	topExplainGraph := []map[string]any{
 		{
-			parserTypes.ExplainLabel: explainGraph,
+			request.ExplainLabel: explainGraph,
 		},
 	}
 

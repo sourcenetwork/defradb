@@ -17,11 +17,11 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type dagScanNode struct {
@@ -308,7 +308,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	heads := make([]*ipld.Link, 0)
 
 	// links
-	linksIndexes := n.parsed.DocumentMapping.IndexesByName[parserTypes.LinksFieldName]
+	linksIndexes := n.parsed.DocumentMapping.IndexesByName[request.LinksFieldName]
 
 	for _, linksIndex := range linksIndexes {
 		links := make([]core.Doc, len(nd.Links()))

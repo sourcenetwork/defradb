@@ -19,8 +19,8 @@ import (
 	gqls "github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // Filter contains the parsed condition map to be
@@ -72,20 +72,20 @@ type parseFn func(*ast.ObjectValue) (any, error)
 // This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]request.OrderCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]parserTypes.OrderCondition); ok {
+	if v, ok := cond.([]request.OrderCondition); ok {
 		return v, nil
 	}
 	return nil, errors.New("failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
-	conditions := make([]parserTypes.OrderCondition, 0)
+	conditions := make([]request.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -98,16 +98,16 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 		switch v := val.(type) {
 		case string: // base direction parsed (hopefully, check NameToOrderDirection)
-			dir, ok := parserTypes.NameToOrderDirection[v]
+			dir, ok := request.NameToOrderDirection[v]
 			if !ok {
 				return nil, errors.New("invalid order direction string")
 			}
-			conditions = append(conditions, parserTypes.OrderCondition{
+			conditions = append(conditions, request.OrderCondition{
 				Fields:    []string{name},
 				Direction: dir,
 			})
 
-		case []parserTypes.OrderCondition: // flatten and incorporate the parsed slice into our current one
+		case []request.OrderCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
 				// Eg. order: {author: {name: ASC, birthday: DESC}}

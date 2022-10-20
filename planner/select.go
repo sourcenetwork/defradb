@@ -14,12 +14,12 @@ import (
 	cid "github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 /*
@@ -264,11 +264,11 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 			var aggregateError error
 
 			switch f.Name {
-			case parserTypes.CountFieldName:
+			case request.CountFieldName:
 				plan, aggregateError = n.p.Count(f, parsed)
-			case parserTypes.SumFieldName:
+			case request.SumFieldName:
 				plan, aggregateError = n.p.Sum(f, parsed)
-			case parserTypes.AverageFieldName:
+			case request.AverageFieldName:
 				plan, aggregateError = n.p.Average(f)
 			}
 
@@ -280,7 +280,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				aggregates = append(aggregates, plan)
 			}
 		case *mapper.Select:
-			if f.Name == parserTypes.VersionFieldName { // reserved sub type for object queries
+			if f.Name == request.VersionFieldName { // reserved sub type for object queries
 				commitSlct := &mapper.CommitSelect{
 					Select: *f,
 				}
@@ -302,7 +302,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
 					return nil, err
 				}
-			} else if f.Name == parserTypes.GroupFieldName {
+			} else if f.Name == request.GroupFieldName {
 				if parsed.GroupBy == nil {
 					return nil, errors.New("_group may only be referenced when within a groupBy query")
 				}

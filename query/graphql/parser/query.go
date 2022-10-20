@@ -16,8 +16,8 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type Query struct {
@@ -43,12 +43,12 @@ type Select struct {
 	CID     client.Option[string]
 
 	// Root is the top level query parsed type
-	Root parserTypes.SelectionType
+	Root request.SelectionType
 
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
-	OrderBy client.Option[parserTypes.OrderBy]
-	GroupBy client.Option[parserTypes.GroupBy]
+	OrderBy client.Option[request.OrderBy]
+	GroupBy client.Option[request.GroupBy]
 	Filter  client.Option[Filter]
 
 	Fields []Selection
@@ -89,7 +89,7 @@ func (s Select) validateGroupBy() []error {
 	for _, childSelection := range s.Fields {
 		switch typedChildSelection := childSelection.(type) {
 		case *Field:
-			if typedChildSelection.Name == parserTypes.TypeNameFieldName {
+			if typedChildSelection.Name == request.TypeNameFieldName {
 				// _typeName is permitted
 				continue
 			}
@@ -165,7 +165,7 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 	//         unless we add another directive named `@explain` at another location (which we should not).
 	for _, directive := range directives {
 		// The arguments pased to the directive are at `directive.Arguments`.
-		if directive.Name.Value == parserTypes.ExplainLabel {
+		if directive.Name.Value == request.ExplainLabel {
 			return true
 		}
 	}
@@ -186,14 +186,14 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 		var parsedSelection Selection
 		switch node := selection.(type) {
 		case *ast.Field:
-			if _, isCommitQuery := parserTypes.CommitQueries[node.Name.Value]; isCommitQuery {
+			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
 				parsed, err := parseCommitSelect(node)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := parserTypes.Aggregates[node.Name.Value]; isAggregate {
+			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
 				parsed, err := parseAggregate(node, i)
 				if err != nil {
 					return nil, []error{err}
@@ -212,7 +212,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(parserTypes.ObjectSelection, node, i)
+				parsed, err := parseSelect(request.ObjectSelection, node, i)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -238,7 +238,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
+func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*Select, error) {
 	slct := &Select{
 		Field: Field{
 			Name:  field.Name.Value,
@@ -253,7 +253,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 		astValue := argument.Value
 
 		// parse filter
-		if prop == parserTypes.FilterClause {
+		if prop == request.FilterClause {
 			obj := astValue.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
@@ -261,45 +261,45 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 
 			slct.Filter = filter
-		} else if prop == parserTypes.DocKey { // parse single dockey query field
+		} else if prop == request.DocKey { // parse single dockey query field
 			val := astValue.(*ast.StringValue)
 			slct.DocKeys = client.Some([]string{val.Value})
-		} else if prop == parserTypes.DocKeys {
+		} else if prop == request.DocKeys {
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
 			slct.DocKeys = client.Some(docKeys)
-		} else if prop == parserTypes.Cid { // parse single CID query field
+		} else if prop == request.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
 			slct.CID = client.Some(val.Value)
-		} else if prop == parserTypes.LimitClause { // parse limit/offset
+		} else if prop == request.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			slct.Limit = client.Some(limit)
-		} else if prop == parserTypes.OffsetClause { // parse limit/offset
+		} else if prop == request.OffsetClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			slct.Offset = client.Some(offset)
-		} else if prop == parserTypes.OrderClause { // parse order by
+		} else if prop == request.OrderClause { // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
 			slct.OrderBy = client.Some(
-				parserTypes.OrderBy{
+				request.OrderBy{
 					Conditions: cond,
 				},
 			)
-		} else if prop == parserTypes.GroupByClause {
+		} else if prop == request.GroupByClause {
 			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
@@ -307,7 +307,7 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 			}
 
 			slct.GroupBy = client.Some(
-				parserTypes.GroupBy{
+				request.GroupBy{
 					Fields: fields,
 				},
 			)
@@ -336,13 +336,13 @@ func getFieldAlias(field *ast.Field) client.Option[string] {
 	return client.Some(field.Alias.Value)
 }
 
-func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
+func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
 	selections := make([]Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			if _, isAggregate := parserTypes.Aggregates[node.Name.Value]; isAggregate {
+			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
 				s, err := parseAggregate(node, i)
 				if err != nil {
 					return nil, err
@@ -353,8 +353,8 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 			} else { // sub type with extra fields
 				subroot := root
 				switch node.Name.Value {
-				case parserTypes.VersionFieldName:
-					subroot = parserTypes.CommitSelection
+				case request.VersionFieldName:
+					subroot = request.CommitSelection
 				}
 				s, err := parseSelect(subroot, node, i)
 				if err != nil {
@@ -389,7 +389,7 @@ type AggregateTarget struct {
 
 	Limit   client.Option[uint64]
 	Offset  client.Option[uint64]
-	OrderBy client.Option[parserTypes.OrderBy]
+	OrderBy client.Option[request.OrderBy]
 	Filter  client.Option[Filter]
 }
 
@@ -408,16 +408,16 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 			var filter client.Option[Filter]
 			var limit client.Option[uint64]
 			var offset client.Option[uint64]
-			var order client.Option[parserTypes.OrderBy]
+			var order client.Option[request.OrderBy]
 
-			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
+			fieldArg, hasFieldArg := tryGet(argumentValue, request.Field)
 			if hasFieldArg {
 				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
 					childName = innerPathStringValue
 				}
 			}
 
-			filterArg, hasFilterArg := tryGet(argumentValue, parserTypes.FilterClause)
+			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
 			if hasFilterArg {
 				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue))
 				if err != nil {
@@ -426,7 +426,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 				filter = filterValue
 			}
 
-			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
+			limitArg, hasLimitArg := tryGet(argumentValue, request.LimitClause)
 			if hasLimitArg {
 				limitValue, err := strconv.ParseUint(limitArg.Value.(*ast.IntValue).Value, 10, 64)
 				if err != nil {
@@ -435,7 +435,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 				limit = client.Some(limitValue)
 			}
 
-			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
+			offsetArg, hasOffsetArg := tryGet(argumentValue, request.OffsetClause)
 			if hasOffsetArg {
 				offsetValue, err := strconv.ParseUint(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
 				if err != nil {
@@ -444,17 +444,17 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 				offset = client.Some(offsetValue)
 			}
 
-			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
+			orderArg, hasOrderArg := tryGet(argumentValue, request.OrderClause)
 			if hasOrderArg {
 				switch orderArgValue := orderArg.Value.(type) {
 				case *ast.EnumValue:
 					// For inline arrays the order arg will be a simple enum declaring the order direction
 					orderDirectionString := orderArgValue.Value
-					orderDirection := parserTypes.OrderDirection(orderDirectionString)
+					orderDirection := request.OrderDirection(orderDirectionString)
 
 					order = client.Some(
-						parserTypes.OrderBy{
-							Conditions: []parserTypes.OrderCondition{
+						request.OrderBy{
+							Conditions: []request.OrderCondition{
 								{
 									Direction: orderDirection,
 								},
@@ -473,7 +473,7 @@ func parseAggregate(field *ast.Field, index int) (*Aggregate, error) {
 					}
 
 					order = client.Some(
-						parserTypes.OrderBy{
+						request.OrderBy{
 							Conditions: orderConditions,
 						},
 					)

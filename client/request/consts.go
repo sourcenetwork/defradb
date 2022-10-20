@@ -8,36 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package types defines the GraphQL types used by the query service.
-*/
-package types
-
-type (
-	OrderDirection string
-
-	SelectionType int
-
-	OrderCondition struct {
-		// field may be a compound field statement
-		// since the order statement allows ordering on
-		// sub objects.
-		//
-		// Given the statement: {order: {author: {birthday: DESC}}}
-		// The field value would be "author.birthday"
-		// and the direction would be "DESC"
-		Fields    []string
-		Direction OrderDirection
-	}
-
-	GroupBy struct {
-		Fields []string
-	}
-
-	OrderBy struct {
-		Conditions []OrderCondition
-	}
-)
+package request
 
 const (
 	// GQL special field, returns the host object's type name
@@ -82,11 +53,6 @@ const (
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
-)
-
-const (
-	ObjectSelection SelectionType = iota
-	CommitSelection
 )
 
 var (
