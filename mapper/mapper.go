@@ -580,7 +580,7 @@ func getTopLevelInfo(
 		return mapping, &client.CollectionDescription{}, nil
 	}
 
-	if parsed.Root != parserTypes.CommitSelection {
+	if parsed.Root == parserTypes.ObjectSelection {
 		mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
 
 		desc, err := descriptionsRepo.getCollectionDesc(collectionName)

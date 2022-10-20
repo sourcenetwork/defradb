@@ -85,8 +85,7 @@ const (
 )
 
 const (
-	NoneSelection = iota
-	ObjectSelection
+	ObjectSelection SelectionType = iota
 	CommitSelection
 )
 
