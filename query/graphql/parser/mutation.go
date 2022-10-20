@@ -62,10 +62,6 @@ type Mutation struct {
 	Fields []Selection
 }
 
-func (m Mutation) GetRoot() parserTypes.SelectionType {
-	return parserTypes.ObjectSelection
-}
-
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
 // the Mutation object. Used to create a Select planNode for the mutation return objects.
 func (m Mutation) ToSelect() *Select {
@@ -184,6 +180,6 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 	}
 
 	var err error
-	mut.Fields, err = parseSelectFields(mut.GetRoot(), field.SelectionSet)
+	mut.Fields, err = parseSelectFields(parserTypes.ObjectSelection, field.SelectionSet)
 	return mut, err
 }
