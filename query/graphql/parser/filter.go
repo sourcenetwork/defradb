@@ -81,7 +81,7 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition
 	if v, ok := cond.([]parserTypes.OrderCondition); ok {
 		return v, nil
 	}
-	return nil, errors.New("Failed to parse statement")
+	return nil, errors.New("failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
@@ -100,7 +100,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 		case string: // base direction parsed (hopefully, check NameToOrderDirection)
 			dir, ok := parserTypes.NameToOrderDirection[v]
 			if !ok {
-				return nil, errors.New("Invalid order direction string")
+				return nil, errors.New("invalid order direction string")
 			}
 			conditions = append(conditions, parserTypes.OrderCondition{
 				Field:     name,
@@ -119,7 +119,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 			}
 
 		default:
-			return nil, errors.New("Unexpected parsed type for parseConditionInOrder")
+			return nil, errors.New("unexpected parsed type for parseConditionInOrder")
 		}
 	}
 
@@ -137,7 +137,7 @@ func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
 	if v, ok := cond.(map[string]any); ok {
 		return v, nil
 	}
-	return nil, errors.New("Failed to parse statement")
+	return nil, errors.New("failed to parse statement")
 }
 
 func parseConditions(stmt *ast.ObjectValue) (any, error) {
@@ -194,7 +194,7 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 		return conditions, nil
 	}
 
-	return nil, errors.New("Failed to parse condition value from query filter statement")
+	return nil, errors.New("failed to parse condition value from query filter statement")
 }
 
 /*

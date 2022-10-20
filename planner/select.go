@@ -224,7 +224,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			c, err := cid.Decode(n.parsed.Cid.Value())
 			if err != nil {
 				return nil, errors.Wrap(
-					"Failed to propagate VersionFetcher span, invalid CID",
+					"failed to propagate VersionFetcher span, invalid CID",
 					err,
 				)
 			}

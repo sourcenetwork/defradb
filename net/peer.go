@@ -93,7 +93,7 @@ func NewPeer(
 	dialOptions []grpc.DialOption,
 ) (*Peer, error) {
 	if db == nil {
-		return nil, errors.New("Database object can't be empty")
+		return nil, errors.New("database object can't be empty")
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -281,7 +281,7 @@ func (p *Peer) AddReplicator(
 	// verify collection
 	col, err := p.db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return pid, errors.Wrap("Failed to get collection for replicator", err)
+		return pid, errors.Wrap("failed to get collection for replicator", err)
 	}
 
 	// extra peerID
@@ -297,7 +297,7 @@ func (p *Peer) AddReplicator(
 
 	// make sure it's not ourselves
 	if pid == p.host.ID() {
-		return pid, errors.New("Can't target ourselves as a replicator")
+		return pid, errors.New("can't target ourselves as a replicator")
 	}
 
 	// make sure we're not duplicating things
@@ -332,7 +332,7 @@ func (p *Peer) AddReplicator(
 	// create read only txn and assign to col
 	txn, err := p.db.NewTxn(ctx, true)
 	if err != nil {
-		return pid, errors.Wrap("Failed to get txn", err)
+		return pid, errors.Wrap("failed to get txn", err)
 	}
 	col = col.WithTxn(txn)
 
@@ -421,7 +421,7 @@ func (p *Peer) AddReplicator(
 func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
-		return errors.Wrap("Failed to get DocKey from broadcast message", err)
+		return errors.Wrap("failed to get DocKey from broadcast message", err)
 	}
 
 	// push to each peer (replicator)
@@ -433,7 +433,7 @@ func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
 func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
-		return errors.Wrap("Failed to get DocKey from broadcast message", err)
+		return errors.Wrap("failed to get DocKey from broadcast message", err)
 	}
 	log.Debug(
 		p.ctx,

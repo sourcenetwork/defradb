@@ -64,7 +64,7 @@ func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, 
 	var desc client.CollectionDescription
 	buf, err := p.txn.Systemstore().Get(p.ctx, key.ToDS())
 	if err != nil {
-		return desc, errors.Wrap("Failed to get collection description", err)
+		return desc, errors.Wrap("failed to get collection description", err)
 	}
 
 	err = json.Unmarshal(buf, &desc)

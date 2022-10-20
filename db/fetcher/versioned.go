@@ -118,7 +118,7 @@ func (vf *VersionedFetcher) Init(
 // Start serializes the correct state accoriding to the Key and CID
 func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
-		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
+		return errors.New("versionedFetcher cannot be started without a CollectionDescription")
 	}
 
 	if len(spans.Value) != 1 {
@@ -244,7 +244,7 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		}
 		err := vf.merge(cc)
 		if err != nil {
-			return errors.Wrap("Failed merging state", err)
+			return errors.Wrap("failed merging state", err)
 		}
 	}
 
@@ -422,7 +422,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return nil, errors.Wrap("Failed to get DAG Node", err)
+		return nil, errors.Wrap("failed to get DAG Node", err)
 	}
 
 	// get node

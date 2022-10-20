@@ -135,7 +135,7 @@ func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
-		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
+		return nil, errors.New("failed to cast ipld.Node to ProtoNode")
 	}
 	data := pbNode.Data()
 	h := &codec.CborHandle{}

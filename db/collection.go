@@ -34,8 +34,8 @@ import (
 )
 
 var (
-	ErrDocumentAlreadyExists = errors.New("A document with the given dockey already exists")
-	ErrUnknownCRDTArgument   = errors.New("Invalid CRDT arguments")
+	ErrDocumentAlreadyExists = errors.New("a document with the given dockey already exists")
+	ErrUnknownCRDTArgument   = errors.New("invalid CRDT arguments")
 	ErrUnknownCRDT           = errors.New("")
 )
 
@@ -63,29 +63,29 @@ type collection struct {
 // NewCollection returns a pointer to a newly instanciated DB Collection
 func (db *db) newCollection(desc client.CollectionDescription) (*collection, error) {
 	if desc.Name == "" {
-		return nil, errors.New("Collection requires name to not be empty")
+		return nil, errors.New("collection requires name to not be empty")
 	}
 
 	if len(desc.Schema.Fields) == 0 {
-		return nil, errors.New("Collection schema has no fields")
+		return nil, errors.New("collection schema has no fields")
 	}
 
 	docKeyField := desc.Schema.Fields[0]
 	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != "_key" {
-		return nil, errors.New("Collection schema first field must be a DocKey")
+		return nil, errors.New("collection schema first field must be a DocKey")
 	}
 
 	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
 	for i, field := range desc.Schema.Fields {
 		if field.Name == "" {
-			return nil, errors.New("Collection schema field missing Name")
+			return nil, errors.New("collection schema field missing Name")
 		}
 		if field.Kind == client.FieldKind_None {
-			return nil, errors.New("Collection schema field missing FieldKind")
+			return nil, errors.New("collection schema field missing FieldKind")
 		}
 		if (field.Kind != client.FieldKind_DocKey && !field.IsObject()) &&
 			field.Typ == client.NONE_CRDT {
-			return nil, errors.New("Collection schema field missing CRDT type")
+			return nil, errors.New("collection schema field missing CRDT type")
 		}
 		desc.Schema.FieldIDs[i] = uint32(i)
 		desc.Schema.Fields[i].ID = client.FieldID(i)
@@ -122,7 +122,7 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Collection already exists")
+		return nil, errors.New("collection already exists")
 	}
 
 	colSeq, err := db.getSequence(ctx, core.COLLECTION)
@@ -181,7 +181,7 @@ func (db *db) CreateCollection(
 // GetCollection returns an existing collection within the database
 func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
-		return nil, errors.New("Collection name can't be empty")
+		return nil, errors.New("collection name can't be empty")
 	}
 
 	key := core.NewCollectionKey(name)
@@ -233,7 +233,7 @@ func (db *db) GetCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, errors.New("Schema ID can't be empty")
+		return nil, errors.New("schema ID can't be empty")
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
@@ -256,7 +256,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, errors.Wrap("Failed to create collection prefix query", err)
+		return nil, errors.Wrap("failed to create collection prefix query", err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {

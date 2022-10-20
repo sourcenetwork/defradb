@@ -22,7 +22,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 		Query: `query {
 					_avg
 				}`,
-		ExpectedError: "Aggregate must be provided with a property to aggregate.",
+		ExpectedError: "aggregate must be provided with a property to aggregate",
 	}
 
 	executeTestCase(t, test)

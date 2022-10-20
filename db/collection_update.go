@@ -29,10 +29,10 @@ import (
 )
 
 var (
-	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
-	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
+	ErrUpdateTargetEmpty     = errors.New("the doc update targeter cannot be empty")
+	ErrUpdateEmpty           = errors.New("the doc update cannot be empty")
 	ErrInvalidMergeValueType = errors.New(
-		"The type of value in the merge patch doesn't match the schema",
+		"the type of value in the merge patch doesn't match the schema",
 	)
 )
 
@@ -604,7 +604,7 @@ func (c *collection) makeSelectionQuery(
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
-			return nil, errors.New("Invalid filter")
+			return nil, errors.New("invalid filter")
 		}
 		var p *parser.Filter
 		p, err = parser.NewFilterFromString(fval)
@@ -615,10 +615,10 @@ func (c *collection) makeSelectionQuery(
 	case *mapper.Filter:
 		f = fval
 	default:
-		return nil, errors.New("Invalid filter")
+		return nil, errors.New("invalid filter")
 	}
 	if filter == "" {
-		return nil, errors.New("Invalid filter")
+		return nil, errors.New("invalid filter")
 	}
 	slct, err := c.makeSelectLocal(f, mapping)
 	if err != nil {
@@ -697,7 +697,7 @@ func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 ) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
-		return "", errors.New("Invalid patch op path")
+		return "", errors.New("invalid patch op path")
 	}
 
 	return "", nil

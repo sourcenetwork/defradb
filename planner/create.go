@@ -54,7 +54,7 @@ func (n *createNode) Init() error { return nil }
 func (n *createNode) Start() error {
 	// parse the doc
 	if n.newDocStr == "" {
-		return errors.New("Invalid document to create")
+		return errors.New("invalid document to create")
 	}
 
 	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))

@@ -96,7 +96,7 @@ func (p *Planner) isValueFloat(
 
 	child, isChildSelect := parent.FieldAt(source.Index).AsSelect()
 	if !isChildSelect {
-		return false, errors.New("Expected child select but none was found")
+		return false, errors.New("expected child select but none was found")
 	}
 
 	if _, isAggregate := parserTypes.Aggregates[source.ChildTarget.Name]; isAggregate {

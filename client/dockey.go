@@ -56,7 +56,7 @@ func NewDocKeyV0(dataCID cid.Cid) DocKey {
 func NewDocKeyFromString(key string) (DocKey, error) {
 	parts := strings.SplitN(key, "-", 2)
 	if len(parts) != 2 {
-		return DocKey{}, errors.New("Malformed DocKey, missing either version or cid")
+		return DocKey{}, errors.New("malformed DocKey, missing either version or cid")
 	}
 	versionStr := parts[0]
 	_, data, err := mbase.Decode(versionStr)
@@ -69,7 +69,7 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 		return DocKey{}, err
 	}
 	if _, ok := ValidDocKeyVersions[uint16(version)]; !ok {
-		return DocKey{}, errors.New("Invalid DocKey version")
+		return DocKey{}, errors.New("invalid DocKey version")
 	}
 
 	uuid, err := uuid.FromString(parts[1])

@@ -52,7 +52,7 @@ func (c *Client) AddReplicator(
 	paddr ma.Multiaddr,
 ) (peer.ID, error) {
 	if len(collection) == 0 {
-		return "", errors.New("Collection can't be empty")
+		return "", errors.New("collection can't be empty")
 	}
 	if paddr == nil {
 		return "", errors.New("target address can't be empty")
@@ -62,7 +62,7 @@ func (c *Client) AddReplicator(
 		Addr:       paddr.Bytes(),
 	})
 	if err != nil {
-		return "", errors.Wrap("AddReplicator request failed", err)
+		return "", errors.Wrap("could not add replicator", err)
 	}
 	return peer.IDFromBytes(resp.PeerID)
 }
