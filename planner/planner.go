@@ -104,7 +104,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 
 func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
-	case *parser.Query:
+	case *parser.Request:
 		if len(n.Queries) > 0 {
 			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
 		} else if len(n.Mutations) > 0 {
@@ -508,7 +508,7 @@ func (p *Planner) executeRequest(
 // runRequest plans how to run the request, then attempts to run the request and returns the results.
 func (p *Planner) runRequest(
 	ctx context.Context,
-	query *parser.Query,
+	query *parser.Request,
 ) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 
@@ -529,7 +529,7 @@ func (p *Planner) runRequest(
 }
 
 // MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
+func (p *Planner) MakePlan(query *parser.Request) (planNode, error) {
 	return p.makePlan(query)
 }
 

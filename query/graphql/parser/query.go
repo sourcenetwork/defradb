@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-type Query struct {
+type Request struct {
 	Queries   []*OperationDefinition
 	Mutations []*OperationDefinition
 }
@@ -121,11 +121,11 @@ type Field struct {
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
 // Requires a non-nil doc, will error if given a nil doc.
-func ParseQuery(doc *ast.Document) (*Query, []error) {
+func ParseQuery(doc *ast.Document) (*Request, []error) {
 	if doc == nil {
 		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
-	q := &Query{
+	r := &Request{
 		Queries:   make([]*OperationDefinition, 0),
 		Mutations: make([]*OperationDefinition, 0),
 	}
@@ -139,21 +139,21 @@ func ParseQuery(doc *ast.Document) (*Query, []error) {
 				if err != nil {
 					return nil, err
 				}
-				q.Queries = append(q.Queries, qdef)
+				r.Queries = append(r.Queries, qdef)
 			} else if node.Operation == "mutation" {
 				// parse mutation operation definition.
 				mdef, err := parseMutationOperationDefinition(node)
 				if err != nil {
 					return nil, []error{err}
 				}
-				q.Mutations = append(q.Mutations, mdef)
+				r.Mutations = append(r.Mutations, mdef)
 			} else {
 				return nil, []error{errors.New("unknown GraphQL operation type")}
 			}
 		}
 	}
 
-	return q, nil
+	return r, nil
 }
 
 // parseExplainDirective returns true if we parsed / detected the explain directive label
