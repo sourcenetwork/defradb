@@ -54,7 +54,7 @@ func (p *Peer) processLog(
 	// check if we already have this block
 	// exists, err := txn.DAGstore().Has(ctx, c)
 	// if err != nil {
-	// 	return nil, errors.Wrap("Failed to check for existing block %s", c, err)
+	// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
 	// }
 	// if exists {
 	// 	log.Debugf("Already have block %s locally, skipping.", c)
@@ -68,7 +68,7 @@ func (p *Peer) processLog(
 
 	delta, err := crdt.DeltaDecode(nd)
 	if err != nil {
-		return nil, errors.Wrap("Failed to decode delta object", err)
+		return nil, errors.Wrap("failed to decode delta object", err)
 	}
 
 	log.Debug(
@@ -130,7 +130,7 @@ func initCRDTForType(
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	blk, err := blocks.NewBlockWithCid(buf, cid)
 	if err != nil {
-		return nil, errors.Wrap("Failed to create block", err)
+		return nil, errors.Wrap("failed to create block", err)
 	}
 	return format.Decode(blk)
 }

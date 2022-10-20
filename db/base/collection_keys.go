@@ -46,7 +46,7 @@ func MakePrimaryIndexKeyForCRDT(
 		fieldKey := getFieldKey(c, key, fieldName)
 		return MakeCollectionKey(c).WithInstanceInfo(fieldKey), nil
 	}
-	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
+	return core.DataStoreKey{}, errors.New("invalid CRDT type")
 }
 
 func getFieldKey(

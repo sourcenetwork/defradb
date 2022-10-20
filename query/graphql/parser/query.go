@@ -160,7 +160,7 @@ func (c Field) GetRoot() parserTypes.SelectionType {
 // Requires a non-nil doc, will error if given a nil doc.
 func ParseQuery(doc *ast.Document) (*Query, []error) {
 	if doc == nil {
-		return nil, []error{errors.New("ParseQuery requires a non-nil ast.Document")}
+		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
 	q := &Query{
 		Statement: doc,
@@ -186,7 +186,7 @@ func ParseQuery(doc *ast.Document) (*Query, []error) {
 				}
 				q.Mutations = append(q.Mutations, mdef)
 			} else {
-				return nil, []error{errors.New("Unknown GraphQL operation type")}
+				return nil, []error{errors.New("unknown GraphQL operation type")}
 			}
 		}
 	}
@@ -427,6 +427,6 @@ func parseAPIQuery(field *ast.Field) (Selection, error) {
 	case "latestCommits", "commits":
 		return parseCommitSelect(field)
 	default:
-		return nil, errors.New("Unknown query")
+		return nil, errors.New("unknown query")
 	}
 }

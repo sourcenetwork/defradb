@@ -56,7 +56,7 @@ func (hf *HeadFetcher) Start(
 ) error {
 	numspans := len(spans.Value)
 	if numspans == 0 {
-		return errors.New("HeadFetcher must have at least one span")
+		return errors.New("headFetcher must have at least one span")
 	} else if numspans > 1 {
 		// if we have multiple spans, we need to sort them by their start position
 		// so we can do a single iterative sweep
@@ -135,7 +135,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 	}
 
 	if hf.kv == nil {
-		return nil, errors.New("Failed to get head, fetcher hasn't been initialized or started")
+		return nil, errors.New("failed to get head, fetcher hasn't been initialized or started")
 	}
 
 	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
@@ -183,12 +183,12 @@ func (hh *heads) List() ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, errors.Wrap("Failed to get next query result ", err)
+			return nil, 0, errors.Wrap("failed to get next query result ", err)
 		}
 		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
 		headCid, err := dshelp.DsKeyToCid(headKey)
 		if err != nil {
-			return nil, 0, errors.Wrap("Failed to get CID from key ", err)
+			return nil, 0, errors.Wrap("failed to get CID from key ", err)
 		}
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {

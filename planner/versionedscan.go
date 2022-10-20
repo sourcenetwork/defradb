@@ -66,7 +66,7 @@ func (n *versionedScanNode) Start() error {
 
 func (n *versionedScanNode) initScan() error {
 	if n.key.DocKey == "" || n.version.Equals(emptyCID) {
-		return errors.New("VersionedScan is missing either a DocKey or VersionCID")
+		return errors.New("versionedScan is missing either a DocKey or VersionCID")
 	}
 
 	// create a span of the form {DocKey, VersionCID}

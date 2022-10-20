@@ -21,7 +21,7 @@ import (
 
 var (
 	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
-	ErrMismatchedMergeType = errors.New("Given type to merge does not match source")
+	ErrMismatchedMergeType = errors.New("given type to merge does not match source")
 )
 
 // ReplicatedData is a data type that allows concurrent writers

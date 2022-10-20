@@ -36,7 +36,7 @@ var (
 func (s *server) pushLog(ctx context.Context, evt client.UpdateEvent, pid peer.ID) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
-		return errors.Wrap("Failed to get DocKey from broadcast message", err)
+		return errors.Wrap("failed to get DocKey from broadcast message", err)
 	}
 	log.Debug(
 		ctx,
@@ -65,7 +65,7 @@ func (s *server) pushLog(ctx context.Context, evt client.UpdateEvent, pid peer.I
 
 	client, err := s.dial(pid) // grpc dial over p2p stream
 	if err != nil {
-		return errors.Wrap("Failed to push log", err)
+		return errors.Wrap("failed to push log", err)
 	}
 
 	cctx, cancel := context.WithTimeout(ctx, PushTimeout)

@@ -164,7 +164,7 @@ func (n *topLevelNode) Next() (bool, error) {
 				return false, err
 			}
 			if !hasChild {
-				return false, errors.New("Expected child value, however none was yielded")
+				return false, errors.New("expected child value, however none was yielded")
 			}
 
 			n.currentValue = child.Value()

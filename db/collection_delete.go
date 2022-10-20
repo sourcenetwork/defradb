@@ -30,8 +30,8 @@ import (
 )
 
 var (
-	ErrDeleteTargetEmpty = errors.New("The doc delete targeter cannot be empty")
-	ErrDeleteEmpty       = errors.New("The doc delete cannot be empty")
+	ErrDeleteTargetEmpty = errors.New("the doc delete targeter cannot be empty")
+	ErrDeleteEmpty       = errors.New("the doc delete cannot be empty")
 )
 
 // DeleteWith deletes a target document. Target can be a Filter statement,
@@ -293,7 +293,7 @@ func (c *collection) applyFullDelete(
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
 	if err != nil {
-		return errors.Wrap("Failed to get document heads", err)
+		return errors.Wrap("failed to get document heads", err)
 	}
 
 	dagDel := newDagDeleter(txn.DAGstore())

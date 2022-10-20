@@ -41,7 +41,7 @@ type QueryExecutor struct {
 
 func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
 	if manager == nil {
-		return nil, errors.New("SchemaManager cannot be nil")
+		return nil, errors.New("schemaManager cannot be nil")
 	}
 
 	return &QueryExecutor{
@@ -56,7 +56,7 @@ func (e *QueryExecutor) MakeSelectQuery(
 	selectStmt *mapper.Select,
 ) (Query, error) {
 	if selectStmt == nil {
-		return nil, errors.New("Cannot create query without a selection")
+		return nil, errors.New("cannot create query without a selection")
 	}
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(selectStmt)

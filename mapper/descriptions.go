@@ -50,7 +50,7 @@ func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDesc
 	key := core.NewCollectionKey(name)
 	buf, err := r.txn.Systemstore().Get(r.ctx, key.ToDS())
 	if err != nil {
-		return client.CollectionDescription{}, errors.Wrap("Failed to get collection description", err)
+		return client.CollectionDescription{}, errors.Wrap("failed to get collection description", err)
 	}
 
 	desc := client.CollectionDescription{}

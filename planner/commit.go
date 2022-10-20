@@ -299,7 +299,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return core.Doc{}, nil, errors.New("Commit Delta missing priority key")
+		return core.Doc{}, nil, errors.New("commit Delta missing priority key")
 	}
 
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
