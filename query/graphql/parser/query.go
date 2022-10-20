@@ -349,7 +349,7 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 				}
 				selections[i] = s
 			} else if node.SelectionSet == nil { // regular field
-				selections[i] = parseField(root, node)
+				selections[i] = parseField(node)
 			} else { // sub type with extra fields
 				subroot := root
 				switch node.Name.Value {
@@ -370,7 +370,7 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
+func parseField(field *ast.Field) *Field {
 	return &Field{
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
