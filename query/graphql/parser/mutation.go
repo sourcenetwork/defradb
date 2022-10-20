@@ -83,7 +83,6 @@ func (m Mutation) ToSelect() *Select {
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
 	qdef := &OperationDefinition{
-		Statement:  def,
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
 
@@ -93,7 +92,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
-	for i, selection := range qdef.Statement.SelectionSet.Selections {
+	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
 			mut, err := parseMutation(node)
