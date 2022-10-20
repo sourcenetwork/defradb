@@ -31,7 +31,6 @@ type Query struct {
 }
 
 type OperationDefinition struct {
-	Name       string
 	Selections []Selection
 	IsExplain  bool
 }
@@ -189,10 +188,6 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, []error) {
 	qdef := &OperationDefinition{
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
-	}
-
-	if def.Name != nil {
-		qdef.Name = def.Name.Value
 	}
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)

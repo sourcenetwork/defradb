@@ -86,10 +86,6 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 		Selections: make([]Selection, len(def.SelectionSet.Selections)),
 	}
 
-	if def.Name != nil {
-		qdef.Name = def.Name.Value
-	}
-
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
 	for i, selection := range def.SelectionSet.Selections {
