@@ -16,8 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/mapper"
 )
 
 // Query is an external hook into the planNode
@@ -28,19 +26,6 @@ import (
 // Currently, this is used by the collection.Update
 // system.
 type Query planNode
-
-func MakeSelectQuery(
-	ctx context.Context,
-	db client.DB,
-	txn datastore.Txn,
-	selectStmt *mapper.Select,
-) (Query, error) {
-	if selectStmt == nil {
-		return nil, errors.New("cannot create query without a selection")
-	}
-	planner := makePlanner(ctx, db, txn)
-	return planner.makePlan(selectStmt)
-}
 
 func ExecQuery(
 	ctx context.Context,

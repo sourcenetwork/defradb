@@ -133,9 +133,6 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 
 		return p.Select(m)
 
-	case *mapper.Select:
-		return p.Select(n)
-
 	case *request.CommitSelect:
 		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
 		if err != nil {
