@@ -76,8 +76,8 @@ func loggerMiddleware(next http.Handler) http.Handler {
 				lrw.contentLength,
 			),
 			logging.NewKV(
-				"ElapsedSeconds",
-				elapsed,
+				"ElapsedTime",
+				elapsed.String(),
 			),
 		)
 	})
