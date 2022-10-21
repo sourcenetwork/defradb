@@ -12,19 +12,12 @@ package planner
 
 import (
 	"context"
-	"fmt"
-
-	gql "github.com/graphql-go/graphql"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
 // Query is an external hook into the planNode
@@ -36,21 +29,7 @@ import (
 // system.
 type Query planNode
 
-type QueryExecutor struct {
-	SchemaManager *schema.SchemaManager
-}
-
-func NewQueryExecutor(manager *schema.SchemaManager) (*QueryExecutor, error) {
-	if manager == nil {
-		return nil, errors.New("schemaManager cannot be nil")
-	}
-
-	return &QueryExecutor{
-		SchemaManager: manager,
-	}, nil
-}
-
-func (e *QueryExecutor) MakeSelectQuery(
+func MakeSelectQuery(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
@@ -63,23 +42,17 @@ func (e *QueryExecutor) MakeSelectQuery(
 	return planner.makePlan(selectStmt)
 }
 
-func (e *QueryExecutor) ExecQuery(
+func ExecQuery(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	query string,
-	args ...any,
+	query *request.Request,
 ) ([]map[string]any, error) {
-	q, err := e.ParseRequestString(query)
-	if err != nil {
-		return nil, err
-	}
-
 	planner := makePlanner(ctx, db, txn)
-	return planner.runRequest(ctx, q)
+	return planner.runRequest(ctx, query)
 }
 
-func (e *QueryExecutor) MakePlanFromParser(
+func MakePlanFromParser(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
@@ -87,29 +60,4 @@ func (e *QueryExecutor) MakePlanFromParser(
 ) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(query)
-}
-
-func (e *QueryExecutor) ParseRequestString(request string) (*request.Request, error) {
-	source := source.NewSource(&source.Source{
-		Body: []byte(request),
-		Name: "GraphQL request",
-	})
-
-	ast, err := gqlp.Parse(gqlp.ParseParams{Source: source})
-	if err != nil {
-		return nil, err
-	}
-
-	schema := e.SchemaManager.Schema()
-	validationResult := gql.ValidateDocument(schema, ast, nil)
-	if !validationResult.IsValid {
-		return nil, errors.New(fmt.Sprintf("%v", validationResult.Errors))
-	}
-
-	query, parsingErrors := parser.ParseQuery(ast)
-	if len(parsingErrors) > 0 {
-		return nil, errors.New(fmt.Sprintf("%v", parsingErrors))
-	}
-
-	return query, nil
 }

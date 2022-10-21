@@ -14,10 +14,9 @@ import (
 	"context"
 	"strings"
 
-	gql "github.com/graphql-go/graphql"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/planner"
 )
 
 func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
@@ -34,7 +33,17 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	}
 	defer txn.Discard(ctx)
 
-	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
+	request, errors := db.parser.Parse(query)
+	if len(errors) > 0 {
+		errorStrings := make([]any, len(errors))
+		for i, err := range errors {
+			errorStrings[i] = err.Error()
+		}
+		res.Errors = errorStrings
+		return res
+	}
+
+	results, err := planner.ExecQuery(ctx, db, txn, request)
 	if err != nil {
 		res.Errors = []any{err.Error()}
 		return res
@@ -54,13 +63,23 @@ func (db *db) ExecTransactionalQuery(
 	query string,
 	txn datastore.Txn,
 ) *client.QueryResult {
-	res := &client.QueryResult{}
-	// check if its Introspection query
-	if strings.Contains(query, "IntrospectionQuery") {
+	if db.parser.IsIntrospectionRequest(query) {
 		return db.ExecIntrospection(query)
 	}
 
-	results, err := db.queryExecutor.ExecQuery(ctx, db, txn, query)
+	res := &client.QueryResult{}
+
+	request, errors := db.parser.Parse(query)
+	if len(errors) > 0 {
+		errorStrings := make([]any, len(errors))
+		for i, err := range errors {
+			errorStrings[i] = err.Error()
+		}
+		res.Errors = errorStrings
+		return res
+	}
+
+	results, err := planner.ExecQuery(ctx, db, txn, request)
 	if err != nil {
 		res.Errors = []any{err.Error()}
 		return res
@@ -71,20 +90,5 @@ func (db *db) ExecTransactionalQuery(
 }
 
 func (db *db) ExecIntrospection(query string) *client.QueryResult {
-	schema := db.schema.Schema()
-	// t := schema.Type("userFilterArg")
-	// spew.Dump(t.(*gql.InputObject).Fields())
-	params := gql.Params{Schema: *schema, RequestString: query}
-	r := gql.Do(params)
-
-	res := &client.QueryResult{
-		Data:   r.Data,
-		Errors: make([]any, len(r.Errors)),
-	}
-
-	for i, err := range r.Errors {
-		res.Errors[i] = err
-	}
-
-	return res
+	return db.parser.ExecuteIntrospectionRequest(query)
 }

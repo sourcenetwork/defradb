@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/graphql-go/graphql/language/ast"
 	dsq "github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -21,23 +20,19 @@ import (
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, query types, etc.
-func (db *db) AddSchema(ctx context.Context, schema string) error {
-	// @todo: create collection after generating query types
-	types, astdoc, err := db.schema.Generator.FromSDL(ctx, schema)
+func (db *db) AddSchema(ctx context.Context, schemaString string) error {
+	schema, err := db.parser.AddSchema(ctx, schemaString)
 	if err != nil {
 		return err
 	}
-	colDesc, err := db.schema.Generator.CreateDescriptions(types)
-	if err != nil {
-		return err
-	}
-	for _, desc := range colDesc {
+
+	for _, desc := range schema.Descriptions {
 		if _, err := db.CreateCollection(ctx, desc); err != nil {
 			return err
 		}
 	}
 
-	return db.saveSchema(ctx, astdoc)
+	return db.saveSchema(ctx, schema)
 }
 
 func (db *db) loadSchema(ctx context.Context) error {
@@ -55,20 +50,16 @@ func (db *db) loadSchema(ctx context.Context) error {
 		sdl += "\n" + string(buf)
 	}
 
-	_, _, err = db.schema.Generator.FromSDL(ctx, sdl)
+	_, err = db.parser.AddSchema(ctx, sdl)
 	return err
 }
 
-func (db *db) saveSchema(ctx context.Context, astdoc *ast.Document) error {
+func (db *db) saveSchema(ctx context.Context, schema *core.Schema) error {
 	// save each type individually
-	for _, def := range astdoc.Definitions {
-		switch defType := def.(type) {
-		case *ast.ObjectDefinition:
-			body := defType.Loc.Source.Body[defType.Loc.Start:defType.Loc.End]
-			key := core.NewSchemaKey(defType.Name.Value)
-			if err := db.systemstore().Put(ctx, key.ToDS(), body); err != nil {
-				return err
-			}
+	for _, def := range schema.Definitions {
+		key := core.NewSchemaKey(def.Name)
+		if err := db.systemstore().Put(ctx, key.ToDS(), def.Body); err != nil {
+			return err
 		}
 	}
 	return nil

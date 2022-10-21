@@ -625,7 +625,7 @@ func (c *collection) makeSelectionQuery(
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
+	return planner.MakeSelectQuery(ctx, c.db, txn, slct)
 }
 
 func (c *collection) makeSelectLocal(filter *mapper.Filter, mapping *core.DocumentMapping) (*mapper.Select, error) {

@@ -828,7 +828,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Results: []dataMap{},
 
-			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
+			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
 		},
 	}
 

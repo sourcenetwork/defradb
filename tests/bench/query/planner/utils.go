@@ -12,11 +12,13 @@ package planner
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/query/graphql"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -27,16 +29,16 @@ func runQueryParserBench(
 	fixture fixtures.Generator,
 	query string,
 ) error {
-	exec, err := buildExecutor(ctx, fixture)
+	parser, err := buildParser(ctx, fixture)
 	if err != nil {
 		return err
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := exec.ParseRequestString(query)
-		if err != nil {
-			return errors.Wrap("failed to parse query string", err)
+		_, errs := parser.Parse(query)
+		if errs != nil {
+			return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 		}
 	}
 	b.StopTimer()
@@ -56,14 +58,14 @@ func runMakePlanBench(
 	}
 	defer db.Close(ctx)
 
-	exec, err := buildExecutor(ctx, fixture)
+	parser, err := buildParser(ctx, fixture)
 	if err != nil {
 		return err
 	}
 
-	q, err := exec.ParseRequestString(query)
-	if err != nil {
-		return errors.Wrap("failed to parse query string", err)
+	q, errs := parser.Parse(query)
+	if len(errs) > 0 {
+		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
@@ -72,7 +74,7 @@ func runMakePlanBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := exec.MakePlanFromParser(ctx, db, txn, q)
+		_, err := planner.MakePlanFromParser(ctx, db, txn, q)
 		if err != nil {
 			return errors.Wrap("failed to make plan", err)
 		}
@@ -81,26 +83,23 @@ func runMakePlanBench(
 	return nil
 }
 
-func buildExecutor(
+func buildParser(
 	ctx context.Context,
 	fixture fixtures.Generator,
-) (*planner.QueryExecutor, error) {
-	sm, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, err
-	}
+) (core.Parser, error) {
 	schema, err := benchutils.ConstructSchema(fixture)
 	if err != nil {
 		return nil, err
 	}
-	types, _, err := sm.Generator.FromSDL(ctx, schema)
+
+	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
-	_, err = sm.Generator.CreateDescriptions(types)
+	_, err = parser.AddSchema(ctx, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	return planner.NewQueryExecutor(sm)
+	return parser, nil
 }
