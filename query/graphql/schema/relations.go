@@ -52,7 +52,7 @@ func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	return rel, nil
 }
 
-func (rm *RelationManager) GetRelationByDescription(
+func (rm *RelationManager) getRelationByDescription(
 	field, schemaType, objectType string,
 ) *Relation {
 	for _, rel := range rm.relations {

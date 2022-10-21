@@ -183,7 +183,7 @@ func (g *Generator) CreateDescriptions(
 				fd.Schema = schemaName
 
 				// check if its a one-to-one, one-to-many, many-to-many
-				rel := g.manager.Relations.GetRelationByDescription(
+				rel := g.manager.Relations.getRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
 					return nil, errors.New(fmt.Sprintf(

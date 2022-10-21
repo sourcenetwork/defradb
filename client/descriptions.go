@@ -40,6 +40,18 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
+// GetRelation returns the field that supports the relation of the given name.
+func (col CollectionDescription) GetRelation(name string) (FieldDescription, bool) {
+	if !col.Schema.IsEmpty() {
+		for _, field := range col.Schema.Fields {
+			if field.RelationName == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
 func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return col.Indexes[0]
 }

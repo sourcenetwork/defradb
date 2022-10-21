@@ -194,19 +194,6 @@ func (db *db) Executor() *planner.QueryExecutor {
 	return db.queryExecutor
 }
 
-func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
-	rm := db.schema.Relations
-	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
-	if rel == nil {
-		return "", errors.New("relation does not exists")
-	}
-	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
-	if !ok {
-		return "", errors.New("relation is missing referenced field")
-	}
-	return subtypefieldname, nil
-}
-
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close(ctx context.Context) {

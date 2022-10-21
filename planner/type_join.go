@@ -258,15 +258,6 @@ func (p *Planner) makeTypeJoinOne(
 		return nil, err
 	}
 
-	subTypeFieldName, err := p.db.GetRelationshipIdField(
-		subType.Name,
-		subType.CollectionName,
-		parent.parsed.CollectionName,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
 	if !ok {
@@ -277,12 +268,22 @@ func (p *Planner) makeTypeJoinOne(
 	// check if the field we're querying is the primary side of the relation
 	isPrimary := subTypeFieldDesc.RelationType&client.Relation_Type_Primary > 0
 
+	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	subTypeField, subTypeFieldNameFound := subTypeCollectionDesc.GetRelation(subTypeFieldDesc.RelationName)
+	if !subTypeFieldNameFound {
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+	}
+
 	return &typeJoinOne{
 		p:                p,
 		root:             source,
 		subSelect:        subType,
 		subTypeName:      subType.Name,
-		subTypeFieldName: subTypeFieldName,
+		subTypeFieldName: subTypeField.Name,
 		subType:          selectPlan,
 		primary:          isPrimary,
 		docMapper:        docMapper{parent.documentMapping},
@@ -445,13 +446,19 @@ func (p *Planner) makeTypeJoinMany(
 		return nil, err
 	}
 
-	rootName, err := p.db.GetRelationshipIdField(
-		subType.Name,
-		subType.CollectionName,
-		parent.parsed.CollectionName,
-	)
+	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
+	if !ok {
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+	}
+
+	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
 	if err != nil {
 		return nil, err
+	}
+
+	rootField, rootNameFound := subTypeCollectionDesc.GetRelation(subTypeFieldDesc.RelationName)
+	if !rootNameFound {
+		return nil, errors.New("couldn't find subtype field description for typeJoin node")
 	}
 
 	return &typeJoinMany{
@@ -459,7 +466,7 @@ func (p *Planner) makeTypeJoinMany(
 		root:        source,
 		subSelect:   subType,
 		subTypeName: subType.Name,
-		rootName:    rootName,
+		rootName:    rootField.Name,
 		subType:     selectPlan,
 		docMapper:   docMapper{parent.documentMapping},
 	}, nil
