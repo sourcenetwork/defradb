@@ -74,7 +74,8 @@ func runMakePlanBench(
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := planner.MakePlanFromParser(ctx, db, txn, q)
+		planner := planner.New(ctx, db, txn)
+		_, err := planner.MakePlan(q)
 		if err != nil {
 			return errors.Wrap("failed to make plan", err)
 		}

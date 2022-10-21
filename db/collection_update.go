@@ -622,7 +622,8 @@ func (c *collection) makeSelectionQuery(
 		return nil, err
 	}
 
-	return planner.MakePlanFromParser(ctx, c.db, txn, &request.Request{
+	planner := planner.New(ctx, c.db, txn)
+	return planner.MakePlan(&request.Request{
 		Queries: []*request.OperationDefinition{
 			{
 				Selections: []request.Selection{

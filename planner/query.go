@@ -10,14 +10,6 @@
 
 package planner
 
-import (
-	"context"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
-)
-
 // Query is an external hook into the planNode
 // system. It allows outside packages to
 // execute and manage a query plan graph directly.
@@ -26,13 +18,3 @@ import (
 // Currently, this is used by the collection.Update
 // system.
 type Query planNode
-
-func MakePlanFromParser(
-	ctx context.Context,
-	db client.DB,
-	txn datastore.Txn,
-	query *request.Request,
-) (planNode, error) {
-	planner := New(ctx, db, txn)
-	return planner.makePlan(query)
-}
