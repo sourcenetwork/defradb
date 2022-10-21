@@ -33,7 +33,7 @@ func ExecQuery(
 	txn datastore.Txn,
 	query *request.Request,
 ) ([]map[string]any, error) {
-	planner := makePlanner(ctx, db, txn)
+	planner := New(ctx, db, txn)
 	return planner.runRequest(ctx, query)
 }
 
@@ -43,6 +43,6 @@ func MakePlanFromParser(
 	txn datastore.Txn,
 	query *request.Request,
 ) (planNode, error) {
-	planner := makePlanner(ctx, db, txn)
+	planner := New(ctx, db, txn)
 	return planner.makePlan(query)
 }

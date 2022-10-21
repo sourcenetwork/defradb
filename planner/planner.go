@@ -93,7 +93,7 @@ type Planner struct {
 	ctx context.Context
 }
 
-func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
+func New(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
