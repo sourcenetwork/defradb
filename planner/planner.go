@@ -501,8 +501,8 @@ func (p *Planner) executeRequest(
 	return docs, err
 }
 
-// runRequest plans how to run the request, then attempts to run the request and returns the results.
-func (p *Planner) runRequest(
+// RunRequest plans how to run the request, then attempts to run the request and returns the results.
+func (p *Planner) RunRequest(
 	ctx context.Context,
 	query *request.Request,
 ) ([]map[string]any, error) {

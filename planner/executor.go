@@ -27,16 +27,6 @@ import (
 // system.
 type Query planNode
 
-func ExecQuery(
-	ctx context.Context,
-	db client.DB,
-	txn datastore.Txn,
-	query *request.Request,
-) ([]map[string]any, error) {
-	planner := New(ctx, db, txn)
-	return planner.runRequest(ctx, query)
-}
-
 func MakePlanFromParser(
 	ctx context.Context,
 	db client.DB,

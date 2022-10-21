@@ -43,7 +43,8 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 		return res
 	}
 
-	results, err := planner.ExecQuery(ctx, db, txn, request)
+	planner := planner.New(ctx, db, txn)
+	results, err := planner.RunRequest(ctx, request)
 	if err != nil {
 		res.Errors = []any{err.Error()}
 		return res
@@ -79,7 +80,8 @@ func (db *db) ExecTransactionalQuery(
 		return res
 	}
 
-	results, err := planner.ExecQuery(ctx, db, txn, request)
+	planner := planner.New(ctx, db, txn)
+	results, err := planner.RunRequest(ctx, request)
 	if err != nil {
 		res.Errors = []any{err.Error()}
 		return res
