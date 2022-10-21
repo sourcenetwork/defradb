@@ -12,13 +12,13 @@ package enumerable
 
 type enumerableTake[T any] struct {
 	source Enumerable[T]
-	limit  int64
-	count  int64
+	limit  uint64
+	count  uint64
 }
 
 // Take creates an `Enumerable` from the given `Enumerable` and limit. The returned
 // `Enumerable` will restrict the maximum number of items yielded to the given limit.
-func Take[T any](source Enumerable[T], limit int64) Enumerable[T] {
+func Take[T any](source Enumerable[T], limit uint64) Enumerable[T] {
 	return &enumerableTake[T]{
 		source: source,
 		limit:  limit,

@@ -13,7 +13,7 @@ package types
 import (
 	gql "github.com/graphql-go/graphql"
 
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 	// Any self referential type needs to be initalized
 	// inside the init() func
 	CommitObject = gql.NewObject(gql.ObjectConfig{
-		Name: parserTypes.CommitTypeName,
+		Name: request.CommitTypeName,
 		Fields: gql.Fields{
 			"height": &gql.Field{
 				Type: gql.Int,
@@ -128,9 +128,9 @@ var (
 					),
 				),
 			),
-			parserTypes.LimitClause:  NewArgConfig(gql.Int),
-			parserTypes.OffsetClause: NewArgConfig(gql.Int),
-			parserTypes.DepthClause:  NewArgConfig(gql.Int),
+			request.LimitClause:  NewArgConfig(gql.Int),
+			request.OffsetClause: NewArgConfig(gql.Int),
+			request.DepthClause:  NewArgConfig(gql.Int),
 		},
 	}
 

@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/client/request"
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
 )
 
@@ -174,12 +174,12 @@ func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql
 				return nil, err
 			}
 		case *gql.Scalar:
-			if _, isAggregate := parserTypes.Aggregates[def.Name]; isAggregate {
+			if _, isAggregate := request.Aggregates[def.Name]; isAggregate {
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
 						Type: g.manager.schema.TypeMap()[name+"FilterArg"],
 					}
-					aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(parserTypes.FilterClause, expandedField)
+					aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.FilterClause, expandedField)
 				}
 			}
 		}
@@ -217,8 +217,8 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 	fields := obj.Fields()
 	for f, def := range fields {
 		// ignore reserved fields, execpt the Group field (as that requires typing), and aggregates
-		if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.GroupFieldName {
-			if _, isAggregate := parserTypes.Aggregates[f]; !isAggregate {
+		if _, ok := request.ReservedFields[f]; ok && f != request.GroupFieldName {
+			if _, isAggregate := request.Aggregates[f]; !isAggregate {
 				continue
 			}
 		}
@@ -264,7 +264,7 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				obj.AddFieldConfig(f, expandedField)
 			}
 		case *gql.Scalar:
-			if _, isAggregate := parserTypes.Aggregates[f]; isAggregate {
+			if _, isAggregate := request.Aggregates[f]; isAggregate {
 				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
 					return err
 				}
@@ -285,7 +285,7 @@ func (g *Generator) createExpandedFieldAggregate(
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var filterTypeName string
-		if target == parserTypes.GroupFieldName {
+		if target == request.GroupFieldName {
 			filterTypeName = obj.Name() + "FilterArg"
 		} else {
 			if targeted := obj.Fields()[target]; targeted != nil {
@@ -356,9 +356,9 @@ func (g *Generator) createExpandedFieldList(
 			"groupBy": schemaTypes.NewArgConfig(
 				gql.NewList(gql.NewNonNull(g.manager.schema.TypeMap()[typeName+"Fields"])),
 			),
-			"order":                  schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
-			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
-			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
+			"order":              schemaTypes.NewArgConfig(g.manager.schema.TypeMap()[typeName+"OrderArg"]),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -407,7 +407,7 @@ func (g *Generator) buildTypesFromAST(
 				// @todo: Check if this is a collection (relation) type
 				// or just a embedded only type (which doesn't need a key)
 				// automatically add the _key: ID field to the type
-				fields[parserTypes.DocKeyFieldName] = &gql.Field{Type: gql.ID}
+				fields[request.DocKeyFieldName] = &gql.Field{Type: gql.ID}
 
 				for _, field := range defType.Fields {
 					fType := new(gql.Field)
@@ -493,7 +493,7 @@ func (g *Generator) buildTypesFromAST(
 					))
 				}
 
-				fields[parserTypes.GroupFieldName] = &gql.Field{
+				fields[request.GroupFieldName] = &gql.Field{
 					Type: gql.NewList(gqlType),
 				}
 
@@ -616,7 +616,7 @@ func (g *Generator) genAggregateFields(ctx context.Context) error {
 
 func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Field {
 	topLevelCountField := gql.Field{
-		Name: parserTypes.CountFieldName,
+		Name: request.CountFieldName,
 		Type: gql.Int,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -630,13 +630,13 @@ func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Fiel
 
 func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.InputObject) []*gql.Field {
 	topLevelSumField := gql.Field{
-		Name: parserTypes.SumFieldName,
+		Name: request.SumFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
 
 	topLevelAverageField := gql.Field{
-		Name: parserTypes.AverageFieldName,
+		Name: request.AverageFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -673,7 +673,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: parserTypes.CountFieldName,
+		Name: request.CountFieldName,
 		Type: gql.Int,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -712,7 +712,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: parserTypes.SumFieldName,
+		Name: request.SumFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -751,7 +751,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	}
 
 	field := gql.Field{
-		Name: parserTypes.AverageFieldName,
+		Name: request.AverageFieldName,
 		Type: gql.Float,
 		Args: gql.FieldConfigArgument{},
 	}
@@ -778,15 +778,15 @@ func (g *Generator) genNumericInlineArraySelectorObject(obj *gql.Object) []*gql.
 			selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 				Name: genNumericInlineArraySelectorName(obj.Name(), field.Name),
 				Fields: gql.InputObjectConfigFieldMap{
-					parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+					request.LimitClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
 						Description: "The maximum number of child items to aggregate.",
 					},
-					parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+					request.OffsetClause: &gql.InputObjectFieldConfig{
 						Type:        gql.Int,
 						Description: "The index from which to start aggregating items.",
 					},
-					parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+					request.OrderClause: &gql.InputObjectFieldConfig{
 						Type:        g.manager.schema.TypeMap()["Ordering"],
 						Description: "The order in which to aggregate items.",
 					},
@@ -811,11 +811,11 @@ func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
 	countableObject := gql.NewInputObject(gql.InputObjectConfig{
 		Name: genObjectCountName(obj.Name()),
 		Fields: gql.InputObjectConfigFieldMap{
-			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+			request.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
 				Description: "The maximum number of child items to count.",
 			},
-			parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+			request.OffsetClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
 				Description: "The index from which to start counting items.",
 			},
@@ -839,11 +839,11 @@ func (g *Generator) genCountInlineArrayInputs(obj *gql.Object) []*gql.InputObjec
 		selectorObject := gql.NewInputObject(gql.InputObjectConfig{
 			Name: genNumericInlineArrayCountName(obj.Name(), field.Name),
 			Fields: gql.InputObjectConfigFieldMap{
-				parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+				request.LimitClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
 					Description: "The maximum number of child items to count.",
 				},
-				parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+				request.OffsetClause: &gql.InputObjectFieldConfig{
 					Type:        gql.Int,
 					Description: "The index from which to start counting items.",
 				},
@@ -889,13 +889,13 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 						fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					} else {
 						// If it is a related list, we need to add count in here so that we can sum it
-						fieldsEnumCfg.Values[parserTypes.CountFieldName] = &gql.EnumValueConfig{Value: parserTypes.CountFieldName}
+						fieldsEnumCfg.Values[request.CountFieldName] = &gql.EnumValueConfig{Value: request.CountFieldName}
 					}
 				}
 			}
 			// A child aggregate will always be aggregatable, as it can be present via an inner grouping
-			fieldsEnumCfg.Values[parserTypes.SumFieldName] = &gql.EnumValueConfig{Value: parserTypes.SumFieldName}
-			fieldsEnumCfg.Values[parserTypes.AverageFieldName] = &gql.EnumValueConfig{Value: parserTypes.AverageFieldName}
+			fieldsEnumCfg.Values[request.SumFieldName] = &gql.EnumValueConfig{Value: request.SumFieldName}
+			fieldsEnumCfg.Values[request.AverageFieldName] = &gql.EnumValueConfig{Value: request.AverageFieldName}
 
 			if !hasSumableFields {
 				return nil, nil
@@ -913,15 +913,15 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			"field": &gql.InputObjectFieldConfig{
 				Type: gql.NewNonNull(fieldsEnum),
 			},
-			parserTypes.LimitClause: &gql.InputObjectFieldConfig{
+			request.LimitClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
 				Description: "The maximum number of child items to aggregate.",
 			},
-			parserTypes.OffsetClause: &gql.InputObjectFieldConfig{
+			request.OffsetClause: &gql.InputObjectFieldConfig{
 				Type:        gql.Int,
 				Description: "The index from which to start aggregating items.",
 			},
-			parserTypes.OrderClause: &gql.InputObjectFieldConfig{
+			request.OrderClause: &gql.InputObjectFieldConfig{
 				Type:        g.manager.schema.TypeMap()[genTypeName(obj, "OrderArg")],
 				Description: "The order in which to aggregate items.",
 			},
@@ -935,8 +935,8 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 }
 
 func appendCommitChildGroupField() {
-	schemaTypes.CommitObject.Fields()[parserTypes.GroupFieldName] = &gql.FieldDefinition{
-		Name: parserTypes.GroupFieldName,
+	schemaTypes.CommitObject.Fields()[request.GroupFieldName] = &gql.FieldDefinition{
+		Name: request.GroupFieldName,
 		Type: gql.NewList(schemaTypes.CommitObject),
 	}
 }
@@ -1125,7 +1125,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocKeyFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1228,7 +1228,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := parserTypes.ReservedFields[f]; ok && f != parserTypes.DocKeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.DocKeyFieldName {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()
@@ -1281,14 +1281,14 @@ func (g *Generator) genTypeQueryableFieldList(
 		Name: name,
 		Type: gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			"dockey":                 schemaTypes.NewArgConfig(gql.String),
-			"dockeys":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
-			"cid":                    schemaTypes.NewArgConfig(gql.String),
-			"filter":                 schemaTypes.NewArgConfig(config.filter),
-			"groupBy":                schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
-			"order":                  schemaTypes.NewArgConfig(config.order),
-			parserTypes.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
-			parserTypes.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
+			"dockey":             schemaTypes.NewArgConfig(gql.String),
+			"dockeys":            schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String))),
+			"cid":                schemaTypes.NewArgConfig(gql.String),
+			"filter":             schemaTypes.NewArgConfig(config.filter),
+			"groupBy":            schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(config.groupBy))),
+			"order":              schemaTypes.NewArgConfig(config.order),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int),
 		},
 	}
 
@@ -1340,7 +1340,7 @@ func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Direc
 
 typeDefs := ` ... `
 
-ast, err := parserTypes.Parse(typeDefs)
+ast, err := request.Parse(typeDefs)
 types, err := buildTypesFromAST(ast)
 
 types, err := GenerateDBQuerySchema(ast)

@@ -64,8 +64,8 @@ func TestExplainQueryWithOnlyLimitSpecified(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(2),
-							"offset": int64(0),
+							"limit":  uint64(2),
+							"offset": uint64(0),
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -139,7 +139,7 @@ func TestExplainQueryWithOnlyOffsetSpecified(t *testing.T) {
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
 							"limit":  nil,
-							"offset": int64(2),
+							"offset": uint64(2),
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -212,8 +212,8 @@ func TestExplainQueryWithBothLimitAndOffset(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(3),
-							"offset": int64(1),
+							"limit":  uint64(3),
+							"offset": uint64(1),
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -368,8 +368,8 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 								"subType": dataMap{
 									"selectTopNode": dataMap{
 										"limitNode": dataMap{
-											"limit":  int64(1),
-											"offset": int64(0),
+											"limit":  uint64(1),
+											"offset": uint64(0),
 											"selectNode": dataMap{
 												"filter": nil,
 												"scanNode": dataMap{
@@ -529,7 +529,7 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 									"selectTopNode": dataMap{
 										"limitNode": dataMap{
 											"limit":  nil,
-											"offset": int64(2),
+											"offset": uint64(2),
 											"selectNode": dataMap{
 												"filter": nil,
 												"scanNode": dataMap{
@@ -688,8 +688,8 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 								"subType": dataMap{
 									"selectTopNode": dataMap{
 										"limitNode": dataMap{
-											"limit":  int64(2),
-											"offset": int64(2),
+											"limit":  uint64(2),
+											"offset": uint64(2),
 											"selectNode": dataMap{
 												"filter": nil,
 												"scanNode": dataMap{
@@ -827,8 +827,8 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(3),
-							"offset": int64(1),
+							"limit":  uint64(3),
+							"offset": uint64(1),
 							"selectNode": dataMap{
 								"filter": nil,
 								"typeIndexJoin": dataMap{
@@ -851,8 +851,8 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 									"subType": dataMap{
 										"selectTopNode": dataMap{
 											"limitNode": dataMap{
-												"limit":  int64(2),
-												"offset": int64(0),
+												"limit":  uint64(2),
+												"offset": uint64(0),
 												"selectNode": dataMap{
 													"filter": nil,
 													"scanNode": dataMap{
@@ -1021,8 +1021,8 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 											"subType": dataMap{
 												"selectTopNode": dataMap{
 													"limitNode": dataMap{
-														"limit":  int64(2),
-														"offset": int64(0),
+														"limit":  uint64(2),
+														"offset": uint64(0),
 														"selectNode": dataMap{
 															"filter": nil,
 															"scanNode": dataMap{
@@ -1201,8 +1201,8 @@ func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(3),
-							"offset": int64(1),
+							"limit":  uint64(3),
+							"offset": uint64(1),
 							"countNode": dataMap{
 								"sources": []dataMap{
 									{
@@ -1234,8 +1234,8 @@ func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.
 												"subType": dataMap{
 													"selectTopNode": dataMap{
 														"limitNode": dataMap{
-															"limit":  int64(2),
-															"offset": int64(0),
+															"limit":  uint64(2),
+															"offset": uint64(0),
 															"selectNode": dataMap{
 																"filter": nil,
 																"scanNode": dataMap{

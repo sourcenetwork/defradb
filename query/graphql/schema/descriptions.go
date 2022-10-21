@@ -18,8 +18,8 @@ import (
 	gql "github.com/graphql-go/graphql"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -146,7 +146,7 @@ func (g *Generator) CreateDescriptions(
 			Name: t.Name(),
 			Fields: []client.FieldDescription{
 				{
-					Name: parserTypes.DocKeyFieldName,
+					Name: request.DocKeyFieldName,
 					Kind: client.FieldKind_DocKey,
 					Typ:  client.NONE_CRDT,
 				},
@@ -154,7 +154,7 @@ func (g *Generator) CreateDescriptions(
 		}
 		// and schema fields
 		for fname, field := range t.Fields() {
-			if _, ok := parserTypes.ReservedFields[fname]; ok {
+			if _, ok := request.ReservedFields[fname]; ok {
 				continue
 			}
 
@@ -236,9 +236,9 @@ func (g *Generator) CreateDescriptions(
 		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
 			// make sure that the _key (DocKeyFieldName) is always at the beginning
-			if desc.Schema.Fields[i].Name == parserTypes.DocKeyFieldName {
+			if desc.Schema.Fields[i].Name == request.DocKeyFieldName {
 				return true
-			} else if desc.Schema.Fields[j].Name == parserTypes.DocKeyFieldName {
+			} else if desc.Schema.Fields[j].Name == request.DocKeyFieldName {
 				return false
 			}
 			return desc.Schema.Fields[i].Name < desc.Schema.Fields[j].Name

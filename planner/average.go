@@ -13,10 +13,10 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type averageNode struct {
@@ -38,9 +38,9 @@ func (p *Planner) Average(
 
 	for _, dependency := range field.Dependencies {
 		switch dependency.Name {
-		case parserTypes.CountFieldName:
+		case request.CountFieldName:
 			countField = dependency
-		case parserTypes.SumFieldName:
+		case request.SumFieldName:
 			sumField = dependency
 		default:
 			return nil, errors.New(fmt.Sprintf("Unknown dependency, name: %s", dependency.Name))

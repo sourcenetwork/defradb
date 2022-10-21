@@ -15,7 +15,7 @@ package core
 
 import (
 	"github.com/sourcenetwork/defradb/client"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 const DocKeyFieldIndex int = 0
@@ -229,7 +229,7 @@ func (mapping *DocumentMapping) Add(index int, name string) {
 
 func (mapping *DocumentMapping) SetTypeName(typeName string) {
 	index := mapping.GetNextIndex()
-	mapping.Add(index, parserTypes.TypeNameFieldName)
+	mapping.Add(index, request.TypeNameFieldName)
 	mapping.typeInfo = client.Some(mappingTypeInfo{
 		Index: index,
 		Name:  typeName,

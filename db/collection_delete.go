@@ -22,11 +22,11 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/merkle/clock"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 var (
@@ -43,7 +43,7 @@ func (c *collection) DeleteWith(
 	target any,
 ) (*client.DeleteResult, error) {
 	switch t := target.(type) {
-	case string, map[string]any, *parser.Filter:
+	case string, map[string]any, *request.Filter:
 		return c.DeleteWithFilter(ctx, t)
 	case client.DocKey:
 		return c.DeleteWithKey(ctx, t)

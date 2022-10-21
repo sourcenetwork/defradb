@@ -75,8 +75,8 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(1),
-							"offset": int64(1),
+							"limit":  uint64(1),
+							"offset": uint64(1),
 							"groupNode": dataMap{
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
@@ -173,8 +173,8 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 								{
 									"collectionName": "author",
 									"limit": dataMap{
-										"limit":  int64(2),
-										"offset": int64(1),
+										"limit":  uint64(2),
+										"offset": uint64(1),
 									},
 									"docKeys": nil,
 									"filter":  nil,
@@ -267,8 +267,8 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 								{
 									"collectionName": "author",
 									"limit": dataMap{
-										"limit":  int64(1),
-										"offset": int64(2),
+										"limit":  uint64(1),
+										"offset": uint64(2),
 									},
 									"docKeys": nil,
 									"filter":  nil,
@@ -278,8 +278,8 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 								{
 									"collectionName": "author",
 									"limit": dataMap{
-										"limit":  int64(2),
-										"offset": int64(0),
+										"limit":  uint64(2),
+										"offset": uint64(0),
 									},
 									"docKeys": nil,
 									"filter":  nil,
@@ -368,16 +368,16 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"limitNode": dataMap{
-							"limit":  int64(1),
-							"offset": int64(0),
+							"limit":  uint64(1),
+							"offset": uint64(0),
 							"groupNode": dataMap{
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
 										"collectionName": "author",
 										"limit": dataMap{
-											"limit":  int64(2),
-											"offset": int64(0),
+											"limit":  uint64(2),
+											"offset": uint64(0),
 										},
 										"orderBy": nil,
 										"docKeys": nil,

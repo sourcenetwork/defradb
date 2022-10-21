@@ -19,6 +19,7 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
@@ -82,13 +83,13 @@ func (e *QueryExecutor) MakePlanFromParser(
 	ctx context.Context,
 	db client.DB,
 	txn datastore.Txn,
-	query *parser.Query,
+	query *request.Request,
 ) (planNode, error) {
 	planner := makePlanner(ctx, db, txn)
 	return planner.makePlan(query)
 }
 
-func (e *QueryExecutor) ParseRequestString(request string) (*parser.Query, error) {
+func (e *QueryExecutor) ParseRequestString(request string) (*request.Request, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",

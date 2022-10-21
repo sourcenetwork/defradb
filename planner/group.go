@@ -13,10 +13,10 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // A node responsible for the grouping of documents by a given selection of fields.
@@ -55,7 +55,7 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 		dataSources = append(
 			dataSources,
 			// If there are no child selects, then we just take the first field index of name _group
-			newDataSource(parsed.DocumentMapping.FirstIndexOfName(parserTypes.GroupFieldName)),
+			newDataSource(parsed.DocumentMapping.FirstIndexOfName(request.GroupFieldName)),
 		)
 	}
 
@@ -147,10 +147,10 @@ func (n *groupNode) Next() (bool, error) {
 
 				childDocs := subSelect.([]core.Doc)
 				if childSelect.Limit != nil {
-					l := int64(len(childDocs))
+					l := uint64(len(childDocs))
 
 					// We must hide all child documents before the offset
-					for i := int64(0); i < childSelect.Limit.Offset && i < l; i++ {
+					for i := uint64(0); i < childSelect.Limit.Offset && i < l; i++ {
 						childDocs[i].Hidden = true
 					}
 
@@ -205,7 +205,7 @@ func (n *groupNode) Explain() (map[string]any, error) {
 
 			// Get targetable attribute(s) of this child.
 
-			if c.DocKeys.HasValue {
+			if c.DocKeys.HasValue() {
 				childExplainGraph["docKeys"] = c.DocKeys.Value
 			} else {
 				childExplainGraph["docKeys"] = nil
