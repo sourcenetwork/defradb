@@ -23,9 +23,9 @@ type limitNode struct {
 	p    *Planner
 	plan planNode
 
-	limit    int64
-	offset   int64
-	rowIndex int64
+	limit    uint64
+	offset   uint64
+	rowIndex uint64
 }
 
 // Limit creates a new limitNode initalized from the parser.Limit object.
@@ -58,7 +58,7 @@ func (n *limitNode) Value() core.Doc        { return n.plan.Value() }
 
 func (n *limitNode) Next() (bool, error) {
 	// check if we're passed the limit
-	if n.limit != 0 && n.rowIndex-n.offset >= n.limit {
+	if n.limit != 0 && n.rowIndex >= n.limit+n.offset {
 		return false, nil
 	}
 

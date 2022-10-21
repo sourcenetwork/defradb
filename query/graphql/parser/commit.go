@@ -16,114 +16,78 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
-var (
-	_ Selection = (*CommitSelect)(nil)
-)
-
-type CommitSelect struct {
-	Alias string
-	Name  string
-
-	DocKey    string
-	FieldName client.Option[string]
-	Cid       client.Option[string]
-	Depth     client.Option[uint64]
-
-	Limit   *parserTypes.Limit
-	OrderBy *parserTypes.OrderBy
-	GroupBy *parserTypes.GroupBy
-
-	Fields []Selection
-}
-
-func (c CommitSelect) GetRoot() parserTypes.SelectionType {
-	return parserTypes.CommitSelection
-}
-
-func (c CommitSelect) ToSelect() *Select {
-	return &Select{
-		Alias:   c.Alias,
-		Limit:   c.Limit,
-		OrderBy: c.OrderBy,
-		GroupBy: c.GroupBy,
-		Fields:  c.Fields,
-		Root:    parserTypes.CommitSelection,
-	}
-}
-
-func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
-	commit := &CommitSelect{
-		Name:  field.Name.Value,
-		Alias: getFieldAlias(field),
+func parseCommitSelect(field *ast.Field) (*request.CommitSelect, error) {
+	commit := &request.CommitSelect{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 	}
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
-		if prop == parserTypes.DocKey {
+		if prop == request.DocKey {
 			raw := argument.Value.(*ast.StringValue)
-			commit.DocKey = raw.Value
-		} else if prop == parserTypes.Cid {
+			commit.DocKey = client.Some(raw.Value)
+		} else if prop == request.Cid {
 			raw := argument.Value.(*ast.StringValue)
 			commit.Cid = client.Some(raw.Value)
-		} else if prop == parserTypes.Field {
+		} else if prop == request.FieldName {
 			raw := argument.Value.(*ast.StringValue)
 			commit.FieldName = client.Some(raw.Value)
-		} else if prop == parserTypes.OrderClause {
+		} else if prop == request.OrderClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			commit.OrderBy = &parserTypes.OrderBy{
-				Conditions: cond,
-				Statement:  obj,
-			}
-		} else if prop == parserTypes.LimitClause {
+			commit.OrderBy = client.Some(
+				request.OrderBy{
+					Conditions: cond,
+				},
+			)
+		} else if prop == request.LimitClause {
 			val := argument.Value.(*ast.IntValue)
-			limit, err := strconv.ParseInt(val.Value, 10, 64)
+			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
-			}
-			commit.Limit.Limit = limit
-		} else if prop == parserTypes.OffsetClause {
+			commit.Limit = client.Some(limit)
+		} else if prop == request.OffsetClause {
 			val := argument.Value.(*ast.IntValue)
-			offset, err := strconv.ParseInt(val.Value, 10, 64)
+			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
-			}
-			commit.Limit.Offset = offset
-		} else if prop == parserTypes.DepthClause {
+			commit.Offset = client.Some(offset)
+		} else if prop == request.DepthClause {
 			raw := argument.Value.(*ast.IntValue)
 			depth, err := strconv.ParseUint(raw.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			commit.Depth = client.Some(depth)
-		} else if prop == parserTypes.GroupByClause {
+		} else if prop == request.GroupByClause {
 			obj := argument.Value.(*ast.ListValue)
 			fields := []string{}
 			for _, v := range obj.Values {
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			commit.GroupBy = &parserTypes.GroupBy{
-				Fields: fields,
-			}
+			commit.GroupBy = client.Some(
+				request.GroupBy{
+					Fields: fields,
+				},
+			)
 		}
 	}
 
 	// latestCommits is just syntax sugar around a commits query
-	if commit.Name == parserTypes.LatestCommitsQueryName {
+	if commit.Name == request.LatestCommitsQueryName {
 		// Depth is not exposed as an input parameter for latestCommits,
 		// so we can blindly set it here without worrying about existing
 		// values
@@ -141,7 +105,7 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 	}
 
 	var err error
-	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
+	commit.Fields, err = parseSelectFields(request.CommitSelection, field.SelectionSet)
 
 	return commit, err
 }

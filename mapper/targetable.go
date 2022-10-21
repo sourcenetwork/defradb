@@ -11,6 +11,7 @@
 package mapper
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 )
@@ -88,11 +89,11 @@ func NewFilter() *Filter {
 // and which records will be returned from a query.
 type Limit struct {
 	// The maximum number of records that can be returned from a query.
-	Limit int64
+	Limit uint64
 
 	// The offset from which counting towards the Limit will begin.
 	// Before records before the Offset will not be returned.
-	Offset int64
+	Offset uint64
 }
 
 // GroupBy represents a grouping instruction on a query.
@@ -124,11 +125,6 @@ type OrderBy struct {
 	Conditions []OrderCondition
 }
 
-type OptionalDocKeys struct {
-	HasValue bool
-	Value    []string
-}
-
 // Targetable represents a targetable property.
 type Targetable struct {
 	// The basic field information of this property.
@@ -136,7 +132,7 @@ type Targetable struct {
 
 	// A optional collection of docKeys that can be specified to restrict results
 	// to belonging to this set.
-	DocKeys OptionalDocKeys
+	DocKeys client.Option[[]string]
 
 	// An optional filter, that can be specified to restrict results to documents
 	// that satisfies all of its conditions.

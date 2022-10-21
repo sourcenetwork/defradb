@@ -20,7 +20,7 @@ type CommitSelect struct {
 	Select
 
 	// The key of the target document for which to get commits for.
-	DocKey string
+	DocKey client.Option[string]
 
 	// The field for which commits have been requested.
 	FieldName client.Option[string]

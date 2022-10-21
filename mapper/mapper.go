@@ -14,26 +14,22 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 // ToSelect converts the given [parser.Select] into a [Select].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
-func ToSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Select) (*Select, error) {
+func ToSelect(ctx context.Context, txn datastore.Txn, parsed *request.Select) (*Select, error) {
 	descriptionsRepo := NewDescriptionsRepo(ctx, txn)
 	// the top-level select will always have index=0, and no parent collection name
 	return toSelect(descriptionsRepo, 0, parsed, "")
@@ -46,7 +42,7 @@ func ToSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Select) (*S
 func toSelect(
 	descriptionsRepo *DescriptionsRepo,
 	thisIndex int,
-	parsed *parser.Select,
+	parsed *request.Select,
 	parentCollectionName string,
 ) (*Select, error) {
 	collectionName, err := getCollectionName(descriptionsRepo, parsed, parentCollectionName)
@@ -90,10 +86,10 @@ func toSelect(
 	}
 
 	// If there is a groupby, and no inner group has been requested, we need to map the property here
-	if parsed.GroupBy != nil {
-		if _, isGroupFieldMapped := mapping.IndexesByName[parserTypes.GroupFieldName]; !isGroupFieldMapped {
+	if parsed.GroupBy.HasValue() {
+		if _, isGroupFieldMapped := mapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
 			index := mapping.GetNextIndex()
-			mapping.Add(index, parserTypes.GroupFieldName)
+			mapping.Add(index, request.GroupFieldName)
 		}
 	}
 
@@ -111,23 +107,22 @@ func toSelect(
 func resolveOrderDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	descName string,
-	source *parserTypes.OrderBy,
+	source client.Option[request.OrderBy],
 	mapping *core.DocumentMapping,
 	existingFields *[]Requestable,
 ) error {
-	if source == nil {
+	if !source.HasValue() {
 		return nil
 	}
 
 	// If there is orderby, and any one of the condition fields that are join fields and have not been
 	// requested, we need to map them here.
-	for _, condition := range source.Conditions {
-		fieldNames := strings.Split(condition.Field, ".")
-		if len(fieldNames) <= 1 {
+	for _, condition := range source.Value().Conditions {
+		if len(condition.Fields) <= 1 {
 			continue
 		}
 
-		joinField := fieldNames[0]
+		joinField := condition.Fields[0]
 
 		// Check if the join field is already mapped, if not then map it.
 		if isOrderJoinFieldMapped := len(mapping.IndexesByName[joinField]) != 0; !isOrderJoinFieldMapped {
@@ -135,7 +130,11 @@ func resolveOrderDependencies(
 			mapping.Add(index, joinField)
 
 			// Resolve the inner child fields and get it's mapping.
-			dummyJoinFieldSelect := parser.Select{Name: joinField}
+			dummyJoinFieldSelect := request.Select{
+				Field: request.Field{
+					Name: joinField,
+				},
+			}
 			innerSelect, err := toSelect(descriptionsRepo, index, &dummyJoinFieldSelect, descName)
 			if err != nil {
 				return err
@@ -156,7 +155,7 @@ func resolveOrderDependencies(
 // append the new target field as well as the aggregate.  The mapping will also be
 // updated with any new fields/aggregates.
 func resolveAggregates(
-	parsed *parser.Select,
+	parsed *request.Select,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
@@ -184,12 +183,12 @@ func resolveAggregates(
 				fieldDesc, isField := desc.GetField(target.hostExternalName)
 				if isField && !fieldDesc.IsObject() {
 					var order *OrderBy
-					if target.order != nil && len(target.order.Conditions) > 0 {
+					if target.order.HasValue() && len(target.order.Value().Conditions) > 0 {
 						// For inline arrays the order element will consist of just a direction
 						order = &OrderBy{
 							Conditions: []OrderCondition{
 								{
-									Direction: SortDirection(target.order.Conditions[0].Direction),
+									Direction: SortDirection(target.order.Value().Conditions[0].Direction),
 								},
 							},
 						}
@@ -226,9 +225,11 @@ func resolveAggregates(
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
 
-				dummyParsed := &parser.Select{
+				dummyParsed := &request.Select{
 					Root: parsed.Root,
-					Name: target.hostExternalName,
+					Field: request.Field{
+						Name: target.hostExternalName,
+					},
 				}
 
 				childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, desc.Name)
@@ -348,9 +349,9 @@ func fieldAt(fields []Requestable, index int) Requestable {
 // aggregateDependencies maps aggregate names to the names of any aggregates
 // that they may be dependent on.
 var aggregateDependencies = map[string][]string{
-	parserTypes.AverageFieldName: {
-		parserTypes.CountFieldName,
-		parserTypes.SumFieldName,
+	request.AverageFieldName: {
+		request.CountFieldName,
+		request.SumFieldName,
 	},
 }
 
@@ -379,7 +380,7 @@ func appendUnderlyingAggregates(
 
 		for _, target := range aggregate.targets {
 			if target.childExternalName != "" {
-				if _, isAggregate := parserTypes.Aggregates[target.childExternalName]; isAggregate {
+				if _, isAggregate := request.Aggregates[target.childExternalName]; isAggregate {
 					continue
 				}
 			}
@@ -438,32 +439,14 @@ func appendIfNotExists(
 // and aggregateRequests from the given parsed.Fields slice. It also mutates the
 // consumed mapping data.
 func getRequestables(
-	parsed *parser.Select,
+	parsed *request.Select,
 	mapping *core.DocumentMapping,
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
-	// If this parser.Select is itself an aggregate, we need to append the
-	// relevent info here as if it was a field of its own (due to a quirk of
-	// the parser package).
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
-		index := mapping.GetNextIndex()
-		aggregateReq, err := getAggregateRequests(index, parsed)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
-			Index: index,
-			Key:   parsed.Alias,
-		})
-		mapping.Add(index, parsed.Name)
-		aggregates = append(aggregates, &aggregateReq)
-	}
-
 	for _, field := range parsed.Fields {
 		switch f := field.(type) {
-		case *parser.Field:
+		case *request.Field:
 			// We can map all fields to the first (and only index)
 			// as they support no value modifiers (such as filters/limits/etc).
 			// All fields should have already been mapped by getTopLevelInfo
@@ -476,34 +459,36 @@ func getRequestables(
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   f.Alias,
+				Key:   getRenderKey(f),
 			})
-		case *parser.Select:
+		case *request.Select:
 			index := mapping.GetNextIndex()
 
-			// Aggregate targets are not known at this point, and must be evaluated
-			// after all requested fields have been evaluated - so we note which
-			// aggregates have been requested and their targets here, before finalizing
-			// their evaluation later.
-			if _, isAggregate := parserTypes.Aggregates[f.Name]; isAggregate {
-				aggregateRequest, err := getAggregateRequests(index, f)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				aggregates = append(aggregates, &aggregateRequest)
-			} else {
-				innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
-				if err != nil {
-					return nil, nil, err
-				}
-				fields = append(fields, innerSelect)
-				mapping.SetChildAt(index, &innerSelect.DocumentMapping)
+			innerSelect, err := toSelect(descriptionsRepo, index, f, desc.Name)
+			if err != nil {
+				return nil, nil, err
 			}
+			fields = append(fields, innerSelect)
+			mapping.SetChildAt(index, &innerSelect.DocumentMapping)
 
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
-				Key:   f.Alias,
+				Key:   getRenderKey(&f.Field),
+			})
+
+			mapping.Add(index, f.Name)
+		case *request.Aggregate:
+			index := mapping.GetNextIndex()
+			aggregateRequest, err := getAggregateRequests(index, f)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			aggregates = append(aggregates, &aggregateRequest)
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
 			})
 
 			mapping.Add(index, f.Name)
@@ -517,7 +502,14 @@ func getRequestables(
 	return
 }
 
-func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest, error) {
+func getRenderKey(field *request.Field) string {
+	if field.Alias.HasValue() {
+		return field.Alias.Value()
+	}
+	return field.Name
+}
+
+func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateRequest, error) {
 	aggregateTargets, err := getAggregateSources(aggregate)
 	if err != nil {
 		return aggregateRequest{}, err
@@ -542,17 +534,17 @@ func getAggregateRequests(index int, aggregate *parser.Select) (aggregateRequest
 // if this is a commit request.
 func getCollectionName(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *parser.Select,
+	parsed *request.Select,
 	parentCollectionName string,
 ) (string, error) {
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
 		// This string is not used or referenced, its value is only there to aid debugging
 		return "_topLevel", nil
 	}
 
-	if parsed.Name == parserTypes.GroupFieldName {
+	if parsed.Name == request.GroupFieldName {
 		return parentCollectionName, nil
-	} else if parsed.Root == parserTypes.CommitSelection {
+	} else if parsed.Root == request.CommitSelection {
 		return parentCollectionName, nil
 	}
 
@@ -576,19 +568,19 @@ func getCollectionName(
 // getTopLevelInfo returns the collection description and maps the fields directly on the object.
 func getTopLevelInfo(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *parser.Select,
+	parsed *request.Select,
 	collectionName string,
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
 
-	if _, isAggregate := parserTypes.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
 		return mapping, &client.CollectionDescription{}, nil
 	}
 
-	if parsed.Root != parserTypes.CommitSelection {
-		mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
+	if parsed.Root == request.ObjectSelection {
+		mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
 
 		desc, err := descriptionsRepo.getCollectionDesc(collectionName)
 		if err != nil {
@@ -612,22 +604,22 @@ func getTopLevelInfo(
 		return mapping, &desc, nil
 	}
 
-	if parsed.Name == parserTypes.LinksFieldName {
-		for i, f := range parserTypes.LinksFields {
+	if parsed.Name == request.LinksFieldName {
+		for i, f := range request.LinksFields {
 			mapping.Add(i, f)
 		}
 
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(parserTypes.LinksFieldName)
+		mapping.SetTypeName(request.LinksFieldName)
 	} else {
-		for i, f := range parserTypes.VersionFields {
+		for i, f := range request.VersionFields {
 			mapping.Add(i, f)
 		}
 
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(parserTypes.CommitTypeName)
+		mapping.SetTypeName(request.CommitTypeName)
 	}
 
 	return mapping, &client.CollectionDescription{}, nil
@@ -636,18 +628,18 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source *parser.Filter,
+	source client.Option[request.Filter],
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
 ) ([]Requestable, error) {
-	if source == nil {
+	if !source.HasValue() {
 		return nil, nil
 	}
 
 	return resolveInnerFilterDependencies(
 		descriptionsRepo,
 		parentCollectionName,
-		source.Conditions,
+		source.Value().Conditions,
 		mapping,
 		existingFields,
 	)
@@ -663,7 +655,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if strings.HasPrefix(key, "_") && key != parserTypes.DocKeyFieldName {
+		if strings.HasPrefix(key, "_") && key != request.DocKeyFieldName {
 			continue
 		}
 
@@ -672,8 +664,10 @@ func resolveInnerFilterDependencies(
 		if !propertyMapped {
 			index := mapping.GetNextIndex()
 
-			dummyParsed := &parser.Select{
-				Name: key,
+			dummyParsed := &request.Select{
+				Field: request.Field{
+					Name: key,
+				},
 			}
 
 			childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
@@ -726,8 +720,10 @@ func resolveInnerFilterDependencies(
 			continue
 		}
 
-		dummyParsed := &parser.Select{
-			Name: key,
+		dummyParsed := &request.Select{
+			Field: request.Field{
+				Name: key,
+			},
 		}
 
 		childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, parentCollectionName)
@@ -779,11 +775,11 @@ func resolveInnerFilterDependencies(
 	return newFields, nil
 }
 
-// ToCommitSelect converts the given [parser.CommitSelect] into a [CommitSelect].
+// ToCommitSelect converts the given [request.CommitSelect] into a [CommitSelect].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [CommitSelect].
-func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *parser.CommitSelect) (*CommitSelect, error) {
+func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *request.CommitSelect) (*CommitSelect, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
 	if err != nil {
 		return nil, err
@@ -797,11 +793,11 @@ func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *parser.Commi
 	}, nil
 }
 
-// ToMutation converts the given [parser.Mutation] into a [Mutation].
+// ToMutation converts the given [request.Mutation] into a [Mutation].
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, txn datastore.Txn, parsed *parser.Mutation) (*Mutation, error) {
+func ToMutation(ctx context.Context, txn datastore.Txn, parsed *request.Mutation) (*Mutation, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
 	if err != nil {
 		return nil, err
@@ -814,41 +810,41 @@ func ToMutation(ctx context.Context, txn datastore.Txn, parsed *parser.Mutation)
 	}, nil
 }
 
-func toTargetable(index int, parsed *parser.Select, docMap *core.DocumentMapping) Targetable {
+func toTargetable(index int, parsed *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
 		Field:   toField(index, parsed),
-		DocKeys: OptionalDocKeys(parsed.DocKeys),
+		DocKeys: parsed.DocKeys,
 		Filter:  ToFilter(parsed.Filter, docMap),
-		Limit:   toLimit(parsed.Limit),
+		Limit:   toLimit(parsed.Limit, parsed.Offset),
 		GroupBy: toGroupBy(parsed.GroupBy, docMap),
 		OrderBy: toOrderBy(parsed.OrderBy, docMap),
 	}
 }
 
-func toField(index int, parsed *parser.Select) Field {
+func toField(index int, parsed *request.Select) Field {
 	return Field{
 		Index: index,
 		Name:  parsed.Name,
 	}
 }
 
-// ToFilter converts the given `source` parser filter to a Filter using the given mapping.
+// ToFilter converts the given `source` request filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
-func ToFilter(source *parser.Filter, mapping *core.DocumentMapping) *Filter {
-	if source == nil {
+func ToFilter(source client.Option[request.Filter], mapping *core.DocumentMapping) *Filter {
+	if !source.HasValue() {
 		return nil
 	}
-	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
+	conditions := make(map[connor.FilterKey]any, len(source.Value().Conditions))
 
-	for sourceKey, sourceClause := range source.Conditions {
+	for sourceKey, sourceClause := range source.Value().Conditions {
 		key, clause := toFilterMap(sourceKey, sourceClause, mapping)
 		conditions[key] = clause
 	}
 
 	return &Filter{
 		Conditions:         conditions,
-		ExternalConditions: source.Conditions,
+		ExternalConditions: source.Value().Conditions,
 	}
 }
 
@@ -861,7 +857,7 @@ func toFilterMap(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != parserTypes.DocKeyFieldName {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocKeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
@@ -921,24 +917,34 @@ func toFilterMap(
 	}
 }
 
-func toLimit(source *parserTypes.Limit) *Limit {
-	if source == nil {
+func toLimit(limit client.Option[uint64], offset client.Option[uint64]) *Limit {
+	var limitValue uint64
+	var offsetValue uint64
+	if !limit.HasValue() && !offset.HasValue() {
 		return nil
+	}
+
+	if limit.HasValue() {
+		limitValue = limit.Value()
+	}
+
+	if offset.HasValue() {
+		offsetValue = offset.Value()
 	}
 
 	return &Limit{
-		Limit:  source.Limit,
-		Offset: source.Offset,
+		Limit:  limitValue,
+		Offset: offsetValue,
 	}
 }
 
-func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *GroupBy {
-	if source == nil {
+func toGroupBy(source client.Option[request.GroupBy], mapping *core.DocumentMapping) *GroupBy {
+	if !source.HasValue() {
 		return nil
 	}
 
-	fields := make([]Field, len(source.Fields))
-	for i, fieldName := range source.Fields {
+	fields := make([]Field, len(source.Value().Fields))
+	for i, fieldName := range source.Value().Fields {
 		// If there are multiple properties of the same name we can just take the first as
 		// we have no other reasonable way of identifying which property they mean if multiple
 		// consumer specified requestables are available.  Aggregate dependencies should not
@@ -956,24 +962,23 @@ func toGroupBy(source *parserTypes.GroupBy, mapping *core.DocumentMapping) *Grou
 	}
 }
 
-func toOrderBy(source *parserTypes.OrderBy, mapping *core.DocumentMapping) *OrderBy {
-	if source == nil {
+func toOrderBy(source client.Option[request.OrderBy], mapping *core.DocumentMapping) *OrderBy {
+	if !source.HasValue() {
 		return nil
 	}
 
-	conditions := make([]OrderCondition, len(source.Conditions))
-	for conditionIndex, condition := range source.Conditions {
-		fields := strings.Split(condition.Field, ".")
-		fieldIndexes := make([]int, len(fields))
+	conditions := make([]OrderCondition, len(source.Value().Conditions))
+	for conditionIndex, condition := range source.Value().Conditions {
+		fieldIndexes := make([]int, len(condition.Fields))
 		currentMapping := mapping
-		for fieldIndex, field := range fields {
+		for fieldIndex, field := range condition.Fields {
 			// If there are multiple properties of the same name we can just take the first as
 			// we have no other reasonable way of identifying which property they mean if multiple
 			// consumer specified requestables are available.  Aggregate dependencies should not
 			// impact this as they are added after selects.
 			firstFieldIndex := currentMapping.FirstIndexOfName(field)
 			fieldIndexes[fieldIndex] = firstFieldIndex
-			if fieldIndex != len(fields)-1 {
+			if fieldIndex != len(condition.Fields)-1 {
 				// no need to do this for the last (and will panic)
 				currentMapping = currentMapping.ChildMappings[firstFieldIndex]
 			}
@@ -1152,129 +1157,31 @@ type aggregateRequestTarget struct {
 	childExternalName string
 
 	// The aggregate filter specified by the consumer for this target. Optional.
-	filter *parser.Filter
+	filter client.Option[request.Filter]
 
 	// The aggregate limit-offset specified by the consumer for this target. Optional.
 	limit *Limit
 
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
-	order *parserTypes.OrderBy
+	order client.Option[request.OrderBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
-func getAggregateSources(field *parser.Select) ([]*aggregateRequestTarget, error) {
-	targets := make([]*aggregateRequestTarget, len(field.Statement.Arguments))
+func getAggregateSources(field *request.Aggregate) ([]*aggregateRequestTarget, error) {
+	targets := make([]*aggregateRequestTarget, len(field.Targets))
 
-	for i, argument := range field.Statement.Arguments {
-		switch argumentValue := argument.Value.GetValue().(type) {
-		case string:
-			targets[i] = &aggregateRequestTarget{
-				hostExternalName: argumentValue,
-			}
-		case []*ast.ObjectField:
-			hostExternalName := argument.Name.Value
-			var childExternalName string
-			var filter *parser.Filter
-			var limit *Limit
-			var order *parserTypes.OrderBy
-
-			fieldArg, hasFieldArg := tryGet(argumentValue, parserTypes.Field)
-			if hasFieldArg {
-				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
-					childExternalName = innerPathStringValue
-				}
-			}
-
-			filterArg, hasFilterArg := tryGet(argumentValue, parserTypes.FilterClause)
-			if hasFilterArg {
-				var err error
-				filter, err = parser.NewFilter(filterArg.Value.(*ast.ObjectValue))
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			limitArg, hasLimitArg := tryGet(argumentValue, parserTypes.LimitClause)
-			offsetArg, hasOffsetArg := tryGet(argumentValue, parserTypes.OffsetClause)
-			var limitValue int64
-			var offsetValue int64
-			if hasLimitArg {
-				var err error
-				limitValue, err = strconv.ParseInt(limitArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if hasOffsetArg {
-				var err error
-				offsetValue, err = strconv.ParseInt(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if hasLimitArg || hasOffsetArg {
-				limit = &Limit{
-					Limit:  limitValue,
-					Offset: offsetValue,
-				}
-			}
-
-			orderArg, hasOrderArg := tryGet(argumentValue, parserTypes.OrderClause)
-			if hasOrderArg {
-				switch orderArgValue := orderArg.Value.(type) {
-				case *ast.EnumValue:
-					// For inline arrays the order arg will be a simple enum declaring the order direction
-					orderDirectionString := orderArgValue.Value
-					orderDirection := parserTypes.OrderDirection(orderDirectionString)
-
-					order = &parserTypes.OrderBy{
-						Conditions: []parserTypes.OrderCondition{
-							{
-								Direction: orderDirection,
-							},
-						},
-					}
-
-				case *ast.ObjectValue:
-					// For relations the order arg will be the complex order object as used by the host object
-					// for non-aggregate ordering
-
-					// We use the parser package parsing for convienience here
-					orderConditions, err := parser.ParseConditionsInOrder(orderArgValue)
-					if err != nil {
-						return nil, err
-					}
-
-					order = &parserTypes.OrderBy{
-						Conditions: orderConditions,
-						Statement:  orderArgValue,
-					}
-				}
-			}
-
-			targets[i] = &aggregateRequestTarget{
-				hostExternalName:  hostExternalName,
-				childExternalName: childExternalName,
-				filter:            filter,
-				limit:             limit,
-				order:             order,
-			}
+	for i, target := range field.Targets {
+		targets[i] = &aggregateRequestTarget{
+			hostExternalName:  target.HostName,
+			childExternalName: target.ChildName.Value(),
+			filter:            target.Filter,
+			limit:             toLimit(target.Limit, target.Offset),
+			order:             target.OrderBy,
 		}
 	}
 
 	return targets, nil
-}
-
-func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
-	for _, field := range fields {
-		if field.Name.Value == name {
-			return field, true
-		}
-	}
-	return nil, false
 }
 
 // tryGetMatchingAggregate scans the given collection for aggregates with the given name and targets.
@@ -1305,20 +1212,20 @@ collectionLoop:
 				continue collectionLoop
 			}
 
-			if target.filter == nil && potentialMatchingTarget.filter != nil {
+			if !target.filter.HasValue() && potentialMatchingTarget.filter.HasValue() {
 				continue collectionLoop
 			}
 
-			if potentialMatchingTarget.filter == nil && target.filter != nil {
+			if !potentialMatchingTarget.filter.HasValue() && target.filter.HasValue() {
 				continue collectionLoop
 			}
 
-			if target.filter == nil && potentialMatchingTarget.filter == nil {
+			if !target.filter.HasValue() && !potentialMatchingTarget.filter.HasValue() {
 				// target matches, so continue the `target` loop and check the remaining.
 				continue
 			}
 
-			if !reflect.DeepEqual(target.filter.Conditions, potentialMatchingTarget.filter.Conditions) {
+			if !reflect.DeepEqual(target.filter.Value().Conditions, potentialMatchingTarget.filter.Value().Conditions) {
 				continue collectionLoop
 			}
 		}
@@ -1365,23 +1272,23 @@ func tryGetTarget(
 // appendNotNilFilter appends a not nil filter for the given child field
 // to the given Select.
 func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
-	if field.filter == nil {
-		field.filter = &parser.Filter{}
-	}
-
-	if field.filter.Conditions == nil {
-		field.filter.Conditions = map[string]any{}
+	if !field.filter.HasValue() || field.filter.Value().Conditions == nil {
+		field.filter = client.Some(
+			request.Filter{
+				Conditions: map[string]any{},
+			},
+		)
 	}
 
 	var childBlock any
 	var hasChildBlock bool
 	if childField == "" {
-		childBlock = field.filter.Conditions
+		childBlock = field.filter.Value().Conditions
 	} else {
-		childBlock, hasChildBlock = field.filter.Conditions[childField]
+		childBlock, hasChildBlock = field.filter.Value().Conditions[childField]
 		if !hasChildBlock {
 			childBlock = map[string]any{}
-			field.filter.Conditions[childField] = childBlock
+			field.filter.Value().Conditions[childField] = childBlock
 		}
 	}
 

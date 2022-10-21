@@ -15,13 +15,12 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -104,7 +103,7 @@ func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner 
 
 func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
-	case *parser.Query:
+	case *request.Request:
 		if len(n.Queries) > 0 {
 			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
 		} else if len(n.Mutations) > 0 {
@@ -113,19 +112,19 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 			return nil, errors.New("query is missing query or mutation statements")
 		}
 
-	case *parser.OperationDefinition:
+	case *request.OperationDefinition:
 		if len(n.Selections) == 0 {
 			return nil, errors.New("operationDefinition is missing selections")
 		}
 		return p.newPlan(n.Selections[0])
 
-	case *parser.Select:
+	case *request.Select:
 		m, err := mapper.ToSelect(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, isAgg := parserTypes.Aggregates[n.Name]; isAgg {
+		if _, isAgg := request.Aggregates[n.Name]; isAgg {
 			// If this Select is an aggregate, then it must be a top-level
 			// aggregate and we need to resolve it within the context of a
 			// top-level node.
@@ -133,17 +132,18 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 
 		return p.Select(m)
+
 	case *mapper.Select:
 		return p.Select(n)
 
-	case *parser.CommitSelect:
+	case *request.CommitSelect:
 		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err
 		}
 		return p.CommitSelect(m)
 
-	case *parser.Mutation:
+	case *request.Mutation:
 		m, err := mapper.ToMutation(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err
@@ -459,7 +459,7 @@ func (p *Planner) explainRequest(
 
 	topExplainGraph := []map[string]any{
 		{
-			parserTypes.ExplainLabel: explainGraph,
+			request.ExplainLabel: explainGraph,
 		},
 	}
 
@@ -507,7 +507,7 @@ func (p *Planner) executeRequest(
 // runRequest plans how to run the request, then attempts to run the request and returns the results.
 func (p *Planner) runRequest(
 	ctx context.Context,
-	query *parser.Query,
+	query *request.Request,
 ) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 
@@ -528,7 +528,7 @@ func (p *Planner) runRequest(
 }
 
 // MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(query *parser.Query) (planNode, error) {
+func (p *Planner) MakePlan(query *request.Request) (planNode, error) {
 	return p.makePlan(query)
 }
 

@@ -14,11 +14,11 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/mapper"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 type sumNode struct {
@@ -66,7 +66,7 @@ func (p *Planner) isValueFloat(
 ) (bool, error) {
 	// It is important that averages are floats even if their underlying values are ints
 	// else sum will round them down to the nearest whole number
-	if source.ChildTarget.Name == parserTypes.AverageFieldName {
+	if source.ChildTarget.Name == request.AverageFieldName {
 		return true, nil
 	}
 
@@ -89,7 +89,7 @@ func (p *Planner) isValueFloat(
 	}
 
 	// If path length is two, we are summing a group or a child relationship
-	if source.ChildTarget.Name == parserTypes.CountFieldName {
+	if source.ChildTarget.Name == request.CountFieldName {
 		// If we are summing a count, we know it is an int and can return false early
 		return false, nil
 	}
@@ -99,7 +99,7 @@ func (p *Planner) isValueFloat(
 		return false, errors.New("expected child select but none was found")
 	}
 
-	if _, isAggregate := parserTypes.Aggregates[source.ChildTarget.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[source.ChildTarget.Name]; isAggregate {
 		// If we are aggregating an aggregate, we need to traverse the aggregation chain down to
 		// the root field in order to determine the value type.  This is recursive to allow handling
 		// of N-depth aggregations (e.g. sum of sum of sum of...)

@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -19,46 +18,38 @@ import (
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
-
-// Filter contains the parsed condition map to be
-// run by the Filter Evaluator.
-// @todo: Cache filter structure for faster condition
-// evaluation.
-type Filter struct {
-	// parsed filter conditions
-	Conditions map[string]any
-}
 
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
+func NewFilter(stmt *ast.ObjectValue) (client.Option[request.Filter], error) {
 	conditions, err := ParseConditions(stmt)
 	if err != nil {
-		return nil, err
+		return client.None[request.Filter](), err
 	}
-	return &Filter{
+	return client.Some(request.Filter{
 		Conditions: conditions,
-	}, nil
+	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(body string) (*Filter, error) {
+func NewFilterFromString(body string) (client.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return nil, err
+		return client.None[request.Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return nil, err
+		return client.None[request.Filter](), err
 	}
 
 	return NewFilter(obj)
@@ -72,20 +63,20 @@ type parseFn func(*ast.ObjectValue) (any, error)
 // This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]request.OrderCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]parserTypes.OrderCondition); ok {
+	if v, ok := cond.([]request.OrderCondition); ok {
 		return v, nil
 	}
 	return nil, errors.New("failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
-	conditions := make([]parserTypes.OrderCondition, 0)
+	conditions := make([]request.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -98,23 +89,23 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 		switch v := val.(type) {
 		case string: // base direction parsed (hopefully, check NameToOrderDirection)
-			dir, ok := parserTypes.NameToOrderDirection[v]
+			dir, ok := request.NameToOrderDirection[v]
 			if !ok {
 				return nil, errors.New("invalid order direction string")
 			}
-			conditions = append(conditions, parserTypes.OrderCondition{
-				Field:     name,
+			conditions = append(conditions, request.OrderCondition{
+				Fields:    []string{name},
 				Direction: dir,
 			})
 
-		case []parserTypes.OrderCondition: // flatten and incorporate the parsed slice into our current one
+		case []request.OrderCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
 				// Eg. order: {author: {name: ASC, birthday: DESC}}
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].
 				// etc.
-				cond.Field = fmt.Sprintf("%s.%s", name, cond.Field)
+				cond.Fields = append([]string{name}, cond.Fields...)
 				conditions = append(conditions, cond)
 			}
 
