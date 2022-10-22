@@ -65,6 +65,14 @@ datastore:
 api:
   # Address of the HTTP API to listen on or connect to
   address: {{ .API.Address }}
+  # Whether the API server should listen over HTTPS
+  tls: {{ .API.TLS }}
+  # The path to the public key file. Ignored if domains is set.
+  pubkey: {{ .API.PubKey }}
+  # The path to the private key file. Ignored if domains is set.
+  privkey: {{ .API.PrivKey }}
+  # Email address for the CA to send problem notifications (optional).
+  # email: {{ .API.Email }}
 
 net:
   # Whether the P2P is disabled

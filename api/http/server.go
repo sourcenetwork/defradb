@@ -12,36 +12,80 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
+	"path"
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
 )
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
 	options  serverOptions
 	listener net.Listener
+	manager  *autocert.Manager
 
 	http.Server
 }
 
 type serverOptions struct {
+	// list of allowed origins for CORS.
 	allowedOrigins []string
-	peerID         string
+	// ID of the server node.
+	peerID string
+	// Whether to run the server with TLS or not.
+	tls bool
+	// Public key for TLS. Ignored if domain is set.
+	pubKey string
+	// Private key for TLS. Ignored if domain is set.
+	privKey string
+	// email address for the CA to send problem notifications (optional)
+	email string
+	// The domain to associate the certificate.
+	domain string
+	// root directory for the node config
+	rootDir string
 }
 
 // NewServer instantiates a new server with the given http.Handler.
 func NewServer(db client.DB, options ...func(*Server)) *Server {
-	svr := &Server{}
-
-	for _, opt := range append(options, DefaultOpts()) {
-		opt(svr)
+	srv := &Server{
+		Server: http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		},
 	}
 
-	svr.Server.Handler = newHandler(db, svr.options)
+	for _, opt := range append(options, DefaultOpts()) {
+		opt(srv)
+	}
 
-	return svr
+	srv.Handler = newHandler(db, srv.options)
+
+	return srv
+}
+
+func newHTTPRedirServer(m *autocert.Manager) *Server {
+	srv := &Server{
+		Server: http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		},
+	}
+
+	srv.Addr = ":80"
+	srv.Handler = m.HTTPHandler(nil)
+
+	return srv
 }
 
 func DefaultOpts() func(*Server) {
@@ -61,6 +105,22 @@ func WithAllowedOrigins(origins ...string) func(*Server) {
 func WithAddress(addr string) func(*Server) {
 	return func(s *Server) {
 		s.Addr = addr
+
+		// If the address is not localhost, we check to see if it's a valid IP address.
+		// If it's not a valid IP, we assume that it's a domain name to be used with TLS.
+		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
+			ip := net.ParseIP(addr)
+			if ip == nil {
+				s.options.tls = true
+				s.options.domain = addr
+			}
+		}
+	}
+}
+
+func WithCAEmail(email string) func(*Server) {
+	return func(s *Server) {
+		s.options.email = email
 	}
 }
 
@@ -70,21 +130,99 @@ func WithPeerID(id string) func(*Server) {
 	}
 }
 
+func WithRootDir(rootDir string) func(*Server) {
+	return func(s *Server) {
+		s.options.rootDir = rootDir
+	}
+}
+
+func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
+	return func(s *Server) {
+		s.options.tls = true
+		s.options.pubKey = pubKey
+		s.options.privKey = privKey
+	}
+}
+
 // Listen creates a new net.Listener and saves it on the receiver.
 func (s *Server) Listen(ctx context.Context) error {
-	lc := net.ListenConfig{}
-	l, err := lc.Listen(ctx, "tcp", s.Addr)
-	if err != nil {
-		return err
+	var err error
+	if s.options.tls {
+		if s.options.domain != "" {
+			certCache := path.Join(s.options.rootDir, "autocerts")
+			log.FeedbackInfo(
+				ctx,
+				"Generating auto certificate",
+				logging.NewKV("Domain", s.options.domain),
+				logging.NewKV("Cert cache", certCache),
+			)
+
+			m := &autocert.Manager{
+				Cache:      autocert.DirCache(certCache),
+				Prompt:     autocert.AcceptTOS,
+				Email:      s.options.email,
+				HostPolicy: autocert.HostWhitelist(s.options.domain),
+			}
+
+			s.listener = m.Listener()
+			s.manager = m
+
+			return nil
+		}
+
+		// When not using auto cert, we create a self signed certificate
+		// with the provided public and prive keys
+		log.FeedbackInfo(ctx, "Generating self signed certificate")
+
+		cer, err := tls.LoadX509KeyPair(
+			path.Join(s.options.rootDir, s.options.privKey),
+			path.Join(s.options.rootDir, s.options.pubKey),
+		)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		config := &tls.Config{
+			Certificates: []tls.Certificate{cer},
+			// Only use curves which have assembly implementations
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+				tls.X25519,
+			},
+			MinVersion: tls.VersionTLS12,
+		}
+
+		s.listener, err = tls.Listen("tcp", s.Addr, config)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		return nil
 	}
-	s.listener = l
+
+	lc := net.ListenConfig{}
+	s.listener, err = lc.Listen(ctx, "tcp", s.Addr)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }
 
 // Run calls Serve with the receiver's listener
-func (s *Server) Run() error {
+func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
 		return errNoListener
+	}
+	if s.manager != nil {
+		// When using TLS it's important to redirect http requests to https
+		go func() {
+			srv := newHTTPRedirServer(s.manager)
+			err := srv.ListenAndServe()
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Info(ctx, "Something went wrong with the redirection server", logging.NewKV("Error", err))
+			}
+		}()
 	}
 	return s.Serve(s.listener)
 }

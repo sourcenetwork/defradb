@@ -19,9 +19,10 @@ import (
 )
 
 func TestNewServerAndRunWithoutListener(t *testing.T) {
+	ctx := context.Background()
 	s := NewServer(nil, WithAddress(":3131"))
 	if ok := assert.NotNil(t, s); ok {
-		assert.Equal(t, errNoListener, s.Run())
+		assert.Equal(t, errNoListener, s.Run(ctx))
 	}
 }
 
@@ -42,7 +43,7 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 		close(serverRunning)
 		err := s.Listen(ctx)
 		assert.NoError(t, err)
-		err = s.Run()
+		err = s.Run(ctx)
 		assert.ErrorIs(t, http.ErrServerClosed, err)
 		defer close(serverDone)
 	}()

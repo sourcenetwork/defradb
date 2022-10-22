@@ -135,6 +135,42 @@ func init() {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
 	}
 
+	startCmd.Flags().Bool(
+		"tls", cfg.API.TLS,
+		"Enable serving the API over https",
+	)
+	err = viper.BindPFlag("api.tls", startCmd.Flags().Lookup("tls"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
+	}
+
+	startCmd.Flags().String(
+		"pubkey", cfg.API.PubKey,
+		"Path to the public key for tls",
+	)
+	err = viper.BindPFlag("api.pubkey", startCmd.Flags().Lookup("pubkey"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkey", err)
+	}
+
+	startCmd.Flags().String(
+		"privkey", cfg.API.PrivKey,
+		"Path to the private key for tls",
+	)
+	err = viper.BindPFlag("api.privkey", startCmd.Flags().Lookup("privkey"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.privkey", err)
+	}
+
+	startCmd.Flags().String(
+		"email", cfg.API.Email,
+		"Email address used by the CA for notifications",
+	)
+	err = viper.BindPFlag("api.email", startCmd.Flags().Lookup("email"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.email", err)
+	}
+
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -268,12 +304,28 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}()
 	}
 
+	rootDir, _, err := config.GetRootDir(rootDirParam)
+	if err != nil {
+		return nil, errors.Wrap("failed to get root dir", err)
+	}
+
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
+		httpapi.WithRootDir(rootDir),
 	}
+
 	if n != nil {
 		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
+
+	if cfg.API.TLS {
+		sOpt = append(
+			sOpt,
+			httpapi.WithSelfSignedCert(cfg.API.PubKey, cfg.API.PrivKey),
+			httpapi.WithCAEmail(cfg.API.Email),
+		)
+	}
+
 	s := httpapi.NewServer(db, sOpt...)
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
@@ -291,7 +343,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 				httpapi.RootPath,
 			),
 		)
-		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
 				if err := n.Close(); err != nil {
