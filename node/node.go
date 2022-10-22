@@ -33,8 +33,6 @@ import (
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
-	"github.com/multiformats/go-multiaddr"
-	record "github.com/libp2p/go-libp2p-record"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -42,6 +40,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 
 	"github.com/sourcenetwork/defradb/client"
