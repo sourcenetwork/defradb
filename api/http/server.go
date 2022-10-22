@@ -195,7 +195,6 @@ func (s *Server) Listen(ctx context.Context) error {
 			// We set manager on the server instance to later start
 			// a redirection server.
 			s.manager = m
-
 		} else {
 			// When not using auto cert, we create a self signed certificate
 			// with the provided public and prive keys.
