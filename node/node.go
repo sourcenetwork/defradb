@@ -32,6 +32,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	record "github.com/libp2p/go-libp2p-record"
 	"github.com/multiformats/go-multiaddr"
 	record "github.com/libp2p/go-libp2p-record"
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -108,7 +109,6 @@ func NewNode(
 	var ddht *dualdht.DHT
 
 	libp2pOpts := []libp2p.Option{
-		libp2p.Peerstore(peerstore),
 		libp2p.ConnectionManager(options.ConnManager),
 		libp2p.DefaultTransports,
 		libp2p.Identity(hostKey),
@@ -190,19 +190,15 @@ func NewNode(
 
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	var connected uint64
-}
 
-// ListenAddrs returns the Multiaddr list of the hosts' listening addresses.
 	var wg sync.WaitGroup
 	for _, pinfo := range addrs {
 		wg.Add(1)
 		go func(pinfo peer.AddrInfo) {
-func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
 			defer wg.Done()
 			err := n.host.Connect(n.ctx, pinfo)
 			if err != nil {
 				log.Info(n.ctx, "Cannot connect to peer", logging.NewKV("Error", err))
-	return n.host.Addrs()
 				return
 			}
 			log.Info(n.ctx, "Connected", logging.NewKV("Peer ID", pinfo.ID))
@@ -221,6 +217,11 @@ func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
 		log.ErrorE(n.ctx, "Problem bootstraping using DHT", err)
 		return
 	}
+}
+
+// ListenAddrs returns the Multiaddr list of the hosts' listening addresses.
+func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
+	return n.host.Addrs()
 }
 
 // PeerID returns the node's peer ID.

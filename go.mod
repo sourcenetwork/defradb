@@ -182,8 +182,6 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect
-	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87 // indirect
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29 // indirect
@@ -200,10 +198,5 @@ require (
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 
-replace (
-	// SourceNetwork fork og graphql-go
-	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220913191310-ead59e54dae4
-
 // SourceNetwork fork og graphql-go
 replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220913191310-ead59e54dae4
-)
