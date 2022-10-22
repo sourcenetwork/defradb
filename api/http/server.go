@@ -49,8 +49,8 @@ type serverOptions struct {
 	allowedOrigins []string
 	// ID of the server node.
 	peerID string
-	// a non nil value means the server should run with TLS
-	tls *tlsOptions
+	// when the value is present, the server will run with tls
+	tls client.Option[tlsOptions]
 	// root directory for the node config.
 	rootDir string
 }
@@ -66,12 +66,6 @@ type tlsOptions struct {
 	domain string
 	// specify the tls port
 	port string
-}
-
-func newTLS() *tlsOptions {
-	return &tlsOptions{
-		port: ":443",
-	}
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -131,10 +125,9 @@ func WithAddress(addr string) func(*Server) {
 		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
 			ip := net.ParseIP(addr)
 			if ip == nil {
-				if s.options.tls == nil {
-					s.options.tls = newTLS()
-				}
-				s.options.tls.domain = addr
+				tlsOpt := s.options.tls.Value()
+				tlsOpt.domain = addr
+				s.options.tls = client.Some(tlsOpt)
 			}
 		}
 	}
@@ -142,10 +135,9 @@ func WithAddress(addr string) func(*Server) {
 
 func WithCAEmail(email string) func(*Server) {
 	return func(s *Server) {
-		if s.options.tls == nil {
-			s.options.tls = newTLS()
-		}
-		s.options.tls.email = email
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.email = email
+		s.options.tls = client.Some(tlsOpt)
 	}
 }
 
@@ -163,27 +155,25 @@ func WithRootDir(rootDir string) func(*Server) {
 
 func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 	return func(s *Server) {
-		if s.options.tls == nil {
-			s.options.tls = newTLS()
-		}
-		s.options.tls.pubKey = pubKey
-		s.options.tls.privKey = privKey
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.pubKey = pubKey
+		tlsOpt.privKey = privKey
+		s.options.tls = client.Some(tlsOpt)
 	}
 }
 
 func WithTLSPort(port int) func(*Server) {
 	return func(s *Server) {
-		if s.options.tls == nil {
-			s.options.tls = newTLS()
-		}
-		s.options.tls.port = fmt.Sprintf(":%d", port)
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.port = fmt.Sprintf(":%d", port)
+		s.options.tls = client.Some(tlsOpt)
 	}
 }
 
 // Listen creates a new net.Listener and saves it on the receiver.
 func (s *Server) Listen(ctx context.Context) error {
 	var err error
-	if s.options.tls != nil {
+	if s.options.tls.HasValue() {
 		return s.listenWithTLS(ctx)
 	}
 
@@ -212,23 +202,23 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 	}
 	addr := s.Addr
 
-	if s.options.tls.domain != "" {
-		addr = s.options.tls.port
+	if s.options.tls.Value().domain != "" {
+		addr = s.options.tls.Value().port
 
 		certCache := path.Join(s.options.rootDir, "autocerts")
 
 		log.FeedbackInfo(
 			ctx,
 			"Generating auto certificate",
-			logging.NewKV("Domain", s.options.tls.domain),
+			logging.NewKV("Domain", s.options.tls.Value().domain),
 			logging.NewKV("Cert cache", certCache),
 		)
 
 		m := &autocert.Manager{
 			Cache:      autocert.DirCache(certCache),
 			Prompt:     autocert.AcceptTOS,
-			Email:      s.options.tls.email,
-			HostPolicy: autocert.HostWhitelist(s.options.tls.domain),
+			Email:      s.options.tls.Value().email,
+			HostPolicy: autocert.HostWhitelist(s.options.tls.Value().domain),
 		}
 
 		config.GetCertificate = m.GetCertificate
@@ -242,8 +232,8 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		log.FeedbackInfo(ctx, "Generating self signed certificate")
 
 		cert, err := tls.LoadX509KeyPair(
-			path.Join(s.options.rootDir, s.options.tls.privKey),
-			path.Join(s.options.rootDir, s.options.tls.pubKey),
+			path.Join(s.options.rootDir, s.options.tls.Value().privKey),
+			path.Join(s.options.rootDir, s.options.tls.Value().pubKey),
 		)
 		if err != nil {
 			return errors.WithStack(err)

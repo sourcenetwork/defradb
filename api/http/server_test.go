@@ -196,7 +196,7 @@ func TestNewServerWithAddress(t *testing.T) {
 
 func TestNewServerWithDomainAddress(t *testing.T) {
 	s := NewServer(nil, WithAddress("example.com"))
-	assert.Equal(t, "example.com", s.options.tls.domain)
+	assert.Equal(t, "example.com", s.options.tls.Value().domain)
 	assert.NotNil(t, s.options.tls)
 }
 
@@ -207,7 +207,7 @@ func TestNewServerWithAllowedOrigins(t *testing.T) {
 
 func TestNewServerWithCAEmail(t *testing.T) {
 	s := NewServer(nil, WithCAEmail("me@example.com"))
-	assert.Equal(t, "me@example.com", s.options.tls.email)
+	assert.Equal(t, "me@example.com", s.options.tls.Value().email)
 }
 
 func TestNewServerWithPeerID(t *testing.T) {
@@ -223,13 +223,13 @@ func TestNewServerWithRootDir(t *testing.T) {
 
 func TestNewServerWithTLSPort(t *testing.T) {
 	s := NewServer(nil, WithTLSPort(44343))
-	assert.Equal(t, ":44343", s.options.tls.port)
+	assert.Equal(t, ":44343", s.options.tls.Value().port)
 }
 
 func TestNewServerWithSelfSignedCert(t *testing.T) {
 	s := NewServer(nil, WithSelfSignedCert("pub.key", "priv.key"))
-	assert.Equal(t, "pub.key", s.options.tls.pubKey)
-	assert.Equal(t, "priv.key", s.options.tls.privKey)
+	assert.Equal(t, "pub.key", s.options.tls.Value().pubKey)
+	assert.Equal(t, "priv.key", s.options.tls.Value().privKey)
 	assert.NotNil(t, s.options.tls)
 }
 
