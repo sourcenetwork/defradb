@@ -30,7 +30,6 @@ type HeadFetcher struct {
 	spans   core.Spans
 	fieldId client.Option[string]
 
-	kv     *core.HeadKeyValue
 	kvIter dsq.Results
 }
 
@@ -86,21 +85,15 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 
 	headStoreKey, err := core.NewHeadStoreKey(res.Key)
 	if err != nil {
-		hf.kv = nil
 		return nil, err
 	}
-	hf.kv = &core.HeadKeyValue{
-		Key:   headStoreKey,
-		Value: res.Value,
-	}
 
-	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
+	if hf.fieldId.HasValue() && hf.fieldId.Value() != headStoreKey.FieldId {
 		// FieldIds do not match, continue to next row
 		return hf.FetchNext()
 	}
 
-	cid := hf.kv.Key.Cid
-	return &cid, nil
+	return &headStoreKey.Cid, nil
 }
 
 func (hf *HeadFetcher) Close() error {
