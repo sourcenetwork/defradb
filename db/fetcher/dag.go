@@ -78,38 +78,31 @@ func (hf *HeadFetcher) Start(
 }
 
 func (hf *HeadFetcher) nextKey() (bool, error) {
-	var err error
-	var done bool
-	done, hf.kv, err = hf.nextKV()
-	if err != nil {
-		return false, err
-	}
-
-	hf.kvEnd = done
-	if hf.kvEnd {
-		return true, nil
-	}
-	return false, nil
-}
-
-func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.HeadKeyValue, err error) {
 	res, available := hf.kvIter.NextSync()
-	if !available {
-		return true, nil, nil
-	}
 	if res.Error != nil {
-		return true, nil, err
+		hf.kvEnd = true
+		hf.kv = nil
+		return true, res.Error
+	}
+	if !available {
+		hf.kvEnd = true
+		hf.kv = nil
+		return true, nil
 	}
 
 	headStoreKey, err := core.NewHeadStoreKey(res.Key)
 	if err != nil {
-		return true, nil, err
+		hf.kvEnd = true
+		hf.kv = nil
+		return true, err
 	}
-	kv = &core.HeadKeyValue{
+	hf.kv = &core.HeadKeyValue{
 		Key:   headStoreKey,
 		Value: res.Value,
 	}
-	return false, kv, nil
+	hf.kvEnd = false
+
+	return false, nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
