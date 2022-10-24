@@ -72,7 +72,7 @@ func (hf *HeadFetcher) Start(
 		return err
 	}
 
-	return hf.nextKey()
+	return nil
 }
 
 func (hf *HeadFetcher) nextKey() error {
@@ -100,25 +100,21 @@ func (hf *HeadFetcher) nextKey() error {
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
+	err := hf.nextKey()
+	if err != nil {
+		return nil, err
+	}
+
 	if hf.kv == nil {
 		return nil, nil
 	}
 
 	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
 		// FieldIds do not match, continue to next row
-		err := hf.nextKey()
-		if err != nil {
-			return nil, err
-		}
 		return hf.FetchNext()
 	}
 
 	cid := hf.kv.Key.Cid
-
-	err := hf.nextKey()
-	if err != nil {
-		return nil, err
-	}
 	return &cid, nil
 }
 
