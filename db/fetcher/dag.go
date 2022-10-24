@@ -31,7 +31,6 @@ type BlockFetcher struct {
 // heads of a given doc/field
 type HeadFetcher struct {
 	spans   core.Spans
-	cid     *cid.Cid
 	fieldId client.Option[string]
 
 	kv     *core.HeadKeyValue
@@ -116,10 +115,6 @@ func (hf *HeadFetcher) nextKV() (iterDone bool, kv *core.HeadKeyValue, err error
 	return false, kv, nil
 }
 
-func (hf *HeadFetcher) processKV(kv *core.HeadKeyValue) {
-	hf.cid = &kv.Key.Cid
-}
-
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 	if hf.kvEnd {
 		return nil, nil
@@ -138,13 +133,13 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return hf.FetchNext()
 	}
 
-	hf.processKV(hf.kv)
+	cid := hf.kv.Key.Cid
 
 	_, err := hf.nextKey()
 	if err != nil {
 		return nil, err
 	}
-	return hf.cid, nil
+	return &cid, nil
 }
 
 func (hf *HeadFetcher) Close() error {
