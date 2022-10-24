@@ -61,16 +61,16 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if len(n.spans.Value) == 0 {
-		key := core.DataStoreKey{}
 		if n.parsed.DocKey.HasValue() {
-			key = key.WithDocKey(n.parsed.DocKey.Value())
+			key := core.DataStoreKey{}.WithDocKey(n.parsed.DocKey.Value())
 
 			if n.parsed.FieldName.HasValue() {
 				field := n.parsed.FieldName.Value()
 				key = key.WithFieldId(field)
 			}
+
+			n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
 		}
-		n.spans = core.NewSpans(core.NewSpan(key, key.PrefixEnd()))
 	}
 
 	return n.fetcher.Start(n.p.ctx, n.p.txn, n.spans, n.parsed.FieldName)

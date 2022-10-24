@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
@@ -39,10 +38,11 @@ func (hf *HeadFetcher) Start(
 	spans core.Spans,
 	fieldId client.Option[string],
 ) error {
-	numspans := len(spans.Value)
-	if numspans == 0 {
-		return errors.New("headFetcher must have at least one span")
-	} else if numspans > 1 {
+	if len(spans.Value) == 0 {
+		spans = core.NewSpans(core.NewSpan(core.DataStoreKey{}, core.DataStoreKey{}.PrefixEnd()))
+	}
+
+	if len(spans.Value) > 1 {
 		// if we have multiple spans, we need to sort them by their start position
 		// so we can do a single iterative sweep
 		sort.Slice(spans.Value, func(i, j int) bool {
