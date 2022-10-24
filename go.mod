@@ -192,4 +192,4 @@ require (
 )
 
 // SourceNetwork fork og graphql-go
-replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20220913191310-ead59e54dae4
+replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221024085138-50a5471a482a

@@ -13,20 +13,24 @@ package parser
 import (
 	"strconv"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
-func parseCommitSelect(field *ast.Field) (*request.CommitSelect, error) {
+func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.CommitSelect, error) {
 	commit := &request.CommitSelect{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, commit.Name)
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
@@ -104,8 +108,12 @@ func parseCommitSelect(field *ast.Field) (*request.CommitSelect, error) {
 		return commit, nil
 	}
 
+	fieldObject, ok := fieldDef.Type.(*gql.Object)
+	if !ok {
+		return nil, errors.New("Couldn't get field object from definition")
+	}
 	var err error
-	commit.Fields, err = parseSelectFields(request.CommitSelection, field.SelectionSet)
+	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)
 
 	return commit, err
 }

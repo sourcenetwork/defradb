@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
@@ -27,18 +29,19 @@ import (
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue) (client.Option[request.Filter], error) {
-	conditions, err := ParseConditions(stmt)
+func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (client.Option[request.Filter], error) {
+	conditions, err := ParseConditions(stmt, inputType)
 	if err != nil {
 		return client.None[request.Filter](), err
 	}
+	spew.Dump(conditions)
 	return client.Some(request.Filter{
 		Conditions: conditions,
 	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(body string) (client.Option[request.Filter], error) {
+func NewFilterFromString(schema gql.Schema, collectionType string, body string) (client.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
@@ -52,7 +55,12 @@ func NewFilterFromString(body string) (client.Option[request.Filter], error) {
 		return client.None[request.Filter](), err
 	}
 
-	return NewFilter(obj)
+	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
+	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
+	if !ok {
+		return client.None[request.Filter](), errors.New("couldn't find filter argument type")
+	}
+	return NewFilter(obj, filterType)
 }
 
 type parseFn func(*ast.ObjectValue) (any, error)
@@ -119,8 +127,8 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.
-func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
-	cond, err := parseConditions(stmt)
+func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any, error) {
+	cond, err := parseConditions(stmt, inputType)
 	if err != nil {
 		return nil, err
 	}
@@ -131,20 +139,12 @@ func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
 	return nil, errors.New("failed to parse statement")
 }
 
-func parseConditions(stmt *ast.ObjectValue) (any, error) {
-	conditions := make(map[string]any)
-	if stmt == nil {
-		return conditions, nil
+func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {
+	val := gql.ValueFromAST(stmt, inputArg, nil)
+	if val == nil {
+		return nil, errors.New("Couldn't parse conditions value from AST")
 	}
-	for _, field := range stmt.Fields {
-		name := field.Name.Value
-		val, err := parseVal(field.Value, parseConditions)
-		if err != nil {
-			return nil, err
-		}
-		conditions[name] = val
-	}
-	return conditions, nil
+	return val, nil
 }
 
 // parseVal handles all the various input types, and extracts their

@@ -605,7 +605,7 @@ func (c *collection) makeSelectionQuery(
 			return nil, errors.New("invalid filter")
 		}
 
-		f, err = parser.NewFilterFromString(fval)
+		f, err = parser.NewFilterFromString(*c.db.schema.Schema(), c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}
