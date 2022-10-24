@@ -75,38 +75,23 @@ func (hf *HeadFetcher) Start(
 	return nil
 }
 
-func (hf *HeadFetcher) nextKey() error {
+func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 	res, available := hf.kvIter.NextSync()
 	if res.Error != nil {
-		hf.kv = nil
-		return res.Error
+		return nil, res.Error
 	}
 	if !available {
-		hf.kv = nil
-		return nil
+		return nil, nil
 	}
 
 	headStoreKey, err := core.NewHeadStoreKey(res.Key)
 	if err != nil {
 		hf.kv = nil
-		return err
+		return nil, err
 	}
 	hf.kv = &core.HeadKeyValue{
 		Key:   headStoreKey,
 		Value: res.Value,
-	}
-
-	return nil
-}
-
-func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
-	err := hf.nextKey()
-	if err != nil {
-		return nil, err
-	}
-
-	if hf.kv == nil {
-		return nil, nil
 	}
 
 	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
