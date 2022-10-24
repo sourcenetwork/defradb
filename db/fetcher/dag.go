@@ -24,21 +24,12 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-// @todo: Generalize all Fetchers into an shared Fetcher utility
-
 type BlockFetcher struct {
 }
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
-
-	// Commented because this code is not used yet according to the linter.
-	// txn   datastore.Txn
-
-	// key core.Key
-	// curSpanIndex int
-
 	spans   core.Spans
 	cid     *cid.Cid
 	fieldId client.Option[string]
@@ -163,48 +154,3 @@ func (hf *HeadFetcher) Close() error {
 
 	return hf.kvIter.Close()
 }
-
-/*
-// List returns the list of current heads plus the max height.
-// @todo Document Heads.List function
-func (hh *heads) List() ([]cid.Cid, uint64, error) {
-	q := query.Query{
-		Prefix:   hh.namespace.String(),
-		KeysOnly: false,
-	}
-
-	results, err := hh.store.Query(q)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer results.Close()
-
-	heads := make([]cid.Cid, 0)
-	var maxHeight uint64
-	for r := range results.Next() {
-		if r.Error != nil {
-			return nil, 0, errors.Wrap("failed to get next query result ", err)
-		}
-		headKey := ds.NewKey(strings.TrimPrefix(r.Key, hh.namespace.String()))
-		headCid, err := dshelp.DsKeyToCid(headKey)
-		if err != nil {
-			return nil, 0, errors.Wrap("failed to get CID from key ", err)
-		}
-		height, n := binary.Uvarint(r.Value)
-		if n <= 0 {
-			return nil, 0, errors.New("error decoding height")
-		}
-		heads = append(heads, headCid)
-		if height > maxHeight {
-			maxHeight = height
-		}
-	}
-	sort.Slice(heads, func(i, j int) bool {
-		ci := heads[i].Bytes()
-		cj := heads[j].Bytes()
-		return bytes.Compare(ci, cj) < 0
-	})
-
-	return heads, maxHeight, nil
-}
-*/
