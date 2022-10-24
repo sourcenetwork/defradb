@@ -73,28 +73,27 @@ func (hf *HeadFetcher) Start(
 		return err
 	}
 
-	_, err = hf.nextKey()
-	return err
+	return hf.nextKey()
 }
 
-func (hf *HeadFetcher) nextKey() (bool, error) {
+func (hf *HeadFetcher) nextKey() error {
 	res, available := hf.kvIter.NextSync()
 	if res.Error != nil {
 		hf.kvEnd = true
 		hf.kv = nil
-		return true, res.Error
+		return res.Error
 	}
 	if !available {
 		hf.kvEnd = true
 		hf.kv = nil
-		return true, nil
+		return nil
 	}
 
 	headStoreKey, err := core.NewHeadStoreKey(res.Key)
 	if err != nil {
 		hf.kvEnd = true
 		hf.kv = nil
-		return true, err
+		return err
 	}
 	hf.kv = &core.HeadKeyValue{
 		Key:   headStoreKey,
@@ -102,7 +101,7 @@ func (hf *HeadFetcher) nextKey() (bool, error) {
 	}
 	hf.kvEnd = false
 
-	return false, nil
+	return nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
@@ -116,7 +115,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 
 	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
 		// FieldIds do not match, continue to next row
-		_, err := hf.nextKey()
+		err := hf.nextKey()
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +124,7 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 
 	cid := hf.kv.Key.Cid
 
-	_, err := hf.nextKey()
+	err := hf.nextKey()
 	if err != nil {
 		return nil, err
 	}
