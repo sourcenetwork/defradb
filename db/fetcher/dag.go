@@ -24,9 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-type BlockFetcher struct {
-}
-
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
