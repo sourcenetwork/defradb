@@ -32,7 +32,6 @@ type HeadFetcher struct {
 
 	kv     *core.HeadKeyValue
 	kvIter dsq.Results
-	kvEnd  bool
 }
 
 func (hf *HeadFetcher) Start(
@@ -79,19 +78,16 @@ func (hf *HeadFetcher) Start(
 func (hf *HeadFetcher) nextKey() error {
 	res, available := hf.kvIter.NextSync()
 	if res.Error != nil {
-		hf.kvEnd = true
 		hf.kv = nil
 		return res.Error
 	}
 	if !available {
-		hf.kvEnd = true
 		hf.kv = nil
 		return nil
 	}
 
 	headStoreKey, err := core.NewHeadStoreKey(res.Key)
 	if err != nil {
-		hf.kvEnd = true
 		hf.kv = nil
 		return err
 	}
@@ -99,18 +95,13 @@ func (hf *HeadFetcher) nextKey() error {
 		Key:   headStoreKey,
 		Value: res.Value,
 	}
-	hf.kvEnd = false
 
 	return nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
-	if hf.kvEnd {
-		return nil, nil
-	}
-
 	if hf.kv == nil {
-		return nil, errors.New("failed to get head, fetcher hasn't been initialized or started")
+		return nil, nil
 	}
 
 	if hf.fieldId.HasValue() && hf.fieldId.Value() != hf.kv.Key.FieldId {
