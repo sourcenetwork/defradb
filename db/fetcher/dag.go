@@ -39,7 +39,12 @@ func (hf *HeadFetcher) Start(
 	fieldId client.Option[string],
 ) error {
 	if len(spans.Value) == 0 {
-		spans = core.NewSpans(core.NewSpan(core.DataStoreKey{}, core.DataStoreKey{}.PrefixEnd()))
+		spans = core.NewSpans(
+			core.NewSpan(
+				core.DataStoreKey{},
+				core.DataStoreKey{}.PrefixEnd(),
+			),
+		)
 	}
 
 	if len(spans.Value) > 1 {
