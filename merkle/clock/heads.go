@@ -70,14 +70,6 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	return hh.store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
 
-func (hh *heads) delete(ctx context.Context, c cid.Cid) error {
-	err := hh.store.Delete(ctx, hh.key(c).ToDS())
-	if errors.Is(err, ds.ErrNotFound) {
-		return nil
-	}
-	return err
-}
-
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
 	height, err := hh.load(ctx, c)
@@ -96,7 +88,7 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 
-	err := hh.delete(ctx, h)
+	err := hh.store.Delete(ctx, hh.key(h).ToDS())
 	if err != nil {
 		return err
 	}

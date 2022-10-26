@@ -20,12 +20,10 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 func newRandomCID() cid.Cid {
@@ -87,29 +85,6 @@ func TestHeadsLoad(t *testing.T) {
 
 	if h != uint64(1) {
 		t.Errorf("Incorrect value from head set load(), have %v, want %v", h, uint64(1))
-		return
-	}
-}
-
-func TestHeadsDelete(t *testing.T) {
-	ctx := context.Background()
-	heads := newHeadSet()
-	c := newRandomCID()
-	err := heads.Write(ctx, c, uint64(1))
-	if err != nil {
-		t.Error("Failed to write to head set:", err)
-		return
-	}
-
-	err = heads.delete(ctx, c)
-	if err != nil {
-		t.Error("Failed to delete from head set:", err)
-		return
-	}
-
-	_, err = heads.load(ctx, c)
-	if !errors.Is(err, ds.ErrNotFound) {
-		t.Error("failed to delete from head set, value still set")
 		return
 	}
 }
