@@ -39,7 +39,6 @@ func NewHeadSet(store datastore.DSReaderWriter, namespace core.HeadStoreKey) *he
 }
 
 func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
-	// /<namespace>/<cid>
 	return hh.namespace.WithCid(c)
 }
 
