@@ -62,7 +62,7 @@ func TestHeadsWrite(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, heads.store, c, uint64(1))
+	err := heads.write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -73,7 +73,7 @@ func TestHeadsLoad(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, heads.store, c, uint64(1))
+	err := heads.write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -95,13 +95,13 @@ func TestHeadsDelete(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, heads.store, c, uint64(1))
+	err := heads.write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
 	}
 
-	err = heads.delete(ctx, heads.store, c)
+	err = heads.delete(ctx, c)
 	if err != nil {
 		t.Error("Failed to delete from head set:", err)
 		return
@@ -118,7 +118,7 @@ func TestHeadsIsHead(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, heads.store, c, uint64(1))
+	err := heads.write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -168,7 +168,7 @@ func TestHeadsReplaceNonEmpty(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
-	err := heads.write(ctx, heads.store, c1, uint64(1))
+	err := heads.write(ctx, c1, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return

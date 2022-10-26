@@ -60,17 +60,18 @@ func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
 	return height, nil
 }
 
-func (hh *heads) write(ctx context.Context, store ds.Write, c cid.Cid, height uint64) error {
+func (hh *heads) write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 	if n == 0 {
 		return errors.New("error encoding height")
 	}
-	return store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
+
+	return hh.store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
 
-func (hh *heads) delete(ctx context.Context, store ds.Write, c cid.Cid) error {
-	err := store.Delete(ctx, hh.key(c).ToDS())
+func (hh *heads) delete(ctx context.Context, c cid.Cid) error {
+	err := hh.store.Delete(ctx, hh.key(c).ToDS())
 	if errors.Is(err, ds.ErrNotFound) {
 		return nil
 	}
@@ -94,14 +95,13 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		logging.NewKV("Old", h),
 		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
-	var store ds.Write = hh.store
 
-	err := hh.delete(ctx, store, h)
+	err := hh.delete(ctx, h)
 	if err != nil {
 		return err
 	}
 
-	err = hh.write(ctx, store, c, height)
+	err = hh.write(ctx, c, height)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
 	log.Debug(ctx, "Adding new DAG head",
 		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
-	return hh.write(ctx, hh.store, c, height)
+	return hh.write(ctx, c, height)
 }
 
 // List returns the list of current heads plus the max height.
