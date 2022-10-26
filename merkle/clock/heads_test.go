@@ -67,33 +67,6 @@ func TestHeadsWrite(t *testing.T) {
 	}
 }
 
-func TestHeadsIsHead(t *testing.T) {
-	ctx := context.Background()
-	heads := newHeadSet()
-	c := newRandomCID()
-	err := heads.Write(ctx, c, uint64(1))
-	if err != nil {
-		t.Error("Failed to write to head set:", err)
-		return
-	}
-
-	ishead, h, err := heads.IsHead(ctx, c)
-	if err != nil {
-		t.Error("Failedd to check isHead:", err)
-		return
-	}
-
-	if ishead == false {
-		t.Error("Expected isHead to return true, instead false")
-		return
-	}
-
-	if h != uint64(1) {
-		t.Errorf("Incorrect height value from isHead, have %v, want %v", h, uint64(1))
-		return
-	}
-}
-
 func TestHeadsReplaceEmpty(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()

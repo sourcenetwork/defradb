@@ -165,7 +165,7 @@ func (mc *MerkleClock) ProcessNode(
 	for _, l := range links {
 		child := l.Cid
 		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", child))
-		isHead, _, err := mc.headset.IsHead(ctx, child)
+		isHead, err := mc.headset.IsHead(ctx, child)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("error checking if %s is head ", child), err)
 		}

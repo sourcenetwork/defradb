@@ -59,18 +59,13 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 }
 
 // IsHead returns if a given cid is among the current heads.
-func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
-	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
+func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
+	_, err := hh.store.Get(ctx, hh.key(c).ToDS())
 	if errors.Is(err, ds.ErrNotFound) {
-		return false, 0, nil
+		return false, nil
 	}
 
-	height, n := binary.Uvarint(v)
-	if n <= 0 {
-		return false, 0, errors.New("error decoding height")
-	}
-
-	return err == nil, height, err
+	return err == nil, err
 }
 
 // Replace replaces a head with a new CID.
