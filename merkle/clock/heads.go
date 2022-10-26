@@ -17,7 +17,6 @@ import (
 	"sort"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/core"
@@ -60,12 +59,7 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
-	_, err := hh.store.Get(ctx, hh.key(c).ToDS())
-	if errors.Is(err, ds.ErrNotFound) {
-		return false, nil
-	}
-
-	return err == nil, err
+	return hh.store.Has(ctx, hh.key(c).ToDS())
 }
 
 // Replace replaces a head with a new CID.
