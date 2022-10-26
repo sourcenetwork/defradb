@@ -32,10 +32,6 @@ type heads struct {
 }
 
 func NewHeadSet(store datastore.DSReaderWriter, namespace core.HeadStoreKey) *heads {
-	return newHeadset(store, namespace)
-}
-
-func newHeadset(store datastore.DSReaderWriter, namespace core.HeadStoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,

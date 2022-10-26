@@ -46,7 +46,7 @@ func NewMerkleClock(
 	return &MerkleClock{
 		headstore: headstore,
 		dagstore:  dagstore,
-		headset:   newHeadset(headstore, namespace),
+		headset:   NewHeadSet(headstore, namespace),
 		crdt:      crdt,
 	}
 }
