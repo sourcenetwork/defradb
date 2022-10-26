@@ -102,14 +102,6 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 	var store ds.Write = hh.store
 	var err error
 
-	// batchingDs, batching := store.(ds.Batching)
-	// if batching {
-	// 	store, err = batchingDs.Batch()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	err = hh.delete(ctx, store, h)
 	if err != nil {
 		return err
@@ -120,12 +112,6 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		return err
 	}
 
-	// if batching {
-	// 	err := store.(ds.Batch).Commit()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 	return nil
 }
 
