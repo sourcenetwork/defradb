@@ -46,9 +46,6 @@ func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
 func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
-	if n == 0 {
-		return errors.New("error encoding height")
-	}
 
 	return hh.store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
 }
