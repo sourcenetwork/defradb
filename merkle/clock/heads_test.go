@@ -67,28 +67,6 @@ func TestHeadsWrite(t *testing.T) {
 	}
 }
 
-func TestHeadsLoad(t *testing.T) {
-	ctx := context.Background()
-	heads := newHeadSet()
-	c := newRandomCID()
-	err := heads.Write(ctx, c, uint64(1))
-	if err != nil {
-		t.Error("Failed to write to head set:", err)
-		return
-	}
-
-	h, err := heads.load(ctx, c)
-	if err != nil {
-		t.Error("failed to load from head set:", err)
-		return
-	}
-
-	if h != uint64(1) {
-		t.Errorf("Incorrect value from head set load(), have %v, want %v", h, uint64(1))
-		return
-	}
-}
-
 func TestHeadsIsHead(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
@@ -126,17 +104,6 @@ func TestHeadsReplaceEmpty(t *testing.T) {
 		t.Error("Failed to Replace items in head set:", err)
 		return
 	}
-
-	h, err := heads.load(ctx, c2)
-	if err != nil {
-		t.Error("Failed to load items in head set:", err)
-		return
-	}
-
-	if h != uint64(3) {
-		t.Errorf("Invalid value for replaced head element, have %v, want %v", h, uint64(3))
-		return
-	}
 }
 
 func TestHeadsReplaceNonEmpty(t *testing.T) {
@@ -153,17 +120,6 @@ func TestHeadsReplaceNonEmpty(t *testing.T) {
 	err = heads.Replace(ctx, c1, c2, uint64(3))
 	if err != nil {
 		t.Error("Failed to Replace items in head set:", err)
-		return
-	}
-
-	h, err := heads.load(ctx, c2)
-	if err != nil {
-		t.Error("Failed to load items in head set:", err)
-		return
-	}
-
-	if h != uint64(3) {
-		t.Errorf("Invalid value for replaced head element, have %v, want %v", h, uint64(3))
 		return
 	}
 }

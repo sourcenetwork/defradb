@@ -48,18 +48,6 @@ func (hh *heads) key(c cid.Cid) core.HeadStoreKey {
 	return hh.namespace.WithCid(c)
 }
 
-func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
-	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
-	if err != nil {
-		return 0, err
-	}
-	height, n := binary.Uvarint(v)
-	if n <= 0 {
-		return 0, errors.New("error decoding height")
-	}
-	return height, nil
-}
-
 func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
@@ -72,10 +60,16 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
-	height, err := hh.load(ctx, c)
+	v, err := hh.store.Get(ctx, hh.key(c).ToDS())
 	if errors.Is(err, ds.ErrNotFound) {
 		return false, 0, nil
 	}
+
+	height, n := binary.Uvarint(v)
+	if n <= 0 {
+		return false, 0, errors.New("error decoding height")
+	}
+
 	return err == nil, height, err
 }
 
