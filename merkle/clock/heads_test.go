@@ -62,7 +62,7 @@ func TestHeadsWrite(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, c, uint64(1))
+	err := heads.Write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -73,7 +73,7 @@ func TestHeadsLoad(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, c, uint64(1))
+	err := heads.Write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -95,7 +95,7 @@ func TestHeadsDelete(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, c, uint64(1))
+	err := heads.Write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -118,7 +118,7 @@ func TestHeadsIsHead(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c := newRandomCID()
-	err := heads.write(ctx, c, uint64(1))
+	err := heads.Write(ctx, c, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -168,7 +168,7 @@ func TestHeadsReplaceNonEmpty(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
-	err := heads.write(ctx, c1, uint64(1))
+	err := heads.Write(ctx, c1, uint64(1))
 	if err != nil {
 		t.Error("Failed to write to head set:", err)
 		return
@@ -201,7 +201,7 @@ func TestHeadsAdd(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
-	err := heads.Add(ctx, c1, uint64(1))
+	err := heads.Write(ctx, c1, uint64(1))
 	if err != nil {
 		t.Error("Failed to Add element to head set:", err)
 		return
@@ -213,8 +213,8 @@ func TestHeaddsList(t *testing.T) {
 	heads := newHeadSet()
 	c1 := newRandomCID()
 	c2 := newRandomCID()
-	heads.Add(ctx, c1, uint64(1))
-	heads.Add(ctx, c2, uint64(2))
+	heads.Write(ctx, c1, uint64(1))
+	heads.Write(ctx, c2, uint64(2))
 
 	list, h, err := heads.List(ctx)
 	if err != nil {

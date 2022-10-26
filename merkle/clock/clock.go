@@ -154,7 +154,7 @@ func (mc *MerkleClock) ProcessNode(
 	}
 	if !hasHeads { // reached the bottom, at a leaf
 		log.Debug(ctx, "No heads found")
-		err := mc.headset.Add(ctx, root, rootPrio)
+		err := mc.headset.Write(ctx, root, rootPrio)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("error adding head (when reached the bottom) %s ", root), err)
 		}
@@ -190,7 +190,7 @@ func (mc *MerkleClock) ProcessNode(
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
 			log.Debug(ctx, "Adding head")
-			err := mc.headset.Add(ctx, root, rootPrio)
+			err := mc.headset.Write(ctx, root, rootPrio)
 			if err != nil {
 				log.ErrorE(
 					ctx,

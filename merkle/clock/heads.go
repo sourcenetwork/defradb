@@ -60,7 +60,7 @@ func (hh *heads) load(ctx context.Context, c cid.Cid) (uint64, error) {
 	return height, nil
 }
 
-func (hh *heads) write(ctx context.Context, c cid.Cid, height uint64) error {
+func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 	if n == 0 {
@@ -101,19 +101,12 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		return err
 	}
 
-	err = hh.write(ctx, c, height)
+	err = hh.Write(ctx, c, height)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (hh *heads) Add(ctx context.Context, c cid.Cid, height uint64) error {
-	log.Debug(ctx, "Adding new DAG head",
-		logging.NewKV("CID", c),
-		logging.NewKV("Height", height))
-	return hh.write(ctx, c, height)
 }
 
 // List returns the list of current heads plus the max height.
