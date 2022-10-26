@@ -95,9 +95,8 @@ func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error
 		logging.NewKV("CID", c),
 		logging.NewKV("Height", height))
 	var store ds.Write = hh.store
-	var err error
 
-	err = hh.delete(ctx, store, h)
+	err := hh.delete(ctx, store, h)
 	if err != nil {
 		return err
 	}
