@@ -80,20 +80,20 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
 }
 
 // Replace replaces a head with a new CID.
-func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
+func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
 	log.Info(
 		ctx,
 		"Replacing DAG head",
-		logging.NewKV("Old", h),
-		logging.NewKV("CID", c),
+		logging.NewKV("Old", old),
+		logging.NewKV("CID", new),
 		logging.NewKV("Height", height))
 
-	err := hh.store.Delete(ctx, hh.key(h).ToDS())
+	err := hh.store.Delete(ctx, hh.key(old).ToDS())
 	if err != nil {
 		return err
 	}
 
-	err = hh.Write(ctx, c, height)
+	err = hh.Write(ctx, new, height)
 	if err != nil {
 		return err
 	}
