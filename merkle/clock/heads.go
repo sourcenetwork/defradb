@@ -86,11 +86,6 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, uint64, error) {
 	return err == nil, height, err
 }
 
-func (hh *heads) Len(ctx context.Context) (int, error) {
-	list, _, err := hh.List(ctx)
-	return len(list), err
-}
-
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, h, c cid.Cid, height uint64) error {
 	log.Info(

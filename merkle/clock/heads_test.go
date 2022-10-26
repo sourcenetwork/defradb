@@ -141,46 +141,6 @@ func TestHeadsIsHead(t *testing.T) {
 	}
 }
 
-func TestHeadsLen(t *testing.T) {
-	ctx := context.Background()
-	heads := newHeadSet()
-	c := newRandomCID()
-	err := heads.write(ctx, heads.store, c, uint64(1))
-	if err != nil {
-		t.Error("Failed to write to head set:", err)
-		return
-	}
-
-	l, err := heads.Len(ctx)
-	if err != nil {
-		t.Error("Failed to get head set length:", err)
-		return
-	}
-
-	if l != 1 {
-		t.Errorf("Incorrect length for head set, have %v, want %v", l, 1)
-		return
-	}
-
-	c = newRandomCID()
-	err = heads.write(ctx, heads.store, c, uint64(1))
-	if err != nil {
-		t.Error("Failed to write to head set:", err)
-		return
-	}
-
-	l, err = heads.Len(ctx)
-	if err != nil {
-		t.Error("Failed to get head set length (second call):", err)
-		return
-	}
-
-	if l != 2 {
-		t.Errorf("Incorrect length for head set, have %v, want %v", l, 2)
-		return
-	}
-}
-
 func TestHeadsReplaceEmpty(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
