@@ -165,22 +165,6 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else if n.parsed.Cid.HasValue() && !n.parsed.DocKey.HasValue() {
-		if n.visitedNodes[n.parsed.Cid.Value()] {
-			// If the requested cid has been visited, we are done and should return false
-			return false, nil
-		}
-
-		cid, err := cid.Decode(n.parsed.Cid.Value())
-		if err != nil {
-			return false, err
-		}
-
-		if hasCid, err := store.Has(n.p.ctx, cid); !hasCid || err != nil {
-			return false, err
-		}
-
-		currentCid = &cid
 	} else {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {

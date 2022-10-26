@@ -82,8 +82,6 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (error message could be better, or empty result).
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by invalid CID",
@@ -102,14 +100,12 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "encoding/hex: invalid byte:",
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
 }
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (error message could be better, or empty result).
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "query for a single block by invalid, short CID",
@@ -128,7 +124,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "length greater than remaining number of bytes in buffer",
+		Results: []map[string]any{},
 	}
 
 	executeTestCase(t, test)
