@@ -388,7 +388,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 								"_and": []any{
 									dataMap{
 										"age": dataMap{
-											"_lt": int64(26),
+											"_lt": int(26),
 										},
 									},
 									dataMap{
@@ -409,7 +409,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 											"_and": []any{
 												dataMap{
 													"age": dataMap{
-														"_lt": int64(26),
+														"_lt": int(26),
 													},
 												},
 												dataMap{
@@ -653,7 +653,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"_and": []any{
 									dataMap{
 										"age": dataMap{
-											"_lt": int64(26),
+											"_lt": int(26),
 										},
 									},
 									dataMap{
@@ -677,7 +677,7 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 											"_and": []any{
 												dataMap{
 													"age": dataMap{
-														"_lt": int64(26),
+														"_lt": int(26),
 													},
 												},
 												dataMap{

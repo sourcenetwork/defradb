@@ -618,7 +618,7 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 								"collectionName": "users",
 								"filter": dataMap{
 									"Age": dataMap{
-										"_eq": int64(21),
+										"_eq": int(21),
 									},
 								},
 								"spans": []dataMap{
@@ -671,7 +671,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"_gt": int64(20),
+											"_gt": int(20),
 										},
 									},
 									"spans": []dataMap{
@@ -719,7 +719,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"_gt": int64(40),
+											"_gt": int(40),
 										},
 									},
 									"spans": []dataMap{
@@ -768,7 +768,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 									"collectionName": "users",
 									"filter": dataMap{
 										"Age": dataMap{
-											"_gt": int64(20),
+											"_gt": int(20),
 										},
 									},
 									"spans": []dataMap{
@@ -833,12 +833,12 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 									"_and": []any{
 										dataMap{
 											"Age": dataMap{
-												"_gt": int64(20),
+												"_gt": int(20),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"_lt": int64(50),
+												"_lt": int(50),
 											},
 										},
 									},
@@ -902,12 +902,12 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 									"_or": []any{
 										dataMap{
 											"Age": dataMap{
-												"_eq": int64(55),
+												"_eq": int(55),
 											},
 										},
 										dataMap{
 											"Age": dataMap{
-												"_eq": int64(19),
+												"_eq": int(19),
 											},
 										},
 									},
@@ -970,9 +970,9 @@ func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
 								"filter": dataMap{
 									"Age": dataMap{
 										"_in": []any{
-											int64(19),
-											int64(40),
-											int64(55),
+											int(19),
+											int(40),
+											int(55),
 										},
 									},
 								},
