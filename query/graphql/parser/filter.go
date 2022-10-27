@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
@@ -34,7 +33,7 @@ func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (client.Option[reques
 	if err != nil {
 		return client.None[request.Filter](), err
 	}
-	spew.Dump(conditions)
+
 	return client.Some(request.Filter{
 		Conditions: conditions,
 	}), nil

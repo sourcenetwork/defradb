@@ -11,8 +11,10 @@
 package parser
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
@@ -171,7 +173,7 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 			obj := astValue.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("couldn't get argument type for filter")
+				return nil, errors.New("2couldn't get argument type for filter")
 			}
 			filter, err := NewFilter(obj, filterType)
 			if err != nil {
@@ -238,8 +240,6 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 	}
 
 	// parse field selections
-	// spew.Dump(fieldDef)
-	// spew.Dump(fieldDef.Type)
 	fieldObject, ok := fieldDef.Type.(*gql.List).OfType.(*gql.Object)
 	if !ok {
 		return nil, errors.New("1Couldn't get field object from definition")
@@ -337,11 +337,14 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 			}
 
 			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
+			spew.Dump(filterArg)
 			if hasFilterArg {
 				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
+				fmt.Println("FIELD DEF:", fieldDef)
+				fmt.Println("ARGS:", fieldDef.Args)
 				filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 				if !ok {
-					return nil, errors.New("couldn't get argument type for filter")
+					return nil, errors.New("3couldn't get argument type for filter")
 				}
 				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue), filterType)
 				if err != nil {
@@ -438,8 +441,17 @@ func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) 
 		if arg.Name() == name {
 			return arg.Type, true
 		}
+		if inputObject, ok := arg.Type.(*gql.InputObject); ok {
+			if foundInput, ok := getArgumentTypeFromInput(inputObject, name); ok {
+				return foundInput, ok
+			}
+		}
 	}
 	return nil, false
+}
+
+func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, bool) {
+
 }
 
 /*

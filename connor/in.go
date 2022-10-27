@@ -1,6 +1,10 @@
 package connor
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 // in will determine whether a value exists within the
 // condition's array of available values.
@@ -8,6 +12,7 @@ func in(conditions, data any) (bool, error) {
 	switch cn := conditions.(type) {
 	case []any:
 		for _, ce := range cn {
+			fmt.Printf("NIN val: %v %T\n", ce, ce)
 			if m, err := eq(ce, data); err != nil {
 				return false, err
 			} else if m {
