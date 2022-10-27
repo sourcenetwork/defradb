@@ -151,18 +151,6 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		)
 	}
 
-	// check if lww state is correct (val is test2)
-	// check if head/blockstore state is correct (one head, two blocks)
-	nHeads, err := clk.headset.Len(ctx)
-	if err != nil {
-		t.Error("Error getting MerkleClock heads size:", err)
-		return
-	}
-	if nHeads != 1 {
-		t.Errorf("Incorrect number of heads of current clock state, have %v, want %v", nHeads, 1)
-		return
-	}
-
 	numBlocks := 0
 	cids, err := clk.dagstore.AllKeysChan(ctx)
 	if err != nil {
