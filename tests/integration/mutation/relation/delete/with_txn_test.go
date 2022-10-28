@@ -280,9 +280,9 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				TransactionId: 0,
 
 				Query: `mutation {
-			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
-			            _key
-			        }
+					delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
+						_key
+					}
 			    }`,
 
 				Results: []map[string]any{
@@ -372,10 +372,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 				TransactionId: 0,
 
 				Query: `mutation {
-			        delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
-			            _key
-			        }
-			    }`,
+					delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
+						_key
+					}
+				}`,
 
 				Results: []map[string]any{
 					{
@@ -437,10 +437,10 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 				TransactionId: 0,
 
 				Query: `mutation {
-			        delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
-			            _key
-			        }
-			    }`,
+					delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
+						_key
+					}
+				}`,
 
 				Results: []map[string]any{
 					{
