@@ -132,7 +132,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 
 func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Deletion of using id, unknown id and empt collection.",
+		Description: "Deletion using id that doesn't exist, where the collection is empty.",
 		Query: `mutation {
 					delete_user(id: "bae-028383cc-d6ba-5df7-959f-2bdce3536a05") {
 						_key
@@ -146,7 +146,7 @@ func TestDeleteWithUnknownIdEmptyCollection(t *testing.T) {
 
 func TestDeleteWithUnknownId(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Deletion of using id, unknown id.",
+		Description: "Deletion using id that doesn't exist, where the collection is non-empty.",
 		Query: `mutation {
 					delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca811") {
 						_key
