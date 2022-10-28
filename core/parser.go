@@ -41,6 +41,4 @@ type Parser interface {
 
 	// Adds the given schema to this parser's model.
 	AddSchema(ctx context.Context, schema string) error
-
-	CreateDescriptions(ctx context.Context, schema string) ([]client.CollectionDescription, []SchemaDefinition, error)
 }

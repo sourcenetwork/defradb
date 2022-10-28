@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 )
@@ -99,36 +98,4 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 func (p *parser) AddSchema(ctx context.Context, schema string) error {
 	_, _, err := p.schemaManager.Generator.FromSDL(ctx, schema)
 	return err
-}
-
-func (p *parser) CreateDescriptions(ctx context.Context, schemaString string) ([]client.CollectionDescription, []core.SchemaDefinition, error) {
-	schemaManager, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	types, astdoc, err := schemaManager.Generator.FromSDL(ctx, schemaString)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	colDesc, err := schemaManager.Generator.CreateDescriptions(types)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	definitions := make([]core.SchemaDefinition, len(astdoc.Definitions))
-	for i, astDefinition := range astdoc.Definitions {
-		objDef, isObjDef := astDefinition.(*ast.ObjectDefinition)
-		if !isObjDef {
-			continue
-		}
-
-		definitions[i] = core.SchemaDefinition{
-			Name: objDef.Name.Value,
-			Body: objDef.Loc.Source.Body[objDef.Loc.Start:objDef.Loc.End],
-		}
-	}
-
-	return colDesc, definitions, nil
 }
