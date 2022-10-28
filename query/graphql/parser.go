@@ -45,12 +45,12 @@ func NewParser() (*parser, error) {
 	return p, nil
 }
 
-func (p *parser) IsIntrospectionRequest(request string) bool {
+func (p *parser) IsIntrospection(request string) bool {
 	// todo: This needs to be done properly https://github.com/sourcenetwork/defradb/issues/911
 	return strings.Contains(request, "IntrospectionQuery")
 }
 
-func (p *parser) ExecuteIntrospectionRequest(request string) *client.QueryResult {
+func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
 	schema := p.schemaManager.Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)

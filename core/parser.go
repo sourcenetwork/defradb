@@ -39,10 +39,10 @@ type Schema struct {
 // a query language.  This includes schema and query parsing, and introspection.
 type Parser interface {
 	// Returns true if the given string is an introspection request.
-	IsIntrospectionRequest(request string) bool
+	IsIntrospection(request string) bool
 
 	// Executes the given introspection request.
-	ExecuteIntrospectionRequest(request string) *client.QueryResult
+	ExecuteIntrospection(request string) *client.QueryResult
 
 	// Parses the given request, returning a strongly typed model of that request.
 	Parse(request string) (*request.Request, []error)

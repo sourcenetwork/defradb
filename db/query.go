@@ -64,7 +64,7 @@ func (db *db) ExecTransactionalQuery(
 	query string,
 	txn datastore.Txn,
 ) *client.QueryResult {
-	if db.parser.IsIntrospectionRequest(query) {
+	if db.parser.IsIntrospection(query) {
 		return db.ExecIntrospection(query)
 	}
 
@@ -92,5 +92,5 @@ func (db *db) ExecTransactionalQuery(
 }
 
 func (db *db) ExecIntrospection(query string) *client.QueryResult {
-	return db.parser.ExecuteIntrospectionRequest(query)
+	return db.parser.ExecuteIntrospection(query)
 }
