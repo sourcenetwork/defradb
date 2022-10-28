@@ -26,7 +26,6 @@ type DB interface {
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
-	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
 
 	Root() ds.Batching
 	Blockstore() blockstore.Blockstore

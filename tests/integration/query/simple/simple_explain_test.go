@@ -40,7 +40,7 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 
 		Results: []dataMap{},
 
-		ExpectedError: "[Directive \"explain\" may not be used on FIELD.]",
+		ExpectedError: "Directive \"explain\" may not be used on FIELD.",
 	}
 	executeTestCase(t, test)
 }

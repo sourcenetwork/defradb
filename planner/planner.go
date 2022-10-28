@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/mapper"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 var (
@@ -93,7 +93,7 @@ type Planner struct {
 	ctx context.Context
 }
 
-func makePlanner(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
+func New(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
@@ -132,9 +132,6 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 
 		return p.Select(m)
-
-	case *mapper.Select:
-		return p.Select(n)
 
 	case *request.CommitSelect:
 		m, err := mapper.ToCommitSelect(p.ctx, p.txn, n)
@@ -504,8 +501,8 @@ func (p *Planner) executeRequest(
 	return docs, err
 }
 
-// runRequest plans how to run the request, then attempts to run the request and returns the results.
-func (p *Planner) runRequest(
+// RunRequest plans how to run the request, then attempts to run the request and returns the results.
+func (p *Planner) RunRequest(
 	ctx context.Context,
 	query *request.Request,
 ) ([]map[string]any, error) {

@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/mapper"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 // sourceInfo stores info about the data source

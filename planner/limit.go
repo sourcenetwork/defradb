@@ -12,7 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/mapper"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 // Limit the results, yielding only what the limit/offset permits
