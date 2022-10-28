@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/mapper"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 // A data-source that may yield child items, parent items, or both depending on configuration

@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/mapper"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
@@ -598,21 +597,19 @@ func (c *collection) makeSelectionQuery(
 	txn datastore.Txn,
 	filter any,
 ) (planner.Query, error) {
-	mapping := c.createMapping()
-	var f *mapper.Filter
+	var f client.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
 			return nil, errors.New("invalid filter")
 		}
-		var p client.Option[request.Filter]
-		p, err = parser.NewFilterFromString(fval)
+
+		f, err = parser.NewFilterFromString(fval)
 		if err != nil {
 			return nil, err
 		}
-		f = mapper.ToFilter(p, mapping)
-	case *mapper.Filter:
+	case client.Option[request.Filter]:
 		f = fval
 	default:
 		return nil, errors.New("invalid filter")
@@ -620,57 +617,42 @@ func (c *collection) makeSelectionQuery(
 	if filter == "" {
 		return nil, errors.New("invalid filter")
 	}
-	slct, err := c.makeSelectLocal(f, mapping)
+	slct, err := c.makeSelectLocal(f)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
+	planner := planner.New(ctx, c.db, txn)
+	return planner.MakePlan(&request.Request{
+		Queries: []*request.OperationDefinition{
+			{
+				Selections: []request.Selection{
+					slct,
+				},
+			},
+		},
+	})
 }
 
-func (c *collection) makeSelectLocal(filter *mapper.Filter, mapping *core.DocumentMapping) (*mapper.Select, error) {
-	slct := &mapper.Select{
-		Targetable: mapper.Targetable{
-			Field: mapper.Field{
-				Name: c.Name(),
-			},
-			Filter: filter,
+func (c *collection) makeSelectLocal(filter client.Option[request.Filter]) (*request.Select, error) {
+	slct := &request.Select{
+		Field: request.Field{
+			Name: c.Name(),
 		},
-		Fields:          make([]mapper.Requestable, len(c.desc.Schema.Fields)),
-		DocumentMapping: *mapping,
+		Filter: filter,
+		Fields: make([]request.Selection, 0),
 	}
 
 	for _, fd := range c.Schema().Fields {
 		if fd.IsObject() {
 			continue
 		}
-		index := int(fd.ID)
-		slct.Fields = append(slct.Fields, &mapper.Field{
-			Index: index,
-			Name:  fd.Name,
+		slct.Fields = append(slct.Fields, &request.Field{
+			Name: fd.Name,
 		})
 	}
 
 	return slct, nil
-}
-
-func (c *collection) createMapping() *core.DocumentMapping {
-	mapping := core.NewDocumentMapping()
-	mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
-	for _, fd := range c.Schema().Fields {
-		if fd.IsObject() {
-			continue
-		}
-		index := int(fd.ID)
-		mapping.Add(index, fd.Name)
-		mapping.RenderKeys = append(mapping.RenderKeys,
-			core.RenderKey{
-				Index: index,
-				Key:   fd.Name,
-			},
-		)
-	}
-	return mapping
 }
 
 // getTypeAndCollectionForPatch parses the Patch op path values

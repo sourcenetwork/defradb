@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/mapper"
+	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 /*

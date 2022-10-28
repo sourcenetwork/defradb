@@ -30,8 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/query/graphql"
 )
 
 var (
@@ -61,8 +60,7 @@ type db struct {
 
 	events client.Events
 
-	schema        *schema.SchemaManager
-	queryExecutor *planner.QueryExecutor
+	parser core.Parser
 
 	// The options used to init the database
 	options any
@@ -92,14 +90,7 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
-	log.Debug(ctx, "Loading: schema manager")
-	sm, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug(ctx, "Loading: query executor")
-	exec, err := planner.NewQueryExecutor(sm)
+	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
@@ -110,9 +101,8 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 
 		crdtFactory: &crdtFactory,
 
-		schema:        sm,
-		queryExecutor: exec,
-		options:       options,
+		parser:  parser,
+		options: options,
 	}
 
 	// apply options
@@ -188,23 +178,6 @@ func (db *db) Events() client.Events {
 
 func (db *db) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.multistore.Rootstore())
-}
-
-func (db *db) Executor() *planner.QueryExecutor {
-	return db.queryExecutor
-}
-
-func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
-	rm := db.schema.Relations
-	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
-	if rel == nil {
-		return "", errors.New("relation does not exists")
-	}
-	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
-	if !ok {
-		return "", errors.New("relation is missing referenced field")
-	}
-	return subtypefieldname, nil
 }
 
 // Close is called when we are shutting down the database.
