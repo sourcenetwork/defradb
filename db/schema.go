@@ -21,18 +21,23 @@ import (
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, query types, etc.
 func (db *db) AddSchema(ctx context.Context, schemaString string) error {
-	schema, err := db.parser.AddSchema(ctx, schemaString)
+	err := db.parser.AddSchema(ctx, schemaString)
 	if err != nil {
 		return err
 	}
 
-	for _, desc := range schema.Descriptions {
+	collectionDescriptions, schemaDefinitions, err := db.parser.CreateDescriptions(ctx, schemaString)
+	if err != nil {
+		return err
+	}
+
+	for _, desc := range collectionDescriptions {
 		if _, err := db.CreateCollection(ctx, desc); err != nil {
 			return err
 		}
 	}
 
-	return db.saveSchema(ctx, schema)
+	return db.saveSchema(ctx, schemaDefinitions)
 }
 
 func (db *db) loadSchema(ctx context.Context) error {
@@ -50,13 +55,12 @@ func (db *db) loadSchema(ctx context.Context) error {
 		sdl += "\n" + string(buf)
 	}
 
-	_, err = db.parser.AddSchema(ctx, sdl)
-	return err
+	return db.parser.AddSchema(ctx, sdl)
 }
 
-func (db *db) saveSchema(ctx context.Context, schema *core.Schema) error {
+func (db *db) saveSchema(ctx context.Context, schemaDefinitions []core.SchemaDefinition) error {
 	// save each type individually
-	for _, def := range schema.Definitions {
+	for _, def := range schemaDefinitions {
 		key := core.NewSchemaKey(def.Name)
 		if err := db.systemstore().Put(ctx, key.ToDS(), def.Body); err != nil {
 			return err

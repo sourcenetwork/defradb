@@ -96,15 +96,25 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 	return query, nil
 }
 
-func (p *parser) AddSchema(ctx context.Context, schema string) (*core.Schema, error) {
-	types, astdoc, err := p.schemaManager.Generator.FromSDL(ctx, schema)
+func (p *parser) AddSchema(ctx context.Context, schema string) error {
+	_, _, err := p.schemaManager.Generator.FromSDL(ctx, schema)
+	return err
+}
+
+func (p *parser) CreateDescriptions(ctx context.Context, schemaString string) ([]client.CollectionDescription, []core.SchemaDefinition, error) {
+	schemaManager, err := schema.NewSchemaManager()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	colDesc, err := p.schemaManager.Generator.CreateDescriptions(types)
+	types, astdoc, err := schemaManager.Generator.FromSDL(ctx, schemaString)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	colDesc, err := schemaManager.Generator.CreateDescriptions(types)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	definitions := make([]core.SchemaDefinition, len(astdoc.Definitions))
@@ -120,8 +130,5 @@ func (p *parser) AddSchema(ctx context.Context, schema string) (*core.Schema, er
 		}
 	}
 
-	return &core.Schema{
-		Definitions:  definitions,
-		Descriptions: colDesc,
-	}, nil
+	return colDesc, definitions, nil
 }
