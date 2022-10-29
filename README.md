@@ -242,7 +242,7 @@ defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
 
 The keys can be generated with your generator of choice or with `make tls-certs`.
 
-Note that the keys should be saved in `~/.defradb/certs`
+Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs ~/.defradb/certs`.
 
 Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
 
