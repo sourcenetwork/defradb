@@ -301,12 +301,20 @@ func (dbcfg DatastoreConfig) validate() error {
 
 // APIConfig configures the API endpoints.
 type APIConfig struct {
-	Address string
+	Address     string
+	TLS         bool
+	PubKeyPath  string
+	PrivKeyPath string
+	Email       string
 }
 
 func defaultAPIConfig() *APIConfig {
 	return &APIConfig{
-		Address: "localhost:9181",
+		Address:     "localhost:9181",
+		TLS:         false,
+		PubKeyPath:  "certs/server.key",
+		PrivKeyPath: "certs/server.crt",
+		Email:       "example@example.com",
 	}
 }
 
@@ -314,15 +322,21 @@ func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return errors.New("no database URL provided")
 	}
-	_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
-	if err != nil {
-		return errors.Wrap("invalid database URL", err)
+	ip := net.ParseIP(apicfg.Address)
+	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
+		_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
+		if err != nil {
+			return errors.Wrap("invalid database URL", err)
+		}
 	}
 	return nil
 }
 
 // AddressToURL provides the API address as URL.
 func (apicfg *APIConfig) AddressToURL() string {
+	if apicfg.TLS {
+		return fmt.Sprintf("https://%s", apicfg.Address)
+	}
 	return fmt.Sprintf("http://%s", apicfg.Address)
 }
 

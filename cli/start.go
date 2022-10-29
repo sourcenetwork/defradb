@@ -82,10 +82,19 @@ var startCmd = &cobra.Command{
 
 func init() {
 	startCmd.Flags().String(
+		"address", cfg.API.Address,
+		"Specify the HTTP API endpoint address",
+	)
+	err := viper.BindPFlag("api.address", startCmd.Flags().Lookup("address"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
+	}
+
+	startCmd.Flags().String(
 		"peers", cfg.Net.Peers,
 		"List of peers to connect to",
 	)
-	err := viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
+	err = viper.BindPFlag("net.peers", startCmd.Flags().Lookup("peers"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
 	}
@@ -133,6 +142,42 @@ func init() {
 	err = viper.BindPFlag("net.p2pdisabled", startCmd.Flags().Lookup("no-p2p"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
+	}
+
+	startCmd.Flags().Bool(
+		"tls", cfg.API.TLS,
+		"Enable serving the API over https",
+	)
+	err = viper.BindPFlag("api.tls", startCmd.Flags().Lookup("tls"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
+	}
+
+	startCmd.Flags().String(
+		"pubkeypath", cfg.API.PubKeyPath,
+		"Path to the public key for tls",
+	)
+	err = viper.BindPFlag("api.pubkeypath", startCmd.Flags().Lookup("pubkeypath"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkeypath", err)
+	}
+
+	startCmd.Flags().String(
+		"privkeypath", cfg.API.PrivKeyPath,
+		"Path to the private key for tls",
+	)
+	err = viper.BindPFlag("api.privkeypath", startCmd.Flags().Lookup("privkeypath"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.privkeypath", err)
+	}
+
+	startCmd.Flags().String(
+		"email", cfg.API.Email,
+		"Email address used by the CA for notifications",
+	)
+	err = viper.BindPFlag("api.email", startCmd.Flags().Lookup("email"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.email", err)
 	}
 
 	rootCmd.AddCommand(startCmd)
@@ -268,12 +313,28 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}()
 	}
 
+	rootDir, _, err := config.GetRootDir(rootDirParam)
+	if err != nil {
+		return nil, errors.Wrap("failed to get root dir", err)
+	}
+
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
+		httpapi.WithRootDir(rootDir),
 	}
+
 	if n != nil {
 		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
+
+	if cfg.API.TLS {
+		sOpt = append(
+			sOpt,
+			httpapi.WithSelfSignedCert(cfg.API.PubKeyPath, cfg.API.PrivKeyPath),
+			httpapi.WithCAEmail(cfg.API.Email),
+		)
+	}
+
 	s := httpapi.NewServer(db, sOpt...)
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
@@ -291,7 +352,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 				httpapi.RootPath,
 			),
 		)
-		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
 				if err := n.Close(); err != nil {
