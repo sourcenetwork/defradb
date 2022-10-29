@@ -40,6 +40,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -215,6 +216,11 @@ func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 		log.ErrorE(n.ctx, "Problem bootstraping using DHT", err)
 		return
 	}
+}
+
+// ListenAddrs returns the Multiaddr list of the hosts' listening addresses.
+func (n *Node) ListenAddrs() []multiaddr.Multiaddr {
+	return n.host.Addrs()
 }
 
 // PeerID returns the node's peer ID.

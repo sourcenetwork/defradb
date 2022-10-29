@@ -122,6 +122,17 @@ clean:
 clean\:test:
 	go clean -testcache
 
+.PHONY: tls-certs
+tls-certs:
+ifeq ($(path),)
+	openssl ecparam -genkey -name secp384r1 -out server.key
+	openssl req -new -x509 -sha256 -key server.key -out server.crt -days 365
+else
+	mkdir -p $(path)
+	openssl ecparam -genkey -name secp384r1 -out $(path)/server.key
+	openssl req -new -x509 -sha256 -key $(path)/server.key -out $(path)/server.crt -days 365
+endif
+
 .PHONY: test
 test:
 	gotestsum --format pkgname -- ./... -race -shuffle=on
