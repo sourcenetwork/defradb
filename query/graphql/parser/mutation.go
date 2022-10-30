@@ -35,7 +35,9 @@ var (
 
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
-func parseMutationOperationDefinition(schema gql.Schema, def *ast.OperationDefinition) (*request.OperationDefinition, error) {
+func parseMutationOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition) (*request.OperationDefinition, error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
@@ -149,7 +151,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("Couldn't get field object from definition")
+		return nil, errors.New("couldn't get field object from definition")
 	}
 	var err error
 	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)

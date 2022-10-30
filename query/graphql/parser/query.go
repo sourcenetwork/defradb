@@ -87,7 +87,9 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
-func parseQueryOperationDefinition(schema gql.Schema, def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
+func parseQueryOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
@@ -150,7 +152,12 @@ func parseQueryOperationDefinition(schema gql.Schema, def *ast.OperationDefiniti
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.Object, field *ast.Field, index int) (*request.Select, error) {
+func parseSelect(
+	schema gql.Schema,
+	rootType request.SelectionType,
+	parent *gql.Object,
+	field *ast.Field,
+	index int) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
 			Name:  field.Name.Value,
@@ -245,7 +252,7 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("Couldn't get field object from definition")
+		return nil, errors.New("couldn't get field object from definition")
 	}
 	var err error
 	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
@@ -263,7 +270,11 @@ func getFieldAlias(field *ast.Field) client.Option[string] {
 	return client.Some(field.Alias.Value)
 }
 
-func parseSelectFields(schema gql.Schema, root request.SelectionType, parent *gql.Object, fields *ast.SelectionSet) ([]request.Selection, error) {
+func parseSelectFields(
+	schema gql.Schema,
+	root request.SelectionType,
+	parent *gql.Object,
+	fields *ast.SelectionSet) ([]request.Selection, error) {
 	selections := make([]request.Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {

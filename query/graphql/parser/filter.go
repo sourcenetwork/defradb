@@ -141,7 +141,7 @@ func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any
 func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {
 	val := gql.ValueFromAST(stmt, inputArg, nil)
 	if val == nil {
-		return nil, errors.New("Couldn't parse conditions value from AST")
+		return nil, errors.New("couldn't parse conditions value from AST")
 	}
 	return val, nil
 }

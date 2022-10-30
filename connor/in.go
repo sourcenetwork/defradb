@@ -1,8 +1,6 @@
 package connor
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -12,7 +10,6 @@ func in(conditions, data any) (bool, error) {
 	switch cn := conditions.(type) {
 	case []any:
 		for _, ce := range cn {
-			fmt.Printf("NIN val: %v %T\n", ce, ce)
 			if m, err := eq(ce, data); err != nil {
 				return false, err
 			} else if m {
