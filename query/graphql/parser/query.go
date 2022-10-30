@@ -11,10 +11,8 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
@@ -240,9 +238,14 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 	}
 
 	// parse field selections
-	fieldObject, ok := fieldDef.Type.(*gql.List).OfType.(*gql.Object)
-	if !ok {
-		return nil, errors.New("1Couldn't get field object from definition")
+	var fieldObject *gql.Object
+	switch ftype := fieldDef.Type.(type) {
+	case *gql.Object:
+		fieldObject = ftype
+	case *gql.List:
+		fieldObject = ftype.OfType.(*gql.Object)
+	default:
+		return nil, errors.New("3Couldn't get field object from definition")
 	}
 	var err error
 	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
@@ -267,12 +270,7 @@ func parseSelectFields(schema gql.Schema, root request.SelectionType, parent *gq
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				fieldDef := gql.GetFieldDef(schema, parent, node.Name.Value)
-				fieldObject, ok := fieldDef.Type.(*gql.Object)
-				if !ok {
-					return nil, errors.New("2Couldn't get field object from definition")
-				}
-				s, err := parseAggregate(schema, fieldObject, node, i)
+				s, err := parseAggregate(schema, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -286,12 +284,7 @@ func parseSelectFields(schema gql.Schema, root request.SelectionType, parent *gq
 					subroot = request.CommitSelection
 				}
 
-				fieldDef := gql.GetFieldDef(schema, parent, node.Name.Value)
-				fieldObject, ok := fieldDef.Type.(*gql.Object)
-				if !ok {
-					return nil, errors.New("3Couldn't get field object from definition")
-				}
-				s, err := parseSelect(schema, subroot, fieldObject, node, i)
+				s, err := parseSelect(schema, subroot, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -337,12 +330,17 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 			}
 
 			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
-			spew.Dump(filterArg)
 			if hasFilterArg {
 				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
-				fmt.Println("FIELD DEF:", fieldDef)
-				fmt.Println("ARGS:", fieldDef.Args)
-				filterType, ok := getArgumentType(fieldDef, request.FilterClause)
+				argType, ok := getArgumentType(fieldDef, hostName)
+				if !ok {
+					return nil, errors.New("3couldn't get argument type for filter")
+				}
+				argTypeObject, ok := argType.(*gql.InputObject)
+				if !ok {
+					return nil, errors.New("expected arg type to be object")
+				}
+				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
 				if !ok {
 					return nil, errors.New("3couldn't get argument type for filter")
 				}
@@ -441,99 +439,26 @@ func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) 
 		if arg.Name() == name {
 			return arg.Type, true
 		}
-		if inputObject, ok := arg.Type.(*gql.InputObject); ok {
-			if foundInput, ok := getArgumentTypeFromInput(inputObject, name); ok {
-				return foundInput, ok
-			}
-		}
+		// // if the found type is another inputobject, recurse
+		// if inputObj, ok := arg.Type.(*gql.InputObject); ok {
+		// 	if foundInput, ok := getArgumentTypeFromInput(1, inputObj, name); ok {
+		// 		return foundInput, ok
+		// 	}
+		// }
 	}
 	return nil, false
 }
 
 func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, bool) {
-
-}
-
-/*
-// parseSelect parses a typed selection field
-// which includes sub fields, and may include
-// filters, limits, orders, etc..
-func parseSelect(ctx context.Context, field *ast.Field, index int, schema Schema) (*Select, error) {
-	slct := &Select{
-		Name:      field.Name.Value,
-		Statement: field,
-	}
-	ttype := getFieldDef(schema, schema.QueryType(), slct.Name)
-
-	// parse arguments
-	for _, argument := range field.Arguments {
-		prop := argument.Name.Value
-		astValue := argument.Value
-
-		// parse filter
-		if prop == "filter" {
-			obj := astValue.(*ast.ObjectValue)
-			typ, ok := getArgumentType(ttype, "filter")
-			if !ok {
-				return nil, fmt.Errorf("couldn't find argument input type")
-			}
-
-			filter, err := NewFilter(ctx, obj, typ, schema)
-			if err != nil {
-				return slct, err
-			}
-
-			slct.Filter = filter
+	for fname, ftype := range input.Fields() {
+		if fname == name {
+			return ftype.Type, true
 		}
+		// if inputObj, ok := ftype.Type.(*gql.InputObject); ok {
+		// 	if foundInput, ok := getArgumentTypeFromInput(inputObj, name); ok {
+		// 		return foundInput, true
+		// 	}
+		// }
 	}
-
-	// if theres no field selections, just return
-	if field.SelectionSet == nil {
-		return slct, nil
-	}
-
-	return slct, nil
+	return nil, false
 }
-
-// Filter contains the parsed condition map to be
-// run by the Filter Evaluator.
-// @todo: Cache filter structure for faster condition
-// evaluation.
-type Filter struct {
-	// parsed filter conditions
-	Conditions map[string]interface{}
-}
-
-// type condition
-
-// NewFilter parses the given GraphQL ObjectValue AST type
-// and extracts all the filter conditions into a usable map.
-func NewFilter(ctx context.Context, stmt *ast.ObjectValue, inputType Input, schema Schema) (*Filter, error) {
-	conditions, err := ParseConditions(ctx, stmt, inputType, schema)
-	if err != nil {
-		return nil, err
-	}
-	return &Filter{
-		Conditions: conditions,
-	}, nil
-}
-
-// parseConditions loops over the stmt ObjectValue fields, and extracts
-// all the relevant name/value pairs.
-func ParseConditions(ctx context.Context, stmt *ast.ObjectValue, inputType Input, schema Schema) (map[string]interface{}, error) {
-	cond := valueFromAST(stmt, inputType, nil)
-
-	// cond, err := parseConditions(stmt)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// if v, ok := cond.(map[string]interface{}); ok {
-	// 	return v, nil
-	// }
-
-	fmt.Println("FILTER CONDITIONS:")
-	spew.Dump(cond)
-	return nil, errors.New("Failed to parse statement")
-}
-*/

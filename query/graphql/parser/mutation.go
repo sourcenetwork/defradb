@@ -142,9 +142,14 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 		return mut, nil
 	}
 
-	fieldObject, ok := fieldDef.Type.(*gql.Object)
-	if !ok {
-		return nil, errors.New("Couldn't get field object from definition")
+	var fieldObject *gql.Object
+	switch ftype := fieldDef.Type.(type) {
+	case *gql.Object:
+		fieldObject = ftype
+	case *gql.List:
+		fieldObject = ftype.OfType.(*gql.Object)
+	default:
+		return nil, errors.New("3Couldn't get field object from definition")
 	}
 	var err error
 	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
