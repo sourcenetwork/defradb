@@ -40,6 +40,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/textileio/go-libp2p-pubsub-rpc/finalizer"
 
@@ -125,6 +126,7 @@ func NewNode(
 			ddht, err = newDHT(ctx, h, store)
 			return ddht, err
 		}),
+		libp2p.Security(libp2ptls.ID, libp2ptls.New),
 	}
 	if options.EnableRelay {
 		libp2pOpts = append(libp2pOpts, libp2p.EnableRelay())
