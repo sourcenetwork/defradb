@@ -171,7 +171,7 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 			obj := astValue.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("2couldn't get argument type for filter")
+				return nil, errors.New("couldn't get argument type for filter")
 			}
 			filter, err := NewFilter(obj, filterType)
 			if err != nil {
@@ -245,7 +245,7 @@ func parseSelect(schema gql.Schema, rootType request.SelectionType, parent *gql.
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("3Couldn't get field object from definition")
+		return nil, errors.New("Couldn't get field object from definition")
 	}
 	var err error
 	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
@@ -334,7 +334,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
 				argType, ok := getArgumentType(fieldDef, hostName)
 				if !ok {
-					return nil, errors.New("3couldn't get argument type for filter")
+					return nil, errors.New("couldn't get argument type for filter")
 				}
 				argTypeObject, ok := argType.(*gql.InputObject)
 				if !ok {
@@ -342,7 +342,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				}
 				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
 				if !ok {
-					return nil, errors.New("3couldn't get argument type for filter")
+					return nil, errors.New("couldn't get argument type for filter")
 				}
 				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue), filterType)
 				if err != nil {

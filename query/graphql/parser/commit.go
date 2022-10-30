@@ -115,7 +115,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("3Couldn't get field object from definition")
+		return nil, errors.New("Couldn't get field object from definition")
 	}
 	var err error
 	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)

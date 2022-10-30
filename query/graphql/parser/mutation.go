@@ -112,7 +112,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			obj := argument.Value.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("1couldn't get argument type for filter")
+				return nil, errors.New("couldn't get argument type for filter")
 			}
 			filter, err := NewFilter(obj, filterType)
 			if err != nil {
@@ -149,7 +149,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("3Couldn't get field object from definition")
+		return nil, errors.New("Couldn't get field object from definition")
 	}
 	var err error
 	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
