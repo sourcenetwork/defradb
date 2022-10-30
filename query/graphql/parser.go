@@ -25,32 +25,32 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-var _ core.Parser = (*parser)(nil)
+var _ core.Parser = (*Parser)(nil)
 
-type parser struct {
-	schemaManager schema.SchemaManager
+type Parser struct {
+	SchemaManager schema.SchemaManager
 }
 
-func NewParser() (*parser, error) {
+func NewParser() (*Parser, error) {
 	schemaManager, err := schema.NewSchemaManager()
 	if err != nil {
 		return nil, err
 	}
 
-	p := &parser{
-		schemaManager: *schemaManager,
+	p := &Parser{
+		SchemaManager: *schemaManager,
 	}
 
 	return p, nil
 }
 
-func (p *parser) IsIntrospection(request string) bool {
+func (p *Parser) IsIntrospection(request string) bool {
 	// todo: This needs to be done properly https://github.com/sourcenetwork/defradb/issues/911
 	return strings.Contains(request, "IntrospectionQuery")
 }
 
-func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
-	schema := p.schemaManager.Schema()
+func (p *Parser) ExecuteIntrospection(request string) *client.QueryResult {
+	schema := p.SchemaManager.Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
@@ -68,7 +68,7 @@ func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
 	return res
 }
 
-func (p *parser) Parse(request string) (*request.Request, []error) {
+func (p *Parser) Parse(request string) (*request.Request, []error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(request),
 		Name: "GraphQL request",
@@ -79,7 +79,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 		return nil, []error{err}
 	}
 
-	schema := p.schemaManager.Schema()
+	schema := p.SchemaManager.Schema()
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))
@@ -89,7 +89,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseQuery(ast)
+	query, parsingErrors := defrap.ParseQuery(*schema, ast)
 	if len(parsingErrors) > 0 {
 		return nil, parsingErrors
 	}
@@ -97,7 +97,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 	return query, nil
 }
 
-func (p *parser) AddSchema(ctx context.Context, schema string) error {
-	_, _, err := p.schemaManager.Generator.FromSDL(ctx, schema)
+func (p *Parser) AddSchema(ctx context.Context, schema string) error {
+	_, _, err := p.SchemaManager.Generator.FromSDL(ctx, schema)
 	return err
 }
