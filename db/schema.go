@@ -13,26 +13,34 @@ package db
 import (
 	"context"
 
+	"github.com/graphql-go/graphql/language/ast"
 	dsq "github.com/ipfs/go-datastore/query"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/query/graphql/schema"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, query types, etc.
 func (db *db) AddSchema(ctx context.Context, schemaString string) error {
-	schema, err := db.parser.AddSchema(ctx, schemaString)
+	err := db.parser.AddSchema(ctx, schemaString)
 	if err != nil {
 		return err
 	}
 
-	for _, desc := range schema.Descriptions {
+	collectionDescriptions, schemaDefinitions, err := createDescriptions(ctx, schemaString)
+	if err != nil {
+		return err
+	}
+
+	for _, desc := range collectionDescriptions {
 		if _, err := db.CreateCollection(ctx, desc); err != nil {
 			return err
 		}
 	}
 
-	return db.saveSchema(ctx, schema)
+	return db.saveSchema(ctx, schemaDefinitions)
 }
 
 func (db *db) loadSchema(ctx context.Context) error {
@@ -50,17 +58,53 @@ func (db *db) loadSchema(ctx context.Context) error {
 		sdl += "\n" + string(buf)
 	}
 
-	_, err = db.parser.AddSchema(ctx, sdl)
-	return err
+	return db.parser.AddSchema(ctx, sdl)
 }
 
-func (db *db) saveSchema(ctx context.Context, schema *core.Schema) error {
+func (db *db) saveSchema(ctx context.Context, schemaDefinitions []core.SchemaDefinition) error {
 	// save each type individually
-	for _, def := range schema.Definitions {
+	for _, def := range schemaDefinitions {
 		key := core.NewSchemaKey(def.Name)
 		if err := db.systemstore().Put(ctx, key.ToDS(), def.Body); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func createDescriptions(
+	ctx context.Context,
+	schemaString string,
+) ([]client.CollectionDescription, []core.SchemaDefinition, error) {
+	// We should not be using this package at all here, and should not be doing most of what this package does
+	// Rework: https://github.com/sourcenetwork/defradb/issues/923
+	schemaManager, err := schema.NewSchemaManager()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	types, astdoc, err := schemaManager.Generator.FromSDL(ctx, schemaString)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	colDesc, err := schemaManager.Generator.CreateDescriptions(types)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	definitions := make([]core.SchemaDefinition, len(astdoc.Definitions))
+	for i, astDefinition := range astdoc.Definitions {
+		objDef, isObjDef := astDefinition.(*ast.ObjectDefinition)
+		if !isObjDef {
+			continue
+		}
+
+		definitions[i] = core.SchemaDefinition{
+			Name: objDef.Name.Value,
+			Body: objDef.Loc.Source.Body[objDef.Loc.Start:objDef.Loc.End],
+		}
+	}
+
+	return colDesc, definitions, nil
 }

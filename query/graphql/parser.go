@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 )
@@ -96,32 +95,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 	return query, nil
 }
 
-func (p *parser) AddSchema(ctx context.Context, schema string) (*core.Schema, error) {
-	types, astdoc, err := p.schemaManager.Generator.FromSDL(ctx, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	colDesc, err := p.schemaManager.Generator.CreateDescriptions(types)
-	if err != nil {
-		return nil, err
-	}
-
-	definitions := make([]core.SchemaDefinition, len(astdoc.Definitions))
-	for i, astDefinition := range astdoc.Definitions {
-		objDef, isObjDef := astDefinition.(*ast.ObjectDefinition)
-		if !isObjDef {
-			continue
-		}
-
-		definitions[i] = core.SchemaDefinition{
-			Name: objDef.Name.Value,
-			Body: objDef.Loc.Source.Body[objDef.Loc.Start:objDef.Loc.End],
-		}
-	}
-
-	return &core.Schema{
-		Definitions:  definitions,
-		Descriptions: colDesc,
-	}, nil
+func (p *parser) AddSchema(ctx context.Context, schema string) error {
+	_, _, err := p.schemaManager.Generator.FromSDL(ctx, schema)
+	return err
 }
