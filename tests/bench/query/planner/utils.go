@@ -97,7 +97,7 @@ func buildParser(
 	if err != nil {
 		return nil, err
 	}
-	_, err = parser.AddSchema(ctx, schema)
+	err = parser.AddSchema(ctx, schema)
 	if err != nil {
 		return nil, err
 	}

@@ -27,14 +27,6 @@ type SchemaDefinition struct {
 	Body []byte
 }
 
-type Schema struct {
-	// The individual declarations of types defined by this schema.
-	Definitions []SchemaDefinition
-
-	// The collection descriptions created from/defined by this schema.
-	Descriptions []client.CollectionDescription
-}
-
 // Parser represents the object responsible for handling stuff specific to
 // a query language.  This includes schema and query parsing, and introspection.
 type Parser interface {
@@ -48,5 +40,5 @@ type Parser interface {
 	Parse(request string) (*request.Request, []error)
 
 	// Adds the given schema to this parser's model.
-	AddSchema(ctx context.Context, schema string) (*Schema, error)
+	AddSchema(ctx context.Context, schema string) error
 }
