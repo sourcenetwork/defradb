@@ -11,9 +11,11 @@
 package http
 
 import (
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ipfs/go-cid"
@@ -136,6 +138,11 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if strings.HasPrefix(query, "subscription") {
+		subscriptionHandler(rw, req)
+		return
+	}
+
 	db, err := dbFromContext(req.Context())
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
@@ -255,4 +262,40 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 		),
 		http.StatusOK,
 	)
+}
+
+func subscriptionHandler(rw http.ResponseWriter, req *http.Request) {
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Connection", "keep-alive")
+
+	brk, err := brokerFromContext(req.Context())
+	if err != nil {
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+		return
+	}
+
+	messageCh := make(chan []byte, 5)
+	brk.subscribe <- messageCh
+
+	defer func() {
+		brk.unsubscribe <- messageCh
+	}()
+
+	for {
+		select {
+		case <-req.Context().Done():
+			return
+		default:
+			fmt.Fprintf(rw, "data: %s\n\n", <-messageCh)
+			flusher.Flush()
+		}
+
+	}
 }

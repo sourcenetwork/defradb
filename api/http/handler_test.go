@@ -59,7 +59,7 @@ func TestSimpleDataResponse(t *testing.T) {
 }
 
 func TestNewHandlerWithLogger(t *testing.T) {
-	h := newHandler(nil, serverOptions{})
+	h := newHandler(nil, nil, serverOptions{})
 
 	dir := t.TempDir()
 
