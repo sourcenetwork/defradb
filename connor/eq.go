@@ -2,9 +2,11 @@ package connor
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
 
 	gql "github.com/graphql-go/graphql"
@@ -84,6 +86,8 @@ func eq(condition, data any) (bool, error) {
 	// into the connor eval package?
 	case gql.NullValue:
 		return data == nil, nil
+	case time.Time:
+		return ctime.Equal(cn, data), nil
 	default:
 		return reflect.DeepEqual(condition, data), nil
 	}
