@@ -16,43 +16,15 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
+func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Simple query, average with filter",
+		Description: "Simple query with basic filter(age)",
 		Query: `query {
-					_avg(users: {field: Age, filter: {Age: {_gt: 26}}})
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Bob",
-					"Age": 30
-				}`,
-				`{
-					"Name": "Alice",
-					"Age": 32
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"_avg": float64(31),
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Simple query, average with datetime filter",
-		Query: `query {
-					_avg(users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
+					users(filter: {CreatedAt: {_eq: "2017-07-23T03:46:56.647Z"}}) {
+						Name
+						Age
+						CreatedAt
+					}
 				}`,
 		Docs: map[int][]string{
 			0: {
@@ -63,19 +35,56 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 				}`,
 				`{
 					"Name": "Bob",
-					"Age": 30,
-					"CreatedAt": "2018-07-23T03:46:56.647Z"
-				}`,
-				`{
-					"Name": "Alice",
 					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56.647Z"
+					"CreatedAt": "2016-07-23T03:46:56.647Z"
 				}`,
 			},
 		},
 		Results: []map[string]any{
 			{
-				"_avg": float64(31),
+				"Name":      "John",
+				"Age":       uint64(21),
+				"CreatedAt": "2017-07-23T03:46:56.647Z",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic filter(age)",
+		Query: `query {
+					users(filter: {CreatedAt: {_eq: null}}) {
+						Name
+						Age
+						CreatedAt
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2016-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Fred",
+					"Age": 44
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name":      "Fred",
+				"Age":       uint64(44),
+				"CreatedAt": nil,
 			},
 		},
 	}
