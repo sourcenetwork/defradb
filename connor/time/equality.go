@@ -9,6 +9,12 @@ func Equal(condition, data any) bool {
 		case time.Time:
 			return d.Equal(c)
 		case string:
+			// todo: Not sure if we should be
+			// parsing incoming data here, or
+			// if the DB should handle this.
+			// (Note: This isnt the user provided
+			// condition on a query, but the data
+			// stored in DB for a document
 			dt, err := time.Parse(time.RFC3339, d)
 			if err != nil {
 				return false
