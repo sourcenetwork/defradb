@@ -134,7 +134,7 @@ const (
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	FieldKind_DECIMAL      FieldKind = 8
 	FieldKind_DATE         FieldKind = 9
-	FieldKind_TIMESTAMP    FieldKind = 10
+	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
 	FieldKind_BYTES        FieldKind = 13
@@ -155,8 +155,6 @@ const (
 	FieldKind_NILLABLE_INT_ARRAY    FieldKind = 19
 	FieldKind_NILLABLE_FLOAT_ARRAY  FieldKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY FieldKind = 21
-
-	FieldKind_DATETIME FieldKind = 22
 )
 
 type RelationType uint8

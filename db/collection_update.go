@@ -24,8 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 var (
@@ -606,10 +604,7 @@ func (c *collection) makeSelectionQuery(
 			return nil, errors.New("invalid filter")
 		}
 
-		// @todo: Want to clean this up. Opening the conversation to
-		// all!
-		schema := c.db.parser.(*graphql.Parser).SchemaManager.Schema()
-		f, err = parser.NewFilterFromString(*schema, c.Name(), fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}
