@@ -73,7 +73,7 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 		Description: "Simple query with cid and dockey",
 		Query: `query {
 					users (
-							cid: "bafybeigriq4rcvsugsqiohxvtov2kvcmtqtldesobtx7vsjl556dhpliau",
+							cid: "bafybeifp4fihbdnnh4gcyeeusdplbvszrxhfweg3bu6s2o4bghz5o5acty",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -102,7 +102,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (first) cid and dockey",
 		Query: `query {
 					users (
-							cid: "bafybeigriq4rcvsugsqiohxvtov2kvcmtqtldesobtx7vsjl556dhpliau",
+							cid: "bafybeifp4fihbdnnh4gcyeeusdplbvszrxhfweg3bu6s2o4bghz5o5acty",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -143,7 +143,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (last) cid and dockey",
 		Query: `query {
 					users (
-							cid: "bafybeiehnzljzuijwsf474kwa2wdzptbiaxtszfgz2q4o3xnczfgwj22ei",
+							cid: "bafybeibjxl22r7yuef5zd2ehsuqiv2rzvsd7ohihon6yvpu7harcpt37ji",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
@@ -184,7 +184,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 		Description: "Simple query with (middle) cid and dockey",
 		Query: `query {
 					users (
-							cid: "bafybeiceb4p4bq7z3wrrr7q3jzsg44liuxvkov5xucxqwawx4hj6hx7tiy",
+							cid: "bafybeiglri6xqrlkgsvo3mmyyew36y2pfg5yddxico7yunuwar4z4vumsu",
 							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
 						) {
 						Name
