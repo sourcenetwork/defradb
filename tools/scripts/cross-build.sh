@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-DEFRADB_MAIN="cmd/defradb/main.go"
+# Cross-compilation script for DefraDB.
+# We assume we run this from a position where DefraDB's build toolchain (go, make, ...) is available.
+
 BUILD_DIR="build/"
 
 platforms=$1
@@ -31,7 +33,7 @@ do
     if [ "$GOOS" = "windows" ]; then
         output_name+='.exe'
     fi
-    if ! env GOOS="$GOOS" GOARCH="$GOARCH" go build -o $output_name $DEFRADB_MAIN; then
+    if ! env GOOS="$GOOS" GOARCH="$GOARCH" make build path="$output_name"; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
     fi
