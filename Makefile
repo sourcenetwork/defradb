@@ -32,9 +32,16 @@ default:
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
 
+# Usage:
+# 	- make build
+# 	- make build path="path/to/defradb-binary"
 .PHONY: build
 build:
+ifeq ($(path),)
 	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
+else
+	@go build $(BUILD_FLAGS) -o $(path) cmd/defradb/main.go
+endif
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
