@@ -55,7 +55,6 @@ var (
 		client.FieldKind_FLOAT:                 client.LWW_REGISTER,
 		client.FieldKind_FLOAT_ARRAY:           client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_FLOAT_ARRAY:  client.LWW_REGISTER,
-		client.FieldKind_DATE:                  client.LWW_REGISTER,
 		client.FieldKind_DATETIME:              client.LWW_REGISTER,
 		client.FieldKind_STRING:                client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
@@ -74,7 +73,6 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 		typeNotNullInt     string = "Int!"
 		typeFloat          string = "Float"
 		typeNotNullFloat   string = "Float!"
-		typeDate           string = "Date"
 		typeDateTime       string = "DateTime"
 		typeString         string = "String"
 		typeNotNullString  string = "String!"
