@@ -8,8 +8,6 @@ import (
 	"github.com/sourcenetwork/defradb/connor/numbers"
 	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
-
-	gql "github.com/graphql-go/graphql"
 )
 
 // eq is an operator which performs object equality
@@ -82,10 +80,6 @@ func eq(condition, data any) (bool, error) {
 		}
 
 		return m, nil
-	// @todo: Are we OK with this spilling of GQL null types
-	// into the connor eval package?
-	case gql.NullValue:
-		return data == nil, nil
 	case time.Time:
 		return ctime.Equal(cn, data), nil
 	default:

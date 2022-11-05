@@ -478,8 +478,8 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
 
-	case client.FieldKind_DATE:
-		return getDate(val)
+	// case client.FieldKind_DATETIME:
+	// 	return getDate(val)
 
 	case client.FieldKind_INT:
 		return getInt64(val)
