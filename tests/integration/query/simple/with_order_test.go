@@ -68,6 +68,62 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic order ASC",
+		Query: `query {
+					users(order: {CreatedAt: ASC}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2021-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2032-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55,
+					"CreatedAt": "2055-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19,
+					"CreatedAt": "2019-07-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Alice",
+				"Age":  uint64(19),
+			},
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+			},
+			{
+				"Name": "Bob",
+				"Age":  uint64(32),
+			},
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with basic order DESC",
@@ -94,6 +150,62 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 				`{
 					"Name": "Alice",
 					"Age": 19
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Carlo",
+				"Age":  uint64(55),
+			},
+			{
+				"Name": "Bob",
+				"Age":  uint64(32),
+			},
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+			},
+			{
+				"Name": "Alice",
+				"Age":  uint64(19),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with basic order DESC",
+		Query: `query {
+					users(order: {CreatedAt: DESC}) {
+						Name
+						Age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2021-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2032-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Carlo",
+					"Age": 55,
+					"CreatedAt": "2055-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19,
+					"CreatedAt": "2019-07-23T03:46:56.647Z"
 				}`,
 			},
 		},
