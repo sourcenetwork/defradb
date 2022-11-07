@@ -30,7 +30,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		},
 	}
 
-	fieldDef := gql.GetFieldDef(schema, parent, commit.Name)
+	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
