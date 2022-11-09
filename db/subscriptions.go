@@ -92,13 +92,13 @@ func (db *db) handleClientSubscriptions(ctx context.Context) {
 }
 
 func (db *db) checkForClientSubsciptions(r *request.Request) (*events.Publisher, error) {
-	if db.clientSubscriptions == nil {
-		return nil, errors.New("server does not accept subscriptions")
-	}
-
 	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
 		s := r.Subscription[0].Selections[0]
 		if subRequest, ok := s.(*request.ObjectSubscription); ok {
+			if db.clientSubscriptions == nil {
+				return nil, errors.New("server does not accept subscriptions")
+			}
+
 			stream := events.NewPublisher(make(chan any))
 			db.clientSubscriptions.syncLock.Lock()
 			subRequest.Stream = stream
