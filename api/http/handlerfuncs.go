@@ -25,7 +25,6 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
-	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -266,7 +265,7 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
-func subscriptionHandler(stream *events.Publisher[client.GQLResult], rw http.ResponseWriter, req *http.Request) {
+func subscriptionHandler(stream *events.Publisher, rw http.ResponseWriter, req *http.Request) {
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)

@@ -13,7 +13,6 @@ package parser
 import (
 	"github.com/graphql-go/graphql/language/ast"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
@@ -43,8 +42,8 @@ func parseSubscriptionOperationDefinition(def *ast.OperationDefinition) (*reques
 // parseSubscription parses a typed subscription field
 // which includes sub fields, and may include
 // filters, IDs, etc.
-func parseSubscription(field *ast.Field) (*request.ObjectSubscription[client.GQLResult], error) {
-	sub := &request.ObjectSubscription[client.GQLResult]{
+func parseSubscription(field *ast.Field) (*request.ObjectSubscription, error) {
+	sub := &request.ObjectSubscription{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),

@@ -48,5 +48,5 @@ type GQLResult struct {
 
 type QueryResult struct {
 	GQL    GQLResult
-	Stream *events.Publisher[GQLResult]
+	Stream *events.Publisher
 }

@@ -10,16 +10,10 @@
 
 package request
 
-import (
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
-)
-
 type Request struct {
 	Queries      []*OperationDefinition
 	Mutations    []*OperationDefinition
 	Subscription []*OperationDefinition
-	UpdateEvent  client.Option[events.Subscription[client.UpdateEvent]]
 }
 
 type Selection any

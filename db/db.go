@@ -60,7 +60,7 @@ type db struct {
 
 	events client.Events
 
-	streams subscription[client.GQLResult]
+	clientSubscriptions *subscriptions
 
 	parser core.Parser
 
@@ -81,9 +81,9 @@ func WithUpdateEvents() Option {
 	}
 }
 
-// WithSubscriptionRunner adds API relateded subscription capabilities.
+// WithClientSubscriptions adds GraphQL API relateded subscription capabilities.
 // Must be called after WithUpdateEvents.
-func WithSubscriptionRunner(ctx context.Context) Option {
+func WithClientSubscriptions(ctx context.Context) Option {
 	return func(db *db) {
 		if db.events.Updates.HasValue() {
 			sub, err := db.events.Updates.Value().Subscribe()
@@ -91,9 +91,11 @@ func WithSubscriptionRunner(ctx context.Context) Option {
 				log.Error(ctx, err.Error())
 				return
 			}
-			db.streams.updateEvt = sub
+			db.clientSubscriptions = &subscriptions{
+				updateEvt: sub,
+			}
 
-			go db.runSubscriptions(ctx)
+			go db.handleClientSubscriptions(ctx)
 		}
 	}
 }

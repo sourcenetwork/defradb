@@ -12,8 +12,10 @@ package events
 
 import "sync"
 
-type Publisher[T any] struct {
-	ch chan T
+// Publisher holds a channel and sync mechanism that enable safe writes
+// where the reader is expected to be the one closing the channel.
+type Publisher struct {
+	ch chan any
 
 	closingCh chan struct{}
 	isClosed  bool
@@ -21,22 +23,22 @@ type Publisher[T any] struct {
 	syncLock  sync.Mutex
 }
 
-// NewPublisher creates a Publisher
-func NewPublisher[T any](ch chan T) *Publisher[T] {
-	return &Publisher[T]{
+// NewPublisher creates a Publisher with the given channel
+func NewPublisher(ch chan any) *Publisher {
+	return &Publisher{
 		ch:        ch,
 		closingCh: make(chan struct{}),
 	}
 }
 
-// Read returns the channel to write
-func (p *Publisher[T]) Read() <-chan T {
+// Read returns the channel
+func (p *Publisher) Read() <-chan any {
 	return p.ch
 }
 
-// Write into the channel in a different goroutine
-func (p *Publisher[T]) Write(data T) {
-	go func(data T) {
+// Write into the channel
+func (p *Publisher) Write(data any) {
+	go func(data any) {
 		p.syncLock.Lock()
 		p.writersWG.Add(1)
 		p.syncLock.Unlock()
@@ -56,7 +58,7 @@ func (p *Publisher[T]) Write(data T) {
 }
 
 // Closes channel, draining any blocked writes
-func (p *Publisher[T]) Close() {
+func (p *Publisher) Close() {
 	close(p.closingCh)
 
 	go func() {
@@ -71,8 +73,8 @@ func (p *Publisher[T]) Close() {
 	p.syncLock.Unlock()
 }
 
-// Closes channel, draining any blocked writes
-func (p *Publisher[T]) IsClosed() bool {
+// IsClosed returns true if the channel has been closed.
+func (p *Publisher) IsClosed() bool {
 	p.syncLock.Lock()
 	defer p.syncLock.Unlock()
 

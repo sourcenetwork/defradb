@@ -237,7 +237,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	options := []db.Option{
 		db.WithUpdateEvents(),
-		db.WithSubscriptionRunner(ctx),
+		db.WithClientSubscriptions(ctx),
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)

@@ -22,21 +22,26 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-type subscription[T any] struct {
+type subscriptions struct {
 	updateEvt events.Subscription[client.UpdateEvent]
-	requests  []*request.ObjectSubscription[T]
+	requests  []*request.ObjectSubscription
 	syncLock  sync.Mutex
 }
 
-func (db *db) runSubscriptions(ctx context.Context) {
-	log.Info(ctx, "Starting subscription runner")
-	for evt := range db.streams.updateEvt {
+func (db *db) handleClientSubscriptions(ctx context.Context) {
+	if db.clientSubscriptions == nil {
+		log.Info(ctx, "can't run subscription without adding the option to the db")
+		return
+	}
+
+	log.Info(ctx, "Starting client subscription handler")
+	for evt := range db.clientSubscriptions.updateEvt {
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
 			log.Error(ctx, err.Error())
 			continue
 		}
-		db.streams.syncLock.Lock()
+		db.clientSubscriptions.syncLock.Lock()
 
 		planner := planner.New(ctx, db, txn)
 
@@ -47,8 +52,8 @@ func (db *db) runSubscriptions(ctx context.Context) {
 		}
 
 		// keeping track of the active requests
-		subs := db.streams.requests[:0]
-		for _, objSub := range db.streams.requests {
+		subs := db.clientSubscriptions.requests[:0]
+		for _, objSub := range db.clientSubscriptions.requests {
 			if objSub.Stream.IsClosed() {
 				continue
 			}
@@ -56,35 +61,49 @@ func (db *db) runSubscriptions(ctx context.Context) {
 			if objSub.Schema == col.Name() {
 				objSub.CID = client.Some(evt.Cid.String())
 				objSub.DocKeys = client.Some([]string{evt.DocKey})
-				result := planner.RunSubscriptionRequest(ctx, objSub)
-				if result.Data == nil {
+				result, err := planner.RunSubscriptionRequest(ctx, objSub)
+				if err != nil {
+					objSub.Stream.Write(client.GQLResult{
+						Errors: []any{err.Error()},
+					})
+				}
+
+				// Don't send anything back to the client if the request yields an empty dataset.
+				if len(result) == 0 {
 					continue
 				}
-				objSub.Stream.Write(result)
+
+				objSub.Stream.Write(client.GQLResult{
+					Data: result,
+				})
 			}
 		}
 
 		// helping the GC
-		for i := len(subs); i < len(db.streams.requests); i++ {
-			db.streams.requests[i] = nil
+		for i := len(subs); i < len(db.clientSubscriptions.requests); i++ {
+			db.clientSubscriptions.requests[i] = nil
 		}
 
-		db.streams.requests = subs
+		db.clientSubscriptions.requests = subs
 
 		txn.Discard(ctx)
-		db.streams.syncLock.Unlock()
+		db.clientSubscriptions.syncLock.Unlock()
 	}
 }
 
-func (db *db) checkForSubsciptions(r *request.Request) (*events.Publisher[client.GQLResult], error) {
+func (db *db) checkForClientSubsciptions(r *request.Request) (*events.Publisher, error) {
+	if db.clientSubscriptions == nil {
+		return nil, errors.New("server does not accept subscriptions")
+	}
+
 	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
 		s := r.Subscription[0].Selections[0]
-		if subRequest, ok := s.(*request.ObjectSubscription[client.GQLResult]); ok {
-			stream := events.NewPublisher(make(chan client.GQLResult))
-			db.streams.syncLock.Lock()
+		if subRequest, ok := s.(*request.ObjectSubscription); ok {
+			stream := events.NewPublisher(make(chan any))
+			db.clientSubscriptions.syncLock.Lock()
 			subRequest.Stream = stream
-			db.streams.requests = append(db.streams.requests, subRequest)
-			db.streams.syncLock.Unlock()
+			db.clientSubscriptions.requests = append(db.clientSubscriptions.requests, subRequest)
+			db.clientSubscriptions.syncLock.Unlock()
 			return stream, nil
 		}
 

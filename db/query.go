@@ -43,7 +43,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 		return res
 	}
 
-	stream, err := db.checkForSubsciptions(request)
+	stream, err := db.checkForClientSubsciptions(request)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res

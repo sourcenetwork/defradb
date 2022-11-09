@@ -18,7 +18,7 @@ import (
 // ObjectSubscription is a field on the SubscriptionType
 // of a graphql query. It includes all the possible
 // arguments
-type ObjectSubscription[T any] struct {
+type ObjectSubscription struct {
 	Field
 
 	DocKeys client.Option[[]string]
@@ -31,12 +31,12 @@ type ObjectSubscription[T any] struct {
 
 	Fields []Selection
 
-	Stream *events.Publisher[T]
+	Stream *events.Publisher
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
 // the Subscription object. Used to create a Select planNode for the event stream return objects.
-func (m ObjectSubscription[T]) ToSelect() *Select {
+func (m ObjectSubscription) ToSelect() *Select {
 	return &Select{
 		Field: Field{
 			Name:  m.Schema,

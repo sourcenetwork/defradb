@@ -147,7 +147,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 		return p.newObjectMutationPlan(m)
 
-	case *request.ObjectSubscription[client.GQLResult]:
+	case *request.ObjectSubscription:
 		m, err := mapper.ToSelect(p.ctx, p.txn, n.ToSelect())
 		if err != nil {
 			return nil, err
@@ -535,31 +535,14 @@ func (p *Planner) RunRequest(
 // RunSubscriptionRequest plans a request specific to a subscription and returns the result.
 func (p *Planner) RunSubscriptionRequest(
 	ctx context.Context,
-	query *request.ObjectSubscription[client.GQLResult],
-) client.GQLResult {
+	query *request.ObjectSubscription,
+) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 	if err != nil {
-		return client.GQLResult{
-			Errors: []any{err.Error()},
-		}
+		return nil, err
 	}
 
-	data, err := p.executeRequest(ctx, plan)
-	if err != nil {
-		return client.GQLResult{
-			Errors: []any{err.Error()},
-		}
-	}
-
-	if len(data) == 0 {
-		return client.GQLResult{
-			Data: nil,
-		}
-	}
-
-	return client.GQLResult{
-		Data: data,
-	}
+	return p.executeRequest(ctx, plan)
 }
 
 // MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
