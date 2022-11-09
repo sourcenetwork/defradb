@@ -28,7 +28,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
-		res.Errors = []any{err.Error()}
+		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
 	defer txn.Discard(ctx)
@@ -39,23 +39,35 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 		for i, err := range errors {
 			errorStrings[i] = err.Error()
 		}
-		res.Errors = errorStrings
+		res.GQL.Errors = errorStrings
+		return res
+	}
+
+	stream, err := db.checkForSubsciptions(request)
+	if err != nil {
+		res.GQL.Errors = []any{err.Error()}
+		return res
+	}
+
+	if stream != nil {
+		res.Stream = stream
 		return res
 	}
 
 	planner := planner.New(ctx, db, txn)
+
 	results, err := planner.RunRequest(ctx, request)
 	if err != nil {
-		res.Errors = []any{err.Error()}
+		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		res.Errors = []any{err.Error()}
+		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
 
-	res.Data = results
+	res.GQL.Data = results
 	return res
 }
 
@@ -76,18 +88,18 @@ func (db *db) ExecTransactionalQuery(
 		for i, err := range errors {
 			errorStrings[i] = err.Error()
 		}
-		res.Errors = errorStrings
+		res.GQL.Errors = errorStrings
 		return res
 	}
 
 	planner := planner.New(ctx, db, txn)
 	results, err := planner.RunRequest(ctx, request)
 	if err != nil {
-		res.Errors = []any{err.Error()}
+		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
 
-	res.Data = results
+	res.GQL.Data = results
 	return res
 }
 

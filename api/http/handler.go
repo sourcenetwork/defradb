@@ -24,8 +24,7 @@ import (
 )
 
 type handler struct {
-	db     client.DB
-	broker *broker
+	db client.DB
 	*chi.Mux
 
 	// user configurable options
@@ -69,10 +68,9 @@ func simpleDataResponse(args ...any) DataResponse {
 }
 
 // newHandler returns a handler with the router instantiated.
-func newHandler(db client.DB, b *broker, opts serverOptions) *handler {
+func newHandler(db client.DB, opts serverOptions) *handler {
 	return setRoutes(&handler{
 		db:      db,
-		broker:  b,
 		options: opts,
 	})
 }
@@ -82,8 +80,7 @@ func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 		if h.options.tls.HasValue() {
 			rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		}
-		ctx := context.WithValue(req.Context(), ctxBroker{}, h.broker)
-		ctx = context.WithValue(ctx, ctxDB{}, h.db)
+		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
 		if h.options.peerID != "" {
 			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
 		}
@@ -117,14 +114,6 @@ func sendJSON(ctx context.Context, rw http.ResponseWriter, v any, code int) {
 		rw.WriteHeader(http.StatusInternalServerError)
 		log.Error(ctx, err.Error())
 	}
-}
-
-func brokerFromContext(ctx context.Context) (*broker, error) {
-	brk, ok := ctx.Value(ctxBroker{}).(*broker)
-	if !ok {
-		return nil, errors.New("no broker available")
-	}
-	return brk, nil
 }
 
 func dbFromContext(ctx context.Context) (client.DB, error) {

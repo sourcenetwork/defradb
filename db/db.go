@@ -60,6 +60,8 @@ type db struct {
 
 	events client.Events
 
+	streams subscription[client.GQLResult]
+
 	parser core.Parser
 
 	// The options used to init the database
@@ -75,6 +77,23 @@ func WithUpdateEvents() Option {
 	return func(db *db) {
 		db.events = client.Events{
 			Updates: client.Some(events.New[client.UpdateEvent](0, updateEventBufferSize)),
+		}
+	}
+}
+
+// WithSubscriptionRunner adds API relateded subscription capabilities.
+// Must be called after WithUpdateEvents.
+func WithSubscriptionRunner(ctx context.Context) Option {
+	return func(db *db) {
+		if db.events.Updates.HasValue() {
+			sub, err := db.events.Updates.Value().Subscribe()
+			if err != nil {
+				log.Error(ctx, err.Error())
+				return
+			}
+			db.streams.updateEvt = sub
+
+			go db.runSubscriptions(ctx)
 		}
 	}
 }

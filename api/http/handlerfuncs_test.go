@@ -832,7 +832,7 @@ func testRequest(opt testOptions) {
 		req.Header.Set(k, v)
 	}
 
-	h := newHandler(opt.DB, nil, opt.ServerOptions)
+	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)

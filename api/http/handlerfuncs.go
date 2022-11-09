@@ -11,11 +11,11 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ipfs/go-cid"
@@ -25,7 +25,9 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 const (
@@ -138,11 +140,6 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(query, "subscription") {
-		subscriptionHandler(rw, req)
-		return
-	}
-
 	db, err := dbFromContext(req.Context())
 	if err != nil {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
@@ -150,7 +147,12 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	sendJSON(req.Context(), rw, result, http.StatusOK)
+	if result.Stream != nil {
+		subscriptionHandler(result.Stream, rw, req)
+		return
+	}
+
+	sendJSON(req.Context(), rw, result.GQL, http.StatusOK)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
@@ -264,7 +266,7 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
-func subscriptionHandler(rw http.ResponseWriter, req *http.Request) {
+func subscriptionHandler(stream *events.Publisher[client.GQLResult], rw http.ResponseWriter, req *http.Request) {
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)
@@ -275,27 +277,19 @@ func subscriptionHandler(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Cache-Control", "no-cache")
 	rw.Header().Set("Connection", "keep-alive")
 
-	brk, err := brokerFromContext(req.Context())
-	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
-		return
-	}
-
-	messageCh := make(chan []byte, 5)
-	brk.subscribe <- messageCh
-
-	defer func() {
-		brk.unsubscribe <- messageCh
-	}()
-
 	for {
 		select {
 		case <-req.Context().Done():
+			stream.Close()
 			return
-		default:
-			fmt.Fprintf(rw, "data: %s\n\n", <-messageCh)
+		case s := <-stream.Read():
+			b, err := json.Marshal(s)
+			if err != nil {
+				handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+				return
+			}
+			fmt.Fprintf(rw, "data: %s\n\n", b)
 			flusher.Flush()
 		}
-
 	}
 }

@@ -146,7 +146,15 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 			return nil, err
 		}
 		return p.newObjectMutationPlan(m)
+
+	case *request.ObjectSubscription[client.GQLResult]:
+		m, err := mapper.ToSelect(p.ctx, p.txn, n.ToSelect())
+		if err != nil {
+			return nil, err
+		}
+		return p.Select(m)
 	}
+
 	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
 }
 
@@ -522,6 +530,36 @@ func (p *Planner) RunRequest(
 
 	// This won't execute if it's an explain request.
 	return p.executeRequest(ctx, plan)
+}
+
+// RunSubscriptionRequest plans a request specific to a subscription and returns the result.
+func (p *Planner) RunSubscriptionRequest(
+	ctx context.Context,
+	query *request.ObjectSubscription[client.GQLResult],
+) client.GQLResult {
+	plan, err := p.makePlan(query)
+	if err != nil {
+		return client.GQLResult{
+			Errors: []any{err.Error()},
+		}
+	}
+
+	data, err := p.executeRequest(ctx, plan)
+	if err != nil {
+		return client.GQLResult{
+			Errors: []any{err.Error()},
+		}
+	}
+
+	if len(data) == 0 {
+		return client.GQLResult{
+			Data: nil,
+		}
+	}
+
+	return client.GQLResult{
+		Data: data,
+	}
 }
 
 // MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.

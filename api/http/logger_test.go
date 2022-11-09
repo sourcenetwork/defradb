@@ -79,7 +79,7 @@ func TestLoggerKeyValueOutput(t *testing.T) {
 
 	rec2 := httptest.NewRecorder()
 
-	h := newHandler(nil, nil, serverOptions{})
+	h := newHandler(nil, serverOptions{})
 	log.ApplyConfig(logging.Config{
 		EncoderFormat: logging.NewEncoderFormatOption(logging.JSON),
 		OutputPaths:   []string{logFile},

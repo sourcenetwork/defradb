@@ -235,11 +235,9 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to open datastore", err)
 	}
 
-	var options []db.Option
-
-	// check for p2p
-	if !cfg.Net.P2PDisabled {
-		options = append(options, db.WithUpdateEvents())
+	options := []db.Option{
+		db.WithUpdateEvents(),
+		db.WithSubscriptionRunner(ctx),
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)

@@ -44,7 +44,6 @@ const (
 type Server struct {
 	options     serverOptions
 	listener    net.Listener
-	broker      *broker
 	certManager *autocert.Manager
 
 	http.Server
@@ -76,22 +75,19 @@ type tlsOptions struct {
 
 // NewServer instantiates a new server with the given http.Handler.
 func NewServer(db client.DB, options ...func(*Server)) *Server {
-	brk := newBroker()
-
 	srv := &Server{
 		Server: http.Server{
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
 		},
-		broker: brk,
 	}
 
 	for _, opt := range append(options, DefaultOpts()) {
 		opt(srv)
 	}
 
-	srv.Handler = newHandler(db, brk, srv.options)
+	srv.Handler = newHandler(db, srv.options)
 
 	return srv
 }
@@ -265,8 +261,6 @@ func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
 		return errNoListener
 	}
-
-	go s.broker.listen(ctx)
 
 	if s.certManager != nil {
 		// When using TLS it's important to redirect http requests to https

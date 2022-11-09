@@ -647,14 +647,14 @@ func assertQueryResults(
 	expectedResults []map[string]any,
 	expectedError string,
 ) bool {
-	if assertErrors(t, description, result.Errors, expectedError) {
+	if assertErrors(t, description, result.GQL.Errors, expectedError) {
 		return true
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.([]map[string]any)
+	resultantData := result.GQL.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
+	log.Info(ctx, "", logging.NewKV("QueryResults", result.GQL.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
