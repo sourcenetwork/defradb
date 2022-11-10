@@ -28,6 +28,12 @@ type subscriptions struct {
 	syncLock  sync.Mutex
 }
 
+func (s *subscriptions) hasListeners() bool {
+	s.syncLock.Lock()
+	defer s.syncLock.Unlock()
+	return len(s.requests) > 0
+}
+
 func (db *db) handleClientSubscriptions(ctx context.Context) {
 	if db.clientSubscriptions == nil {
 		log.Info(ctx, "can't run subscription without adding the option to the db")
@@ -36,16 +42,13 @@ func (db *db) handleClientSubscriptions(ctx context.Context) {
 
 	log.Info(ctx, "Starting client subscription handler")
 	for evt := range db.clientSubscriptions.updateEvt {
-		db.clientSubscriptions.syncLock.Lock()
-		if len(db.clientSubscriptions.requests) == 0 {
-			db.clientSubscriptions.syncLock.Unlock()
+		if !db.clientSubscriptions.hasListeners() {
 			continue
 		}
 
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
 			log.Error(ctx, err.Error())
-			db.clientSubscriptions.syncLock.Unlock()
 			continue
 		}
 
@@ -54,9 +57,10 @@ func (db *db) handleClientSubscriptions(ctx context.Context) {
 		col, err := db.GetCollectionBySchemaID(ctx, evt.SchemaID)
 		if err != nil {
 			log.Error(ctx, err.Error())
-			db.clientSubscriptions.syncLock.Unlock()
 			continue
 		}
+
+		db.clientSubscriptions.syncLock.Lock()
 
 		// keeping track of the active requests
 		subs := db.clientSubscriptions.requests[:0]
