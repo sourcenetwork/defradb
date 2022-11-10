@@ -36,18 +36,25 @@ func (db *db) handleClientSubscriptions(ctx context.Context) {
 
 	log.Info(ctx, "Starting client subscription handler")
 	for evt := range db.clientSubscriptions.updateEvt {
+		db.clientSubscriptions.syncLock.Lock()
+		if len(db.clientSubscriptions.requests) == 0 {
+			db.clientSubscriptions.syncLock.Unlock()
+			continue
+		}
+
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
 			log.Error(ctx, err.Error())
+			db.clientSubscriptions.syncLock.Unlock()
 			continue
 		}
-		db.clientSubscriptions.syncLock.Lock()
 
 		planner := planner.New(ctx, db, txn)
 
 		col, err := db.GetCollectionBySchemaID(ctx, evt.SchemaID)
 		if err != nil {
 			log.Error(ctx, err.Error())
+			db.clientSubscriptions.syncLock.Unlock()
 			continue
 		}
 
