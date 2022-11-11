@@ -33,7 +33,6 @@ type handler struct {
 
 // context variables
 type (
-	ctxBroker struct{}
 	ctxDB     struct{}
 	ctxPeerID struct{}
 )

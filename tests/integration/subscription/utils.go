@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type dataMap = map[string]any
-
 var userSchema = (`
 	type user {
 		name: String
