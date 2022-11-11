@@ -234,7 +234,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 		return databaseInfo{}, err
 	}
 
-	dbopts = append(dbopts, db.WithUpdateEvents(), db.WithClientSubscriptions(ctx))
+	dbopts = append(dbopts, db.WithUpdateEvents())
 
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
@@ -250,7 +250,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 
 func NewMapDB(ctx context.Context) (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithClientSubscriptions(ctx))
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -280,7 +280,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents(), db.WithClientSubscriptions(ctx))
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -412,11 +412,11 @@ func ExecuteQueryTestCase(
 		//  the commited result of the transactional queries
 		if test.Query != "" {
 			result := dbi.db.ExecQuery(ctx, test.Query)
-			if result.Stream != nil {
+			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
 					dbi.db.ExecQuery(ctx, q.Query)
 					select {
-					case s := <-result.Stream.Read():
+					case s := <-result.Pub.Stream():
 						data := s.(client.GQLResult)
 						if assertQueryResults(
 							ctx,
@@ -436,7 +436,7 @@ func ExecuteQueryTestCase(
 						assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
 					}
 				}
-				result.Stream.Close()
+				result.Pub.Unsubscribe()
 			} else {
 				if assertQueryResults(
 					ctx,

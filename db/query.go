@@ -43,14 +43,15 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 		return res
 	}
 
-	stream, err := db.checkForClientSubsciptions(request)
+	pub, subRequest, err := db.checkForClientSubsciptions(request)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
 
-	if stream != nil {
-		res.Stream = stream
+	if pub != nil {
+		res.Pub = pub
+		go db.handleSubscription(ctx, pub, subRequest)
 		return res
 	}
 

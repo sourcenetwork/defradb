@@ -60,8 +60,6 @@ type db struct {
 
 	events client.Events
 
-	clientSubscriptions *subscriptions
-
 	parser core.Parser
 
 	// The options used to init the database
@@ -77,25 +75,6 @@ func WithUpdateEvents() Option {
 	return func(db *db) {
 		db.events = client.Events{
 			Updates: client.Some(events.New[client.UpdateEvent](0, updateEventBufferSize)),
-		}
-	}
-}
-
-// WithClientSubscriptions adds GraphQL API relateded subscription capabilities.
-// Must be called after WithUpdateEvents.
-func WithClientSubscriptions(ctx context.Context) Option {
-	return func(db *db) {
-		if db.events.Updates.HasValue() {
-			sub, err := db.events.Updates.Value().Subscribe()
-			if err != nil {
-				log.Error(ctx, err.Error())
-				return
-			}
-			db.clientSubscriptions = &subscriptions{
-				updateEvt: sub,
-			}
-
-			go db.handleClientSubscriptions(ctx)
 		}
 	}
 }

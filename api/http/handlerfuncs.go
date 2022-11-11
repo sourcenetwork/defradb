@@ -25,6 +25,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/events"
 )
@@ -146,8 +147,8 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	if result.Stream != nil {
-		subscriptionHandler(result.Stream, rw, req)
+	if result.Pub != nil {
+		subscriptionHandler(result.Pub, rw, req)
 		return
 	}
 
@@ -265,7 +266,7 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 }
 
-func subscriptionHandler(stream *events.Publisher, rw http.ResponseWriter, req *http.Request) {
+func subscriptionHandler(pub *events.Publisher[client.UpdateEvent], rw http.ResponseWriter, req *http.Request) {
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)
@@ -279,9 +280,12 @@ func subscriptionHandler(stream *events.Publisher, rw http.ResponseWriter, req *
 	for {
 		select {
 		case <-req.Context().Done():
-			stream.Close()
+			pub.Unsubscribe()
 			return
-		case s := <-stream.Read():
+		case s, open := <-pub.Stream():
+			if !open {
+				return
+			}
 			b, err := json.Marshal(s)
 			if err != nil {
 				handleErr(req.Context(), rw, err, http.StatusInternalServerError)

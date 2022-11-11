@@ -12,7 +12,6 @@ package request
 
 import (
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/events"
 )
 
 // ObjectSubscription is a field on the SubscriptionType
@@ -21,29 +20,24 @@ import (
 type ObjectSubscription struct {
 	Field
 
-	DocKeys client.Option[[]string]
-	CID     client.Option[string]
-
 	// Schema is the target schema/collection
 	Schema string
 
 	Filter client.Option[Filter]
 
 	Fields []Selection
-
-	Stream *events.Publisher
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
 // the Subscription object. Used to create a Select planNode for the event stream return objects.
-func (m ObjectSubscription) ToSelect() *Select {
+func (m ObjectSubscription) ToSelect(docKey, cid string) *Select {
 	return &Select{
 		Field: Field{
 			Name:  m.Schema,
 			Alias: m.Alias,
 		},
-		DocKeys: m.DocKeys,
-		CID:     m.CID,
+		DocKeys: client.Some([]string{docKey}),
+		CID:     client.Some(cid),
 		Fields:  m.Fields,
 		Filter:  m.Filter,
 	}

@@ -960,7 +960,6 @@ func testNewInMemoryDB(t *testing.T, ctx context.Context) client.DB {
 
 	options := []db.Option{
 		db.WithUpdateEvents(),
-		db.WithClientSubscriptions(ctx),
 	}
 
 	defra, err := db.NewDB(ctx, rootstore, options...)

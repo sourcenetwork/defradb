@@ -10,73 +10,49 @@
 
 package events
 
-import "sync"
+import "time"
 
-// Publisher holds a channel and sync mechanism that enable safe writes
-// where the reader is expected to be the one closing the channel.
-type Publisher struct {
-	ch chan any
+// time limit we set for the client to read after publishing.
+const clientTimeout = 60 * time.Second
 
-	closingCh chan struct{}
-	isClosed  bool
-	writersWG sync.WaitGroup
-	syncLock  sync.Mutex
+type Publisher[T any] struct {
+	ch     Channel[T]
+	event  Subscription[T]
+	stream chan any
 }
 
-// NewPublisher creates a Publisher with the given channel
-func NewPublisher(ch chan any) *Publisher {
-	return &Publisher{
-		ch:        ch,
-		closingCh: make(chan struct{}),
+func NewPublisher[T any](ch Channel[T]) (*Publisher[T], error) {
+	evtCh, err := ch.Subscribe()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Publisher[T]{
+		ch:     ch,
+		event:  evtCh,
+		stream: make(chan any),
+	}, nil
+}
+
+func (p *Publisher[T]) Event() Subscription[T] {
+	return p.event
+}
+
+func (p *Publisher[T]) Stream() chan any {
+	return p.stream
+}
+
+func (p *Publisher[T]) Publish(data any) {
+	select {
+	case p.stream <- data:
+	case <-time.After(clientTimeout):
+		// if sending to the client times out, we assume an inactive or problematic client and
+		// unsubscribe them from the event stream
+		p.Unsubscribe()
 	}
 }
 
-// Read returns the channel
-func (p *Publisher) Read() <-chan any {
-	return p.ch
-}
-
-// Write into the channel
-func (p *Publisher) Write(data any) {
-	go func(data any) {
-		p.syncLock.Lock()
-		p.writersWG.Add(1)
-		p.syncLock.Unlock()
-		defer p.writersWG.Done()
-
-		select {
-		case <-p.closingCh:
-			return
-		default:
-		}
-
-		select {
-		case <-p.closingCh:
-		case p.ch <- data:
-		}
-	}(data)
-}
-
-// Closes channel, draining any blocked writes
-func (p *Publisher) Close() {
-	close(p.closingCh)
-
-	go func() {
-		for range p.ch {
-		}
-	}()
-
-	p.syncLock.Lock()
-	p.writersWG.Wait()
-	p.isClosed = true
-	close(p.ch)
-	p.syncLock.Unlock()
-}
-
-// IsClosed returns true if the channel has been closed.
-func (p *Publisher) IsClosed() bool {
-	p.syncLock.Lock()
-	defer p.syncLock.Unlock()
-
-	return p.isClosed
+func (p *Publisher[T]) Unsubscribe() {
+	p.ch.Unsubscribe(p.event)
+	close(p.stream)
 }

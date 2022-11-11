@@ -146,13 +146,6 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 			return nil, err
 		}
 		return p.newObjectMutationPlan(m)
-
-	case *request.ObjectSubscription:
-		m, err := mapper.ToSelect(p.ctx, p.txn, n.ToSelect())
-		if err != nil {
-			return nil, err
-		}
-		return p.Select(m)
 	}
 
 	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
@@ -535,7 +528,7 @@ func (p *Planner) RunRequest(
 // RunSubscriptionRequest plans a request specific to a subscription and returns the result.
 func (p *Planner) RunSubscriptionRequest(
 	ctx context.Context,
-	query *request.ObjectSubscription,
+	query *request.Select,
 ) ([]map[string]any, error) {
 	plan, err := p.makePlan(query)
 	if err != nil {

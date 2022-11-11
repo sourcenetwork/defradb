@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -22,103 +21,62 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-type subscriptions struct {
-	updateEvt events.Subscription[client.UpdateEvent]
-	requests  []*request.ObjectSubscription
-	syncLock  sync.Mutex
-}
-
-func (s *subscriptions) hasListeners() bool {
-	s.syncLock.Lock()
-	defer s.syncLock.Unlock()
-	return len(s.requests) > 0
-}
-
-func (db *db) handleClientSubscriptions(ctx context.Context) {
-	if db.clientSubscriptions == nil {
-		log.Info(ctx, "can't run subscription without adding the option to the db")
-		return
+func (db *db) checkForClientSubsciptions(r *request.Request) (
+	*events.Publisher[client.UpdateEvent],
+	*request.ObjectSubscription,
+	error,
+) {
+	if !db.events.Updates.HasValue() {
+		return nil, nil, errors.New("server does not accept subscriptions")
 	}
 
-	log.Info(ctx, "Starting client subscription handler")
-	for evt := range db.clientSubscriptions.updateEvt {
-		if !db.clientSubscriptions.hasListeners() {
-			continue
+	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
+		s := r.Subscription[0].Selections[0]
+		if subRequest, ok := s.(*request.ObjectSubscription); ok {
+			pub, err := events.NewPublisher(db.events.Updates.Value())
+			if err != nil {
+				return nil, nil, err
+			}
+
+			return pub, subRequest, nil
 		}
 
+		return nil, nil, errors.New(fmt.Sprintf("expected ObjectSubscription[client.GQLResult] type but got %T", s))
+	}
+	return nil, nil, nil
+}
+
+func (db *db) handleSubscription(
+	ctx context.Context,
+	pub *events.Publisher[client.UpdateEvent],
+	r *request.ObjectSubscription,
+) {
+	for evt := range pub.Event() {
 		txn, err := db.NewTxn(ctx, false)
 		if err != nil {
 			log.Error(ctx, err.Error())
 			continue
 		}
 
-		planner := planner.New(ctx, db, txn)
+		p := planner.New(ctx, db, txn)
 
-		col, err := db.GetCollectionBySchemaID(ctx, evt.SchemaID)
+		s := r.ToSelect(evt.DocKey, evt.Cid.String())
+
+		result, err := p.RunSubscriptionRequest(ctx, s)
 		if err != nil {
-			log.Error(ctx, err.Error())
+			pub.Publish(client.GQLResult{
+				Errors: []any{err.Error()},
+			})
 			continue
 		}
 
-		db.clientSubscriptions.syncLock.Lock()
-
-		// keeping track of the active requests
-		subs := db.clientSubscriptions.requests[:0]
-		for _, objSub := range db.clientSubscriptions.requests {
-			if objSub.Stream.IsClosed() {
-				continue
-			}
-			subs = append(subs, objSub)
-			if objSub.Schema == col.Name() {
-				objSub.CID = client.Some(evt.Cid.String())
-				objSub.DocKeys = client.Some([]string{evt.DocKey})
-				result, err := planner.RunSubscriptionRequest(ctx, objSub)
-				if err != nil {
-					objSub.Stream.Write(client.GQLResult{
-						Errors: []any{err.Error()},
-					})
-				}
-
-				// Don't send anything back to the client if the request yields an empty dataset.
-				if len(result) == 0 {
-					continue
-				}
-
-				objSub.Stream.Write(client.GQLResult{
-					Data: result,
-				})
-			}
+		// Don't send anything back to the client if the request yields an empty dataset.
+		if len(result) == 0 {
+			continue
 		}
 
-		// helping the GC
-		for i := len(subs); i < len(db.clientSubscriptions.requests); i++ {
-			db.clientSubscriptions.requests[i] = nil
-		}
-
-		db.clientSubscriptions.requests = subs
-
-		txn.Discard(ctx)
-		db.clientSubscriptions.syncLock.Unlock()
+		pub.Publish(client.GQLResult{
+			Data: result,
+		})
 	}
-}
-
-func (db *db) checkForClientSubsciptions(r *request.Request) (*events.Publisher, error) {
-	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
-		s := r.Subscription[0].Selections[0]
-		if subRequest, ok := s.(*request.ObjectSubscription); ok {
-			if db.clientSubscriptions == nil {
-				return nil, errors.New("server does not accept subscriptions")
-			}
-
-			stream := events.NewPublisher(make(chan any))
-			db.clientSubscriptions.syncLock.Lock()
-			subRequest.Stream = stream
-			db.clientSubscriptions.requests = append(db.clientSubscriptions.requests, subRequest)
-			db.clientSubscriptions.syncLock.Unlock()
-			return stream, nil
-		}
-
-		return nil, errors.New(fmt.Sprintf("expected ObjectSubscription[client.GQLResult] type but got %T", s))
-	}
-	return nil, nil
 }
