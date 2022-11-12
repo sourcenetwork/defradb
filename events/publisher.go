@@ -15,12 +15,17 @@ import "time"
 // time limit we set for the client to read after publishing.
 const clientTimeout = 60 * time.Second
 
+// Publisher hold a referance to the event channel,
+// the associated subscription channel and the stream channel that
+// returns data to the subscribed client
 type Publisher[T any] struct {
 	ch     Channel[T]
 	event  Subscription[T]
 	stream chan any
 }
 
+// NewPublisher creates a new Publisher with the given event Channel, subscribes to the
+// event Channel and opens a new channel for the stream.
 func NewPublisher[T any](ch Channel[T]) (*Publisher[T], error) {
 	evtCh, err := ch.Subscribe()
 	if err != nil {
@@ -34,14 +39,18 @@ func NewPublisher[T any](ch Channel[T]) (*Publisher[T], error) {
 	}, nil
 }
 
+// Event returns the subsciption channel
 func (p *Publisher[T]) Event() Subscription[T] {
 	return p.event
 }
 
+// Stream returns the streaming channel
 func (p *Publisher[T]) Stream() chan any {
 	return p.stream
 }
 
+// Publish sends data to the streaming channel and unsubscribes if
+// the client hangs for too long.
 func (p *Publisher[T]) Publish(data any) {
 	select {
 	case p.stream <- data:
@@ -52,6 +61,7 @@ func (p *Publisher[T]) Publish(data any) {
 	}
 }
 
+// Unsubscribe unsubscribes the client for the event channel and closes the stream.
 func (p *Publisher[T]) Unsubscribe() {
 	p.ch.Unsubscribe(p.event)
 	close(p.stream)
