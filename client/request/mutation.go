@@ -31,9 +31,9 @@ type Mutation struct {
 	Field
 	Type MutationType
 
-	// Schema is the target schema/collection
+	// Collection is the target collection name
 	// if this mutation is on an object.
-	Schema string
+	Collection string
 
 	IDs    client.Option[[]string]
 	Filter client.Option[Filter]
@@ -47,7 +47,7 @@ type Mutation struct {
 func (m Mutation) ToSelect() *Select {
 	return &Select{
 		Field: Field{
-			Name:  m.Schema,
+			Name:  m.Collection,
 			Alias: m.Alias,
 		},
 		Fields:  m.Fields,

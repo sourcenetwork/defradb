@@ -92,7 +92,7 @@ func parseMutation(field *ast.Field) (*request.Mutation, error) {
 		// then the mutation name would be create_my_book
 		// so we need to recreate the string my_book, which
 		// has been split by "_", so we just join by "_"
-		mut.Schema = strings.Join(mutNameParts[1:], "_")
+		mut.Collection = strings.Join(mutNameParts[1:], "_")
 	}
 
 	// parse arguments

@@ -50,7 +50,7 @@ func parseSubscription(field *ast.Field) (*request.ObjectSubscription, error) {
 		},
 	}
 
-	sub.Schema = sub.Name
+	sub.Collection = sub.Name
 
 	// parse arguments
 	for _, argument := range field.Arguments {

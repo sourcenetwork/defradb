@@ -20,8 +20,8 @@ import (
 type ObjectSubscription struct {
 	Field
 
-	// Schema is the target schema/collection
-	Schema string
+	// Collection is the target collection name
+	Collection string
 
 	Filter client.Option[Filter]
 
@@ -33,7 +33,7 @@ type ObjectSubscription struct {
 func (m ObjectSubscription) ToSelect(docKey, cid string) *Select {
 	return &Select{
 		Field: Field{
-			Name:  m.Schema,
+			Name:  m.Collection,
 			Alias: m.Alias,
 		},
 		DocKeys: client.Some([]string{docKey}),
