@@ -17,7 +17,7 @@ import (
 )
 
 var userSchema = (`
-	type user {
+	type User {
 		name: String
 		age: Int
 		points: Float
@@ -26,5 +26,5 @@ var userSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"user"}, test)
+	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"User"}, test)
 }

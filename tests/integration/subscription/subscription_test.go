@@ -20,7 +20,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
-					user {
+					User {
 						_key
 						name
 						age
@@ -29,7 +29,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -45,7 +45,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 			},
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -70,7 +70,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with filter and one user creation",
 		Query: `subscription {
-					user(filter: {age: {_lt: 30}}) {
+					User(filter: {age: {_lt: 30}}) {
 						_key
 						name
 						age
@@ -79,7 +79,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -104,7 +104,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with filter and one user creation outside of the filter",
 		Query: `subscription {
-					user(filter: {age: {_gt: 30}}) {
+					User(filter: {age: {_gt: 30}}) {
 						_key
 						name
 						age
@@ -113,7 +113,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -132,7 +132,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with filter and user creation in and outside of the filter",
 		Query: `subscription {
-					user(filter: {age: {_lt: 30}}) {
+					User(filter: {age: {_lt: 30}}) {
 						_key
 						name
 						age
@@ -141,7 +141,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -157,7 +157,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 			},
 			{
 				Query: `mutation {
-					create_user(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"Addo\",\"age\": 31,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
 						age
@@ -176,7 +176,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
-					user {
+					User {
 						_key
 						name
 						age
@@ -202,7 +202,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					update_user(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
+					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
 						_key
 						name
 						age
@@ -228,7 +228,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
-					user {
+					User {
 						_key
 						name
 						age
@@ -254,7 +254,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
 			{
 				Query: `mutation {
-					update_user(data: "{\"points\": 55}") {
+					update_User(data: "{\"points\": 55}") {
 						_key
 						name
 						age
