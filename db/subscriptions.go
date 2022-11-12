@@ -12,11 +12,9 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
 )
@@ -27,7 +25,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 	error,
 ) {
 	if !db.events.Updates.HasValue() {
-		return nil, nil, errors.New("server does not accept subscriptions")
+		return nil, nil, ErrSubscriptionsNotAllowed
 	}
 
 	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
@@ -41,7 +39,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 			return pub, subRequest, nil
 		}
 
-		return nil, nil, errors.New(fmt.Sprintf("expected ObjectSubscription[client.GQLResult] type but got %T", s))
+		return nil, nil, NewErrUnexpectedType[request.ObjectSubscription](s)
 	}
 	return nil, nil, nil
 }
