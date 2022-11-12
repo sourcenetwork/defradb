@@ -67,6 +67,8 @@ var (
 	mapStore       bool
 )
 
+const subsciptionTimeout = 1 * time.Second
+
 // Represents a query assigned to a particular transaction.
 type SubscriptionQuery struct {
 	Query string
@@ -74,7 +76,8 @@ type SubscriptionQuery struct {
 	Results []map[string]any
 	// The expected error resulting from the query.
 	ExpectedError string
-	// If set to true, the query should yield no results
+	// If set to true, the query should yield no results.
+	// The timeout is duration is that of subscriptionTimeout (1 second)
 	ExpectedTimout bool
 }
 
@@ -429,7 +432,7 @@ func ExecuteQueryTestCase(
 							continue
 						}
 					// a safety in case the stream hangs or no results are expected.
-					case <-time.After(1 * time.Second):
+					case <-time.After(subsciptionTimeout):
 						if q.ExpectedTimout {
 							continue
 						}
