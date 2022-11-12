@@ -13,7 +13,7 @@ package events
 import "time"
 
 // time limit we set for the client to read after publishing.
-const clientTimeout = 60 * time.Second
+var clientTimeout = 60 * time.Second
 
 // Publisher hold a referance to the event channel,
 // the associated subscription channel and the stream channel that
@@ -26,7 +26,7 @@ type Publisher[T any] struct {
 
 // NewPublisher creates a new Publisher with the given event Channel, subscribes to the
 // event Channel and opens a new channel for the stream.
-func NewPublisher[T any](ch Channel[T]) (*Publisher[T], error) {
+func NewPublisher[T any](ch Channel[T], streamBufferSize int) (*Publisher[T], error) {
 	evtCh, err := ch.Subscribe()
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func NewPublisher[T any](ch Channel[T]) (*Publisher[T], error) {
 	return &Publisher[T]{
 		ch:     ch,
 		event:  evtCh,
-		stream: make(chan any),
+		stream: make(chan any, streamBufferSize),
 	}, nil
 }
 

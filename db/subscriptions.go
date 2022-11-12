@@ -31,7 +31,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 	if len(r.Subscription) > 0 && len(r.Subscription[0].Selections) > 0 {
 		s := r.Subscription[0].Selections[0]
 		if subRequest, ok := s.(*request.ObjectSubscription); ok {
-			pub, err := events.NewPublisher(db.events.Updates.Value())
+			pub, err := events.NewPublisher(db.events.Updates.Value(), 5)
 			if err != nil {
 				return nil, nil, err
 			}
