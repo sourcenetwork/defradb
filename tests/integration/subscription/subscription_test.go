@@ -171,3 +171,113 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestSubscriptionWithUpdateMutations(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Subscription with user creations",
+		Query: `subscription {
+					user {
+						_key
+						name
+						age
+						points
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+				`{
+					"name": "Addo",
+					"age": 35,
+					"verified": true,
+					"points": 50
+				}`,
+			},
+		},
+		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
+			{
+				Query: `mutation {
+					update_user(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":    uint64(27),
+						"name":   "John",
+						"points": float64(45),
+					},
+				},
+			},
+		},
+		DisableMapStore: true,
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Subscription with user creations",
+		Query: `subscription {
+					user {
+						_key
+						name
+						age
+						points
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+				`{
+					"name": "Addo",
+					"age": 31,
+					"verified": true,
+					"points": 50
+				}`,
+			},
+		},
+		PostSubscriptionQueries: []testUtils.SubscriptionQuery{
+			{
+				Query: `mutation {
+					update_user(data: "{\"points\": 55}") {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key":   "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d",
+						"age":    uint64(27),
+						"name":   "John",
+						"points": float64(55),
+					},
+					{
+						"_key":   "bae-cf723876-5c6a-5dcf-a877-ab288eb30d57",
+						"age":    uint64(31),
+						"name":   "Addo",
+						"points": float64(55),
+					},
+				},
+			},
+		},
+		DisableMapStore: true,
+	}
+
+	executeTestCase(t, test)
+}

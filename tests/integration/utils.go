@@ -418,25 +418,49 @@ func ExecuteQueryTestCase(
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
 					dbi.db.ExecQuery(ctx, q.Query)
-					select {
-					case s := <-result.Pub.Stream():
-						data := s.(client.GQLResult)
-						if assertQueryResults(
-							ctx,
-							t,
-							test.Description,
-							&data,
-							q.Results,
-							q.ExpectedError,
-						) {
-							continue
+					data := []map[string]any{}
+					errs := []any{}
+					if len(q.Results) > 1 {
+						for range q.Results {
+							select {
+							case s := <-result.Pub.Stream():
+								sResult := s.(client.GQLResult)
+								sData := sResult.Data.([]map[string]any)
+								errs = append(errs, sResult.Errors...)
+								data = append(data, sData...)
+							// a safety in case the stream hangs.
+							case <-time.After(subsciptionTimeout):
+								assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
+							}
 						}
-					// a safety in case the stream hangs or no results are expected.
-					case <-time.After(subsciptionTimeout):
-						if q.ExpectedTimout {
-							continue
+					} else {
+						select {
+						case s := <-result.Pub.Stream():
+							sResult := s.(client.GQLResult)
+							sData := sResult.Data.([]map[string]any)
+							errs = append(errs, sResult.Errors...)
+							data = append(data, sData...)
+						// a safety in case the stream hangs or no results are expected.
+						case <-time.After(subsciptionTimeout):
+							if q.ExpectedTimout {
+								continue
+							}
+							assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
 						}
-						assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
+					}
+					gqlResult := &client.GQLResult{
+						Data:   data,
+						Errors: errs,
+					}
+					if assertQueryResults(
+						ctx,
+						t,
+						test.Description,
+						gqlResult,
+						q.Results,
+						q.ExpectedError,
+					) {
+						continue
 					}
 				}
 				result.Pub.Unsubscribe()
