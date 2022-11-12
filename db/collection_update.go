@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"strings"
-	"time"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/valyala/fastjson"
@@ -483,6 +482,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 		// to handle this correctly.
 		// For now, we will persist DateTime as a
 		// RFC3339 string
+		// see https://github.com/sourcenetwork/defradb/issues/935
 		return getString(val)
 
 	case client.FieldKind_INT:
@@ -517,14 +517,6 @@ func getFloat64(v *fastjson.Value) (float64, error) {
 
 func getInt64(v *fastjson.Value) (int64, error) {
 	return v.Int64()
-}
-
-func getDate(v *fastjson.Value) (time.Time, error) {
-	s, err := getString(v)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Parse(time.RFC3339, s)
 }
 
 func getArray[T any](

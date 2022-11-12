@@ -28,7 +28,7 @@ func le(condition, data any) (bool, error) {
 			}
 			return dt.Before(c) || dt.Equal(c), nil
 		default:
-			return false, errors.New(fmt.Sprintf("5unknown comparison type '%#v'", condition))
+			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 		}
 	default:
 		switch cn := numbers.TryUpcast(condition).(type) {
@@ -51,7 +51,7 @@ func le(condition, data any) (bool, error) {
 
 			return false, nil
 		default:
-			return false, errors.New(fmt.Sprintf("6unknown comparison type '%#v'", condition))
+			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 		}
 	}
 }

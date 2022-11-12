@@ -37,7 +37,8 @@ var (
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(
 	schema gql.Schema,
-	def *ast.OperationDefinition) (*request.OperationDefinition, error) {
+	def *ast.OperationDefinition,
+) (*request.OperationDefinition, error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}

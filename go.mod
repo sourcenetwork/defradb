@@ -192,6 +192,4 @@ require (
 )
 
 // SourceNetwork fork og graphql-go
-// TEMP: local reference
-// replace github.com/graphql-go/graphql => ../graphql-go
 replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221105072543-c4354fe539cf

@@ -39,7 +39,7 @@ type Parser interface {
 	// Parses the given request, returning a strongly typed model of that request.
 	Parse(request string) (*request.Request, []error)
 
-	// // NewFilterFromString creates a new filter from a string.
+	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (client.Option[request.Filter], error)
 
 	// Adds the given schema to this parser's model.

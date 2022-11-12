@@ -133,7 +133,7 @@ const (
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	FieldKind_DECIMAL      FieldKind = 8
-	_                      FieldKind = 9
+	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12

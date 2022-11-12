@@ -30,8 +30,6 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		},
 	}
 
-	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
-
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		if prop == request.DocKey {
@@ -107,6 +105,8 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 	if field.SelectionSet == nil {
 		return commit, nil
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
 
 	var fieldObject *gql.Object
 	switch ftype := fieldDef.Type.(type) {

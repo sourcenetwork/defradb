@@ -27,7 +27,7 @@ func gt(condition, data any) (bool, error) {
 			}
 			return dt.After(c), nil
 		default:
-			return false, errors.New(fmt.Sprintf("3unknown comparison type '%#v'", condition))
+			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 		}
 	default:
 		switch cn := numbers.TryUpcast(condition).(type) {
@@ -50,7 +50,7 @@ func gt(condition, data any) (bool, error) {
 
 			return false, nil
 		default:
-			return false, errors.New(fmt.Sprintf("4unknown comparison type '%#v'", condition))
+			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
 		}
 	}
 }

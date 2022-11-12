@@ -157,7 +157,8 @@ func parseSelect(
 	rootType request.SelectionType,
 	parent *gql.Object,
 	field *ast.Field,
-	index int) (*request.Select, error) {
+	index int,
+) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
 			Name:  field.Name.Value,
@@ -355,7 +356,11 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				if !ok {
 					return nil, errors.New("couldn't get argument type for filter")
 				}
-				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue), filterType)
+				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
+				if !ok {
+					return nil, errors.New("couldn't get object value type for filter")
+				}
+				filterValue, err := NewFilter(filterObjVal, filterType)
 				if err != nil {
 					return nil, err
 				}
@@ -450,12 +455,6 @@ func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) 
 		if arg.Name() == name {
 			return arg.Type, true
 		}
-		// // if the found type is another inputobject, recurse
-		// if inputObj, ok := arg.Type.(*gql.InputObject); ok {
-		// 	if foundInput, ok := getArgumentTypeFromInput(1, inputObj, name); ok {
-		// 		return foundInput, ok
-		// 	}
-		// }
 	}
 	return nil, false
 }
@@ -465,11 +464,6 @@ func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, b
 		if fname == name {
 			return ftype.Type, true
 		}
-		// if inputObj, ok := ftype.Type.(*gql.InputObject); ok {
-		// 	if foundInput, ok := getArgumentTypeFromInput(inputObj, name); ok {
-		// 		return foundInput, true
-		// 	}
-		// }
 	}
 	return nil, false
 }
