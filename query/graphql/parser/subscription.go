@@ -52,10 +52,9 @@ func parseSubscription(field *ast.Field) (*request.ObjectSubscription, error) {
 
 	sub.Collection = sub.Name
 
-	// parse arguments
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
-		if prop == request.FilterClause { // parse filter
+		if prop == request.FilterClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			filter, err := NewFilter(obj)
 			if err != nil {
