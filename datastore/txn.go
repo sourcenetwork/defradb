@@ -22,8 +22,6 @@ import (
 type Txn interface {
 	MultiStore
 
-	IsBatch() bool
-
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
@@ -41,7 +39,6 @@ type Txn interface {
 type txn struct {
 	t ds.Txn
 	MultiStore
-	isBatch bool
 
 	successFns []func()
 	errorFns   []func()
@@ -51,7 +48,7 @@ var _ Txn = (*txn)(nil)
 
 // NOTE: rootstore temporarily set to any and should be changed when the rootstore is changed to
 // support ds.TxnDatastore
-func NewTxnFrom(ctx context.Context, rootstore any, readonly bool) (Txn, error) {
+func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -62,14 +59,12 @@ func NewTxnFrom(ctx context.Context, rootstore any, readonly bool) (Txn, error) 
 		return &txn{
 			rootTxn,
 			multistore,
-			false,
 			[]func(){},
 			[]func(){},
 		}, nil
 	}
 
-	txnStore := rootstore.(ds.TxnDatastore)
-	rootTxn, err := txnStore.NewTransaction(ctx, readonly)
+	rootTxn, err := rootstore.NewTransaction(ctx, readonly)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +74,6 @@ func NewTxnFrom(ctx context.Context, rootstore any, readonly bool) (Txn, error) 
 	return &txn{
 		rootTxn,
 		multistore,
-		false,
 		[]func(){},
 		[]func(){},
 	}, nil
@@ -124,10 +118,6 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 	}
 }
 
-func (txn *txn) IsBatch() bool {
-	return txn.isBatch
-}
-
 // Shim to make ds.Txn support ds.Datastore
 type ShimTxnStore struct {
 	ds.Txn
@@ -140,14 +130,4 @@ func (ts ShimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
 func (ts ShimTxnStore) Close() error {
 	ts.Discard(context.TODO())
 	return nil
-}
-
-// shim to make ds.Batch implement ds.Datastore
-type ShimBatcherTxn struct {
-	ds.Read
-	ds.Batch
-}
-
-func (ShimBatcherTxn) Discard(_ context.Context) {
-	// noop
 }

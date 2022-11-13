@@ -171,8 +171,6 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				},
 			},
 		},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -319,8 +317,6 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 		},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)

@@ -42,7 +42,6 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
-	memoryMapEnvName           = "DEFRA_MAP"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
 	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
@@ -67,7 +66,6 @@ var (
 	log            = logging.MustNewLogger("defra.tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
-	mapStore       bool
 )
 
 const subsciptionTimeout = 1 * time.Second
@@ -120,10 +118,6 @@ type QueryTestCase struct {
 
 	// The expected content of an expected error
 	ExpectedError string
-
-	// If this is set to true, test case will not be run against the mapStore.
-	// Useful if the functionality under test is not supported by it.
-	DisableMapStore bool
 }
 
 type databaseInfo struct {
@@ -180,7 +174,6 @@ func init() {
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
 	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
-	mapStoreValue, _ := os.LookupEnv(memoryMapEnvName)
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
 	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
@@ -188,7 +181,6 @@ func init() {
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
 	DetectDbChanges = getBool(detectDbChangesValue)
-	mapStore = getBool(mapStoreValue)
 	SetupOnly = getBool(setupOnlyValue)
 
 	if !repositorySpecified {
@@ -204,7 +196,6 @@ func init() {
 		badgerInMemory = true
 		// Testing against the file system is off by default
 		badgerFile = false
-		mapStore = true
 	}
 
 	if DetectDbChanges {
@@ -524,7 +515,6 @@ func ExecuteQueryTestCase(
 func detectDbChangesInit(repository string, targetBranch string) {
 	badgerFile = true
 	badgerInMemory = false
-	mapStore = false
 
 	if SetupOnly {
 		// Only the primary test process should perform the setup below

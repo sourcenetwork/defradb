@@ -48,8 +48,6 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 				},
 			},
 		},
-		// Map store does not support transactions
-		DisableMapStore: true,
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -110,8 +108,6 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 				Results: []map[string]any{},
 			},
 		},
-		// Map store does not support transactions
-		DisableMapStore: true,
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -160,8 +156,6 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				},
 			},
 		},
-		// Map store does not support transactions
-		DisableMapStore: true,
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -214,8 +208,6 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				},
 			},
 		},
-		// Map store does not support transactions
-		DisableMapStore: true,
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -284,8 +276,6 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				"age":  uint64(28),
 			},
 		},
-		// Map store does not support transactions
-		DisableMapStore: true,
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
