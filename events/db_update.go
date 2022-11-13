@@ -21,11 +21,6 @@ type UpdateChannel = immutables.Option[Channel[Update]]
 
 var EmptyUpdateChannel = immutables.None[Channel[Update]]()
 
-type Events struct {
-	// Updates publishes an `Update` for each document written to in the database.
-	Updates UpdateChannel
-}
-
 // UpdateEvent represents a new DAG node added to the
 // append-only MerkleCRDT Clock graph of a
 // document or sub-field.
