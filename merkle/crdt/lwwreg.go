@@ -19,12 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
 var (
 	lwwFactoryFn = MerkleCRDTFactory(
-		func(mstore datastore.MultiStore, _ string, _ client.UpdateChannel) MerkleCRDTInitFn {
+		func(mstore datastore.MultiStore, _ string, _ events.UpdateChannel) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleLWWRegister(
 					mstore.Datastore(),

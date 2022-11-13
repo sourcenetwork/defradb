@@ -10,7 +10,7 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/defradb/immutables"
 
 type Aggregate struct {
 	Field
@@ -20,10 +20,10 @@ type Aggregate struct {
 
 type AggregateTarget struct {
 	HostName  string
-	ChildName client.Option[string]
+	ChildName immutables.Option[string]
 
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[OrderBy]
-	Filter  client.Option[Filter]
+	Limit   immutables.Option[uint64]
+	Offset  immutables.Option[uint64]
+	OrderBy immutables.Option[OrderBy]
+	Filter  immutables.Option[Filter]
 }

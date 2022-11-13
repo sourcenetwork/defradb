@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor/numbers"
 	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 // eq is an operator which performs object equality
@@ -27,25 +27,25 @@ func eq(condition, data any) (bool, error) {
 		}
 		return false, nil
 
-	case client.Option[bool]:
+	case immutables.Option[bool]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[int64]:
+	case immutables.Option[int64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[float64]:
+	case immutables.Option[float64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[string]:
+	case immutables.Option[string]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}

@@ -11,9 +11,9 @@
 package mapper
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 var (
@@ -132,7 +132,7 @@ type Targetable struct {
 
 	// A optional collection of docKeys that can be specified to restrict results
 	// to belonging to this set.
-	DocKeys client.Option[[]string]
+	DocKeys immutables.Option[[]string]
 
 	// An optional filter, that can be specified to restrict results to documents
 	// that satisfies all of its conditions.

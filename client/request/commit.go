@@ -10,7 +10,7 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/defradb/immutables"
 
 var (
 	_ Selection = (*CommitSelect)(nil)
@@ -19,15 +19,15 @@ var (
 type CommitSelect struct {
 	Field
 
-	DocKey    client.Option[string]
-	FieldName client.Option[string]
-	Cid       client.Option[string]
-	Depth     client.Option[uint64]
+	DocKey    immutables.Option[string]
+	FieldName immutables.Option[string]
+	Cid       immutables.Option[string]
+	Depth     immutables.Option[uint64]
 
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[OrderBy]
-	GroupBy client.Option[GroupBy]
+	Limit   immutables.Option[uint64]
+	Offset  immutables.Option[uint64]
+	OrderBy immutables.Option[OrderBy]
+	GroupBy immutables.Option[GroupBy]
 
 	Fields []Selection
 }

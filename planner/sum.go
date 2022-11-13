@@ -16,8 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/immutables"
+	"github.com/sourcenetwork/defradb/immutables/enumerable"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -229,12 +230,12 @@ func (n *sumNode) Next() (bool, error) {
 				},
 			)
 
-		case []client.Option[int64]:
+		case []immutables.Option[int64]:
 			collectionSum, err = sumItems(
 				childCollection,
 				&source,
 				lessO[int64],
-				func(childItem client.Option[int64]) float64 {
+				func(childItem immutables.Option[int64]) float64 {
 					if !childItem.HasValue() {
 						return 0
 					}
@@ -252,12 +253,12 @@ func (n *sumNode) Next() (bool, error) {
 				},
 			)
 
-		case []client.Option[float64]:
+		case []immutables.Option[float64]:
 			collectionSum, err = sumItems(
 				childCollection,
 				&source,
 				lessO[float64],
-				func(childItem client.Option[float64]) float64 {
+				func(childItem immutables.Option[float64]) float64 {
 					if !childItem.HasValue() {
 						return 0
 					}
@@ -340,7 +341,7 @@ func lessN[T number](a T, b T) bool {
 	return a < b
 }
 
-func lessO[T number](a client.Option[T], b client.Option[T]) bool {
+func lessO[T number](a immutables.Option[T], b immutables.Option[T]) bool {
 	if !a.HasValue() {
 		return true
 	}

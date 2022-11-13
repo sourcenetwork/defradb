@@ -11,8 +11,8 @@
 package mapper
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 // Select represents a request to return data from Defra.
@@ -27,7 +27,7 @@ type Select struct {
 	core.DocumentMapping
 
 	// A commit identifier that can be specified to request data at a given time.
-	Cid client.Option[string]
+	Cid immutables.Option[string]
 
 	// The name of the collection that this Select selects data from.
 	CollectionName string

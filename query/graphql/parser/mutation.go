@@ -16,9 +16,9 @@ import (
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 var (
@@ -125,7 +125,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			mut.Filter = filter
 		} else if prop == request.Id {
 			raw := argument.Value.(*ast.StringValue)
-			mut.IDs = client.Some([]string{raw.Value})
+			mut.IDs = immutables.Some([]string{raw.Value})
 		} else if prop == request.Ids {
 			raw := argument.Value.(*ast.ListValue)
 			ids := make([]string, len(raw.Values))
@@ -136,7 +136,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 				}
 				ids[i] = id.Value
 			}
-			mut.IDs = client.Some(ids)
+			mut.IDs = immutables.Some(ids)
 		}
 	}
 

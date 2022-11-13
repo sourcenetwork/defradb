@@ -8,12 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package request
-
-import "github.com/sourcenetwork/defradb/immutables"
-
-// Field implements Selection
-type Field struct {
-	Name  string
-	Alias immutables.Option[string]
-}
+/*
+Package immutables provides immutable types.
+*/
+package immutables

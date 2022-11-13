@@ -13,7 +13,7 @@ package inline_array
 import (
 	"testing"
 
-	. "github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/immutables"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -114,8 +114,13 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":               "John",
-				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), None[bool]()},
+				"Name": "John",
+				"IndexLikesDislikes": []immutables.Option[bool]{
+					immutables.Some(true),
+					immutables.Some(true),
+					immutables.Some(false),
+					immutables.None[bool](),
+				},
 			},
 		},
 	}
@@ -288,8 +293,14 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":       "John",
-				"TestScores": []Option[int64]{Some[int64](-1), None[int64](), Some[int64](-1), Some[int64](2), Some[int64](0)},
+				"Name": "John",
+				"TestScores": []immutables.Option[int64]{
+					immutables.Some[int64](-1),
+					immutables.None[int64](),
+					immutables.Some[int64](-1),
+					immutables.Some[int64](2),
+					immutables.Some[int64](0),
+				},
 			},
 		},
 	}
@@ -394,8 +405,13 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":        "John",
-				"PageRatings": []Option[float64]{Some(3.1425), None[float64](), Some(-0.00000000001), Some[float64](10)},
+				"Name": "John",
+				"PageRatings": []immutables.Option[float64]{
+					immutables.Some(3.1425),
+					immutables.None[float64](),
+					immutables.Some(-0.00000000001),
+					immutables.Some[float64](10),
+				},
 			},
 		},
 	}
@@ -500,8 +516,14 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":        "John",
-				"PageHeaders": []Option[string]{Some(""), Some("the previous"), Some("the first"), Some("empty string"), None[string]()},
+				"Name": "John",
+				"PageHeaders": []immutables.Option[string]{
+					immutables.Some(""),
+					immutables.Some("the previous"),
+					immutables.Some("the first"),
+					immutables.Some("empty string"),
+					immutables.None[string](),
+				},
 			},
 		},
 	}

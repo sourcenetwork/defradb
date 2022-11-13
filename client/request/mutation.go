@@ -10,7 +10,7 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/defradb/immutables"
 
 type MutationType int
 
@@ -35,8 +35,8 @@ type Mutation struct {
 	// if this mutation is on an object.
 	Collection string
 
-	IDs    client.Option[[]string]
-	Filter client.Option[Filter]
+	IDs    immutables.Option[[]string]
+	Filter immutables.Option[Filter]
 	Data   string
 
 	Fields []Selection

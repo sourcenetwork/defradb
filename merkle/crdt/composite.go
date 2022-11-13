@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -27,7 +28,7 @@ var (
 		func(
 			mstore datastore.MultiStore,
 			schemaID string,
-			uCh client.UpdateChannel,
+			uCh events.UpdateChannel,
 		) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleCompositeDAG(
@@ -65,7 +66,7 @@ func NewMerkleCompositeDAG(
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
 	schemaID string,
-	uCh client.UpdateChannel,
+	uCh events.UpdateChannel,
 	ns,
 	key core.DataStoreKey,
 ) *MerkleCompositeDAG {

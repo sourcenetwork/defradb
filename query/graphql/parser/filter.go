@@ -14,52 +14,45 @@ import (
 	"strconv"
 	"strings"
 
-	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (client.Option[request.Filter], error) {
-	conditions, err := ParseConditions(stmt, inputType)
+func NewFilter(stmt *ast.ObjectValue) (immutables.Option[request.Filter], error) {
+	conditions, err := ParseConditions(stmt)
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutables.None[request.Filter](), err
 	}
-
-	return client.Some(request.Filter{
+	return immutables.Some(request.Filter{
 		Conditions: conditions,
 	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(schema gql.Schema, collectionType string, body string) (client.Option[request.Filter], error) {
+func NewFilterFromString(body string) (immutables.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutables.None[request.Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutables.None[request.Filter](), err
 	}
 
-	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
-	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
-	if !ok {
-		return client.None[request.Filter](), errors.New("couldn't find filter argument type")
-	}
-	return NewFilter(obj, filterType)
+	return NewFilter(obj)
 }
 
 type parseFn func(*ast.ObjectValue) (any, error)
@@ -126,8 +119,8 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.
-func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any, error) {
-	cond, err := parseConditions(stmt, inputType)
+func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
+	cond, err := parseConditions(stmt)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +131,20 @@ func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any
 	return nil, errors.New("failed to parse statement")
 }
 
-func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {
-	val := gql.ValueFromAST(stmt, inputArg, nil)
-	if val == nil {
-		return nil, errors.New("couldn't parse conditions value from AST")
+func parseConditions(stmt *ast.ObjectValue) (any, error) {
+	conditions := make(map[string]any)
+	if stmt == nil {
+		return conditions, nil
 	}
-	return val, nil
+	for _, field := range stmt.Fields {
+		name := field.Name.Value
+		val, err := parseVal(field.Value, parseConditions)
+		if err != nil {
+			return nil, err
+		}
+		conditions[name] = val
+	}
+	return conditions, nil
 }
 
 // parseVal handles all the various input types, and extracts their

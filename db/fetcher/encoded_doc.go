@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 type EPTuple []encProperty
@@ -139,11 +140,11 @@ func (e encProperty) Decode() (client.CType, any, error) {
 	return ctype, val, nil
 }
 
-func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
-	resultArray := make([]client.Option[T], len(items))
+func convertNillableArray[T any](items []any) ([]immutables.Option[T], error) {
+	resultArray := make([]immutables.Option[T], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[T]()
+			resultArray[i] = immutables.None[T]()
 			continue
 		}
 		value, ok := untypedValue.(T)
@@ -155,7 +156,7 @@ func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
 				*new(T),
 			))
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutables.Some(value)
 	}
 	return resultArray, nil
 }
@@ -163,18 +164,18 @@ func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
 func convertNillableArrayWithConverter[TOut any](
 	items []any,
 	converter func(in any) (TOut, error),
-) ([]client.Option[TOut], error) {
-	resultArray := make([]client.Option[TOut], len(items))
+) ([]immutables.Option[TOut], error) {
+	resultArray := make([]immutables.Option[TOut], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[TOut]()
+			resultArray[i] = immutables.None[TOut]()
 			continue
 		}
 		value, err := converter(untypedValue)
 		if err != nil {
 			return nil, err
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutables.Some(value)
 	}
 	return resultArray, nil
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/immutables"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql"
@@ -58,7 +59,7 @@ type db struct {
 
 	crdtFactory *crdt.Factory
 
-	events client.Events
+	events events.Events
 
 	parser core.Parser
 
@@ -73,8 +74,8 @@ const updateEventBufferSize = 100
 
 func WithUpdateEvents() Option {
 	return func(db *db) {
-		db.events = client.Events{
-			Updates: client.Some(events.New[client.UpdateEvent](0, updateEventBufferSize)),
+		db.events = events.Events{
+			Updates: immutables.Some(events.New[events.Update](0, updateEventBufferSize)),
 		}
 	}
 }
@@ -172,7 +173,7 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (db *db) Events() client.Events {
+func (db *db) Events() events.Events {
 	return db.events
 }
 

@@ -18,16 +18,16 @@ import (
 	"github.com/ipfs/go-cid"
 	dsq "github.com/ipfs/go-datastore/query"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/immutables"
 )
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
 // heads of a given doc/field
 type HeadFetcher struct {
 	spans   core.Spans
-	fieldId client.Option[string]
+	fieldId immutables.Option[string]
 
 	kvIter dsq.Results
 }
@@ -36,7 +36,7 @@ func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
 	spans core.Spans,
-	fieldId client.Option[string],
+	fieldId immutables.Option[string],
 ) error {
 	if len(spans.Value) == 0 {
 		spans = core.NewSpans(
