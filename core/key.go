@@ -111,23 +111,39 @@ func NewDataStoreKey(key string) DataStoreKey {
 		return dataStoreKey
 	}
 
-	elements := strings.Split(key, "/")
+	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
 
-	if isDataObjectMarker(elements) {
+	numberOfElements := len(elements)
+
+	// With less than 4 elements, we know it's an invalid key
+	if numberOfElements < 4 {
+		return dataStoreKey
+	}
+
+	// Exactly 4 elements happens only for unit tests.
+	if numberOfElements == 4 {
 		return DataStoreKey{
-			CollectionId: elements[3],
-			InstanceType: ValueKey,
-			DocKey:       elements[5],
+			CollectionId: elements[0],
+			InstanceType: InstanceType(elements[1]),
+			DocKey:       elements[2],
+			FieldId:      elements[3],
 		}
 	}
 
-	numberOfElements := len(elements)
-	return DataStoreKey{
-		CollectionId: elements[numberOfElements-4],
-		InstanceType: InstanceType(elements[numberOfElements-3]),
-		DocKey:       elements[numberOfElements-2],
-		FieldId:      elements[numberOfElements-1],
+	// Once we find a valid prefix, we know that the following elements represent the DataStoreKey.
+	for i := 1; i < numberOfElements; i++ {
+		if isValidPrefix(elements[i]) {
+			dataStoreKey.CollectionId = elements[i+1]
+			dataStoreKey.InstanceType = InstanceType(elements[i+2])
+			dataStoreKey.DocKey = elements[i+3]
+			if i+4 < numberOfElements {
+				dataStoreKey.FieldId = elements[i+4]
+			}
+			break
+		}
 	}
+
+	return dataStoreKey
 }
 
 func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
@@ -451,20 +467,12 @@ func bytesPrefixEnd(b []byte) []byte {
 	return b
 }
 
-func isDataObjectMarker(elements []string) bool {
-	numElements := len(elements)
-	// lenght is 6 because it has no FieldID
-	if numElements != 6 {
+func isValidPrefix(prefix string) bool {
+	switch prefix {
+	// All valid prefixes should be added to this case.
+	case "data":
+		return true
+	default:
 		return false
 	}
-	if elements[1] != "db" {
-		return false
-	}
-	if elements[2] != "data" {
-		return false
-	}
-	if elements[4] != "v" {
-		return false
-	}
-	return true
 }
