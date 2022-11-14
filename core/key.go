@@ -131,7 +131,7 @@ func NewDataStoreKey(key string) DataStoreKey {
 	}
 
 	// Once we find a valid prefix, we know that the following elements represent the DataStoreKey.
-	for i := 1; i < numberOfElements; i++ {
+	for i := 0; i < numberOfElements; i++ {
 		if isValidPrefix(elements[i]) {
 			dataStoreKey.CollectionId = elements[i+1]
 			dataStoreKey.InstanceType = InstanceType(elements[i+2])
