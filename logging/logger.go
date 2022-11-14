@@ -17,6 +17,8 @@ import (
 	"os"
 	"sync"
 
+	golog "github.com/ipfs/go-log"
+	gologV2 "github.com/ipfs/go-log/v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -258,4 +260,46 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	}
 
 	return newLogger.Named(name), nil
+}
+
+// goLogger is a wrapper for a go-log logger
+// Used by github.com/ipfs/go-ipfs-provider
+type goLogger struct {
+	*logger
+	*golog.ZapEventLogger
+}
+
+func GetGoLogger(name string) *goLogger {
+	l := mustNewLogger(name)
+	gl := golog.Logger(name)
+	return &goLogger{
+		logger:         l,
+		ZapEventLogger: gl,
+	}
+}
+
+func (l *goLogger) ApplyConfig(config Config) {
+	l.logger.ApplyConfig(config)
+	l.ZapEventLogger.SugaredLogger = *l.logger.logger.Sugar()
+}
+
+// goLogger is a wrapper for a go-log V2 logger
+// Used by github.com/sourcenetwork/defradb/datastore/badger/v3
+type goLoggerV2 struct {
+	*logger
+	*gologV2.ZapEventLogger
+}
+
+func GetGoLoggerV2(name string) *goLoggerV2 {
+	l := mustNewLogger(name)
+	gl := gologV2.Logger(name)
+	return &goLoggerV2{
+		logger:         l,
+		ZapEventLogger: gl,
+	}
+}
+
+func (l *goLoggerV2) ApplyConfig(config Config) {
+	l.logger.ApplyConfig(config)
+	l.ZapEventLogger.SugaredLogger = *l.logger.logger.Sugar()
 }

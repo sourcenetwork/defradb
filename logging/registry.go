@@ -18,7 +18,10 @@ var configMutex sync.RWMutex
 var cachedConfig Config
 
 var registryMutex sync.Mutex
-var registry = map[string][]Logger{}
+var registry = map[string][]Logger{
+	"reprovider.simple": {GetGoLogger("reprovider.simple")},
+	"badger":            {GetGoLoggerV2("badger")},
+}
 
 func register(name string, logger Logger) {
 	registryMutex.Lock()
