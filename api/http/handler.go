@@ -31,9 +31,11 @@ type handler struct {
 	options serverOptions
 }
 
-type ctxDB struct{}
-
-type ctxPeerID struct{}
+// context variables
+type (
+	ctxDB     struct{}
+	ctxPeerID struct{}
+)
 
 // DataResponse is the GQL top level object holding data for the response payload.
 type DataResponse struct {

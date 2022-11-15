@@ -8,17 +8,23 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package request
+package subscription
 
-type Request struct {
-	Queries      []*OperationDefinition
-	Mutations    []*OperationDefinition
-	Subscription []*OperationDefinition
-}
+import (
+	"testing"
 
-type Selection any
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
 
-type OperationDefinition struct {
-	Selections []Selection
-	IsExplain  bool
+var userSchema = (`
+	type User {
+		name: String
+		age: Int
+		points: Float
+		verified: Boolean
+	}
+`)
+
+func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
+	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"User"}, test)
 }

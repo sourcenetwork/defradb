@@ -147,6 +147,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 		return p.newObjectMutationPlan(m)
 	}
+
 	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
 }
 
@@ -521,6 +522,19 @@ func (p *Planner) RunRequest(
 	}
 
 	// This won't execute if it's an explain request.
+	return p.executeRequest(ctx, plan)
+}
+
+// RunSubscriptionRequest plans a request specific to a subscription and returns the result.
+func (p *Planner) RunSubscriptionRequest(
+	ctx context.Context,
+	query *request.Select,
+) ([]map[string]any, error) {
+	plan, err := p.makePlan(query)
+	if err != nil {
+		return nil, err
+	}
+
 	return p.executeRequest(ctx, plan)
 }
 

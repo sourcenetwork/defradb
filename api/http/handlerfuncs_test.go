@@ -19,7 +19,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-cid"
@@ -475,6 +477,78 @@ mutation {
 	assert.Contains(t, users[0].Key, "bae-")
 }
 
+func TestExecGQLHandlerWithSubsctiption(t *testing.T) {
+	ctx := context.Background()
+	defra := testNewInMemoryDB(t, ctx)
+
+	// load schema
+	testLoadSchema(t, ctx, defra)
+
+	stmt := `
+subscription {
+	user {
+		_key
+		age
+		name
+	}
+}`
+
+	buf := bytes.NewBuffer([]byte(stmt))
+
+	ch := make(chan []byte)
+	errCh := make(chan error)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	// We need to set a timeout otherwise the testSubscriptionRequest function will block until the
+	// http.ServeHTTP call returns, which in this case will only happen with a timeout.
+	ctxTimeout, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	go testSubscriptionRequest(ctxTimeout, testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf,
+		Headers:        map[string]string{"Content-Type": contentTypeGraphQL},
+		ExpectedStatus: 200,
+	}, wg, ch, errCh)
+
+	// We wait as long as possible before sending the mutation request.
+	wg.Wait()
+
+	// add document
+	stmt2 := `
+mutation {
+	create_user(data: "{\"age\": 31, \"verified\": true, \"points\": 90, \"name\": \"Bob\"}") {
+		_key
+	}
+}`
+
+	buf2 := bytes.NewBuffer([]byte(stmt2))
+	users := []testUser{}
+	resp := DataResponse{
+		Data: &users,
+	}
+	testRequest(testOptions{
+		Testing:        t,
+		DB:             defra,
+		Method:         "POST",
+		Path:           GraphQLPath,
+		Body:           buf2,
+		ExpectedStatus: 200,
+		ResponseData:   &resp,
+	})
+	select {
+	case data := <-ch:
+		assert.Contains(t, string(data), "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab")
+	case err := <-errCh:
+		t.Fatal(err)
+	}
+}
+
 func TestLoadSchemaHandlerWithReadBodyError(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
@@ -848,6 +922,34 @@ func testRequest(opt testOptions) {
 	}
 }
 
+func testSubscriptionRequest(ctx context.Context, opt testOptions, wg *sync.WaitGroup, ch chan []byte, errCh chan error) {
+	req, err := http.NewRequest(opt.Method, opt.Path, opt.Body)
+	if err != nil {
+		errCh <- err
+		return
+	}
+
+	req = req.WithContext(ctx)
+
+	for k, v := range opt.Headers {
+		req.Header.Set(k, v)
+	}
+
+	h := newHandler(opt.DB, opt.ServerOptions)
+	rec := httptest.NewRecorder()
+	wg.Done()
+	h.ServeHTTP(rec, req)
+	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
+
+	respBody, err := io.ReadAll(rec.Result().Body)
+	if err != nil {
+		errCh <- err
+		return
+	}
+
+	ch <- respBody
+}
+
 func testNewInMemoryDB(t *testing.T, ctx context.Context) client.DB {
 	// init in memory DB
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
@@ -856,12 +958,15 @@ func testNewInMemoryDB(t *testing.T, ctx context.Context) client.DB {
 		t.Fatal(err)
 	}
 
-	var options []db.Option
+	options := []db.Option{
+		db.WithUpdateEvents(),
+	}
 
 	defra, err := db.NewDB(ctx, rootstore, options...)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return defra
 }
 

@@ -18,7 +18,6 @@ import (
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	"golang.org/x/crypto/acme/autocert"
 
@@ -28,11 +27,17 @@ import (
 )
 
 const (
-	// these constants are best effort durations that fit our current API
+	// These constants are best effort durations that fit our current API
 	// and possibly prevent from running out of file descriptors.
-	readTimeout  = 5 * time.Second
-	writeTimeout = 10 * time.Second
-	idleTimeout  = 120 * time.Second
+	// readTimeout  = 5 * time.Second
+	// writeTimeout = 10 * time.Second
+	// idleTimeout  = 120 * time.Second
+
+	// Temparily disabling timeouts until [this proposal](https://github.com/golang/go/issues/54136) is merged.
+	// https://github.com/sourcenetwork/defradb/issues/927
+	readTimeout  = 0
+	writeTimeout = 0
+	idleTimeout  = 0
 )
 
 // Server struct holds the Handler for the HTTP API.
@@ -256,6 +261,7 @@ func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
 		return errNoListener
 	}
+
 	if s.certManager != nil {
 		// When using TLS it's important to redirect http requests to https
 		go func() {
