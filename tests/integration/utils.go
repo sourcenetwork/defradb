@@ -21,6 +21,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
@@ -66,6 +67,20 @@ var (
 	mapStore       bool
 )
 
+const subsciptionTimeout = 1 * time.Second
+
+// Represents a query assigned to a particular transaction.
+type SubscriptionQuery struct {
+	Query string
+	// The expected (data) results of the query
+	Results []map[string]any
+	// The expected error resulting from the query.
+	ExpectedError string
+	// If set to true, the query should yield no results.
+	// The timeout is duration is that of subscriptionTimeout (1 second)
+	ExpectedTimout bool
+}
+
 // Represents a query assigned to a particular transaction.
 type TransactionQuery struct {
 	// Used to identify the transaction for this to run against (allows multiple
@@ -82,6 +97,10 @@ type TransactionQuery struct {
 type QueryTestCase struct {
 	Description string
 	Query       string
+
+	// A collection of queries to exucute after the subscriber is listening on the stream
+	PostSubscriptionQueries []SubscriptionQuery
+
 	// A collection of queries tied to a specific transaction.
 	// These will be executed before `Query` (if specified), in the order that they are listed here.
 	TransactionalQueries []TransactionQuery
@@ -218,6 +237,8 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 		return databaseInfo{}, err
 	}
 
+	dbopts = append(dbopts, db.WithUpdateEvents())
+
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
 		return databaseInfo{}, err
@@ -232,7 +253,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 
 func NewMapDB(ctx context.Context) (databaseInfo, error) {
 	rootstore := ds.NewMapDatastore()
-	db, err := db.NewDB(ctx, rootstore)
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -262,7 +283,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 		return databaseInfo{}, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore)
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err
 	}
@@ -363,7 +384,7 @@ func ExecuteQueryTestCase(
 				continue
 			}
 			result := dbi.db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
-			if assertQueryResults(ctx, t, test.Description, result, tq.Results, tq.ExpectedError) {
+			if assertQueryResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}
 		}
@@ -394,19 +415,70 @@ func ExecuteQueryTestCase(
 		//  the commited result of the transactional queries
 		if test.Query != "" {
 			result := dbi.db.ExecQuery(ctx, test.Query)
-			if assertQueryResults(
-				ctx,
-				t,
-				test.Description,
-				result,
-				test.Results,
-				test.ExpectedError,
-			) {
-				continue
-			}
+			if result.Pub != nil {
+				for _, q := range test.PostSubscriptionQueries {
+					dbi.db.ExecQuery(ctx, q.Query)
+					data := []map[string]any{}
+					errs := []any{}
+					if len(q.Results) > 1 {
+						for range q.Results {
+							select {
+							case s := <-result.Pub.Stream():
+								sResult := s.(client.GQLResult)
+								sData := sResult.Data.([]map[string]any)
+								errs = append(errs, sResult.Errors...)
+								data = append(data, sData...)
+							// a safety in case the stream hangs.
+							case <-time.After(subsciptionTimeout):
+								assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
+							}
+						}
+					} else {
+						select {
+						case s := <-result.Pub.Stream():
+							sResult := s.(client.GQLResult)
+							sData := sResult.Data.([]map[string]any)
+							errs = append(errs, sResult.Errors...)
+							data = append(data, sData...)
+						// a safety in case the stream hangs or no results are expected.
+						case <-time.After(subsciptionTimeout):
+							if q.ExpectedTimout {
+								continue
+							}
+							assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
+						}
+					}
+					gqlResult := &client.GQLResult{
+						Data:   data,
+						Errors: errs,
+					}
+					if assertQueryResults(
+						ctx,
+						t,
+						test.Description,
+						gqlResult,
+						q.Results,
+						q.ExpectedError,
+					) {
+						continue
+					}
+				}
+				result.Pub.Unsubscribe()
+			} else {
+				if assertQueryResults(
+					ctx,
+					t,
+					test.Description,
+					&result.GQL,
+					test.Results,
+					test.ExpectedError,
+				) {
+					continue
+				}
 
-			if test.ExpectedError != "" {
-				assert.Fail(t, "Expected an error however none was raised.", test.Description)
+				if test.ExpectedError != "" {
+					assert.Fail(t, "Expected an error however none was raised.", test.Description)
+				}
 			}
 		}
 
@@ -643,7 +715,7 @@ func assertQueryResults(
 	ctx context.Context,
 	t *testing.T,
 	description string,
-	result *client.QueryResult,
+	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
 ) bool {

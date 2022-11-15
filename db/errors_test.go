@@ -8,17 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package request
+package db
 
-type Request struct {
-	Queries      []*OperationDefinition
-	Mutations    []*OperationDefinition
-	Subscription []*OperationDefinition
-}
+import (
+	"testing"
 
-type Selection any
+	"github.com/stretchr/testify/assert"
+)
 
-type OperationDefinition struct {
-	Selections []Selection
-	IsExplain  bool
+func TestNewUnexpectedType(t *testing.T) {
+	someString := "defradb"
+	err := NewErrUnexpectedType[int](someString)
+	assert.Equal(t, err.Error(), "unexpected type. Expected: int, Actual: string")
 }

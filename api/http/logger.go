@@ -12,7 +12,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/sourcenetwork/defradb/logging"
@@ -33,20 +32,21 @@ func newLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
 	}
 }
 
+func (lrw *loggingResponseWriter) Flush() {
+	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (lrw *loggingResponseWriter) Header() http.Header {
+	return lrw.ResponseWriter.Header()
+}
+
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
 func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
-	// used for chucked payloads. Content-Length should not be set
-	// for each chunk.
-	if lrw.ResponseWriter.Header().Get("Content-Length") != "" {
-		return lrw.ResponseWriter.Write(b)
-	}
-
 	lrw.contentLength = len(b)
-	lrw.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(lrw.contentLength))
 	return lrw.ResponseWriter.Write(b)
 }
 

@@ -17,6 +17,7 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 type DB interface {
@@ -40,7 +41,12 @@ type DB interface {
 	PrintDump(ctx context.Context) error
 }
 
-type QueryResult struct {
+type GQLResult struct {
 	Errors []any `json:"errors,omitempty"`
 	Data   any   `json:"data"`
+}
+
+type QueryResult struct {
+	GQL GQLResult
+	Pub *events.Publisher[UpdateEvent]
 }

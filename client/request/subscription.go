@@ -10,48 +10,35 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
-
-type MutationType int
-
-const (
-	NoneMutationType = MutationType(iota)
-	CreateObjects
-	UpdateObjects
-	DeleteObjects
+import (
+	"github.com/sourcenetwork/defradb/client"
 )
 
-// Mutation is a field on the MutationType
+// ObjectSubscription is a field on the SubscriptionType
 // of a graphql query. It includes all the possible
-// arguments and all
-//
-// @todo: Change name to ObjectMutation to indicate
-// generated object mutation actions
-type Mutation struct {
+// arguments
+type ObjectSubscription struct {
 	Field
-	Type MutationType
 
 	// Collection is the target collection name
-	// if this mutation is on an object.
 	Collection string
 
-	IDs    client.Option[[]string]
 	Filter client.Option[Filter]
-	Data   string
 
 	Fields []Selection
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
-// the Mutation object. Used to create a Select planNode for the mutation return objects.
-func (m Mutation) ToSelect() *Select {
+// the Subscription object. Used to create a Select planNode for the event stream return objects.
+func (m ObjectSubscription) ToSelect(docKey, cid string) *Select {
 	return &Select{
 		Field: Field{
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
+		DocKeys: client.Some([]string{docKey}),
+		CID:     client.Some(cid),
 		Fields:  m.Fields,
-		DocKeys: m.IDs,
 		Filter:  m.Filter,
 	}
 }

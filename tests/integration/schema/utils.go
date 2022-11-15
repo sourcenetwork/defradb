@@ -94,10 +94,10 @@ func assertSchemaResults(
 	result *client.QueryResult,
 	testCase QueryTestCase,
 ) bool {
-	if assertErrors(t, result.Errors, testCase.ExpectedError) {
+	if assertErrors(t, result.GQL.Errors, testCase.ExpectedError) {
 		return true
 	}
-	resultantData := result.Data.(map[string]any)
+	resultantData := result.GQL.Data.(map[string]any)
 
 	if len(testCase.ExpectedData) == 0 && len(testCase.ContainsData) == 0 {
 		assert.Equal(t, testCase.ExpectedData, resultantData)

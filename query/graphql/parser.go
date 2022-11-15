@@ -55,12 +55,14 @@ func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
 	r := gql.Do(params)
 
 	res := &client.QueryResult{
-		Data:   r.Data,
-		Errors: make([]any, len(r.Errors)),
+		GQL: client.GQLResult{
+			Data:   r.Data,
+			Errors: make([]any, len(r.Errors)),
+		},
 	}
 
 	for i, err := range r.Errors {
-		res.Errors[i] = err
+		res.GQL.Errors[i] = err
 	}
 
 	return res

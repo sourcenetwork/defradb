@@ -28,28 +28,37 @@ func ParseQuery(doc *ast.Document) (*request.Request, []error) {
 		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
 	r := &request.Request{
-		Queries:   make([]*request.OperationDefinition, 0),
-		Mutations: make([]*request.OperationDefinition, 0),
+		Queries:      make([]*request.OperationDefinition, 0),
+		Mutations:    make([]*request.OperationDefinition, 0),
+		Subscription: make([]*request.OperationDefinition, 0),
 	}
 
 	for _, def := range doc.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
-			if node.Operation == "query" {
+			switch node.Operation {
+			case "query":
 				// parse query operation definition.
 				qdef, err := parseQueryOperationDefinition(node)
 				if err != nil {
 					return nil, err
 				}
 				r.Queries = append(r.Queries, qdef)
-			} else if node.Operation == "mutation" {
+			case "mutation":
 				// parse mutation operation definition.
 				mdef, err := parseMutationOperationDefinition(node)
 				if err != nil {
 					return nil, []error{err}
 				}
 				r.Mutations = append(r.Mutations, mdef)
-			} else {
+			case "subscription":
+				// parse subscription operation definition.
+				sdef, err := parseSubscriptionOperationDefinition(node)
+				if err != nil {
+					return nil, []error{err}
+				}
+				r.Subscription = append(r.Subscription, sdef)
+			default:
 				return nil, []error{errors.New("unknown GraphQL operation type")}
 			}
 		}

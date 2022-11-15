@@ -11,6 +11,8 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -23,7 +25,9 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/pkg/errors"
 
+	"github.com/sourcenetwork/defradb/client"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 const (
@@ -143,7 +147,12 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	sendJSON(req.Context(), rw, result, http.StatusOK)
+	if result.Pub != nil {
+		subscriptionHandler(result.Pub, rw, req)
+		return
+	}
+
+	sendJSON(req.Context(), rw, result.GQL, http.StatusOK)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
@@ -255,4 +264,35 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 		),
 		http.StatusOK,
 	)
+}
+
+func subscriptionHandler(pub *events.Publisher[client.UpdateEvent], rw http.ResponseWriter, req *http.Request) {
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Connection", "keep-alive")
+
+	for {
+		select {
+		case <-req.Context().Done():
+			pub.Unsubscribe()
+			return
+		case s, open := <-pub.Stream():
+			if !open {
+				return
+			}
+			b, err := json.Marshal(s)
+			if err != nil {
+				handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+				return
+			}
+			fmt.Fprintf(rw, "data: %s\n\n", b)
+			flusher.Flush()
+		}
+	}
 }
