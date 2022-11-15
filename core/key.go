@@ -116,31 +116,26 @@ func NewDataStoreKey(key string) DataStoreKey {
 	numberOfElements := len(elements)
 
 	// With less than 4 elements, we know it's an invalid key
-	if numberOfElements < 4 {
+	if numberOfElements < 3 {
 		return dataStoreKey
 	}
 
-	// Exactly 4 elements happens only for unit tests.
-	if numberOfElements == 4 {
-		return DataStoreKey{
-			CollectionId: elements[0],
-			InstanceType: InstanceType(elements[1]),
-			DocKey:       elements[2],
-			FieldId:      elements[3],
+	// Once we find a valid prefix, we know that the following elements represent the DataStoreKey.
+	keyStart := -1
+	if numberOfElements > 4 {
+		for i := 0; i < numberOfElements; i++ {
+			if isValidPrefix(elements[i]) {
+				keyStart = i
+				break
+			}
 		}
 	}
 
-	// Once we find a valid prefix, we know that the following elements represent the DataStoreKey.
-	for i := 0; i < numberOfElements; i++ {
-		if isValidPrefix(elements[i]) {
-			dataStoreKey.CollectionId = elements[i+1]
-			dataStoreKey.InstanceType = InstanceType(elements[i+2])
-			dataStoreKey.DocKey = elements[i+3]
-			if i+4 < numberOfElements {
-				dataStoreKey.FieldId = elements[i+4]
-			}
-			break
-		}
+	dataStoreKey.CollectionId = elements[keyStart+1]
+	dataStoreKey.InstanceType = InstanceType(elements[keyStart+2])
+	dataStoreKey.DocKey = elements[keyStart+3]
+	if keyStart+4 < numberOfElements {
+		dataStoreKey.FieldId = elements[keyStart+4]
 	}
 
 	return dataStoreKey
