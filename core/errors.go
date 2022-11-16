@@ -8,9 +8,6 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package core provides commonly shared interfaces and building blocks.
-*/
 package core
 
 import "github.com/sourcenetwork/defradb/errors"
