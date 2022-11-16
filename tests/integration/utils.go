@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -259,14 +260,14 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 }
 
 func NewMapDB(ctx context.Context) (databaseInfo, error) {
-	rootstore := ds.NewMapDatastore()
+	rootstore := memory.NewStore()
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err
 	}
 
 	return databaseInfo{
-		name:      "ipfs-map-datastore",
+		name:      "defra-memory-datastore",
 		db:        db,
 		rootstore: rootstore,
 	}, nil
@@ -458,8 +459,8 @@ func ExecuteQueryTestCase(
 						for range q.Results {
 							select {
 							case s := <-result.Pub.Stream():
-								sResult := s.(client.GQLResult)
-								sData := sResult.Data.([]map[string]any)
+								sResult, _ := s.(client.GQLResult)
+								sData, _ := sResult.Data.([]map[string]any)
 								errs = append(errs, sResult.Errors...)
 								data = append(data, sData...)
 							// a safety in case the stream hangs.
@@ -470,8 +471,8 @@ func ExecuteQueryTestCase(
 					} else {
 						select {
 						case s := <-result.Pub.Stream():
-							sResult := s.(client.GQLResult)
-							sData := sResult.Data.([]map[string]any)
+							sResult, _ := s.(client.GQLResult)
+							sData, _ := sResult.Data.([]map[string]any)
 							errs = append(errs, sResult.Errors...)
 							data = append(data, sData...)
 						// a safety in case the stream hangs or no results are expected.
