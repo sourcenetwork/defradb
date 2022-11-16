@@ -217,13 +217,36 @@ func (w *wrappedIterator) IteratePrefix(
 	startPrefix ds.Key,
 	endPrefix ds.Key,
 ) (dsq.Results, error) {
-	return w.iterator.IteratePrefix(
+	results, err := w.iterator.IteratePrefix(
 		ctx,
 		w.transform.ConvertKey(startPrefix),
 		w.transform.ConvertKey(endPrefix),
 	)
+	if err != nil {
+		return nil, err
+	}
+	return &wrappedResults{
+		Results:   results,
+		transform: w.transform,
+	}, nil
 }
 
 func (w *wrappedIterator) Close() error {
 	return w.iterator.Close()
+}
+
+type wrappedResults struct {
+	dsq.Results
+	transform ktds.KeyTransform
+}
+
+func (wr *wrappedResults) NextSync() (dsq.Result, bool) {
+	r, ok := wr.Results.NextSync()
+	if !ok {
+		return r, false
+	}
+	if r.Error == nil {
+		r.Entry.Key = wr.transform.InvertKey(ds.RawKey(r.Entry.Key)).String()
+	}
+	return r, true
 }
