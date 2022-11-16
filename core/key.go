@@ -105,29 +105,37 @@ var _ Key = (*SequenceKey)(nil)
 // /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
-func NewDataStoreKey(key string) DataStoreKey {
+func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
-		return dataStoreKey
+		return dataStoreKey, errors.WithStack(ErrEmptyKey)
 	}
 
-	elements := strings.Split(key, "/")
-
-	if isDataObjectMarker(elements) {
-		return DataStoreKey{
-			CollectionId: elements[3],
-			InstanceType: ValueKey,
-			DocKey:       elements[5],
-		}
-	}
+	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
 
 	numberOfElements := len(elements)
-	return DataStoreKey{
-		CollectionId: elements[numberOfElements-4],
-		InstanceType: InstanceType(elements[numberOfElements-3]),
-		DocKey:       elements[numberOfElements-2],
-		FieldId:      elements[numberOfElements-1],
+
+	// With less than 3 or more than 4 elements, we know it's an invalid key
+	if numberOfElements < 3 || numberOfElements > 4 {
+		return dataStoreKey, errors.WithStack(ErrInvalidKey)
 	}
+
+	dataStoreKey.CollectionId = elements[0]
+	dataStoreKey.InstanceType = InstanceType(elements[1])
+	dataStoreKey.DocKey = elements[2]
+	if numberOfElements == 4 {
+		dataStoreKey.FieldId = elements[3]
+	}
+
+	return dataStoreKey, nil
+}
+
+func MustNewDataStoreKey(key string) DataStoreKey {
+	dsKey, err := NewDataStoreKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return dsKey
 }
 
 func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
@@ -449,22 +457,4 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
-}
-
-func isDataObjectMarker(elements []string) bool {
-	numElements := len(elements)
-	// lenght is 6 because it has no FieldID
-	if numElements != 6 {
-		return false
-	}
-	if elements[1] != "db" {
-		return false
-	}
-	if elements[2] != "data" {
-		return false
-	}
-	if elements[4] != "v" {
-		return false
-	}
-	return true
 }
