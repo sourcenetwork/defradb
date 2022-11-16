@@ -262,6 +262,12 @@ func buildZapLogger(name string, config Config) (*zap.Logger, error) {
 	return newLogger.Named(name), nil
 }
 
+/*
+	The following are wrappers for external packages loggers that are compatible with
+	our own logger (i.e. Zap based). They offer a way to access the internal logger stores
+	and apply our configuration. They should implement ApplyConfig.
+*/
+
 // goLogger is a wrapper for a go-log logger
 // Used by github.com/ipfs/go-ipfs-provider
 type goLogger struct {
