@@ -745,7 +745,7 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 	}
 
 	if key.InstanceType == core.ValueKey {
-		err := txn.Datastore().Delete(ctx, core.NewDataStoreKey(key.ToString()).ToDS())
+		err := txn.Datastore().Delete(ctx, key.ToDS())
 		if err != nil {
 			return false, err
 		}
@@ -758,7 +758,12 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 			return false, err
 		}
 
-		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
+		dsKey, err := core.NewDataStoreKey(e.Key)
+		if err != nil {
+			return false, err
+		}
+
+		err = txn.Datastore().Delete(ctx, dsKey.ToDS())
 		if err != nil {
 			return false, err
 		}

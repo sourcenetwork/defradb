@@ -105,40 +105,37 @@ var _ Key = (*SequenceKey)(nil)
 // /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
-func NewDataStoreKey(key string) DataStoreKey {
+func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
-		return dataStoreKey
+		return dataStoreKey, errors.WithStack(ErrEmptyKey)
 	}
 
 	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
 
 	numberOfElements := len(elements)
 
-	// With less than 4 elements, we know it's an invalid key
-	if numberOfElements < 3 {
-		return dataStoreKey
+	// With less than 3 or more than 4 elements, we know it's an invalid key
+	if numberOfElements < 3 || numberOfElements > 4 {
+		return dataStoreKey, errors.WithStack(ErrInvalidKey)
 	}
 
-	// Once we find a valid prefix, we know that the following elements represent the DataStoreKey.
-	keyStart := -1
-	if numberOfElements > 4 {
-		for i := 0; i < numberOfElements; i++ {
-			if isValidPrefix(elements[i]) {
-				keyStart = i
-				break
-			}
-		}
+	dataStoreKey.CollectionId = elements[0]
+	dataStoreKey.InstanceType = InstanceType(elements[1])
+	dataStoreKey.DocKey = elements[2]
+	if numberOfElements == 4 {
+		dataStoreKey.FieldId = elements[3]
 	}
 
-	dataStoreKey.CollectionId = elements[keyStart+1]
-	dataStoreKey.InstanceType = InstanceType(elements[keyStart+2])
-	dataStoreKey.DocKey = elements[keyStart+3]
-	if keyStart+4 < numberOfElements {
-		dataStoreKey.FieldId = elements[keyStart+4]
-	}
+	return dataStoreKey, nil
+}
 
-	return dataStoreKey
+func MustNewDataStoreKey(key string) DataStoreKey {
+	dsKey, err := NewDataStoreKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return dsKey
 }
 
 func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
@@ -460,14 +457,4 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
-}
-
-func isValidPrefix(prefix string) bool {
-	switch prefix {
-	// All valid prefixes should be added to this case.
-	case "data":
-		return true
-	default:
-		return false
-	}
 }
