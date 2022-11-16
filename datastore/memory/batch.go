@@ -39,6 +39,7 @@ func NewBasicBatch(d *Store) ds.Batch {
 	}
 }
 
+// Put implements ds.Put
 func (b *basicBatch) Put(ctx context.Context, key ds.Key, val []byte) error {
 	b.syncLock.Lock()
 	defer b.syncLock.Unlock()
@@ -47,6 +48,7 @@ func (b *basicBatch) Put(ctx context.Context, key ds.Key, val []byte) error {
 	return nil
 }
 
+// Delete implements ds.Delete
 func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
 	b.syncLock.Lock()
 	defer b.syncLock.Unlock()
@@ -55,6 +57,7 @@ func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
 	return nil
 }
 
+// Commit saves the operations to the target datastore
 func (b *basicBatch) Commit(ctx context.Context) error {
 	b.syncLock.Lock()
 	defer b.syncLock.Unlock()

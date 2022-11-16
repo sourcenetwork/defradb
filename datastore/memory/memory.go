@@ -35,6 +35,7 @@ func NewStore() (d *Store) {
 	}
 }
 
+// Batch return a ds.Batch datastore based on Store
 func (d *Store) Batch(ctx context.Context) (ds.Batch, error) {
 	return NewBasicBatch(d), nil
 }
@@ -84,6 +85,7 @@ func (d *Store) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	return found, nil
 }
 
+// NewTransaction return a ds.Txn datastore based on Store
 func (d *Store) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
 	return NewTransaction(d, readOnly), nil
 }

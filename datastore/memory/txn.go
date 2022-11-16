@@ -18,6 +18,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 )
 
+// basicTxn implements ds.Txn
 type basicTxn struct {
 	syncLock sync.Mutex
 	ops      map[ds.Key]op
@@ -36,6 +37,7 @@ func NewTransaction(d *Store, readOnly bool) ds.Txn {
 	}
 }
 
+// Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
@@ -49,7 +51,7 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	return t.target.Get(ctx, key)
 }
 
-// GetSize implements Datastore.GetSize
+// GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
@@ -63,7 +65,7 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 	return t.target.GetSize(ctx, key)
 }
 
-// Has implements Datastore.Has
+// Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
@@ -77,6 +79,7 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 	return t.target.Has(ctx, key)
 }
 
+// Put implements ds.Put
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	if t.readOnly {
 		return nil
@@ -89,7 +92,7 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	return nil
 }
 
-// Query implements Datastore.Query
+// Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
@@ -142,6 +145,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 	return r, nil
 }
 
+// Delete implements ds.Delete
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 	if t.readOnly {
 		return nil
@@ -154,6 +158,7 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 	return nil
 }
 
+// Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
@@ -161,6 +166,7 @@ func (t *basicTxn) Discard(ctx context.Context) {
 	t.ops = make(map[ds.Key]op)
 }
 
+// Commit saves the operations to the target datastore
 func (t *basicTxn) Commit(ctx context.Context) error {
 	if t.readOnly {
 		return nil
