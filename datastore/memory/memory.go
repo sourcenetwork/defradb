@@ -28,9 +28,7 @@ var _ ds.Datastore = (*Store)(nil)
 var _ ds.Batching = (*Store)(nil)
 var _ ds.TxnFeature = (*Store)(nil)
 
-// NewStore constructs a Store. It is _not_ thread-safe by
-// default, wrap using sync.MutexWrap if you need thread safety (the answer here
-// is usually yes).
+// NewStore constructs an empty Store.
 func NewStore() (d *Store) {
 	return &Store{
 		values: make(map[ds.Key][]byte),
@@ -45,7 +43,7 @@ func (d *Store) Close() error {
 	return nil
 }
 
-// Delete implements Datastore.Delete
+// Delete implements ds.Delete
 func (d *Store) Delete(ctx context.Context, key ds.Key) (err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -54,7 +52,7 @@ func (d *Store) Delete(ctx context.Context, key ds.Key) (err error) {
 	return nil
 }
 
-// Get implements Datastore.Get
+// Get implements ds.Get
 func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -66,7 +64,7 @@ func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	return val, nil
 }
 
-// GetSize implements Datastore.GetSize
+// GetSize implements ds.GetSize
 func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -77,7 +75,7 @@ func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	return -1, ds.ErrNotFound
 }
 
-// Has implements Datastore.Has
+// Has implements ds.Has
 func (d *Store) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -90,7 +88,7 @@ func (d *Store) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, erro
 	return NewTransaction(d, readOnly), nil
 }
 
-// Put implements Datastore.Put
+// Put implements ds.Put
 func (d *Store) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -99,7 +97,7 @@ func (d *Store) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
 	return nil
 }
 
-// Query implements Datastore.Query
+// Query implements ds.Query
 func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
@@ -117,7 +115,7 @@ func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	return r, nil
 }
 
-// Sync implements Datastore.Sync
+// Sync implements ds.Sync
 func (d *Store) Sync(ctx context.Context, prefix ds.Key) error {
 	return nil
 }

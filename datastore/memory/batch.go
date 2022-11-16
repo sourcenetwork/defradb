@@ -22,8 +22,7 @@ type op struct {
 	value  []byte
 }
 
-// basicBatch implements the transaction interface for datastores who do
-// not have any sort of underlying transactional support
+// basicBatch implements ds.Batch
 type basicBatch struct {
 	syncLock sync.Mutex
 	ops      map[ds.Key]op
@@ -32,6 +31,7 @@ type basicBatch struct {
 
 var _ ds.Batch = (*basicBatch)(nil)
 
+// NewBasicBatch returns a ds.Batch datastore
 func NewBasicBatch(d *Store) ds.Batch {
 	return &basicBatch{
 		ops:    make(map[ds.Key]op),

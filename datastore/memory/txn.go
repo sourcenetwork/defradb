@@ -27,6 +27,7 @@ type basicTxn struct {
 
 var _ ds.Txn = (*basicTxn)(nil)
 
+// NewTransaction returns a ds.Txn datastore
 func NewTransaction(d *Store, readOnly bool) ds.Txn {
 	return &basicTxn{
 		ops:      make(map[ds.Key]op),
