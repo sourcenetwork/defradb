@@ -77,12 +77,12 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 }
 
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
-
 	if t.readOnly {
 		return nil
 	}
+
+	t.syncLock.Lock()
+	defer t.syncLock.Unlock()
 
 	t.ops[key] = op{value: value}
 	return nil
@@ -142,12 +142,12 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 }
 
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
-
 	if t.readOnly {
 		return nil
 	}
+
+	t.syncLock.Lock()
+	defer t.syncLock.Unlock()
 
 	t.ops[key] = op{delete: true}
 	return nil
@@ -161,26 +161,22 @@ func (t *basicTxn) Discard(ctx context.Context) {
 }
 
 func (t *basicTxn) Commit(ctx context.Context) error {
+	if t.readOnly {
+		return nil
+	}
+
 	t.syncLock.Lock()
 	defer t.syncLock.Unlock()
 	t.target.syncLock.Lock()
 	defer t.target.syncLock.Unlock()
 
-	if t.readOnly {
-		return nil
-	}
-
-	var err error
 	for k, op := range t.ops {
 		if op.delete {
 			delete(t.target.values, k)
 		} else {
 			t.target.values[k] = op.value
 		}
-		if err != nil {
-			break
-		}
 	}
 
-	return err
+	return nil
 }

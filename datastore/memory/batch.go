@@ -61,17 +61,13 @@ func (b *basicBatch) Commit(ctx context.Context) error {
 	b.target.syncLock.Lock()
 	defer b.target.syncLock.Unlock()
 
-	var err error
 	for k, op := range b.ops {
 		if op.delete {
 			delete(b.target.values, k)
 		} else {
 			b.target.values[k] = op.value
 		}
-		if err != nil {
-			break
-		}
 	}
 
-	return err
+	return nil
 }
