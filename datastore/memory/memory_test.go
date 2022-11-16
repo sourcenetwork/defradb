@@ -32,8 +32,7 @@ var (
 	testKey4   = ds.NewKey("testKey4")
 	testValue4 = []byte("this is a test value 4")
 
-	testKey5   = ds.NewKey("testKey5")
-	testValue5 = []byte("this is a test value 5")
+	testKey5 = ds.NewKey("testKey5")
 )
 
 func newLoadedStore() *Store {
