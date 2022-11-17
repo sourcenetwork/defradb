@@ -24,9 +24,9 @@ type op struct {
 
 // basicBatch implements ds.Batch
 type basicBatch struct {
-	syncLock sync.Mutex
-	ops      map[ds.Key]op
-	target   *Store
+	mu     sync.Mutex
+	ops    map[ds.Key]op
+	target *Store
 }
 
 var _ ds.Batch = (*basicBatch)(nil)
@@ -41,8 +41,8 @@ func NewBasicBatch(d *Store) ds.Batch {
 
 // Put implements ds.Put
 func (b *basicBatch) Put(ctx context.Context, key ds.Key, val []byte) error {
-	b.syncLock.Lock()
-	defer b.syncLock.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	b.ops[key] = op{value: val}
 	return nil
@@ -50,8 +50,8 @@ func (b *basicBatch) Put(ctx context.Context, key ds.Key, val []byte) error {
 
 // Delete implements ds.Delete
 func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
-	b.syncLock.Lock()
-	defer b.syncLock.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	b.ops[key] = op{delete: true}
 	return nil
@@ -59,10 +59,10 @@ func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
 
 // Commit saves the operations to the target datastore
 func (b *basicBatch) Commit(ctx context.Context) error {
-	b.syncLock.Lock()
-	defer b.syncLock.Unlock()
-	b.target.syncLock.Lock()
-	defer b.target.syncLock.Unlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.target.mu.Lock()
+	defer b.target.mu.Unlock()
 
 	for k, op := range b.ops {
 		if op.delete {

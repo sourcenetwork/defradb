@@ -21,8 +21,8 @@ import (
 
 // Store uses a btree for internal storage.
 type Store struct {
-	syncLock sync.Mutex
-	values   *btree.Map[string, []byte]
+	mu     sync.Mutex
+	values *btree.Map[string, []byte]
 }
 
 var _ ds.Datastore = (*Store)(nil)
@@ -47,16 +47,16 @@ func (d *Store) Close() error {
 
 // Delete implements ds.Delete
 func (d *Store) Delete(ctx context.Context, key ds.Key) (err error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	d.values.Delete(key.String())
 	return nil
 }
 
 // Get implements ds.Get
 func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	if val, exists := d.values.Get(key.String()); exists {
 		return val, nil
@@ -66,8 +66,8 @@ func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 
 // GetSize implements ds.GetSize
 func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	if val, exists := d.values.Get(key.String()); exists {
 		return len(val), nil
@@ -77,8 +77,8 @@ func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 
 // Has implements ds.Has
 func (d *Store) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	_, exists = d.values.Get(key.String())
 	return exists, nil
@@ -91,16 +91,16 @@ func (d *Store) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, erro
 
 // Put implements ds.Put
 func (d *Store) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	d.values.Set(key.String(), value)
 	return nil
 }
 
 // Query implements ds.Query
 func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	d.syncLock.Lock()
-	defer d.syncLock.Unlock()
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
 	re := make([]dsq.Entry, 0, d.values.Len())
 	iter := d.values.Iter()

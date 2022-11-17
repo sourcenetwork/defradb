@@ -20,7 +20,7 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	syncLock sync.Mutex
+	mu       sync.Mutex
 	ops      map[ds.Key]op
 	target   *Store
 	readOnly bool
@@ -39,8 +39,8 @@ func NewTransaction(d *Store, readOnly bool) ds.Txn {
 
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	if op, ok := t.ops[key]; ok {
 		if op.delete {
@@ -53,8 +53,8 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	if op, ok := t.ops[key]; ok {
 		if op.delete {
@@ -67,8 +67,8 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	if op, ok := t.ops[key]; ok {
 		if op.delete {
@@ -85,8 +85,8 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 		return nil
 	}
 
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.ops[key] = op{value: value}
 	return nil
@@ -94,10 +94,10 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
-	t.target.syncLock.Lock()
-	defer t.target.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.target.mu.Lock()
+	defer t.target.mu.Unlock()
 
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.target.values.Len()+len(t.ops))
@@ -152,8 +152,8 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 		return nil
 	}
 
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.ops[key] = op{delete: true}
 	return nil
@@ -161,8 +161,8 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 
 // Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.ops = make(map[ds.Key]op)
 }
@@ -173,10 +173,10 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return nil
 	}
 
-	t.syncLock.Lock()
-	defer t.syncLock.Unlock()
-	t.target.syncLock.Lock()
-	defer t.target.syncLock.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.target.mu.Lock()
+	defer t.target.mu.Unlock()
 
 	for k, op := range t.ops {
 		if op.delete {
