@@ -24,18 +24,18 @@ type op struct {
 
 // basicBatch implements ds.Batch
 type basicBatch struct {
-	mu     sync.Mutex
-	ops    map[ds.Key]op
-	target *Store
+	mu  sync.Mutex
+	ops map[ds.Key]op
+	ds  *Datastore
 }
 
 var _ ds.Batch = (*basicBatch)(nil)
 
-// NewBasicBatch returns a ds.Batch datastore
-func NewBasicBatch(d *Store) ds.Batch {
+// newBasicBatch returns a ds.Batch datastore
+func newBasicBatch(d *Datastore) ds.Batch {
 	return &basicBatch{
-		ops:    make(map[ds.Key]op),
-		target: d,
+		ops: make(map[ds.Key]op),
+		ds:  d,
 	}
 }
 
@@ -57,18 +57,18 @@ func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
 	return nil
 }
 
-// Commit saves the operations to the target datastore
+// Commit saves the operations to the underlying datastore
 func (b *basicBatch) Commit(ctx context.Context) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.target.mu.Lock()
-	defer b.target.mu.Unlock()
+	b.ds.txnmu.Lock()
+	defer b.ds.txnmu.Unlock()
 
 	for k, op := range b.ops {
 		if op.delete {
-			b.target.values.Delete(k.String())
+			b.ds.values.Delete(k.String())
 		} else {
-			b.target.values.Set(k.String(), op.value)
+			b.ds.values.Set(k.String(), op.value)
 		}
 	}
 

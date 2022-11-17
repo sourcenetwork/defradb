@@ -260,7 +260,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 }
 
 func NewMapDB(ctx context.Context) (databaseInfo, error) {
-	rootstore := memory.NewStore()
+	rootstore := memory.NewDatastore()
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
 		return databaseInfo{}, err

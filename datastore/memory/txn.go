@@ -16,23 +16,24 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/tidwall/btree"
 )
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
 	mu       sync.Mutex
-	ops      map[ds.Key]op
-	target   *Store
+	ops      *btree.Map[string, op]
+	ds       *Datastore
 	readOnly bool
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
 
-// NewTransaction returns a ds.Txn datastore
-func NewTransaction(d *Store, readOnly bool) ds.Txn {
+// newTransaction returns a ds.Txn datastore
+func newTransaction(d *Datastore, readOnly bool) ds.Txn {
 	return &basicTxn{
-		ops:      make(map[ds.Key]op),
-		target:   d,
+		ops:      btree.NewMap[string, op](2),
+		ds:       d,
 		readOnly: readOnly,
 	}
 }
@@ -42,13 +43,13 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if op, ok := t.ops[key]; ok {
+	if op, exists := t.ops.Get(key.String()); exists {
 		if op.delete {
 			return nil, ds.ErrNotFound
 		}
 		return op.value, nil
 	}
-	return t.target.Get(ctx, key)
+	return t.ds.Get(ctx, key)
 }
 
 // GetSize implements ds.GetSize
@@ -56,13 +57,13 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if op, ok := t.ops[key]; ok {
+	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
-			return -1, ds.ErrNotFound
+			return 0, ds.ErrNotFound
 		}
 		return len(op.value), nil
 	}
-	return t.target.GetSize(ctx, key)
+	return t.ds.GetSize(ctx, key)
 }
 
 // Has implements ds.Has
@@ -70,25 +71,25 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if op, ok := t.ops[key]; ok {
+	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
 			return false, nil
 		}
 		return true, nil
 	}
-	return t.target.Has(ctx, key)
+	return t.ds.Has(ctx, key)
 }
 
 // Put implements ds.Put
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	if t.readOnly {
-		return nil
+		return ErrReadOnlyTxn
 	}
 
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.ops[key] = op{value: value}
+	t.ops.Set(key.String(), op{value: value})
 	return nil
 }
 
@@ -96,49 +97,64 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.target.mu.Lock()
-	defer t.target.mu.Unlock()
 
 	// best effort allocation
-	re := make([]dsq.Entry, 0, t.target.values.Len()+len(t.ops))
-	handledOps := make(map[ds.Key]struct{})
-	iter := t.target.values.Iter()
+	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
+	iter := t.ds.values.Iter()
+	iterOps := t.ops.Iter()
+	iterOpsHasMore := iterOps.Next()
 	for iter.Next() {
-		e := dsq.Entry{}
-		if op, exists := t.ops[ds.NewKey(iter.Key())]; exists {
-			handledOps[ds.NewKey(iter.Key())] = struct{}{}
-			if op.delete {
+		for {
+			if !iterOpsHasMore {
+				break
+			}
+			if iterOps.Key() <= iter.Key() {
+				if iterOps.Value().delete {
+					iterOpsHasMore = iterOps.Next()
+					iter.Next()
+					continue
+				}
+				e := dsq.Entry{
+					Key:  iterOps.Key(),
+					Size: len(iterOps.Value().value),
+				}
+				if !q.KeysOnly {
+					e.Value = iterOps.Value().value
+				}
+				re = append(re, e)
+				iterOpsHasMore = iterOps.Next()
+				iter.Next()
 				continue
 			}
-			e.Key = iter.Key()
-			e.Size = len(op.value)
-			if !q.KeysOnly {
-				e.Value = op.value
-			}
-		} else {
-			e.Key = iter.Key()
-			e.Size = len(iter.Value())
-			if !q.KeysOnly {
-				e.Value = iter.Value()
-			}
+			break
 		}
-
+		e := dsq.Entry{
+			Key:  iter.Key(),
+			Size: len(iter.Value()),
+		}
+		if !q.KeysOnly {
+			e.Value = iter.Value()
+		}
 		re = append(re, e)
 	}
 
-	for k, v := range t.ops {
-		if _, handled := handledOps[k]; handled {
+	for {
+		if !iterOpsHasMore {
+			break
+		}
+		if iterOps.Value().delete {
+			iterOpsHasMore = iterOps.Next()
 			continue
 		}
-
-		if v.delete {
-			continue
+		e := dsq.Entry{
+			Key:  iterOps.Key(),
+			Size: len(iterOps.Value().value),
 		}
-		e := dsq.Entry{Key: k.String(), Size: len(v.value)}
 		if !q.KeysOnly {
-			e.Value = v.value
+			e.Value = iterOps.Value().value
 		}
 		re = append(re, e)
+		iterOpsHasMore = iterOps.Next()
 	}
 
 	r := dsq.ResultsWithEntries(q, re)
@@ -149,13 +165,13 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 // Delete implements ds.Delete
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 	if t.readOnly {
-		return nil
+		return ErrReadOnlyTxn
 	}
 
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.ops[key] = op{delete: true}
+	t.ops.Set(key.String(), op{delete: true})
 	return nil
 }
 
@@ -163,26 +179,25 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 func (t *basicTxn) Discard(ctx context.Context) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-
-	t.ops = make(map[ds.Key]op)
+	t.ops.Clear()
 }
 
-// Commit saves the operations to the target datastore
+// Commit saves the operations to the underlying datastore
 func (t *basicTxn) Commit(ctx context.Context) error {
 	if t.readOnly {
-		return nil
+		return ErrReadOnlyTxn
 	}
 
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.target.mu.Lock()
-	defer t.target.mu.Unlock()
-
-	for k, op := range t.ops {
-		if op.delete {
-			t.target.values.Delete(k.String())
+	t.ds.txnmu.Lock()
+	defer t.ds.txnmu.Unlock()
+	iter := t.ops.Iter()
+	for iter.Next() {
+		if iter.Value().delete {
+			t.ds.values.Delete(iter.Key())
 		} else {
-			t.target.values.Set(k.String(), op.value)
+			t.ds.values.Set(iter.Key(), iter.Value().value)
 		}
 	}
 

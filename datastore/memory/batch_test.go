@@ -21,15 +21,15 @@ import (
 // NewBasicBatch, Put, Delete, Commit
 
 func TestNewBatch(t *testing.T) {
-	s := NewStore()
-	b := NewBasicBatch(s)
+	s := NewDatastore()
+	b := newBasicBatch(s)
 	assert.NotNil(t, b)
 }
 
 func TestBatchOperations(t *testing.T) {
 	ctx := context.Background()
 
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 	b, err := s.Batch(ctx)
 	if err != nil {
 		t.Error(err)

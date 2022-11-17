@@ -35,20 +35,20 @@ var (
 	testKey5 = ds.NewKey("testKey5")
 )
 
-func newLoadedStore() *Store {
-	s := NewStore()
-	s.values.Load(testKey1.String(), testValue1)
-	s.values.Load(testKey2.String(), testValue2)
+func newLoadedDatastore() *Datastore {
+	s := NewDatastore()
+	s.values.Set(testKey1.String(), testValue1)
+	s.values.Set(testKey2.String(), testValue2)
 	return s
 }
 
-func TestNewStore(t *testing.T) {
-	s := NewStore()
+func TestNewDatastore(t *testing.T) {
+	s := NewDatastore()
 	assert.NotNil(t, s)
 }
 
 func TestGetOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -60,7 +60,7 @@ func TestGetOperation(t *testing.T) {
 }
 
 func TestGetOperationNotFound(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -69,7 +69,7 @@ func TestGetOperationNotFound(t *testing.T) {
 }
 
 func TestDeleteOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -83,7 +83,7 @@ func TestDeleteOperation(t *testing.T) {
 }
 
 func TestGetSizeOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -95,7 +95,7 @@ func TestGetSizeOperation(t *testing.T) {
 }
 
 func TestGetSizeOperationNotFound(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -104,7 +104,7 @@ func TestGetSizeOperationNotFound(t *testing.T) {
 }
 
 func TestHasOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -116,7 +116,7 @@ func TestHasOperation(t *testing.T) {
 }
 
 func TestHasOperationNotFound(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -128,7 +128,7 @@ func TestHasOperationNotFound(t *testing.T) {
 }
 
 func TestPutOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -145,7 +145,7 @@ func TestPutOperation(t *testing.T) {
 }
 
 func TestQueryOperation(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 
@@ -164,14 +164,14 @@ func TestQueryOperation(t *testing.T) {
 }
 
 func TestCloseOperationNotFound(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	err := s.Close()
 	assert.NoError(t, err)
 }
 
 func TestSyncOperationNotFound(t *testing.T) {
-	s := newLoadedStore()
+	s := newLoadedDatastore()
 
 	ctx := context.Background()
 

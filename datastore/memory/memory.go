@@ -19,45 +19,40 @@ import (
 	"github.com/tidwall/btree"
 )
 
-// Store uses a btree for internal storage.
-type Store struct {
-	mu     sync.Mutex
+// Datastore uses a btree for internal storage.
+type Datastore struct {
+	txnmu  sync.Mutex
 	values *btree.Map[string, []byte]
 }
 
-var _ ds.Datastore = (*Store)(nil)
-var _ ds.Batching = (*Store)(nil)
-var _ ds.TxnFeature = (*Store)(nil)
+var _ ds.Datastore = (*Datastore)(nil)
+var _ ds.Batching = (*Datastore)(nil)
+var _ ds.TxnFeature = (*Datastore)(nil)
 
-// NewStore constructs an empty Store.
-func NewStore() (d *Store) {
-	return &Store{
+// NewDatastore constructs an empty Datastore.
+func NewDatastore() (d *Datastore) {
+	return &Datastore{
 		values: btree.NewMap[string, []byte](2),
 	}
 }
 
-// Batch return a ds.Batch datastore based on Store
-func (d *Store) Batch(ctx context.Context) (ds.Batch, error) {
-	return NewBasicBatch(d), nil
+// Batch return a ds.Batch datastore based on Datastore
+func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
+	return newBasicBatch(d), nil
 }
 
-func (d *Store) Close() error {
+func (d *Datastore) Close() error {
 	return nil
 }
 
 // Delete implements ds.Delete
-func (d *Store) Delete(ctx context.Context, key ds.Key) (err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 	d.values.Delete(key.String())
 	return nil
 }
 
 // Get implements ds.Get
-func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
+func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	if val, exists := d.values.Get(key.String()); exists {
 		return val, nil
 	}
@@ -65,43 +60,32 @@ func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 }
 
 // GetSize implements ds.GetSize
-func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
+func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	if val, exists := d.values.Get(key.String()); exists {
 		return len(val), nil
 	}
-	return -1, ds.ErrNotFound
+	return 0, ds.ErrNotFound
 }
 
 // Has implements ds.Has
-func (d *Store) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
+func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	_, exists = d.values.Get(key.String())
 	return exists, nil
 }
 
-// NewTransaction return a ds.Txn datastore based on Store
-func (d *Store) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
-	return NewTransaction(d, readOnly), nil
+// NewTransaction return a ds.Txn datastore based on Datastore
+func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
+	return newTransaction(d, readOnly), nil
 }
 
 // Put implements ds.Put
-func (d *Store) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
 	d.values.Set(key.String(), value)
 	return nil
 }
 
 // Query implements ds.Query
-func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
+func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	re := make([]dsq.Entry, 0, d.values.Len())
 	iter := d.values.Iter()
 	for iter.Next() {
@@ -117,6 +101,6 @@ func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 }
 
 // Sync implements ds.Sync
-func (d *Store) Sync(ctx context.Context, prefix ds.Key) error {
+func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 	return nil
 }
