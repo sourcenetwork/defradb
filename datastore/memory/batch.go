@@ -66,9 +66,9 @@ func (b *basicBatch) Commit(ctx context.Context) error {
 
 	for k, op := range b.ops {
 		if op.delete {
-			delete(b.target.values, k)
+			b.target.values.Delete(k.String())
 		} else {
-			b.target.values[k] = op.value
+			b.target.values.Set(k.String(), op.value)
 		}
 	}
 

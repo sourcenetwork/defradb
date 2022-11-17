@@ -100,25 +100,26 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 	defer t.target.syncLock.Unlock()
 
 	// best effort allocation
-	re := make([]dsq.Entry, 0, len(t.target.values)+len(t.ops))
+	re := make([]dsq.Entry, 0, t.target.values.Len()+len(t.ops))
 	handledOps := make(map[ds.Key]struct{})
-	for k, v := range t.target.values {
+	iter := t.target.values.Iter()
+	for iter.Next() {
 		e := dsq.Entry{}
-		if op, exists := t.ops[k]; exists {
-			handledOps[k] = struct{}{}
+		if op, exists := t.ops[ds.NewKey(iter.Key())]; exists {
+			handledOps[ds.NewKey(iter.Key())] = struct{}{}
 			if op.delete {
 				continue
 			}
-			e.Key = k.String()
+			e.Key = iter.Key()
 			e.Size = len(op.value)
 			if !q.KeysOnly {
 				e.Value = op.value
 			}
 		} else {
-			e.Key = k.String()
-			e.Size = len(v)
+			e.Key = iter.Key()
+			e.Size = len(iter.Value())
 			if !q.KeysOnly {
-				e.Value = v
+				e.Value = iter.Value()
 			}
 		}
 
@@ -179,9 +180,9 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 
 	for k, op := range t.ops {
 		if op.delete {
-			delete(t.target.values, k)
+			t.target.values.Delete(k.String())
 		} else {
-			t.target.values[k] = op.value
+			t.target.values.Set(k.String(), op.value)
 		}
 	}
 

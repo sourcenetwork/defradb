@@ -36,12 +36,10 @@ var (
 )
 
 func newLoadedStore() *Store {
-	return &Store{
-		values: map[ds.Key][]byte{
-			testKey1: testValue1,
-			testKey2: testValue2,
-		},
-	}
+	s := NewStore()
+	s.values.Load(testKey1.String(), testValue1)
+	s.values.Load(testKey2.String(), testValue2)
+	return s
 }
 
 func TestNewStore(t *testing.T) {

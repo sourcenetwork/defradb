@@ -16,12 +16,13 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/tidwall/btree"
 )
 
-// Store uses a standard Go map for internal storage.
+// Store uses a btree for internal storage.
 type Store struct {
 	syncLock sync.Mutex
-	values   map[ds.Key][]byte
+	values   *btree.Map[string, []byte]
 }
 
 var _ ds.Datastore = (*Store)(nil)
@@ -31,7 +32,7 @@ var _ ds.TxnFeature = (*Store)(nil)
 // NewStore constructs an empty Store.
 func NewStore() (d *Store) {
 	return &Store{
-		values: make(map[ds.Key][]byte),
+		values: btree.NewMap[string, []byte](2),
 	}
 }
 
@@ -48,8 +49,7 @@ func (d *Store) Close() error {
 func (d *Store) Delete(ctx context.Context, key ds.Key) (err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
-
-	delete(d.values, key)
+	d.values.Delete(key.String())
 	return nil
 }
 
@@ -58,11 +58,10 @@ func (d *Store) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
 
-	val, found := d.values[key]
-	if !found {
-		return nil, ds.ErrNotFound
+	if val, exists := d.values.Get(key.String()); exists {
+		return val, nil
 	}
-	return val, nil
+	return nil, ds.ErrNotFound
 }
 
 // GetSize implements ds.GetSize
@@ -70,8 +69,8 @@ func (d *Store) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
 
-	if v, found := d.values[key]; found {
-		return len(v), nil
+	if val, exists := d.values.Get(key.String()); exists {
+		return len(val), nil
 	}
 	return -1, ds.ErrNotFound
 }
@@ -81,8 +80,8 @@ func (d *Store) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
 
-	_, found := d.values[key]
-	return found, nil
+	_, exists = d.values.Get(key.String())
+	return exists, nil
 }
 
 // NewTransaction return a ds.Txn datastore based on Store
@@ -94,8 +93,7 @@ func (d *Store) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, erro
 func (d *Store) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
-
-	d.values[key] = value
+	d.values.Set(key.String(), value)
 	return nil
 }
 
@@ -104,11 +102,12 @@ func (d *Store) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	d.syncLock.Lock()
 	defer d.syncLock.Unlock()
 
-	re := make([]dsq.Entry, 0, len(d.values))
-	for k, v := range d.values {
-		e := dsq.Entry{Key: k.String(), Size: len(v)}
+	re := make([]dsq.Entry, 0, d.values.Len())
+	iter := d.values.Iter()
+	for iter.Next() {
+		e := dsq.Entry{Key: iter.Key(), Size: len(iter.Value())}
 		if !q.KeysOnly {
-			e.Value = v
+			e.Value = iter.Value()
 		}
 		re = append(re, e)
 	}
