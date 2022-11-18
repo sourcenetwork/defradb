@@ -463,6 +463,9 @@ func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, b
 	return nil, false
 }
 
+// typeFromFieldDef will return the output gql.Object type from the given field.
+// The return type may be a gql.Object or a gql.List, if it is a List type, we
+// need to get the concrete "OfType".
 func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
 	var fieldObject *gql.Object
 	switch ftype := field.Type.(type) {
