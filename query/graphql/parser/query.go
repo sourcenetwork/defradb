@@ -54,7 +54,7 @@ func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error
 				r.Mutations = append(r.Mutations, mdef)
 			case "subscription":
 				// parse subscription operation definition.
-				sdef, err := parseSubscriptionOperationDefinition(node)
+				sdef, err := parseSubscriptionOperationDefinition(schema, node)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -246,16 +246,11 @@ func parseSelect(
 	}
 
 	// parse field selections
-	var fieldObject *gql.Object
-	switch ftype := fieldDef.Type.(type) {
-	case *gql.Object:
-		fieldObject = ftype
-	case *gql.List:
-		fieldObject = ftype.OfType.(*gql.Object)
-	default:
-		return nil, errors.New("couldn't get field object from definition")
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
 	}
-	var err error
+
 	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
@@ -466,4 +461,17 @@ func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, b
 		}
 	}
 	return nil, false
+}
+
+func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
+	var fieldObject *gql.Object
+	switch ftype := field.Type.(type) {
+	case *gql.Object:
+		fieldObject = ftype
+	case *gql.List:
+		fieldObject = ftype.OfType.(*gql.Object)
+	default:
+		return nil, errors.New("couldn't get field object from definition")
+	}
+	return fieldObject, nil
 }

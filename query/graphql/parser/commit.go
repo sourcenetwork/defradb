@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.CommitSelect, error) {
@@ -108,16 +107,11 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 
 	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
 
-	var fieldObject *gql.Object
-	switch ftype := fieldDef.Type.(type) {
-	case *gql.Object:
-		fieldObject = ftype
-	case *gql.List:
-		fieldObject = ftype.OfType.(*gql.Object)
-	default:
-		return nil, errors.New("couldn't get field object from definition")
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
 	}
-	var err error
+
 	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)
 
 	return commit, err
