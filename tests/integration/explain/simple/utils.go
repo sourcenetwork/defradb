@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 type dataMap = map[string]any
@@ -56,8 +57,18 @@ var bookAuthorGQLSchema = (`
 
 `)
 
+// TODO: Remove after draft has received feedback.
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	testUtils.ExecuteQueryTestCase(
+		t,
+		bookAuthorGQLSchema,
+		[]string{"article", "book", "author", "authorContact", "contactAddress"},
+		test,
+	)
+}
+
+func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
+	explainUtils.ExecuteExplainRequestTestCase(
 		t,
 		bookAuthorGQLSchema,
 		[]string{"article", "book", "author", "authorContact", "contactAddress"},
