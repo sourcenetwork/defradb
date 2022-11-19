@@ -86,60 +86,42 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 	iter := t.ds.values.Iter()
 	iterOps := t.ops.Iter()
 	iterOpsHasMore := iterOps.Next()
+	// iterate over the underlying store and ensure that ops with keys smaller than or equal to
+	// the key of the underlying store are added with priority.
 	for iter.Next() {
-		for {
-			if !iterOpsHasMore || iterOps.Key() > iter.Key() {
-				break
+		for iterOpsHasMore && iterOps.Key() <= iter.Key() {
+			if !iterOps.Value().delete {
+				re = append(re, setEntry(iterOps.Key(), iterOps.Value().value, q))
 			}
-			if iterOps.Value().delete {
-				iterOpsHasMore = iterOps.Next()
-				iter.Next()
-				continue
-			}
-			e := dsq.Entry{
-				Key:  iterOps.Key(),
-				Size: len(iterOps.Value().value),
-			}
-			if !q.KeysOnly {
-				e.Value = iterOps.Value().value
-			}
-			re = append(re, e)
 			iterOpsHasMore = iterOps.Next()
 			iter.Next()
-			continue
 		}
-		e := dsq.Entry{
-			Key:  iter.Key(),
-			Size: len(iter.Value()),
-		}
-		if !q.KeysOnly {
-			e.Value = iter.Value()
-		}
-		re = append(re, e)
+
+		re = append(re, setEntry(iter.Key(), iter.Value(), q))
 	}
 
-	for {
-		if !iterOpsHasMore {
-			break
+	// add the remaining ops
+	for iterOpsHasMore {
+		if !iterOps.Value().delete {
+			re = append(re, setEntry(iterOps.Key(), iterOps.Value().value, q))
 		}
-		if iterOps.Value().delete {
-			iterOpsHasMore = iterOps.Next()
-			continue
-		}
-		e := dsq.Entry{
-			Key:  iterOps.Key(),
-			Size: len(iterOps.Value().value),
-		}
-		if !q.KeysOnly {
-			e.Value = iterOps.Value().value
-		}
-		re = append(re, e)
 		iterOpsHasMore = iterOps.Next()
 	}
 
 	r := dsq.ResultsWithEntries(q, re)
 	r = dsq.NaiveQueryApply(q, r)
 	return r, nil
+}
+
+func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
+	e := dsq.Entry{
+		Key:  key,
+		Size: len(value),
+	}
+	if !q.KeysOnly {
+		e.Value = value
+	}
+	return e
 }
 
 // Delete implements ds.Delete
