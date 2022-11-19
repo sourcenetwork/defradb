@@ -21,7 +21,7 @@ import (
 
 // Datastore uses a btree for internal storage.
 type Datastore struct {
-	txnmu  sync.Mutex
+	txnmu  sync.RWMutex
 	values *btree.Map[string, []byte]
 }
 
@@ -47,12 +47,16 @@ func (d *Datastore) Close() error {
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	d.values.Delete(key.String())
 	return nil
 }
 
 // Get implements ds.Get
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	if val, exists := d.values.Get(key.String()); exists {
 		return val, nil
 	}
@@ -61,6 +65,8 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 
 // GetSize implements ds.GetSize
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	if val, exists := d.values.Get(key.String()); exists {
 		return len(val), nil
 	}
@@ -69,6 +75,8 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 
 // Has implements ds.Has
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	_, exists = d.values.Get(key.String())
 	return exists, nil
 }
@@ -80,12 +88,16 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 
 // Put implements ds.Put
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	d.values.Set(key.String(), value)
 	return nil
 }
 
 // Query implements ds.Query
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	d.txnmu.RLock()
+	defer d.txnmu.RUnlock()
 	re := make([]dsq.Entry, 0, d.values.Len())
 	iter := d.values.Iter()
 	for iter.Next() {

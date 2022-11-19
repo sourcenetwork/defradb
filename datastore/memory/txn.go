@@ -12,7 +12,6 @@ package memory
 
 import (
 	"context"
-	"sync"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -21,7 +20,6 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	mu       sync.Mutex
 	ops      *btree.Map[string, op]
 	ds       *Datastore
 	readOnly bool
@@ -40,9 +38,6 @@ func newTransaction(d *Datastore, readOnly bool) ds.Txn {
 
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if op, exists := t.ops.Get(key.String()); exists {
 		if op.delete {
 			return nil, ds.ErrNotFound
@@ -54,9 +49,6 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
 			return 0, ds.ErrNotFound
@@ -68,9 +60,6 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
 			return false, nil
@@ -86,18 +75,12 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	t.ops.Set(key.String(), op{value: value})
 	return nil
 }
 
 // Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
 	iter := t.ds.values.Iter()
@@ -105,28 +88,25 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 	iterOpsHasMore := iterOps.Next()
 	for iter.Next() {
 		for {
-			if !iterOpsHasMore {
+			if !iterOpsHasMore || iterOps.Key() > iter.Key() {
 				break
 			}
-			if iterOps.Key() <= iter.Key() {
-				if iterOps.Value().delete {
-					iterOpsHasMore = iterOps.Next()
-					iter.Next()
-					continue
-				}
-				e := dsq.Entry{
-					Key:  iterOps.Key(),
-					Size: len(iterOps.Value().value),
-				}
-				if !q.KeysOnly {
-					e.Value = iterOps.Value().value
-				}
-				re = append(re, e)
+			if iterOps.Value().delete {
 				iterOpsHasMore = iterOps.Next()
 				iter.Next()
 				continue
 			}
-			break
+			e := dsq.Entry{
+				Key:  iterOps.Key(),
+				Size: len(iterOps.Value().value),
+			}
+			if !q.KeysOnly {
+				e.Value = iterOps.Value().value
+			}
+			re = append(re, e)
+			iterOpsHasMore = iterOps.Next()
+			iter.Next()
+			continue
 		}
 		e := dsq.Entry{
 			Key:  iter.Key(),
@@ -168,17 +148,12 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	t.ops.Set(key.String(), op{delete: true})
 	return nil
 }
 
 // Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	t.ops.Clear()
 }
 
@@ -188,8 +163,6 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	t.ds.txnmu.Lock()
 	defer t.ds.txnmu.Unlock()
 	iter := t.ops.Iter()
