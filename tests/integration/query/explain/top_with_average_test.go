@@ -162,7 +162,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 										"filter": dataMap{
 											"age": dataMap{
 												"_ne": nil,
-												"_gt": int64(26),
+												"_gt": int(26),
 											},
 										},
 										"spans": []dataMap{
@@ -183,7 +183,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 										"fieldName":      "author",
 										"filter": dataMap{
 											"age": dataMap{
-												"_gt": int64(26),
+												"_gt": int(26),
 												"_ne": nil,
 											},
 										},
@@ -198,7 +198,7 @@ func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 										"fieldName": "author",
 										"filter": dataMap{
 											"age": dataMap{
-												"_gt": int64(26),
+												"_gt": int(26),
 												"_ne": nil,
 											},
 										},

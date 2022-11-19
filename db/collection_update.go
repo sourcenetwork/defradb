@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"strings"
-	"time"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/valyala/fastjson"
@@ -24,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
 )
 
 var (
@@ -479,8 +477,13 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
 
-	case client.FieldKind_DATE:
-		return getDate(val)
+	case client.FieldKind_DATETIME:
+		// @TODO: Requires Typed Document refactor
+		// to handle this correctly.
+		// For now, we will persist DateTime as a
+		// RFC3339 string
+		// see https://github.com/sourcenetwork/defradb/issues/935
+		return getString(val)
 
 	case client.FieldKind_INT:
 		return getInt64(val)
@@ -514,14 +517,6 @@ func getFloat64(v *fastjson.Value) (float64, error) {
 
 func getInt64(v *fastjson.Value) (int64, error) {
 	return v.Int64()
-}
-
-func getDate(v *fastjson.Value) (time.Time, error) {
-	s, err := getString(v)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Parse(time.RFC3339, s)
 }
 
 func getArray[T any](
@@ -605,7 +600,7 @@ func (c *collection) makeSelectionQuery(
 			return nil, errors.New("invalid filter")
 		}
 
-		f, err = parser.NewFilterFromString(fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}

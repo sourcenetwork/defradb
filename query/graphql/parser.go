@@ -89,7 +89,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseQuery(ast)
+	query, parsingErrors := defrap.ParseQuery(*schema, ast)
 	if len(parsingErrors) > 0 {
 		return nil, parsingErrors
 	}
@@ -100,4 +100,8 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 func (p *parser) AddSchema(ctx context.Context, schema string) error {
 	_, _, err := p.schemaManager.Generator.FromSDL(ctx, schema)
 	return err
+}
+
+func (p *parser) NewFilterFromString(collectionType string, body string) (client.Option[request.Filter], error) {
+	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
 }

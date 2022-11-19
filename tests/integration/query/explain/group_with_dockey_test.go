@@ -161,7 +161,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 									"collectionName": "author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_eq": int64(20),
+											"_eq": int(20),
 										},
 									},
 									"spans": []dataMap{
