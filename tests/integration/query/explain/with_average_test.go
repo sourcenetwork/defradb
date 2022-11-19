@@ -322,7 +322,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 										"fieldName": "articles",
 										"filter": dataMap{
 											"pages": dataMap{
-												"_gt": int64(3),
+												"_gt": int(3),
 												"_ne": nil,
 											},
 										},
@@ -344,7 +344,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 											"fieldName":      "articles",
 											"filter": dataMap{
 												"pages": dataMap{
-													"_gt": int64(3),
+													"_gt": int(3),
 													"_ne": nil,
 												},
 											},
@@ -422,7 +422,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 																	"collectionName": "article",
 																	"filter": dataMap{
 																		"pages": dataMap{
-																			"_gt": int64(3),
+																			"_gt": int(3),
 																			"_ne": nil,
 																		},
 																	},

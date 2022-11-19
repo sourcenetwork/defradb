@@ -13,6 +13,7 @@ package parser
 import (
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,7 +35,10 @@ var (
 
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
-func parseMutationOperationDefinition(def *ast.OperationDefinition) (*request.OperationDefinition, error) {
+func parseMutationOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition,
+) (*request.OperationDefinition, error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
@@ -44,7 +48,7 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*request.Op
 	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			mut, err := parseMutation(node)
+			mut, err := parseMutation(schema, schema.MutationType(), node)
 			if err != nil {
 				return nil, err
 			}
@@ -62,13 +66,15 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*request.Op
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(field *ast.Field) (*request.Mutation, error) {
+func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.Mutation, error) {
 	mut := &request.Mutation{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, mut.Name)
 
 	// parse the mutation type
 	// mutation names are either generated from a type
@@ -107,7 +113,11 @@ func parseMutation(field *ast.Field) (*request.Mutation, error) {
 			mut.Data = raw.Value
 		} else if prop == request.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
-			filter, err := NewFilter(obj)
+			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
+			if !ok {
+				return nil, errors.New("couldn't get argument type for filter")
+			}
+			filter, err := NewFilter(obj, filterType)
 			if err != nil {
 				return nil, err
 			}
@@ -135,7 +145,11 @@ func parseMutation(field *ast.Field) (*request.Mutation, error) {
 		return mut, nil
 	}
 
-	var err error
-	mut.Fields, err = parseSelectFields(request.ObjectSelection, field.SelectionSet)
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
+	}
+
+	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
 	return mut, err
 }

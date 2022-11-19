@@ -47,3 +47,38 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query, count with datetime filter",
+		Query: `query {
+					_count(users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56.647Z"}}})
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 30,
+					"CreatedAt": "2017-09-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 32,
+					"CreatedAt": "2017-10-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"_count": 2,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

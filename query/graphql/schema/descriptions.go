@@ -33,7 +33,7 @@ var (
 		gql.Boolean:   client.FieldKind_BOOL,
 		gql.Int:       client.FieldKind_INT,
 		gql.Float:     client.FieldKind_FLOAT,
-		gql.DateTime:  client.FieldKind_DATE,
+		gql.DateTime:  client.FieldKind_DATETIME,
 		gql.String:    client.FieldKind_STRING,
 		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
 		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
@@ -55,7 +55,7 @@ var (
 		client.FieldKind_FLOAT:                 client.LWW_REGISTER,
 		client.FieldKind_FLOAT_ARRAY:           client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_FLOAT_ARRAY:  client.LWW_REGISTER,
-		client.FieldKind_DATE:                  client.LWW_REGISTER,
+		client.FieldKind_DATETIME:              client.LWW_REGISTER,
 		client.FieldKind_STRING:                client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
@@ -73,7 +73,7 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 		typeNotNullInt     string = "Int!"
 		typeFloat          string = "Float"
 		typeNotNullFloat   string = "Float!"
-		typeDate           string = "Date"
+		typeDateTime       string = "DateTime"
 		typeString         string = "String"
 		typeNotNullString  string = "String!"
 	)
@@ -89,8 +89,8 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 			return client.FieldKind_INT
 		case typeFloat:
 			return client.FieldKind_FLOAT
-		case typeDate:
-			return client.FieldKind_DATE
+		case typeDateTime:
+			return client.FieldKind_DATETIME
 		case typeString:
 			return client.FieldKind_STRING
 		}

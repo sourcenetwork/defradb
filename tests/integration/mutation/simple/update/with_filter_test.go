@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
 
 func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
@@ -120,7 +119,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		simpleTests.ExecuteTestCase(t, test)
+		ExecuteTestCase(t, test)
 	}
 }
 
@@ -164,7 +163,7 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	ExecuteTestCase(t, test)
 }
 
 func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
@@ -202,5 +201,5 @@ func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	ExecuteTestCase(t, test)
 }

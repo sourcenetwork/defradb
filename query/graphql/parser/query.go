@@ -13,6 +13,7 @@ package parser
 import (
 	"strconv"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -23,7 +24,7 @@ import (
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
 // Requires a non-nil doc, will error if given a nil doc.
-func ParseQuery(doc *ast.Document) (*request.Request, []error) {
+func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error) {
 	if doc == nil {
 		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
@@ -39,21 +40,21 @@ func ParseQuery(doc *ast.Document) (*request.Request, []error) {
 			switch node.Operation {
 			case "query":
 				// parse query operation definition.
-				qdef, err := parseQueryOperationDefinition(node)
+				qdef, err := parseQueryOperationDefinition(schema, node)
 				if err != nil {
 					return nil, err
 				}
 				r.Queries = append(r.Queries, qdef)
 			case "mutation":
 				// parse mutation operation definition.
-				mdef, err := parseMutationOperationDefinition(node)
+				mdef, err := parseMutationOperationDefinition(schema, node)
 				if err != nil {
 					return nil, []error{err}
 				}
 				r.Mutations = append(r.Mutations, mdef)
 			case "subscription":
 				// parse subscription operation definition.
-				sdef, err := parseSubscriptionOperationDefinition(node)
+				sdef, err := parseSubscriptionOperationDefinition(schema, node)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -86,7 +87,9 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
-func parseQueryOperationDefinition(def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
+func parseQueryOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
@@ -98,14 +101,14 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*request.Opera
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
-				parsed, err := parseCommitSelect(node)
+				parsed, err := parseCommitSelect(schema, schema.QueryType(), node)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
 			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				parsed, err := parseAggregate(node, i)
+				parsed, err := parseAggregate(schema, schema.QueryType(), node, i)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -123,7 +126,7 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*request.Opera
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(request.ObjectSelection, node, i)
+				parsed, err := parseSelect(schema, request.ObjectSelection, schema.QueryType(), node, i)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -149,7 +152,13 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*request.Opera
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*request.Select, error) {
+func parseSelect(
+	schema gql.Schema,
+	rootType request.SelectionType,
+	parent *gql.Object,
+	field *ast.Field,
+	index int,
+) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
 			Name:  field.Name.Value,
@@ -157,6 +166,8 @@ func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*
 		},
 		Root: rootType,
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, slct.Name)
 
 	// parse arguments
 	for _, argument := range field.Arguments {
@@ -166,7 +177,11 @@ func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*
 		// parse filter
 		if prop == request.FilterClause {
 			obj := astValue.(*ast.ObjectValue)
-			filter, err := NewFilter(obj)
+			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
+			if !ok {
+				return nil, errors.New("couldn't get argument type for filter")
+			}
+			filter, err := NewFilter(obj, filterType)
 			if err != nil {
 				return slct, err
 			}
@@ -231,8 +246,12 @@ func parseSelect(rootType request.SelectionType, field *ast.Field, index int) (*
 	}
 
 	// parse field selections
-	var err error
-	slct.Fields, err = parseSelectFields(slct.Root, field.SelectionSet)
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
+	}
+
+	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
 	}
@@ -247,14 +266,18 @@ func getFieldAlias(field *ast.Field) client.Option[string] {
 	return client.Some(field.Alias.Value)
 }
 
-func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]request.Selection, error) {
+func parseSelectFields(
+	schema gql.Schema,
+	root request.SelectionType,
+	parent *gql.Object,
+	fields *ast.SelectionSet) ([]request.Selection, error) {
 	selections := make([]request.Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
 			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				s, err := parseAggregate(node, i)
+				s, err := parseAggregate(schema, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -267,7 +290,8 @@ func parseSelectFields(root request.SelectionType, fields *ast.SelectionSet) ([]
 				case request.VersionFieldName:
 					subroot = request.CommitSelection
 				}
-				s, err := parseSelect(subroot, node, i)
+
+				s, err := parseSelect(schema, subroot, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -288,7 +312,7 @@ func parseField(field *ast.Field) *request.Field {
 	}
 }
 
-func parseAggregate(field *ast.Field, index int) (*request.Aggregate, error) {
+func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, index int) (*request.Aggregate, error) {
 	targets := make([]*request.AggregateTarget, len(field.Arguments))
 
 	for i, argument := range field.Arguments {
@@ -314,7 +338,24 @@ func parseAggregate(field *ast.Field, index int) (*request.Aggregate, error) {
 
 			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
 			if hasFilterArg {
-				filterValue, err := NewFilter(filterArg.Value.(*ast.ObjectValue))
+				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
+				argType, ok := getArgumentType(fieldDef, hostName)
+				if !ok {
+					return nil, errors.New("couldn't get argument type for filter")
+				}
+				argTypeObject, ok := argType.(*gql.InputObject)
+				if !ok {
+					return nil, errors.New("expected arg type to be object")
+				}
+				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
+				if !ok {
+					return nil, errors.New("couldn't get argument type for filter")
+				}
+				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
+				if !ok {
+					return nil, errors.New("couldn't get object value type for filter")
+				}
+				filterValue, err := NewFilter(filterObjVal, filterType)
 				if err != nil {
 					return nil, err
 				}
@@ -402,4 +443,38 @@ func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
 		}
 	}
 	return nil, false
+}
+
+func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) {
+	for _, arg := range field.Args {
+		if arg.Name() == name {
+			return arg.Type, true
+		}
+	}
+	return nil, false
+}
+
+func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, bool) {
+	for fname, ftype := range input.Fields() {
+		if fname == name {
+			return ftype.Type, true
+		}
+	}
+	return nil, false
+}
+
+// typeFromFieldDef will return the output gql.Object type from the given field.
+// The return type may be a gql.Object or a gql.List, if it is a List type, we
+// need to get the concrete "OfType".
+func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
+	var fieldObject *gql.Object
+	switch ftype := field.Type.(type) {
+	case *gql.Object:
+		fieldObject = ftype
+	case *gql.List:
+		fieldObject = ftype.OfType.(*gql.Object)
+	default:
+		return nil, errors.New("couldn't get field object from definition")
+	}
+	return fieldObject, nil
 }
