@@ -23,12 +23,12 @@ func TestKeyMutex(t *testing.T) {
 	km.lock("test")
 	assert.Equal(t, int32(1), atomic.LoadInt32(km.keys["test"].queue))
 	km.unlock("test")
-	assert.Equal(t, int32(0), atomic.LoadInt32(km.keys["test"].queue))
+	assert.Nil(t, km.keys["test"])
 
 	km.rlock("test")
 	km.rlock("test")
 	assert.Equal(t, int32(2), atomic.LoadInt32(km.keys["test"].queue))
 	km.runlock("test")
 	km.runlock("test")
-	assert.Equal(t, int32(0), atomic.LoadInt32(km.keys["test"].queue))
+	assert.Nil(t, km.keys["test"])
 }

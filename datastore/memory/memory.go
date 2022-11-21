@@ -42,7 +42,6 @@ func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
 }
 
 func (d *Datastore) Close() error {
-	d.km.close <- struct{}{}
 	return nil
 }
 

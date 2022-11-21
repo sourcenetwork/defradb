@@ -12,7 +12,6 @@ package memory
 
 import (
 	"sync"
-	"time"
 
 	"sync/atomic"
 )
@@ -20,7 +19,6 @@ import (
 type keyMutex struct {
 	querymu sync.RWMutex
 	keys    map[string]*lock
-	close   chan struct{}
 }
 
 type lock struct {
@@ -30,10 +28,8 @@ type lock struct {
 
 func newKeyMutex() *keyMutex {
 	km := &keyMutex{
-		keys:  make(map[string]*lock),
-		close: make(chan struct{}),
+		keys: make(map[string]*lock),
 	}
-	go km.clearLocks()
 	return km
 }
 
@@ -56,6 +52,9 @@ func (km *keyMutex) unlock(key string) {
 	km.keys[key].mu.Unlock()
 	atomic.AddInt32(km.keys[key].queue, -1)
 	km.querymu.Unlock()
+	if atomic.LoadInt32(km.keys[key].queue) == 0 {
+		km.keys[key] = nil
+	}
 }
 
 func (km *keyMutex) rlock(key string) {
@@ -76,19 +75,7 @@ func (km *keyMutex) runlock(key string) {
 	}
 	km.keys[key].mu.RUnlock()
 	atomic.AddInt32(km.keys[key].queue, -1)
-}
-
-func (km *keyMutex) clearLocks() {
-	for {
-		select {
-		case <-km.close:
-			return
-		case <-time.After(10 * time.Minute):
-			for k, v := range km.keys {
-				if atomic.LoadInt32(v.queue) == 0 {
-					km.keys[k] = nil
-				}
-			}
-		}
+	if atomic.LoadInt32(km.keys[key].queue) == 0 {
+		km.keys[key] = nil
 	}
 }
