@@ -61,8 +61,6 @@ func (b *basicBatch) Delete(ctx context.Context, key ds.Key) error {
 func (b *basicBatch) Commit(ctx context.Context) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.ds.txnmu.Lock()
-	defer b.ds.txnmu.Unlock()
 
 	for k, op := range b.ops {
 		if op.delete {

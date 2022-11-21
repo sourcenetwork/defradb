@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"sync"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -20,6 +21,7 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
+	mu       sync.RWMutex
 	ops      *btree.Map[string, op]
 	ds       *Datastore
 	readOnly bool
@@ -38,6 +40,9 @@ func newTransaction(d *Datastore, readOnly bool) ds.Txn {
 
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
 	if op, exists := t.ops.Get(key.String()); exists {
 		if op.delete {
 			return nil, ds.ErrNotFound
@@ -49,6 +54,9 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
 	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
 			return 0, ds.ErrNotFound
@@ -60,6 +68,9 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
 	if op, ok := t.ops.Get(key.String()); ok {
 		if op.delete {
 			return false, nil
@@ -71,6 +82,9 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 
 // Put implements ds.Put
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
@@ -81,6 +95,11 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	t.ds.km.querymu.RLock()
+	defer t.ds.km.querymu.RUnlock()
+
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
 	iter := t.ds.values.Iter()
@@ -126,6 +145,9 @@ func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
 
 // Delete implements ds.Delete
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
@@ -145,8 +167,9 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.ds.txnmu.Lock()
-	defer t.ds.txnmu.Unlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	iter := t.ops.Iter()
 	for iter.Next() {
 		if iter.Value().delete {
@@ -155,6 +178,8 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 			t.ds.values.Set(iter.Key(), iter.Value().value)
 		}
 	}
+
+	t.ops.Clear()
 
 	return nil
 }

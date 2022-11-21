@@ -12,7 +12,6 @@ package memory
 
 import (
 	"context"
-	"sync"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -21,7 +20,7 @@ import (
 
 // Datastore uses a btree for internal storage.
 type Datastore struct {
-	txnmu  sync.RWMutex
+	km     *keyMutex
 	values *btree.Map[string, []byte]
 }
 
@@ -32,6 +31,7 @@ var _ ds.TxnFeature = (*Datastore)(nil)
 // NewDatastore constructs an empty Datastore.
 func NewDatastore() (d *Datastore) {
 	return &Datastore{
+		km:     newKeyMutex(),
 		values: btree.NewMap[string, []byte](2),
 	}
 }
@@ -42,21 +42,24 @@ func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
 }
 
 func (d *Datastore) Close() error {
+	d.km.close <- struct{}{}
 	return nil
 }
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.lock(key.String())
+	defer d.km.unlock(key.String())
+
 	d.values.Delete(key.String())
 	return nil
 }
 
 // Get implements ds.Get
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.rlock(key.String())
+	defer d.km.runlock(key.String())
+
 	if val, exists := d.values.Get(key.String()); exists {
 		return val, nil
 	}
@@ -65,8 +68,9 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 
 // GetSize implements ds.GetSize
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.rlock(key.String())
+	defer d.km.runlock(key.String())
+
 	if val, exists := d.values.Get(key.String()); exists {
 		return len(val), nil
 	}
@@ -75,8 +79,9 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 
 // Has implements ds.Has
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.rlock(key.String())
+	defer d.km.runlock(key.String())
+
 	_, exists = d.values.Get(key.String())
 	return exists, nil
 }
@@ -88,16 +93,18 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 
 // Put implements ds.Put
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.lock(key.String())
+	defer d.km.unlock(key.String())
+
 	d.values.Set(key.String(), value)
 	return nil
 }
 
 // Query implements ds.Query
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	d.txnmu.RLock()
-	defer d.txnmu.RUnlock()
+	d.km.querymu.RLock()
+	defer d.km.querymu.RUnlock()
+
 	re := make([]dsq.Entry, 0, d.values.Len())
 	iter := d.values.Iter()
 	for iter.Next() {
