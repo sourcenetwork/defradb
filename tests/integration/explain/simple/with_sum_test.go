@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -19,6 +19,7 @@ import (
 func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type.",
+
 		Query: `query @explain {
 			author {
 				name
@@ -132,6 +133,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with a filter.",
+
 		Query: `query @explain {
 			author {
 				name
@@ -259,6 +261,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a simple sum query on an  inline array field (childFieldName is nil).",
+
 		Query: `query @explain {
 			book {
 				name
@@ -331,6 +334,7 @@ func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.
 func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
+
 		Query: `query @explain {
 			author {
 				name

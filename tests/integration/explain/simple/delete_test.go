@@ -8,16 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package delete
+package test_explain_simple
 
 import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
-
-type dataMap = map[string]any
 
 func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
@@ -26,17 +23,17 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Description: "Explain simple multi-key delete mutation with one key that exists.",
 
 			Query: `mutation @explain {
-								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
-									_key
-								}
-							}`,
+				delete_author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -48,19 +45,19 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 						"deleteNode": dataMap{
 							"filter": nil,
 							"ids": []string{
-								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
-												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+												"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+												"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 											},
 										},
 									},
@@ -78,23 +75,23 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Description: "Explain deletion of multiple documents that exist, when given multiple keys with alias.",
 
 			Query: `mutation @explain {
-								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
-									AliasKey: _key
-								}
-							}`,
+				delete_author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"]) {
+					AliasKey: _key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
 					`{
-						"name": "Shahzad",
+						"name": "Lone",
 						"age":  26,
-						"points": 48.48,
-						"verified": true
+						"verified": false
 					}`,
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "John",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -106,24 +103,24 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 						"deleteNode": dataMap{
 							"filter": nil,
 							"ids": []string{
-								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-								"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
-												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+												"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+												"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 											},
 											{
-												"end":   "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393f",
-												"start": "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+												"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+												"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 											},
 										},
 									},
@@ -141,23 +138,23 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Description: "Explain the deletion of multiple documents that exist, where an update has happened too.",
 
 			Query: `mutation @explain {
-								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"]) {
-									AliasKey: _key
-								}
-							}`,
+				delete_author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"]) {
+					AliasKey: _key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
 					`{
-						"name": "Shahzad",
+						"name": "Lone",
 						"age":  26,
-						"points": 48.48,
-						"verified": true
+						"verified": false
 					}`,
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "John",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -165,10 +162,9 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 
 			Updates: map[int]map[int][]string{
 				0: {
-					0: {
+					2: {
 						`{
-							"age":  27,
-							"points": 48.2,
+							"age":  28,
 							"verified": false
 						}`,
 					},
@@ -181,24 +177,24 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 						"deleteNode": dataMap{
 							"filter": nil,
 							"ids": []string{
-								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
-								"bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
+								"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 							},
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
-												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+												"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+												"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 											},
 											{
-												"end":   "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393f",
-												"start": "/1/bae-3a1a496e-24eb-5ae3-9c17-524c146a393e",
+												"end":   "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67g",
+												"start": "/3/bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 											},
 										},
 									},
@@ -216,17 +212,17 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 			Description: "Explain simple delete mutation with single id, where the doc exists.",
 
 			Query: `mutation @explain {
-								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
-									_key
-								}
-							}`,
+				delete_author(id: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.5,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -238,19 +234,19 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 						"deleteNode": dataMap{
 							"filter": nil,
 							"ids": []string{
-								"bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 							},
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-8ca944fd-260e-5a44-b88f-326d9faca811",
-												"start": "/1/bae-8ca944fd-260e-5a44-b88f-326d9faca810",
+												"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+												"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 											},
 										},
 									},
@@ -266,7 +262,7 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		simpleTests.ExecuteTestCase(t, test)
+		executeTestCase(t, test)
 	}
 }
 
@@ -277,17 +273,16 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Explain deletion using filter - One matching document, that exists.",
 
 			Query: `mutation @explain {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
-							_key
-						}
-					}`,
+				delete_author(filter: {name: {_eq: "Shahzad"}}) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
 					`{
 						"name": "Shahzad",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 				},
@@ -307,8 +302,8 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter": dataMap{
 											"name": dataMap{
 												"_eq": "Shahzad",
@@ -316,8 +311,8 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 										},
 										"spans": []dataMap{
 											{
-												"end":   "/2",
-												"start": "/1",
+												"end":   "/4",
+												"start": "/3",
 											},
 										},
 									},
@@ -335,46 +330,41 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Explain deletion using filter - Multiple matching documents that exist with alias.",
 
 			Query: `mutation @explain {
-								delete_user(filter: {
-									_and: [
-										{age: {_lt: 26}},
-										{verified: {_eq: true}},
-									]
-								}) {
-									DeletedKeyByFilter: _key
-								}
-							}`,
+				delete_author(filter: {
+					_and: [
+						{age: {_lt: 26}},
+						{verified: {_eq: true}},
+					]
+				}) {
+					DeletedKeyByFilter: _key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
 					`{
 						"name": "Shahzad",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  25,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  6,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  1,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
-						"name": "John",
+						"name": "Shahzad Lone",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 				},
@@ -403,8 +393,8 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter": dataMap{
 											"_and": []any{
 												dataMap{
@@ -421,8 +411,8 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 										},
 										"spans": []dataMap{
 											{
-												"end":   "/2",
-												"start": "/1",
+												"end":   "/4",
+												"start": "/3",
 											},
 										},
 									},
@@ -440,41 +430,36 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Explain deletion using filter - Match everything in this collection.",
 
 			Query: `mutation @explain {
-								delete_user(filter: {}) {
-									DeletedKeyByFilter: _key
-								}
-							}`,
+				delete_author(filter: {}) {
+					DeletedKeyByFilter: _key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
 					`{
 						"name": "Shahzad",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  25,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  6,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
 						"name": "Shahzad",
 						"age":  1,
-						"points": 48.48,
 						"verified": true
 					}`,
 					`{
-						"name": "John",
+						"name": "Shahzad Lone",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 				},
@@ -490,13 +475,13 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         dataMap{},
 										"spans": []dataMap{
 											{
-												"end":   "/2",
-												"start": "/1",
+												"end":   "/4",
+												"start": "/3",
 											},
 										},
 									},
@@ -512,7 +497,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		simpleTests.ExecuteTestCase(t, test)
+		executeTestCase(t, test)
 	}
 }
 
@@ -522,17 +507,17 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain deletion of one document using a list when it doesn't exist.",
 
 			Query: `mutation @explain {
-						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
-							_key
-						}
-					}`,
+				delete_author(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -550,13 +535,13 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507f",
-												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
+												"end":   "/3/bae-6a6482a8-24e1-5c73-a237-ca569e41507f",
+												"start": "/3/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
 											},
 										},
 									},
@@ -574,10 +559,11 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain a simple multi-key delete mutation while no documents exist.",
 
 			Query: `mutation @explain {
-								delete_user(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
-									_key
-								}
-							}`,
+				delete_author(ids: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
+					_key
+				}
+			}`,
+
 			Docs: map[int][]string{},
 
 			Results: []dataMap{
@@ -593,17 +579,17 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a06",
-												"start": "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
+												"end":   "/3/bae-028383cc-d6ba-5df7-959f-2bdce3536a06",
+												"start": "/3/bae-028383cc-d6ba-5df7-959f-2bdce3536a05",
 											},
 											{
-												"end":   "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a04",
-												"start": "/1/bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
+												"end":   "/3/bae-028383cc-d6ba-5df7-959f-2bdce3536a04",
+												"start": "/3/bae-028383cc-d6ba-5df7-959f-2bdce3536a03",
 											},
 										},
 									},
@@ -621,25 +607,25 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain a simple multi-key delete used with filter.",
 
 			Query: `mutation @explain {
-								delete_user(
-								    ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "test"],
-								    filter: {
-									    _and: [
-									    	{age: {_lt: 26}},
-									    	{verified: {_eq: true}},
-									    ]
-									}
-								) {
-									_key
-								}
-							}`,
+				delete_author(
+				    ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "test"],
+				    filter: {
+					    _and: [
+					    	{age: {_lt: 26}},
+					    	{verified: {_eq: true}},
+					    ]
+					}
+				) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "Shahzad",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -664,15 +650,15 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								},
 							},
 							"ids": []string{
-								"bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+								"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 								"test",
 							},
 							"selectTopNode": dataMap{
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter": dataMap{
 											"_and": []any{
 												dataMap{
@@ -689,12 +675,12 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 										},
 										"spans": []dataMap{
 											{
-												"end":   "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507e",
-												"start": "/1/bae-6a6482a8-24e1-5c73-a237-ca569e41507d",
+												"end":   "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9e",
+												"start": "/3/bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 											},
 											{
-												"end":   "/1/tesu",
-												"start": "/1/test",
+												"end":   "/3/tesu",
+												"start": "/3/test",
 											},
 										},
 									},
@@ -712,10 +698,10 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain no delete with filter: because the collection is empty.",
 
 			Query: `mutation @explain {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
-							_key
-						}
-					}`,
+				delete_author(filter: {name: {_eq: "Shahzad"}}) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{},
 
@@ -733,8 +719,8 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter": dataMap{
 											"name": dataMap{
 												"_eq": "Shahzad",
@@ -742,8 +728,8 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 										},
 										"spans": []dataMap{
 											{
-												"end":   "/2",
-												"start": "/1",
+												"end":   "/4",
+												"start": "/3",
 											},
 										},
 									},
@@ -761,17 +747,16 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain a simple multi-key delete mutation but no ids given.",
 
 			Query: `mutation @explain {
-								delete_user(ids: []) {
-									_key
-								}
-							}`,
+				delete_author(ids: []) {
+					_key
+				}
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
 					`{
 						"name": "Shahzad",
 						"age":  26,
-						"points": 48.48,
 						"verified": true
 					}`,
 				},
@@ -787,8 +772,8 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 								"selectNode": dataMap{
 									"filter": nil,
 									"scanNode": dataMap{
-										"collectionID":   "1",
-										"collectionName": "user",
+										"collectionID":   "3",
+										"collectionName": "author",
 										"filter":         nil,
 										"spans":          []dataMap{},
 									},
@@ -806,21 +791,21 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 			Description: "Explain deletion of multiple documents that exist without sub selection, should give error.",
 
 			Query: `mutation @explain {
-								delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d", "bae-3a1a496e-24eb-5ae3-9c17-524c146a393e"])
-							}`,
+				delete_author(ids: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d", "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"])
+			}`,
 
 			Docs: map[int][]string{
-				0: {
+				2: {
+					// bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f
 					`{
-						"name": "Shahzad",
+						"name": "Lone",
 						"age":  26,
-						"points": 48.48,
-						"verified": true
+						"verified": false
 					}`,
+					// "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
 					`{
-						"name": "John",
-						"age":  26,
-						"points": 48.48,
+						"name":     "Shahzad Lone",
+						"age":      27,
 						"verified": true
 					}`,
 				},
@@ -828,11 +813,11 @@ func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) 
 
 			Results: []dataMap{},
 
-			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
+			ExpectedError: "Field \"delete_author\" of type \"[author]\" must have a sub selection.",
 		},
 	}
 
 	for _, test := range tests {
-		simpleTests.ExecuteTestCase(t, test)
+		executeTestCase(t, test)
 	}
 }

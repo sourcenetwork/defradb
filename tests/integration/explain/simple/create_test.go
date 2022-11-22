@@ -8,28 +8,25 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package create
+package test_explain_simple
 
 import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/simple"
 )
-
-type dataMap = map[string]any
 
 func TestExplainMutationCreateSimple(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain simple create mutation.",
 
 		Query: `mutation @explain {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
-						_key
-						name
-						age
-					}
-				}`,
+			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
+				_key
+				name
+				age
+			}
+		}`,
 
 		Results: []dataMap{
 			{
@@ -37,16 +34,15 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 					"createNode": dataMap{
 						"data": dataMap{
 							"age":      float64(27),
-							"name":     "John",
-							"points":   42.1,
+							"name":     "Shahzad Lone",
 							"verified": true,
 						},
 						"selectTopNode": dataMap{
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "user",
+									"collectionID":   "3",
+									"collectionName": "author",
 									"filter":         nil,
 									"spans":          []dataMap{},
 								},
@@ -60,7 +56,7 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 		ExpectedError: "",
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }
 
 func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
@@ -68,17 +64,17 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 		Description: "Explain simple create mutation, where document already exists.",
 
 		Query: `mutation @explain {
-					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
-						_key
-						name
-						age
-					}
-				}`,
+			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
+				_key
+				name
+				age
+			}
+		}`,
 
 		Docs: map[int][]string{
-			0: {
+			2: {
 				`{
-					"name": "John",
+					"name": "Shahzad Lone",
 					"age": 27
 				}`,
 			},
@@ -90,14 +86,14 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 					"createNode": dataMap{
 						"data": dataMap{
 							"age":  float64(27),
-							"name": "John",
+							"name": "Shahzad Lone",
 						},
 						"selectTopNode": dataMap{
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
-									"collectionID":   "1",
-									"collectionName": "user",
+									"collectionID":   "3",
+									"collectionName": "author",
 									"filter":         nil,
 									"spans":          []dataMap{},
 								},
@@ -111,5 +107,5 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 		ExpectedError: "",
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	executeTestCase(t, test)
 }

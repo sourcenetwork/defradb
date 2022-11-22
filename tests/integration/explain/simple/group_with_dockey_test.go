@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -16,31 +16,38 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainSimpleGroupByOnParent(t *testing.T) {
+func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain a grouping on parent.",
+		Description: "Explain query with a dockey on parent groupBy.",
+
 		Query: `query @explain {
-					author (groupBy: [age]) {
-						age
-						_group {
-							name
-						}
-					}
-				}`,
+			author(
+				groupBy: [age],
+				dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
+			) {
+				age
+				_group {
+					name
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
+				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
 				`{
 					"name": "John Grisham",
-					"age": 65
+					"age": 12
 				}`,
 
+				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 				`{
 					"name": "Cornelia Funke",
-					"age": 62
+					"age": 20
 				}`,
 
+				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 				`{
 					"name": "John's Twin",
 					"age": 65
@@ -53,17 +60,17 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"groupNode": dataMap{
-							"groupByFields": []string{"age"},
 							"childSelects": []dataMap{
 								{
 									"collectionName": "author",
 									"docKeys":        nil,
+									"filter":         nil,
 									"groupBy":        nil,
 									"limit":          nil,
 									"orderBy":        nil,
-									"filter":         nil,
 								},
 							},
+							"groupByFields": []string{"age"},
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -72,8 +79,8 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 									"filter":         nil,
 									"spans": []dataMap{
 										{
-											"start": "/3",
-											"end":   "/4",
+											"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
+											"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
 										},
 									},
 								},
@@ -88,31 +95,42 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
+func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain a grouping by two fields.",
+		Description: "Explain query with a dockeys and filter on parent groupBy.",
+
 		Query: `query @explain {
-                     author (groupBy: [age, name]) {
-                         age
-                         _group {
-                             name
-                         }
-                     }
-                 }`,
+			author(
+				groupBy: [age],
+				filter: {age: {_eq: 20}},
+				dockeys: [
+					"bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
+					"bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
+				]
+			) {
+				age
+				_group {
+					name
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
+				// dockey: "bae-21a6ad4a-1cd8-5613-807c-a90c7c12f880"
 				`{
                      "name": "John Grisham",
-                     "age": 65
+                     "age": 12
                  }`,
 
+				// dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 				`{
                      "name": "Cornelia Funke",
-                     "age": 62
+                     "age": 20
                  }`,
 
+				// dockey: "bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed"
 				`{
                      "name": "John's Twin",
                      "age": 65
@@ -125,7 +143,6 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"groupNode": dataMap{
-							"groupByFields": []string{"age", "name"},
 							"childSelects": []dataMap{
 								{
 									"collectionName": "author",
@@ -136,16 +153,25 @@ func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
 									"filter":         nil,
 								},
 							},
+							"groupByFields": []string{"age"},
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
 									"collectionID":   "3",
 									"collectionName": "author",
-									"filter":         nil,
+									"filter": dataMap{
+										"age": dataMap{
+											"_eq": int(20),
+										},
+									},
 									"spans": []dataMap{
 										{
-											"start": "/3",
-											"end":   "/4",
+											"start": "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
+											"end":   "/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2255",
+										},
+										{
+											"start": "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed",
+											"end":   "/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeee",
 										},
 									},
 								},

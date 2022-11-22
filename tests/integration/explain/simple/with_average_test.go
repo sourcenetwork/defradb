@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -19,12 +19,13 @@ import (
 func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a simple query using average on array field.",
+
 		Query: `query @explain {
-					book {
-						name
-						_avg(chapterPages: {})
-					}
-				}`,
+			book {
+				name
+				_avg(chapterPages: {})
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// books
@@ -89,12 +90,13 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a average query on joined field.",
+
 		Query: `query @explain {
-					author {
-						name
-						_avg(books: {field: pages})
-					}
-				}`,
+			author {
+				name
+				_avg(books: {field: pages})
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// books
@@ -226,15 +228,16 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a average query on multiple joined fields with filter.",
+
 		Query: `query @explain {
-					author {
-						name
-						_avg(
-							books: {field: pages},
-							articles: {field: pages, filter: {pages: {_gt: 3}}}
-						)
-					}
-				}`,
+			author {
+				name
+				_avg(
+					books: {field: pages},
+					articles: {field: pages, filter: {pages: {_gt: 3}}}
+				)
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// articles
