@@ -32,22 +32,22 @@ func TestBatchOperations(t *testing.T) {
 	s := newLoadedDatastore()
 	b, err := s.Batch(ctx)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = b.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = b.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = b.Commit(ctx)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = s.Get(ctx, testKey1)
@@ -55,7 +55,7 @@ func TestBatchOperations(t *testing.T) {
 
 	resp, err := s.Get(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, testValue3, resp)
 }

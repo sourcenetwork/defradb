@@ -12,7 +12,9 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
 
 	ds "github.com/ipfs/go-datastore"
 )
@@ -62,11 +64,13 @@ func (b *basicBatch) Commit(ctx context.Context) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	v := atomic.AddUint64(b.ds.version, 1)
 	for k, op := range b.ops {
+		fmt.Println(b.ds.name, "catch commit", v, k)
 		if op.delete {
-			b.ds.values.Delete(k.String())
+			b.ds.values.Set(item{key: k.String(), version: v, isDeleted: true})
 		} else {
-			b.ds.values.Set(k.String(), op.value)
+			b.ds.values.Set(item{key: k.String(), version: v, val: op.value})
 		}
 	}
 

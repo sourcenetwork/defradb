@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -33,12 +34,12 @@ func TestTxnGetOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Get(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, testValue1, resp)
 }
@@ -48,17 +49,17 @@ func TestTxnGetOperationAfterPut(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Get(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, testValue3, resp)
 }
@@ -68,12 +69,12 @@ func TestTxnGetOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = tx.Get(ctx, testKey1)
@@ -85,7 +86,7 @@ func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
@@ -97,7 +98,7 @@ func TestTxnGetOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = tx.Get(ctx, testKey3)
@@ -109,17 +110,17 @@ func TestTxnDeleteAndCommitOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = tx.Get(ctx, testKey1)
@@ -131,12 +132,12 @@ func TestTxnGetSizeOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.GetSize(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, len(testValue1), resp)
 }
@@ -146,17 +147,17 @@ func TestTxnGetSizeOfterPutOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.GetSize(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, len(testValue1), resp)
 }
@@ -166,12 +167,12 @@ func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = tx.GetSize(ctx, testKey1)
@@ -183,7 +184,7 @@ func TestTxnGetSizeOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = tx.GetSize(ctx, testKey3)
@@ -195,12 +196,12 @@ func TestTxnHasOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Has(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, true, resp)
 }
@@ -210,12 +211,12 @@ func TestTxnHasOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Has(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, false, resp)
 }
@@ -225,17 +226,17 @@ func TestTxnHasOfterPutOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Has(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, true, resp)
 }
@@ -245,17 +246,17 @@ func TestTxnHasOperationAfterDelete(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := tx.Has(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, false, resp)
 }
@@ -265,22 +266,22 @@ func TestTxnPutAndCommitOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := s.Has(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, true, resp)
 }
@@ -290,7 +291,7 @@ func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
@@ -305,7 +306,7 @@ func TestTxnPutOperationReadOnly(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
@@ -317,32 +318,37 @@ func TestTxnQueryOperation(t *testing.T) {
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = s.Put(ctx, testKey4, testValue4)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Put(ctx, testKey2, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = tx.Delete(ctx, testKey5)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
+	}
+
+	err = tx.Put(ctx, testKey6, testValue6)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	results, err := tx.Query(ctx, dsq.Query{
@@ -350,7 +356,7 @@ func TestTxnQueryOperation(t *testing.T) {
 		Offset: 1,
 	})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	result, _ := results.NextSync()
@@ -359,22 +365,104 @@ func TestTxnQueryOperation(t *testing.T) {
 	assert.Equal(t, testValue3, result.Entry.Value)
 }
 
+func TestTxnQueryOperationWithAddedItems(t *testing.T) {
+	s := newLoadedDatastore()
+
+	ctx := context.Background()
+
+	err := s.Put(ctx, testKey3, testValue3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Put(ctx, testKey4, testValue4)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Put(ctx, testKey5, testValue5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Delete(ctx, testKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err := s.NewTransaction(ctx, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx.Put(ctx, testKey6, testValue6)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx.Put(ctx, testKey2, testValue3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx.Delete(ctx, testKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	results, err := tx.Query(ctx, dsq.Query{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := results.Rest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedResults := []dsq.Entry{
+		{
+			Key:   testKey2.String(),
+			Value: testValue3,
+			Size:  len(testValue3),
+		},
+		{
+			Key:   testKey3.String(),
+			Value: testValue3,
+			Size:  len(testValue3),
+		},
+		{
+			Key:   testKey4.String(),
+			Value: testValue4,
+			Size:  len(testValue4),
+		},
+		{
+			Key:   testKey5.String(),
+			Value: testValue5,
+			Size:  len(testValue5),
+		},
+		{
+			Key:   testKey6.String(),
+			Value: testValue6,
+			Size:  len(testValue6),
+		},
+	}
+	assert.Equal(t, expectedResults, entries)
+}
+
 func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore()
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = s.Put(ctx, testKey4, testValue4)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	results, err := tx.Query(ctx, dsq.Query{})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, _ = results.NextSync()
@@ -388,15 +476,17 @@ func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 func TestTxnDiscardOperationNotFound(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore()
+	v := atomic.AddUint64(s.version, 1)
 	tx := &basicTxn{
-		ops:      btree.NewMap[string, op](2),
+		ops:      btree.NewBTreeG(byKeys),
 		ds:       s,
 		readOnly: false,
+		version:  &v,
 	}
 
 	err := tx.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	assert.Equal(t, 1, tx.ops.Len())

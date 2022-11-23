@@ -12,6 +12,9 @@ package memory
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -32,13 +35,27 @@ var (
 	testKey4   = ds.NewKey("testKey4")
 	testValue4 = []byte("this is a test value 4")
 
-	testKey5 = ds.NewKey("testKey5")
+	testKey5   = ds.NewKey("testKey5")
+	testValue5 = []byte("this is a test value 5")
+
+	testKey6   = ds.NewKey("testKey6")
+	testValue6 = []byte("this is a test value 6")
 )
 
 func newLoadedDatastore() *Datastore {
 	s := NewDatastore()
-	s.values.Set(testKey1.String(), testValue1)
-	s.values.Set(testKey2.String(), testValue2)
+	v := atomic.AddUint64(s.version, 1)
+	s.values.Set(item{
+		key:     testKey1.String(),
+		val:     testValue1,
+		version: v,
+	})
+	v++
+	s.values.Set(item{
+		key:     testKey2.String(),
+		val:     testValue2,
+		version: v,
+	})
 	return s
 }
 
@@ -54,7 +71,7 @@ func TestGetOperation(t *testing.T) {
 
 	resp, err := s.Get(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, testValue1, resp)
 }
@@ -75,7 +92,7 @@ func TestDeleteOperation(t *testing.T) {
 
 	err := s.Delete(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	_, err = s.Get(ctx, testKey1)
@@ -89,7 +106,7 @@ func TestGetSizeOperation(t *testing.T) {
 
 	resp, err := s.GetSize(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, len(testValue1), resp)
 }
@@ -110,7 +127,7 @@ func TestHasOperation(t *testing.T) {
 
 	resp, err := s.Has(ctx, testKey1)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, true, resp)
 }
@@ -122,7 +139,7 @@ func TestHasOperationNotFound(t *testing.T) {
 
 	resp, err := s.Has(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, false, resp)
 }
@@ -134,12 +151,12 @@ func TestPutOperation(t *testing.T) {
 
 	err := s.Put(ctx, testKey3, testValue3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	resp, err := s.Get(ctx, testKey3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, testValue3, resp)
 }
@@ -154,13 +171,101 @@ func TestQueryOperation(t *testing.T) {
 		Offset: 1,
 	})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	result, _ := results.NextSync()
 
 	assert.Equal(t, testKey2.String(), result.Entry.Key)
 	assert.Equal(t, testValue2, result.Entry.Value)
+}
+
+func TestQueryOperationWithAddedItems(t *testing.T) {
+	s := newLoadedDatastore()
+
+	ctx := context.Background()
+
+	err := s.Put(ctx, testKey3, testValue3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Put(ctx, testKey4, testValue4)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Put(ctx, testKey5, testValue5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Delete(ctx, testKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Put(ctx, testKey2, testValue2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Delete(ctx, testKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	results, err := s.Query(ctx, dsq.Query{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := results.Rest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedResults := []dsq.Entry{
+		{
+			Key:   testKey2.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+		{
+			Key:   testKey3.String(),
+			Value: testValue3,
+			Size:  len(testValue3),
+		},
+		{
+			Key:   testKey4.String(),
+			Value: testValue4,
+			Size:  len(testValue4),
+		},
+		{
+			Key:   testKey5.String(),
+			Value: testValue5,
+			Size:  len(testValue5),
+		},
+	}
+	assert.Equal(t, expectedResults, entries)
+}
+
+func TestConcurrentWrite(t *testing.T) {
+	s := newLoadedDatastore()
+
+	ctx := context.Background()
+	wg := &sync.WaitGroup{}
+
+	for i := 1; i <= 1000; i++ {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, num int) {
+			_ = s.Put(ctx, ds.NewKey(fmt.Sprintf("testKey%d", num)), []byte(fmt.Sprintf("this is a test value %d", num)))
+			wg.Done()
+		}(wg, i)
+	}
+	wg.Wait()
+	resp, err := s.Get(ctx, ds.NewKey("testKey3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []byte("this is a test value 3"), resp)
 }
 
 func TestCloseOperationNotFound(t *testing.T) {

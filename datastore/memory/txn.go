@@ -12,7 +12,7 @@ package memory
 
 import (
 	"context"
-	"sync"
+	"sync/atomic"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -21,9 +21,9 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	mu       sync.RWMutex
-	ops      *btree.Map[string, op]
+	ops      *btree.BTreeG[item]
 	ds       *Datastore
+	version  *uint64
 	readOnly bool
 }
 
@@ -31,101 +31,147 @@ var _ ds.Txn = (*basicTxn)(nil)
 
 // newTransaction returns a ds.Txn datastore
 func newTransaction(d *Datastore, readOnly bool) ds.Txn {
+	v := atomic.AddUint64(d.version, 1)
 	return &basicTxn{
-		ops:      btree.NewMap[string, op](2),
+		ops:      btree.NewBTreeG(byKeys),
 		ds:       d,
 		readOnly: readOnly,
+		version:  &v,
 	}
 }
 
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	if op, exists := t.ops.Get(key.String()); exists {
-		if op.delete {
-			return nil, ds.ErrNotFound
+	result := item{}
+	v := atomic.LoadUint64(t.version)
+	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
+		if key.String() == item.key {
+			result = item
 		}
-		return op.value, nil
+		return false
+	})
+	if result.key == "" {
+		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
+			if key.String() == item.key {
+				result = item
+			}
+			return false
+		})
 	}
-	return t.ds.Get(ctx, key)
+	if result.key == "" || result.isDeleted {
+		return nil, ds.ErrNotFound
+	}
+	return result.val, nil
+
 }
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	if op, ok := t.ops.Get(key.String()); ok {
-		if op.delete {
-			return 0, ds.ErrNotFound
+	result := item{}
+	v := atomic.LoadUint64(t.version)
+	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
+		if key.String() == item.key {
+			result = item
 		}
-		return len(op.value), nil
+		return false
+	})
+	if result.key == "" {
+		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
+			if key.String() == item.key {
+				result = item
+			}
+			return false
+		})
 	}
-	return t.ds.GetSize(ctx, key)
+	if result.key == "" || result.isDeleted {
+		return 0, ds.ErrNotFound
+	}
+	return len(result.val), nil
 }
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	if op, ok := t.ops.Get(key.String()); ok {
-		if op.delete {
-			return false, nil
+	result := item{}
+	v := atomic.LoadUint64(t.version)
+	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
+		if key.String() == item.key {
+			result = item
 		}
-		return true, nil
+		return false
+	})
+	if result.key == "" {
+		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
+			if key.String() == item.key {
+				result = item
+			}
+			return false
+		})
 	}
-	return t.ds.Has(ctx, key)
+	if result.key == "" || result.isDeleted {
+		return false, nil
+	}
+	return true, nil
 }
 
 // Put implements ds.Put
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
+	t.ops.Set(item{key: key.String(), version: atomic.LoadUint64(t.version), val: value})
 
-	t.ops.Set(key.String(), op{value: value})
 	return nil
 }
 
 // Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	t.ds.km.querymu.RLock()
-	defer t.ds.km.querymu.RUnlock()
-
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
 	iter := t.ds.values.Iter()
 	iterOps := t.ops.Iter()
-	iterOpsHasMore := iterOps.Next()
+	iterOpsHasValue := iterOps.Next()
 	// iterate over the underlying store and ensure that ops with keys smaller than or equal to
 	// the key of the underlying store are added with priority.
 	for iter.Next() {
-		for iterOpsHasMore && iterOps.Key() <= iter.Key() {
-			if !iterOps.Value().delete {
-				re = append(re, setEntry(iterOps.Key(), iterOps.Value().value, q))
+		// fast forward to last inserted version
+		item := iter.Item()
+		for iter.Next() {
+			if item.key == iter.Item().key {
+				item = iter.Item()
+				continue
 			}
-			iterOpsHasMore = iterOps.Next()
-			iter.Next()
+			iter.Prev()
+			break
 		}
 
-		re = append(re, setEntry(iter.Key(), iter.Value(), q))
+		// handle all ops tha come before the current item's key or equal to the current item's key
+		for iterOpsHasValue && iterOps.Item().key <= item.key {
+			if iterOps.Item().key == item.key {
+				item = iterOps.Item()
+			} else if !iterOps.Item().isDeleted {
+				re = append(re, setEntry(iterOps.Item().key, iterOps.Item().val, q))
+			}
+			iterOpsHasValue = iterOps.Next()
+		}
+
+		if item.isDeleted {
+			continue
+		}
+
+		re = append(re, setEntry(item.key, item.val, q))
 	}
+
+	iter.Release()
 
 	// add the remaining ops
-	for iterOpsHasMore {
-		if !iterOps.Value().delete {
-			re = append(re, setEntry(iterOps.Key(), iterOps.Value().value, q))
+	for iterOpsHasValue {
+		if !iterOps.Item().isDeleted {
+			re = append(re, setEntry(iterOps.Item().key, iterOps.Item().val, q))
 		}
-		iterOpsHasMore = iterOps.Next()
+		iterOpsHasValue = iterOps.Next()
 	}
+
+	iterOps.Release()
 
 	r := dsq.ResultsWithEntries(q, re)
 	r = dsq.NaiveQueryApply(q, r)
@@ -145,20 +191,18 @@ func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
 
 // Delete implements ds.Delete
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
 
-	t.ops.Set(key.String(), op{delete: true})
+	t.ops.Set(item{key: key.String(), version: atomic.LoadUint64(t.version), isDeleted: true})
 	return nil
 }
 
 // Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
 	t.ops.Clear()
+	atomic.StoreUint64(t.version, atomic.AddUint64(t.ds.version, 1))
 }
 
 // Commit saves the operations to the underlying datastore
@@ -167,19 +211,20 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	iter := t.ops.Iter()
 	for iter.Next() {
-		if iter.Value().delete {
-			t.ds.values.Delete(iter.Key())
+		if iter.Item().isDeleted {
+			t.ds.values.Set(iter.Item())
 		} else {
-			t.ds.values.Set(iter.Key(), iter.Value().value)
+			t.ds.values.Set(iter.Item())
 		}
 	}
 
+	iter.Release()
+
 	t.ops.Clear()
+
+	atomic.StoreUint64(t.version, atomic.AddUint64(t.ds.version, 1))
 
 	return nil
 }
