@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -400,7 +401,7 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", client.EmptyUpdateChannel, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", events.EmptyUpdateChannel, ctype, key)
 		if err != nil {
 			return err
 		}

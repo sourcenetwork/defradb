@@ -18,8 +18,8 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -28,36 +28,39 @@ import (
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (client.Option[request.Filter], error) {
+func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (immutable.Option[request.Filter], error) {
 	conditions, err := ParseConditions(stmt, inputType)
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutable.None[request.Filter](), err
 	}
-
-	return client.Some(request.Filter{
+	return immutable.Some(request.Filter{
 		Conditions: conditions,
 	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(schema gql.Schema, collectionType string, body string) (client.Option[request.Filter], error) {
+func NewFilterFromString(
+	schema gql.Schema,
+	collectionType string,
+	body string,
+) (immutable.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutable.None[request.Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return client.None[request.Filter](), err
+		return immutable.None[request.Filter](), err
 	}
 
 	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
 	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
 	if !ok {
-		return client.None[request.Filter](), errors.New("couldn't find filter argument type")
+		return immutable.None[request.Filter](), errors.New("couldn't find filter argument type")
 	}
 	return NewFilter(obj, filterType)
 }

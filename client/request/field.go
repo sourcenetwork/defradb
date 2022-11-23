@@ -10,10 +10,10 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/immutable"
 
 // Field implements Selection
 type Field struct {
 	Name  string
-	Alias client.Option[string]
+	Alias immutable.Option[string]
 }

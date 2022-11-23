@@ -10,7 +10,11 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/client"
+import (
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
+)
 
 type SelectionType int
 
@@ -26,17 +30,17 @@ const (
 type Select struct {
 	Field
 
-	DocKeys client.Option[[]string]
-	CID     client.Option[string]
+	DocKeys immutable.Option[[]string]
+	CID     immutable.Option[string]
 
 	// Root is the top level query parsed type
 	Root SelectionType
 
-	Limit   client.Option[uint64]
-	Offset  client.Option[uint64]
-	OrderBy client.Option[OrderBy]
-	GroupBy client.Option[GroupBy]
-	Filter  client.Option[Filter]
+	Limit   immutable.Option[uint64]
+	Offset  immutable.Option[uint64]
+	OrderBy immutable.Option[OrderBy]
+	GroupBy immutable.Option[GroupBy]
+	Filter  immutable.Option[Filter]
 
 	Fields []Selection
 }

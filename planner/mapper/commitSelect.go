@@ -10,7 +10,7 @@
 
 package mapper
 
-import "github.com/sourcenetwork/defradb/client"
+import "github.com/sourcenetwork/immutable"
 
 // CommitSelect represents a commit request from a consumer.
 //
@@ -20,16 +20,16 @@ type CommitSelect struct {
 	Select
 
 	// The key of the target document for which to get commits for.
-	DocKey client.Option[string]
+	DocKey immutable.Option[string]
 
 	// The field for which commits have been requested.
-	FieldName client.Option[string]
+	FieldName immutable.Option[string]
 
 	// The maximum depth to yield results for.
-	Depth client.Option[uint64]
+	Depth immutable.Option[uint64]
 
 	// The parent Cid for which commit information has been requested.
-	Cid client.Option[string]
+	Cid immutable.Option[string]
 }
 
 func (s *CommitSelect) CloneTo(index int) Requestable {

@@ -36,7 +36,7 @@ type DB interface {
 	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
 	Close(context.Context)
 
-	Events() Events
+	Events() events.Events
 
 	PrintDump(ctx context.Context) error
 }
@@ -48,5 +48,5 @@ type GQLResult struct {
 
 type QueryResult struct {
 	GQL GQLResult
-	Pub *events.Publisher[UpdateEvent]
+	Pub *events.Publisher[events.Update]
 }

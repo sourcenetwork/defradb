@@ -14,7 +14,8 @@ Package core provides commonly shared interfaces and building blocks.
 package core
 
 import (
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
@@ -86,7 +87,7 @@ type mappingTypeInfo struct {
 
 type DocumentMapping struct {
 	// The type information for the object, if provided.
-	typeInfo client.Option[mappingTypeInfo]
+	typeInfo immutable.Option[mappingTypeInfo]
 
 	// The set of fields that should be rendered.
 	//
@@ -230,7 +231,7 @@ func (mapping *DocumentMapping) Add(index int, name string) {
 func (mapping *DocumentMapping) SetTypeName(typeName string) {
 	index := mapping.GetNextIndex()
 	mapping.Add(index, request.TypeNameFieldName)
-	mapping.typeInfo = client.Some(mappingTypeInfo{
+	mapping.typeInfo = immutable.Some(mappingTypeInfo{
 		Index: index,
 		Name:  typeName,
 	})

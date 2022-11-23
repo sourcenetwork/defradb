@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
@@ -139,11 +140,11 @@ func (e encProperty) Decode() (client.CType, any, error) {
 	return ctype, val, nil
 }
 
-func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
-	resultArray := make([]client.Option[T], len(items))
+func convertNillableArray[T any](items []any) ([]immutable.Option[T], error) {
+	resultArray := make([]immutable.Option[T], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[T]()
+			resultArray[i] = immutable.None[T]()
 			continue
 		}
 		value, ok := untypedValue.(T)
@@ -155,7 +156,7 @@ func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
 				*new(T),
 			))
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutable.Some(value)
 	}
 	return resultArray, nil
 }
@@ -163,18 +164,18 @@ func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
 func convertNillableArrayWithConverter[TOut any](
 	items []any,
 	converter func(in any) (TOut, error),
-) ([]client.Option[TOut], error) {
-	resultArray := make([]client.Option[TOut], len(items))
+) ([]immutable.Option[TOut], error) {
+	resultArray := make([]immutable.Option[TOut], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[TOut]()
+			resultArray[i] = immutable.None[TOut]()
 			continue
 		}
 		value, err := converter(untypedValue)
 		if err != nil {
 			return nil, err
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutable.Some(value)
 	}
 	return resultArray, nil
 }

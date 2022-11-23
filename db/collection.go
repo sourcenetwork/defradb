@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
@@ -663,7 +664,7 @@ func (c *collection) save(
 		txn.OnSuccess(
 			func() {
 				c.db.events.Updates.Value().Publish(
-					client.UpdateEvent{
+					events.Update{
 						DocKey:   doc.Key().String(),
 						Cid:      headNode.Cid(),
 						SchemaID: c.schemaID,
