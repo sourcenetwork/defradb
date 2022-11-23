@@ -19,16 +19,15 @@ import (
 	"sync"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/immutables"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 	"github.com/sourcenetwork/defradb/query/graphql"
@@ -75,7 +74,7 @@ const updateEventBufferSize = 100
 func WithUpdateEvents() Option {
 	return func(db *db) {
 		db.events = events.Events{
-			Updates: immutables.Some(events.New[events.Update](0, updateEventBufferSize)),
+			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
 		}
 	}
 }
@@ -197,7 +196,7 @@ func (db *db) Close(ctx context.Context) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := query.Query{
+	q := dsq.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsq.Order{dsq.OrderByKey{}},

@@ -13,7 +13,8 @@ package inline_array
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/immutables"
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -76,7 +77,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
+						"Name": "John", 
 						"LikedIndexes": [true, true, false, true]
 					}`,
 				},
@@ -115,11 +116,11 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"IndexLikesDislikes": []immutables.Option[bool]{
-					immutables.Some(true),
-					immutables.Some(true),
-					immutables.Some(false),
-					immutables.None[bool](),
+				"IndexLikesDislikes": []immutable.Option[bool]{
+					immutable.Some(true),
+					immutable.Some(true),
+					immutable.Some(false),
+					immutable.None[bool](),
 				},
 			},
 		},
@@ -294,12 +295,12 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"TestScores": []immutables.Option[int64]{
-					immutables.Some[int64](-1),
-					immutables.None[int64](),
-					immutables.Some[int64](-1),
-					immutables.Some[int64](2),
-					immutables.Some[int64](0),
+				"TestScores": []immutable.Option[int64]{
+					immutable.Some[int64](-1),
+					immutable.None[int64](),
+					immutable.Some[int64](-1),
+					immutable.Some[int64](2),
+					immutable.Some[int64](0),
 				},
 			},
 		},
@@ -406,11 +407,11 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"PageRatings": []immutables.Option[float64]{
-					immutables.Some(3.1425),
-					immutables.None[float64](),
-					immutables.Some(-0.00000000001),
-					immutables.Some[float64](10),
+				"PageRatings": []immutable.Option[float64]{
+					immutable.Some(3.1425),
+					immutable.None[float64](),
+					immutable.Some(-0.00000000001),
+					immutable.Some[float64](10),
 				},
 			},
 		},
@@ -517,12 +518,12 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"PageHeaders": []immutables.Option[string]{
-					immutables.Some(""),
-					immutables.Some("the previous"),
-					immutables.Some("the first"),
-					immutables.Some("empty string"),
-					immutables.None[string](),
+				"PageHeaders": []immutable.Option[string]{
+					immutable.Some(""),
+					immutable.Some("the previous"),
+					immutable.Some("the first"),
+					immutable.Some("empty string"),
+					immutable.None[string](),
 				},
 			},
 		},

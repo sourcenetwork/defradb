@@ -13,6 +13,8 @@ package core
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -40,7 +42,7 @@ type Parser interface {
 	Parse(request string) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
-	NewFilterFromString(collectionType string, body string) (client.Option[request.Filter], error)
+	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
 	// Adds the given schema to this parser's model.
 	AddSchema(ctx context.Context, schema string) error

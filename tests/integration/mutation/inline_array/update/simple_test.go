@@ -13,7 +13,8 @@ package update
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/immutables"
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	inlineArray "github.com/sourcenetwork/defradb/tests/integration/mutation/inline_array"
 )
@@ -162,12 +163,12 @@ func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"IndexLikesDislikes": []immutables.Option[bool]{
-					immutables.Some(true),
-					immutables.Some(true),
-					immutables.Some(false),
-					immutables.Some(true),
-					immutables.None[bool](),
+				"IndexLikesDislikes": []immutable.Option[bool]{
+					immutable.Some(true),
+					immutable.Some(true),
+					immutable.Some(false),
+					immutable.Some(true),
+					immutable.None[bool](),
 				},
 			},
 		},
@@ -343,12 +344,12 @@ func TestMutationInlineArrayWithNillableInts(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"TestScores": []immutables.Option[int64]{
-					immutables.None[int64](),
-					immutables.Some[int64](2),
-					immutables.Some[int64](3),
-					immutables.None[int64](),
-					immutables.Some[int64](8),
+				"TestScores": []immutable.Option[int64]{
+					immutable.None[int64](),
+					immutable.Some[int64](2),
+					immutable.Some[int64](3),
+					immutable.None[int64](),
+					immutable.Some[int64](8),
 				},
 			},
 		},
@@ -501,11 +502,11 @@ func TestMutationInlineArrayWithNillableFloats(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"PageRatings": []immutables.Option[float64]{
-					immutables.Some(3.1425),
-					immutables.Some(-0.00000000001),
-					immutables.None[float64](),
-					immutables.Some[float64](10),
+				"PageRatings": []immutable.Option[float64]{
+					immutable.Some(3.1425),
+					immutable.Some(-0.00000000001),
+					immutable.None[float64](),
+					immutable.Some[float64](10),
 				},
 			},
 		},
@@ -665,13 +666,13 @@ func TestMutationInlineArrayWithNillableStrings(t *testing.T) {
 		Results: []map[string]any{
 			{
 				"Name": "John",
-				"PageHeaders": []immutables.Option[string]{
-					immutables.Some(""),
-					immutables.Some("the previous"),
-					immutables.None[string](),
-					immutables.Some("empty string"),
-					immutables.Some("blank string"),
-					immutables.Some("hitchi"),
+				"PageHeaders": []immutable.Option[string]{
+					immutable.Some(""),
+					immutable.Some("the previous"),
+					immutable.None[string](),
+					immutable.Some("empty string"),
+					immutable.Some("blank string"),
+					immutable.Some("hitchi"),
 				},
 			},
 		},

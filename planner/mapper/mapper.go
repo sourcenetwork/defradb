@@ -16,14 +16,15 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/immutable/enumerable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/immutables"
-	"github.com/sourcenetwork/defradb/immutables/enumerable"
 )
 
 // ToSelect converts the given [parser.Select] into a [Select].
@@ -108,7 +109,7 @@ func toSelect(
 func resolveOrderDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	descName string,
-	source immutables.Option[request.OrderBy],
+	source immutable.Option[request.OrderBy],
 	mapping *core.DocumentMapping,
 	existingFields *[]Requestable,
 ) error {
@@ -629,7 +630,7 @@ func getTopLevelInfo(
 func resolveFilterDependencies(
 	descriptionsRepo *DescriptionsRepo,
 	parentCollectionName string,
-	source immutables.Option[request.Filter],
+	source immutable.Option[request.Filter],
 	mapping *core.DocumentMapping,
 	existingFields []Requestable,
 ) ([]Requestable, error) {
@@ -832,7 +833,7 @@ func toField(index int, parsed *request.Select) Field {
 // ToFilter converts the given `source` request filter to a Filter using the given mapping.
 //
 // Any requestables identified by name will be converted to being identified by index instead.
-func ToFilter(source immutables.Option[request.Filter], mapping *core.DocumentMapping) *Filter {
+func ToFilter(source immutable.Option[request.Filter], mapping *core.DocumentMapping) *Filter {
 	if !source.HasValue() {
 		return nil
 	}
@@ -918,7 +919,7 @@ func toFilterMap(
 	}
 }
 
-func toLimit(limit immutables.Option[uint64], offset immutables.Option[uint64]) *Limit {
+func toLimit(limit immutable.Option[uint64], offset immutable.Option[uint64]) *Limit {
 	var limitValue uint64
 	var offsetValue uint64
 	if !limit.HasValue() && !offset.HasValue() {
@@ -939,7 +940,7 @@ func toLimit(limit immutables.Option[uint64], offset immutables.Option[uint64]) 
 	}
 }
 
-func toGroupBy(source immutables.Option[request.GroupBy], mapping *core.DocumentMapping) *GroupBy {
+func toGroupBy(source immutable.Option[request.GroupBy], mapping *core.DocumentMapping) *GroupBy {
 	if !source.HasValue() {
 		return nil
 	}
@@ -963,7 +964,7 @@ func toGroupBy(source immutables.Option[request.GroupBy], mapping *core.Document
 	}
 }
 
-func toOrderBy(source immutables.Option[request.OrderBy], mapping *core.DocumentMapping) *OrderBy {
+func toOrderBy(source immutable.Option[request.OrderBy], mapping *core.DocumentMapping) *OrderBy {
 	if !source.HasValue() {
 		return nil
 	}
@@ -1158,14 +1159,14 @@ type aggregateRequestTarget struct {
 	childExternalName string
 
 	// The aggregate filter specified by the consumer for this target. Optional.
-	filter immutables.Option[request.Filter]
+	filter immutable.Option[request.Filter]
 
 	// The aggregate limit-offset specified by the consumer for this target. Optional.
 	limit *Limit
 
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
-	order immutables.Option[request.OrderBy]
+	order immutable.Option[request.OrderBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -1274,7 +1275,7 @@ func tryGetTarget(
 // to the given Select.
 func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	if !field.filter.HasValue() || field.filter.Value().Conditions == nil {
-		field.filter = immutables.Some(
+		field.filter = immutable.Some(
 			request.Filter{
 				Conditions: map[string]any{},
 			},

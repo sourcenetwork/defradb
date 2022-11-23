@@ -10,7 +10,7 @@
 
 package request
 
-import "github.com/sourcenetwork/defradb/immutables"
+import immutables "github.com/sourcenetwork/immutable"
 
 type Aggregate struct {
 	Field

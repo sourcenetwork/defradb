@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	cbor "github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -23,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-	"github.com/sourcenetwork/defradb/immutables"
 	"github.com/sourcenetwork/defradb/planner"
 )
 
@@ -594,7 +594,7 @@ func (c *collection) makeSelectionQuery(
 	txn datastore.Txn,
 	filter any,
 ) (planner.Query, error) {
-	var f immutables.Option[request.Filter]
+	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
 	case string:
@@ -606,7 +606,7 @@ func (c *collection) makeSelectionQuery(
 		if err != nil {
 			return nil, err
 		}
-	case immutables.Option[request.Filter]:
+	case immutable.Option[request.Filter]:
 		f = fval
 	default:
 		return nil, errors.New("invalid filter")
@@ -631,7 +631,7 @@ func (c *collection) makeSelectionQuery(
 	})
 }
 
-func (c *collection) makeSelectLocal(filter immutables.Option[request.Filter]) (*request.Select, error) {
+func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
 			Name: c.Name(),

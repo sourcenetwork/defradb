@@ -13,13 +13,12 @@ package events
 import (
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-
-	"github.com/sourcenetwork/defradb/immutables"
+	"github.com/sourcenetwork/immutable"
 )
 
-type UpdateChannel = immutables.Option[Channel[Update]]
+type UpdateChannel = immutable.Option[Channel[Update]]
 
-var EmptyUpdateChannel = immutables.None[Channel[Update]]()
+var EmptyUpdateChannel = immutable.None[Channel[Update]]()
 
 // UpdateEvent represents a new DAG node added to the
 // append-only MerkleCRDT Clock graph of a

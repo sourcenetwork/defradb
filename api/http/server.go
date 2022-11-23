@@ -19,11 +19,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/immutables"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -56,7 +56,7 @@ type serverOptions struct {
 	// ID of the server node.
 	peerID string
 	// when the value is present, the server will run with tls
-	tls immutables.Option[tlsOptions]
+	tls immutable.Option[tlsOptions]
 	// root directory for the node config.
 	rootDir string
 }
@@ -133,7 +133,7 @@ func WithAddress(addr string) func(*Server) {
 			if ip == nil {
 				tlsOpt := s.options.tls.Value()
 				tlsOpt.domain = addr
-				s.options.tls = immutables.Some(tlsOpt)
+				s.options.tls = immutable.Some(tlsOpt)
 			}
 		}
 	}
@@ -143,7 +143,7 @@ func WithCAEmail(email string) func(*Server) {
 	return func(s *Server) {
 		tlsOpt := s.options.tls.Value()
 		tlsOpt.email = email
-		s.options.tls = immutables.Some(tlsOpt)
+		s.options.tls = immutable.Some(tlsOpt)
 	}
 }
 
@@ -164,7 +164,7 @@ func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 		tlsOpt := s.options.tls.Value()
 		tlsOpt.pubKey = pubKey
 		tlsOpt.privKey = privKey
-		s.options.tls = immutables.Some(tlsOpt)
+		s.options.tls = immutable.Some(tlsOpt)
 	}
 }
 
@@ -172,7 +172,7 @@ func WithTLSPort(port int) func(*Server) {
 	return func(s *Server) {
 		tlsOpt := s.options.tls.Value()
 		tlsOpt.port = fmt.Sprintf(":%d", port)
-		s.options.tls = immutables.Some(tlsOpt)
+		s.options.tls = immutable.Some(tlsOpt)
 	}
 }
 

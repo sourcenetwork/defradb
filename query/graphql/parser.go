@@ -14,15 +14,16 @@ import (
 	"context"
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
+	gqlp "github.com/graphql-go/graphql/language/parser"
+	"github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	defrap "github.com/sourcenetwork/defradb/query/graphql/parser"
 	"github.com/sourcenetwork/defradb/query/graphql/schema"
-
-	gql "github.com/graphql-go/graphql"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
 )
 
 var _ core.Parser = (*parser)(nil)
@@ -102,6 +103,6 @@ func (p *parser) AddSchema(ctx context.Context, schema string) error {
 	return err
 }
 
-func (p *parser) NewFilterFromString(collectionType string, body string) (client.Option[request.Filter], error) {
+func (p *parser) NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error) {
 	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
 }

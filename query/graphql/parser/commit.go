@@ -15,10 +15,10 @@ import (
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/immutables"
 )
 
 func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.CommitSelect, error) {
@@ -33,20 +33,20 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		prop := argument.Name.Value
 		if prop == request.DocKey {
 			raw := argument.Value.(*ast.StringValue)
-			commit.DocKey = immutables.Some(raw.Value)
+			commit.DocKey = immutable.Some(raw.Value)
 		} else if prop == request.Cid {
 			raw := argument.Value.(*ast.StringValue)
-			commit.Cid = immutables.Some(raw.Value)
+			commit.Cid = immutable.Some(raw.Value)
 		} else if prop == request.FieldName {
 			raw := argument.Value.(*ast.StringValue)
-			commit.FieldName = immutables.Some(raw.Value)
+			commit.FieldName = immutable.Some(raw.Value)
 		} else if prop == request.OrderClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			commit.OrderBy = immutables.Some(
+			commit.OrderBy = immutable.Some(
 				request.OrderBy{
 					Conditions: cond,
 				},
@@ -57,21 +57,21 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 			if err != nil {
 				return nil, err
 			}
-			commit.Limit = immutables.Some(limit)
+			commit.Limit = immutable.Some(limit)
 		} else if prop == request.OffsetClause {
 			val := argument.Value.(*ast.IntValue)
 			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			commit.Offset = immutables.Some(offset)
+			commit.Offset = immutable.Some(offset)
 		} else if prop == request.DepthClause {
 			raw := argument.Value.(*ast.IntValue)
 			depth, err := strconv.ParseUint(raw.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			commit.Depth = immutables.Some(depth)
+			commit.Depth = immutable.Some(depth)
 		} else if prop == request.GroupByClause {
 			obj := argument.Value.(*ast.ListValue)
 			fields := []string{}
@@ -79,7 +79,7 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			commit.GroupBy = immutables.Some(
+			commit.GroupBy = immutable.Some(
 				request.GroupBy{
 					Fields: fields,
 				},
@@ -92,11 +92,11 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		// Depth is not exposed as an input parameter for latestCommits,
 		// so we can blindly set it here without worrying about existing
 		// values
-		commit.Depth = immutables.Some(uint64(1))
+		commit.Depth = immutable.Some(uint64(1))
 
 		if !commit.FieldName.HasValue() {
 			// latest commits defaults to composite commits only at the moment
-			commit.FieldName = immutables.Some(core.COMPOSITE_NAMESPACE)
+			commit.FieldName = immutable.Some(core.COMPOSITE_NAMESPACE)
 		}
 	}
 
