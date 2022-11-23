@@ -15,8 +15,8 @@ import (
 
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -189,38 +189,38 @@ func parseSelect(
 			slct.Filter = filter
 		} else if prop == request.DocKey { // parse single dockey query field
 			val := astValue.(*ast.StringValue)
-			slct.DocKeys = client.Some([]string{val.Value})
+			slct.DocKeys = immutable.Some([]string{val.Value})
 		} else if prop == request.DocKeys {
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
-			slct.DocKeys = client.Some(docKeys)
+			slct.DocKeys = immutable.Some(docKeys)
 		} else if prop == request.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
-			slct.CID = client.Some(val.Value)
+			slct.CID = immutable.Some(val.Value)
 		} else if prop == request.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			slct.Limit = client.Some(limit)
+			slct.Limit = immutable.Some(limit)
 		} else if prop == request.OffsetClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
 			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			slct.Offset = client.Some(offset)
+			slct.Offset = immutable.Some(offset)
 		} else if prop == request.OrderClause { // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			slct.OrderBy = client.Some(
+			slct.OrderBy = immutable.Some(
 				request.OrderBy{
 					Conditions: cond,
 				},
@@ -232,7 +232,7 @@ func parseSelect(
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			slct.GroupBy = client.Some(
+			slct.GroupBy = immutable.Some(
 				request.GroupBy{
 					Fields: fields,
 				},
@@ -259,11 +259,11 @@ func parseSelect(
 	return slct, err
 }
 
-func getFieldAlias(field *ast.Field) client.Option[string] {
+func getFieldAlias(field *ast.Field) immutable.Option[string] {
 	if field.Alias == nil {
-		return client.None[string]()
+		return immutable.None[string]()
 	}
-	return client.Some(field.Alias.Value)
+	return immutable.Some(field.Alias.Value)
 }
 
 func parseSelectFields(
@@ -324,10 +324,10 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 		case []*ast.ObjectField:
 			hostName := argument.Name.Value
 			var childName string
-			var filter client.Option[request.Filter]
-			var limit client.Option[uint64]
-			var offset client.Option[uint64]
-			var order client.Option[request.OrderBy]
+			var filter immutable.Option[request.Filter]
+			var limit immutable.Option[uint64]
+			var offset immutable.Option[uint64]
+			var order immutable.Option[request.OrderBy]
 
 			fieldArg, hasFieldArg := tryGet(argumentValue, request.FieldName)
 			if hasFieldArg {
@@ -368,7 +368,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				if err != nil {
 					return nil, err
 				}
-				limit = client.Some(limitValue)
+				limit = immutable.Some(limitValue)
 			}
 
 			offsetArg, hasOffsetArg := tryGet(argumentValue, request.OffsetClause)
@@ -377,7 +377,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				if err != nil {
 					return nil, err
 				}
-				offset = client.Some(offsetValue)
+				offset = immutable.Some(offsetValue)
 			}
 
 			orderArg, hasOrderArg := tryGet(argumentValue, request.OrderClause)
@@ -388,7 +388,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 					orderDirectionString := orderArgValue.Value
 					orderDirection := request.OrderDirection(orderDirectionString)
 
-					order = client.Some(
+					order = immutable.Some(
 						request.OrderBy{
 							Conditions: []request.OrderCondition{
 								{
@@ -408,7 +408,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 						return nil, err
 					}
 
-					order = client.Some(
+					order = immutable.Some(
 						request.OrderBy{
 							Conditions: orderConditions,
 						},
@@ -418,7 +418,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 
 			targets[i] = &request.AggregateTarget{
 				HostName:  hostName,
-				ChildName: client.Some(childName),
+				ChildName: immutable.Some(childName),
 				Filter:    filter,
 				Limit:     limit,
 				Offset:    offset,

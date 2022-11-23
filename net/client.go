@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
 )
@@ -33,7 +34,7 @@ var (
 
 // pushLog creates a pushLog request and sends it to another node
 // over libp2p grpc connection
-func (s *server) pushLog(ctx context.Context, evt client.UpdateEvent, pid peer.ID) error {
+func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("failed to get DocKey from broadcast message", err)

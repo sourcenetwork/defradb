@@ -38,6 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -53,7 +54,7 @@ type Peer struct {
 	//config??
 
 	db            client.DB
-	updateChannel chan client.UpdateEvent
+	updateChannel chan events.Update
 
 	host host.Host
 	dht  routing.Routing
@@ -395,7 +396,7 @@ func (p *Peer) AddReplicator(
 					continue
 				}
 
-				evt := client.UpdateEvent{
+				evt := events.Update{
 					DocKey:   dockey.ToString(),
 					Cid:      c,
 					SchemaID: col.SchemaID(),
@@ -418,7 +419,7 @@ func (p *Peer) AddReplicator(
 	return pid, nil
 }
 
-func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
+func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("failed to get DocKey from broadcast message", err)
@@ -430,7 +431,7 @@ func (p *Peer) handleDocCreateLog(evt client.UpdateEvent) error {
 	return p.RegisterNewDocument(p.ctx, dockey, evt.Cid, evt.Block, evt.SchemaID)
 }
 
-func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
+func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
 		return errors.Wrap("failed to get DocKey from broadcast message", err)
@@ -463,7 +464,7 @@ func (p *Peer) handleDocUpdateLog(evt client.UpdateEvent) error {
 	return nil
 }
 
-func (p *Peer) pushLogToReplicators(ctx context.Context, lg client.UpdateEvent) {
+func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	// push to each peer (replicator)
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {

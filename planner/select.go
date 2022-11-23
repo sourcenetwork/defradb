@@ -12,8 +12,8 @@ package planner
 
 import (
 	cid "github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -116,7 +116,7 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
-	docKeys client.Option[[]string]
+	docKeys immutable.Option[[]string]
 
 	parsed       *mapper.Select
 	groupSelects []*mapper.Select
@@ -293,7 +293,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
 					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocKey = client.Some(parsed.DocKeys.Value()[0]) // @todo check length
+					commitSlct.DocKey = immutable.Some(parsed.DocKeys.Value()[0]) // @todo check length
 					commitSlct.Cid = parsed.Cid
 				}
 

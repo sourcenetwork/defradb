@@ -11,7 +11,7 @@
 package request
 
 import (
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ObjectSubscription is a field on the SubscriptionType
@@ -23,7 +23,7 @@ type ObjectSubscription struct {
 	// Collection is the target collection name
 	Collection string
 
-	Filter client.Option[Filter]
+	Filter immutable.Option[Filter]
 
 	Fields []Selection
 }
@@ -36,8 +36,8 @@ func (m ObjectSubscription) ToSelect(docKey, cid string) *Select {
 			Name:  m.Collection,
 			Alias: m.Alias,
 		},
-		DocKeys: client.Some([]string{docKey}),
-		CID:     client.Some(cid),
+		DocKeys: immutable.Some([]string{docKey}),
+		CID:     immutable.Some(cid),
 		Fields:  m.Fields,
 		Filter:  m.Filter,
 	}

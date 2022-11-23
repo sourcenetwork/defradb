@@ -17,9 +17,10 @@ package planner
 import (
 	"reflect"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/immutable/enumerable"
+
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/core/enumerable"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -112,25 +113,25 @@ func (n *countNode) Next() (bool, error) {
 				case []bool:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []client.Option[bool]:
+				case []immutable.Option[bool]:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []int64:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []client.Option[int64]:
+				case []immutable.Option[int64]:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []float64:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []client.Option[float64]:
+				case []immutable.Option[float64]:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 				case []string:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 
-				case []client.Option[string]:
+				case []immutable.Option[string]:
 					arrayCount, err = countItems(array, source.Filter, source.Limit)
 				}
 				if err != nil {

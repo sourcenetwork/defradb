@@ -4,7 +4,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/connor/numbers"
 	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
@@ -27,25 +28,25 @@ func eq(condition, data any) (bool, error) {
 		}
 		return false, nil
 
-	case client.Option[bool]:
+	case immutable.Option[bool]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[int64]:
+	case immutable.Option[int64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[float64]:
+	case immutable.Option[float64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[string]:
+	case immutable.Option[string]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}

@@ -15,6 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 var (
@@ -29,7 +30,7 @@ type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 type MerkleCRDTFactory func(
 	mstore datastore.MultiStore,
 	schemaID string,
-	uCh client.UpdateChannel,
+	uCh events.UpdateChannel,
 ) MerkleCRDTInitFn
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
@@ -67,7 +68,7 @@ func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 // supplied with all the current stores (passed in as a datastore.MultiStore object).
 func (factory Factory) Instance(
 	schemaID string,
-	uCh client.UpdateChannel,
+	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
 ) (MerkleCRDT, error) {
@@ -85,7 +86,7 @@ func (factory Factory) Instance(
 func (factory Factory) InstanceWithStores(
 	store datastore.MultiStore,
 	schemaID string,
-	uCh client.UpdateChannel,
+	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
 ) (MerkleCRDT, error) {

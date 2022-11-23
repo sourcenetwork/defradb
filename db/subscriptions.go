@@ -20,7 +20,7 @@ import (
 )
 
 func (db *db) checkForClientSubsciptions(r *request.Request) (
-	*events.Publisher[client.UpdateEvent],
+	*events.Publisher[events.Update],
 	*request.ObjectSubscription,
 	error,
 ) {
@@ -46,7 +46,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 
 func (db *db) handleSubscription(
 	ctx context.Context,
-	pub *events.Publisher[client.UpdateEvent],
+	pub *events.Publisher[events.Update],
 	r *request.ObjectSubscription,
 ) {
 	for evt := range pub.Event() {

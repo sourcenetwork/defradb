@@ -15,8 +15,8 @@ import (
 
 	ipld "github.com/ipfs/go-ipld-format"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -43,7 +43,7 @@ type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
 
-	updateChannel client.UpdateChannel
+	updateChannel events.UpdateChannel
 }
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
