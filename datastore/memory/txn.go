@@ -62,7 +62,6 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 		return nil, ds.ErrNotFound
 	}
 	return result.val, nil
-
 }
 
 // GetSize implements ds.GetSize
@@ -144,7 +143,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 			break
 		}
 
-		// handle all ops tha come before the current item's key or equal to the current item's key
+		// handle all ops that come before the current item's key or equal to the current item's key
 		for iterOpsHasValue && iterOps.Item().key <= item.key {
 			if iterOps.Item().key == item.key {
 				item = iterOps.Item()

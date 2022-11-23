@@ -12,7 +12,6 @@ package memory
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -66,7 +65,6 @@ func (b *basicBatch) Commit(ctx context.Context) error {
 
 	v := atomic.AddUint64(b.ds.version, 1)
 	for k, op := range b.ops {
-		fmt.Println(b.ds.name, "catch commit", v, k)
 		if op.delete {
 			b.ds.values.Set(item{key: k.String(), version: v, isDeleted: true})
 		} else {

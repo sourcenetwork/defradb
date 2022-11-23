@@ -42,8 +42,8 @@ var (
 	testValue6 = []byte("this is a test value 6")
 )
 
-func newLoadedDatastore() *Datastore {
-	s := NewDatastore()
+func newLoadedDatastore(ctx context.Context) *Datastore {
+	s := NewDatastore(ctx)
 	v := atomic.AddUint64(s.version, 1)
 	s.values.Set(item{
 		key:     testKey1.String(),
@@ -60,14 +60,14 @@ func newLoadedDatastore() *Datastore {
 }
 
 func TestNewDatastore(t *testing.T) {
-	s := NewDatastore()
+	ctx := context.Background()
+	s := NewDatastore(ctx)
 	assert.NotNil(t, s)
 }
 
 func TestGetOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Get(ctx, testKey1)
 	if err != nil {
@@ -77,18 +77,16 @@ func TestGetOperation(t *testing.T) {
 }
 
 func TestGetOperationNotFound(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	_, err := s.Get(ctx, testKey3)
 	assert.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestDeleteOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Delete(ctx, testKey1)
 	if err != nil {
@@ -100,9 +98,8 @@ func TestDeleteOperation(t *testing.T) {
 }
 
 func TestGetSizeOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	resp, err := s.GetSize(ctx, testKey1)
 	if err != nil {
@@ -112,18 +109,16 @@ func TestGetSizeOperation(t *testing.T) {
 }
 
 func TestGetSizeOperationNotFound(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	_, err := s.GetSize(ctx, testKey3)
 	assert.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestHasOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Has(ctx, testKey1)
 	if err != nil {
@@ -133,9 +128,8 @@ func TestHasOperation(t *testing.T) {
 }
 
 func TestHasOperationNotFound(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Has(ctx, testKey3)
 	if err != nil {
@@ -145,9 +139,8 @@ func TestHasOperationNotFound(t *testing.T) {
 }
 
 func TestPutOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey3, testValue3)
 	if err != nil {
@@ -162,9 +155,8 @@ func TestPutOperation(t *testing.T) {
 }
 
 func TestQueryOperation(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	results, err := s.Query(ctx, dsq.Query{
 		Limit:  1,
@@ -181,9 +173,8 @@ func TestQueryOperation(t *testing.T) {
 }
 
 func TestQueryOperationWithAddedItems(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey3, testValue3)
 	if err != nil {
@@ -248,9 +239,9 @@ func TestQueryOperationWithAddedItems(t *testing.T) {
 }
 
 func TestConcurrentWrite(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
 	wg := &sync.WaitGroup{}
 
 	for i := 1; i <= 1000; i++ {
@@ -269,17 +260,93 @@ func TestConcurrentWrite(t *testing.T) {
 }
 
 func TestCloseOperationNotFound(t *testing.T) {
-	s := newLoadedDatastore()
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Close()
 	assert.NoError(t, err)
 }
 
 func TestSyncOperationNotFound(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Sync(ctx, testKey1)
 	assert.NoError(t, err)
+}
+
+func TestCompressor(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Put(ctx, testKey1, testValue2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Put(ctx, testKey2, testValue3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	iter := s.values.Iter()
+	results := []dsq.Entry{}
+	for iter.Next() {
+		results = append(results, dsq.Entry{
+			Key:   iter.Item().key,
+			Value: iter.Item().val,
+			Size:  len(iter.Item().val),
+		})
+	}
+	iter.Release()
+
+	expectedResults := []dsq.Entry{
+		{
+			Key:   testKey1.String(),
+			Value: testValue1,
+			Size:  len(testValue1),
+		},
+		{
+			Key:   testKey1.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+		{
+			Key:   testKey2.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+		{
+			Key:   testKey2.String(),
+			Value: testValue3,
+			Size:  len(testValue3),
+		},
+	}
+	assert.Equal(t, expectedResults, results)
+
+	s.smash(ctx)
+
+	iter = s.values.Iter()
+	results = []dsq.Entry{}
+	for iter.Next() {
+		results = append(results, dsq.Entry{
+			Key:   iter.Item().key,
+			Value: iter.Item().val,
+			Size:  len(iter.Item().val),
+		})
+	}
+	iter.Release()
+
+	expectedResults = []dsq.Entry{
+		{
+			Key:   testKey1.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+		{
+			Key:   testKey2.String(),
+			Value: testValue3,
+			Size:  len(testValue3),
+		},
+	}
+	assert.Equal(t, expectedResults, results)
 }

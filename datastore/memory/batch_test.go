@@ -21,7 +21,8 @@ import (
 // NewBasicBatch, Put, Delete, Commit
 
 func TestNewBatch(t *testing.T) {
-	s := NewDatastore()
+	ctx := context.Background()
+	s := NewDatastore(ctx)
 	b := newBasicBatch(s)
 	assert.NotNil(t, b)
 }
@@ -29,7 +30,7 @@ func TestNewBatch(t *testing.T) {
 func TestBatchOperations(t *testing.T) {
 	ctx := context.Background()
 
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	b, err := s.Batch(ctx)
 	if err != nil {
 		t.Fatal(err)

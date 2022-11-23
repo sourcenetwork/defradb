@@ -23,7 +23,7 @@ import (
 
 func TestNewTransaction(t *testing.T) {
 	ctx := context.Background()
-	s := NewDatastore()
+	s := NewDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	assert.NotNil(t, tx)
 	assert.NoError(t, err)
@@ -31,7 +31,7 @@ func TestNewTransaction(t *testing.T) {
 
 func TestTxnGetOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +46,7 @@ func TestTxnGetOperation(t *testing.T) {
 
 func TestTxnGetOperationAfterPut(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestTxnGetOperationAfterPut(t *testing.T) {
 
 func TestTxnGetOperationAfterDelete(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -83,7 +83,7 @@ func TestTxnGetOperationAfterDelete(t *testing.T) {
 
 func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
 		t.Fatal(err)
@@ -95,7 +95,7 @@ func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
 
 func TestTxnGetOperationNotFound(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +107,7 @@ func TestTxnGetOperationNotFound(t *testing.T) {
 
 func TestTxnDeleteAndCommitOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +129,7 @@ func TestTxnDeleteAndCommitOperation(t *testing.T) {
 
 func TestTxnGetSizeOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -144,7 +144,7 @@ func TestTxnGetSizeOperation(t *testing.T) {
 
 func TestTxnGetSizeOfterPutOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -164,7 +164,7 @@ func TestTxnGetSizeOfterPutOperation(t *testing.T) {
 
 func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -181,7 +181,7 @@ func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
 
 func TestTxnGetSizeOperationNotFound(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -193,7 +193,7 @@ func TestTxnGetSizeOperationNotFound(t *testing.T) {
 
 func TestTxnHasOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -208,7 +208,7 @@ func TestTxnHasOperation(t *testing.T) {
 
 func TestTxnHasOperationNotFound(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -223,7 +223,7 @@ func TestTxnHasOperationNotFound(t *testing.T) {
 
 func TestTxnHasOfterPutOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -243,7 +243,7 @@ func TestTxnHasOfterPutOperation(t *testing.T) {
 
 func TestTxnHasOperationAfterDelete(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -263,7 +263,7 @@ func TestTxnHasOperationAfterDelete(t *testing.T) {
 
 func TestTxnPutAndCommitOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -288,7 +288,7 @@ func TestTxnPutAndCommitOperation(t *testing.T) {
 
 func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
 		t.Fatal(err)
@@ -303,7 +303,7 @@ func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
 
 func TestTxnPutOperationReadOnly(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, true)
 	if err != nil {
 		t.Fatal(err)
@@ -315,7 +315,7 @@ func TestTxnPutOperationReadOnly(t *testing.T) {
 
 func TestTxnQueryOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -366,9 +366,8 @@ func TestTxnQueryOperation(t *testing.T) {
 }
 
 func TestTxnQueryOperationWithAddedItems(t *testing.T) {
-	s := newLoadedDatastore()
-
 	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey3, testValue3)
 	if err != nil {
@@ -449,7 +448,7 @@ func TestTxnQueryOperationWithAddedItems(t *testing.T) {
 
 func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	tx, err := s.NewTransaction(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -475,7 +474,7 @@ func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 
 func TestTxnDiscardOperationNotFound(t *testing.T) {
 	ctx := context.Background()
-	s := newLoadedDatastore()
+	s := newLoadedDatastore(ctx)
 	v := atomic.AddUint64(s.version, 1)
 	tx := &basicTxn{
 		ops:      btree.NewBTreeG(byKeys),
