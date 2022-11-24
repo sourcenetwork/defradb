@@ -356,7 +356,7 @@ func TestCompressorBatching(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	wg := &sync.WaitGroup{}
-	for j := 1; j <= 1000; j++ {
+	for j := 1; j <= 10; j++ {
 		for i := 1; i <= 1000; i++ {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, num int) {
@@ -379,5 +379,5 @@ func TestCompressorBatching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.GreaterOrEqual(t, 999000, val)
+	assert.GreaterOrEqual(t, 9990, val)
 }

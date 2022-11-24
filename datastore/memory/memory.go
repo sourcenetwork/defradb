@@ -87,16 +87,21 @@ func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 	return nil
 }
 
-// Get implements ds.Get
-func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
+func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) item {
 	result := item{}
-	// We only care about the last version so we stop iterating right away.
-	d.values.Descend(item{key: key.String(), version: d.getVersion()}, func(item item) bool {
+	// We only care about the last version so we stop iterating right away yu returning false.
+	d.values.Descend(item{key: key.String(), version: version}, func(item item) bool {
 		if key.String() == item.key && !item.isDeleted {
 			result = item
 		}
 		return false
 	})
+	return result
+}
+
+// Get implements ds.Get
+func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
+	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" {
 		return nil, ds.ErrNotFound
 	}
@@ -105,14 +110,7 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 
 // GetSize implements ds.GetSize
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	result := item{}
-	// We only care about the last version so we stop iterating right away.
-	d.values.Descend(item{key: key.String(), version: d.nextVersion()}, func(item item) bool {
-		if key.String() == item.key && !item.isDeleted {
-			result = item
-		}
-		return false
-	})
+	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" {
 		return 0, ds.ErrNotFound
 	}
@@ -121,14 +119,7 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 
 // Has implements ds.Has
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	result := item{}
-	// We only care about the last version so we stop iterating right away.
-	d.values.Descend(item{key: key.String(), version: d.nextVersion()}, func(item item) bool {
-		if key.String() == item.key && !item.isDeleted {
-			result = item
-		}
-		return false
-	})
+	result := d.get(ctx, key, d.getVersion())
 	return result.key != "", nil
 }
 
@@ -240,5 +231,4 @@ func (d *Datastore) smash(ctx context.Context) {
 			d.values.Delete(i)
 		}
 	}
-
 }

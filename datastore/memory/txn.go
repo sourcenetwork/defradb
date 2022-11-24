@@ -44,25 +44,23 @@ func (t *basicTxn) getVersion() uint64 {
 	return atomic.LoadUint64(t.version)
 }
 
-// Get implements ds.Get
-func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+func (t *basicTxn) get(ctx context.Context, key ds.Key, version uint64) item {
 	result := item{}
-	v := t.getVersion()
-	// We only care about the last version so we stop iterating right away.
-	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
+	// We only care about the last version so we stop iterating right away by returning false.
+	t.ops.Descend(item{key: key.String(), version: version}, func(item item) bool {
 		if key.String() == item.key {
 			result = item
 		}
 		return false
 	})
+	return result
+}
+
+// Get implements ds.Get
+func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" {
-		// We only care about the last version so we stop iterating right away.
-		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
-			if key.String() == item.key {
-				result = item
-			}
-			return false
-		})
+		result = t.ds.get(ctx, key, t.getVersion())
 	}
 	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
@@ -72,23 +70,9 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	result := item{}
-	v := t.getVersion()
-	// We only care about the last version so we stop iterating right away.
-	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
-		if key.String() == item.key {
-			result = item
-		}
-		return false
-	})
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" {
-		// We only care about the last version so we stop iterating right away.
-		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
-			if key.String() == item.key {
-				result = item
-			}
-			return false
-		})
+		result = t.ds.get(ctx, key, t.getVersion())
 	}
 	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
@@ -98,23 +82,9 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	result := item{}
-	v := t.getVersion()
-	// We only care about the last version so we stop iterating right away.
-	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
-		if key.String() == item.key {
-			result = item
-		}
-		return false
-	})
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" {
-		// We only care about the last version so we stop iterating right away.
-		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
-			if key.String() == item.key {
-				result = item
-			}
-			return false
-		})
+		result = t.ds.get(ctx, key, t.getVersion())
 	}
 	if result.key == "" || result.isDeleted {
 		return false, nil
