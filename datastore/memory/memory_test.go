@@ -379,5 +379,5 @@ func TestCompressorBatching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.GreaterOrEqual(t, 9990, val)
+	assert.GreaterOrEqual(t, val, 9000)
 }
