@@ -15,10 +15,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
@@ -132,7 +131,7 @@ func ExecuteExplainRequestTestCase(
 	if testUtils.AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
 		return
 	}
-	assert.NotEmpty(t, dbs)
+	require.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
 		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.Name()))
@@ -152,9 +151,9 @@ func ExecuteExplainRequestTestCase(
 				)
 				dbi.DB().Close(ctx)
 				return
-			} else {
-				dbi = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 			}
+
+			dbi = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 		} else {
 			testUtils.SetupDatabase(
 				ctx,
@@ -170,7 +169,7 @@ func ExecuteExplainRequestTestCase(
 		}
 
 		result := dbi.DB().ExecQuery(ctx, explainTest.Request)
-		if assertExplainRequestTestCaseWithActualResult(
+		if assertExplainRequestResults(
 			ctx,
 			t,
 			&result.GQL,
@@ -187,13 +186,13 @@ func ExecuteExplainRequestTestCase(
 	}
 }
 
-func assertExplainRequestTestCaseWithActualResult(
+func assertExplainRequestResults(
 	ctx context.Context,
 	t *testing.T,
 	actualResult *client.GQLResult,
 	explainTest ExplainRequestTestCase,
 ) bool {
-	// 1) Check expected error matches actual error.
+	// Check expected error matches actual error.
 	if testUtils.AssertErrors(
 		t,
 		explainTest.Description,
@@ -207,8 +206,8 @@ func assertExplainRequestTestCaseWithActualResult(
 	resultantData := actualResult.Data.([]map[string]any)
 	log.Info(ctx, "", logging.NewKV("FullExplainGraphResult", actualResult.Data))
 
-	// 2) Check if the expected full explain graph (if provided) matches the actual full explain graph
-	//    that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
+	// Check if the expected full explain graph (if provided) matches the actual full explain graph
+	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
 	if lengthOfExpectedFullGraph := len(explainTest.ExpectedFullGraph); explainTest.ExpectedFullGraph != nil {
 		require.Equal(t, lengthOfExpectedFullGraph, len(resultantData), explainTest.Description)
 		for index, actualResult := range resultantData {
@@ -223,8 +222,8 @@ func assertExplainRequestTestCaseWithActualResult(
 		}
 	}
 
-	// 3) Ensure the complete high-level pattern matches, inother words check that all the
-	//    explain graph nodes are in the correct expected ordering.
+	// Ensure the complete high-level pattern matches, inother words check that all the
+	// explain graph nodes are in the correct expected ordering.
 	if explainTest.ExpectedPatterns != nil {
 		require.Equal(t, len(explainTest.ExpectedPatterns), len(resultantData), explainTest.Description)
 		for index, actualResult := range resultantData {
@@ -239,8 +238,8 @@ func assertExplainRequestTestCaseWithActualResult(
 		}
 	}
 
-	// 4) Match the targeted node's attributes (subset assertions), with the expected attributes.
-	//    Note: This does not check if the node is in correct location or not.
+	// Match the targeted node's attributes (subset assertions), with the expected attributes.
+	// Note: This does not check if the node is in correct location or not.
 	if explainTest.ExpectedTargets != nil {
 		for _, target := range explainTest.ExpectedTargets {
 			assertExplainTargetCase(t, explainTest.Description, target, resultantData)
@@ -372,12 +371,12 @@ func findTargetNode(
 // trimSubNodes returns a graph where all the immediate sub nodes are trimmed (i.e. no nested subnodes remain).
 func trimSubNodes(graph any) any {
 	checkGraph, ok := graph.(map[string]any)
-	trimGraph := copyMap(checkGraph)
-
 	if !ok {
 		return graph
 	}
 
+	// Copying is super important here so we don't trim the actual result (as we might want to continue using it),
+	trimGraph := copyMap(checkGraph)
 	for key := range trimGraph {
 		if isPlanNode(key) {
 			delete(trimGraph, key)
@@ -439,6 +438,14 @@ func copyMap(originalMap map[string]any) map[string]any {
 		switch v := oValue.(type) {
 		case map[string]any:
 			newMap[oKey] = copyMap(v)
+
+		case []map[string]any:
+			newList := make([]map[string]any, len(v))
+			for index, item := range v {
+				newList[index] = copyMap(item)
+			}
+			newMap[oKey] = newList
+
 		default:
 			newMap[oKey] = oValue
 		}

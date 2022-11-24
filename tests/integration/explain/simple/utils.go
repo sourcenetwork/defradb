@@ -57,7 +57,7 @@ var bookAuthorGQLSchema = (`
 
 `)
 
-// TODO: Remove after draft has received feedback.
+// TODO: This should be resolved in ISSUE#953 (github.com/sourcenetwork/defradb).
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	testUtils.ExecuteQueryTestCase(
 		t,

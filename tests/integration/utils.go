@@ -25,9 +25,9 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -339,13 +339,15 @@ func ExecuteQueryTestCase(
 	collectionNames []string,
 	test QueryTestCase,
 ) {
-	isTransactional := false
-	if len(test.TransactionalQueries) > 0 {
-		isTransactional = true
-	}
+	isTransactional := len(test.TransactionalQueries) > 0
 
 	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames, isTransactional) {
 		return
+	}
+
+	// Must have a non-empty request.
+	if !isTransactional && test.Query == "" {
+		assert.Fail(t, "Test must have a non-empty request.", test.Description)
 	}
 
 	ctx := context.Background()
@@ -353,7 +355,7 @@ func ExecuteQueryTestCase(
 	if AssertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}
-	assert.NotEmpty(t, dbs)
+	require.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
 		log.Info(ctx, test.Description, logging.NewKV("Database", dbi.name))
@@ -373,9 +375,9 @@ func ExecuteQueryTestCase(
 				)
 				dbi.db.Close(ctx)
 				return
-			} else {
-				dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 			}
+
+			dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 		} else {
 			SetupDatabase(
 				ctx,
@@ -445,7 +447,7 @@ func ExecuteQueryTestCase(
 
 		// We run the core query after the explicitly transactional ones to permit tests to query
 		//  the commited result of the transactional queries
-		if test.Query != "" {
+		if !isTransactional || (isTransactional && test.Query != "") {
 			result := dbi.db.ExecQuery(ctx, test.Query)
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
