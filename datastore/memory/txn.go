@@ -40,10 +40,15 @@ func newTransaction(d *Datastore, readOnly bool) ds.Txn {
 	}
 }
 
+func (t *basicTxn) getVersion() uint64 {
+	return atomic.LoadUint64(t.version)
+}
+
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	result := item{}
-	v := atomic.LoadUint64(t.version)
+	v := t.getVersion()
+	// We only care about the last version so we stop iterating right away.
 	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
 		if key.String() == item.key {
 			result = item
@@ -51,6 +56,7 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 		return false
 	})
 	if result.key == "" {
+		// We only care about the last version so we stop iterating right away.
 		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
 			if key.String() == item.key {
 				result = item
@@ -67,7 +73,8 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	result := item{}
-	v := atomic.LoadUint64(t.version)
+	v := t.getVersion()
+	// We only care about the last version so we stop iterating right away.
 	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
 		if key.String() == item.key {
 			result = item
@@ -75,6 +82,7 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 		return false
 	})
 	if result.key == "" {
+		// We only care about the last version so we stop iterating right away.
 		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
 			if key.String() == item.key {
 				result = item
@@ -91,7 +99,8 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	result := item{}
-	v := atomic.LoadUint64(t.version)
+	v := t.getVersion()
+	// We only care about the last version so we stop iterating right away.
 	t.ops.Descend(item{key: key.String(), version: v}, func(item item) bool {
 		if key.String() == item.key {
 			result = item
@@ -99,6 +108,7 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 		return false
 	})
 	if result.key == "" {
+		// We only care about the last version so we stop iterating right away.
 		t.ds.values.Descend(item{key: key.String(), version: v}, func(item item) bool {
 			if key.String() == item.key {
 				result = item
@@ -117,7 +127,7 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
-	t.ops.Set(item{key: key.String(), version: atomic.LoadUint64(t.version), val: value})
+	t.ops.Set(item{key: key.String(), version: t.getVersion(), val: value})
 
 	return nil
 }
@@ -201,7 +211,7 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 // Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
 	t.ops.Clear()
-	atomic.StoreUint64(t.version, atomic.AddUint64(t.ds.version, 1))
+	atomic.StoreUint64(t.version, t.ds.nextVersion())
 }
 
 // Commit saves the operations to the underlying datastore
@@ -212,18 +222,14 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 
 	iter := t.ops.Iter()
 	for iter.Next() {
-		if iter.Item().isDeleted {
-			t.ds.values.Set(iter.Item())
-		} else {
-			t.ds.values.Set(iter.Item())
-		}
+		t.ds.values.Set(iter.Item())
 	}
 
 	iter.Release()
 
 	t.ops.Clear()
 
-	atomic.StoreUint64(t.version, atomic.AddUint64(t.ds.version, 1))
+	atomic.StoreUint64(t.version, t.ds.nextVersion())
 
 	return nil
 }

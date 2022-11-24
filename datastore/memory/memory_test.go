@@ -13,8 +13,8 @@ package memory
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
@@ -44,7 +44,7 @@ var (
 
 func newLoadedDatastore(ctx context.Context) *Datastore {
 	s := NewDatastore(ctx)
-	v := atomic.AddUint64(s.version, 1)
+	v := s.nextVersion()
 	s.values.Set(item{
 		key:     testKey1.String(),
 		val:     testValue1,
@@ -349,4 +349,35 @@ func TestCompressor(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expectedResults, results)
+}
+
+func TestCompressorBatching(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	wg := &sync.WaitGroup{}
+	for j := 1; j <= 1000; j++ {
+		for i := 1; i <= 1000; i++ {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, num int) {
+				_ = s.Put(ctx, ds.NewKey("test"), []byte(fmt.Sprintf("%d", num)))
+				wg.Done()
+			}(wg, i*j)
+		}
+		wg.Wait()
+	}
+
+	s.smash(ctx)
+
+	resp, err := s.Get(ctx, ds.NewKey("test"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	val, err := strconv.Atoi(string(resp))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.GreaterOrEqual(t, 999000, val)
 }

@@ -38,18 +38,10 @@ func byKeys(a, b item) bool {
 	}
 }
 
-var dbV *uint64
-
-func init() {
-	v := uint64(0)
-	dbV = &v
-}
-
 // Datastore uses a btree for internal storage.
 type Datastore struct {
 	version  *uint64
 	values   *btree.BTreeG[item]
-	name     uint64
 	compress chan struct{}
 	close    chan struct{}
 }
@@ -64,12 +56,19 @@ func NewDatastore(ctx context.Context) *Datastore {
 	d := &Datastore{
 		values:   btree.NewBTreeG(byKeys),
 		version:  &v,
-		name:     atomic.AddUint64(dbV, 1),
 		compress: make(chan struct{}),
 		close:    make(chan struct{}),
 	}
 	go d.compressor(ctx)
 	return d
+}
+
+func (d *Datastore) getVersion() uint64 {
+	return atomic.LoadUint64(d.version)
+}
+
+func (d *Datastore) nextVersion() uint64 {
+	return atomic.AddUint64(d.version, 1)
 }
 
 // Batch return a ds.Batch datastore based on Datastore
@@ -84,15 +83,15 @@ func (d *Datastore) Close() error {
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	v := atomic.AddUint64(d.version, 1)
-	d.values.Set(item{key: key.String(), version: v, isDeleted: true})
+	d.values.Set(item{key: key.String(), version: d.getVersion(), isDeleted: true})
 	return nil
 }
 
 // Get implements ds.Get
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	result := item{}
-	d.values.Descend(item{key: key.String(), version: atomic.LoadUint64(d.version)}, func(item item) bool {
+	// We only care about the last version so we stop iterating right away.
+	d.values.Descend(item{key: key.String(), version: d.getVersion()}, func(item item) bool {
 		if key.String() == item.key && !item.isDeleted {
 			result = item
 		}
@@ -107,7 +106,8 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 // GetSize implements ds.GetSize
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	result := item{}
-	d.values.Descend(item{key: key.String(), version: atomic.LoadUint64(d.version)}, func(item item) bool {
+	// We only care about the last version so we stop iterating right away.
+	d.values.Descend(item{key: key.String(), version: d.nextVersion()}, func(item item) bool {
 		if key.String() == item.key && !item.isDeleted {
 			result = item
 		}
@@ -122,7 +122,8 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 // Has implements ds.Has
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	result := item{}
-	d.values.Descend(item{key: key.String(), version: atomic.LoadUint64(d.version)}, func(item item) bool {
+	// We only care about the last version so we stop iterating right away.
+	d.values.Descend(item{key: key.String(), version: d.nextVersion()}, func(item item) bool {
 		if key.String() == item.key && !item.isDeleted {
 			result = item
 		}
@@ -138,8 +139,7 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 
 // Put implements ds.Put
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	v := atomic.AddUint64(d.version, 1)
-	d.values.Set(item{key: key.String(), version: v, val: value})
+	d.values.Set(item{key: key.String(), version: d.nextVersion(), val: value})
 	return nil
 }
 
@@ -183,8 +183,10 @@ func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 }
 
 func (d *Datastore) compressor(ctx context.Context) {
-	now := time.Now()
-	nextCompression := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	dbStartTime := time.Now()
+	nextCompression := time.Date(dbStartTime.Year(), dbStartTime.Month(), dbStartTime.Day()+1,
+		0, 0, 0, 0, dbStartTime.Location())
+
 	for {
 		select {
 		case <-d.close:
@@ -202,20 +204,41 @@ func (d *Datastore) compressor(ctx context.Context) {
 }
 
 func (d *Datastore) smash(ctx context.Context) {
-	itemsToDelete := []item{}
-	iter := d.values.Iter()
-	iter.Next()
-	item := iter.Item()
-	// fast forward to last inserted version and delete versions before it
-	for iter.Next() {
-		if item.key == iter.Item().key {
-			itemsToDelete = append(itemsToDelete, item)
-		}
-		item = iter.Item()
-	}
-	iter.Release()
+	// smashing bellow this version
+	v := d.getVersion()
 
-	for _, i := range itemsToDelete {
-		d.values.Delete(i)
+	for {
+		itemsToDelete := []item{}
+		iter := d.values.Iter()
+		iter.Next()
+		item := iter.Item()
+
+		// fast forward to last inserted version and delete versions before it
+		total := 0
+		for iter.Next() {
+			if iter.Item().version > v {
+				continue
+			}
+			if item.key == iter.Item().key {
+				itemsToDelete = append(itemsToDelete, item)
+				total++
+			}
+			item = iter.Item()
+			// we don't want to delete more than 1000 items at a time
+			// to prevent loading too much into memory
+			if total >= 1000 {
+				break
+			}
+		}
+		iter.Release()
+
+		if total == 0 {
+			return
+		}
+
+		for _, i := range itemsToDelete {
+			d.values.Delete(i)
+		}
 	}
+
 }
