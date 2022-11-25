@@ -143,18 +143,66 @@ func TestExplainJoinsNew(t *testing.T) {
 			},
 
 			{
-				// I want to target the last scanNode in the second typeIndexJoin, inorder to navigate there
-				// I need to skip 2 occurances / offset target by 2 in a way (look the test below, I marked the target).
+				TargetNodeName:   "scanNode",
+				OccurancesToSkip: 0,
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"end":   "/4",
+							"start": "/3",
+						},
+					},
+				},
+			},
+
+			{
+				TargetNodeName:   "scanNode",
+				OccurancesToSkip: 1,
+				ExpectedAttributes: dataMap{
+					"collectionID":   "2",
+					"collectionName": "book",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"end":   "/3",
+							"start": "/2",
+						},
+					},
+				},
+			},
+
+			{
 				TargetNodeName:   "scanNode",
 				OccurancesToSkip: 2,
+				ExpectedAttributes: dataMap{
+					"collectionID":   "3",
+					"collectionName": "author",
+					"filter":         nil,
+					"spans": []dataMap{
+						{
+							"end":   "/4",
+							"start": "/3",
+						},
+					},
+				},
+			},
+
+			{
+				// I want to target the last scanNode in the second typeIndexJoin, inorder to navigate there
+				// I need to skip 3 occurances / offset target by 2 in a way (look the test below, I marked the target).
+				TargetNodeName:   "scanNode",
+				OccurancesToSkip: 3,
 				ExpectedAttributes: dataMap{
 					"collectionID":   "1",
 					"collectionName": "article",
 					"filter":         nil,
 					"spans": []dataMap{
 						{
-							"start": "/1",
 							"end":   "/2",
+							"start": "/1",
 						},
 					},
 				},
@@ -243,6 +291,88 @@ func TestExplainJoinsOld(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"sumNode": dataMap{
+							"selectNode": dataMap{
+								"filter": nil,
+								"parallelNode": []dataMap{
+									{
+										"typeIndexJoin": dataMap{
+											"joinType": "typeJoinMany",
+											"root": dataMap{
+												"scanNode": dataMap{ //------------ scan nodes to skip to get here = 0
+													"collectionID":   "3",
+													"collectionName": "author",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"end":   "/4",
+															"start": "/3",
+														},
+													},
+												},
+											},
+											"rootName": "author",
+											"subType": dataMap{
+												"selectTopNode": dataMap{
+													"selectNode": dataMap{
+														"filter": nil,
+														"scanNode": dataMap{ //---- scan nodes to skip to get here = 1
+															"collectionID":   "2",
+															"collectionName": "book",
+															"filter":         nil,
+															"spans": []dataMap{
+																{
+																	"end":   "/3",
+																	"start": "/2",
+																},
+															},
+														},
+													},
+												},
+											},
+											"subTypeName": "books",
+										},
+									},
+									{
+										"typeIndexJoin": dataMap{
+											"joinType": "typeJoinMany",
+											"root": dataMap{
+												"scanNode": dataMap{ //------------ scan nodes to skip to get here = 2
+													"collectionID":   "3",
+													"collectionName": "author",
+													"filter":         nil,
+													"spans": []dataMap{
+														{
+															"end":   "/4",
+															"start": "/3",
+														},
+													},
+												},
+											},
+											"rootName": "author",
+											"subType": dataMap{
+												"selectTopNode": dataMap{
+													"selectNode": dataMap{
+														"filter": nil,
+														"scanNode": dataMap{ //---- scan nodes to skip to get here = 3
+															// In the last case of the new example above we are trying to target this scanNode.
+															"collectionID":   "1",
+															"collectionName": "article",
+															"filter":         nil,
+															"spans": []dataMap{
+																{
+																	"end":   "/2",
+																	"start": "/1",
+																},
+															},
+														},
+													},
+												},
+											},
+											"subTypeName": "articles",
+										},
+									},
+								},
+							},
 							"sources": []dataMap{
 								{
 									"childFieldName": "pages",
@@ -254,88 +384,6 @@ func TestExplainJoinsOld(t *testing.T) {
 									"childFieldName": "pages",
 									"fieldName":      "articles",
 									"filter":         nil,
-								},
-							},
-							"selectNode": dataMap{
-								"filter": nil,
-								"parallelNode": []dataMap{
-									{
-										"typeIndexJoin": dataMap{
-											"joinType":    "typeJoinMany",
-											"subTypeName": "books",
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"filter": nil,
-														"scanNode": dataMap{ //---- scan nodes to skip to get here = 0
-															"collectionID":   "2",
-															"collectionName": "book",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/2",
-																	"end":   "/3",
-																},
-															},
-														},
-													},
-												},
-											},
-											"rootName": "author",
-											"root": dataMap{
-												"scanNode": dataMap{ //------------ scan nodes to skip to get here = 1
-													"collectionID":   "3",
-													"collectionName": "author",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/3",
-															"end":   "/4",
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										"typeIndexJoin": dataMap{
-											"joinType":    "typeJoinMany",
-											"subTypeName": "articles",
-											"subType": dataMap{
-												"selectTopNode": dataMap{
-													"selectNode": dataMap{
-														"filter": nil,
-														"scanNode": dataMap{ //---- scan nodes to skip to get here = 2
-															// In the last case of the new example above we are trying to target this scanNode.
-															"collectionID":   "1",
-															"collectionName": "article",
-															"filter":         nil,
-															"spans": []dataMap{
-																{
-																	"start": "/1",
-																	"end":   "/2",
-																},
-															},
-														},
-													},
-												},
-											},
-											"rootName": "author",
-											"root": dataMap{
-												"scanNode": dataMap{ //------------ scan nodes to skip to get here = 3
-													"collectionID":   "3",
-													"collectionName": "author",
-													"filter":         nil,
-													"spans": []dataMap{
-														{
-															"start": "/3",
-															"end":   "/4",
-														},
-													},
-												},
-											},
-										},
-									},
 								},
 							},
 						},

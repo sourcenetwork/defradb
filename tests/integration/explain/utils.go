@@ -13,6 +13,7 @@ package test_explain
 import (
 	"context"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -82,8 +83,7 @@ type ExplainRequestTestCase struct {
 	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
 	Request string
 
-	// Docs is a map from Collection Index, to a list
-	// of docs in stringified JSON format
+	// Docs is a map from Collection Index, to a list of docs in stringified JSON format
 	Docs map[int][]string
 
 	// The raw expected explain graph with everything (helpful for debugging purposes).
@@ -97,6 +97,8 @@ type ExplainRequestTestCase struct {
 
 	// Every target helps assert an individual node somewhere in the explain graph (node's position is omitted).
 	// Each target assertion is only responsible to check if the node's attributes are correct.
+	// This is the only test that sorts the keys and traverses the map in a deterministic order to ensure
+	// that consistent skips occur if there are multiple nodes of matching target name.
 	// Note: This is not always asserted (i.e. ignored from the comparison if not provided).
 	ExpectedTargets []PlanNodeTargetCase
 
@@ -283,6 +285,9 @@ func assertExplainTargetCase(
 // findTargetNode returns true if the targetName is found in the explain graph after skipping given number of
 // occurances, 0 means first occurance. The function also returns total occurances it encountered so far. The
 // returned count of 'matches' should always be <= occurance argument.
+
+// Note: The traversal of the map must be in a deterministic and ordered manner, so we skip the same nodes items
+// with every run and the occurances to skip logic behaves consistently.
 func findTargetNode(
 	targetName string,
 	toSkip uint,
@@ -293,8 +298,21 @@ func findTargetNode(
 
 	switch r := actualResult.(type) {
 	case map[string]any:
-		for key, value := range r {
+		// To traverse the unordered map in a deterministic order, we will collect the keys, sort them
+		// in increasing order, and then traverse the map in that order.
+		sortedKeys := make([]string, len(r))
+
+		var index uint = 0
+		for k := range r {
+			sortedKeys[index] = k
+			index++
+		}
+
+		sort.Strings(sortedKeys)
+
+		for _, key := range sortedKeys {
 			if isPlanNode(key) {
+				value := r[key]
 				if key == targetName {
 					totalMatchedSoFar++
 
