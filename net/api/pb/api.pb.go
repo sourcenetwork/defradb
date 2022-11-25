@@ -6,14 +6,13 @@ package api_pb
 import (
 	context "context"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -28,8 +27,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type AddReplicatorRequest struct {
-	Collection []byte `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	Addr       []byte `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Collections []string `protobuf:"bytes,1,rep,name=collections,proto3" json:"collections,omitempty"`
+	Addr        []byte   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
 }
 
 func (m *AddReplicatorRequest) Reset()         { *m = AddReplicatorRequest{} }
@@ -65,9 +64,9 @@ func (m *AddReplicatorRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AddReplicatorRequest proto.InternalMessageInfo
 
-func (m *AddReplicatorRequest) GetCollection() []byte {
+func (m *AddReplicatorRequest) GetCollections() []string {
 	if m != nil {
-		return m.Collection
+		return m.Collections
 	}
 	return nil
 }
@@ -123,27 +122,319 @@ func (m *AddReplicatorReply) GetPeerID() []byte {
 	return nil
 }
 
+type DeleteReplicatorRequest struct {
+	PeerID []byte `protobuf:"bytes,1,opt,name=peerID,proto3" json:"peerID,omitempty"`
+}
+
+func (m *DeleteReplicatorRequest) Reset()         { *m = DeleteReplicatorRequest{} }
+func (m *DeleteReplicatorRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteReplicatorRequest) ProtoMessage()    {}
+func (*DeleteReplicatorRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{2}
+}
+func (m *DeleteReplicatorRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeleteReplicatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeleteReplicatorRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeleteReplicatorRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteReplicatorRequest.Merge(m, src)
+}
+func (m *DeleteReplicatorRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeleteReplicatorRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteReplicatorRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteReplicatorRequest proto.InternalMessageInfo
+
+func (m *DeleteReplicatorRequest) GetPeerID() []byte {
+	if m != nil {
+		return m.PeerID
+	}
+	return nil
+}
+
+type DeleteReplicatorReply struct {
+	PeerID []byte `protobuf:"bytes,1,opt,name=peerID,proto3" json:"peerID,omitempty"`
+}
+
+func (m *DeleteReplicatorReply) Reset()         { *m = DeleteReplicatorReply{} }
+func (m *DeleteReplicatorReply) String() string { return proto.CompactTextString(m) }
+func (*DeleteReplicatorReply) ProtoMessage()    {}
+func (*DeleteReplicatorReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{3}
+}
+func (m *DeleteReplicatorReply) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeleteReplicatorReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeleteReplicatorReply.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeleteReplicatorReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteReplicatorReply.Merge(m, src)
+}
+func (m *DeleteReplicatorReply) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeleteReplicatorReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteReplicatorReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteReplicatorReply proto.InternalMessageInfo
+
+func (m *DeleteReplicatorReply) GetPeerID() []byte {
+	if m != nil {
+		return m.PeerID
+	}
+	return nil
+}
+
+type GetAllReplicatorRequest struct {
+}
+
+func (m *GetAllReplicatorRequest) Reset()         { *m = GetAllReplicatorRequest{} }
+func (m *GetAllReplicatorRequest) String() string { return proto.CompactTextString(m) }
+func (*GetAllReplicatorRequest) ProtoMessage()    {}
+func (*GetAllReplicatorRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{4}
+}
+func (m *GetAllReplicatorRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAllReplicatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAllReplicatorRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAllReplicatorRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllReplicatorRequest.Merge(m, src)
+}
+func (m *GetAllReplicatorRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAllReplicatorRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllReplicatorRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllReplicatorRequest proto.InternalMessageInfo
+
+type GetAllReplicatorReply struct {
+	Replicators []*GetAllReplicatorReply_Replicators `protobuf:"bytes,1,rep,name=replicators,proto3" json:"replicators,omitempty"`
+}
+
+func (m *GetAllReplicatorReply) Reset()         { *m = GetAllReplicatorReply{} }
+func (m *GetAllReplicatorReply) String() string { return proto.CompactTextString(m) }
+func (*GetAllReplicatorReply) ProtoMessage()    {}
+func (*GetAllReplicatorReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{5}
+}
+func (m *GetAllReplicatorReply) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAllReplicatorReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAllReplicatorReply.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAllReplicatorReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllReplicatorReply.Merge(m, src)
+}
+func (m *GetAllReplicatorReply) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAllReplicatorReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllReplicatorReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllReplicatorReply proto.InternalMessageInfo
+
+func (m *GetAllReplicatorReply) GetReplicators() []*GetAllReplicatorReply_Replicators {
+	if m != nil {
+		return m.Replicators
+	}
+	return nil
+}
+
+type GetAllReplicatorReply_Replicators struct {
+	Info    *GetAllReplicatorReply_Replicators_Info `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Schemas []string                                `protobuf:"bytes,2,rep,name=schemas,proto3" json:"schemas,omitempty"`
+}
+
+func (m *GetAllReplicatorReply_Replicators) Reset()         { *m = GetAllReplicatorReply_Replicators{} }
+func (m *GetAllReplicatorReply_Replicators) String() string { return proto.CompactTextString(m) }
+func (*GetAllReplicatorReply_Replicators) ProtoMessage()    {}
+func (*GetAllReplicatorReply_Replicators) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{5, 0}
+}
+func (m *GetAllReplicatorReply_Replicators) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAllReplicatorReply_Replicators) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAllReplicatorReply_Replicators.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAllReplicatorReply_Replicators) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllReplicatorReply_Replicators.Merge(m, src)
+}
+func (m *GetAllReplicatorReply_Replicators) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAllReplicatorReply_Replicators) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllReplicatorReply_Replicators.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllReplicatorReply_Replicators proto.InternalMessageInfo
+
+func (m *GetAllReplicatorReply_Replicators) GetInfo() *GetAllReplicatorReply_Replicators_Info {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+func (m *GetAllReplicatorReply_Replicators) GetSchemas() []string {
+	if m != nil {
+		return m.Schemas
+	}
+	return nil
+}
+
+type GetAllReplicatorReply_Replicators_Info struct {
+	Id    []byte `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Addrs []byte `protobuf:"bytes,2,opt,name=addrs,proto3" json:"addrs,omitempty"`
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) Reset() {
+	*m = GetAllReplicatorReply_Replicators_Info{}
+}
+func (m *GetAllReplicatorReply_Replicators_Info) String() string { return proto.CompactTextString(m) }
+func (*GetAllReplicatorReply_Replicators_Info) ProtoMessage()    {}
+func (*GetAllReplicatorReply_Replicators_Info) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{5, 0, 0}
+}
+func (m *GetAllReplicatorReply_Replicators_Info) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAllReplicatorReply_Replicators_Info) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAllReplicatorReply_Replicators_Info.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAllReplicatorReply_Replicators_Info) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllReplicatorReply_Replicators_Info.Merge(m, src)
+}
+func (m *GetAllReplicatorReply_Replicators_Info) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAllReplicatorReply_Replicators_Info) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllReplicatorReply_Replicators_Info.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllReplicatorReply_Replicators_Info proto.InternalMessageInfo
+
+func (m *GetAllReplicatorReply_Replicators_Info) GetId() []byte {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) GetAddrs() []byte {
+	if m != nil {
+		return m.Addrs
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*AddReplicatorRequest)(nil), "api.pb.AddReplicatorRequest")
 	proto.RegisterType((*AddReplicatorReply)(nil), "api.pb.AddReplicatorReply")
+	proto.RegisterType((*DeleteReplicatorRequest)(nil), "api.pb.DeleteReplicatorRequest")
+	proto.RegisterType((*DeleteReplicatorReply)(nil), "api.pb.DeleteReplicatorReply")
+	proto.RegisterType((*GetAllReplicatorRequest)(nil), "api.pb.GetAllReplicatorRequest")
+	proto.RegisterType((*GetAllReplicatorReply)(nil), "api.pb.GetAllReplicatorReply")
+	proto.RegisterType((*GetAllReplicatorReply_Replicators)(nil), "api.pb.GetAllReplicatorReply.Replicators")
+	proto.RegisterType((*GetAllReplicatorReply_Replicators_Info)(nil), "api.pb.GetAllReplicatorReply.Replicators.Info")
 }
 
 func init() { proto.RegisterFile("api.proto", fileDescriptor_00212fb1f9d3bf1c) }
 
 var fileDescriptor_00212fb1f9d3bf1c = []byte{
-	// 191 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4c, 0x2c, 0xc8, 0xd4,
-	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x03, 0x33, 0x93, 0x94, 0xbc, 0xb8, 0x44, 0x1c, 0x53,
-	0x52, 0x82, 0x52, 0x0b, 0x72, 0x32, 0x93, 0x13, 0x4b, 0xf2, 0x8b, 0x82, 0x52, 0x0b, 0x4b, 0x53,
-	0x8b, 0x4b, 0x84, 0xe4, 0xb8, 0xb8, 0x92, 0xf3, 0x73, 0x72, 0x52, 0x93, 0x4b, 0x32, 0xf3, 0xf3,
-	0x24, 0x18, 0x15, 0x18, 0x35, 0x78, 0x82, 0x90, 0x44, 0x84, 0x84, 0xb8, 0x58, 0x12, 0x53, 0x52,
-	0x8a, 0x24, 0x98, 0xc0, 0x32, 0x60, 0xb6, 0x92, 0x0e, 0x97, 0x10, 0x9a, 0x59, 0x05, 0x39, 0x95,
-	0x42, 0x62, 0x5c, 0x6c, 0x05, 0xa9, 0xa9, 0x45, 0x9e, 0x2e, 0x50, 0x53, 0xa0, 0x3c, 0xa3, 0x30,
-	0x2e, 0xf6, 0xe0, 0xd4, 0xa2, 0xb2, 0xcc, 0xe4, 0x54, 0x21, 0x6f, 0x2e, 0x5e, 0x14, 0x8d, 0x42,
-	0x32, 0x7a, 0x10, 0xe7, 0xe9, 0x61, 0x73, 0x9b, 0x94, 0x14, 0x0e, 0xd9, 0x82, 0x9c, 0x4a, 0x25,
-	0x06, 0x27, 0x89, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71,
-	0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x48, 0x62, 0x03, 0x7b,
-	0xdd, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0xcb, 0x02, 0x68, 0xde, 0x07, 0x01, 0x00, 0x00,
+	// 372 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xc1, 0x4e, 0xea, 0x40,
+	0x14, 0xed, 0xf4, 0xf1, 0x20, 0xdc, 0xbe, 0x67, 0xf4, 0x06, 0xa4, 0x36, 0x5a, 0x49, 0x57, 0x98,
+	0x90, 0x1a, 0xf1, 0x0b, 0x20, 0x24, 0x86, 0xe0, 0xaa, 0xea, 0x07, 0x94, 0x76, 0x88, 0x93, 0x8c,
+	0x4c, 0xed, 0x54, 0x13, 0x76, 0x26, 0xfe, 0x80, 0x5b, 0xff, 0xc8, 0x25, 0x4b, 0x97, 0x06, 0x7e,
+	0xc4, 0x30, 0x05, 0x41, 0x4a, 0x8d, 0xbb, 0x39, 0x73, 0xef, 0x39, 0xf7, 0xf6, 0x9c, 0x0e, 0x94,
+	0xfd, 0x88, 0xb9, 0x51, 0x2c, 0x12, 0x81, 0x45, 0x75, 0x1c, 0x38, 0x97, 0x50, 0x69, 0x87, 0xa1,
+	0x47, 0x23, 0xce, 0x02, 0x3f, 0x11, 0xb1, 0x47, 0xef, 0x1f, 0xa8, 0x4c, 0xb0, 0x0e, 0x46, 0x20,
+	0x38, 0xa7, 0x41, 0xc2, 0xc4, 0x48, 0x9a, 0xa4, 0xfe, 0xa7, 0x51, 0xf6, 0xd6, 0xaf, 0x10, 0xa1,
+	0xe0, 0x87, 0x61, 0x6c, 0xea, 0x75, 0xd2, 0xf8, 0xe7, 0xa9, 0xb3, 0xd3, 0x04, 0xdc, 0x50, 0x8b,
+	0xf8, 0x18, 0xf7, 0xa1, 0x18, 0x51, 0x1a, 0xf7, 0xba, 0x26, 0x51, 0xbd, 0x0b, 0xe4, 0x9c, 0x41,
+	0xad, 0x4b, 0x39, 0x4d, 0x68, 0x76, 0x7c, 0x1e, 0xe5, 0x14, 0xaa, 0x59, 0xca, 0x4f, 0x33, 0x0e,
+	0xa0, 0x76, 0x41, 0x93, 0x36, 0xe7, 0x99, 0x19, 0xce, 0x93, 0x0e, 0xd5, 0x6c, 0x6d, 0x2e, 0xd6,
+	0x07, 0x23, 0xfe, 0xba, 0x4a, 0x3f, 0xde, 0x68, 0x9d, 0xb8, 0xa9, 0x65, 0xee, 0x56, 0x8e, 0xbb,
+	0xc2, 0xd2, 0x5b, 0x67, 0x5b, 0xaf, 0x04, 0x8c, 0xb5, 0x22, 0x76, 0xa0, 0xc0, 0x46, 0x43, 0xa1,
+	0xf6, 0x34, 0x5a, 0xee, 0xaf, 0x55, 0xdd, 0xde, 0x68, 0x28, 0x3c, 0xc5, 0x45, 0x13, 0x4a, 0x32,
+	0xb8, 0xa5, 0x77, 0xbe, 0x34, 0x75, 0x95, 0xcc, 0x12, 0x5a, 0x4d, 0x28, 0xcc, 0xfb, 0x70, 0x07,
+	0x74, 0x16, 0x2e, 0xbc, 0xd0, 0x59, 0x88, 0x15, 0xf8, 0x3b, 0x4f, 0x48, 0x2e, 0xe2, 0x4a, 0x41,
+	0xeb, 0x59, 0x87, 0xd2, 0x15, 0x8d, 0x1f, 0x59, 0x40, 0xb1, 0x0f, 0xff, 0xbf, 0x65, 0x87, 0x87,
+	0xcb, 0xd5, 0xb6, 0xfd, 0x20, 0x96, 0x95, 0x53, 0x8d, 0xf8, 0xd8, 0xd1, 0xf0, 0x1a, 0x76, 0x37,
+	0x73, 0xc2, 0xe3, 0x25, 0x23, 0x27, 0x74, 0xeb, 0x28, 0xbf, 0x21, 0x55, 0xbd, 0x81, 0xbd, 0x4d,
+	0x9b, 0xe4, 0x4a, 0x36, 0x27, 0xe7, 0x95, 0xec, 0x56, 0x8b, 0x1d, 0xad, 0x63, 0xbe, 0x4d, 0x6d,
+	0x32, 0x99, 0xda, 0xe4, 0x63, 0x6a, 0x93, 0x97, 0x99, 0xad, 0x4d, 0x66, 0xb6, 0xf6, 0x3e, 0xb3,
+	0xb5, 0x41, 0x51, 0x3d, 0x96, 0xf3, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x55, 0x65, 0xce, 0x49,
+	0x39, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -160,6 +451,10 @@ const _ = grpc.SupportPackageIsVersion4
 type ServiceClient interface {
 	// AddReplicator for this peer
 	AddReplicator(ctx context.Context, in *AddReplicatorRequest, opts ...grpc.CallOption) (*AddReplicatorReply, error)
+	// DeleteReplicator for this peer
+	DeleteReplicator(ctx context.Context, in *DeleteReplicatorRequest, opts ...grpc.CallOption) (*DeleteReplicatorReply, error)
+	// DeleteReplicator for this peer
+	GetAllReplicators(ctx context.Context, in *GetAllReplicatorRequest, opts ...grpc.CallOption) (*GetAllReplicatorReply, error)
 }
 
 type serviceClient struct {
@@ -179,10 +474,32 @@ func (c *serviceClient) AddReplicator(ctx context.Context, in *AddReplicatorRequ
 	return out, nil
 }
 
+func (c *serviceClient) DeleteReplicator(ctx context.Context, in *DeleteReplicatorRequest, opts ...grpc.CallOption) (*DeleteReplicatorReply, error) {
+	out := new(DeleteReplicatorReply)
+	err := c.cc.Invoke(ctx, "/api.pb.Service/DeleteReplicator", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceClient) GetAllReplicators(ctx context.Context, in *GetAllReplicatorRequest, opts ...grpc.CallOption) (*GetAllReplicatorReply, error) {
+	out := new(GetAllReplicatorReply)
+	err := c.cc.Invoke(ctx, "/api.pb.Service/GetAllReplicators", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceServer is the server API for Service service.
 type ServiceServer interface {
 	// AddReplicator for this peer
 	AddReplicator(context.Context, *AddReplicatorRequest) (*AddReplicatorReply, error)
+	// DeleteReplicator for this peer
+	DeleteReplicator(context.Context, *DeleteReplicatorRequest) (*DeleteReplicatorReply, error)
+	// DeleteReplicator for this peer
+	GetAllReplicators(context.Context, *GetAllReplicatorRequest) (*GetAllReplicatorReply, error)
 }
 
 // UnimplementedServiceServer can be embedded to have forward compatible implementations.
@@ -192,12 +509,18 @@ type UnimplementedServiceServer struct {
 func (*UnimplementedServiceServer) AddReplicator(ctx context.Context, req *AddReplicatorRequest) (*AddReplicatorReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddReplicator not implemented")
 }
+func (*UnimplementedServiceServer) DeleteReplicator(ctx context.Context, req *DeleteReplicatorRequest) (*DeleteReplicatorReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteReplicator not implemented")
+}
+func (*UnimplementedServiceServer) GetAllReplicators(ctx context.Context, req *GetAllReplicatorRequest) (*GetAllReplicatorReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllReplicators not implemented")
+}
 
 func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
 	s.RegisterService(&_Service_serviceDesc, srv)
 }
 
-func _Service_AddReplicator_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
+func _Service_AddReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddReplicatorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -209,8 +532,44 @@ func _Service_AddReplicator_Handler(srv any, ctx context.Context, dec func(any) 
 		Server:     srv,
 		FullMethod: "/api.pb.Service/AddReplicator",
 	}
-	handler := func(ctx context.Context, req any) (any, error) {
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ServiceServer).AddReplicator(ctx, req.(*AddReplicatorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Service_DeleteReplicator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteReplicatorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).DeleteReplicator(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.pb.Service/DeleteReplicator",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).DeleteReplicator(ctx, req.(*DeleteReplicatorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Service_GetAllReplicators_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllReplicatorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).GetAllReplicators(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.pb.Service/GetAllReplicators",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).GetAllReplicators(ctx, req.(*GetAllReplicatorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -222,6 +581,14 @@ var _Service_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddReplicator",
 			Handler:    _Service_AddReplicator_Handler,
+		},
+		{
+			MethodName: "DeleteReplicator",
+			Handler:    _Service_DeleteReplicator_Handler,
+		},
+		{
+			MethodName: "GetAllReplicators",
+			Handler:    _Service_GetAllReplicators_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -255,12 +622,14 @@ func (m *AddReplicatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Collection) > 0 {
-		i -= len(m.Collection)
-		copy(dAtA[i:], m.Collection)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.Collection)))
-		i--
-		dAtA[i] = 0xa
+	if len(m.Collections) > 0 {
+		for iNdEx := len(m.Collections) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Collections[iNdEx])
+			copy(dAtA[i:], m.Collections[iNdEx])
+			i = encodeVarintApi(dAtA, i, uint64(len(m.Collections[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -295,6 +664,207 @@ func (m *AddReplicatorReply) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *DeleteReplicatorRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeleteReplicatorRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteReplicatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PeerID) > 0 {
+		i -= len(m.PeerID)
+		copy(dAtA[i:], m.PeerID)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.PeerID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DeleteReplicatorReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeleteReplicatorReply) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteReplicatorReply) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PeerID) > 0 {
+		i -= len(m.PeerID)
+		copy(dAtA[i:], m.PeerID)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.PeerID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GetAllReplicatorRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetAllReplicatorRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetAllReplicatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *GetAllReplicatorReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetAllReplicatorReply) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetAllReplicatorReply) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Replicators) > 0 {
+		for iNdEx := len(m.Replicators) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Replicators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintApi(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GetAllReplicatorReply_Replicators) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetAllReplicatorReply_Replicators) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetAllReplicatorReply_Replicators) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Schemas) > 0 {
+		for iNdEx := len(m.Schemas) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Schemas[iNdEx])
+			copy(dAtA[i:], m.Schemas[iNdEx])
+			i = encodeVarintApi(dAtA, i, uint64(len(m.Schemas[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.Info != nil {
+		{
+			size, err := m.Info.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Addrs) > 0 {
+		i -= len(m.Addrs)
+		copy(dAtA[i:], m.Addrs)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.Addrs)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintApi(dAtA []byte, offset int, v uint64) int {
 	offset -= sovApi(v)
 	base := offset
@@ -312,9 +882,11 @@ func (m *AddReplicatorRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Collection)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
+	if len(m.Collections) > 0 {
+		for _, s := range m.Collections {
+			l = len(s)
+			n += 1 + l + sovApi(uint64(l))
+		}
 	}
 	l = len(m.Addr)
 	if l > 0 {
@@ -330,6 +902,92 @@ func (m *AddReplicatorReply) Size() (n int) {
 	var l int
 	_ = l
 	l = len(m.PeerID)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
+
+func (m *DeleteReplicatorRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PeerID)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
+
+func (m *DeleteReplicatorReply) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.PeerID)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
+
+func (m *GetAllReplicatorRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *GetAllReplicatorReply) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Replicators) > 0 {
+		for _, e := range m.Replicators {
+			l = e.Size()
+			n += 1 + l + sovApi(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *GetAllReplicatorReply_Replicators) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Info != nil {
+		l = m.Info.Size()
+		n += 1 + l + sovApi(uint64(l))
+	}
+	if len(m.Schemas) > 0 {
+		for _, s := range m.Schemas {
+			l = len(s)
+			n += 1 + l + sovApi(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *GetAllReplicatorReply_Replicators_Info) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	l = len(m.Addrs)
 	if l > 0 {
 		n += 1 + l + sovApi(uint64(l))
 	}
@@ -373,9 +1031,9 @@ func (m *AddReplicatorRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Collection", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Collections", wireType)
 			}
-			var byteLen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowApi
@@ -385,25 +1043,23 @@ func (m *AddReplicatorRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthApi
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthApi
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Collection = append(m.Collection[:0], dAtA[iNdEx:postIndex]...)
-			if m.Collection == nil {
-				m.Collection = []byte{}
-			}
+			m.Collections = append(m.Collections, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -445,10 +1101,7 @@ func (m *AddReplicatorRequest) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthApi
 			}
 			if (iNdEx + skippy) > l {
@@ -532,10 +1185,545 @@ func (m *AddReplicatorReply) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthApi
 			}
-			if (iNdEx + skippy) < 0 {
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeleteReplicatorRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeleteReplicatorRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeleteReplicatorRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PeerID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PeerID = append(m.PeerID[:0], dAtA[iNdEx:postIndex]...)
+			if m.PeerID == nil {
+				m.PeerID = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeleteReplicatorReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeleteReplicatorReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeleteReplicatorReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PeerID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PeerID = append(m.PeerID[:0], dAtA[iNdEx:postIndex]...)
+			if m.PeerID == nil {
+				m.PeerID = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetAllReplicatorRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetAllReplicatorRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetAllReplicatorRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetAllReplicatorReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetAllReplicatorReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetAllReplicatorReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Replicators", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Replicators = append(m.Replicators, &GetAllReplicatorReply_Replicators{})
+			if err := m.Replicators[len(m.Replicators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetAllReplicatorReply_Replicators) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Replicators: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Replicators: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Info == nil {
+				m.Info = &GetAllReplicatorReply_Replicators_Info{}
+			}
+			if err := m.Info.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Schemas", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Schemas = append(m.Schemas, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetAllReplicatorReply_Replicators_Info) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Info: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Info: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = append(m.Id[:0], dAtA[iNdEx:postIndex]...)
+			if m.Id == nil {
+				m.Id = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Addrs", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Addrs = append(m.Addrs[:0], dAtA[iNdEx:postIndex]...)
+			if m.Addrs == nil {
+				m.Addrs = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthApi
 			}
 			if (iNdEx + skippy) > l {

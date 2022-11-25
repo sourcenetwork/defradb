@@ -2,7 +2,7 @@ syntax = "proto3";
 package api.pb;
 
 message AddReplicatorRequest {
-    bytes collection = 1;
+    repeated string collections = 1;
     bytes addr = 2;
 }
 
@@ -10,8 +10,38 @@ message AddReplicatorReply {
     bytes peerID = 1;
 }
 
+message DeleteReplicatorRequest {
+    bytes peerID = 1;
+}
+
+message DeleteReplicatorReply {
+    bytes peerID = 1;
+}
+
+message GetAllReplicatorRequest {}
+
+message GetAllReplicatorReply {
+    message Replicators {
+        message Info {
+            bytes id = 1;
+            bytes addrs = 2;
+        }
+        Info info = 1;
+        repeated string schemas = 2;
+    }
+
+    repeated Replicators replicators = 1;
+   
+}
+
 // Service is the peer-to-peer network API for document sync
 service Service {
     // AddReplicator for this peer
     rpc AddReplicator(AddReplicatorRequest) returns (AddReplicatorReply) {}
+
+    // DeleteReplicator for this peer
+    rpc DeleteReplicator(DeleteReplicatorRequest) returns (DeleteReplicatorReply) {}
+
+    // DeleteReplicator for this peer
+    rpc GetAllReplicators(GetAllReplicatorRequest) returns (GetAllReplicatorReply) {}
 }

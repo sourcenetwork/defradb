@@ -15,6 +15,7 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
@@ -39,6 +40,10 @@ type DB interface {
 	Events() events.Events
 
 	PrintDump(ctx context.Context) error
+
+	AddReplicator(ctx context.Context, rep Replicator) error
+	DeleteReplicator(ctx context.Context, pid peer.ID) error
+	GetAllReplicators(ctx context.Context) ([]Replicator, error)
 }
 
 type GQLResult struct {

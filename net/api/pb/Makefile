@@ -4,7 +4,7 @@ GO = $(PB:.proto=.pb.go)
 all: $(GO)
 
 %.pb.go: %.proto
-	protoc -I=. -I=$(GOPATH)/src -I=$(GOPATH)/src/github.com/gogo/protobuf/protobuf --gogofaster_out=\
+	protoc -I=. --gogofaster_out=\
 	plugins=grpc:\
 	. $<
 
