@@ -41,14 +41,24 @@ func NewMap[K comparable, V any](kvs ...KV[K, V]) *Map[K, V] {
 	return m
 }
 
-// Delete removes the items from the map according to the given keys
-func (m *Map[K, V]) Delete(keys ...K) {
-	for _, key := range keys {
-		if v, ok := m.values[key]; ok {
-			m.list.delete(v.item)
-			delete(m.values, key)
-		}
+// Copy returns a copy of the original map
+func (m *Map[K, V]) Copy() *Map[K, V] {
+	newMap := NewMap[K, V]()
+	for kv := m.Start(); kv != nil; kv = kv.Next() {
+		newMap.Set(kv.key, kv.val)
 	}
+	return newMap
+}
+
+// Delete removes the items from the map according to the given keys
+func (m *Map[K, V]) Delete(key K) (V, bool) {
+	if kv, exists := m.values[key]; exists {
+		m.list.delete(kv.item)
+		delete(m.values, key)
+		return kv.val, true
+	}
+	var zero V
+	return zero, false
 }
 
 // DeleteIndex removes the items from the map at the given index
@@ -76,6 +86,24 @@ func (m *Map[K, V]) GetIndex(i int) (V, bool) {
 		return zero, false
 	}
 	return kv.val, true
+}
+
+// Keys returns the list of keys of the ordered map
+func (m *Map[K, V]) Keys() []K {
+	keys := []K{}
+	for kv := m.Start(); kv != nil; kv = kv.Next() {
+		keys = append(keys, kv.key)
+	}
+	return keys
+}
+
+// Values returns the list of values of the ordered map
+func (m *Map[K, V]) Values() []V {
+	values := []V{}
+	for kv := m.Start(); kv != nil; kv = kv.Next() {
+		values = append(values, kv.val)
+	}
+	return values
 }
 
 // Len returns the number of items in the map
