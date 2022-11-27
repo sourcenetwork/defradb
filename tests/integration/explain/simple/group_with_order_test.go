@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -19,14 +19,15 @@ import (
 func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with ordered parent groupBy.",
+
 		Query: `query @explain {
-					author(groupBy: [name], order: {name: DESC}) {
-						name
-						_group {
-							age
-						}
-					}
-				}`,
+			author(groupBy: [name], order: {name: DESC}) {
+				name
+				_group {
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -115,14 +116,15 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with groupBy string, and child order ascending.",
+
 		Query: `query @explain {
-					author(groupBy: [name]) {
-						name
-						_group (order: {age: ASC}){
-							age
-						}
-					}
-				}`,
+			author(groupBy: [name]) {
+				name
+				_group (order: {age: ASC}){
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -208,14 +210,15 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with parent groupBy order, and child order.",
+
 		Query: `query @explain {
-					author(groupBy: [name], order: {name: DESC}) {
-						name
-						_group (order: {age: ASC}){
-							age
-						}
-					}
-				}`,
+			author(groupBy: [name], order: {name: DESC}) {
+				name
+				_group (order: {age: ASC}){
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -309,20 +312,21 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with parent groupBy order, and child order.",
+
 		Query: `query @explain {
-					author(groupBy: [name]) {
-						name
-						_group (
-							groupBy: [verified],
-							order: {verified: ASC}
-						){
-							verified
-							_group (order: {age: DESC}) {
-								age
-							}
-						}
+			author(groupBy: [name]) {
+				name
+				_group (
+					groupBy: [verified],
+					order: {verified: ASC}
+				){
+					verified
+					_group (order: {age: DESC}) {
+						age
 					}
-				}`,
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors

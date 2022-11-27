@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package test_explain_simple
 
 import (
 	"testing"
@@ -22,18 +22,18 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 		Description: "Explain a query by providing the directive on wrong location (field).",
 
 		Query: `query {
-					users @explain {
-						_key
-						Name
-						Age
-					}
-				}`,
+			author @explain {
+				_key
+				name
+				age
+			}
+		}`,
 
 		Docs: map[int][]string{
-			0: {
+			2: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
@@ -48,21 +48,24 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 func TestExplainQuerySimple(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a query with no filter",
+
 		Query: `query @explain {
-					users {
-						_key
-						Name
-						Age
-					}
-				}`,
+			author {
+				_key
+				name
+				age
+			}
+		}`,
+
 		Docs: map[int][]string{
-			0: {
+			2: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
+
 		Results: []dataMap{
 			{
 				"explain": dataMap{
@@ -71,12 +74,12 @@ func TestExplainQuerySimple(t *testing.T) {
 							"filter": nil,
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "1",
-								"collectionName": "users",
+								"collectionID":   "3",
+								"collectionName": "author",
 								"spans": []dataMap{
 									{
-										"start": "/1",
-										"end":   "/2",
+										"start": "/3",
+										"end":   "/4",
 									},
 								},
 							},
@@ -93,20 +96,23 @@ func TestExplainQuerySimple(t *testing.T) {
 func TestExplainQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a query with alias, no filter",
+
 		Query: `query @explain {
-					users {
-						username: Name
-						age: Age
-					}
-				}`,
+			author {
+				username: name
+				age: age
+			}
+		}`,
+
 		Docs: map[int][]string{
-			0: {
+			2: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 			},
 		},
+
 		Results: []dataMap{
 			{
 				"explain": dataMap{
@@ -115,12 +121,12 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 							"filter": nil,
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "1",
-								"collectionName": "users",
+								"collectionID":   "3",
+								"collectionName": "author",
 								"spans": []dataMap{
 									{
-										"start": "/1",
-										"end":   "/2",
+										"start": "/3",
+										"end":   "/4",
 									},
 								},
 							},
@@ -137,24 +143,27 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a query with no filter, mutiple rows",
+
 		Query: `query @explain {
-					users {
-						Name
-						Age
-					}
-				}`,
+			author {
+				name
+				age
+			}
+		}`,
+
 		Docs: map[int][]string{
-			0: {
+			2: {
 				`{
-					"Name": "John",
-					"Age": 21
+					"name": "John",
+					"age": 21
 				}`,
 				`{
-					"Name": "Bob",
-					"Age": 27
+					"name": "Bob",
+					"age": 27
 				}`,
 			},
 		},
+
 		Results: []dataMap{
 			{
 				"explain": dataMap{
@@ -163,12 +172,12 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 							"filter": nil,
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "1",
-								"collectionName": "users",
+								"collectionID":   "3",
+								"collectionName": "author",
 								"spans": []dataMap{
 									{
-										"start": "/1",
-										"end":   "/2",
+										"start": "/3",
+										"end":   "/4",
 									},
 								},
 							},

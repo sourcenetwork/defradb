@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -22,12 +22,12 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 		Description: "Explain a one-to-one join relation query, with alias.",
 
 		Query: `query @explain {
-				author {
-					OnlyEmail: contact {
-						email
-					}
+			author {
+				OnlyEmail: contact {
+					email
 				}
-			}`,
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// articles
@@ -173,16 +173,16 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 		Description: "Explain two one-to-one join relation query.",
 
 		Query: `query @explain {
-				author {
-					OnlyEmail: contact {
-						email
-					}
-					contact {
-						cell
-						email
-					}
+			author {
+				OnlyEmail: contact {
+					email
 				}
-			}`,
+				contact {
+					cell
+					email
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// articles
@@ -371,17 +371,17 @@ func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
 		Description: "Explain query with two nested level deep one to one join.",
 
 		Query: `query @explain {
-					author {
-						_key
-						name
-						contact {
-							email
-							address {
-								city
-							}
-						}
+			author {
+				_key
+				name
+				contact {
+					email
+					address {
+						city
 					}
-				}`,
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			// articles

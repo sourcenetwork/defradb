@@ -25,7 +25,9 @@ import (
 
 	badger "github.com/dgraph-io/badger/v3"
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -114,6 +116,7 @@ type QueryTestCase struct {
 	Updates map[int]map[int][]string
 
 	Results []map[string]any
+
 	// The expected content of an expected error
 	ExpectedError string
 
@@ -127,6 +130,10 @@ type databaseInfo struct {
 	path      string
 	db        client.DB
 	rootstore ds.Batching
+}
+
+func (dbi databaseInfo) Name() string {
+	return dbi.name
 }
 
 func (dbi databaseInfo) Rootstore() ds.Batching {
@@ -158,10 +165,10 @@ For each test:
    if test does not exist in target and is new to this branch)
 - Run the test query and assert results (as per normal tests) using the current branch
 */
-var detectDbChanges bool
+var DetectDbChanges bool
+var SetupOnly bool
 
 var detectDbChangesCodeDir string
-var setupOnly bool
 var areDatabaseFormatChangesDocumented bool
 var previousTestCaseTestName string
 
@@ -179,9 +186,9 @@ func init() {
 
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
-	detectDbChanges = getBool(detectDbChangesValue)
+	DetectDbChanges = getBool(detectDbChangesValue)
 	mapStore = getBool(mapStoreValue)
-	setupOnly = getBool(setupOnlyValue)
+	SetupOnly = getBool(setupOnlyValue)
 
 	if !repositorySpecified {
 		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
@@ -192,14 +199,14 @@ func init() {
 	}
 
 	// default is to run against all
-	if !badgerInMemory && !badgerFile && !mapStore && !detectDbChanges {
+	if !badgerInMemory && !badgerFile && !mapStore && !DetectDbChanges {
 		badgerInMemory = true
 		// Testing against the file system is off by default
 		badgerFile = false
 		mapStore = true
 	}
 
-	if detectDbChanges {
+	if DetectDbChanges {
 		detectDbChangesInit(repositoryValue, targetBranchValue)
 	}
 }
@@ -214,7 +221,7 @@ func getBool(val string) bool {
 }
 
 func IsDetectingDbChanges() bool {
-	return detectDbChanges
+	return DetectDbChanges
 }
 
 // AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
@@ -296,7 +303,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 	}, nil
 }
 
-func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]databaseInfo, error) {
+func GetDatabases(ctx context.Context, t *testing.T, disableMapStore bool) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
@@ -315,7 +322,7 @@ func getDatabases(ctx context.Context, t *testing.T, test QueryTestCase) ([]data
 		databases = append(databases, badgerIMDatabase)
 	}
 
-	if !test.DisableMapStore && mapStore {
+	if !disableMapStore && mapStore {
 		mapDatabase, err := NewMapDB(ctx)
 		if err != nil {
 			return nil, err
@@ -332,30 +339,57 @@ func ExecuteQueryTestCase(
 	collectionNames []string,
 	test QueryTestCase,
 ) {
-	if detectDbChanges && detectDbChangesPreTestChecks(t, collectionNames, test) {
+	isTransactional := len(test.TransactionalQueries) > 0
+
+	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames, isTransactional) {
 		return
 	}
 
+	// Must have a non-empty request.
+	if !isTransactional && test.Query == "" {
+		assert.Fail(t, "Test must have a non-empty request.", test.Description)
+	}
+
 	ctx := context.Background()
-	dbs, err := getDatabases(ctx, t, test)
-	if assertError(t, test.Description, err, test.ExpectedError) {
+	dbs, err := GetDatabases(ctx, t, test.DisableMapStore)
+	if AssertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}
-	assert.NotEmpty(t, dbs)
+	require.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
 		log.Info(ctx, test.Description, logging.NewKV("Database", dbi.name))
 
-		if detectDbChanges {
-			if setupOnly {
-				setupDatabase(ctx, t, dbi, schema, collectionNames, test)
+		if DetectDbChanges {
+			if SetupOnly {
+				SetupDatabase(
+					ctx,
+					t,
+					dbi,
+					schema,
+					collectionNames,
+					test.Description,
+					test.ExpectedError,
+					test.Docs,
+					immutable.Some(test.Updates),
+				)
 				dbi.db.Close(ctx)
 				return
-			} else {
-				dbi = setupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 			}
+
+			dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
 		} else {
-			setupDatabase(ctx, t, dbi, schema, collectionNames, test)
+			SetupDatabase(
+				ctx,
+				t,
+				dbi,
+				schema,
+				collectionNames,
+				test.Description,
+				test.ExpectedError,
+				test.Docs,
+				immutable.Some(test.Updates),
+			)
 		}
 
 		// Create the transactions before executing and queries
@@ -368,7 +402,7 @@ func ExecuteQueryTestCase(
 
 			txn, err := dbi.db.NewTxn(ctx, false)
 			if err != nil {
-				if assertError(t, test.Description, err, tq.ExpectedError) {
+				if AssertError(t, test.Description, err, tq.ExpectedError) {
 					erroredQueries[i] = true
 				}
 			}
@@ -400,7 +434,7 @@ func ExecuteQueryTestCase(
 			txnIndexesCommited[tq.TransactionId] = struct{}{}
 
 			err := transactions[tq.TransactionId].Commit(ctx)
-			if assertError(t, test.Description, err, tq.ExpectedError) {
+			if AssertError(t, test.Description, err, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}
 		}
@@ -413,7 +447,7 @@ func ExecuteQueryTestCase(
 
 		// We run the core query after the explicitly transactional ones to permit tests to query
 		//  the commited result of the transactional queries
-		if test.Query != "" {
+		if !isTransactional || (isTransactional && test.Query != "") {
 			result := dbi.db.ExecQuery(ctx, test.Query)
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
@@ -491,7 +525,7 @@ func detectDbChangesInit(repository string, targetBranch string) {
 	badgerInMemory = false
 	mapStore = false
 
-	if setupOnly {
+	if SetupOnly {
 		// Only the primary test process should perform the setup below
 		return
 	}
@@ -545,10 +579,10 @@ func detectDbChangesInit(repository string, targetBranch string) {
 }
 
 // Returns true if test should pass early
-func detectDbChangesPreTestChecks(
+func DetectDbChangesPreTestChecks(
 	t *testing.T,
 	collectionNames []string,
-	test QueryTestCase,
+	isTransactional bool,
 ) bool {
 	if previousTestCaseTestName == t.Name() {
 		// The database format changer currently only supports running the first test
@@ -563,7 +597,7 @@ func detectDbChangesPreTestChecks(
 		return true
 	}
 
-	if len(test.TransactionalQueries) > 0 {
+	if isTransactional {
 		// Transactional queries are not yet supported by the database change
 		//  detector, so we skip the test
 		t.SkipNow()
@@ -578,39 +612,48 @@ func detectDbChangesPreTestChecks(
 	return false
 }
 
-func setupDatabase(
+func SetupDatabase(
 	ctx context.Context,
 	t *testing.T,
 	dbi databaseInfo,
 	schema string,
 	collectionNames []string,
-	test QueryTestCase,
+	description string,
+	expectedError string,
+	documents map[int][]string,
+	updates immutable.Option[map[int]map[int][]string],
 ) {
 	db := dbi.db
 	err := db.AddSchema(ctx, schema)
-	if assertError(t, test.Description, err, test.ExpectedError) {
+	if AssertError(t, description, err, expectedError) {
 		return
 	}
 
 	collections := []client.Collection{}
 	for _, collectionName := range collectionNames {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if assertError(t, test.Description, err, test.ExpectedError) {
+		if AssertError(t, description, err, expectedError) {
 			return
 		}
 		collections = append(collections, col)
 	}
 
 	// insert docs
-	for collectionIndex, docs := range test.Docs {
-		collectionUpdates, hasCollectionUpdates := test.Updates[collectionIndex]
+	for collectionIndex, docs := range documents {
+		hasCollectionUpdates := false
+		collectionUpdates := map[int][]string{}
+
+		if updates.HasValue() {
+			collectionUpdates, hasCollectionUpdates = updates.Value()[collectionIndex]
+		}
+
 		for documentIndex, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if assertError(t, test.Description, err, test.ExpectedError) {
+			if AssertError(t, description, err, expectedError) {
 				return
 			}
 			err = collections[collectionIndex].Save(ctx, doc)
-			if assertError(t, test.Description, err, test.ExpectedError) {
+			if AssertError(t, description, err, expectedError) {
 				return
 			}
 
@@ -620,11 +663,11 @@ func setupDatabase(
 				if hasDocumentUpdates {
 					for _, u := range documentUpdates {
 						err = doc.SetWithJSON([]byte(u))
-						if assertError(t, test.Description, err, test.ExpectedError) {
+						if AssertError(t, description, err, expectedError) {
 							return
 						}
 						err = collections[collectionIndex].Save(ctx, doc)
-						if assertError(t, test.Description, err, test.ExpectedError) {
+						if AssertError(t, description, err, expectedError) {
 							return
 						}
 					}
@@ -634,7 +677,7 @@ func setupDatabase(
 	}
 }
 
-func setupDatabaseUsingTargetBranch(
+func SetupDatabaseUsingTargetBranch(
 	ctx context.Context,
 	t *testing.T,
 	dbi databaseInfo,
@@ -719,7 +762,7 @@ func assertQueryResults(
 	expectedResults []map[string]any,
 	expectedError string,
 ) bool {
-	if assertErrors(t, description, result.Errors, expectedError) {
+	if AssertErrors(t, description, result.Errors, expectedError) {
 		return true
 	}
 
@@ -744,7 +787,7 @@ func assertQueryResults(
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-func assertError(t *testing.T, description string, err error, expectedError string) bool {
+func AssertError(t *testing.T, description string, err error, expectedError string) bool {
 	if err == nil {
 		return false
 	}
@@ -763,7 +806,7 @@ func assertError(t *testing.T, description string, err error, expectedError stri
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-func assertErrors(
+func AssertErrors(
 	t *testing.T,
 	description string,
 	errs []any,

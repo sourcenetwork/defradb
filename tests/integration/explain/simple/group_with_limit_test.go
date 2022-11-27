@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -22,51 +22,51 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 		Description: "Explain query with limit and offset on parent groupBy.",
 
 		Query: `query @explain {
-                     author(
-						groupBy: [name],
-						limit: 1,
-						offset: 1
-					) {
-						name
-						_group {
-							age
-						}
-                     }
-                 }`,
+			author(
+				groupBy: [name],
+				limit: 1,
+				offset: 1
+			) {
+				name
+				_group {
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 65
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 65
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": false,
-                     "age": 2
-                 }`,
+					"name": "John Grisham",
+ 					"verified": false,
+ 					"age": 2
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 50
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 50
+				}`,
 				`{
-                     "name": "Cornelia Funke",
-                     "verified": true,
-                     "age": 62
-                 }`,
+					"name": "Cornelia Funke",
+					"verified": true,
+					"age": 62
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 			},
 		},
 
@@ -120,47 +120,47 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 		Description: "Explain query with limit and offset on child groupBy.",
 
 		Query: `query @explain {
-                     author(groupBy: [name]) {
-						name
-						_group(limit: 2, offset: 1) {
-							age
-						}
-                     }
-                 }`,
+			author(groupBy: [name]) {
+				name
+				_group(limit: 2, offset: 1) {
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 65
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 65
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": false,
-                     "age": 2
-                 }`,
+					"name": "John Grisham",
+ 					"verified": false,
+ 					"age": 2
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 50
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 50
+				}`,
 				`{
-                     "name": "Cornelia Funke",
-                     "verified": true,
-                     "age": 62
-                 }`,
+					"name": "Cornelia Funke",
+					"verified": true,
+					"age": 62
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 			},
 		},
 
@@ -210,51 +210,52 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with limit on child groupBy (multiple rendered).",
+
 		Query: `query @explain {
-					author(groupBy: [name]) {
-						name
-						innerFirstGroup: _group(limit: 1, offset: 2) {
-							age
-						}
-						innerSecondGroup: _group(limit: 2) {
-							age
-						}
-					}
-				}`,
+			author(groupBy: [name]) {
+				name
+				innerFirstGroup: _group(limit: 1, offset: 2) {
+					age
+				}
+				innerSecondGroup: _group(limit: 2) {
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 65
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 65
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": false,
-                     "age": 2
-                 }`,
+					"name": "John Grisham",
+ 					"verified": false,
+ 					"age": 2
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 50
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 50
+				}`,
 				`{
-                     "name": "Cornelia Funke",
-                     "verified": true,
-                     "age": 62
-                 }`,
+					"name": "Cornelia Funke",
+					"verified": true,
+					"age": 62
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 			},
 		},
 
@@ -315,51 +316,52 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain query with limit on parent and child groupBy.",
+
 		Query: `query @explain {
-                     author(
-						groupBy: [name],
-						limit: 1
-					) {
-                         name
-                         _group(limit: 2) {
-                             age
-                         }
-                     }
-                 }`,
+			author(
+				groupBy: [name],
+				limit: 1
+			) {
+				name
+				_group(limit: 2) {
+					age
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 65
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 65
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": false,
-                     "age": 2
-                 }`,
+					"name": "John Grisham",
+ 					"verified": false,
+ 					"age": 2
+				}`,
 				`{
-                     "name": "John Grisham",
-                     "verified": true,
-                     "age": 50
-                 }`,
+					"name": "John Grisham",
+					"verified": true,
+					"age": 50
+				}`,
 				`{
-                     "name": "Cornelia Funke",
-                     "verified": true,
-                     "age": 62
-                 }`,
+					"name": "Cornelia Funke",
+					"verified": true,
+					"age": 62
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 				`{
-                     "name": "Twin",
-                     "verified": true,
-                     "age": 63
-                 }`,
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
 			},
 		},
 

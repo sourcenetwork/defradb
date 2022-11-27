@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -19,12 +19,13 @@ import (
 func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a groupBy with average on an field.",
+
 		Query: `query @explain {
-					author (groupBy: [name]) {
-						name
-						_avg(_group: {field: age})
-					}
-				}`,
+			author (groupBy: [name]) {
+				name
+				_avg(_group: {field: age})
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -136,16 +137,17 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a groupBy with average of inside the inner group (on a field).",
+
 		Query: `query @explain {
-					author (groupBy: [name]) {
-						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
-							verified
-							_avg(_group: {field: age})
-						}
-					}
-				}`,
+			author (groupBy: [name]) {
+				name
+				_avg(_group: {field: _avg})
+				_group(groupBy: [verified]) {
+					verified
+					_avg(_group: {field: age})
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -245,6 +247,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
+
 		Query: `query @explain {
 			author (groupBy: [name]) {
 				name
@@ -357,20 +360,21 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAverage(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
+
 		Query: `query @explain {
-					author (groupBy: [name]) {
-						name
-						_avg(_group: {field: _avg})
-						_group(groupBy: [verified]) {
-							verified
-								_avg(_group: {field: age})
-								_group (groupBy: [age]){
-									age
-									_avg(_group: {field: age})
-								}
+			author (groupBy: [name]) {
+				name
+				_avg(_group: {field: _avg})
+				_group(groupBy: [verified]) {
+					verified
+						_avg(_group: {field: age})
+						_group (groupBy: [age]){
+							age
+							_avg(_group: {field: age})
 						}
-					}
-				}`,
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors

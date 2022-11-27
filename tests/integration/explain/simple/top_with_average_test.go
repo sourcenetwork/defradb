@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -16,25 +16,29 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainTopLevelCountQuery(t *testing.T) {
+func TestExplainTopLevelAverageQuery(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain top-level count query.",
+		Description: "Explain top-level average query.",
 
 		Query: `query @explain {
-					_count(author: {})
-				}`,
+			_avg(
+				author: {
+					field: age
+				}
+			)
+		}`,
 
 		Docs: map[int][]string{
 			//authors
 			2: {
 				`{
 					"name": "John",
-					"verified": true,
-					"age": 21
+					"verified": false,
+					"age": 28
 				}`,
 				`{
 					"name": "Bob",
-					"verified": false,
+					"verified": true,
 					"age": 30
 				}`,
 			},
@@ -51,11 +55,30 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 									"scanNode": dataMap{
 										"collectionID":   "3",
 										"collectionName": "author",
-										"filter":         nil,
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
 										"spans": []dataMap{
 											{
-												"start": "/3",
 												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"sumNode": dataMap{
+								"sources": []dataMap{
+									{
+										"childFieldName": "age",
+										"fieldName":      "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
 											},
 										},
 									},
@@ -67,10 +90,17 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 								"sources": []dataMap{
 									{
 										"fieldName": "author",
-										"filter":    nil,
+										"filter": dataMap{
+											"age": dataMap{
+												"_ne": nil,
+											},
+										},
 									},
 								},
 							},
+						},
+						{
+							"averageNode": dataMap{},
 						},
 					},
 				},
@@ -81,21 +111,22 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
+func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain top-level count query with filter.",
+		Description: "Explain top-level average query with filter.",
 
 		Query: `query @explain {
-					_count(
-						author: {
-							filter: {
-								age: {
-									_gt: 26
-								}
-							}
+			_avg(
+				author: {
+					field: age,
+					filter: {
+						age: {
+							_gt: 26
 						}
-					)
-				}`,
+					}
+				}
+			)
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -112,7 +143,7 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 				}`,
 				`{
 					"name": "Alice",
-					"verified": true,
+					"verified": false,
 					"age": 32
 				}`,
 			},
@@ -131,13 +162,30 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 										"collectionName": "author",
 										"filter": dataMap{
 											"age": dataMap{
+												"_ne": nil,
 												"_gt": int(26),
 											},
 										},
 										"spans": []dataMap{
 											{
-												"start": "/3",
 												"end":   "/4",
+												"start": "/3",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							"sumNode": dataMap{
+								"sources": []dataMap{
+									{
+										"childFieldName": "age",
+										"fieldName":      "author",
+										"filter": dataMap{
+											"age": dataMap{
+												"_gt": int(26),
+												"_ne": nil,
 											},
 										},
 									},
@@ -152,11 +200,15 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),
+												"_ne": nil,
 											},
 										},
 									},
 								},
 							},
+						},
+						{
+							"averageNode": dataMap{},
 						},
 					},
 				},
