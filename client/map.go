@@ -70,11 +70,14 @@ func (m *Map[K, V]) Delete(key K) (V, bool) {
 }
 
 // DeleteIndex removes the items from the map at the given index
-func (m *Map[K, V]) DeleteIndex(i int) {
+func (m *Map[K, V]) DeleteIndex(i int) (V, bool) {
 	kv := m.list.deleteIndex(i)
 	if kv != nil {
 		delete(m.values, kv.key)
+		return kv.val, true
 	}
+	var zero V
+	return zero, false
 }
 
 // Get returns a map item
