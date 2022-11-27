@@ -41,6 +41,14 @@ func NewMap[K comparable, V any](kvs ...KV[K, V]) *Map[K, V] {
 	return m
 }
 
+// Clear removes all values form the ordered map
+func (m *Map[K, V]) Clear() {
+	for kv := m.Start(); kv != nil; kv = kv.Next() {
+		delete(m.values, kv.key)
+	}
+	m.list.Init()
+}
+
 // Copy returns a copy of the original map
 func (m *Map[K, V]) Copy() *Map[K, V] {
 	newMap := NewMap[K, V]()
@@ -127,14 +135,14 @@ func (m *Map[K, V]) Set(key K, val V) {
 }
 
 // From creates a new ordered map with items represented by the given keys.
-func (m *Map[K, V]) From(keys []K) *Map[K, V] {
-	newMap := NewMap[K, V]()
+func (m *Map[K, V]) From(keys []K) []*KV[K, V] {
+	kvList := make([]*KV[K, V], 0, len(keys))
 	for _, key := range keys {
-		if val, exists := m.Get(key); exists {
-			newMap.Set(key, val)
+		if kv, exists := m.values[key]; exists {
+			kvList = append(kvList, kv)
 		}
 	}
-	return newMap
+	return kvList
 }
 
 // Start returns the first item in the ordered map.

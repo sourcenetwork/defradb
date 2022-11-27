@@ -94,11 +94,9 @@ func TestMapFromListOfKeys(t *testing.T) {
 
 	m2 := m.From([]string{"test2", "test3"})
 
-	assert.Equal(t, 2, m2.Len())
-	v0, _ := m2.GetIndex(0)
-	assert.Equal(t, 2, v0)
-	v1, _ := m2.GetIndex(1)
-	assert.Equal(t, 3, v1)
+	assert.Equal(t, 2, len(m2))
+	assert.Equal(t, 2, m2[0].val)
+	assert.Equal(t, 3, m2[1].val)
 }
 
 func TestEmptyMapStartIsNil(t *testing.T) {
