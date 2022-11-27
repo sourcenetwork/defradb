@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMapOperations(t *testing.T) {
@@ -24,29 +23,49 @@ func TestMapOperations(t *testing.T) {
 		NewKV("test3", 3),
 		NewKV("test4", 4),
 	)
-	assert.Equal(t, 4, m.GetIndex(3))
-	assert.Equal(t, 1, m.Get("test1"))
-	assert.Equal(t, 3, m.Get("test3"))
+	v, exists := m.GetIndex(3)
+	assert.True(t, exists)
+	assert.Equal(t, 4, v)
+	v, exists = m.Get("test1")
+	assert.True(t, exists)
+	assert.Equal(t, 1, v)
+	v, exists = m.Get("test3")
+	assert.True(t, exists)
+	assert.Equal(t, 3, v)
 	assert.Equal(t, 4, m.Len())
 
 	m.Delete("test3")
-	assert.Equal(t, 4, m.GetIndex(2))
-	assert.Equal(t, 0, m.Get("test3"))
+	v, exists = m.GetIndex(2)
+	assert.True(t, exists)
+	assert.Equal(t, 4, v)
+	_, exists = m.Get("test3")
+	assert.False(t, exists)
 	assert.Equal(t, 3, m.Len())
 
-	m.Set(NewKV("test5", 5))
-	assert.Equal(t, 5, m.GetIndex(3))
-	assert.Equal(t, 5, m.Get("test5"))
+	m.Set("test5", 5)
+	v, exists = m.GetIndex(3)
+	assert.True(t, exists)
+	assert.Equal(t, 5, v)
+	v, exists = m.Get("test5")
+	assert.True(t, exists)
+	assert.Equal(t, 5, v)
 	assert.Equal(t, 4, m.Len())
 
-	m.Set(NewKV("test5", 6))
-	assert.Equal(t, 6, m.GetIndex(3))
-	assert.Equal(t, 6, m.Get("test5"))
+	m.Set("test5", 6)
+	v, exists = m.GetIndex(3)
+	assert.True(t, exists)
+	assert.Equal(t, 6, v)
+	v, exists = m.Get("test5")
+	assert.True(t, exists)
+	assert.Equal(t, 6, v)
 	assert.Equal(t, 4, m.Len())
 
 	m.DeleteIndex(0)
-	assert.Equal(t, 6, m.GetIndex(2))
-	assert.Equal(t, 0, m.Get("test1"))
+	v, exists = m.GetIndex(2)
+	assert.True(t, exists)
+	assert.Equal(t, 6, v)
+	_, exists = m.Get("test1")
+	assert.False(t, exists)
 	assert.Equal(t, 3, m.Len())
 }
 
@@ -58,20 +77,9 @@ func TestMapIteratorOperations(t *testing.T) {
 		NewKV("test4", 4),
 	)
 
-	iter := m.Iter()
-
 	i := 1
-	for {
-		hasValue, err := iter.Next()
-		require.NoError(t, err)
-		if !hasValue {
-			break
-		}
-		val, err := iter.Value()
-		require.NoError(t, err)
-		assert.Equal(t, i, val)
+	for kv := m.Start(); kv != nil; kv = kv.Next() {
+		assert.Equal(t, i, kv.val)
 		i++
 	}
-
-	iter.Reset()
 }

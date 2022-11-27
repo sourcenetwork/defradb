@@ -10,119 +10,181 @@
 
 package client
 
-import (
-	"github.com/sourcenetwork/immutable/enumerable"
-)
-
 // KV is a key value struct used as input to Map
 type KV[K comparable, V any] struct {
 	key K
 	val V
+
+	item *item[*KV[K, V]]
 }
 
 // NewKV returns a new KV set with key and value
 func NewKV[K comparable, V any](key K, val V) KV[K, V] {
-	return KV[K, V]{key, val}
+	return KV[K, V]{key, val, nil}
 }
 
 // Map implemnents an ordered map
 type Map[K comparable, V any] struct {
-	values map[K]V
-	order  []K
+	values map[K]*KV[K, V]
+	list   *list[*KV[K, V]]
 }
 
 // NewMap return a pointer to a new Map set with the given KVs
 func NewMap[K comparable, V any](kvs ...KV[K, V]) *Map[K, V] {
 	m := &Map[K, V]{
-		values: make(map[K]V),
-		order:  make([]K, 0, len(kvs)),
+		values: make(map[K]*KV[K, V]),
+		list:   newList[*KV[K, V]](),
 	}
-	m.Set(kvs...)
+	for _, kv := range kvs {
+		m.Set(kv.key, kv.val)
+	}
 	return m
 }
 
 // Delete removes the items from the map according to the given keys
 func (m *Map[K, V]) Delete(keys ...K) {
 	for _, key := range keys {
-		if _, ok := m.values[key]; ok {
+		if v, ok := m.values[key]; ok {
+			m.list.delete(v.item)
 			delete(m.values, key)
-			for i, k := range m.order {
-				if k == key {
-					copy(m.order[i:], m.order[i+1:])
-					var zero K
-					m.order[len(m.order)-1] = zero
-					m.order = m.order[:len(m.order)-1]
-				}
-			}
 		}
 	}
 }
 
 // DeleteIndex removes the items from the map at the given index
 func (m *Map[K, V]) DeleteIndex(i int) {
-	if _, ok := m.values[m.order[i]]; ok {
-		delete(m.values, m.order[i])
-		copy(m.order[i:], m.order[i+1:])
-		var zero K
-		m.order[len(m.order)-1] = zero
-		m.order = m.order[:len(m.order)-1]
+	kv := m.list.deleteIndex(i)
+	if kv != nil {
+		delete(m.values, kv.key)
 	}
 }
 
 // Get returns a map item
-func (m *Map[K, V]) Get(key K) V {
-	return m.values[key]
+func (m *Map[K, V]) Get(key K) (V, bool) {
+	if kv, exists := m.values[key]; exists {
+		return kv.val, true
+	}
+	var zero V
+	return zero, false
 }
 
 // GetIndex returns a map item at the given index
-func (m *Map[K, V]) GetIndex(i int) V {
-	return m.values[m.order[i]]
+func (m *Map[K, V]) GetIndex(i int) (V, bool) {
+	kv := m.list.index(i)
+	if kv == nil {
+		var zero V
+		return zero, false
+	}
+	return kv.val, true
 }
 
 // Len returns the number of items in the map
 func (m *Map[K, V]) Len() int {
-	return len(m.order)
+	return len(m.values)
 }
 
 // Set adds or modifies values in the map according to the given KVs
-func (m *Map[K, V]) Set(kvs ...KV[K, V]) {
-	for _, kv := range kvs {
-		if _, ok := m.values[kv.key]; !ok {
-			m.values[kv.key] = kv.val
-			m.order = append(m.order, kv.key)
-		} else {
-			m.values[kv.key] = kv.val
+func (m *Map[K, V]) Set(key K, val V) {
+	if kv, exists := m.values[key]; exists {
+		kv.val = val
+		return
+	}
+
+	kv := &KV[K, V]{
+		key: key,
+		val: val,
+	}
+	kv.item = m.list.append(kv)
+	m.values[key] = kv
+}
+
+func (m *Map[K, V]) Start() *KV[K, V] {
+	if m.list == nil || m.list.root.next == nil {
+		return nil
+	}
+	return m.list.root.next.value
+}
+
+func (kv *KV[K, V]) Next() *KV[K, V] {
+	if i := kv.item.next; kv.item.list != nil && i != &kv.item.list.root {
+		return i.value
+	}
+	return nil
+}
+
+type item[T any] struct {
+	prev, next *item[T]
+
+	list *list[T]
+
+	value T
+}
+type list[T any] struct {
+	root item[T]
+}
+
+func (l *list[T]) Init() *list[T] {
+	l.root.prev = &l.root
+	l.root.next = &l.root
+	return l
+}
+
+func newList[T any]() *list[T] {
+	return new(list[T]).Init()
+}
+
+func (l *list[T]) append(val T) *item[T] {
+	i := &item[T]{
+		value: val,
+		prev:  l.root.prev,
+		next:  l.root.prev.next,
+		list:  l,
+	}
+	i.prev.next = i
+	i.next.prev = i
+	return i
+}
+
+func (l *list[T]) delete(i *item[T]) {
+	i.prev.next = i.next
+	i.next.prev = i.prev
+	i.next = nil
+	i.prev = nil
+	i.list = nil
+}
+
+func (l *list[T]) deleteIndex(i int) T {
+	next := l.root.next
+	j := 0
+	for {
+		if next == &l.root {
+			return next.value
 		}
+		if i == j {
+			next.prev.next = next.next
+			next.next.prev = next.prev
+			next.next = nil
+			next.prev = nil
+			next.list = nil
+			return next.value
+		}
+		next = next.next
+		j++
 	}
 }
 
-type mapIterator[K comparable, V any] struct {
-	m            *Map[K, V]
-	currentIndex int
-	maxIndex     int
-}
-
-// New creates an `Enumerable` from the given Map.
-func (m *Map[K, V]) Iter() enumerable.Enumerable[V] {
-	return &mapIterator[K, V]{
-		m:            m,
-		currentIndex: -1,
-		maxIndex:     len(m.order) - 1,
+func (l *list[T]) index(i int) T {
+	next := l.root.next
+	var zero T
+	j := 0
+	for {
+		if next == &l.root {
+			return zero
+		}
+		if i == j {
+			return next.value
+		}
+		next = next.next
+		j++
 	}
-}
-
-func (mi *mapIterator[K, V]) Next() (bool, error) {
-	if mi.currentIndex == mi.maxIndex {
-		return false, nil
-	}
-	mi.currentIndex += 1
-	return true, nil
-}
-
-func (mi *mapIterator[K, V]) Value() (V, error) {
-	return mi.m.values[mi.m.order[mi.currentIndex]], nil
-}
-
-func (mi *mapIterator[K, V]) Reset() {
-	mi.currentIndex = -1
 }
