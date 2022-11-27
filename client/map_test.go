@@ -83,3 +83,44 @@ func TestMapIteratorOperations(t *testing.T) {
 		i++
 	}
 }
+
+func TestMapFromListOfKeys(t *testing.T) {
+	m := NewMap(
+		NewKV("test1", 1),
+		NewKV("test2", 2),
+		NewKV("test3", 3),
+		NewKV("test4", 4),
+	)
+
+	m2 := m.From([]string{"test2", "test3"})
+
+	assert.Equal(t, 2, m2.Len())
+	v0, _ := m2.GetIndex(0)
+	assert.Equal(t, 2, v0)
+	v1, _ := m2.GetIndex(1)
+	assert.Equal(t, 3, v1)
+}
+
+func TestEmptyMapStartIsNil(t *testing.T) {
+	m := NewMap[string, int]()
+
+	assert.Nil(t, m.Start())
+}
+
+func TestMapGetIndexOutOfBounds(t *testing.T) {
+	m := NewMap(
+		NewKV("test1", 1),
+	)
+	_, exists := m.GetIndex(1)
+	assert.False(t, exists)
+}
+
+func TestMaDeleteIndexOutOfBounds(t *testing.T) {
+	m := NewMap(
+		NewKV("test1", 1),
+	)
+
+	m.DeleteIndex(1)
+
+	assert.Equal(t, 1, m.Len())
+}

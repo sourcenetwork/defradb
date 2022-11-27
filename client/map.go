@@ -98,13 +98,24 @@ func (m *Map[K, V]) Set(key K, val V) {
 	m.values[key] = kv
 }
 
-func (m *Map[K, V]) Start() *KV[K, V] {
-	if m.list == nil || m.list.root.next == nil {
-		return nil
+// From creates a new ordered map with items represented by the given keys.
+func (m *Map[K, V]) From(keys []K) *Map[K, V] {
+	newMap := NewMap[K, V]()
+	for _, key := range keys {
+		if val, exists := m.Get(key); exists {
+			newMap.Set(key, val)
+		}
 	}
+	return newMap
+}
+
+// Start returns the first item in the ordered map.
+func (m *Map[K, V]) Start() *KV[K, V] {
 	return m.list.root.next.value
 }
 
+// Next returns the following item in the ordered map.
+// If the next item is the root, we return nil.
 func (kv *KV[K, V]) Next() *KV[K, V] {
 	if i := kv.item.next; kv.item.list != nil && i != &kv.item.list.root {
 		return i.value
