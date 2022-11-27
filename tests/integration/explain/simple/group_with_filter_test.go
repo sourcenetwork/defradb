@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -19,17 +19,18 @@ import (
 func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a grouping with filter on parent.",
+
 		Query: `query @explain {
-                     author (
-                         groupBy: [age],
-                         filter: {age: {_gt: 63}}
-                     ) {
-                         age
-                         _group {
-                             name
-                         }
-                     }
-                 }`,
+			author (
+				groupBy: [age],
+				filter: {age: {_gt: 63}}
+			) {
+				age
+				_group {
+					name
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors
@@ -98,14 +99,15 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Explain a grouping with filter on the inner group selection.",
+
 		Query: `query @explain {
-                     author (groupBy: [age]) {
-                         age
-                         _group(filter: {age: {_gt: 63}}) {
-                             name
-                         }
-                     }
-                 }`,
+			author (groupBy: [age]) {
+				age
+				_group(filter: {age: {_gt: 63}}) {
+					name
+				}
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//authors

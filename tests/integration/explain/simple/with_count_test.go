@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain
+package test_explain_simple
 
 import (
 	"testing"
@@ -22,11 +22,11 @@ func TestExplainQueryOneToManyWithACount(t *testing.T) {
 		Description: "Explain one one-to-many relation query with count.",
 
 		Query: `query @explain {
-				author {
-					name
-					numberOfBooks: _count(books: {})
-				}
-			}`,
+			author {
+				name
+				numberOfBooks: _count(books: {})
+			}
+		}`,
 
 		Docs: map[int][]string{
 			//articles

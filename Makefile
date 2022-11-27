@@ -144,6 +144,11 @@ endif
 test:
 	gotestsum --format pkgname -- ./... -race -shuffle=on
 
+# Only build the tests (don't execute them).
+.PHONY: test\:build
+test\:build:
+	gotestsum --format pkgname -- ./... -race -shuffle=on -run=nope
+
 .PHONY: test\:ci
 test\:ci:
 	DEFRA_BADGER_MEMORY=true DEFRA_BADGER_FILE=true $(MAKE) test:names
