@@ -89,11 +89,11 @@ func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 
 func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) item {
 	result := item{}
-	// We only care about the last version so we stop iterating right away yu returning false.
 	d.values.Descend(item{key: key.String(), version: version}, func(item item) bool {
 		if key.String() == item.key && !item.isDeleted {
 			result = item
 		}
+		// We only care about the last version so we stop iterating right away by returning false.
 		return false
 	})
 	return result
@@ -184,7 +184,7 @@ func (d *Datastore) compressor(ctx context.Context) {
 			return
 		case <-d.compress:
 			d.smash(ctx)
-		case <-time.After(1 * time.Minute):
+		case <-time.After(30 * time.Minute):
 			now := time.Now()
 			if now.After(nextCompression) {
 				d.smash(ctx)

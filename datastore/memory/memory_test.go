@@ -356,13 +356,13 @@ func TestCompressorBatching(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	wg := &sync.WaitGroup{}
-	for j := 1; j <= 10; j++ {
+	for j := 0; j < 10; j++ {
 		for i := 1; i <= 1000; i++ {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, num int) {
 				_ = s.Put(ctx, ds.NewKey("test"), []byte(fmt.Sprintf("%d", num)))
 				wg.Done()
-			}(wg, i*j)
+			}(wg, i+(j*1000))
 		}
 		wg.Wait()
 	}
