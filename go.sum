@@ -515,9 +515,6 @@ github.com/ipfs/go-ipfs-routing v0.0.1/go.mod h1:k76lf20iKFxQTjcJokbPM9iBXVXVZhc
 github.com/ipfs/go-ipfs-routing v0.1.0/go.mod h1:hYoUkJLyAUKhF58tysKpids8RNDPO42BVMgK5dNsoqY=
 github.com/ipfs/go-ipfs-routing v0.2.1 h1:E+whHWhJkdN9YeoHZNj5itzc+OR292AJ2uE9FFiW0BY=
 github.com/ipfs/go-ipfs-routing v0.2.1/go.mod h1:xiNNiwgjmLqPS1cimvAw6EyB9rkVDbiocA4yY+wRNLM=
-github.com/ipfs/go-ipfs-util v0.0.1/go.mod h1:spsl5z8KUnrve+73pOhSVZND1SIxPW5RyBCNzQxlJBc=
-github.com/ipfs/go-ipfs-util v0.0.2 h1:59Sswnk1MFaiq+VcaknX7aYEyGyGDAA73ilhEK2POp8=
-github.com/ipfs/go-ipfs-util v0.0.2/go.mod h1:CbPtkWJzjLdEcezDns2XYaehFVNXG9zrdrtMecczcsQ=
 github.com/ipfs/go-ipld-cbor v0.0.2/go.mod h1:wTBtrQZA3SoFKMVkp6cn6HMRteIB1VsmHA0AQFOn7Nc=
 github.com/ipfs/go-ipld-cbor v0.0.3/go.mod h1:wTBtrQZA3SoFKMVkp6cn6HMRteIB1VsmHA0AQFOn7Nc=
 github.com/ipfs/go-ipld-cbor v0.0.4/go.mod h1:BkCduEx3XBCO6t2Sfo5BaHzuok7hbhdMm9Oh8B2Ftq4=
@@ -1279,6 +1276,8 @@ github.com/textileio/go-libp2p-pubsub-rpc v0.0.9 h1:yA58Giu0WYxS5+ixDTKDktMKcwWh
 github.com/textileio/go-libp2p-pubsub-rpc v0.0.9/go.mod h1:3rOV6TxePSwADKpnwXBKpTjAA4QyjZBus13xc6VCtSw=
 github.com/textileio/go-log/v2 v2.1.3-gke-2 h1:YkMA5ua0Cf/X6CkbexInsoJ/HdaHQBlgiv9Yy9hddNM=
 github.com/textileio/go-log/v2 v2.1.3-gke-2/go.mod h1:DwACkjFS3kjZZR/4Spx3aPfSsciyslwUe5bxV8CEU2w=
+github.com/tinygo-pkg/go-ipfs-util v0.0.3-0.20221204112252-4145c4c5cfe5 h1:hH7vGtuuxnUyHvEsxDTpzm00ZsKDTU/7LFEEakZ+kz4=
+github.com/tinygo-pkg/go-ipfs-util v0.0.3-0.20221204112252-4145c4c5cfe5/go.mod h1:rHi3dz+KpKr2onTqIRiu+UdJoDt8ejAp6fIGaZClhiw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVMw=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=

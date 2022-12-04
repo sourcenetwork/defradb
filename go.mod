@@ -194,3 +194,6 @@ require (
 
 // SourceNetwork fork og graphql-go
 replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7
+
+// tinygo forks
+replace github.com/ipfs/go-ipfs-util => github.com/tinygo-pkg/go-ipfs-util v0.0.3-0.20221204112252-4145c4c5cfe5
