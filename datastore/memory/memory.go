@@ -206,12 +206,10 @@ func (d *Datastore) purgeOldVersions(ctx context.Context) {
 			return
 		case <-d.purge:
 			d.executePurge(ctx)
-		case <-time.After(30 * time.Minute):
+		case <-time.After(time.Until(nextCompression)):
+			d.executePurge(ctx)
 			now := time.Now()
-			if now.After(nextCompression) {
-				d.executePurge(ctx)
-				nextCompression = time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-			}
+			nextCompression = time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
 		}
 	}
 }
