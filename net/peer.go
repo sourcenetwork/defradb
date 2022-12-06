@@ -359,6 +359,8 @@ func (p *Peer) AddReplicator(
 		return pid, errors.Wrap("failed to persist replicator", err)
 	}
 
+	wg := &sync.WaitGroup{}
+
 	for _, col := range collections {
 		// create read only txn and assign to col
 		txn, err := p.db.NewTxn(ctx, true)
@@ -385,11 +387,13 @@ func (p *Peer) AddReplicator(
 		// get all keys and push
 		// -> get head
 		// -> pushLog(head.block)
-		go func(collection client.Collection) {
+		wg.Add(1)
+		go func(collection client.Collection, keysCh <-chan client.DocKeysResult, wg *sync.WaitGroup) {
+			defer wg.Done()
 			defer txn.Discard(ctx)
 			for key := range keysCh {
 				if key.Err != nil {
-					log.ErrorE(p.ctx, "Key channel error", key.Err)
+					log.ErrorE(ctx, "Key channel error", key.Err)
 					continue
 				}
 				dockey := core.DataStoreKeyFromDocKey(key.Key)
@@ -400,7 +404,7 @@ func (p *Peer) AddReplicator(
 				cids, priority, err := headset.List(ctx)
 				if err != nil {
 					log.ErrorE(
-						p.ctx,
+						ctx,
 						"Failed to get heads",
 						err,
 						logging.NewKV("DocKey", key.Key.String()),
@@ -412,7 +416,7 @@ func (p *Peer) AddReplicator(
 				for _, c := range cids {
 					blk, err := txn.DAGstore().Get(ctx, c)
 					if err != nil {
-						log.ErrorE(p.ctx, "Failed to get block", err,
+						log.ErrorE(ctx, "Failed to get block", err,
 							logging.NewKV("CID", c),
 							logging.NewKV("PID", pid),
 							logging.NewKV("Collection", collection.Name()))
@@ -422,7 +426,7 @@ func (p *Peer) AddReplicator(
 					// @todo: remove encode/decode loop for core.Log data
 					nd, err := dag.DecodeProtobuf(blk.RawData())
 					if err != nil {
-						log.ErrorE(p.ctx, "Failed to decode protobuf", err, logging.NewKV("CID", c))
+						log.ErrorE(ctx, "Failed to decode protobuf", err, logging.NewKV("CID", c))
 						continue
 					}
 
@@ -436,7 +440,7 @@ func (p *Peer) AddReplicator(
 					if err := p.server.pushLog(ctx, evt, pid); err != nil {
 						fmt.Println(evt)
 						log.ErrorE(
-							p.ctx,
+							ctx,
 							"Failed to replicate log",
 							err,
 							logging.NewKV("CID", c),
@@ -445,9 +449,9 @@ func (p *Peer) AddReplicator(
 					}
 				}
 			}
-		}(col)
+		}(col, keysCh, wg)
 	}
-
+	wg.Wait()
 	return pid, nil
 }
 
