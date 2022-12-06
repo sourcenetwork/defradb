@@ -693,3 +693,36 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 	err = tx.Commit(ctx)
 	assert.ErrorIs(t, err, ErrTxnConflict)
 }
+
+func TestTxnWithConflictAfterGet(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	tx := s.newTransaction(false)
+
+	tx2 := s.newTransaction(false)
+
+	_, err := tx.Get(ctx, testKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx2.Put(ctx, testKey2, testValue3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx2.Commit(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = tx.Commit(ctx)
+	assert.ErrorIs(t, err, ErrTxnConflict)
+}

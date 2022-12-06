@@ -51,6 +51,8 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 	})
 	if result.key == "" {
 		result = t.ds.get(ctx, key, t.getDSVersion())
+		result.isGet = true
+		t.ops.Set(result)
 	}
 	return result
 }
@@ -132,7 +134,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 		for iterOpsHasValue && iterOps.Item().key <= item.key {
 			if iterOps.Item().key == item.key {
 				item = iterOps.Item()
-			} else if !iterOps.Item().isDeleted {
+			} else if !iterOps.Item().isDeleted && !iterOps.Item().isGet {
 				re = append(re, setEntry(iterOps.Item().key, iterOps.Item().val, q))
 			}
 			iterOpsHasValue = iterOps.Next()
@@ -149,7 +151,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 
 	// add the remaining ops
 	for iterOpsHasValue {
-		if !iterOps.Item().isDeleted {
+		if !iterOps.Item().isDeleted && !iterOps.Item().isGet {
 			re = append(re, setEntry(iterOps.Item().key, iterOps.Item().val, q))
 		}
 		iterOpsHasValue = iterOps.Next()
@@ -209,12 +211,16 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return ErrReadOnlyTxn
 	}
 
-	iter := t.ops.Iter()
 	if err := t.checkForConflicts(ctx); err != nil {
+		t.Discard(ctx)
 		return err
 	}
+	iter := t.ops.Iter()
 	v := t.ds.nextVersion()
 	for iter.Next() {
+		if iter.Item().isGet {
+			continue
+		}
 		item := iter.Item()
 		item.version = v
 		t.ds.values.Set(item)
@@ -232,6 +238,7 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 		return nil
 	}
 	iter := t.ops.Iter()
+	defer iter.Release()
 	for iter.Next() {
 		expectedItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.getDSVersion())
 		latestItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.ds.getVersion())
@@ -239,6 +246,5 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 			return ErrTxnConflict
 		}
 	}
-	iter.Release()
 	return nil
 }

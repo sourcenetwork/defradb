@@ -25,6 +25,7 @@ type dsItem struct {
 	version   uint64
 	val       []byte
 	isDeleted bool
+	isGet     bool
 }
 
 func byKeys(a, b dsItem) bool {
