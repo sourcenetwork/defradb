@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
@@ -41,7 +40,6 @@ for the p2p data sync system.`,
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(col, args)
 		peerAddr, err := ma.NewMultiaddr(args[0])
 		if err != nil {
 			return errors.Wrap("could not parse peer address", err)
@@ -93,6 +91,7 @@ for the p2p data sync system.`,
 func init() {
 	replicatorCmd.AddCommand(addReplicatorCmd)
 	addReplicatorCmd.Flags().BoolVarP(&fullRep, "full", "f", false, "Set the replicator to act on all collections")
-	addReplicatorCmd.Flags().StringArrayVarP(&col, "collection", "c", []string{}, "Define the collection for the replicator")
+	addReplicatorCmd.Flags().StringArrayVarP(&col, "collection", "c",
+		[]string{}, "Define the collection for the replicator")
 	addReplicatorCmd.MarkFlagsMutuallyExclusive("full", "collection")
 }

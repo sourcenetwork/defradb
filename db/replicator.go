@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
@@ -24,10 +25,10 @@ import (
 
 func (db *db) AddReplicator(ctx context.Context, rep client.Replicator) error {
 	existingRep, err := db.getReplicator(ctx, rep.Info)
-	if err != nil && err != ds.ErrNotFound {
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
-	if err != ds.ErrNotFound {
+	if !errors.Is(err, ds.ErrNotFound) {
 		newSchemas := []string{}
 		for _, newSchema := range rep.Schemas {
 			isNew := true

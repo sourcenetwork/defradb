@@ -16,8 +16,9 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestAddReplicator(t *testing.T) {
@@ -26,6 +27,7 @@ func TestAddReplicator(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	if err != nil {
 		t.Error(err)
@@ -48,6 +50,7 @@ func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	if err != nil {
 		t.Error(err)
@@ -109,6 +112,7 @@ func TestGetAllReplicatorsWith2AddionnsOnSamePeer(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	if err != nil {
 		t.Error(err)
@@ -155,6 +159,7 @@ func TestDeleteReplicatorWith2Addition(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
 	if err != nil {
 		t.Error(err)

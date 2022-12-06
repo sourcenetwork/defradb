@@ -117,7 +117,10 @@ func NewPeer(
 		return nil, err
 	}
 
-	p.loadReplicator(p.ctx)
+	err = p.loadReplicator(p.ctx)
+	if err != nil {
+		return nil, err
+	}
 	p.setupBlockService()
 	p.setupDAGService()
 
@@ -438,7 +441,6 @@ func (p *Peer) AddReplicator(
 						Priority: priority,
 					}
 					if err := p.server.pushLog(ctx, evt, pid); err != nil {
-						fmt.Println(evt)
 						log.ErrorE(
 							ctx,
 							"Failed to replicate log",
