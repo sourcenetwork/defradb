@@ -15,4 +15,5 @@ import "github.com/sourcenetwork/defradb/errors"
 var (
 	ErrReadOnlyTxn  = errors.New("read only transaction")
 	ErrTxnDiscarded = errors.New("transaction discarded")
+	ErrTxnConflict  = errors.New("transaction conflict")
 )

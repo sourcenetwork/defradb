@@ -11,6 +11,7 @@
 package memory
 
 import (
+	"bytes"
 	"context"
 	"sync/atomic"
 
@@ -21,30 +22,35 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	ops       *btree.BTreeG[item]
-	ds        *Datastore
-	version   *uint64
-	readOnly  bool
-	discarded bool
+	ops        *btree.BTreeG[dsItem]
+	ds         *Datastore
+	dsVersion  *uint64
+	txnVersion *uint64
+	readOnly   bool
+	discarded  bool
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
 
-func (t *basicTxn) getVersion() uint64 {
-	return atomic.LoadUint64(t.version)
+func (t *basicTxn) getDSVersion() uint64 {
+	return atomic.LoadUint64(t.dsVersion)
 }
 
-func (t *basicTxn) get(ctx context.Context, key ds.Key, version uint64) item {
-	result := item{}
-	// We only care about the last version so we stop iterating right away by returning false.
-	t.ops.Descend(item{key: key.String(), version: version}, func(item item) bool {
+func (t *basicTxn) getTxnVersion() uint64 {
+	return atomic.LoadUint64(t.txnVersion)
+}
+
+func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
+	result := dsItem{}
+	t.ops.Descend(dsItem{key: key.String(), version: t.getTxnVersion()}, func(item dsItem) bool {
 		if key.String() == item.key {
 			result = item
 		}
+		// We only care about the last version so we stop iterating right away by returning false.
 		return false
 	})
 	if result.key == "" {
-		result = t.ds.get(ctx, key, t.getVersion())
+		result = t.ds.get(ctx, key, t.getDSVersion())
 	}
 	return result
 }
@@ -54,7 +60,7 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	if t.discarded {
 		return nil, ErrTxnDiscarded
 	}
-	result := t.get(ctx, key, t.getVersion())
+	result := t.get(ctx, key)
 	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
 	}
@@ -66,7 +72,7 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 	if t.discarded {
 		return 0, ErrTxnDiscarded
 	}
-	result := t.get(ctx, key, t.getVersion())
+	result := t.get(ctx, key)
 	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
 	}
@@ -78,7 +84,7 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 	if t.discarded {
 		return false, ErrTxnDiscarded
 	}
-	result := t.get(ctx, key, t.getVersion())
+	result := t.get(ctx, key)
 	if result.key == "" || result.isDeleted {
 		return false, nil
 	}
@@ -93,7 +99,7 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
-	t.ops.Set(item{key: key.String(), version: t.getVersion(), val: value})
+	t.ops.Set(dsItem{key: key.String(), version: t.getTxnVersion(), val: value})
 
 	return nil
 }
@@ -176,7 +182,12 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 		return ErrReadOnlyTxn
 	}
 
-	t.ops.Set(item{key: key.String(), version: t.getVersion(), isDeleted: true})
+	item := t.get(ctx, key)
+	if item.key == "" || item.isDeleted {
+		return ds.ErrNotFound
+	}
+
+	t.ops.Set(dsItem{key: key.String(), version: t.getTxnVersion(), isDeleted: true})
 	return nil
 }
 
@@ -199,13 +210,35 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 	}
 
 	iter := t.ops.Iter()
+	if err := t.checkForConflicts(ctx); err != nil {
+		return err
+	}
+	v := t.ds.nextVersion()
 	for iter.Next() {
-		t.ds.values.Set(iter.Item())
+		item := iter.Item()
+		item.version = v
+		t.ds.values.Set(item)
 	}
 
 	iter.Release()
 
 	t.Discard(ctx)
 
+	return nil
+}
+
+func (t *basicTxn) checkForConflicts(ctx context.Context) error {
+	if t.getDSVersion() == t.ds.getVersion() {
+		return nil
+	}
+	iter := t.ops.Iter()
+	for iter.Next() {
+		expectedItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.getDSVersion())
+		latestItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.ds.getVersion())
+		if latestItem.isDeleted || !bytes.Equal(latestItem.val, expectedItem.val) {
+			return ErrTxnConflict
+		}
+	}
+	iter.Release()
 	return nil
 }

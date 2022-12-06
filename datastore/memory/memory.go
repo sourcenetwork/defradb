@@ -20,14 +20,14 @@ import (
 	"github.com/tidwall/btree"
 )
 
-type item struct {
+type dsItem struct {
 	key       string
 	version   uint64
 	val       []byte
 	isDeleted bool
 }
 
-func byKeys(a, b item) bool {
+func byKeys(a, b dsItem) bool {
 	switch {
 	case a.key < b.key:
 		return true
@@ -41,7 +41,7 @@ func byKeys(a, b item) bool {
 // Datastore uses a btree for internal storage.
 type Datastore struct {
 	version *uint64
-	values  *btree.BTreeG[item]
+	values  *btree.BTreeG[dsItem]
 	purge   chan struct{}
 	close   chan struct{}
 }
@@ -91,14 +91,14 @@ func (d *Datastore) Close() error {
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	d.values.Set(item{key: key.String(), version: d.nextVersion(), isDeleted: true})
+	d.values.Set(dsItem{key: key.String(), version: d.nextVersion(), isDeleted: true})
 	return nil
 }
 
-func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) item {
-	result := item{}
-	d.values.Descend(item{key: key.String(), version: version}, func(item item) bool {
-		if key.String() == item.key && !item.isDeleted {
+func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) dsItem {
+	result := dsItem{}
+	d.values.Descend(dsItem{key: key.String(), version: version}, func(item dsItem) bool {
+		if key.String() == item.key {
 			result = item
 		}
 		// We only care about the last version so we stop iterating right away by returning false.
@@ -110,7 +110,7 @@ func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) item {
 // Get implements ds.Get
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	result := d.get(ctx, key, d.getVersion())
-	if result.key == "" {
+	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
 	}
 	return result.val, nil
@@ -119,7 +119,7 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 // GetSize implements ds.GetSize
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	result := d.get(ctx, key, d.getVersion())
-	if result.key == "" {
+	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
 	}
 	return len(result.val), nil
@@ -128,7 +128,7 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 // Has implements ds.Has
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	result := d.get(ctx, key, d.getVersion())
-	return result.key != "", nil
+	return result.key != "" && !result.isDeleted, nil
 }
 
 // NewTransaction return a ds.Txn datastore based on Datastore
@@ -138,18 +138,20 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 
 // newTransaction returns a ds.Txn datastore
 func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
-	v := atomic.AddUint64(d.version, 1)
+	v := d.getVersion()
+	txnV := v + 1
 	return &basicTxn{
-		ops:      btree.NewBTreeG(byKeys),
-		ds:       d,
-		readOnly: readOnly,
-		version:  &v,
+		ops:        btree.NewBTreeG(byKeys),
+		ds:         d,
+		readOnly:   readOnly,
+		dsVersion:  &v,
+		txnVersion: &txnV,
 	}
 }
 
 // Put implements ds.Put
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	d.values.Set(item{key: key.String(), version: d.nextVersion(), val: value})
+	d.values.Set(dsItem{key: key.String(), version: d.nextVersion(), val: value})
 	return nil
 }
 
@@ -219,7 +221,7 @@ func (d *Datastore) executePurge(ctx context.Context) {
 	v := d.getVersion()
 
 	for {
-		itemsToDelete := []item{}
+		itemsToDelete := []dsItem{}
 		iter := d.values.Iter()
 		iter.Next()
 		item := iter.Item()

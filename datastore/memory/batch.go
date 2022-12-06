@@ -58,9 +58,9 @@ func (b *basicBatch) Commit(ctx context.Context) error {
 	v := atomic.AddUint64(b.ds.version, 1)
 	for k, op := range b.ops {
 		if op.delete {
-			b.ds.values.Set(item{key: k.String(), version: v, isDeleted: true})
+			b.ds.values.Set(dsItem{key: k.String(), version: v, isDeleted: true})
 		} else {
-			b.ds.values.Set(item{key: k.String(), version: v, val: op.value})
+			b.ds.values.Set(dsItem{key: k.String(), version: v, val: op.value})
 		}
 	}
 

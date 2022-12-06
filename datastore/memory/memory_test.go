@@ -45,13 +45,13 @@ var (
 func newLoadedDatastore(ctx context.Context) *Datastore {
 	s := NewDatastore(ctx)
 	v := s.nextVersion()
-	s.values.Set(item{
+	s.values.Set(dsItem{
 		key:     testKey1.String(),
 		val:     testValue1,
 		version: v,
 	})
-	v++
-	s.values.Set(item{
+	v = s.nextVersion()
+	s.values.Set(dsItem{
 		key:     testKey2.String(),
 		val:     testValue2,
 		version: v,
