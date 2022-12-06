@@ -30,7 +30,7 @@ var ignorePaths = []string{
 	"docs",
 	"build",
 	".",
-	".git",
+	".git", 
 	".github",
 
 	// specific packages
