@@ -23,7 +23,7 @@ import (
 func TestNewBatch(t *testing.T) {
 	ctx := context.Background()
 	s := NewDatastore(ctx)
-	b := newBasicBatch(s)
+	b := s.newBasicBatch()
 	assert.NotNil(t, b)
 }
 

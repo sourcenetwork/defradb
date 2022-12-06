@@ -40,10 +40,10 @@ func byKeys(a, b item) bool {
 
 // Datastore uses a btree for internal storage.
 type Datastore struct {
-	version  *uint64
-	values   *btree.BTreeG[item]
-	compress chan struct{}
-	close    chan struct{}
+	version *uint64
+	values  *btree.BTreeG[item]
+	purge   chan struct{}
+	close   chan struct{}
 }
 
 var _ ds.Datastore = (*Datastore)(nil)
@@ -54,12 +54,12 @@ var _ ds.TxnFeature = (*Datastore)(nil)
 func NewDatastore(ctx context.Context) *Datastore {
 	v := uint64(0)
 	d := &Datastore{
-		values:   btree.NewBTreeG(byKeys),
-		version:  &v,
-		compress: make(chan struct{}),
-		close:    make(chan struct{}),
+		values:  btree.NewBTreeG(byKeys),
+		version: &v,
+		purge:   make(chan struct{}),
+		close:   make(chan struct{}),
 	}
-	go d.compressor(ctx)
+	go d.purgeOldVersions(ctx)
 	return d
 }
 
@@ -73,7 +73,15 @@ func (d *Datastore) nextVersion() uint64 {
 
 // Batch return a ds.Batch datastore based on Datastore
 func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
-	return newBasicBatch(d), nil
+	return d.newBasicBatch(), nil
+}
+
+// newBasicBatch returns a ds.Batch datastore
+func (d *Datastore) newBasicBatch() ds.Batch {
+	return &basicBatch{
+		ops: make(map[ds.Key]op),
+		ds:  d,
+	}
 }
 
 func (d *Datastore) Close() error {
@@ -83,7 +91,7 @@ func (d *Datastore) Close() error {
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	d.values.Set(item{key: key.String(), version: d.getVersion(), isDeleted: true})
+	d.values.Set(item{key: key.String(), version: d.nextVersion(), isDeleted: true})
 	return nil
 }
 
@@ -125,7 +133,18 @@ func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error
 
 // NewTransaction return a ds.Txn datastore based on Datastore
 func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
-	return newTransaction(d, readOnly), nil
+	return d.newTransaction(readOnly), nil
+}
+
+// newTransaction returns a ds.Txn datastore
+func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
+	v := atomic.AddUint64(d.version, 1)
+	return &basicTxn{
+		ops:      btree.NewBTreeG(byKeys),
+		ds:       d,
+		readOnly: readOnly,
+		version:  &v,
+	}
 }
 
 // Put implements ds.Put
@@ -173,7 +192,8 @@ func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 	return nil
 }
 
-func (d *Datastore) compressor(ctx context.Context) {
+// purgeOldVersions will execute the purge once a day or when explicitly requested
+func (d *Datastore) purgeOldVersions(ctx context.Context) {
 	dbStartTime := time.Now()
 	nextCompression := time.Date(dbStartTime.Year(), dbStartTime.Month(), dbStartTime.Day()+1,
 		0, 0, 0, 0, dbStartTime.Location())
@@ -182,20 +202,20 @@ func (d *Datastore) compressor(ctx context.Context) {
 		select {
 		case <-d.close:
 			return
-		case <-d.compress:
-			d.smash(ctx)
+		case <-d.purge:
+			d.executePurge(ctx)
 		case <-time.After(30 * time.Minute):
 			now := time.Now()
 			if now.After(nextCompression) {
-				d.smash(ctx)
+				d.executePurge(ctx)
 				nextCompression = time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
 			}
 		}
 	}
 }
 
-func (d *Datastore) smash(ctx context.Context) {
-	// smashing bellow this version
+func (d *Datastore) executePurge(ctx context.Context) {
+	// purging bellow this version
 	v := d.getVersion()
 
 	for {

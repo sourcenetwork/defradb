@@ -21,24 +21,14 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	ops      *btree.BTreeG[item]
-	ds       *Datastore
-	version  *uint64
-	readOnly bool
+	ops       *btree.BTreeG[item]
+	ds        *Datastore
+	version   *uint64
+	readOnly  bool
+	discarded bool
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
-
-// newTransaction returns a ds.Txn datastore
-func newTransaction(d *Datastore, readOnly bool) ds.Txn {
-	v := atomic.AddUint64(d.version, 1)
-	return &basicTxn{
-		ops:      btree.NewBTreeG(byKeys),
-		ds:       d,
-		readOnly: readOnly,
-		version:  &v,
-	}
-}
 
 func (t *basicTxn) getVersion() uint64 {
 	return atomic.LoadUint64(t.version)
@@ -53,15 +43,18 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key, version uint64) item {
 		}
 		return false
 	})
+	if result.key == "" {
+		result = t.ds.get(ctx, key, t.getVersion())
+	}
 	return result
 }
 
 // Get implements ds.Get
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
-	result := t.get(ctx, key, t.getVersion())
-	if result.key == "" {
-		result = t.ds.get(ctx, key, t.getVersion())
+	if t.discarded {
+		return nil, ErrTxnDiscarded
 	}
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
 	}
@@ -70,10 +63,10 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 
 // GetSize implements ds.GetSize
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
-	result := t.get(ctx, key, t.getVersion())
-	if result.key == "" {
-		result = t.ds.get(ctx, key, t.getVersion())
+	if t.discarded {
+		return 0, ErrTxnDiscarded
 	}
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
 	}
@@ -82,10 +75,10 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 
 // Has implements ds.Has
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
-	result := t.get(ctx, key, t.getVersion())
-	if result.key == "" {
-		result = t.ds.get(ctx, key, t.getVersion())
+	if t.discarded {
+		return false, ErrTxnDiscarded
 	}
+	result := t.get(ctx, key, t.getVersion())
 	if result.key == "" || result.isDeleted {
 		return false, nil
 	}
@@ -94,6 +87,9 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 
 // Put implements ds.Put
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
+	if t.discarded {
+		return ErrTxnDiscarded
+	}
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
@@ -104,6 +100,9 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 // Query implements ds.Query
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	if t.discarded {
+		return nil, ErrTxnDiscarded
+	}
 	// best effort allocation
 	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
 	iter := t.ds.values.Iter()
@@ -170,22 +169,31 @@ func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
 
 // Delete implements ds.Delete
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
+	if t.discarded {
+		return ErrTxnDiscarded
+	}
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
 
-	t.ops.Set(item{key: key.String(), version: atomic.LoadUint64(t.version), isDeleted: true})
+	t.ops.Set(item{key: key.String(), version: t.getVersion(), isDeleted: true})
 	return nil
 }
 
 // Discard removes all the operations added to the transaction
 func (t *basicTxn) Discard(ctx context.Context) {
+	if t.discarded {
+		return
+	}
 	t.ops.Clear()
-	atomic.StoreUint64(t.version, t.ds.nextVersion())
+	t.discarded = true
 }
 
 // Commit saves the operations to the underlying datastore
 func (t *basicTxn) Commit(ctx context.Context) error {
+	if t.discarded {
+		return ErrTxnDiscarded
+	}
 	if t.readOnly {
 		return ErrReadOnlyTxn
 	}
@@ -197,9 +205,7 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 
 	iter.Release()
 
-	t.ops.Clear()
-
-	atomic.StoreUint64(t.version, t.ds.nextVersion())
+	t.Discard(ctx)
 
 	return nil
 }

@@ -323,7 +323,7 @@ func TestCompressor(t *testing.T) {
 	}
 	assert.Equal(t, expectedResults, results)
 
-	s.smash(ctx)
+	s.executePurge(ctx)
 
 	iter = s.values.Iter()
 	results = []dsq.Entry{}
@@ -367,7 +367,7 @@ func TestCompressorBatching(t *testing.T) {
 		wg.Wait()
 	}
 
-	s.smash(ctx)
+	s.executePurge(ctx)
 
 	resp, err := s.Get(ctx, ds.NewKey("test"))
 	if err != nil {

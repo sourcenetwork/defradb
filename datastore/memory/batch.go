@@ -32,14 +32,6 @@ type basicBatch struct {
 
 var _ ds.Batch = (*basicBatch)(nil)
 
-// newBasicBatch returns a ds.Batch datastore
-func newBasicBatch(d *Datastore) ds.Batch {
-	return &basicBatch{
-		ops: make(map[ds.Key]op),
-		ds:  d,
-	}
-}
-
 // Put implements ds.Put
 func (b *basicBatch) Put(ctx context.Context, key ds.Key, val []byte) error {
 	b.mu.Lock()

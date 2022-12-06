@@ -124,6 +124,9 @@ func TestTxnDeleteAndCommitOperation(t *testing.T) {
 	}
 
 	_, err = tx.Get(ctx, testKey1)
+	assert.ErrorIs(t, err, ErrTxnDiscarded)
+
+	_, err = s.Get(ctx, testKey1)
 	assert.ErrorIs(t, err, ds.ErrNotFound)
 }
 
