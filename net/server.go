@@ -132,8 +132,8 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 	return nil, nil
 }
 
-// PushLog receives a push log request
-func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
+// HandleLog receives a push log request
+func (s *server) HandleLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -315,7 +315,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
 		Addr: addr{from},
 	})
-	if _, err := s.PushLog(ctx, req); err != nil {
+	if _, err := s.HandleLog(ctx, req); err != nil {
 		log.ErrorE(ctx, "Failed pushing log for doc", err, logging.NewKV("Topic", topic))
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
