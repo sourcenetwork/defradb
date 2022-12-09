@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/cybergarage/go-cbor v1.2.0
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.7
@@ -60,6 +61,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.4.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
+	github.com/cybergarage/go-safecast v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
@@ -197,3 +199,5 @@ replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.
 
 // tinygo forks
 replace github.com/ipfs/go-ipfs-util => github.com/tinygo-pkg/go-ipfs-util v0.0.3-0.20221204112252-4145c4c5cfe5
+
+replace github.com/cybergarage/go-cbor => ../../jsimnz/go-cbor

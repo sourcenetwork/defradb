@@ -11,7 +11,7 @@
 package net
 
 import (
-	"github.com/libp2p/go-libp2p/core/protocol"
+	// "github.com/libp2p/go-libp2p/core/protocol"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -25,7 +25,7 @@ const (
 	// Version is the current protocol version.
 	Version = "0.0.1"
 	// Protocol is the complete libp2p protocol tag.
-	Protocol protocol.ID = "/" + Name + "/" + Version
+	// Protocol protocol.ID = "/" + Name + "/" + Version
 )
 
 func init() {

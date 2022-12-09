@@ -157,6 +157,10 @@ github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7Do
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/cskr/pubsub v1.0.2 h1:vlOzMhl6PFn60gRlTQQsIfVwaPB/B/8MziK8FhEPt/0=
 github.com/cskr/pubsub v1.0.2/go.mod h1:/8MzYXk/NJAz782G8RPkFzXTZVu63VotefPnR9TIRis=
+github.com/cybergarage/go-cbor v1.2.0 h1:lRmnGQszGm5qRUWu4cNVpcYj/ilMP3K0ul1zReK6Zw8=
+github.com/cybergarage/go-cbor v1.2.0/go.mod h1:ZBFG6UPO1UXvLDIFtjxjA+vT7zQb91LFZdJAYB7w3Jc=
+github.com/cybergarage/go-safecast v1.1.0 h1:vBBrFIvsK5LvtIDSXXQbIdrtmJR5BmLpPkrvaPHuFZ8=
+github.com/cybergarage/go-safecast v1.1.0/go.mod h1:us/bjLPEfj6kR3DaY0HGhcW1WK0oDCqkpuYSTi+t7uY=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

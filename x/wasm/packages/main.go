@@ -30,7 +30,7 @@ var ignorePaths = []string{
 	"docs",
 	"build",
 	".",
-	".git", 
+	".git",
 	".github",
 
 	// specific packages
@@ -40,6 +40,7 @@ var ignorePaths = []string{
 	"cli",
 	"version",
 	"net",
+	"node",
 	"api",
 }
 
