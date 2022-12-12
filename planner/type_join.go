@@ -116,7 +116,9 @@ func (n *typeIndexJoin) Start() error {
 	return n.joinPlan.Start()
 }
 
-func (n *typeIndexJoin) Spans(spans core.Spans) { /* todo */ }
+func (n *typeIndexJoin) Spans(spans core.Spans) {
+	n.joinPlan.Spans(spans)
+}
 
 func (n *typeIndexJoin) Next() (bool, error) {
 	return n.joinPlan.Next()
@@ -308,7 +310,10 @@ func (n *typeJoinOne) Start() error {
 	return n.root.Start()
 }
 
-func (n *typeJoinOne) Spans(spans core.Spans) { /* todo */ }
+func (n *typeJoinOne) Spans(spans core.Spans) {
+	n.root.Spans(spans)
+	n.subType.Spans(spans)
+}
 
 func (n *typeJoinOne) Next() (bool, error) {
 	hasNext, err := n.root.Next()
@@ -488,7 +493,10 @@ func (n *typeJoinMany) Start() error {
 	return n.root.Start()
 }
 
-func (n *typeJoinMany) Spans(spans core.Spans) { /* todo */ }
+func (n *typeJoinMany) Spans(spans core.Spans) {
+	n.root.Spans(spans)
+	n.subType.Spans(spans)
+}
 
 func (n *typeJoinMany) Next() (bool, error) {
 	hasNext, err := n.root.Next()
