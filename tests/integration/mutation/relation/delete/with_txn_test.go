@@ -464,12 +464,9 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 
 		Results: []map[string]any{
 			{
-				"_key": "bae-edf7f0fc-f0fd-57e2-b695-569d87e1b251",
-				"name": "Book By Online",
-				"publisher": map[string]any{ // TODO(#874): This should be properly unlinked.
-					"_key": nil,
-					"name": nil,
-				},
+				"_key":      "bae-edf7f0fc-f0fd-57e2-b695-569d87e1b251",
+				"name":      "Book By Online",
+				"publisher": nil,
 			},
 		},
 
