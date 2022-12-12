@@ -364,8 +364,6 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 		return doc
 	}
 
-	doc.Fields[n.subSelect.Index] = n.subSelect.DocumentMapping.NewDoc()
-
 	// create the collection key for the sub doc
 	slct := n.subType.(*selectTopNode).selectnode
 	desc := slct.sourceInfo.collectionDescription
