@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/dgraph-io/badger/v3 v3.2103.2
+	github.com/dgraph-io/badger/v3 v3.2103.4
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
@@ -63,7 +63,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
-	github.com/dgraph-io/ristretto v0.1.0 // indirect
+	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
@@ -179,7 +179,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220920183852-bf014ff85ad5 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
