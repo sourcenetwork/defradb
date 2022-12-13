@@ -16,10 +16,11 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -62,7 +63,7 @@ func newLoadedDatastore(ctx context.Context) *Datastore {
 func TestNewDatastore(t *testing.T) {
 	ctx := context.Background()
 	s := NewDatastore(ctx)
-	assert.NotNil(t, s)
+	require.NotNil(t, s)
 }
 
 func TestGetOperation(t *testing.T) {
@@ -70,10 +71,8 @@ func TestGetOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Get(ctx, testKey1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, testValue1, resp)
+	require.NoError(t, err)
+	require.Equal(t, testValue1, resp)
 }
 
 func TestGetOperationNotFound(t *testing.T) {
@@ -81,7 +80,7 @@ func TestGetOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	_, err := s.Get(ctx, testKey3)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestDeleteOperation(t *testing.T) {
@@ -89,12 +88,10 @@ func TestDeleteOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	err := s.Delete(ctx, testKey1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, err = s.Get(ctx, testKey1)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestGetSizeOperation(t *testing.T) {
@@ -102,10 +99,8 @@ func TestGetSizeOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	resp, err := s.GetSize(ctx, testKey1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, len(testValue1), resp)
+	require.NoError(t, err)
+	require.Equal(t, len(testValue1), resp)
 }
 
 func TestGetSizeOperationNotFound(t *testing.T) {
@@ -113,7 +108,7 @@ func TestGetSizeOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	_, err := s.GetSize(ctx, testKey3)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestHasOperation(t *testing.T) {
@@ -121,10 +116,8 @@ func TestHasOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Has(ctx, testKey1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, true, resp)
+	require.NoError(t, err)
+	require.Equal(t, true, resp)
 }
 
 func TestHasOperationNotFound(t *testing.T) {
@@ -132,10 +125,8 @@ func TestHasOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	resp, err := s.Has(ctx, testKey3)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, false, resp)
+	require.NoError(t, err)
+	require.Equal(t, false, resp)
 }
 
 func TestPutOperation(t *testing.T) {
@@ -143,15 +134,11 @@ func TestPutOperation(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey3, testValue3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	resp, err := s.Get(ctx, testKey3)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, testValue3, resp)
+	require.NoError(t, err)
+	require.Equal(t, testValue3, resp)
 }
 
 func TestQueryOperation(t *testing.T) {
@@ -162,14 +149,12 @@ func TestQueryOperation(t *testing.T) {
 		Limit:  1,
 		Offset: 1,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	result, _ := results.NextSync()
 
-	assert.Equal(t, testKey2.String(), result.Entry.Key)
-	assert.Equal(t, testValue2, result.Entry.Value)
+	require.Equal(t, testKey2.String(), result.Entry.Key)
+	require.Equal(t, testValue2, result.Entry.Value)
 }
 
 func TestQueryOperationWithAddedItems(t *testing.T) {
@@ -177,42 +162,26 @@ func TestQueryOperationWithAddedItems(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey3, testValue3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = s.Put(ctx, testKey4, testValue4)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = s.Put(ctx, testKey5, testValue5)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = s.Delete(ctx, testKey2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = s.Put(ctx, testKey2, testValue2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = s.Delete(ctx, testKey1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	results, err := s.Query(ctx, dsq.Query{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	entries, err := results.Rest()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	expectedResults := []dsq.Entry{
 		{
 			Key:   testKey2.String(),
@@ -235,7 +204,7 @@ func TestQueryOperationWithAddedItems(t *testing.T) {
 			Size:  len(testValue5),
 		},
 	}
-	assert.Equal(t, expectedResults, entries)
+	require.Equal(t, expectedResults, entries)
 }
 
 func TestConcurrentWrite(t *testing.T) {
@@ -253,10 +222,8 @@ func TestConcurrentWrite(t *testing.T) {
 	}
 	wg.Wait()
 	resp, err := s.Get(ctx, ds.NewKey("testKey3"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, []byte("this is a test value 3"), resp)
+	require.NoError(t, err)
+	require.Equal(t, []byte("this is a test value 3"), resp)
 }
 
 func TestCloseOperationNotFound(t *testing.T) {
@@ -264,7 +231,7 @@ func TestCloseOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	err := s.Close()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestSyncOperationNotFound(t *testing.T) {
@@ -272,21 +239,17 @@ func TestSyncOperationNotFound(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 
 	err := s.Sync(ctx, testKey1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
-func TestCompressor(t *testing.T) {
+func TestPurge(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 
 	err := s.Put(ctx, testKey1, testValue2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = s.Put(ctx, testKey2, testValue3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	iter := s.values.Iter()
 	results := []dsq.Entry{}
@@ -321,7 +284,7 @@ func TestCompressor(t *testing.T) {
 			Size:  len(testValue3),
 		},
 	}
-	assert.Equal(t, expectedResults, results)
+	require.Equal(t, expectedResults, results)
 
 	s.executePurge(ctx)
 
@@ -348,10 +311,10 @@ func TestCompressor(t *testing.T) {
 			Size:  len(testValue3),
 		},
 	}
-	assert.Equal(t, expectedResults, results)
+	require.Equal(t, expectedResults, results)
 }
 
-func TestCompressorBatching(t *testing.T) {
+func TestPurgeBatching(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 
@@ -370,14 +333,42 @@ func TestCompressorBatching(t *testing.T) {
 	s.executePurge(ctx)
 
 	resp, err := s.Get(ctx, ds.NewKey("test"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	val, err := strconv.Atoi(string(resp))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, val, 9000)
+	require.GreaterOrEqual(t, val, 9000)
+}
+
+func TestPurgeWithOlderInFlightTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	s.inFlightTxn.Set(dsTxn{
+		dsVersion:  s.getVersion(),
+		txnVersion: s.nextTxnVersion(),
+		expiresAt:  time.Now(),
+	})
+
+	err := s.Put(ctx, testKey4, testValue4)
+	require.NoError(t, err)
+
+	s.executePurge(ctx)
+}
+
+func TestClearOldFlightTransactions(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	s.inFlightTxn.Set(dsTxn{
+		dsVersion:  s.getVersion(),
+		txnVersion: s.nextTxnVersion(),
+		expiresAt:  time.Now(),
+	})
+
+	require.Equal(t, 1, s.inFlightTxn.Len())
+
+	s.clearOldInFlightTxn(ctx)
+
+	require.Equal(t, 0, s.inFlightTxn.Len())
 }

@@ -11,7 +11,6 @@
 package memory
 
 import (
-	"bytes"
 	"context"
 	"sync/atomic"
 
@@ -199,6 +198,7 @@ func (t *basicTxn) Discard(ctx context.Context) {
 		return
 	}
 	t.ops.Clear()
+	t.clearInFlightTxn()
 	t.discarded = true
 }
 
@@ -211,26 +211,20 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		return ErrReadOnlyTxn
 	}
 
-	if err := t.checkForConflicts(ctx); err != nil {
-		t.Discard(ctx)
-		return err
+	c := commit{
+		tx:  t,
+		err: make(chan error),
 	}
-	iter := t.ops.Iter()
-	v := t.ds.nextVersion()
-	for iter.Next() {
-		if iter.Item().isGet {
-			continue
-		}
-		item := iter.Item()
-		item.version = v
-		t.ds.values.Set(item)
-	}
-
-	iter.Release()
+	t.ds.commit <- c
+	e, open := <-c.err
 
 	t.Discard(ctx)
 
-	return nil
+	if !open {
+		return nil
+	}
+
+	return e
 }
 
 func (t *basicTxn) checkForConflicts(ctx context.Context) error {
@@ -242,9 +236,18 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 	for iter.Next() {
 		expectedItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.getDSVersion())
 		latestItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.ds.getVersion())
-		if latestItem.isDeleted || !bytes.Equal(latestItem.val, expectedItem.val) {
+		if latestItem.isDeleted || latestItem.version != expectedItem.version {
 			return ErrTxnConflict
 		}
 	}
 	return nil
+}
+
+func (t *basicTxn) clearInFlightTxn() {
+	t.ds.inFlightTxn.Delete(
+		dsTxn{
+			dsVersion:  t.getDSVersion(),
+			txnVersion: t.getTxnVersion(),
+		},
+	)
 }
