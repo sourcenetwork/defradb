@@ -216,13 +216,9 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 		err: make(chan error),
 	}
 	t.ds.commit <- c
-	e, open := <-c.err
+	e := <-c.err
 
 	t.Discard(ctx)
-
-	if !open {
-		return nil
-	}
 
 	return e
 }
