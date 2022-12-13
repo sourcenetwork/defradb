@@ -169,6 +169,60 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "One-to-one-to-one relation secondary direction",
+		Query: `query {
+			author {
+				name
+				published {
+					name
+				}
+			}
+		}`,
+		Docs: map[int][]string{
+			//books
+			0: {
+				// "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				`{
+					"name": "Painted House"
+				}`,
+				// "bae-c2f3f08b-53f2-5b53-9a9f-da1eee096321"
+				`{
+					"name": "Theif Lord"
+				}`,
+			},
+			//authors
+			1: {
+				`{
+					"name": "John Grisham",
+					"published_id": "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+				}`,
+				`{
+					"name": "Cornelia Funke",
+					"published_id": "bae-c2f3f08b-53f2-5b53-9a9f-da1eee096321"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				"published": map[string]any{
+					"name": "Painted House",
+				},
+			},
+			{
+				"name": "Cornelia Funke",
+				"published": map[string]any{
+					"name": "Theif Lord",
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "One-to-one relation primary direction, nil child",
