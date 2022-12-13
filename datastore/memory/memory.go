@@ -341,6 +341,10 @@ func (d *Datastore) commitHandler(ctx context.Context) {
 }
 
 func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {
+	if d.inFlightTxn.Len() == 0 {
+		return
+	}
+
 	now := time.Now()
 	for {
 		itemsToDelete := []dsTxn{}
