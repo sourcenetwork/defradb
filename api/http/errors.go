@@ -12,11 +12,12 @@ package http
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var env = os.Getenv("DEFRA_ENV")
