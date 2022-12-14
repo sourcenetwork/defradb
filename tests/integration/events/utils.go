@@ -89,8 +89,8 @@ func ExecuteQueryTestCase(
 
 	setupDatabase(ctx, t, db, testCase)
 
-	closeTestRoutineChan := make(chan struct{})
 	testRoutineClosedChan := make(chan struct{})
+	closeTestRoutineChan := make(chan struct{})
 	eventsChan, err := db.Events().Updates.Value().Subscribe()
 	if err != nil {
 		t.Fatal(err)
@@ -115,7 +115,6 @@ func ExecuteQueryTestCase(
 
 				indexOfNextExpectedUpdate++
 			case <-closeTestRoutineChan:
-				testRoutineClosedChan <- struct{}{}
 				return
 			}
 		}
@@ -138,6 +137,10 @@ func ExecuteQueryTestCase(
 
 	select {
 	case <-time.After(eventTimeout):
+		// Trigger an exit from the go routine monitoring the eventsChan.
+		// As well as being a bit cleaner it stops the `--race` flag from
+		// (rightly) seeing the assert of indexOfNextExpectedUpdate as a
+		// data race.
 		closeTestRoutineChan <- struct{}{}
 	case <-testRoutineClosedChan:
 		// no-op - just allow the host func to continue
