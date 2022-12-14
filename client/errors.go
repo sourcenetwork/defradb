@@ -20,6 +20,7 @@ const (
 	errFieldNotExist         string = "The given field does not exist"
 	errSelectOfNonGroupField string = "cannot select a non-group-by field at group-level"
 	errUnexpectedType        string = "unexpected type"
+	errParsingFailed         string = "failed to parse argument"
 )
 
 // Errors returnable from this package.
@@ -30,6 +31,7 @@ var (
 	ErrFieldNotExist         = errors.New(errFieldNotExist)
 	ErrSelectOfNonGroupField = errors.New(errSelectOfNonGroupField)
 	ErrUnexpectedType        = errors.New(errUnexpectedType)
+	ErrParsingFailed         = errors.New(errParsingFailed)
 	ErrFieldNotObject        = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch     = errors.New("value does not match indicated type")
 	ErrIndexNotFound         = errors.New("no index found for given ID")
@@ -55,4 +57,8 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
 		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
 	)
+}
+
+func NewErrParsingFailed(inner error, argumentName string) error {
+	return errors.Wrap(errParsingFailed, inner, errors.NewKV("Argument", argumentName))
 }

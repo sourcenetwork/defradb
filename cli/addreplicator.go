@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sourcenetwork/defradb/errors"
+	defraClient "github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/logging"
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
@@ -33,12 +33,12 @@ for the p2p data sync system.`,
 			if err := cmd.Usage(); err != nil {
 				return err
 			}
-			return errors.New("must specify two arguments: collection and peer")
+			return NewErrMissingArgs(len(args), 2)
 		}
 		collection := args[0]
 		peerAddr, err := ma.NewMultiaddr(args[1])
 		if err != nil {
-			return errors.Wrap("could not parse peer address", err)
+			return defraClient.NewErrParsingFailed(err, "peer")
 		}
 
 		log.FeedbackInfo(
@@ -52,12 +52,12 @@ for the p2p data sync system.`,
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 		if err != nil {
-			return errors.Wrap("failed to create RPC client", err)
+			return NewErrFailedToCreateRPCClient(err)
 		}
 
 		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
 		if err != nil {
-			return errors.Wrap("failed to parse RPC timeout duration", err)
+			return defraClient.NewErrParsingFailed(err, "RPC timeout duration")
 		}
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
@@ -65,7 +65,7 @@ for the p2p data sync system.`,
 
 		pid, err := client.AddReplicator(ctx, collection, peerAddr)
 		if err != nil {
-			return errors.Wrap("failed to add replicator, request failed", err)
+			return NewErrFailedToAddReplicator(err)
 		}
 		log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
 		return nil
