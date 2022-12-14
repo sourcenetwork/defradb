@@ -118,7 +118,7 @@ func sendJSON(ctx context.Context, rw http.ResponseWriter, v any, code int) {
 func dbFromContext(ctx context.Context) (client.DB, error) {
 	db, ok := ctx.Value(ctxDB{}).(client.DB)
 	if !ok {
-		return nil, errors.New("no database available")
+		return nil, ErrDatabaseNotAvailable
 	}
 
 	return db, nil
