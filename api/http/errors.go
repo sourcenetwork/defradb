@@ -21,9 +21,13 @@ import (
 
 var env = os.Getenv("DEFRA_ENV")
 
+// Errors returnable from this package.
+//
+// This list is incomplete and undefined errors may also be returned.
+// Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	errNoListener = errors.New("cannot serve with no listener")
-	errSchema     = errors.New("base must start with the http or https scheme")
+	ErrNoListener = errors.New("cannot serve with no listener")
+	ErrSchema     = errors.New("base must start with the http or https scheme")
 )
 
 // ErrorResponse is the GQL top level object holding error items for the response payload.

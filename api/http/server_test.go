@@ -24,7 +24,7 @@ func TestNewServerAndRunWithoutListener(t *testing.T) {
 	ctx := context.Background()
 	s := NewServer(nil, WithAddress(":0"))
 	if ok := assert.NotNil(t, s); ok {
-		assert.Equal(t, errNoListener, s.Run(ctx))
+		assert.Equal(t, ErrNoListener, s.Run(ctx))
 	}
 }
 
