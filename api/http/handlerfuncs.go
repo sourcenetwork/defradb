@@ -111,7 +111,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(
 				req.Context(),
 				rw,
-				ErrXFormNotSupported,
+				ErrFormNotSupported,
 				http.StatusBadRequest,
 			)
 			return

@@ -29,7 +29,7 @@ var (
 	ErrNoListener           = errors.New("cannot serve with no listener")
 	ErrSchema               = errors.New("base must start with the http or https scheme")
 	ErrDatabaseNotAvailable = errors.New("no database available")
-	ErrXFormNotSupported    = errors.New("content type application/x-www-form-urlencoded not yet supported")
+	ErrFormNotSupported     = errors.New("content type application/x-www-form-urlencoded not yet supported")
 	ErrBodyEmpty            = errors.New("body cannot be empty")
 	ErrMissingGQLQuery      = errors.New("missing GraphQL query")
 	ErrPeerIdUnavailable    = errors.New("no peer ID available. P2P might be disabled")
