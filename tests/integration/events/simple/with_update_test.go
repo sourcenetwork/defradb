@@ -30,6 +30,8 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
+	docKey1 := doc1.Key().String()
+
 	doc2, err := client.NewDocFromJSON(
 		[]byte(
 			`{
@@ -38,6 +40,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
+	docKey2 := doc2.Key().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
@@ -60,14 +63,14 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some("bae-43deba43-f2bc-59f4-9056-fef661b22832"),
+				DocKey: immutable.Some(docKey1),
 				Cid:    immutable.Some("bafybeihm4gewwhzsyqs7tuazdsbusp6pm3oinhnj2ae6funcwshwpxuxri"),
 			},
 			{
-				DocKey: immutable.Some("bae-359dfe55-77a4-59de-a687-fc5049dc61fe"),
+				DocKey: immutable.Some(docKey2),
 			},
 			{
-				DocKey: immutable.Some("bae-43deba43-f2bc-59f4-9056-fef661b22832"),
+				DocKey: immutable.Some(docKey1),
 				Cid:    immutable.Some("bafybeicxo5sqjzi2mjputtbzwnkliickvowwfigyzziibtwlj7xe3ca7ly"),
 			},
 		},

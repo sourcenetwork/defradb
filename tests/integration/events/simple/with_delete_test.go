@@ -32,6 +32,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 		),
 	)
 	assert.Nil(t, err)
+	docKey1 := doc1.Key().String()
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
@@ -49,7 +50,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 		},
 		ExpectedUpdates: []testUtils.ExpectedUpdate{
 			{
-				DocKey: immutable.Some("bae-43deba43-f2bc-59f4-9056-fef661b22832"),
+				DocKey: immutable.Some(docKey1),
 			},
 			// No update to reflect the delete
 		},
