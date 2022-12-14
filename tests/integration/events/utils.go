@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/db"
@@ -76,25 +77,19 @@ func ExecuteQueryTestCase(
 
 	var dbi dbInfo
 	dbi, err = testUtils.NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	db := dbi.DB()
 
 	err = db.AddSchema(ctx, schema)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	setupDatabase(ctx, t, db, testCase)
 
 	testRoutineClosedChan := make(chan struct{})
 	closeTestRoutineChan := make(chan struct{})
 	eventsChan, err := db.Events().Updates.Value().Subscribe()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	indexOfNextExpectedUpdate := 0
 	go func() {
@@ -122,9 +117,7 @@ func ExecuteQueryTestCase(
 
 	for collectionName, collectionCallSet := range testCase.CollectionCalls {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		for _, collectionCall := range collectionCallSet {
 			collectionCall(col)
@@ -161,19 +154,14 @@ func setupDatabase(
 ) {
 	for collectionName, docs := range testCase.Docs {
 		col, err := db.GetCollectionByName(ctx, collectionName)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		for _, docStr := range docs {
 			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
+
 			err = col.Save(ctx, doc)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 		}
 	}
 }
