@@ -11,21 +11,9 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
 	ErrSubscriptionsNotAllowed = errors.New("server does not accept subscriptions")
-	ErrUnexpectedType          = errors.New("unexpected type")
 )
-
-func NewErrUnexpectedType[T any](actual any) error {
-	var expected T
-	return errors.WithStack(
-		ErrUnexpectedType,
-		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
-		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
-	)
-}
