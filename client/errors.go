@@ -39,6 +39,8 @@ var (
 	ErrInvalidUpdateTarget   = errors.New("the target document to update is of invalid type")
 	ErrInvalidUpdater        = errors.New("the updater of a document is of invalid type")
 	ErrInvalidDeleteTarget   = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocKey       = errors.New("malformed DocKey, missing either version or cid")
+	ErrInvalidDocKeyVersion  = errors.New("invalid DocKey version")
 )
 
 func NewErrFieldNotExist(name string) error {
@@ -55,6 +57,14 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 		ErrUnexpectedType,
 		errors.NewKV("Property", property),
 		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
+		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
+	)
+}
+
+func NewErrUnhandledType(property string, actual any) error {
+	return errors.WithStack(
+		ErrUnexpectedType,
+		errors.NewKV("Property", property),
 		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
 	)
 }
