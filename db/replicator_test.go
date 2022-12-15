@@ -86,7 +86,7 @@ func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 	}, reps)
 }
 
-func TestGetAllReplicatorsWith2AddionnsOnSamePeer(t *testing.T) {
+func TestGetAllReplicatorsWith2AdditionsOnSamePeer(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
 	require.NoError(t, err)
@@ -213,10 +213,24 @@ func TestDeleteReplicatorWith2Addition(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	reps, err := db.GetAllReplicators(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, []client.Replicator{
+		{
+			Info:    *info,
+			Schemas: []string{"test"},
+		},
+		{
+			Info:    *info2,
+			Schemas: []string{"test", "test2", "test3"},
+		},
+	}, reps)
+
 	err = db.DeleteReplicator(ctx, client.Replicator{Info: *info})
 	require.NoError(t, err)
 
-	reps, err := db.GetAllReplicators(ctx)
+	reps, err = db.GetAllReplicators(ctx)
 	require.NoError(t, err)
 
 	assert.Equal(t, []client.Replicator{
