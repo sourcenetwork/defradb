@@ -108,7 +108,7 @@ var _ Key = (*SequenceKey)(nil)
 func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
-		return dataStoreKey, errors.WithStack(ErrEmptyKey)
+		return dataStoreKey, ErrEmptyKey
 	}
 
 	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
@@ -117,7 +117,7 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 
 	// With less than 3 or more than 4 elements, we know it's an invalid key
 	if numberOfElements < 3 || numberOfElements > 4 {
-		return dataStoreKey, errors.WithStack(ErrInvalidKey)
+		return dataStoreKey, ErrInvalidKey
 	}
 
 	dataStoreKey.CollectionId = elements[0]
