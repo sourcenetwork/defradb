@@ -10,7 +10,9 @@
 
 package core
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 var (
 	ErrEmptyKey   = errors.New("received empty key string")

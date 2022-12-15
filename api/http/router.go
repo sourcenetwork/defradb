@@ -68,7 +68,7 @@ func setRoutes(h *handler) *handler {
 // The base must start with a http or https.
 func JoinPaths(base string, paths ...string) (*url.URL, error) {
 	if !strings.HasPrefix(base, "http") {
-		return nil, errSchema
+		return nil, ErrSchema
 	}
 
 	u, err := url.Parse(base)
