@@ -37,22 +37,22 @@ func NewService(peer *net.Peer) *Service {
 	return &Service{peer: peer}
 }
 
-func (s *Service) AddReplicator(
+func (s *Service) SetReplicator(
 	ctx context.Context,
-	req *pb.AddReplicatorRequest,
-) (*pb.AddReplicatorReply, error) {
-	log.Debug(ctx, "Received AddReplicator request")
+	req *pb.SetReplicatorRequest,
+) (*pb.SetReplicatorReply, error) {
+	log.Debug(ctx, "Received SetReplicator request")
 
 	addr, err := ma.NewMultiaddrBytes(req.Addr)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pid, err := s.peer.AddReplicator(ctx, addr, req.Collections...)
+	pid, err := s.peer.SetReplicator(ctx, addr, req.Collections...)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.AddReplicatorReply{
+	return &pb.SetReplicatorReply{
 		PeerID: marshalPeerID(pid),
 	}, nil
 }

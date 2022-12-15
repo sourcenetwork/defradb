@@ -46,8 +46,8 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// AddReplicator sends a request to add a target replicator to the DB peer
-func (c *Client) AddReplicator(
+// SetReplicator sends a request to add a target replicator to the DB peer
+func (c *Client) SetReplicator(
 	ctx context.Context,
 	paddr ma.Multiaddr,
 	collections ...string,
@@ -55,7 +55,7 @@ func (c *Client) AddReplicator(
 	if paddr == nil {
 		return "", errors.New("target address can't be empty")
 	}
-	resp, err := c.c.AddReplicator(ctx, &pb.AddReplicatorRequest{
+	resp, err := c.c.SetReplicator(ctx, &pb.SetReplicatorRequest{
 		Collections: collections,
 		Addr:        paddr.Bytes(),
 	})
@@ -69,6 +69,7 @@ func (c *Client) AddReplicator(
 func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	pid peer.ID,
+	collections ...string,
 ) error {
 	_, err := c.c.DeleteReplicator(ctx, &pb.DeleteReplicatorRequest{
 		PeerID: []byte(pid),

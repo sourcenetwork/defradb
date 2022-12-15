@@ -23,37 +23,70 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
-func (db *db) AddReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	existingRep, err := db.getReplicator(ctx, rep.Info)
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	if errors.Is(err, ds.ErrNotFound) {
+		return db.saveReplicator(ctx, rep)
+	}
+	if err != nil {
 		return err
 	}
-	if !errors.Is(err, ds.ErrNotFound) {
-		newSchemas := []string{}
-		for _, newSchema := range rep.Schemas {
-			isNew := true
-			for _, existingSchema := range existingRep.Schemas {
-				if existingSchema == newSchema {
-					isNew = false
-					break
-				}
-			}
-			if isNew {
-				newSchemas = append(newSchemas, newSchema)
+
+	newSchemas := []string{}
+	for _, newSchema := range rep.Schemas {
+		isNew := true
+		for _, existingSchema := range existingRep.Schemas {
+			if existingSchema == newSchema {
+				isNew = false
+				break
 			}
 		}
-		rep.Schemas = append(existingRep.Schemas, newSchemas...)
+		if isNew {
+			newSchemas = append(newSchemas, newSchema)
+		}
 	}
+	rep.Schemas = append(existingRep.Schemas, newSchemas...)
 	return db.saveReplicator(ctx, rep)
 }
 
-func (db *db) DeleteReplicator(ctx context.Context, pid peer.ID) error {
-	return db.deleteReplicator(ctx, pid)
+func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+	if len(rep.Schemas) == 0 {
+		return db.deleteReplicator(ctx, rep.Info.ID)
+	}
+	return db.deleteSchemasForReplicator(ctx, rep)
 }
 
 func (db *db) deleteReplicator(ctx context.Context, pid peer.ID) error {
 	key := core.NewReplicatorKey(pid.String())
 	return db.systemstore().Delete(ctx, key.ToDS())
+}
+
+func (db *db) deleteSchemasForReplicator(ctx context.Context, rep client.Replicator) error {
+	existingRep, err := db.getReplicator(ctx, rep.Info)
+	if err != nil {
+		return err
+	}
+
+	updatedSchemaList := []string{}
+	for _, s := range existingRep.Schemas {
+		found := false
+		for _, toDelete := range rep.Schemas {
+			if toDelete == s {
+				found = true
+				break
+			}
+		}
+		if !found {
+			updatedSchemaList = append(updatedSchemaList, s)
+		}
+	}
+
+	if len(updatedSchemaList) == 0 {
+		return db.deleteReplicator(ctx, rep.Info.ID)
+	}
+
+	existingRep.Schemas = updatedSchemaList
+	return db.saveReplicator(ctx, existingRep)
 }
 
 func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {

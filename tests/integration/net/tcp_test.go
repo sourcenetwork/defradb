@@ -129,3 +129,33 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+// TestP2FullPReplicator tests document syncing between a node and a replicator.
+func TestP2FullPReplicator(t *testing.T) {
+	test := P2PTestCase{
+		NodeConfig: []*config.Config{
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+			},
+		},
+		DocumentsToReplicate: []string{
+			`{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		ReplicatorResult: map[int]map[string]map[string]any{
+			1: {
+				"bae-83077925-af1f-5370-a0e2-4b00feb0dd1f": {
+					"Age": uint64(27),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

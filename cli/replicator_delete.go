@@ -24,25 +24,38 @@ import (
 )
 
 var deleteReplicatorCmd = &cobra.Command{
-	Use:   "delete <peer>",
+	Use:   "delete [-f, --full | -c, --collection] <peer>",
 	Short: "Delete a replicator",
 	Long: `Use this command if you wish to remove the target replicator
 for the p2p data sync system.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
-			if err := cmd.Usage(); err != nil {
-				return err
-			}
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return errors.New("must specify one argument: peer")
 		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		pidString := args[0]
 
-		log.FeedbackInfo(
-			cmd.Context(),
-			"Removing replicator",
-			logging.NewKV("PeerID", pidString),
-			logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
-		)
+		if len(col) != 0 {
+			log.FeedbackInfo(
+				cmd.Context(),
+				"Removing replicator for collection",
+				logging.NewKV("PeerAddress", pidString),
+				logging.NewKV("Collection", col),
+				logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
+			)
+		} else {
+			if !fullRep {
+				return errors.New("must run with either --full or --collection")
+			}
+			log.FeedbackInfo(
+				cmd.Context(),
+				"Removing full replicator",
+				logging.NewKV("PeerAddress", pidString),
+				logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
+			)
+		}
 
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
@@ -74,4 +87,8 @@ for the p2p data sync system.`,
 
 func init() {
 	replicatorCmd.AddCommand(deleteReplicatorCmd)
+	replicatorCmd.Flags().BoolVarP(&fullRep, "full", "f", false, "Set the replicator to act on all collections")
+	replicatorCmd.Flags().StringArrayVarP(&col, "collection", "c",
+		[]string{}, "Define the collection for the replicator")
+	replicatorCmd.MarkFlagsMutuallyExclusive("full", "collection")
 }

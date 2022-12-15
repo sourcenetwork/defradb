@@ -14,30 +14,26 @@ import (
 	"context"
 	"testing"
 
+	ds "github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestAddReplicator(t *testing.T) {
+func TestSetReplicator(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(a)
-	if err != nil {
-		t.Error(err)
-	}
-	err = db.AddReplicator(ctx, client.Replicator{
+	require.NoError(t, err)
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info,
 		Schemas: []string{"test"},
 	})
@@ -47,52 +43,36 @@ func TestAddReplicator(t *testing.T) {
 func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(a)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info,
 		Schemas: []string{"test"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	a2, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8C")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// Extract the peer ID from the multiaddr.
 	info2, err := peer.AddrInfoFromP2pAddr(a2)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info2,
 		Schemas: []string{"test", "test2", "test3"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	reps, err := db.GetAllReplicators(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, []client.Replicator{
 		{
@@ -109,41 +89,29 @@ func TestGetAllReplicatorsWith2Addition(t *testing.T) {
 func TestGetAllReplicatorsWith2AddionnsOnSamePeer(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(a)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info,
 		Schemas: []string{"test"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info,
 		Schemas: []string{"test", "test2", "test3"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	reps, err := db.GetAllReplicators(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, []client.Replicator{
 		{
@@ -153,60 +121,103 @@ func TestGetAllReplicatorsWith2AddionnsOnSamePeer(t *testing.T) {
 	}, reps)
 }
 
-func TestDeleteReplicatorWith2Addition(t *testing.T) {
+func TestDeleteSchemaForReplicator(t *testing.T) {
 	ctx := context.Background()
 	db, err := newMemoryDB(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	defer db.Close(ctx)
 	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(a)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"test", "test2", "test3"},
+	})
+	require.NoError(t, err)
+
+	err = db.DeleteReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"test2"},
+	})
+	require.NoError(t, err)
+
+	rep, err := db.getReplicator(ctx, *info)
+	require.NoError(t, err)
+
+	assert.Equal(t, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"test", "test3"},
+	}, rep)
+}
+
+func TestDeleteAllSchemasForReplicator(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
+	require.NoError(t, err)
+
+	// Extract the peer ID from the multiaddr.
+	info, err := peer.AddrInfoFromP2pAddr(a)
+	require.NoError(t, err)
+
+	err = db.SetReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"test", "test2", "test3"},
+	})
+	require.NoError(t, err)
+
+	err = db.DeleteReplicator(ctx, client.Replicator{
+		Info:    *info,
+		Schemas: []string{"test", "test2", "test3"},
+	})
+	require.NoError(t, err)
+
+	_, err = db.getReplicator(ctx, *info)
+	require.ErrorIs(t, err, ds.ErrNotFound)
+}
+
+func TestDeleteReplicatorWith2Addition(t *testing.T) {
+	ctx := context.Background()
+	db, err := newMemoryDB(ctx)
+	require.NoError(t, err)
+	defer db.Close(ctx)
+	a, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B")
+	require.NoError(t, err)
+
+	// Extract the peer ID from the multiaddr.
+	info, err := peer.AddrInfoFromP2pAddr(a)
+	require.NoError(t, err)
+
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info,
 		Schemas: []string{"test"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	a2, err := ma.NewMultiaddr("/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8C")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// Extract the peer ID from the multiaddr.
 	info2, err := peer.AddrInfoFromP2pAddr(a2)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.AddReplicator(ctx, client.Replicator{
+	err = db.SetReplicator(ctx, client.Replicator{
 		Info:    *info2,
 		Schemas: []string{"test", "test2", "test3"},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
-	err = db.DeleteReplicator(ctx, info.ID)
-	if err != nil {
-		t.Error(err)
-	}
+	err = db.DeleteReplicator(ctx, client.Replicator{Info: *info})
+	require.NoError(t, err)
 
 	reps, err := db.GetAllReplicators(ctx)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, []client.Replicator{
 		{

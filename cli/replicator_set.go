@@ -28,11 +28,11 @@ var (
 	col     []string
 )
 
-var addReplicatorCmd = &cobra.Command{
-	Use:   "add [-f, --full | -c, --collection] <peer>",
-	Short: "Add a new replicator",
+var setReplicatorCmd = &cobra.Command{
+	Use:   "set [-f, --full | -c, --collection] <peer>",
+	Short: "Set a P2P replicator",
 	Long: `Use this command if you wish to add a new target replicator
-for the p2p data sync system.`,
+for the p2p data sync system or add schemas to an existing one`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return errors.New("must specify one argument: peer")
@@ -79,7 +79,7 @@ for the p2p data sync system.`,
 		ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
 		defer cancel()
 
-		pid, err := client.AddReplicator(ctx, peerAddr, col...)
+		pid, err := client.SetReplicator(ctx, peerAddr, col...)
 		if err != nil {
 			return errors.Wrap("failed to add replicator, request failed", err)
 		}
@@ -89,9 +89,9 @@ for the p2p data sync system.`,
 }
 
 func init() {
-	replicatorCmd.AddCommand(addReplicatorCmd)
-	addReplicatorCmd.Flags().BoolVarP(&fullRep, "full", "f", false, "Set the replicator to act on all collections")
-	addReplicatorCmd.Flags().StringArrayVarP(&col, "collection", "c",
+	replicatorCmd.AddCommand(setReplicatorCmd)
+	setReplicatorCmd.Flags().BoolVarP(&fullRep, "full", "f", false, "Set the replicator to act on all collections")
+	setReplicatorCmd.Flags().StringArrayVarP(&col, "collection", "c",
 		[]string{}, "Define the collection for the replicator")
-	addReplicatorCmd.MarkFlagsMutuallyExclusive("full", "collection")
+	setReplicatorCmd.MarkFlagsMutuallyExclusive("full", "collection")
 }
