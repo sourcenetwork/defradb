@@ -74,7 +74,7 @@ func NewMerkleCompositeDAG(
 		datastore,
 		schemaID,
 		ns,
-		key.ToString(), /* stuff like namespace and ID */
+		key, /* stuff like namespace and ID */
 	)
 
 	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)

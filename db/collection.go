@@ -478,15 +478,9 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return ErrDocumentAlreadyExists
 	}
 
-	// write primary key object marker
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{base.ObjectMarker})
-	if err != nil {
-		return err
-	}
-
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		valueKey := c.getDatastoreFromDocKey(dockey)
+		valueKey := c.getDSKeyFromDockey(dockey)
 		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
@@ -933,7 +927,7 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 	}
 }
 
-func (c *collection) getDatastoreFromDocKey(docKey client.DocKey) core.DataStoreKey {
+func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),

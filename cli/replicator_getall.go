@@ -13,65 +13,70 @@ package cli
 import (
 	"context"
 
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	defraClient "github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	netclient "github.com/sourcenetwork/defradb/net/api/client"
 )
 
-var addReplicatorCmd = &cobra.Command{
-	Use:   "addreplicator <collection> <peer>",
-	Short: "Add a new replicator",
-	Long: `Use this command if you wish to add a new target replicator
+var getAllReplicatorsCmd = &cobra.Command{
+	Use:   "getall",
+	Short: "Get all replicators",
+	Long: `Use this command if you wish to get all the replicators
 for the p2p data sync system.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 2 {
+		if len(args) != 0 {
 			if err := cmd.Usage(); err != nil {
 				return err
 			}
-			return NewErrMissingArgs(len(args), 2)
-		}
-		collection := args[0]
-		peerAddr, err := ma.NewMultiaddr(args[1])
-		if err != nil {
-			return defraClient.NewErrParsingFailed(err, "peer")
+			return errors.New("must specify no argument")
 		}
 
 		log.FeedbackInfo(
 			cmd.Context(),
-			"Adding replicator for collection",
-			logging.NewKV("PeerAddress", peerAddr),
-			logging.NewKV("Collection", collection),
+			"Getting all replicators",
 			logging.NewKV("RPCAddress", cfg.Net.RPCAddress),
 		)
 
 		cred := insecure.NewCredentials()
 		client, err := netclient.NewClient(cfg.Net.RPCAddress, grpc.WithTransportCredentials(cred))
 		if err != nil {
-			return NewErrFailedToCreateRPCClient(err)
+			return errors.Wrap("failed to create RPC client", err)
 		}
 
 		rpcTimeoutDuration, err := cfg.Net.RPCTimeoutDuration()
 		if err != nil {
-			return defraClient.NewErrParsingFailed(err, "RPC timeout duration")
+			return errors.Wrap("failed to parse RPC timeout duration", err)
 		}
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), rpcTimeoutDuration)
 		defer cancel()
 
-		pid, err := client.AddReplicator(ctx, collection, peerAddr)
+		reps, err := client.GetAllReplicators(ctx)
 		if err != nil {
-			return NewErrFailedToAddReplicator(err)
+			return errors.Wrap("failed to get replicators, request failed", err)
 		}
-		log.FeedbackInfo(ctx, "Successfully added replicator", logging.NewKV("PID", pid))
+		if len(reps) > 0 {
+			log.FeedbackInfo(ctx, "Successfully got all replicators")
+			for _, rep := range reps {
+				log.FeedbackInfo(
+					ctx,
+					rep.Info.ID.String(),
+					logging.NewKV("Schemas", rep.Schemas),
+					logging.NewKV("Addrs", rep.Info.Addrs),
+				)
+			}
+		} else {
+			log.FeedbackInfo(ctx, "No replicator found")
+		}
+
 		return nil
 	},
 }
 
 func init() {
-	rpcCmd.AddCommand(addReplicatorCmd)
+	replicatorCmd.AddCommand(getAllReplicatorsCmd)
 }

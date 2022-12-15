@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
 )
 
 var (
@@ -77,7 +78,8 @@ func (delta *CompositeDAGDelta) GetSchemaID() string {
 // CompositeDAG is a CRDT structure that is used
 // to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	key      string
+	store    datastore.DSReaderWriter
+	key      core.DataStoreKey
 	schemaID string
 }
 
@@ -85,16 +87,17 @@ func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaID string,
 	namespace core.Key,
-	key string,
+	key core.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
+		store:    store,
 		key:      key,
 		schemaID: schemaID,
 	}
 }
 
 func (c CompositeDAG) ID() string {
-	return c.key
+	return c.key.ToString()
 }
 
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
@@ -114,17 +117,18 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 }
 
 // Merge implements ReplicatedData interface
-// Merge two LWWRegistry based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-// @todo
+// It ensures that the object marker exists for the given key.
+// If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
-	// d, ok := delta.(*CompositeDAGDelta)
-	// if !ok {
-	// 	return core.ErrMismatchedMergeType
-	// }
-
-	// return reg.setValue(d.Data, d.GetPriority())
+	// ensure object marker exists
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil {
+		return err
+	}
+	if !exists {
+		// write object marker
+		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+	}
 	return nil
 }
 

@@ -39,6 +39,16 @@ type DB interface {
 	Events() events.Events
 
 	PrintDump(ctx context.Context) error
+
+	// SetReplicator adds a replicator to the persisted list or adds
+	// schemas if the replicator already exists.
+	SetReplicator(ctx context.Context, rep Replicator) error
+	// DeleteReplicator deletes a replicator from the persisted list
+	// or specific schemas if they are specified.
+	DeleteReplicator(ctx context.Context, rep Replicator) error
+	// GetAllReplicators returns the full list of replicators with their
+	// subscribed schemas.
+	GetAllReplicators(ctx context.Context) ([]Replicator, error)
 }
 
 type GQLResult struct {
