@@ -11,7 +11,6 @@
 package core
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -19,7 +18,6 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -108,7 +106,7 @@ var _ Key = (*SequenceKey)(nil)
 func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
-		return dataStoreKey, errors.WithStack(ErrEmptyKey)
+		return dataStoreKey, ErrEmptyKey
 	}
 
 	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
@@ -117,7 +115,7 @@ func NewDataStoreKey(key string) (DataStoreKey, error) {
 
 	// With less than 3 or more than 4 elements, we know it's an invalid key
 	if numberOfElements < 3 || numberOfElements > 4 {
-		return dataStoreKey, errors.WithStack(ErrInvalidKey)
+		return dataStoreKey, ErrInvalidKey
 	}
 
 	dataStoreKey.CollectionId = elements[0]
@@ -154,7 +152,7 @@ func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	elements := strings.Split(key, "/")
 	if len(elements) != 4 {
-		return HeadStoreKey{}, errors.New(fmt.Sprintf("Given headstore key string is not in expected format: %s", key))
+		return HeadStoreKey{}, ErrInvalidKey
 	}
 
 	cid, err := cid.Decode(elements[3])
@@ -440,7 +438,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {
-		return 0, errors.Wrap("failed to get FieldID of Key", err)
+		return 0, NewErrFailedToGetFieldIdOfKey(err)
 	}
 	return uint32(fieldID), nil
 }

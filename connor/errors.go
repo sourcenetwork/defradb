@@ -8,22 +8,24 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package connor
 
 import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errFailedToGetFieldIdOfKey string = "failed to get FieldID of Key"
+	errUnknownOperator string = "unknown operator"
 )
 
+// Errors returnable from this package.
+//
+// This list is incomplete and undefined errors may also be returned.
+// Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFailedToGetFieldIdOfKey = errors.New(errFailedToGetFieldIdOfKey)
-	ErrEmptyKey                = errors.New("received empty key string")
-	ErrInvalidKey              = errors.New("invalid key string")
+	ErrUnknownOperator = errors.New(errUnknownOperator)
 )
 
-func NewErrFailedToGetFieldIdOfKey(inner error) error {
-	return errors.Wrap(errFailedToGetFieldIdOfKey, inner)
+func NewErrUnknownOperator(operator string) error {
+	return errors.New(errUnknownOperator, errors.NewKV("Operator", operator))
 }

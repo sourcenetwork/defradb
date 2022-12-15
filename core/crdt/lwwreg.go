@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -130,7 +129,7 @@ func (reg LWWRegister) ID() string {
 func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
-		return core.ErrMismatchedMergeType
+		return ErrMismatchedMergeType
 	}
 
 	return reg.setValue(ctx, d.Data, d.GetPriority())
@@ -139,7 +138,7 @@ func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) e
 func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
 	curPrio, err := reg.getPriority(ctx, reg.key)
 	if err != nil {
-		return errors.Wrap("failed to get priority for Set ", err)
+		return NewErrFailedToGetPriority(err)
 	}
 
 	// if the current priority is higher ignore put
@@ -159,7 +158,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	buf := append([]byte{byte(client.LWW_REGISTER)}, val...)
 	err = reg.store.Put(ctx, valueK.ToDS(), buf)
 	if err != nil {
-		return errors.Wrap("failed to store new value ", err)
+		return NewErrFailedToStoreValue(err)
 	}
 
 	return reg.setPriority(ctx, reg.key, priority)
@@ -172,7 +171,7 @@ func (reg LWWRegister) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &LWWRegDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
-		return nil, errors.New("failed to cast ipld.Node to ProtoNode")
+		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
 	data := pbNode.Data()
 	h := &codec.CborHandle{}

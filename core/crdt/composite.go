@@ -20,9 +20,9 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -135,7 +135,7 @@ func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
-		return nil, errors.New("failed to cast ipld.Node to ProtoNode")
+		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
 	data := pbNode.Data()
 	h := &codec.CborHandle{}
