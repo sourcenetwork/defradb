@@ -129,7 +129,7 @@ func (reg LWWRegister) ID() string {
 func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta, id string) error {
 	d, ok := delta.(*LWWRegDelta)
 	if !ok {
-		return core.ErrMismatchedMergeType
+		return ErrMismatchedMergeType
 	}
 
 	return reg.setValue(ctx, d.Data, d.GetPriority())

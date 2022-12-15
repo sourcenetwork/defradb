@@ -28,6 +28,8 @@ var (
 	ErrFailedToStoreValue  = errors.New(errFailedToStoreValue)
 	ErrEncodingPriority    = errors.New("error encoding priority")
 	ErrDecodingPriority    = errors.New("error decoding priority")
+	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
+	ErrMismatchedMergeType = errors.New("given type to merge does not match source")
 )
 
 func NewErrFailedToGetPriority(inner error) error {
