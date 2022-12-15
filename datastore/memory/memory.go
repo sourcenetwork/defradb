@@ -56,11 +56,6 @@ func byKeys(a, b dsItem) bool {
 	}
 }
 
-type put struct {
-	item dsItem
-	err  chan error
-}
-
 type commit struct {
 	tx  *basicTxn
 	err chan error
@@ -74,7 +69,6 @@ type Datastore struct {
 	inFlightTxn *btree.BTreeG[dsTxn]
 	close       chan struct{}
 	commit      chan commit
-	put         chan put
 }
 
 var _ ds.Datastore = (*Datastore)(nil)
@@ -92,7 +86,6 @@ func NewDatastore(ctx context.Context) *Datastore {
 		inFlightTxn: btree.NewBTreeG(byDSVersion),
 		close:       make(chan struct{}),
 		commit:      make(chan commit),
-		put:         make(chan put),
 	}
 	go d.purgeOldVersions(ctx)
 	go d.commitHandler(ctx)
@@ -131,12 +124,12 @@ func (d *Datastore) Close() error {
 
 // Delete implements ds.Delete
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	p := put{
-		item: dsItem{key: key.String(), isDeleted: true},
-		err:  make(chan error),
+	tx := d.newTransaction(false)
+	err = tx.Delete(ctx, key)
+	if err != nil {
+		return err
 	}
-	d.put <- p
-	return <-p.err
+	return tx.Commit(ctx)
 }
 
 func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) dsItem {
@@ -196,12 +189,12 @@ func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 
 // Put implements ds.Put
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	p := put{
-		item: dsItem{key: key.String(), val: value},
-		err:  make(chan error),
+	tx := d.newTransaction(false)
+	err = tx.Put(ctx, key, value)
+	if err != nil {
+		return err
 	}
-	d.put <- p
-	return <-p.err
+	return tx.Commit(ctx)
 }
 
 // Query implements ds.Query
@@ -251,14 +244,14 @@ func (d *Datastore) purgeOldVersions(ctx context.Context) {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-d.close:
 			return
 		case <-time.After(time.Until(nextCompression)):
 			d.executePurge(ctx)
 			now := time.Now()
 			nextCompression = time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-		case <-time.After(30 * time.Minute):
-			d.clearOldInFlightTxn(ctx)
 		}
 	}
 }
@@ -308,13 +301,8 @@ func (d *Datastore) executePurge(ctx context.Context) {
 func (d *Datastore) commitHandler(ctx context.Context) {
 	for {
 		select {
-		case p, open := <-d.put:
-			if !open {
-				return
-			}
-			p.item.version = d.nextVersion()
-			d.values.Set(p.item)
-			close(p.err)
+		case <-ctx.Done():
+			return
 		case c, open := <-d.commit:
 			if !open {
 				return

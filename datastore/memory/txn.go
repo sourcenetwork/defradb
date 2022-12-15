@@ -198,7 +198,7 @@ func (t *basicTxn) Discard(ctx context.Context) {
 		return
 	}
 	t.ops.Clear()
-	t.clearInFlightTxn()
+	t.clearInFlightTxn(ctx)
 	t.discarded = true
 }
 
@@ -239,11 +239,12 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 	return nil
 }
 
-func (t *basicTxn) clearInFlightTxn() {
+func (t *basicTxn) clearInFlightTxn(ctx context.Context) {
 	t.ds.inFlightTxn.Delete(
 		dsTxn{
 			dsVersion:  t.getDSVersion(),
 			txnVersion: t.getTxnVersion(),
 		},
 	)
+	t.ds.clearOldInFlightTxn(ctx)
 }
