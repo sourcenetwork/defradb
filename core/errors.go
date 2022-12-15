@@ -14,7 +14,16 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var (
-	ErrEmptyKey   = errors.New("received empty key string")
-	ErrInvalidKey = errors.New("invalid key string")
+const (
+	errFailedToGetFieldIdOfKey string = "failed to get FieldID of Key"
 )
+
+var (
+	ErrFailedToGetFieldIdOfKey = errors.New(errFailedToGetFieldIdOfKey)
+	ErrEmptyKey                = errors.New("received empty key string")
+	ErrInvalidKey              = errors.New("invalid key string")
+)
+
+func NewErrFailedToGetFieldIdOfKey(inner error) error {
+	return errors.Wrap(errFailedToGetFieldIdOfKey, inner)
+}
