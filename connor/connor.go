@@ -1,11 +1,5 @@
 package connor
 
-import (
-	"fmt"
-
-	"github.com/sourcenetwork/defradb/errors"
-)
-
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
 func Match(conditions map[FilterKey]any, data any) (bool, error) {
@@ -38,6 +32,6 @@ func matchWith(op string, conditions, data any) (bool, error) {
 	case "_or":
 		return or(conditions, data)
 	default:
-		return false, errors.New(fmt.Sprintf("unknown operator '%s'", op))
+		return false, NewErrUnknownOperator(op)
 	}
 }
