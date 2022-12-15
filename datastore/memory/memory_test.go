@@ -94,6 +94,20 @@ func TestDeleteOperation(t *testing.T) {
 	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
+func TestDeleteOperation2(t *testing.T) {
+	ctx := context.Background()
+	s := NewDatastore(ctx)
+
+	err := s.Put(ctx, testKey1, testValue1)
+	require.NoError(t, err)
+
+	err = s.Delete(ctx, testKey1)
+	require.NoError(t, err)
+
+	_, err = s.Get(ctx, testKey1)
+	require.ErrorIs(t, err, ds.ErrNotFound)
+}
+
 func TestGetSizeOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)

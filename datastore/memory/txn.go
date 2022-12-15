@@ -39,6 +39,24 @@ func (t *basicTxn) getTxnVersion() uint64 {
 	return atomic.LoadUint64(t.txnVersion)
 }
 
+// Delete implements ds.Delete
+func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
+	if t.discarded {
+		return ErrTxnDiscarded
+	}
+	if t.readOnly {
+		return ErrReadOnlyTxn
+	}
+
+	item := t.get(ctx, key)
+	if item.key == "" || item.isDeleted {
+		return nil
+	}
+
+	t.ops.Set(dsItem{key: key.String(), version: t.getTxnVersion(), isDeleted: true})
+	return nil
+}
+
 func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 	result := dsItem{}
 	t.ops.Descend(dsItem{key: key.String(), version: t.getTxnVersion()}, func(item dsItem) bool {
@@ -172,24 +190,6 @@ func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
 		e.Value = value
 	}
 	return e
-}
-
-// Delete implements ds.Delete
-func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
-	if t.discarded {
-		return ErrTxnDiscarded
-	}
-	if t.readOnly {
-		return ErrReadOnlyTxn
-	}
-
-	item := t.get(ctx, key)
-	if item.key == "" || item.isDeleted {
-		return ds.ErrNotFound
-	}
-
-	t.ops.Set(dsItem{key: key.String(), version: t.getTxnVersion(), isDeleted: true})
-	return nil
 }
 
 // Discard removes all the operations added to the transaction
