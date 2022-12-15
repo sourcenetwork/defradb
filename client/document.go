@@ -12,15 +12,12 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -89,7 +86,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		delete(data, "_key") // remove the key so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
-			return nil, errors.New("provided _key in document must be a string type")
+			return nil, NewErrUnexpectedType[string]("data[_key]", k)
 		}
 		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err
@@ -341,7 +338,7 @@ func (doc *Document) setAndParseType(field string, value any) error {
 		}
 
 	default:
-		return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", field, val))
+		return NewErrUnhandledType(field, val)
 	}
 	return nil
 }

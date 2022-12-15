@@ -111,7 +111,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(
 				req.Context(),
 				rw,
-				errors.New("content type application/x-www-form-urlencoded not yet supported"),
+				ErrFormNotSupported,
 				http.StatusBadRequest,
 			)
 			return
@@ -121,7 +121,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 
 		default:
 			if req.Body == nil {
-				handleErr(req.Context(), rw, errors.New("body cannot be empty"), http.StatusBadRequest)
+				handleErr(req.Context(), rw, ErrBodyEmpty, http.StatusBadRequest)
 				return
 			}
 			body, err := io.ReadAll(req.Body)
@@ -135,7 +135,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 
 	// if at this point query is still empty, return an error
 	if query == "" {
-		handleErr(req.Context(), rw, errors.New("missing GraphQL query"), http.StatusBadRequest)
+		handleErr(req.Context(), rw, ErrMissingGQLQuery, http.StatusBadRequest)
 		return
 	}
 
@@ -251,7 +251,7 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	peerID, ok := req.Context().Value(ctxPeerID{}).(string)
 	if !ok || peerID == "" {
-		handleErr(req.Context(), rw, errors.New("no peer ID available. P2P might be disabled"), http.StatusNotFound)
+		handleErr(req.Context(), rw, ErrPeerIdUnavailable, http.StatusNotFound)
 		return
 	}
 
@@ -268,7 +268,7 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseWriter, req *http.Request) {
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
-		handleErr(req.Context(), rw, errors.New("streaming unsupported"), http.StatusInternalServerError)
+		handleErr(req.Context(), rw, ErrStreamingUnsupported, http.StatusInternalServerError)
 		return
 	}
 

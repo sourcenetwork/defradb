@@ -260,7 +260,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 // Run calls Serve with the receiver's listener
 func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
-		return errNoListener
+		return ErrNoListener
 	}
 
 	if s.certManager != nil {

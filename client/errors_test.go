@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package client
 
 import (
 	"testing"
@@ -18,6 +18,7 @@ import (
 
 func TestNewUnexpectedType(t *testing.T) {
 	someString := "defradb"
-	err := NewErrUnexpectedType[int](someString)
-	assert.Equal(t, err.Error(), "unexpected type. Expected: int, Actual: string")
+	someLocation := "foo"
+	err := NewErrUnexpectedType[int](someLocation, someString)
+	assert.Equal(t, err.Error(), "unexpected type. Property: foo, Expected: int, Actual: string")
 }
