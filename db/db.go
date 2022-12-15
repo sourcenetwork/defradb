@@ -35,11 +35,6 @@ import (
 
 var (
 	log = logging.MustNewLogger("defra.db")
-	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
-	// call against the supplied Document Key.
-	ErrDocVerification = errors.New("the document verification failed")
-
-	ErrOptionsEmpty = errors.New("empty options configuration provided")
 )
 
 // make sure we match our client interface

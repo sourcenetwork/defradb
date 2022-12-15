@@ -29,11 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
-var (
-	ErrDeleteTargetEmpty = errors.New("the doc delete targeter cannot be empty")
-	ErrDeleteEmpty       = errors.New("the doc delete cannot be empty")
-)
-
 // DeleteWith deletes a target document. Target can be a Filter statement,
 //  a single docKey, a single document, an array of docKeys, or an array of documents.
 // If you want more type safety, use the respective typed versions of Delete.
@@ -293,7 +288,7 @@ func (c *collection) applyFullDelete(
 	// Get all the heads (cids).
 	heads, _, err := headset.List(ctx)
 	if err != nil {
-		return errors.Wrap("failed to get document heads", err)
+		return NewErrFailedToGetHeads(err)
 	}
 
 	dagDel := newDagDeleter(txn.DAGstore())
