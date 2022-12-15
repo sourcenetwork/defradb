@@ -1,11 +1,10 @@
 package connor
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor/numbers"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // ge does value comparisons to determine whether one
@@ -28,7 +27,7 @@ func ge(condition, data any) (bool, error) {
 			}
 			return dt.After(c) || dt.Equal(c), nil
 		default:
-			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
+			return false, client.NewErrUnhandledType("data", d)
 		}
 	default:
 		switch cn := numbers.TryUpcast(condition).(type) {
@@ -51,7 +50,7 @@ func ge(condition, data any) (bool, error) {
 
 			return false, nil
 		default:
-			return false, errors.New(fmt.Sprintf("unknown comparison type '%#v'", condition))
+			return false, client.NewErrUnhandledType("condition", cn)
 		}
 	}
 }
