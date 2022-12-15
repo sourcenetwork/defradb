@@ -35,11 +35,12 @@ const (
 )
 
 const (
-	COLLECTION        = "collection/names"
+	COLLECTION        = "/collection/names"
 	COLLECTION_SCHEMA = "/collection/schema"
-	SCHEMA            = "schema"
-	SEQ               = "seq"
-	PRIMARY_KEY       = "pk"
+	SCHEMA            = "/schema"
+	SEQ               = "/seq"
+	PRIMARY_KEY       = "/pk"
+	REPLICATOR        = "/replicator/id"
 )
 
 type Key interface {
@@ -95,6 +96,12 @@ type SequenceKey struct {
 }
 
 var _ Key = (*SequenceKey)(nil)
+
+type ReplicatorKey struct {
+	ReplicatorID string
+}
+
+var _ Key = (*ReplicatorKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminater.  It assumes
@@ -279,6 +286,13 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 		k.InstanceType == other.InstanceType
 }
 
+func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
+	return PrimaryDataStoreKey{
+		CollectionId: k.CollectionId,
+		DocKey:       k.DocKey,
+	}
+}
+
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionId: k.CollectionId,
@@ -300,7 +314,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 	if k.CollectionId != "" {
 		result = result + "/" + k.CollectionId
 	}
-	result = result + "/" + PRIMARY_KEY
+	result = result + PRIMARY_KEY
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
@@ -309,7 +323,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 }
 
 func (k CollectionKey) ToString() string {
-	result := "/" + COLLECTION
+	result := COLLECTION
 
 	if k.CollectionName != "" {
 		result = result + "/" + k.CollectionName
@@ -327,7 +341,7 @@ func (k CollectionKey) ToDS() ds.Key {
 }
 
 func (k CollectionSchemaKey) ToString() string {
-	result := "/" + COLLECTION_SCHEMA
+	result := COLLECTION_SCHEMA
 
 	if k.SchemaId != "" {
 		result = result + "/" + k.SchemaId
@@ -345,7 +359,7 @@ func (k CollectionSchemaKey) ToDS() ds.Key {
 }
 
 func (k SchemaKey) ToString() string {
-	result := "/" + SCHEMA
+	result := SCHEMA
 
 	if k.SchemaName != "" {
 		result = result + "/" + k.SchemaName
@@ -363,7 +377,7 @@ func (k SchemaKey) ToDS() ds.Key {
 }
 
 func (k SequenceKey) ToString() string {
-	result := "/" + SEQ
+	result := SEQ
 
 	if k.SequenceName != "" {
 		result = result + "/" + k.SequenceName
@@ -377,6 +391,28 @@ func (k SequenceKey) Bytes() []byte {
 }
 
 func (k SequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func NewReplicatorKey(id string) ReplicatorKey {
+	return ReplicatorKey{ReplicatorID: id}
+}
+
+func (k ReplicatorKey) ToString() string {
+	result := REPLICATOR
+
+	if k.ReplicatorID != "" {
+		result = result + "/" + k.ReplicatorID
+	}
+
+	return result
+}
+
+func (k ReplicatorKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k ReplicatorKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

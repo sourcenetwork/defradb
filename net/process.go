@@ -19,7 +19,6 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -42,7 +41,7 @@ func (p *Peer) processLog(
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
-	getter format.NodeGetter) ([]cid.Cid, error) {
+	getter ipld.NodeGetter) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
 	txn, err := p.db.NewTxn(ctx, false)
@@ -133,12 +132,12 @@ func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	if err != nil {
 		return nil, errors.Wrap("failed to create block", err)
 	}
-	return format.Decode(blk)
+	return ipld.Decode(blk)
 }
 
 func (p *Peer) createNodeGetter(
 	crdt crdt.MerkleCRDT,
-	getter format.NodeGetter,
+	getter ipld.NodeGetter,
 ) *clock.CrdtNodeGetter {
 	return &clock.CrdtNodeGetter{
 		NodeGetter:     getter,

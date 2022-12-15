@@ -13,6 +13,9 @@ package net
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 )
 
@@ -122,6 +125,39 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 			1: {
 				0: {
 					"Age": uint64(62),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// TestP2FullPReplicator tests document syncing between a node and a replicator.
+func TestP2FullPReplicator(t *testing.T) {
+	doc, err := client.NewDocFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	require.NoError(t, err)
+
+	test := P2PTestCase{
+		NodeConfig: []*config.Config{
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+			},
+		},
+		DocumentsToReplicate: []*client.Document{
+			doc,
+		},
+		ReplicatorResult: map[int]map[string]map[string]any{
+			1: {
+				doc.Key().String(): {
+					"Age": uint64(21),
 				},
 			},
 		},

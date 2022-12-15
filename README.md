@@ -247,7 +247,7 @@ Since the keys should be stored within the DefraDB data and configuration direct
 Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
 
 ```shell
-defradb start --address="example.com"
+defradb start --url="example.com"
 ```
 
 
@@ -334,7 +334,7 @@ defradb client schema add --url localhost:9182 '
 
 Set *nodeA* to actively replicate the "Article" collection to *nodeB*:
 ```shell
-defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9162/p2p/<peerID_of_nodeB>
+defradb client rpc addreplicator "Article" /ip4/0.0.0.0/tcp/9172/p2p/<peerID_of_nodeB>
 ```
 
 As we add or update documents in the "Article" collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
