@@ -150,8 +150,8 @@ func TestP2FullPReplicator(t *testing.T) {
 		},
 		ReplicatorResult: map[int]map[string]map[string]any{
 			1: {
-				"bae-83077925-af1f-5370-a0e2-4b00feb0dd1f": {
-					"Age": uint64(27),
+				"bae-52b9170d-b77a-5887-b877-cbdbb99b009f": {
+					"Age": uint64(21),
 				},
 			},
 		},

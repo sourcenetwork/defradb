@@ -286,6 +286,13 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 		k.InstanceType == other.InstanceType
 }
 
+func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
+	return PrimaryDataStoreKey{
+		CollectionId: k.CollectionId,
+		DocKey:       k.DocKey,
+	}
+}
+
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionId: k.CollectionId,

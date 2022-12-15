@@ -77,7 +77,8 @@ func (delta *CompositeDAGDelta) GetSchemaID() string {
 // CompositeDAG is a CRDT structure that is used
 // to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	key      string
+	store    datastore.DSReaderWriter
+	key      core.DataStoreKey
 	schemaID string
 }
 
@@ -85,16 +86,17 @@ func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaID string,
 	namespace core.Key,
-	key string,
+	key core.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
+		store:    store,
 		key:      key,
 		schemaID: schemaID,
 	}
 }
 
 func (c CompositeDAG) ID() string {
-	return c.key
+	return c.key.ToString()
 }
 
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
@@ -119,12 +121,15 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 // MUTATE STATE
 // @todo
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
-	// d, ok := delta.(*CompositeDAGDelta)
-	// if !ok {
-	// 	return core.ErrMismatchedMergeType
-	// }
-
-	// return reg.setValue(d.Data, d.GetPriority())
+	// ensure object marker exists
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil {
+		return err
+	}
+	if !exists {
+		// write object marker
+		c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+	}
 	return nil
 }
 
