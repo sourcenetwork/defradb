@@ -62,7 +62,7 @@ type P2PTestCase struct {
 	NodeReplicators map[int][]int
 
 	SeedDocuments        []string
-	DocumentsToReplicate []string
+	DocumentsToReplicate []*client.Document
 
 	// node/dockey/values
 	Updates          map[int]map[int][]string
@@ -153,6 +153,15 @@ func seedDocument(ctx context.Context, db client.DB, document string) (client.Do
 	return doc.Key(), nil
 }
 
+func saveDocument(ctx context.Context, db client.DB, document *client.Document) error {
+	col, err := db.GetCollectionByName(ctx, userCollection)
+	if err != nil {
+		return err
+	}
+
+	return col.Save(ctx, document)
+}
+
 func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
@@ -176,14 +185,7 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*clie
 	if err != nil {
 		return nil, err
 	}
-	dockeyCh, err := col.GetAllDocKeys(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	for d := range dockeyCh {
-		fmt.Println(d)
-	}
 	doc, err := col.Get(ctx, dockey)
 	if err != nil {
 		return nil, err
@@ -223,6 +225,10 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		nodes = append(nodes, n)
 	}
 
+	//////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////
+	// PubSub related test logic
+
 	// wait for peers to connect to each other
 	if len(test.NodePeers) > 0 {
 		for i, n := range nodes {
@@ -234,21 +240,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				err := n.WaitForPubSubEvent(p.PeerID())
 				require.NoError(t, err)
 				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
-			}
-		}
-	}
-
-	if len(test.NodeReplicators) > 0 {
-		for i, n := range nodes {
-			if reps, ok := test.NodeReplicators[i]; ok {
-				for _, r := range reps {
-					addr, err := ma.NewMultiaddr(
-						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
-					)
-					require.NoError(t, err)
-					_, err = n.Peer.SetReplicator(ctx, addr)
-					require.NoError(t, err)
-				}
 			}
 		}
 	}
@@ -303,13 +294,31 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		}
 	}
 
+	//////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////
+	// Replicator related test logic
+
+	if len(test.NodeReplicators) > 0 {
+		for i, n := range nodes {
+			if reps, ok := test.NodeReplicators[i]; ok {
+				for _, r := range reps {
+					addr, err := ma.NewMultiaddr(
+						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
+					)
+					require.NoError(t, err)
+					_, err = n.Peer.SetReplicator(ctx, addr)
+					require.NoError(t, err)
+				}
+			}
+		}
+	}
+
 	if len(test.DocumentsToReplicate) > 0 {
 		for n, reps := range test.NodeReplicators {
 			for _, doc := range test.DocumentsToReplicate {
-				_, err := seedDocument(ctx, nodes[n].DB, doc)
+				err := saveDocument(ctx, nodes[n].DB, doc)
 				require.NoError(t, err)
 			}
-
 			for _, rep := range reps {
 				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
 				err := nodes[rep].WaitForPushLogEvent(nodes[n].PeerID())
@@ -318,7 +327,6 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 
 				for dockey, results := range test.ReplicatorResult[rep] {
 					for field, result := range results {
-
 						d, err := client.NewDocKeyFromString(dockey)
 						require.NoError(t, err)
 

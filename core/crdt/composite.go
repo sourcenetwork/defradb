@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/db/base"
 )
 
 var (
@@ -116,10 +117,8 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 }
 
 // Merge implements ReplicatedData interface
-// Merge two LWWRegistry based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-// @todo
+// It ensures that the object marker exists for the given key.
+// If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
 	// ensure object marker exists
 	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
@@ -128,7 +127,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) er
 	}
 	if !exists {
 		// write object marker
-		c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
 	}
 	return nil
 }
