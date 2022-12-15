@@ -118,7 +118,7 @@ func NewPeer(
 		return nil, err
 	}
 
-	err = p.loadReplicator(p.ctx)
+	err = p.loadReplicators(p.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +522,7 @@ func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, erro
 	return p.db.GetAllReplicators(ctx)
 }
 
-func (p *Peer) loadReplicator(ctx context.Context) error {
+func (p *Peer) loadReplicators(ctx context.Context) error {
 	reps, err := p.db.GetAllReplicators(ctx)
 	if err != nil {
 		return errors.Wrap("failed to get replicators", err)
