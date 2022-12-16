@@ -13,7 +13,6 @@ package fetcher
 import (
 	"container/list"
 	"context"
-	"fmt"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -120,11 +119,11 @@ func (vf *VersionedFetcher) Init(
 // Start serializes the correct state accoriding to the Key and CID
 func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
-		return errors.New("versionedFetcher cannot be started without a CollectionDescription")
+		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
 
 	if len(spans.Value) != 1 {
-		return errors.New("spans must contain only a single entry")
+		return ErrSingleSpanOnly
 	}
 
 	// For the VersionedFetcher, the spans needs to be in the format
@@ -132,9 +131,9 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	dk := spans.Value[0].Start()
 	cidRaw := spans.Value[0].End()
 	if dk.DocKey == "" {
-		return errors.New("spans missing start DocKey")
+		return client.NewErrUninitializeProperty("Spans", "DocKey")
 	} else if cidRaw.DocKey == "" { // todo: dont abuse DataStoreKey/Span like this!
-		return errors.New("span missing end CID")
+		return client.NewErrUninitializeProperty("Spans", "CID")
 	}
 
 	// decode cidRaw from core.Key to cid.Cid
@@ -142,10 +141,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 
 	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
-		return errors.Wrap(
-			fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey),
-			err,
-		)
+		return NewErrFailedToDecodeCIDForVFetcher(err)
 	}
 
 	vf.txn = txn
@@ -166,7 +162,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	}
 
 	if err := vf.seekTo(vf.version); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed seeking state to %v", c), err)
+		return NewErrFailedToSeek(c, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
@@ -242,11 +238,11 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
 		cc, ok := ccv.Value.(cid.Cid)
 		if !ok {
-			return errors.New("queueudCids contains an invalid CID value")
+			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
 		}
 		err := vf.merge(cc)
 		if err != nil {
-			return errors.Wrap("failed merging state", err)
+			return NewErrFailedToMergeState(err)
 		}
 	}
 
@@ -282,7 +278,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to find block in blockstore", err)
+		return NewErrVFetcherFailedToFindBlock(err)
 	}
 	// skip if we already have it locally
 	if hasLocalBlock {
@@ -291,12 +287,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to get block in blockstore", err)
+		return NewErrVFetcherFailedToGetBlock(err)
 	}
 
 	// store the block in the local (transient store)
 	if err := vf.store.DAGstore().Put(vf.ctx, blk); err != nil {
-		return errors.Wrap("(version fetcher) failed to write block to blockstore ", err)
+		return NewErrVFetcherFailedToWriteBlock(err)
 	}
 
 	// add the CID to the queuedCIDs list
@@ -307,14 +303,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// decode the block
 	nd, err := dag.DecodeProtobuf(blk.RawData())
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to decode protobuf", err)
+		return NewErrVFetcherFailedToDecodeNode(err)
 	}
 
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
 	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
-		return errors.Wrap("(version fetcher) failed to get node link from DAG", err)
+		return NewErrVFetcherFailedToGetDagLink(err)
 	}
 
 	// only seekNext on parent if we have a HEAD link
@@ -377,7 +373,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 		fieldID := vf.col.Schema.GetFieldKey(l.Name)
 		if fieldID == uint32(0) {
-			return errors.New(fmt.Sprintf("Invalid sub graph field name: %s", l.Name))
+			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
@@ -424,7 +420,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return nil, errors.Wrap("failed to get DAG Node", err)
+		return nil, NewErrFailedToGetDagNode(err)
 	}
 
 	// get node

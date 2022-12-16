@@ -22,17 +22,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/planner"
-)
-
-var (
-	ErrUpdateTargetEmpty     = errors.New("the doc update targeter cannot be empty")
-	ErrUpdateEmpty           = errors.New("the doc update cannot be empty")
-	ErrInvalidMergeValueType = errors.New(
-		"the type of value in the merge patch doesn't match the schema",
-	)
 )
 
 // UpdateWith updates a target document using the given updater type. Target
@@ -295,7 +286,7 @@ func (c *collection) applyPatch( //nolint:unused
 
 		pathVal := opObject.Get("path")
 		if pathVal == nil {
-			return errors.New("missing document field to update")
+			return ErrMissingDocFieldToUpdate
 		}
 
 		path, err := pathVal.StringBytes()
@@ -340,7 +331,7 @@ func (c *collection) applyMerge(
 ) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
-		return errors.New("document is missing key")
+		return ErrDocMissingKey
 	}
 	key := c.getPrimaryKey(keyStr)
 	links := make([]core.DAGLink, 0)
@@ -359,7 +350,7 @@ func (c *collection) applyMerge(
 
 		fd, valid := c.desc.GetField(mfield)
 		if !valid {
-			return errors.New("invalid field in Patch")
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		if c.isFieldDescriptionRelationID(&fd) {
@@ -498,10 +489,10 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, errors.New("merge doesn't support sub types yet")
+		return nil, ErrMergeSubTypeNotSupported
 	}
 
-	return nil, errors.New("unsupported field kind")
+	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)
 }
 
 func getString(v *fastjson.Value) (string, error) {
@@ -599,7 +590,7 @@ func (c *collection) makeSelectionQuery(
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
-			return nil, errors.New("invalid filter")
+			return nil, ErrInvalidFilter
 		}
 
 		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
@@ -609,10 +600,10 @@ func (c *collection) makeSelectionQuery(
 	case immutable.Option[request.Filter]:
 		f = fval
 	default:
-		return nil, errors.New("invalid filter")
+		return nil, ErrInvalidFilter
 	}
 	if filter == "" {
-		return nil, errors.New("invalid filter")
+		return nil, ErrInvalidFilter
 	}
 	slct, err := c.makeSelectLocal(f)
 	if err != nil {
@@ -676,7 +667,7 @@ func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 ) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
-		return "", errors.New("invalid patch op path")
+		return "", ErrInvalidOpPath
 	}
 
 	return "", nil
