@@ -49,7 +49,9 @@ type txn struct {
 
 var _ Txn = (*txn)(nil)
 
-func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (Txn, error) {
+// NOTE: rootstore temporarily set to any and should be changed when the rootstore is changed to
+// support ds.TxnDatastore
+func NewTxnFrom(ctx context.Context, rootstore any, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -66,34 +68,18 @@ func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (Txn,
 		}, nil
 	}
 
-	var rootTxn ds.Txn
-	var err error
-	var isBatch bool
-	if txnStore, ok := rootstore.(ds.TxnDatastore); ok {
-		rootTxn, err = txnStore.NewTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		batcher, err := rootstore.Batch(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// hide a ds.Batching store as a ds.Txn
-		rootTxn = ShimBatcherTxn{
-			Read:  rootstore,
-			Batch: batcher,
-		}
-		isBatch = true
+	txnStore := rootstore.(ds.TxnDatastore)
+	rootTxn, err := txnStore.NewTransaction(ctx, readonly)
+	if err != nil {
+		return nil, err
 	}
 
-	root := AsDSReaderWriter(ShimTxnStore{rootTxn})
+	root := AsDSReaderWriter(txnStore)
 	multistore := MultiStoreFrom(root)
 	return &txn{
 		rootTxn,
 		multistore,
-		isBatch,
+		false,
 		[]func(){},
 		[]func(){},
 	}, nil
