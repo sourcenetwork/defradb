@@ -1,3 +1,13 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package metric
 
 import (
@@ -33,7 +43,6 @@ type Meter struct {
 	reader   otelMetric.Reader
 	provider *otelMetric.MeterProvider
 	meter    metric.Meter
-	// exporter metric.Exporter
 }
 
 func NewMeter() Meter {
@@ -46,18 +55,11 @@ func (m *Meter) Register(name string) {
 }
 
 func (m *Meter) Dump(ctx context.Context) (any, error) {
-	data, err := m.reader.Collect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return m.reader.Collect(ctx)
 }
 
 func (m *Meter) Close(ctx context.Context) error {
-	if err := m.provider.Shutdown(ctx); err != nil {
-		return err
-	}
-	return nil
+	return m.provider.Shutdown(ctx)
 }
 
 func (m *Meter) GetSyncHistogram(
@@ -85,8 +87,7 @@ func (m *Meter) DumpScopeMetricsString(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var jsonBytes []byte
-	jsonBytes, err = json.MarshalIndent(data.ScopeMetrics, "", "  ")
+	jsonBytes, err := json.MarshalIndent(data.ScopeMetrics, "", "  ")
 
 	if err != nil {
 		return "", err
@@ -105,22 +106,4 @@ func (m *Meter) newManualProvider() *otelMetric.MeterProvider {
 	return otelMetric.NewMeterProvider(
 		otelMetric.WithReader(m.reader),
 	)
-
 }
-
-//func (m Metric) NewPeriodicConsoleProvider() *metric.MeterProvider {
-//	exporter, err := stdoutmetric.New()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	// Register the exporter with an SDK via a periodic reader.
-//	readPeriodic := metric.NewPeriodicReader(
-//		exporter,
-//		metric.WithInterval(1*time.Second),
-//	)
-//
-//	return metric.NewMeterProvider(
-//		metric.WithReader(readPeriodic),
-//	)
-//}
