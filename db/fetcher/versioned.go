@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
@@ -153,7 +154,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	vf.version = c
 
 	// create store
-	root := ds.NewMapDatastore()
+	root := memory.NewDatastore(ctx)
 	vf.root = root
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
