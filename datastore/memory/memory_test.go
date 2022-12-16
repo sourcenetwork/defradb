@@ -360,7 +360,7 @@ func TestPurgeWithOlderInFlightTxn(t *testing.T) {
 	s := newLoadedDatastore(ctx)
 	s.inFlightTxn.Set(dsTxn{
 		dsVersion:  s.getVersion(),
-		txnVersion: s.nextTxnVersion(),
+		txnVersion: s.getVersion() + 1,
 		expiresAt:  time.Now(),
 	})
 
@@ -376,7 +376,7 @@ func TestClearOldFlightTransactions(t *testing.T) {
 
 	s.inFlightTxn.Set(dsTxn{
 		dsVersion:  s.getVersion(),
-		txnVersion: s.nextTxnVersion(),
+		txnVersion: s.getVersion() + 1,
 		expiresAt:  time.Now(),
 	})
 

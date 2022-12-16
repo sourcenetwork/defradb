@@ -63,8 +63,8 @@ type commit struct {
 
 // Datastore uses a btree for internal storage.
 type Datastore struct {
+	// Latest committed version.
 	version     *uint64
-	txnVersion  *uint64
 	values      *btree.BTreeG[dsItem]
 	inFlightTxn *btree.BTreeG[dsTxn]
 	close       chan struct{}
@@ -78,10 +78,8 @@ var _ ds.TxnFeature = (*Datastore)(nil)
 // NewDatastore constructs an empty Datastore.
 func NewDatastore(ctx context.Context) *Datastore {
 	v := uint64(0)
-	txnV := v
 	d := &Datastore{
 		version:     &v,
-		txnVersion:  &txnV,
 		values:      btree.NewBTreeG(byKeys),
 		inFlightTxn: btree.NewBTreeG(byDSVersion),
 		close:       make(chan struct{}),
@@ -98,10 +96,6 @@ func (d *Datastore) getVersion() uint64 {
 
 func (d *Datastore) nextVersion() uint64 {
 	return atomic.AddUint64(d.version, 1)
-}
-
-func (d *Datastore) nextTxnVersion() uint64 {
-	return atomic.AddUint64(d.txnVersion, 1)
 }
 
 // Batch return a ds.Batch datastore based on Datastore
@@ -176,14 +170,12 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 // newTransaction returns a ds.Txn datastore
 func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 	v := d.getVersion()
-	txnV := d.nextTxnVersion()
-	d.inFlightTxn.Set(dsTxn{v, txnV, time.Now().Add(1 * time.Hour)})
+	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour)})
 	return &basicTxn{
-		ops:        btree.NewBTreeG(byKeys),
-		ds:         d,
-		readOnly:   readOnly,
-		dsVersion:  &v,
-		txnVersion: &txnV,
+		ops:       btree.NewBTreeG(byKeys),
+		ds:        d,
+		readOnly:  readOnly,
+		dsVersion: &v,
 	}
 }
 
@@ -329,7 +321,7 @@ func (d *Datastore) commitHandler(ctx context.Context) {
 }
 
 func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {
-	if d.inFlightTxn.Len() == 0 {
+	if d.inFlightTxn.Height() == 0 {
 		return
 	}
 

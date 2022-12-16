@@ -21,12 +21,12 @@ import (
 
 // basicTxn implements ds.Txn
 type basicTxn struct {
-	ops        *btree.BTreeG[dsItem]
-	ds         *Datastore
-	dsVersion  *uint64
-	txnVersion *uint64
-	readOnly   bool
-	discarded  bool
+	ops *btree.BTreeG[dsItem]
+	ds  *Datastore
+	// Version of the datastore when the transaction was initiated.
+	dsVersion *uint64
+	readOnly  bool
+	discarded bool
 }
 
 var _ ds.Txn = (*basicTxn)(nil)
@@ -36,7 +36,7 @@ func (t *basicTxn) getDSVersion() uint64 {
 }
 
 func (t *basicTxn) getTxnVersion() uint64 {
-	return atomic.LoadUint64(t.txnVersion)
+	return t.getDSVersion() + 1
 }
 
 // Delete implements ds.Delete
@@ -50,6 +50,7 @@ func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 
 	item := t.get(ctx, key)
 	if item.key == "" || item.isDeleted {
+		// if the key doesn't exist of the item is already deleted, this is a no-op.
 		return nil
 	}
 
@@ -232,7 +233,7 @@ func (t *basicTxn) checkForConflicts(ctx context.Context) error {
 	for iter.Next() {
 		expectedItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.getDSVersion())
 		latestItem := t.ds.get(ctx, ds.NewKey(iter.Item().key), t.ds.getVersion())
-		if latestItem.isDeleted || latestItem.version != expectedItem.version {
+		if latestItem.version != expectedItem.version {
 			return ErrTxnConflict
 		}
 	}
