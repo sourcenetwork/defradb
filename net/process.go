@@ -41,7 +41,8 @@ func (p *Peer) processLog(
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
-	getter ipld.NodeGetter) ([]cid.Cid, error) {
+	getter ipld.NodeGetter,
+) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
 	// TODO: Implement better transaction retry mechanics
