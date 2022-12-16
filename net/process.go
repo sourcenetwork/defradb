@@ -36,6 +36,7 @@ import (
 // of CRDT blocks
 func (p *Peer) processLog(
 	ctx context.Context,
+	txn datastore.Txn,
 	col client.Collection,
 	dockey core.DataStoreKey,
 	c cid.Cid,
@@ -164,6 +165,7 @@ func (p *Peer) createNodeGetter(
 
 func (p *Peer) handleChildBlocks(
 	session *sync.WaitGroup,
+	txn datastore.Txn,
 	col client.Collection,
 	dockey core.DataStoreKey,
 	field string,
@@ -221,6 +223,7 @@ func (p *Peer) handleChildBlocks(
 			session:    session,
 			nodeGetter: getter,
 			node:       cNode,
+			txn:        txn,
 		}
 
 		select {

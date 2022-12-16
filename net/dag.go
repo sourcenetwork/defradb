@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -56,6 +57,8 @@ type dagJob struct {
 	collection client.Collection // collection our document belongs to
 	dockey     core.DataStoreKey // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
+
+	txn datastore.Txn // transaction common to a pushlog event
 
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
@@ -99,6 +102,7 @@ func (p *Peer) dagWorker() {
 
 		children, err := p.processLog(
 			p.ctx,
+			job.txn,
 			job.collection,
 			job.dockey,
 			job.node.Cid(),
@@ -121,6 +125,7 @@ func (p *Peer) dagWorker() {
 		go func(j *dagJob) {
 			p.handleChildBlocks(
 				j.session,
+				j.txn,
 				j.collection,
 				j.dockey,
 				j.fieldName,

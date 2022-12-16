@@ -166,7 +166,14 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if err != nil {
 		return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 	}
-	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
+
+	txn, err := s.db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard(ctx)
+
+	cids, err := s.peer.processLog(ctx, txn, col, docKey, cid, "", nd, getter)
 	if err != nil {
 		log.ErrorE(
 			ctx,
@@ -186,10 +193,16 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			logging.NewKV("CID", cid),
 		)
 		var session sync.WaitGroup
-		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
+		s.peer.handleChildBlocks(&session, txn, col, docKey, "", nd, cids, getter)
 		session.Wait()
 	} else {
 		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+	}
+
+	err = txn.Commit(ctx)
+	if err != nil {
+		fmt.Println("commit conflict")
+		return nil, err
 	}
 
 	if s.pushLogEmitter != nil {
