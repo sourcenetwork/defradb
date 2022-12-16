@@ -129,7 +129,7 @@ func ExecuteExplainRequestTestCase(
 	}
 
 	ctx := context.Background()
-	dbs, err := testUtils.GetDatabases(ctx, t, false)
+	dbs, err := testUtils.GetDatabases(ctx, t)
 	if testUtils.AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
 		return
 	}

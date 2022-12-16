@@ -42,6 +42,7 @@ const (
 	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	inMemoryEnvName            = "DEFRA_IN_MEMORY"
 	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
 	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
 	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
@@ -66,6 +67,7 @@ var (
 	log            = logging.MustNewLogger("defra.tests.integration")
 	badgerInMemory bool
 	badgerFile     bool
+	inMemoryStore  bool
 )
 
 const subsciptionTimeout = 1 * time.Second
@@ -174,12 +176,14 @@ func init() {
 	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
 	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
 	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
+	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
 	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
 	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
 	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
 
 	badgerFile = getBool(badgerFileValue)
 	badgerInMemory = getBool(badgerInMemoryValue)
+	inMemoryStore = getBool(inMemoryStoreValue)
 	DetectDbChanges = getBool(detectDbChangesValue)
 	SetupOnly = getBool(setupOnlyValue)
 
@@ -192,7 +196,7 @@ func init() {
 	}
 
 	// default is to run against all
-	if !badgerInMemory && !badgerFile && !mapStore && !DetectDbChanges {
+	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
 		badgerInMemory = true
 		// Testing against the file system is off by default
 		badgerFile = false
@@ -250,7 +254,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 	}, nil
 }
 
-func NewMapDB(ctx context.Context) (databaseInfo, error) {
+func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
 	rootstore := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
@@ -295,7 +299,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 	}, nil
 }
 
-func GetDatabases(ctx context.Context, t *testing.T, disableMapStore bool) ([]databaseInfo, error) {
+func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
 	if badgerInMemory {
@@ -314,12 +318,12 @@ func GetDatabases(ctx context.Context, t *testing.T, disableMapStore bool) ([]da
 		databases = append(databases, badgerIMDatabase)
 	}
 
-	if !disableMapStore && mapStore {
-		mapDatabase, err := NewMapDB(ctx)
+	if inMemoryStore {
+		inMemoryDatabase, err := NewInMemoryDB(ctx)
 		if err != nil {
 			return nil, err
 		}
-		databases = append(databases, mapDatabase)
+		databases = append(databases, inMemoryDatabase)
 	}
 
 	return databases, nil
@@ -343,7 +347,7 @@ func ExecuteQueryTestCase(
 	}
 
 	ctx := context.Background()
-	dbs, err := GetDatabases(ctx, t, test.DisableMapStore)
+	dbs, err := GetDatabases(ctx, t)
 	if AssertError(t, test.Description, err, test.ExpectedError) {
 		return
 	}

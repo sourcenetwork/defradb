@@ -14,7 +14,6 @@ import (
 	"container/list"
 	"context"
 
-	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	format "github.com/ipfs/go-ipld-format"

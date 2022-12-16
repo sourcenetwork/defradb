@@ -69,7 +69,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 		return nil, err
 	}
 
-	root := AsDSReaderWriter(txnStore)
+	root := AsDSReaderWriter(rootstore)
 	multistore := MultiStoreFrom(root)
 	return &txn{
 		rootTxn,
