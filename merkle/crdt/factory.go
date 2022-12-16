@@ -14,12 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/events"
-)
-
-var (
-	ErrFactoryTypeNoExist = errors.New("no such factory for the given type exists")
 )
 
 // MerkleCRDTInitFn instantiates a MerkleCRDT with a given key.
