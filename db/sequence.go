@@ -28,7 +28,7 @@ type sequence struct {
 
 func (db *db) getSequence(ctx context.Context, key string) (*sequence, error) {
 	if key == "" {
-		return nil, errors.New("key cannot be empty")
+		return nil, ErrKeyEmpty
 	}
 	seqKey := core.NewSequenceKey(key)
 	seq := &sequence{

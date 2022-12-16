@@ -21,6 +21,7 @@ const (
 	errSelectOfNonGroupField string = "cannot select a non-group-by field at group-level"
 	errUnexpectedType        string = "unexpected type"
 	errParsingFailed         string = "failed to parse argument"
+	errUninitializeProperty  string = "invalid state, required property is uninitialized"
 )
 
 // Errors returnable from this package.
@@ -32,6 +33,7 @@ var (
 	ErrSelectOfNonGroupField = errors.New(errSelectOfNonGroupField)
 	ErrUnexpectedType        = errors.New(errUnexpectedType)
 	ErrParsingFailed         = errors.New(errParsingFailed)
+	ErrUninitializeProperty  = errors.New(errUninitializeProperty)
 	ErrFieldNotObject        = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch     = errors.New("value does not match indicated type")
 	ErrIndexNotFound         = errors.New("no index found for given ID")
@@ -71,4 +73,12 @@ func NewErrUnhandledType(property string, actual any) error {
 
 func NewErrParsingFailed(inner error, argumentName string) error {
 	return errors.Wrap(errParsingFailed, inner, errors.NewKV("Argument", argumentName))
+}
+
+func NewErrUninitializeProperty(host string, propertyName string) error {
+	return errors.New(
+		errUninitializeProperty,
+		errors.NewKV("Host", host),
+		errors.NewKV("PropertyName", propertyName),
+	)
 }

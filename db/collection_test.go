@@ -117,7 +117,11 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "collection schema has no fields")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection, PropertyName: Fields",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
@@ -133,7 +137,11 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "collection requires name to not be empty")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection, PropertyName: Name",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
@@ -207,7 +215,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "collection schema field missing Name")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: Name",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
@@ -232,7 +244,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "collection schema field missing FieldKind")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: FieldKind",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
@@ -257,7 +273,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "collection schema field missing CRDT type")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: CRDT type",
+	)
 }
 
 func TestGetCollectionByName(t *testing.T) {

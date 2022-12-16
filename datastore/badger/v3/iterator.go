@@ -15,7 +15,6 @@ package badger
 //  that John linked - maybe just use/wrap that
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	badger "github.com/dgraph-io/badger/v3"
@@ -23,8 +22,8 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	goprocess "github.com/jbenet/goprocess"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore/iterable"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 type BadgerIterator struct {
@@ -56,7 +55,7 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 			opt.Reverse = true
 			reversedOrder = true
 		default:
-			return nil, errors.New(fmt.Sprintf("Order format not supported: %v", orderType))
+			return nil, client.NewErrUnhandledType("Order format", orderType)
 		}
 	}
 
