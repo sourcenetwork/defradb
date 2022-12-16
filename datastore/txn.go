@@ -46,8 +46,7 @@ type txn struct {
 
 var _ Txn = (*txn)(nil)
 
-// NOTE: rootstore temporarily set to any and should be changed when the rootstore is changed to
-// support ds.TxnDatastore
+// NewTxnFrom returns a new Txn from the rootstore.
 func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {

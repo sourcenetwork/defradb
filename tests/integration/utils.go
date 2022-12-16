@@ -200,6 +200,7 @@ func init() {
 		badgerInMemory = true
 		// Testing against the file system is off by default
 		badgerFile = false
+		inMemoryStore = true
 	}
 
 	if DetectDbChanges {

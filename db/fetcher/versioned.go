@@ -152,9 +152,6 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	// create store
 	root := memory.NewDatastore(ctx)
 	vf.root = root
-	if err != nil {
-		return err
-	}
 
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
