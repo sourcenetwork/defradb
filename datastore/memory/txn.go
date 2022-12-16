@@ -216,8 +216,7 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 			err: make(chan error),
 		}
 		t.ds.commit <- c
-		e := <-c.err
-		return e
+		return <-c.err
 	}
 
 	return nil

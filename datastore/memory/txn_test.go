@@ -396,6 +396,51 @@ func TestTxnQueryOperation(t *testing.T) {
 	require.Equal(t, testValue3, result.Entry.Value)
 }
 
+func TestTxnQueryOperationInTwoConcurentTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+	defer tx.Discard(ctx)
+
+	tx2, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+	defer tx.Discard(ctx)
+
+	err = tx.Put(ctx, testKey1, testValue3)
+	require.NoError(t, err)
+
+	result, err := tx.Get(ctx, testKey1)
+	require.NoError(t, err)
+
+	require.Equal(t, testValue3, result)
+
+	results, err := tx2.Query(ctx, dsq.Query{})
+	require.NoError(t, err)
+	entries, err := results.Rest()
+	require.NoError(t, err)
+	expectedResults := []dsq.Entry{
+		{
+			Key:   testKey1.String(),
+			Value: testValue1,
+			Size:  len(testValue1),
+		},
+		{
+			Key:   testKey2.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+	}
+
+	require.Equal(t, expectedResults, entries)
+}
+
 func TestTxnQueryOperationWithAddedItems(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)

@@ -68,7 +68,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 		return nil, err
 	}
 
-	root := AsDSReaderWriter(rootstore)
+	root := AsDSReaderWriter(ShimTxnStore{rootTxn})
 	multistore := MultiStoreFrom(root)
 	return &txn{
 		rootTxn,
@@ -115,4 +115,18 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 	for _, fn := range txn.successFns {
 		fn()
 	}
+}
+
+// Shim to make ds.Txn support ds.Datastore
+type ShimTxnStore struct {
+	ds.Txn
+}
+
+func (ts ShimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
+	return ts.Txn.Commit(ctx)
+}
+
+func (ts ShimTxnStore) Close() error {
+	ts.Discard(context.TODO())
+	return nil
 }
