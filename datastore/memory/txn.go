@@ -208,20 +208,19 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
-	if t.readOnly {
-		return ErrReadOnlyTxn
+	defer t.Discard(ctx)
+
+	if !t.readOnly {
+		c := commit{
+			tx:  t,
+			err: make(chan error),
+		}
+		t.ds.commit <- c
+		e := <-c.err
+		return e
 	}
 
-	c := commit{
-		tx:  t,
-		err: make(chan error),
-	}
-	t.ds.commit <- c
-	e := <-c.err
-
-	t.Discard(ctx)
-
-	return e
+	return nil
 }
 
 func (t *basicTxn) checkForConflicts(ctx context.Context) error {

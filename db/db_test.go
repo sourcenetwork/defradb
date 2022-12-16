@@ -14,36 +14,26 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/dgraph-io/badger/v3"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
 func newMemoryDB(ctx context.Context) (*db, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		return nil, err
-	}
+	rootstore := memory.NewDatastore(ctx)
 	return newDB(ctx, rootstore)
 }
 
 func TestNewDB(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	rootstore := memory.NewDatastore(ctx)
 
-	_, err = NewDB(ctx, rootstore)
+	_, err := NewDB(ctx, rootstore)
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,11 +41,7 @@ func TestNewDB(t *testing.T) {
 
 func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		t.Error(err)
-	}
+	rootstore := memory.NewDatastore(ctx)
 
 	db, err := NewDB(ctx, rootstore)
 	if err != nil {
