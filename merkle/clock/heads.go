@@ -21,7 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -100,7 +99,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 	var maxHeight uint64
 	for r := range results.Next() {
 		if r.Error != nil {
-			return nil, 0, errors.Wrap("failed to get next query result ", r.Error)
+			return nil, 0, NewErrFailedToGetNextQResult(r.Error)
 		}
 
 		headKey, err := core.NewHeadStoreKey(r.Key)
@@ -110,7 +109,7 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 
 		height, n := binary.Uvarint(r.Value)
 		if n <= 0 {
-			return nil, 0, errors.New("error decoding height")
+			return nil, 0, ErrDecodingHeight
 		}
 		heads = append(heads, headKey.Cid)
 		if height > maxHeight {
