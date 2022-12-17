@@ -10,8 +10,6 @@
 
 package events
 
-import "github.com/sourcenetwork/defradb/errors"
-
 type simpleChannel[T any] struct {
 	subscribers         []chan T
 	subscriptionChannel chan chan T
@@ -42,7 +40,7 @@ func NewSimpleChannel[T any](subscriberBufferSize int, eventBufferSize int) Chan
 
 func (c *simpleChannel[T]) Subscribe() (Subscription[T], error) {
 	if c.isClosed {
-		return nil, errors.New("cannot subscribe to a closed channel")
+		return nil, ErrSubscribedToClosedChan
 	}
 
 	// It is important to set this buffer size too, else we may end up blocked in the handleChannel func
