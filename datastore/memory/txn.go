@@ -130,7 +130,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 		return nil, ErrTxnDiscarded
 	}
 	// best effort allocation
-	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
+	re := make([]dsq.Entry, 0, t.ds.values.Height()+t.ops.Height())
 	iter := t.ds.values.Iter()
 	iterOps := t.ops.Iter()
 	iterOpsHasValue := iterOps.Next()
