@@ -130,7 +130,7 @@ func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) 
 		return nil, ErrTxnDiscarded
 	}
 	// best effort allocation
-	re := make([]dsq.Entry, 0, t.ds.values.Len()+t.ops.Len())
+	re := make([]dsq.Entry, 0, t.ds.values.Height()+t.ops.Height())
 	iter := t.ds.values.Iter()
 	iterOps := t.ops.Iter()
 	iterOpsHasValue := iterOps.Next()
@@ -208,20 +208,18 @@ func (t *basicTxn) Commit(ctx context.Context) error {
 	if t.discarded {
 		return ErrTxnDiscarded
 	}
-	if t.readOnly {
-		return ErrReadOnlyTxn
+	defer t.Discard(ctx)
+
+	if !t.readOnly {
+		c := commit{
+			tx:  t,
+			err: make(chan error),
+		}
+		t.ds.commit <- c
+		return <-c.err
 	}
 
-	c := commit{
-		tx:  t,
-		err: make(chan error),
-	}
-	t.ds.commit <- c
-	e := <-c.err
-
-	t.Discard(ctx)
-
-	return e
+	return nil
 }
 
 func (t *basicTxn) checkForConflicts(ctx context.Context) error {

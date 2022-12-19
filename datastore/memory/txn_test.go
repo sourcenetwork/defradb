@@ -16,7 +16,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/btree"
 )
@@ -31,8 +30,8 @@ func TestNewTransaction(t *testing.T) {
 		}
 	}()
 	tx, err := s.NewTransaction(ctx, false)
-	assert.NotNil(t, tx)
-	assert.NoError(t, err)
+	require.NotNil(t, tx)
+	require.NoError(t, err)
 }
 
 func TestTxnGetOperation(t *testing.T) {
@@ -49,7 +48,7 @@ func TestTxnGetOperation(t *testing.T) {
 
 	resp, err := tx.Get(ctx, testKey1)
 	require.NoError(t, err)
-	assert.Equal(t, testValue1, resp)
+	require.Equal(t, testValue1, resp)
 }
 
 func TestTxnGetOperationAfterPut(t *testing.T) {
@@ -69,7 +68,7 @@ func TestTxnGetOperationAfterPut(t *testing.T) {
 
 	resp, err := tx.Get(ctx, testKey3)
 	require.NoError(t, err)
-	assert.Equal(t, testValue3, resp)
+	require.Equal(t, testValue3, resp)
 }
 
 func TestTxnGetOperationAfterDelete(t *testing.T) {
@@ -88,7 +87,7 @@ func TestTxnGetOperationAfterDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.Get(ctx, testKey1)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
@@ -104,7 +103,7 @@ func TestTxnGetOperationAfterDeleteReadOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Delete(ctx, testKey1)
-	assert.ErrorIs(t, err, ErrReadOnlyTxn)
+	require.ErrorIs(t, err, ErrReadOnlyTxn)
 }
 
 func TestTxnGetOperationNotFound(t *testing.T) {
@@ -120,7 +119,7 @@ func TestTxnGetOperationNotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.Get(ctx, testKey3)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnDeleteAndCommitOperation(t *testing.T) {
@@ -142,10 +141,10 @@ func TestTxnDeleteAndCommitOperation(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.Get(ctx, testKey1)
-	assert.ErrorIs(t, err, ErrTxnDiscarded)
+	require.ErrorIs(t, err, ErrTxnDiscarded)
 
 	_, err = s.Get(ctx, testKey1)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnGetSizeOperation(t *testing.T) {
@@ -162,7 +161,7 @@ func TestTxnGetSizeOperation(t *testing.T) {
 
 	resp, err := tx.GetSize(ctx, testKey1)
 	require.NoError(t, err)
-	assert.Equal(t, len(testValue1), resp)
+	require.Equal(t, len(testValue1), resp)
 }
 
 func TestTxnGetSizeOfterPutOperation(t *testing.T) {
@@ -182,7 +181,7 @@ func TestTxnGetSizeOfterPutOperation(t *testing.T) {
 
 	resp, err := tx.GetSize(ctx, testKey3)
 	require.NoError(t, err)
-	assert.Equal(t, len(testValue1), resp)
+	require.Equal(t, len(testValue1), resp)
 }
 
 func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
@@ -201,7 +200,7 @@ func TestTxnGetSizeOperationAfterDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.GetSize(ctx, testKey1)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnGetSizeOperationNotFound(t *testing.T) {
@@ -217,7 +216,7 @@ func TestTxnGetSizeOperationNotFound(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.GetSize(ctx, testKey3)
-	assert.ErrorIs(t, err, ds.ErrNotFound)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnHasOperation(t *testing.T) {
@@ -234,7 +233,7 @@ func TestTxnHasOperation(t *testing.T) {
 
 	resp, err := tx.Has(ctx, testKey1)
 	require.NoError(t, err)
-	assert.Equal(t, true, resp)
+	require.Equal(t, true, resp)
 }
 
 func TestTxnHasOperationNotFound(t *testing.T) {
@@ -251,7 +250,7 @@ func TestTxnHasOperationNotFound(t *testing.T) {
 
 	resp, err := tx.Has(ctx, testKey3)
 	require.NoError(t, err)
-	assert.Equal(t, false, resp)
+	require.Equal(t, false, resp)
 }
 
 func TestTxnHasOfterPutOperation(t *testing.T) {
@@ -271,7 +270,7 @@ func TestTxnHasOfterPutOperation(t *testing.T) {
 
 	resp, err := tx.Has(ctx, testKey3)
 	require.NoError(t, err)
-	assert.Equal(t, true, resp)
+	require.Equal(t, true, resp)
 }
 
 func TestTxnHasOperationAfterDelete(t *testing.T) {
@@ -291,7 +290,7 @@ func TestTxnHasOperationAfterDelete(t *testing.T) {
 
 	resp, err := tx.Has(ctx, testKey1)
 	require.NoError(t, err)
-	assert.Equal(t, false, resp)
+	require.Equal(t, false, resp)
 }
 
 func TestTxnPutAndCommitOperation(t *testing.T) {
@@ -314,7 +313,7 @@ func TestTxnPutAndCommitOperation(t *testing.T) {
 
 	resp, err := s.Has(ctx, testKey3)
 	require.NoError(t, err)
-	assert.Equal(t, true, resp)
+	require.Equal(t, true, resp)
 }
 
 func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
@@ -330,10 +329,13 @@ func TestTxnPutAndCommitOperationReadOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Put(ctx, testKey3, testValue3)
-	assert.ErrorIs(t, err, ErrReadOnlyTxn)
+	require.ErrorIs(t, err, ErrReadOnlyTxn)
 
 	err = tx.Commit(ctx)
-	assert.ErrorIs(t, err, ErrReadOnlyTxn)
+	require.NoError(t, err)
+
+	_, err = s.Get(ctx, testKey3)
+	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
 func TestTxnPutOperationReadOnly(t *testing.T) {
@@ -349,7 +351,7 @@ func TestTxnPutOperationReadOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Put(ctx, testKey3, testValue3)
-	assert.ErrorIs(t, err, ErrReadOnlyTxn)
+	require.ErrorIs(t, err, ErrReadOnlyTxn)
 }
 
 func TestTxnQueryOperation(t *testing.T) {
@@ -377,7 +379,7 @@ func TestTxnQueryOperation(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Delete(ctx, testKey5)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = tx.Put(ctx, testKey6, testValue6)
 	require.NoError(t, err)
@@ -390,8 +392,53 @@ func TestTxnQueryOperation(t *testing.T) {
 
 	result, _ := results.NextSync()
 
-	assert.Equal(t, testKey3.String(), result.Entry.Key)
-	assert.Equal(t, testValue3, result.Entry.Value)
+	require.Equal(t, testKey3.String(), result.Entry.Key)
+	require.Equal(t, testValue3, result.Entry.Value)
+}
+
+func TestTxnQueryOperationInTwoConcurentTxn(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	tx, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+	defer tx.Discard(ctx)
+
+	tx2, err := s.NewTransaction(ctx, false)
+	require.NoError(t, err)
+	defer tx.Discard(ctx)
+
+	err = tx.Put(ctx, testKey1, testValue3)
+	require.NoError(t, err)
+
+	result, err := tx.Get(ctx, testKey1)
+	require.NoError(t, err)
+
+	require.Equal(t, testValue3, result)
+
+	results, err := tx2.Query(ctx, dsq.Query{})
+	require.NoError(t, err)
+	entries, err := results.Rest()
+	require.NoError(t, err)
+	expectedResults := []dsq.Entry{
+		{
+			Key:   testKey1.String(),
+			Value: testValue1,
+			Size:  len(testValue1),
+		},
+		{
+			Key:   testKey2.String(),
+			Value: testValue2,
+			Size:  len(testValue2),
+		},
+	}
+
+	require.Equal(t, expectedResults, entries)
 }
 
 func TestTxnQueryOperationWithAddedItems(t *testing.T) {
@@ -458,7 +505,7 @@ func TestTxnQueryOperationWithAddedItems(t *testing.T) {
 			Size:  len(testValue6),
 		},
 	}
-	assert.Equal(t, expectedResults, entries)
+	require.Equal(t, expectedResults, entries)
 }
 
 func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
@@ -483,8 +530,8 @@ func TestTxnQueryWithOnlyOneOperation(t *testing.T) {
 	_, _ = results.NextSync()
 	result, _ := results.NextSync()
 
-	assert.Equal(t, testKey4.String(), result.Entry.Key)
-	assert.Equal(t, testValue4, result.Entry.Value)
+	require.Equal(t, testKey4.String(), result.Entry.Key)
+	require.Equal(t, testValue4, result.Entry.Value)
 }
 
 func TestTxnDiscardOperationNotFound(t *testing.T) {
@@ -507,10 +554,10 @@ func TestTxnDiscardOperationNotFound(t *testing.T) {
 	err := tx.Put(ctx, testKey3, testValue3)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, tx.ops.Len())
+	require.Equal(t, 1, tx.ops.Len())
 
 	tx.Discard(ctx)
-	assert.Equal(t, 0, tx.ops.Len())
+	require.Equal(t, 0, tx.ops.Len())
 }
 
 func TestTxnWithConflict(t *testing.T) {
@@ -537,7 +584,7 @@ func TestTxnWithConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Commit(ctx)
-	assert.ErrorIs(t, err, ErrTxnConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestTxnWithConflictAfterDelete(t *testing.T) {
@@ -564,7 +611,7 @@ func TestTxnWithConflictAfterDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Commit(ctx)
-	assert.ErrorIs(t, err, ErrTxnConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }
 
 func TestTxnWithConflictAfterGet(t *testing.T) {
@@ -591,5 +638,5 @@ func TestTxnWithConflictAfterGet(t *testing.T) {
 	require.NoError(t, err)
 
 	err = tx.Commit(ctx)
-	assert.ErrorIs(t, err, ErrTxnConflict)
+	require.ErrorIs(t, err, ErrTxnConflict)
 }

@@ -15,7 +15,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	ktds "github.com/ipfs/go-datastore/keytransform"
-	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/datastore/iterable"
@@ -55,7 +54,7 @@ func (w *wrappedStore) Delete(ctx context.Context, key ds.Key) error {
 	return w.store.Delete(ctx, w.transform.ConvertKey(key))
 }
 
-func (w *wrappedStore) GetIterator(q query.Query) (iterable.Iterator, error) {
+func (w *wrappedStore) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 	iterator, err := w.store.GetIterator(
 		withPrefix(q, w.transform.ConvertKey(ds.NewKey(q.Prefix)).String()),
 	)
@@ -65,8 +64,8 @@ func (w *wrappedStore) GetIterator(q query.Query) (iterable.Iterator, error) {
 	return &wrappedIterator{transform: w.transform, iterator: iterator}, nil
 }
 
-func withPrefix(q query.Query, prefix string) query.Query {
-	return query.Query{
+func withPrefix(q dsq.Query, prefix string) dsq.Query {
+	return dsq.Query{
 		Prefix:            prefix,
 		Filters:           q.Filters,
 		Orders:            q.Orders,
@@ -108,10 +107,10 @@ func (w *wrappedStore) Query(ctx context.Context, q dsq.Query) (dsq.Results, err
 	return dsq.NaiveQueryApply(nq, qr), nil
 }
 
-// Split the query into a child query and a naive query. That way, we can make
+// Split the query into a child query and a naive dsq. That way, we can make
 // the child datastore do as much work as possible.
 func (w *wrappedStore) prepareQuery(q dsq.Query) (naive, child dsq.Query) {
-	// First, put everything in the child query. Then, start taking things
+	// First, put everything in the child dsq. Then, start taking things
 	// out.
 	child = q
 

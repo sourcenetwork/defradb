@@ -81,8 +81,6 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 				"published": nil,
 			},
 		},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -145,8 +143,6 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 		}`,
 
 		Results: []map[string]any{},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -242,8 +238,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				"published": nil,
 			},
 		},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -333,8 +327,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 		}`,
 
 		Results: []map[string]any{},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -398,8 +390,6 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 		}`,
 
 		Results: []map[string]any{},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
@@ -469,8 +459,6 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 				"publisher": nil,
 			},
 		},
-
-		DisableMapStore: true,
 	}
 
 	relationTests.ExecuteTestCase(t, test)
