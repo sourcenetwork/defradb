@@ -38,14 +38,17 @@ func NewKV(key string, value any) KV {
 // pairs provided.
 //
 // A stacktrace will be yielded if formatting with a `+`, e.g `fmt.Sprintf("%+v", err)`.
+// This function will not be inlined by the compiler as it will spoil any stacktrace
+// generated.
+//go:noinline
 func New(message string, keyvals ...KV) error {
-	return newError(message, keyvals...)
+	return newError(message, 1, keyvals...)
 }
 
 // Wrap creates a new error of the given message that contains
 // the given inner error, suffixing any key-value pairs provided.
 func Wrap(message string, inner error, keyvals ...KV) error {
-	err := newError(message, keyvals...)
+	err := newError(message, 1, keyvals...)
 	err.inner = inner
 	return err
 }
@@ -55,18 +58,20 @@ func Is(err, target error) bool {
 }
 
 func WithStack(err error, keyvals ...KV) error {
-	return withStackTrace(err.Error(), keyvals...)
+	return withStackTrace(err.Error(), 1, keyvals...)
 }
 
-func newError(message string, keyvals ...KV) *defraError {
-	return withStackTrace(message, keyvals...)
+func newError(message string, additionalStackDepthToSkip int, keyvals ...KV) *defraError {
+	return withStackTrace(message, additionalStackDepthToSkip+1, keyvals...)
 }
 
-func withStackTrace(message string, keyvals ...KV) *defraError {
+func withStackTrace(message string, additionalStackDepthToSkip int, keyvals ...KV) *defraError {
 	stackBuffer := make([]uintptr, MaxStackDepth)
+
 	// Skip the first X frames as they are part of this library (and dependencies) and are
-	// best hidden.
-	length := runtime.Callers(4, stackBuffer[:])
+	// best hidden, also account for any parent calls within this library.
+	const depthFromHereToSkip int = 2
+	length := runtime.Callers(depthFromHereToSkip+additionalStackDepthToSkip, stackBuffer[:])
 	stack := stackBuffer[:length]
 	stackText := toString(stack)
 
