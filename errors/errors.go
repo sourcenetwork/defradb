@@ -47,6 +47,9 @@ func New(message string, keyvals ...KV) error {
 
 // Wrap creates a new error of the given message that contains
 // the given inner error, suffixing any key-value pairs provided.
+// This function will not be inlined by the compiler as it will spoil any stacktrace
+// generated.
+//go:noinline
 func Wrap(message string, inner error, keyvals ...KV) error {
 	err := newError(message, 1, keyvals...)
 	err.inner = inner
@@ -57,14 +60,23 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+// This function will not be inlined by the compiler as it will spoil any stacktrace
+// generated.
+//go:noinline
 func WithStack(err error, keyvals ...KV) error {
 	return withStackTrace(err.Error(), 1, keyvals...)
 }
 
+// This function will not be inlined by the compiler as it will spoil any stacktrace
+// generated.
+//go:noinline
 func newError(message string, additionalStackDepthToSkip int, keyvals ...KV) *defraError {
 	return withStackTrace(message, additionalStackDepthToSkip+1, keyvals...)
 }
 
+// This function will not be inlined by the compiler as it will spoil any stacktrace
+// generated.
+//go:noinline
 func withStackTrace(message string, additionalStackDepthToSkip int, keyvals ...KV) *defraError {
 	stackBuffer := make([]uintptr, MaxStackDepth)
 
