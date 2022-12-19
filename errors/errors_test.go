@@ -35,27 +35,20 @@ func TestErrorIsDefraError(t *testing.T) {
 }
 
 func TestErrorWithStack(t *testing.T) {
-	err := errors.New("gndjdhs")
+	errorMessage := "gndjdhs"
+	err := errors.New(errorMessage)
 
 	errWithStack := WithStack(err)
 
 	result := fmt.Sprintf("%+v", errWithStack)
 
-	/*
-		The Go test flag `-race` messes with the stacktrace causing this function's frame to be ommited from
-		the stacktrace, as our CI runs with the `-race` flag, these assertions need to be disabled.
+	// Assert that the first line starts with the error message and contains this [test] function's stacktrace-line -
+	// including file, line number, and function reference. An exact string match should not be used as the stacktrace
+	// is machine dependent.
+	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/defradb\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
 
-		// Assert that the first line starts with the error message and contains this [test] function's stacktrace-line -
-		// including file, line number, and function reference. An exact string match should not be used as the stacktrace
-		// is machine dependent.
-		assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/defradb\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
-		// Assert that the error contains this function's name, and a print-out of the generating line.
-		assert.Regexp(t, "TestErrorFmtvWithStacktrace: err := Error\\(errorMessage\\)", result)
-	*/
-
-	// As noted above, we cannot assert that this function's stack frame is included in the trace,
-	// however we should still assert that the error message is present.
-	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: ", err.Error()), result)
+	// Assert that the error contains this function's name, and a print-out of the generating line.
+	assert.Regexp(t, "TestErrorWithStack: errWithStack := WithStack\\(err\\)", result)
 
 	// Assert that the next line of the stacktrace is also present.
 	assert.Regexp(t, ".*\\/testing/testing.go:[0-9]+ \\([a-zA-Z0-9]*\\)", result)
