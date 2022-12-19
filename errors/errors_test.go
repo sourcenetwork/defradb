@@ -37,9 +37,9 @@ func TestErrorIsDefraError(t *testing.T) {
 func TestErrorWithStack(t *testing.T) {
 	err := errors.New("gndjdhs")
 
-	errWithStach := WithStack(err)
+	errWithStack := WithStack(err)
 
-	result := fmt.Sprintf("%+v", errWithStach)
+	result := fmt.Sprintf("%+v", errWithStack)
 
 	/*
 		The Go test flag `-race` messes with the stacktrace causing this function's frame to be ommited from
