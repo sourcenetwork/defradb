@@ -58,9 +58,6 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					Results: []map[string]any{},
 				},
 			},
-
-			// Map store does not support transactions
-			DisableMapStore: true,
 		},
 
 		{

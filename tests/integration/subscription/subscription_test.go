@@ -60,7 +60,6 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 				},
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)
@@ -94,7 +93,6 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 				},
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)
@@ -122,7 +120,6 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 				ExpectedTimout: true,
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)
@@ -166,7 +163,6 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 				ExpectedTimout: true,
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)
@@ -218,7 +214,6 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 				},
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)
@@ -276,7 +271,6 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				},
 			},
 		},
-		DisableMapStore: true,
 	}
 
 	executeTestCase(t, test)

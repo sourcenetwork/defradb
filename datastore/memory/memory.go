@@ -191,7 +191,7 @@ func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err erro
 
 // Query implements ds.Query
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
-	re := make([]dsq.Entry, 0, d.values.Len())
+	re := make([]dsq.Entry, 0, d.values.Height())
 	iter := d.values.Iter()
 	for iter.Next() {
 		// fast forward to last inserted version

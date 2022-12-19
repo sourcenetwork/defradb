@@ -48,7 +48,7 @@ var (
 type db struct {
 	glock sync.RWMutex
 
-	rootstore  ds.Batching
+	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
 	crdtFactory *crdt.Factory
@@ -75,11 +75,11 @@ func WithUpdateEvents() Option {
 }
 
 // NewDB creates a new instance of the DB using the given options.
-func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (client.DB, error) {
+func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
 }
 
-func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, error) {
+func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*db, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
@@ -120,7 +120,7 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
-func (db *db) Root() ds.Batching {
+func (db *db) Root() datastore.RootStore {
 	return db.rootstore
 }
 

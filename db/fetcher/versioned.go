@@ -85,7 +85,7 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  ds.Datastore
+	root  datastore.RootStore
 	store datastore.Txn
 
 	key     core.DataStoreKey
@@ -152,9 +152,10 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	// create store
 	root := memory.NewDatastore(ctx)
 	vf.root = root
+
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
-		root,
+		vf.root,
 		false,
 	) // were going to discard and nuke this later
 	if err != nil {
@@ -212,16 +213,6 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		return err
 	}
 
-	// after seekNext is completed, we have a populated
-	// queuedCIDs list, and all the necessary
-	// blocks in our local store
-	// If we are using a batch store, then we need to commit
-	if vf.store.IsBatch() {
-		if err := vf.store.Commit(vf.ctx); err != nil {
-			return err
-		}
-	}
-
 	// if we have a queuedCIDs length of 0, means we don't need
 	// to do any more state serialization
 
@@ -243,13 +234,6 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 		err := vf.merge(cc)
 		if err != nil {
 			return NewErrFailedToMergeState(err)
-		}
-	}
-
-	// If we are using a batch store, then we need to commit
-	if vf.store.IsBatch() {
-		if err := vf.store.Commit(vf.ctx); err != nil {
-			return err
 		}
 	}
 
@@ -429,7 +413,6 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 }
 
 func (vf *VersionedFetcher) Close() error {
-	vf.store.Discard(vf.ctx)
 	if err := vf.root.Close(); err != nil {
 		return err
 	}

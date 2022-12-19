@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +29,7 @@ import (
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -203,7 +203,7 @@ func (di *defraInstance) close(ctx context.Context) {
 func start(ctx context.Context) (*defraInstance, error) {
 	log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
-	var rootstore ds.Batching
+	var rootstore ds.RootStore
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {

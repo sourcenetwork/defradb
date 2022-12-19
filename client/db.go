@@ -13,7 +13,6 @@ package client
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 
 	"github.com/sourcenetwork/defradb/datastore"
@@ -28,7 +27,7 @@ type DB interface {
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
 
-	Root() ds.Batching
+	Root() datastore.RootStore
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
