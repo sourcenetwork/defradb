@@ -134,7 +134,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 }
 
 // TestP2FullPReplicator tests document syncing between a node and a replicator.
-func TestP2FullPReplicator(t *testing.T) {
+func TestP2POneToOneReplicator(t *testing.T) {
 	doc, err := client.NewDocFromJSON([]byte(`{
 		"Name": "John",
 		"Age": 21
@@ -158,6 +158,139 @@ func TestP2FullPReplicator(t *testing.T) {
 			1: {
 				doc.Key().String(): {
 					"Age": uint64(21),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestP2POneToManyReplicator(t *testing.T) {
+	doc, err := client.NewDocFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	require.NoError(t, err)
+
+	test := P2PTestCase{
+		NodeConfig: []*config.Config{
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+				2,
+			},
+		},
+		DocumentsToReplicate: []*client.Document{
+			doc,
+		},
+		ReplicatorResult: map[int]map[string]map[string]any{
+			1: {
+				doc.Key().String(): {
+					"Age": uint64(21),
+				},
+			},
+			2: {
+				doc.Key().String(): {
+					"Age": uint64(21),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
+	doc1, err := client.NewDocFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	require.NoError(t, err)
+
+	doc2, err := client.NewDocFromJSON([]byte(`{
+		"Name": "Fred",
+		"Age": 22
+	}`))
+	require.NoError(t, err)
+
+	test := P2PTestCase{
+		NodeConfig: []*config.Config{
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+			},
+		},
+		DocumentsToReplicate: []*client.Document{
+			doc1,
+			doc2,
+		},
+		ReplicatorResult: map[int]map[string]map[string]any{
+			1: {
+				doc1.Key().String(): {
+					"Age": uint64(21),
+				},
+				doc2.Key().String(): {
+					"Age": uint64(22),
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
+	doc1, err := client.NewDocFromJSON([]byte(`{
+		"Name": "John",
+		"Age": 21
+	}`))
+	require.NoError(t, err)
+
+	doc2, err := client.NewDocFromJSON([]byte(`{
+		"Name": "Fred",
+		"Age": 22
+	}`))
+	require.NoError(t, err)
+
+	test := P2PTestCase{
+		NodeConfig: []*config.Config{
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+			randomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+				2,
+			},
+		},
+		DocumentsToReplicate: []*client.Document{
+			doc1,
+			doc2,
+		},
+		ReplicatorResult: map[int]map[string]map[string]any{
+			1: {
+				doc1.Key().String(): {
+					"Age": uint64(21),
+				},
+				doc2.Key().String(): {
+					"Age": uint64(22),
+				},
+			},
+			2: {
+				doc1.Key().String(): {
+					"Age": uint64(21),
+				},
+				doc2.Key().String(): {
+					"Age": uint64(22),
 				},
 			},
 		},
