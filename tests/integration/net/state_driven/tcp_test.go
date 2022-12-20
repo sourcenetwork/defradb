@@ -13,9 +13,6 @@ package net
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
 )
 
@@ -31,8 +28,8 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: []string{
-			`{
+		SeedDocuments: map[int]string{
+			0: `{
 				"Name": "John",
 				"Age": 21
 			}`,
@@ -56,12 +53,12 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(45),
+					"Age": anyOf{uint64(45), uint64(60)},
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(60),
+					"Age": anyOf{uint64(45), uint64(60)},
 				},
 			},
 		},
@@ -82,8 +79,8 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: []string{
-			`{
+		SeedDocuments: map[int]string{
+			0: `{
 				"Name": "John",
 				"Age": 21
 			}`,
@@ -119,12 +116,12 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(47),
+					"Age": anyOf{uint64(47), uint64(62)},
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(62),
+					"Age": anyOf{uint64(47), uint64(62)},
 				},
 			},
 		},
@@ -135,12 +132,6 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 
 // TestP2FullPReplicator tests document syncing between a node and a replicator.
 func TestP2POneToOneReplicator(t *testing.T) {
-	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
-	}`))
-	require.NoError(t, err)
-
 	test := P2PTestCase{
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
@@ -151,12 +142,22 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				1,
 			},
 		},
-		DocumentsToReplicate: []*client.Document{
-			doc,
+		Creates: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		ReplicatorResult: map[int]map[string]map[string]any{
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
 			1: {
-				doc.Key().String(): {
+				0: {
 					"Age": uint64(21),
 				},
 			},
@@ -167,12 +168,6 @@ func TestP2POneToOneReplicator(t *testing.T) {
 }
 
 func TestP2POneToManyReplicator(t *testing.T) {
-	doc, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
-	}`))
-	require.NoError(t, err)
-
 	test := P2PTestCase{
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
@@ -185,17 +180,27 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				2,
 			},
 		},
-		DocumentsToReplicate: []*client.Document{
-			doc,
+		Creates: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		ReplicatorResult: map[int]map[string]map[string]any{
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
 			1: {
-				doc.Key().String(): {
+				0: {
 					"Age": uint64(21),
 				},
 			},
 			2: {
-				doc.Key().String(): {
+				0: {
 					"Age": uint64(21),
 				},
 			},
@@ -206,18 +211,6 @@ func TestP2POneToManyReplicator(t *testing.T) {
 }
 
 func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
-	doc1, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
-	}`))
-	require.NoError(t, err)
-
-	doc2, err := client.NewDocFromJSON([]byte(`{
-		"Name": "Fred",
-		"Age": 22
-	}`))
-	require.NoError(t, err)
-
 	test := P2PTestCase{
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
@@ -228,16 +221,32 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				1,
 			},
 		},
-		DocumentsToReplicate: []*client.Document{
-			doc1,
-			doc2,
+		Creates: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+				1: `{
+					"Name": "Fred",
+					"Age": 22
+				}`,
+			},
 		},
-		ReplicatorResult: map[int]map[string]map[string]any{
-			1: {
-				doc1.Key().String(): {
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
 					"Age": uint64(21),
 				},
-				doc2.Key().String(): {
+				1: {
+					"Age": uint64(22),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(21),
+				},
+				1: {
 					"Age": uint64(22),
 				},
 			},
@@ -248,18 +257,6 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 }
 
 func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
-	doc1, err := client.NewDocFromJSON([]byte(`{
-		"Name": "John",
-		"Age": 21
-	}`))
-	require.NoError(t, err)
-
-	doc2, err := client.NewDocFromJSON([]byte(`{
-		"Name": "Fred",
-		"Age": 22
-	}`))
-	require.NoError(t, err)
-
 	test := P2PTestCase{
 		NodeConfig: []*config.Config{
 			randomNetworkingConfig(),
@@ -272,24 +269,40 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				2,
 			},
 		},
-		DocumentsToReplicate: []*client.Document{
-			doc1,
-			doc2,
+		Creates: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+				1: `{
+					"Name": "Fred",
+					"Age": 22
+				}`,
+			},
 		},
-		ReplicatorResult: map[int]map[string]map[string]any{
-			1: {
-				doc1.Key().String(): {
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
 					"Age": uint64(21),
 				},
-				doc2.Key().String(): {
+				1: {
+					"Age": uint64(22),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(21),
+				},
+				1: {
 					"Age": uint64(22),
 				},
 			},
 			2: {
-				doc1.Key().String(): {
+				0: {
 					"Age": uint64(21),
 				},
-				doc2.Key().String(): {
+				1: {
 					"Age": uint64(22),
 				},
 			},

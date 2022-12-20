@@ -61,19 +61,22 @@ type P2PTestCase struct {
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodeReplicators map[int][]int
 
-	SeedDocuments        []string
-	DocumentsToReplicate []*client.Document
+	SeedDocuments map[int]string
 
+	// node/dockey/value
+	Creates map[int]map[int]string
 	// node/dockey/values
 	Updates map[int]map[int][]string
+	// node/dockey/values
 	Results map[int]map[int]map[string]any
-
-	// Expected replicated results by docKey by nodeId
-	// [nodeId][docKey][fieldName]Value
-	ReplicatorResult map[int]map[string]map[string]any
 }
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
+// anyOf may be used as `P2PTestCase`.`Results` field where the value may
+// be one of several values, yet the value of that field must be the same
+// across all nodes due to strong eventual consistancy.
+type anyOf []any
+
+func setupDefraNode(t *testing.T, cfg *config.Config, seeds map[int]string) (*node.Node, map[int]client.DocKey, error) {
 	ctx := context.Background()
 	var err error
 
@@ -90,11 +93,11 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	}
 
 	// seed the database with a set of documents
-	dockeys := []client.DocKey{}
-	for _, document := range seeds {
-		dockey, err := seedDocument(ctx, db, document)
+	docKeysById := map[int]client.DocKey{}
+	for id, document := range seeds {
+		dockey, err := createDocument(ctx, db, document)
 		require.NoError(t, err)
-		dockeys = append(dockeys, dockey)
+		docKeysById[id] = dockey
 	}
 
 	// init the p2p node
@@ -130,14 +133,14 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 
 	cfg.Net.P2PAddress = n.ListenAddrs()[0].String()
 
-	return n, dockeys, nil
+	return n, docKeysById, nil
 }
 
 func seedSchema(ctx context.Context, db client.DB) error {
 	return db.AddSchema(ctx, userCollectionGQLSchema)
 }
 
-func seedDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
+func createDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return client.DocKey{}, err
@@ -154,15 +157,6 @@ func seedDocument(ctx context.Context, db client.DB, document string) (client.Do
 	}
 
 	return doc.Key(), nil
-}
-
-func saveDocument(ctx context.Context, db client.DB, document *client.Document) error {
-	col, err := db.GetCollectionByName(ctx, userCollection)
-	if err != nil {
-		return err
-	}
-
-	return col.Save(ctx, document)
 }
 
 func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
@@ -196,7 +190,7 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*clie
 	return doc, err
 }
 
-func getAllDocuments(ctx context.Context, db client.DB) (map[client.DocKey]*client.Document, error) {
+func getAllDocuments(ctx context.Context, db client.DB) (map[string]*client.Document, error) {
 	col, err := db.GetCollectionByName(ctx, userCollection)
 	if err != nil {
 		return nil, err
@@ -207,7 +201,7 @@ func getAllDocuments(ctx context.Context, db client.DB) (map[client.DocKey]*clie
 		return nil, err
 	}
 
-	docs := map[client.DocKey]*client.Document{}
+	docs := map[string]*client.Document{}
 	for docKeyResult := range docKeys {
 		if docKeyResult.Err != nil {
 			return nil, docKeyResult.Err
@@ -217,7 +211,7 @@ func getAllDocuments(ctx context.Context, db client.DB) (map[client.DocKey]*clie
 		if err != nil {
 			return nil, err
 		}
-		docs[docKeyResult.Key] = doc
+		docs[docKeyResult.Key.String()] = doc
 	}
 
 	return docs, nil
@@ -226,7 +220,7 @@ func getAllDocuments(ctx context.Context, db client.DB) (map[client.DocKey]*clie
 func executeTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
-	dockeys := []client.DocKey{}
+	docKeysById := map[int]client.DocKey{}
 	nodes := []*node.Node{}
 
 	for i, cfg := range test.NodeConfig {
@@ -250,27 +244,72 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		require.NoError(t, err)
 
 		if i == 0 {
-			dockeys = append(dockeys, d...)
+			for id, key := range d {
+				docKeysById[id] = key
+			}
 		}
 		nodes = append(nodes, n)
 	}
 
-	//////////////////////////////////////////////////////////////
-	//////////////////////////////////////////////////////////////
-	// PubSub related test logic
+	nodeIndexes := map[int]struct{}{}
+	for s, n := range test.NodeReplicators {
+		nodeIndexes[s] = struct{}{}
+		for _, nodeId := range n {
+			nodeIndexes[nodeId] = struct{}{}
+		}
+	}
+	for s, n := range test.NodePeers {
+		nodeIndexes[s] = struct{}{}
+		for _, nodeId := range n {
+			nodeIndexes[nodeId] = struct{}{}
+		}
+	}
 
 	// wait for peers to connect to each other
 	if len(test.NodePeers) > 0 {
-		for i, n := range nodes {
-			for j, p := range nodes {
-				if i == j {
-					continue
+		for peer1, peers := range test.NodePeers {
+			peerIndexes := append([]int{peer1}, peers...)
+
+			for _, i := range peerIndexes {
+				n := nodes[i]
+				for _, j := range peerIndexes {
+					if i == j {
+						continue
+					}
+					p := nodes[j]
+
+					log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
+					err := n.WaitForPubSubEvent(p.PeerID())
+					require.NoError(t, err)
+					log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 				}
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
-				err := n.WaitForPubSubEvent(p.PeerID())
-				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 			}
+		}
+	}
+
+	if len(test.NodeReplicators) > 0 {
+		for i, reps := range test.NodeReplicators {
+			n := nodes[i]
+			for _, r := range reps {
+				addr, err := ma.NewMultiaddr(
+					fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
+				)
+				require.NoError(t, err)
+				_, err = n.Peer.SetReplicator(ctx, addr)
+				require.NoError(t, err)
+			}
+		}
+	}
+
+	for sourceIndex, docsToCreate := range test.Creates {
+		for id, doc := range docsToCreate {
+			docKey, err := createDocument(ctx, nodes[sourceIndex].DB, doc)
+			require.NoError(t, err)
+
+			docKeysById[id] = docKey
+
+			nodeIndexesToSync := getNodeIndexesToSync(test, sourceIndex, true)
+			waitForNodesToSync(ctx, t, nodes, nodeIndexesToSync, sourceIndex)
 		}
 	}
 
@@ -284,113 +323,66 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for d, updates := range updateMap {
 			for _, update := range updates {
 				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
-				err := updateDocument(ctx, nodes[n].DB, dockeys[d], update)
+				err := updateDocument(ctx, nodes[n].DB, docKeysById[d], update)
 				require.NoError(t, err)
 
-				// wait for peers to sync
-				for n2, p := range nodes {
-					if n2 == n {
-						continue
-					}
-					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogEvent(nodes[n].PeerID())
-					require.NoError(t, err)
-					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
-				}
+				nodeIndexesToSync := getNodeIndexesToSync(test, n, false)
+				waitForNodesToSync(ctx, t, nodes, nodeIndexesToSync, n)
 			}
 		}
+	}
 
-		// check that peers actually received the update
-		for n2, resultsMap := range test.Results {
-			if n2 == n {
-				continue
-			}
-			if n2 >= len(nodes) {
-				log.Info(ctx, "cannot check results of a node that hasn't been started. Skipping to next node")
-				continue
-			}
+	docsByNodeId := map[int]map[string]*client.Document{}
+	for nodeIndex, node := range nodes {
+		docs, err := getAllDocuments(ctx, node.DB)
+		require.NoError(t, err)
 
-			for d, results := range resultsMap {
-				for field, result := range results {
-					doc, err := getDocument(ctx, nodes[n2].DB, dockeys[d])
-					require.NoError(t, err)
+		docsByNodeId[nodeIndex] = docs
+	}
 
-					val, err := doc.Get(field)
-					require.NoError(t, err)
+	require.Equal(t, len(test.Results), len(docsByNodeId))
 
+	anyOfByField := map[docFieldKey][]any{}
+	for nodeId, expectedResults := range test.Results {
+		docs := docsByNodeId[nodeId]
+		require.Equal(t, len(expectedResults), len(docs))
+
+		for docIndex, results := range expectedResults {
+			expectedDockey := docKeysById[docIndex]
+			require.NotNil(t, expectedDockey)
+
+			doc := docs[expectedDockey.String()]
+			require.NotNil(t, doc)
+
+			for field, result := range results {
+				val, err := doc.Get(field)
+				require.NoError(t, err)
+
+				switch r := result.(type) {
+				case anyOf:
+					assert.Contains(t, r, val)
+
+					dfk := docFieldKey{docIndex, field}
+					valueSet := anyOfByField[dfk]
+					valueSet = append(valueSet, val)
+					anyOfByField[dfk] = valueSet
+				default:
 					assert.Equal(t, result, val)
 				}
 			}
 		}
 	}
 
-	//////////////////////////////////////////////////////////////
-	//////////////////////////////////////////////////////////////
-	// Replicator related test logic
-
-	if len(test.NodeReplicators) > 0 {
-		for i, n := range nodes {
-			if reps, ok := test.NodeReplicators[i]; ok {
-				for _, r := range reps {
-					addr, err := ma.NewMultiaddr(
-						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
-					)
-					require.NoError(t, err)
-					_, err = n.Peer.SetReplicator(ctx, addr)
-					require.NoError(t, err)
-				}
-			}
+	// Whilst at a field level the field value of a given document may match any item
+	// in the slice, the field value must be consistent across all nodes.  Here we
+	// assert this consistency.
+	for _, valueSet := range anyOfByField {
+		if len(valueSet) < 2 {
+			continue
 		}
-	}
-
-	destinationNodeIds := map[int]struct{}{}
-	for _, n := range test.NodeReplicators {
-		for _, nodeId := range n {
-			destinationNodeIds[nodeId] = struct{}{}
-		}
-	}
-
-	for peerId, n := range test.NodeReplicators {
-		for _, doc := range test.DocumentsToReplicate {
-			err := saveDocument(ctx, nodes[peerId].DB, doc)
-			require.NoError(t, err)
-
-			for _, nodeId := range n {
-				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", nodeId, peerId))
-				err := nodes[nodeId].WaitForPushLogEvent(nodes[peerId].PeerID())
-				require.NoError(t, err)
-				log.Info(ctx, fmt.Sprintf("Node %d synced", nodeId))
-			}
-		}
-	}
-
-	docsByNodeId := map[int]map[client.DocKey]*client.Document{}
-	for nodeId := range destinationNodeIds {
-		docs, err := getAllDocuments(ctx, nodes[nodeId].DB)
-		require.NoError(t, err)
-
-		docsByNodeId[nodeId] = docs
-	}
-
-	require.Equal(t, len(test.ReplicatorResult), len(docsByNodeId))
-
-	for nodeId, expectedResults := range test.ReplicatorResult {
-		docs := docsByNodeId[nodeId]
-		require.Equal(t, len(expectedResults), len(docs))
-
-		for expectedDockey, results := range expectedResults {
-			for field, result := range results {
-				d, err := client.NewDocKeyFromString(expectedDockey)
-				require.NoError(t, err)
-
-				doc := docs[d]
-				require.NotNil(t, doc)
-
-				val, err := doc.Get(field)
-				require.NoError(t, err)
-
-				assert.Equal(t, result, val)
-			}
+		firstValue := valueSet[0]
+		for _, value := range valueSet {
+			assert.Equal(t, firstValue, value)
 		}
 	}
 
@@ -401,6 +393,56 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			log.Info(ctx, "node not closing as expected", logging.NewKV("Error", err.Error()))
 		}
 	}
+}
+
+func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, isCreate bool) map[int]struct{} {
+	nodeIndexesToSync := map[int]struct{}{}
+
+	// We need to sync all the replicators for this source
+	for _, nodeIndex := range test.NodeReplicators[sourceIndex] {
+		if nodeIndex != sourceIndex {
+			nodeIndexesToSync[nodeIndex] = struct{}{}
+		}
+	}
+
+	// We should not wait for peers on create, as they do not sync new docs
+	if !isCreate {
+		// We need to sync all NodePeer indexes that are not the source index
+		// (NodePeers map is bi-directional)
+		for s, dsts := range test.NodePeers {
+			if s != sourceIndex {
+				nodeIndexesToSync[s] = struct{}{}
+			}
+			for _, nodeIndex := range dsts {
+				if nodeIndex != sourceIndex {
+					nodeIndexesToSync[nodeIndex] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return nodeIndexesToSync
+}
+
+func waitForNodesToSync(
+	ctx context.Context,
+	t *testing.T,
+	nodes []*node.Node,
+	nodeIds map[int]struct{},
+	sourceIndex int,
+) {
+	for nodeId := range nodeIds {
+		log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", nodeId, sourceIndex))
+		err := nodes[nodeId].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
+		require.NoError(t, err)
+		log.Info(ctx, fmt.Sprintf("Node %d synced", nodeId))
+	}
+}
+
+// docFieldKey is an internal key type that wraps docIndex and fieldName
+type docFieldKey struct {
+	docIndex  int
+	fieldName string
 }
 
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
