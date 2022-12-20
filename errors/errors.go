@@ -74,6 +74,11 @@ func newError(message string, depthToSkip int, keyvals ...KV) *defraError {
 	return withStackTrace(message, depthToSkip+1, keyvals...)
 }
 
+// withStackTrace creates a `defraError` with a stacktrace and the given key-value pairs.
+//
+// The stacktrace will skip the top `depthToSkip` frames, allowing frames/calls generated from
+// within this package to not polute the resultant stacktrace.
+//
 // This function will not be inlined by the compiler as it will spoil any stacktrace
 // generated.
 //go:noinline
