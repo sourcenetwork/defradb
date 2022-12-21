@@ -97,6 +97,47 @@ func TestP2POneToManyReplicator(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestP2POneToOneOfManyReplicator(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			// This last node is not marked for replication
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodeReplicators: map[int][]int{
+			0: {
+				1,
+			},
+		},
+		Creates: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
+			2: {
+				// No documents should be replicated to this node
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{

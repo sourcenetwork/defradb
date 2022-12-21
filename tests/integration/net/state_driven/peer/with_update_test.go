@@ -17,6 +17,96 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state_driven"
 )
 
+// The parent-child distinction in these tests is as much documentation and test
+// of the test system as of production.  See it as a santity check of sorts.
+func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]string{
+			0: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// The parent-child distinction in these tests is as much documentation and test
+// of the test system as of production.  See it as a santity check of sorts.
+func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]string{
+			0: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		Updates: map[int]map[int][]string{
+			1: {
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
 func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 	test := testUtils.P2PTestCase{
@@ -60,6 +150,57 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 			1: {
 				0: {
 					"Age": testUtils.AnyOf{uint64(45), uint64(60)},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			// This last node is not marked for peer sync
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]string{
+			0: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+			2: {
+				// Update should not be synced to this node
+				0: {
+					"Age": uint64(21),
 				},
 			},
 		},
