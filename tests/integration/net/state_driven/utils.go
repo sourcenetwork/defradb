@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package net
+package state_driven
 
 import (
 	"context"
@@ -71,10 +71,10 @@ type P2PTestCase struct {
 	Results map[int]map[int]map[string]any
 }
 
-// anyOf may be used as `P2PTestCase`.`Results` field where the value may
+// AnyOf may be used as `P2PTestCase`.`Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistancy.
-type anyOf []any
+type AnyOf []any
 
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds map[int]string) (*node.Node, map[int]client.DocKey, error) {
 	ctx := context.Background()
@@ -217,7 +217,7 @@ func getAllDocuments(ctx context.Context, db client.DB) (map[string]*client.Docu
 	return docs, nil
 }
 
-func executeTestCase(t *testing.T, test P2PTestCase) {
+func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 	ctx := context.Background()
 
 	docKeysById := map[int]client.DocKey{}
@@ -353,7 +353,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 				require.NoError(t, err)
 
 				switch r := result.(type) {
-				case anyOf:
+				case AnyOf:
 					assert.Contains(t, r, val)
 
 					dfk := docFieldKey{docIndex, field}
@@ -441,7 +441,7 @@ type docFieldKey struct {
 
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
 
-func randomNetworkingConfig() *config.Config {
+func RandomNetworkingConfig() *config.Config {
 	cfg := config.DefaultConfig()
 	cfg.Net.P2PAddress = randomMultiaddr
 	cfg.Net.RPCAddress = "0.0.0.0:0"
