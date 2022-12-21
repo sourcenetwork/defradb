@@ -313,13 +313,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		}
 	}
 
-	// update and sync peers
 	for n, updateMap := range test.Updates {
-		if n >= len(nodes) {
-			log.Info(ctx, "cannot update a node that hasn't been started. Skipping to next node")
-			continue
-		}
-
 		for d, updates := range updateMap {
 			for _, update := range updates {
 				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
