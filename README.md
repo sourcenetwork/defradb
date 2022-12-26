@@ -235,6 +235,12 @@ Doing so, you will discover about filtering, ordering, limiting, relationships, 
 
 By default, DefraDB will expose the HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self signed certificates or Let's Encrypt.
 
+To start defradb with self signed certificates placed under `~/.defradb/certs/` with `server.key`
+being the public key and `server.crt` being the private key, just do:
+```shell
+defradb start --tls
+```
+
 In the case of self signed certificates, the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be defined and `tls` set to `true` either via the config file or via the CLI.
 ```shell
 defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
@@ -242,7 +248,20 @@ defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
 
 The keys can be generated with your generator of choice or with `make tls-certs`.
 
-Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs ~/.defradb/certs`.
+Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
+
+Then to start the server with TLS, using your generated keys in custom path:
+```shell
+defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
+
+```
+
+Note the following example can sometimes not properly expand `~` and can cause problems:
+```shell
+defradb start --tls --pubkeypath="~/path-to-pubkey.key" --privkeypath="~/path-to-privkey.crt"
+```
+
+`<<<INSERT CLI INSTRUCTIONS TO START TLS WITH AUTO CERTIFICATE GENERATION>>>`
 
 Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
 
