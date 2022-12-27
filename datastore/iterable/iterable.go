@@ -17,11 +17,15 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 )
 
+// IterableTxn is an interface that should be implemented by transactions
+// supporting multi-prefix iteration.
 type IterableTxn interface {
 	ds.Txn
 	Iterable
 }
 
+// IterableDatastore is an interface that should be implemented by datastores supporting
+// multi-prefix iteration.
 type IterableDatastore interface {
 	ds.Read
 	ds.Write

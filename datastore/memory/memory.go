@@ -98,12 +98,12 @@ func (d *Datastore) nextVersion() uint64 {
 	return atomic.AddUint64(d.version, 1)
 }
 
-// Batch return a ds.Batch datastore based on Datastore
+// Batch return a ds.Batch datastore based on Datastore.
 func (d *Datastore) Batch(ctx context.Context) (ds.Batch, error) {
 	return d.newBasicBatch(), nil
 }
 
-// newBasicBatch returns a ds.Batch datastore
+// newBasicBatch returns a ds.Batch datastore.
 func (d *Datastore) newBasicBatch() ds.Batch {
 	return &basicBatch{
 		ops: make(map[ds.Key]op),
@@ -116,7 +116,7 @@ func (d *Datastore) Close() error {
 	return nil
 }
 
-// Delete implements ds.Delete
+// Delete implements ds.Delete.
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 	tx := d.newTransaction(false)
 	err = tx.Delete(ctx, key)
@@ -138,7 +138,7 @@ func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) dsItem 
 	return result
 }
 
-// Get implements ds.Get
+// Get implements ds.Get.
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
@@ -147,7 +147,7 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 	return result.val, nil
 }
 
-// GetSize implements ds.GetSize
+// GetSize implements ds.GetSize.
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
@@ -156,18 +156,18 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 	return len(result.val), nil
 }
 
-// Has implements ds.Has
+// Has implements ds.Has.
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	result := d.get(ctx, key, d.getVersion())
 	return result.key != "" && !result.isDeleted, nil
 }
 
-// NewTransaction return a ds.Txn datastore based on Datastore
+// NewTransaction return a ds.Txn datastore based on Datastore.
 func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
 	return d.newTransaction(readOnly), nil
 }
 
-// newTransaction returns a ds.Txn datastore
+// newTransaction returns a ds.Txn datastore.
 func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 	v := d.getVersion()
 	d.inFlightTxn.Set(dsTxn{v, v + 1, time.Now().Add(1 * time.Hour)})
@@ -179,7 +179,7 @@ func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 	}
 }
 
-// Put implements ds.Put
+// Put implements ds.Put.
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
 	tx := d.newTransaction(false)
 	err = tx.Put(ctx, key, value)
@@ -189,7 +189,7 @@ func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err erro
 	return tx.Commit(ctx)
 }
 
-// Query implements ds.Query
+// Query implements ds.Query.
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	re := make([]dsq.Entry, 0, d.values.Height())
 	iter := d.values.Iter()
@@ -223,12 +223,12 @@ func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error)
 	return r, nil
 }
 
-// Sync implements ds.Sync
+// Sync implements ds.Sync.
 func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 	return nil
 }
 
-// purgeOldVersions will execute the purge once a day or when explicitly requested
+// purgeOldVersions will execute the purge once a day or when explicitly requested.
 func (d *Datastore) purgeOldVersions(ctx context.Context) {
 	dbStartTime := time.Now()
 	nextCompression := time.Date(dbStartTime.Year(), dbStartTime.Month(), dbStartTime.Day()+1,

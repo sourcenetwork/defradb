@@ -98,10 +98,7 @@ type VersionedFetcher struct {
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
-// Init
-
-// Start
-
+// Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
@@ -116,7 +113,7 @@ func (vf *VersionedFetcher) Init(
 	return vf.DocumentFetcher.Init(col, fields, reverse)
 }
 
-// Start serializes the correct state accoriding to the Key and CID
+// Start serializes the correct state according to the Key and CID.
 func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
 		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
@@ -169,6 +166,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
+// Rootstore returns the rootstore of the VersionedFetcher.
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
 	return vf.root
 }
@@ -187,7 +185,7 @@ err := VersionFetcher.Start(txn, spans) {
 }
 */
 
-// SeekTo exposes the private seekTo
+// SeekTo exposes the private seekTo.
 func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 	err := vf.seekTo(c)
 	if err != nil {
@@ -197,12 +195,10 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
-// seekTo seeks to the given CID version by steping through the CRDT
-// state graph from the beginning to the target state, creating the
-// serialized state at the given version. It starts by seeking to the
-// closest existing state snapshot in the transient Versioned stores,
-// which on the first run is 0. It seeks by iteratively jumping through
-// the state graph via the `_head` link.
+// seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
+// to the target state, creating the serialized state at the given version. It starts by seeking
+// to the closest existing state snapshot in the transient Versioned stores, which on the first
+// run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
 func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
@@ -320,8 +316,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	return nil
 }
 
-// merge in the state of the IPLD Block identified by CID c into the
-// VersionedFetcher state.
+// merge in the state of the IPLD Block identified by CID c into the VersionedFetcher state.
 // Requires the CID to already exists in the DAGStore.
 // This function only works for merging Composite MerkleCRDT objects.
 //
@@ -329,7 +324,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // then extracts the delta object and priority from the block
 // gets the existing MerkleClock instance, or creates one.
 //
-// Currently we assume the CID is a CompositeDAG CRDT node
+// Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	// get node
 	nd, err := vf.getDAGNode(c)
@@ -412,6 +407,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	return dag.DecodeProtobuf(blk.RawData())
 }
 
+// Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
 	if err := vf.root.Close(); err != nil {
 		return err
@@ -420,6 +416,7 @@ func (vf *VersionedFetcher) Close() error {
 	return vf.DocumentFetcher.Close()
 }
 
+// NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
 func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
 	// Todo: Dont abuse DataStoreKey for version cid!
 	return core.NewSpans(core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()}))

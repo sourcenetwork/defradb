@@ -128,8 +128,7 @@ func NewPeer(
 	return p, nil
 }
 
-// Start all the internal workers/goroutines/loops that manage the P2P
-// state
+// Start all the internal workers/goroutines/loops that manage the P2P state.
 func (p *Peer) Start() error {
 	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
@@ -169,6 +168,7 @@ func (p *Peer) Start() error {
 	return nil
 }
 
+// Close the peer node and all its internal workers/goroutines/loops.
 func (p *Peer) Close() error {
 	// close topics
 	if err := p.server.removeAllPubsubTopics(); err != nil {
@@ -236,6 +236,7 @@ func (p *Peer) handleBroadcastLoop() {
 	}
 }
 
+// RegisterNewDocument registers a new document with the peer node.
 func (p *Peer) RegisterNewDocument(
 	ctx context.Context,
 	dockey client.DocKey,
@@ -276,7 +277,7 @@ func (p *Peer) RegisterNewDocument(
 	return p.server.publishLog(p.ctx, dockey.String(), req)
 }
 
-// SetReplicator adds a target peer node as a replication destination for documents in our DB
+// SetReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) SetReplicator(
 	ctx context.Context,
 	paddr ma.Multiaddr,
@@ -455,7 +456,7 @@ func (p *Peer) pushToReplicator(
 	}
 }
 
-// DeleteReplicator adds a target peer node as a replication destination for documents in our DB
+// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) DeleteReplicator(
 	ctx context.Context,
 	pid peer.ID,
@@ -517,7 +518,7 @@ func (p *Peer) DeleteReplicator(
 	})
 }
 
-// GetAllReplicators adds a target peer node as a replication destination for documents in our DB
+// GetAllReplicators adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	return p.db.GetAllReplicators(ctx)
 }

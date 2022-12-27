@@ -19,9 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
+// DocKeyFieldIndex is the index of the key field in a document.
 const DocKeyFieldIndex int = 0
 
+// DocFields is a slice of fields in a document.
 type DocFields []any
+
+// Doc is a document.
 type Doc struct {
 	// If true, this Doc will not be rendered, but will still be passed through
 	// the plan graph just like any other document.
@@ -69,6 +73,7 @@ func (d *Doc) Clone() Doc {
 	return cp
 }
 
+// RenderKey is a key that should be rendered into the document.
 type RenderKey struct {
 	// The field index to be rendered.
 	Index int
@@ -85,6 +90,7 @@ type mappingTypeInfo struct {
 	Name string
 }
 
+// DocumentMapping is a mapping of a document.
 type DocumentMapping struct {
 	// The type information for the object, if provided.
 	typeInfo immutable.Option[mappingTypeInfo]
@@ -228,6 +234,7 @@ func (mapping *DocumentMapping) Add(index int, name string) {
 	}
 }
 
+// SetTypeName sets the type name for this mapping.
 func (mapping *DocumentMapping) SetTypeName(typeName string) {
 	index := mapping.GetNextIndex()
 	mapping.Add(index, request.TypeNameFieldName)

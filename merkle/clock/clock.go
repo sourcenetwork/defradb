@@ -26,6 +26,7 @@ var (
 	log = logging.MustNewLogger("defra.merkleclock")
 )
 
+// MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
 type MerkleClock struct {
 	headstore datastore.DSReaderWriter
 	dagstore  datastore.DAGStore
@@ -34,7 +35,7 @@ type MerkleClock struct {
 	crdt    core.ReplicatedData
 }
 
-// NewMerkleClock returns a new MerkleClock to read/write events (deltas) to the clock.
+// NewMerkleClock returns a new MerkleClock.
 func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
@@ -84,9 +85,8 @@ func (mc *MerkleClock) putBlock(
 
 // @todo Change AddDAGNode to AddDelta
 
-// AddDAGNode adds a new delta to the existing DAG for this MerkleClock.
-// It checks the current heads, sets the delta priority in the merkle dag
-// adds it to the blockstore the runs ProcessNode.
+// AddDAGNode adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
+// sets the delta priority in the Merkle DAG, and adds it to the blockstore the runs ProcessNode.
 func (mc *MerkleClock) AddDAGNode(
 	ctx context.Context,
 	delta core.Delta,
@@ -119,8 +119,7 @@ func (mc *MerkleClock) AddDAGNode(
 	return nd, err //@todo: Include raw block data in return
 }
 
-// ProcessNode processes an already merged delta into a crdt
-// by
+// ProcessNode processes an already merged delta into a CRDT by adding it to the state.
 func (mc *MerkleClock) ProcessNode(
 	ctx context.Context,
 	ng core.NodeGetter,
@@ -205,6 +204,7 @@ func (mc *MerkleClock) ProcessNode(
 	return children, nil
 }
 
+// Heads returns the current heads of the MerkleClock.
 func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }

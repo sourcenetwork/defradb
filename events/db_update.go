@@ -16,13 +16,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// UpdateChannel is the bus onto which updates are published.
 type UpdateChannel = immutable.Option[Channel[Update]]
 
+// EmptyUpdateChannel is an empty UpdateChannel.
 var EmptyUpdateChannel = immutable.None[Channel[Update]]()
 
-// UpdateEvent represents a new DAG node added to the
-// append-only MerkleCRDT Clock graph of a
-// document or sub-field.
+// UpdateEvent represents a new DAG node added to the append-only MerkleCRDT Clock graph
+// of a document or sub-field.
 type Update struct {
 	DocKey   string
 	Cid      cid.Cid

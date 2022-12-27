@@ -17,9 +17,8 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-// MerkleClock is the core logical clock implementation that manages
-// writing to and from the MerkleDAG structure, ensuring a casual
-// ordering of
+// MerkleClock is the core logical clock implementation that manages writing to and from
+// the MerkleDAG structure, ensuring a causal ordering of events.
 type MerkleClock interface {
 	AddDAGNode(
 		ctx context.Context,
