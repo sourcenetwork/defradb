@@ -39,7 +39,7 @@ func (t *basicTxn) getTxnVersion() uint64 {
 	return t.getDSVersion() + 1
 }
 
-// Delete implements ds.Delete
+// Delete implements ds.Delete.
 func (t *basicTxn) Delete(ctx context.Context, key ds.Key) error {
 	if t.discarded {
 		return ErrTxnDiscarded
@@ -75,7 +75,7 @@ func (t *basicTxn) get(ctx context.Context, key ds.Key) dsItem {
 	return result
 }
 
-// Get implements ds.Get
+// Get implements ds.Get.
 func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	if t.discarded {
 		return nil, ErrTxnDiscarded
@@ -87,7 +87,7 @@ func (t *basicTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 	return result.val, nil
 }
 
-// GetSize implements ds.GetSize
+// GetSize implements ds.GetSize.
 func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
 	if t.discarded {
 		return 0, ErrTxnDiscarded
@@ -99,7 +99,7 @@ func (t *basicTxn) GetSize(ctx context.Context, key ds.Key) (size int, err error
 	return len(result.val), nil
 }
 
-// Has implements ds.Has
+// Has implements ds.Has.
 func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
 	if t.discarded {
 		return false, ErrTxnDiscarded
@@ -111,7 +111,7 @@ func (t *basicTxn) Has(ctx context.Context, key ds.Key) (exists bool, err error)
 	return true, nil
 }
 
-// Put implements ds.Put
+// Put implements ds.Put.
 func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	if t.discarded {
 		return ErrTxnDiscarded
@@ -124,7 +124,7 @@ func (t *basicTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	return nil
 }
 
-// Query implements ds.Query
+// Query implements ds.Query.
 func (t *basicTxn) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
 	if t.discarded {
 		return nil, ErrTxnDiscarded
@@ -193,7 +193,7 @@ func setEntry(key string, value []byte, q dsq.Query) dsq.Entry {
 	return e
 }
 
-// Discard removes all the operations added to the transaction
+// Discard removes all the operations added to the transaction.
 func (t *basicTxn) Discard(ctx context.Context) {
 	if t.discarded {
 		return
@@ -203,7 +203,7 @@ func (t *basicTxn) Discard(ctx context.Context) {
 	t.discarded = true
 }
 
-// Commit saves the operations to the underlying datastore
+// Commit saves the operations to the underlying datastore.
 func (t *basicTxn) Commit(ctx context.Context) error {
 	if t.discarded {
 		return ErrTxnDiscarded

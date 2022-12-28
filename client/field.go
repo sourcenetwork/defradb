@@ -10,7 +10,7 @@
 
 package client
 
-// Field is an interface to interact with Fields inside a document
+// Field is an interface to interact with Fields inside a document.
 type Field interface {
 	Name() string
 	Type() CType //TODO Abstract into a Field Type interface
@@ -34,14 +34,17 @@ func (doc *Document) newField(t CType, name string, schemaType ...string) Field 
 	return f
 }
 
+// Name returns the name of the field.
 func (field simpleField) Name() string {
 	return field.name
 }
 
+// Type returns the type of the field.
 func (field simpleField) Type() CType {
 	return field.crdtType
 }
 
+// SchemaType returns the schema type of the field.
 func (field simpleField) SchemaType() string {
 	return field.schemaType
 }

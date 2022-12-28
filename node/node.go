@@ -55,6 +55,7 @@ var (
 
 const evtWaitTimeout = 10 * time.Second
 
+// Node is a networked peer instance of DefraDB.
 type Node struct {
 	// embed the DB interface into the node
 	client.DB
@@ -187,6 +188,7 @@ func NewNode(
 	return n, nil
 }
 
+// Boostrap connects to the given peers.
 func (n *Node) Boostrap(addrs []peer.AddrInfo) {
 	var connected uint64
 
@@ -378,6 +380,7 @@ func newDHT(ctx context.Context, h host.Host, dsb ds.Batching) (*dualdht.DHT, er
 	return dualdht.New(ctx, h, dhtOpts...)
 }
 
+// Close closes the node and all its services.
 func (n Node) Close() error {
 	return n.Peer.Close()
 }

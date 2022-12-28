@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// SelectionType is the type of selection.
 type SelectionType int
 
 const (
@@ -23,10 +24,9 @@ const (
 	CommitSelection
 )
 
-// Select is a complex Field with strong typing
-// It used for sub types in a query. Includes
-// fields, and query arguments like filters,
-// limits, etc.
+// Select is a complex Field with strong typing.
+// It is used for sub-types in a query.
+// Includes fields, and query arguments like filters, limits, etc.
 type Select struct {
 	Field
 
@@ -45,6 +45,7 @@ type Select struct {
 	Fields []Selection
 }
 
+// Validate validates the Select.
 func (s *Select) Validate() []error {
 	result := []error{}
 
