@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Options is the node options.
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
 	TCPAddr           ma.Multiaddr

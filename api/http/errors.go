@@ -24,7 +24,7 @@ var env = os.Getenv("DEFRA_ENV")
 
 // Errors returnable from this package.
 //
-// This list is incomplete and undefined errors may also be returned.
+// This list is incomplete. Undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrNoListener           = errors.New("cannot serve with no listener")
@@ -42,7 +42,7 @@ type ErrorResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-// ErrorItem hold an error message and extensions that might be pertinent to the request
+// ErrorItem hold an error message and extensions that might be pertinent to the request.
 type ErrorItem struct {
 	Message    string     `json:"message"`
 	Extensions extensions `json:"extensions,omitempty"`

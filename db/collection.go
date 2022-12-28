@@ -173,7 +173,7 @@ func (db *db) CreateCollection(
 	return col, err
 }
 
-// GetCollection returns an existing collection within the database
+// GetCollection returns an existing collection within the database.
 func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, ErrCollectionNameEmpty
@@ -221,8 +221,7 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}, nil
 }
 
-// GetCollectionBySchemaID returns an existing collection within the database using the
-// schema hash ID
+// GetCollectionBySchemaID returns an existing collection using the schema hash ID.
 func (db *db) GetCollectionBySchemaID(
 	ctx context.Context,
 	schemaID string,
@@ -241,8 +240,7 @@ func (db *db) GetCollectionBySchemaID(
 	return db.GetCollectionByName(ctx, name)
 }
 
-// GetAllCollections gets all the currently defined collections in the
-// database
+// GetAllCollections gets all the currently defined collections.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
 	prefix := core.NewCollectionKey("")
@@ -276,7 +274,8 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 	return cols, nil
 }
 
-// GetAllDocKeys returns all the document keys that exist in the collection
+// GetAllDocKeys returns all the document keys that exist in the collection.
+//
 // @todo: We probably need a lock on the collection for this kind of op since
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocKeys(ctx context.Context) (<-chan client.DocKeysResult, error) {
@@ -346,38 +345,38 @@ func (c *collection) getAllDocKeysChan(
 	return resCh, nil
 }
 
-// Description returns the client.CollectionDescription
+// Description returns the client.CollectionDescription.
 func (c *collection) Description() client.CollectionDescription {
 	return c.desc
 }
 
-// Name returns the collection name
+// Name returns the collection name.
 func (c *collection) Name() string {
 	return c.desc.Name
 }
 
-// Schema returns the Schema of the collection
+// Schema returns the Schema of the collection.
 func (c *collection) Schema() client.SchemaDescription {
 	return c.desc.Schema
 }
 
-// ID returns the ID of the collection
+// ID returns the ID of the collection.
 func (c *collection) ID() uint32 {
 	return c.colID
 }
 
-// Indexes returns the defined indexes on the Collection
+// Indexes returns the defined indexes on the Collection.
 // @todo: Properly handle index creation/management
 func (c *collection) Indexes() []client.IndexDescription {
 	return c.desc.Indexes
 }
 
-// PrimaryIndex returns the primary index for the given collection
+// PrimaryIndex returns the primary index for the given collection.
 func (c *collection) PrimaryIndex() client.IndexDescription {
 	return c.desc.Indexes[0]
 }
 
-// Index returns the index with the given index ID
+// Index returns the index with the given index ID.
 func (c *collection) Index(id uint32) (client.IndexDescription, error) {
 	for _, index := range c.desc.Indexes {
 		if index.ID == id {
@@ -393,7 +392,7 @@ func (c *collection) SchemaID() string {
 }
 
 // WithTxn returns a new instance of the collection, with a transaction
-// handle instead of a raw DB handle
+// handle instead of a raw DB handle.
 func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	return &collection{
 		db:       c.db,
@@ -404,7 +403,7 @@ func (c *collection) WithTxn(txn datastore.Txn) client.Collection {
 	}
 }
 
-// Create a new document
+// Create a new document.
 // Will verify the DocKey/CID to ensure that the new document is correctly formatted.
 func (c *collection) Create(ctx context.Context, doc *client.Document) error {
 	txn, err := c.getTxn(ctx, false)
@@ -490,10 +489,9 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	return err
 }
 
-// Update an existing document with the new values
-// Any field that needs to be removed or cleared
-// should call doc.Clear(field) before. Any field that
-// is nil/empty that hasn't called Clear will be ignored
+// Update an existing document with the new values.
+// Any field that needs to be removed or cleared should call doc.Clear(field) before.
+// Any field that is nil/empty that hasn't called Clear will be ignored.
 func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -518,7 +516,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-// Contract: DB Exists check is already performed, and a doc with the given key exists
+// Contract: DB Exists check is already performed, and a doc with the given key exists.
 // Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
@@ -531,7 +529,7 @@ func (c *collection) update(ctx context.Context, txn datastore.Txn, doc *client.
 	return nil
 }
 
-// Save a document into the db
+// Save a document into the db.
 // Either by creating a new document or by updating an existing one
 func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	txn, err := c.getTxn(ctx, false)
@@ -658,13 +656,10 @@ func (c *collection) save(
 	return headNode.Cid(), nil
 }
 
-// Delete will attempt to delete a document by key
-// will return true if a deletion is successful, and
-// return false, along with an error, if it cannot.
-// If the document doesn't exist, then it will return
-// false, and a ErrDocumentNotFound error.
-// This operation will all state relating to the given
-// DocKey. This includes data, block, and head storage.
+// Delete will attempt to delete a document by key will return true if a deletion is successful,
+// and return false, along with an error, if it cannot.
+// If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
+// This operation will all state relating to the given DocKey. This includes data, block, and head storage.
 func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {
@@ -748,7 +743,7 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 	return true, nil
 }
 
-// Exists checks if a given document exists with supplied DocKey
+// Exists checks if a given document exists with supplied DocKey.
 func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error) {
 	txn, err := c.getTxn(ctx, false)
 	if err != nil {

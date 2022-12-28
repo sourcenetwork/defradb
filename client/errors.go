@@ -45,14 +45,18 @@ var (
 	ErrInvalidDocKeyVersion  = errors.New("invalid DocKey version")
 )
 
+// NewErrFieldNotExist returns an error indicating that the given field does not exist.
 func NewErrFieldNotExist(name string) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
 }
 
+// NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field
+// was selected at group-level.
 func NewErrSelectOfNonGroupField(name string) error {
 	return errors.New(errSelectOfNonGroupField, errors.NewKV("Field", name))
 }
 
+// NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
 func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 	var expected TExpected
 	return errors.WithStack(
@@ -63,6 +67,8 @@ func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 	)
 }
 
+// NewErrUnhandledType returns an error indicating that the given value is of
+// a type that is not handled.
 func NewErrUnhandledType(property string, actual any) error {
 	return errors.WithStack(
 		ErrUnexpectedType,
@@ -71,10 +77,13 @@ func NewErrUnhandledType(property string, actual any) error {
 	)
 }
 
+// NewErrParsingFailed returns an error indicating that the given argument could not be parsed.
 func NewErrParsingFailed(inner error, argumentName string) error {
 	return errors.Wrap(errParsingFailed, inner, errors.NewKV("Argument", argumentName))
 }
 
+// NewErrUninitializeProperty returns an error indicating that the required property
+// is uninitialized.
 func NewErrUninitializeProperty(host string, propertyName string) error {
 	return errors.New(
 		errUninitializeProperty,

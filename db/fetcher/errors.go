@@ -41,42 +41,53 @@ var (
 	ErrSingleSpanOnly               = errors.New("spans must contain only a single entry")
 )
 
+// NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
 func NewErrFieldIdNotFound(fieldId uint32) error {
 	return errors.New(errFieldIdNotFound, errors.NewKV("FieldId", fieldId))
 }
 
+// NewErrFailedToDecodeCIDForVFetcher returns an error indicating that the given CID could not be decoded.
 func NewErrFailedToDecodeCIDForVFetcher(inner error) error {
 	return errors.Wrap(errFailedToDecodeCIDForVFetcher, inner)
 }
 
+// NewErrFailedToSeek returns an error indicating that the given target could not be seeked to.
 func NewErrFailedToSeek(target any, inner error) error {
 	return errors.Wrap(errFailedToSeek, inner, errors.NewKV("Target", target))
 }
 
+// NewErrFailedToMergeState returns an error indicating that the given state could not be merged.
 func NewErrFailedToMergeState(inner error) error {
 	return errors.Wrap(errFailedToMergeState, inner)
 }
 
+// NewErrVFetcherFailedToFindBlock returns an error indicating that the given block could not be found.
 func NewErrVFetcherFailedToFindBlock(inner error) error {
 	return errors.Wrap(errVFetcherFailedToFindBlock, inner)
 }
 
+// NewErrVFetcherFailedToGetBlock returns an error indicating that the given block could not be retrieved.
 func NewErrVFetcherFailedToGetBlock(inner error) error {
 	return errors.Wrap(errVFetcherFailedToGetBlock, inner)
 }
 
+// NewErrVFetcherFailedToWriteBlock returns an error indicating that the given block could not be written.
 func NewErrVFetcherFailedToWriteBlock(inner error) error {
 	return errors.Wrap(errVFetcherFailedToWriteBlock, inner)
 }
 
+// NewErrVFetcherFailedToDecodeNode returns an error indicating that the given node could not be decoded.
 func NewErrVFetcherFailedToDecodeNode(inner error) error {
 	return errors.Wrap(errVFetcherFailedToDecodeNode, inner)
 }
 
+// NewErrVFetcherFailedToGetDagLink returns an error indicating that the given DAG link
+// could not be retrieved.
 func NewErrVFetcherFailedToGetDagLink(inner error) error {
 	return errors.Wrap(errVFetcherFailedToGetDagLink, inner)
 }
 
+// NewErrFailedToGetDagNode returns an error indicating that the given DAG node could not be retrieved.
 func NewErrFailedToGetDagNode(inner error) error {
 	return errors.Wrap(errFailedToGetDagNode, inner)
 }

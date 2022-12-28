@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package events provides the internal event system.
+*/
 package events
 
 type Subscription[T any] chan T

@@ -78,6 +78,7 @@ func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (
 	}, nil
 }
 
+// Commit finalizes a transaction, attempting to commit it to the Datastore.
 func (t *txn) Commit(ctx context.Context) error {
 	if err := t.t.Commit(ctx); err != nil {
 		t.runErrorFns(ctx)
@@ -87,10 +88,12 @@ func (t *txn) Commit(ctx context.Context) error {
 	return nil
 }
 
+// Discard throws away changes recorded in a transaction without committing.
 func (t *txn) Discard(ctx context.Context) {
 	t.t.Discard(ctx)
 }
 
+// OnSuccess registers a function to be called when the transaction is committed.
 func (txn *txn) OnSuccess(fn func()) {
 	if fn == nil {
 		return
@@ -98,6 +101,7 @@ func (txn *txn) OnSuccess(fn func()) {
 	txn.successFns = append(txn.successFns, fn)
 }
 
+// OnError registers a function to be called when the transaction is rolled back.
 func (txn *txn) OnError(fn func()) {
 	if fn == nil {
 		return
@@ -117,15 +121,17 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 	}
 }
 
-// Shim to make ds.Txn support ds.Datastore
+// Shim to make ds.Txn support ds.Datastore.
 type ShimTxnStore struct {
 	ds.Txn
 }
 
+// Sync executes the transaction.
 func (ts ShimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
 	return ts.Txn.Commit(ctx)
 }
 
+// Close discards the transaction.
 func (ts ShimTxnStore) Close() error {
 	ts.Discard(context.TODO())
 	return nil

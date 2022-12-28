@@ -24,6 +24,7 @@ var (
 	ErrInvalidKey              = errors.New("invalid key string")
 )
 
+// NewErrFailedToGetFieldIdOfKey returns the error indicating failure to get FieldID of Key.
 func NewErrFailedToGetFieldIdOfKey(inner error) error {
 	return errors.Wrap(errFailedToGetFieldIdOfKey, inner)
 }

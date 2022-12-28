@@ -108,6 +108,7 @@ func newHTTPRedirServer(m *autocert.Manager) *Server {
 	return srv
 }
 
+// DefaultOpts returns the default options for the server.
 func DefaultOpts() func(*Server) {
 	return func(s *Server) {
 		if s.Addr == "" {
@@ -116,12 +117,14 @@ func DefaultOpts() func(*Server) {
 	}
 }
 
+// WithAllowedOrigins returns an option to set the allowed origins for CORS.
 func WithAllowedOrigins(origins ...string) func(*Server) {
 	return func(s *Server) {
 		s.options.allowedOrigins = append(s.options.allowedOrigins, origins...)
 	}
 }
 
+// WithAddress returns an option to set the address for the server.
 func WithAddress(addr string) func(*Server) {
 	return func(s *Server) {
 		s.Addr = addr
@@ -139,6 +142,7 @@ func WithAddress(addr string) func(*Server) {
 	}
 }
 
+// WithCAEmail returns an option to set the email address for the CA to send problem notifications.
 func WithCAEmail(email string) func(*Server) {
 	return func(s *Server) {
 		tlsOpt := s.options.tls.Value()
@@ -147,18 +151,21 @@ func WithCAEmail(email string) func(*Server) {
 	}
 }
 
+// WithPeerID returns an option to set the identifier of the server node.
 func WithPeerID(id string) func(*Server) {
 	return func(s *Server) {
 		s.options.peerID = id
 	}
 }
 
+// WithRootDir returns an option to set the root directory for the node config.
 func WithRootDir(rootDir string) func(*Server) {
 	return func(s *Server) {
 		s.options.rootDir = rootDir
 	}
 }
 
+// WithSelfSignedCert returns an option to set the public and private keys for TLS.
 func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 	return func(s *Server) {
 		tlsOpt := s.options.tls.Value()
@@ -168,6 +175,7 @@ func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 	}
 }
 
+// WithTLSPort returns an option to set the port for TLS.
 func WithTLSPort(port int) func(*Server) {
 	return func(s *Server) {
 		tlsOpt := s.options.tls.Value()
@@ -257,7 +265,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 	return nil
 }
 
-// Run calls Serve with the receiver's listener
+// Run calls Serve with the receiver's listener.
 func (s *Server) Run(ctx context.Context) error {
 	if s.listener == nil {
 		return ErrNoListener
