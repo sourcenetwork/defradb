@@ -8,6 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package metric provides the observability system.
+
+It is a wrapper around the opentelemetry metric package.
+*/
 package metric
 
 import (

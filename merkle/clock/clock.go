@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package clock provides a MerkleClock implementation, to track causal ordering of events.
+*/
 package clock
 
 import (
