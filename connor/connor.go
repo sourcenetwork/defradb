@@ -1,3 +1,8 @@
+/*
+Package connor provides a domain-specific language to express conditions against data.
+
+It is derived from https://github.com/SierraSoftworks/connor.
+*/
 package connor
 
 // Match is the default method used in Connor to match some data to a

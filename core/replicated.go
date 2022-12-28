@@ -17,9 +17,8 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
-// ReplicatedData is a data type that allows concurrent writers
-// to deterministically merge other replicated data so as to
-// converge on the same state
+// ReplicatedData is a data type that allows concurrent writers to deterministically merge other
+// replicated data so as to converge on the same state.
 type ReplicatedData interface {
 	ID() string
 	Merge(ctx context.Context, other Delta, id string) error
@@ -27,7 +26,7 @@ type ReplicatedData interface {
 	Value(ctx context.Context) ([]byte, error)
 }
 
-// PersistedReplicatedData persists a ReplicatedData to an underlying datastore
+// PersistedReplicatedData persists a ReplicatedData to an underlying datastore.
 type PersistedReplicatedData interface {
 	ReplicatedData
 	Publish(Delta) (cid.Cid, error)

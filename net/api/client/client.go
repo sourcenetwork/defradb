@@ -29,7 +29,7 @@ type Client struct {
 	conn *grpc.ClientConn
 }
 
-// NewClient returns a new defra gRPC client connected to the target address
+// NewClient returns a new defra gRPC client connected to the target address.
 func NewClient(target string, opts ...grpc.DialOption) (*Client, error) {
 	conn, err := grpc.Dial(target, opts...)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// SetReplicator sends a request to add a target replicator to the DB peer
+// SetReplicator sends a request to add a target replicator to the DB peer.
 func (c *Client) SetReplicator(
 	ctx context.Context,
 	paddr ma.Multiaddr,
@@ -65,7 +65,7 @@ func (c *Client) SetReplicator(
 	return peer.IDFromBytes(resp.PeerID)
 }
 
-// DeleteReplicator sends a request to add a target replicator to the DB peer
+// DeleteReplicator sends a request to add a target replicator to the DB peer.
 func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	pid peer.ID,
@@ -77,7 +77,7 @@ func (c *Client) DeleteReplicator(
 	return err
 }
 
-// GetAllReplicators sends a request to add a target replicator to the DB peer
+// GetAllReplicators sends a request to add a target replicator to the DB peer.
 func (c *Client) GetAllReplicators(
 	ctx context.Context,
 ) ([]client.Replicator, error) {

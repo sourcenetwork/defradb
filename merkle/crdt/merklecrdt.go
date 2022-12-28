@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package crdt provides CRDT implementations leveraging MerkleClock.
+*/
 package crdt
 
 import (

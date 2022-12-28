@@ -34,6 +34,7 @@ type multistore struct {
 
 var _ MultiStore = (*multistore)(nil)
 
+// MultiStoreFrom creates a MultiStore from a root datastore.
 func MultiStoreFrom(rootstore DSReaderWriter) MultiStore {
 	block := prefix(rootstore, blockStoreKey)
 	ms := &multistore{
@@ -67,6 +68,7 @@ func (ms multistore) Rootstore() DSReaderWriter {
 	return ms.root
 }
 
+// Systemstore implements MultiStore.
 func (ms multistore) Systemstore() DSReaderWriter {
 	return ms.system
 }

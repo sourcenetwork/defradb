@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
+// SchemaDefinition represents a schema definition.
 type SchemaDefinition struct {
 	// The name of this schema definition.
 	Name string
@@ -29,8 +30,8 @@ type SchemaDefinition struct {
 	Body []byte
 }
 
-// Parser represents the object responsible for handling stuff specific to
-// a query language.  This includes schema and query parsing, and introspection.
+// Parser represents the object responsible for handling stuff specific to a query language.
+// This includes schema and query parsing, and introspection.
 type Parser interface {
 	// Returns true if the given string is an introspection request.
 	IsIntrospection(request string) bool

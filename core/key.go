@@ -27,10 +27,13 @@ var (
 	KeyMax = []byte{0xff, 0xff}
 )
 
+// InstanceType is a type that represents the type of instance.
 type InstanceType string
 
 const (
-	ValueKey    = InstanceType("v")
+	// ValueKey is a type that represents a value instance.
+	ValueKey = InstanceType("v")
+	// PriorityKey is a type that represents a priority instance.
 	PriorityKey = InstanceType("p")
 )
 
@@ -43,12 +46,14 @@ const (
 	REPLICATOR        = "/replicator/id"
 )
 
+// Key is an interface that represents a key in the database.
 type Key interface {
 	ToString() string
 	Bytes() []byte
 	ToDS() ds.Key
 }
 
+// DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
 	CollectionId string
 	InstanceType InstanceType
@@ -440,10 +445,9 @@ func (k HeadStoreKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// PrefixEnd determines the end key given key as a prefix, that is the
-// key that sorts precisely behind all keys starting with prefix: "1"
-// is added to the final byte and the carry propagated. The special
-// cases of nil and KeyMin always returns KeyMax.
+// PrefixEnd determines the end key given key as a prefix, that is the key that sorts precisely
+// behind all keys starting with prefix: "1" is added to the final byte and the carry propagated.
+// The special cases of nil and KeyMin always returns KeyMax.
 func (k DataStoreKey) PrefixEnd() DataStoreKey {
 	newKey := k
 
@@ -469,8 +473,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 // FieldID extracts the Field Identifier from the Key.
 // In a Primary index, the last key path is the FieldID.
 // This may be different in Secondary Indexes.
-// An error is returned if it can't correct convert the
-// field to a uint32.
+// An error is returned if it can't correct convert the field to a uint32.
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {

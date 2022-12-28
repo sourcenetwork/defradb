@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore/iterable"
 )
 
+// AsDSReaderWriter returns a DSReaderWriter from the given datastore.
 func AsDSReaderWriter(store ds.Datastore) DSReaderWriter {
 	switch typedStore := store.(type) {
 	case iterable.IterableDatastore:
