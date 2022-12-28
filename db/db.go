@@ -61,11 +61,12 @@ type db struct {
 	options any
 }
 
-// functional option type
+// Functional option type.
 type Option func(*db)
 
 const updateEventBufferSize = 100
 
+// WithUpdateEvents enables the update events channel.
 func WithUpdateEvents() Option {
 	return func(db *db) {
 		db.events = events.Events{
@@ -116,10 +117,12 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 	return db, nil
 }
 
+// NewTxn creates a new transaction.
 func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
+// Root returns the root datastore.
 func (db *db) Root() datastore.RootStore {
 	return db.rootstore
 }
@@ -167,10 +170,12 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
+// Events returns the events Channel.
 func (db *db) Events() events.Events {
 	return db.events
 }
 
+// PrintDump prints the entire database to console.
 func (db *db) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.multistore.Rootstore())
 }

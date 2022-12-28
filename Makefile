@@ -254,6 +254,11 @@ docs\:cli:
 docs\:manpages:
 	go run cmd/genmanpages/main.go -o build/man/
 
+.PHONY: docs\:godoc
+docs\:godoc:
+	godoc -http=:6060
+	# open http://localhost:6060/pkg/github.com/sourcenetwork/defradb/
+
 detectedOS := $(shell uname)
 .PHONY: install\:manpages
 install\:manpages:

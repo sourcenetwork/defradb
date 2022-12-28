@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 )
 
+// SetReplicator adds a new replicator to the database.
 func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	existingRep, err := db.getReplicator(ctx, rep.Info)
 	if errors.Is(err, ds.ErrNotFound) {
@@ -49,6 +50,7 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	return db.saveReplicator(ctx, rep)
 }
 
+// DeleteReplicator removes a replicator from the database.
 func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	if len(rep.Schemas) == 0 {
 		return db.deleteReplicator(ctx, rep.Info.ID)
@@ -89,6 +91,7 @@ func (db *db) deleteSchemasForReplicator(ctx context.Context, rep client.Replica
 	return db.saveReplicator(ctx, existingRep)
 }
 
+// GetAllReplicators returns all replicators of the database.
 func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	reps := []client.Replicator{}
 	// create collection system prefix query

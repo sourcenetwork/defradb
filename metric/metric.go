@@ -8,6 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package metric provides the observability system.
+
+It is a wrapper around the opentelemetry metric package.
+*/
 package metric
 
 import (
@@ -45,23 +50,28 @@ type Meter struct {
 	meter    metric.Meter
 }
 
+// NewMeter returns a new meter.
 func NewMeter() Meter {
 	return Meter{}
 }
 
+// Register gives a name to the metric and initializes the provider.
 func (m *Meter) Register(name string) {
 	m.provider = m.newManualProvider()
 	m.meter = m.provider.Meter(name)
 }
 
+// Dump is responsible to read the metrics and output all the gathered data.
 func (m *Meter) Dump(ctx context.Context) (any, error) {
 	return m.reader.Collect(ctx)
 }
 
+// Close shutsdown the meter.
 func (m *Meter) Close(ctx context.Context) error {
 	return m.provider.Shutdown(ctx)
 }
 
+// GetSyncHistogram returns a new histogram with the given name and unit.
 func (m *Meter) GetSyncHistogram(
 	name string,
 	unit unit.Unit,
@@ -72,6 +82,7 @@ func (m *Meter) GetSyncHistogram(
 	)
 }
 
+// GetSyncCounter returns a new counter with the given name and unit.
 func (m *Meter) GetSyncCounter(
 	name string,
 	unit unit.Unit,
@@ -82,6 +93,7 @@ func (m *Meter) GetSyncCounter(
 	)
 }
 
+// DumpScopeMetricsString returns a string representation of the metrics.
 func (m *Meter) DumpScopeMetricsString(ctx context.Context) (string, error) {
 	data, err := m.reader.Collect(ctx)
 	if err != nil {
@@ -96,6 +108,7 @@ func (m *Meter) DumpScopeMetricsString(ctx context.Context) (string, error) {
 	return string(jsonBytes), nil
 }
 
+// Get returns the meter.
 func (m *Meter) Get() metric.Meter {
 	return m.meter
 }

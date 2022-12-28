@@ -8,6 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+/*
+Package errors provides the internal error system.
+*/
 package errors
 
 import (
@@ -22,11 +25,13 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/733
 const MaxStackDepth int = 50
 
+// KV is a key-value pair.
 type KV struct {
 	key   string
 	value any
 }
 
+// NewKV creates a new key-value pair.
 func NewKV(key string, value any) KV {
 	return KV{
 		key:   key,

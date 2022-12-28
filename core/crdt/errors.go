@@ -32,10 +32,12 @@ var (
 	ErrMismatchedMergeType = errors.New("given type to merge does not match source")
 )
 
+// NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.
 func NewErrFailedToGetPriority(inner error) error {
 	return errors.Wrap(errFailedToGetPriority, inner)
 }
 
+// NewErrFailedToStoreValue returns an error indicating that the value could not be stored.
 func NewErrFailedToStoreValue(inner error) error {
 	return errors.Wrap(errFailedToStoreValue, inner)
 }

@@ -23,10 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/db/base"
 )
 
-// Fetcher is the interface for collecting documents
-// from the underlying data store. It handles all
-// the key/value scanning, aggregation, and document
-// encoding.
+// Fetcher is the interface for collecting documents from the underlying data store.
+// It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
 	Init(col *client.CollectionDescription, fields []*client.FieldDescription, reverse bool) error
 	Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error
@@ -40,6 +38,7 @@ var (
 	_ Fetcher = (*DocumentFetcher)(nil)
 )
 
+// DocumentFetcher is a utility to incrementally fetch all the documents.
 type DocumentFetcher struct {
 	col     *client.CollectionDescription
 	reverse bool
@@ -63,7 +62,7 @@ type DocumentFetcher struct {
 	isReadingDocument bool
 }
 
-// Init implements DocumentFetcher
+// Init implements DocumentFetcher.
 func (df *DocumentFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
@@ -100,7 +99,7 @@ func (df *DocumentFetcher) Init(
 	return nil
 }
 
-// Start implements DocumentFetcher
+// Start implements DocumentFetcher.
 func (df *DocumentFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if df.col == nil {
 		return client.NewErrUninitializeProperty("DocumentFetcher", "CollectionDescription")
@@ -360,8 +359,8 @@ func (df *DocumentFetcher) FetchNextDecoded(ctx context.Context) (*client.Docume
 	return df.decodedDoc, nil
 }
 
-// FetchNextDoc returns the next document as a core.Doc
-// The first return value is the parsed document key
+// FetchNextDoc returns the next document as a core.Doc.
+// The first return value is the parsed document key.
 func (df *DocumentFetcher) FetchNextDoc(
 	ctx context.Context,
 	mapping *core.DocumentMapping,
@@ -381,6 +380,7 @@ func (df *DocumentFetcher) FetchNextDoc(
 	return encdoc.Key, doc, err
 }
 
+// Close closes the DocumentFetcher.
 func (df *DocumentFetcher) Close() error {
 	if df.kvIter == nil {
 		return nil

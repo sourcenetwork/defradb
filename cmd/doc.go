@@ -8,12 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package client
+/*
+Package cmd provides the defradb program and related utilities.
 
-import "github.com/libp2p/go-libp2p/core/peer"
-
-// Replicator is a peer that a set of local collections are replicated to.
-type Replicator struct {
-	Info    peer.AddrInfo
-	Schemas []string
-}
+The package is *virtual* as it doesn't have any code. Rather, each subfolder is its own individual program.
+*/
+package cmd

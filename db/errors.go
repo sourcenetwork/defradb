@@ -51,17 +51,24 @@ var (
 	ErrKeyEmpty                 = errors.New("key cannot be empty")
 )
 
+// NewErrFailedToGetHeads returns a new error indicating that the heads of a document
+// could not be obtained.
 func NewErrFailedToGetHeads(inner error) error {
 	return errors.Wrap(errFailedToGetHeads, inner)
 }
 
+// NewErrFailedToCreateCollectionQuery returns a new error indicating that the query
+// to create a collection failed.
 func NewErrFailedToCreateCollectionQuery(inner error) error {
 	return errors.Wrap(errFailedToCreateCollectionQuery, inner)
 }
 
+// NewErrFailedToGetCollection returns a new error indicating that the collection could not be obtained.
 func NewErrFailedToGetCollection(name string, inner error) error {
 	return errors.Wrap(errFailedToGetCollection, inner, errors.NewKV("Name", name))
 }
+
+// NewErrDocVerification returns a new error indicating that the document verification failed.
 func NewErrDocVerification(expected string, actual string) error {
 	return errors.New(
 		errDocVerification,

@@ -23,8 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// HeadFetcher is a utility to incrementally fetch all the MerkleCRDT
-// heads of a given doc/field
+// HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
 	spans   core.Spans
 	fieldId immutable.Option[string]
