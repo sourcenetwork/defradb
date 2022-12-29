@@ -213,11 +213,15 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		},
+		ServerName: "DefraDB",
 	}
 	addr := s.Addr
 
 	if s.options.tls.Value().domain != "" {
 		addr = s.options.tls.Value().port
+		if addr == "" {
+			addr = ":443"
+		}
 
 		certCache := path.Join(s.options.rootDir, "autocerts")
 
