@@ -129,6 +129,7 @@ clean:
 clean\:test:
 	go clean -testcache
 
+# Example: `make tls-certs path="~/.defradb/certs"`
 .PHONY: tls-certs
 tls-certs:
 ifeq ($(path),)
