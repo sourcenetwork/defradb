@@ -250,8 +250,8 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		log.FeedbackInfo(ctx, "Generating self signed certificate")
 
 		cert, err := tls.LoadX509KeyPair(
-			path.Join(s.options.rootDir, s.options.tls.Value().privKey),
-			path.Join(s.options.rootDir, s.options.tls.Value().pubKey),
+			s.options.tls.Value().privKey,
+			s.options.tls.Value().pubKey,
 		)
 		if err != nil {
 			return errors.WithStack(err)

@@ -235,20 +235,40 @@ Doing so, you will discover about filtering, ordering, limiting, relationships, 
 
 By default, DefraDB will expose the HTTP API at `http://localhost:9181/api/v0`. It's also possible to configure the API to use TLS with self signed certificates or Let's Encrypt.
 
-In the case of self signed certificates, the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be defined and `tls` set to `true` either via the config file or via the CLI.
+To start defradb with self signed certificates placed under `~/.defradb/certs/` with `server.key`
+being the public key and `server.crt` being the private key, just do:
 ```shell
-defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
+defradb start --tls
 ```
 
 The keys can be generated with your generator of choice or with `make tls-certs`.
 
-Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs ~/.defradb/certs`.
+Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
 
-Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
+If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be
+explicitly defined inaddition to the `--tls` flag or `tls` set to `true` in the config.
 
+Then to start the server with TLS, using your generated keys in custom path:
 ```shell
-defradb start --url="example.com"
+defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
+
 ```
+
+Note the following example can sometimes not properly expand `~` and can cause problems:
+```shell
+defradb start --tls --pubkeypath="~/path-to-pubkey.key" --privkeypath="~/path-to-privkey.crt"
+```
+
+DefraDB also comes with automatic HTTPS for deployments on the public web. To enable HTTPS,
+ deploy DefraDB to a server with both port 80 and port 443 open. With your domain's DNS A record
+ pointed to the IP of your server, you can run the database using the following command:
+```shell
+sudo defradb start --tls --url=your-domain.net --email=email@example.com
+```
+Note: `sudo` is needed above for the redirection server (to bind port 80).
+
+A valid email address is necessary for the creation of the certificate, and is important to
+ get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
 
 ## Peer-to-peer data synchronization
