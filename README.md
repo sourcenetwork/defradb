@@ -241,14 +241,12 @@ being the public key and `server.crt` being the private key, just do:
 defradb start --tls
 ```
 
-In the case of self signed certificates, the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be defined and `tls` set to `true` either via the config file or via the CLI.
-```shell
-defradb start --tls --pubkeypath="path-to-pubkey" --privkeypath="path-to-pubkey"
-```
-
 The keys can be generated with your generator of choice or with `make tls-certs`.
 
 Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
+
+If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be
+explicitly defined inaddition to the `--tls` flag or `tls` set to `true` in the config.
 
 Then to start the server with TLS, using your generated keys in custom path:
 ```shell
@@ -261,13 +259,16 @@ Note the following example can sometimes not properly expand `~` and can cause p
 defradb start --tls --pubkeypath="~/path-to-pubkey.key" --privkeypath="~/path-to-privkey.crt"
 ```
 
-`<<<INSERT CLI INSTRUCTIONS TO START TLS WITH AUTO CERTIFICATE GENERATION>>>`
-
-Alternatively, the API endpoint can be publically exposed via a valid domain name. In this case, defining the address as a valid domain name will automatically generate a Let's Encrypt certificate.
-
+DefraDB also comes with automatic HTTPS for deployments on the public web. To enable HTTPS,
+ deploy DefraDB to a server with both port 80 and port 443 open. With your domain's DNS A record
+ pointed to the IP of your server, you can run the database using the following command:
 ```shell
-defradb start --url="example.com"
+sudo defradb start --tls --url=your-domain.net --email=email@example.com
 ```
+Note: `sudo` is needed above for the redirection server (to bind port 80).
+
+A valid email address is necessary for the creation of the certificate, and is important to
+ get notifications from the Certificate Authority - in case the certificate is about to expire, etc.
 
 
 ## Peer-to-peer data synchronization

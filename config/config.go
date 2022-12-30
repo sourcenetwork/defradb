@@ -326,7 +326,7 @@ func defaultAPIConfig() *APIConfig {
 }
 
 // expandHomeDir expands paths if they were passed in as `~` rather than `${HOME}`
-// coverts `~/.defradb/certs/server.crt` to `/home/username/.defradb/certs/server.crt`.
+// converts `~/.defradb/certs/server.crt` to `/home/username/.defradb/certs/server.crt`.
 func expandHomeDir(path *string) error {
 	if *path == "~" {
 		return errors.New("path cannot be just ~ (home directory)")
