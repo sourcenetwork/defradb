@@ -23,6 +23,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 )
@@ -39,6 +40,11 @@ const (
 	readTimeout  = 0
 	writeTimeout = 0
 	idleTimeout  = 0
+)
+
+const (
+	httpPort  = ":80"
+	httpsPort = ":443"
 )
 
 // Server struct holds the Handler for the HTTP API.
@@ -59,6 +65,8 @@ type serverOptions struct {
 	tls immutable.Option[tlsOptions]
 	// root directory for the node config.
 	rootDir string
+	// The domain for the API (optional).
+	domain immutable.Option[string]
 }
 
 type tlsOptions struct {
@@ -68,8 +76,6 @@ type tlsOptions struct {
 	privKey string
 	// email address for the CA to send problem notifications (optional)
 	email string
-	// The domain to associate the certificate.
-	domain string
 	// specify the tls port
 	port string
 }
@@ -102,7 +108,7 @@ func newHTTPRedirServer(m *autocert.Manager) *Server {
 		},
 	}
 
-	srv.Addr = ":80"
+	srv.Addr = httpPort
 	srv.Handler = m.HTTPHandler(nil)
 
 	return srv
@@ -134,9 +140,8 @@ func WithAddress(addr string) func(*Server) {
 		if !strings.HasPrefix(addr, "localhost:") && !strings.HasPrefix(addr, ":") {
 			ip := net.ParseIP(addr)
 			if ip == nil {
-				tlsOpt := s.options.tls.Value()
-				tlsOpt.domain = addr
-				s.options.tls = immutable.Some(tlsOpt)
+				s.Addr = httpPort
+				s.options.domain = immutable.Some(addr)
 			}
 		}
 	}
@@ -175,6 +180,15 @@ func WithSelfSignedCert(pubKey, privKey string) func(*Server) {
 	}
 }
 
+// WithTLS returns an option to enable TLS.
+func WithTLS() func(*Server) {
+	return func(s *Server) {
+		tlsOpt := s.options.tls.Value()
+		tlsOpt.port = httpsPort
+		s.options.tls = immutable.Some(tlsOpt)
+	}
+}
+
 // WithTLSPort returns an option to set the port for TLS.
 func WithTLSPort(port int) func(*Server) {
 	return func(s *Server) {
@@ -201,7 +215,7 @@ func (s *Server) Listen(ctx context.Context) error {
 }
 
 func (s *Server) listenWithTLS(ctx context.Context) error {
-	config := &tls.Config{
+	cfg := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 		// We only allow cipher suites that are marked secure
 		// by ssllabs
@@ -215,12 +229,12 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		},
 		ServerName: "DefraDB",
 	}
-	addr := s.Addr
 
-	if s.options.tls.Value().domain != "" {
-		addr = s.options.tls.Value().port
-		if addr == "" {
-			addr = ":443"
+	if s.options.domain.HasValue() && s.options.domain.Value() != "" {
+		s.Addr = s.options.tls.Value().port
+
+		if s.options.tls.Value().email == "" || s.options.tls.Value().email == config.DefaultAPIEmail {
+			return ErrNoEmail
 		}
 
 		certCache := path.Join(s.options.rootDir, "autocerts")
@@ -228,7 +242,7 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 		log.FeedbackInfo(
 			ctx,
 			"Generating auto certificate",
-			logging.NewKV("Domain", s.options.tls.Value().domain),
+			logging.NewKV("Domain", s.options.domain.Value()),
 			logging.NewKV("Cert cache", certCache),
 		)
 
@@ -236,10 +250,10 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 			Cache:      autocert.DirCache(certCache),
 			Prompt:     autocert.AcceptTOS,
 			Email:      s.options.tls.Value().email,
-			HostPolicy: autocert.HostWhitelist(s.options.tls.Value().domain),
+			HostPolicy: autocert.HostWhitelist(s.options.domain.Value()),
 		}
 
-		config.GetCertificate = m.GetCertificate
+		cfg.GetCertificate = m.GetCertificate
 
 		// We set manager on the server instance to later start
 		// a redirection server.
@@ -257,11 +271,11 @@ func (s *Server) listenWithTLS(ctx context.Context) error {
 			return errors.WithStack(err)
 		}
 
-		config.Certificates = []tls.Certificate{cert}
+		cfg.Certificates = []tls.Certificate{cert}
 	}
 
 	var err error
-	s.listener, err = tls.Listen("tcp", addr, config)
+	s.listener, err = tls.Listen("tcp", s.Addr, cfg)
 	if err != nil {
 		return errors.WithStack(err)
 	}

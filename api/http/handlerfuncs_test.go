@@ -19,7 +19,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -99,6 +98,7 @@ func TestPingHandler(t *testing.T) {
 func TestDumpHandlerWithNoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	resp := DataResponse{}
 	testRequest(testOptions{
@@ -306,6 +306,7 @@ func TestExecGQLHandlerContentTypeJSONWithJSONError(t *testing.T) {
 func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// load schema
 	testLoadSchema(t, ctx, defra)
@@ -349,6 +350,7 @@ func TestExecGQLHandlerContentTypeJSON(t *testing.T) {
 func TestExecGQLHandlerContentTypeJSONWithCharset(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// load schema
 	testLoadSchema(t, ctx, defra)
@@ -413,6 +415,7 @@ func TestExecGQLHandlerContentTypeFormURLEncoded(t *testing.T) {
 func TestExecGQLHandlerContentTypeGraphQL(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// load schema
 	testLoadSchema(t, ctx, defra)
@@ -447,6 +450,7 @@ mutation {
 func TestExecGQLHandlerContentTypeText(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// load schema
 	testLoadSchema(t, ctx, defra)
@@ -480,6 +484,7 @@ mutation {
 func TestExecGQLHandlerWithSubsctiption(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// load schema
 	testLoadSchema(t, ctx, defra)
@@ -498,9 +503,6 @@ subscription {
 	ch := make(chan []byte)
 	errCh := make(chan error)
 
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	// We need to set a timeout otherwise the testSubscriptionRequest function will block until the
 	// http.ServeHTTP call returns, which in this case will only happen with a timeout.
 	ctxTimeout, cancel := context.WithTimeout(ctx, time.Second)
@@ -514,10 +516,10 @@ subscription {
 		Body:           buf,
 		Headers:        map[string]string{"Content-Type": contentTypeGraphQL},
 		ExpectedStatus: 200,
-	}, wg, ch, errCh)
+	}, ch, errCh)
 
-	// We wait as long as possible before sending the mutation request.
-	wg.Wait()
+	// We wait to ensure the subscription requests can subscribe to the event channel.
+	time.Sleep(time.Second / 2)
 
 	// add document
 	stmt2 := `
@@ -543,7 +545,7 @@ mutation {
 	})
 	select {
 	case data := <-ch:
-		assert.Contains(t, string(data), "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab")
+		assert.Contains(t, string(data), users[0].Key)
 	case err := <-errCh:
 		t.Fatal(err)
 	}
@@ -578,9 +580,9 @@ func TestLoadSchemaHandlerWithoutDB(t *testing.T) {
 	env = "dev"
 	stmt := `
 type user {
-	name: String 
-	age: Int 
-	verified: Boolean 
+	name: String
+	age: Int
+	verified: Boolean
 	points: Float
 }`
 
@@ -608,13 +610,14 @@ func TestLoadSchemaHandlerWithAddSchemaError(t *testing.T) {
 	env = "dev"
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	// statement with types instead of type
 	stmt := `
 types user {
-	name: String 
-	age: Int 
-	verified: Boolean 
+	name: String
+	age: Int
+	verified: Boolean
 	points: Float
 }`
 
@@ -636,7 +639,7 @@ types user {
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
 	assert.Equal(
 		t,
-		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types user {\n   ^\n3: \\u0009name: String \n",
+		"Syntax Error GraphQL (2:1) Unexpected Name \"types\"\n\n1: \n2: types user {\n   ^\n3: \\u0009name: String\n",
 		errResponse.Errors[0].Message,
 	)
 }
@@ -644,12 +647,13 @@ types user {
 func TestLoadSchemaHandlerWitNoError(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	stmt := `
 type user {
-	name: String 
-	age: Int 
-	verified: Boolean 
+	name: String
+	age: Int
+	verified: Boolean
 	points: Float
 }`
 
@@ -746,6 +750,7 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 	env = "dev"
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	errResponse := ErrorResponse{}
 	testRequest(testOptions{
@@ -767,6 +772,7 @@ func TestGetBlockHandlerWithGetBlockstoreError(t *testing.T) {
 func TestGetBlockHandlerWithValidBlockstore(t *testing.T) {
 	ctx := context.Background()
 	defra := testNewInMemoryDB(t, ctx)
+	defer defra.Close(ctx)
 
 	testLoadSchema(t, ctx, defra)
 
@@ -922,7 +928,7 @@ func testRequest(opt testOptions) {
 	}
 }
 
-func testSubscriptionRequest(ctx context.Context, opt testOptions, wg *sync.WaitGroup, ch chan []byte, errCh chan error) {
+func testSubscriptionRequest(ctx context.Context, opt testOptions, ch chan []byte, errCh chan error) {
 	req, err := http.NewRequest(opt.Method, opt.Path, opt.Body)
 	if err != nil {
 		errCh <- err
@@ -937,7 +943,6 @@ func testSubscriptionRequest(ctx context.Context, opt testOptions, wg *sync.Wait
 
 	h := newHandler(opt.DB, opt.ServerOptions)
 	rec := httptest.NewRecorder()
-	wg.Done()
 	h.ServeHTTP(rec, req)
 	assert.Equal(opt.Testing, opt.ExpectedStatus, rec.Result().StatusCode)
 
