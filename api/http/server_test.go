@@ -57,12 +57,23 @@ func TestNewServerAndRunWithListenerAndValidPort(t *testing.T) {
 	<-serverDone
 }
 
+func TestNewServerAndRunWithAutocertWithoutEmail(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
+
+	err := s.Listen(ctx)
+	assert.ErrorIs(t, err, ErrNoEmail)
+
+	s.Shutdown(context.Background())
+}
+
 func TestNewServerAndRunWithAutocert(t *testing.T) {
 	ctx := context.Background()
 	serverRunning := make(chan struct{})
 	serverDone := make(chan struct{})
 	dir := t.TempDir()
-	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0))
+	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir), WithTLSPort(0), WithCAEmail("dev@defradb.net"))
 	go func() {
 		close(serverRunning)
 		err := s.Listen(ctx)
@@ -196,7 +207,7 @@ func TestNewServerWithAddress(t *testing.T) {
 
 func TestNewServerWithDomainAddress(t *testing.T) {
 	s := NewServer(nil, WithAddress("example.com"))
-	assert.Equal(t, "example.com", s.options.tls.Value().domain)
+	assert.Equal(t, "example.com", s.options.domain.Value())
 	assert.NotNil(t, s.options.tls)
 }
 

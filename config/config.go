@@ -310,6 +310,8 @@ type APIConfig struct {
 	Email       string
 }
 
+var DefaultAPIEmail = "example@example.com"
+
 func defaultAPIConfig() *APIConfig {
 	rootDir, err := DefaultRootDir()
 	if err != nil {
@@ -321,7 +323,7 @@ func defaultAPIConfig() *APIConfig {
 		TLS:         false,
 		PubKeyPath:  path.Join(rootDir, "certs/server.key"),
 		PrivKeyPath: path.Join(rootDir, "certs/server.crt"),
-		Email:       "example@example.com",
+		Email:       DefaultAPIEmail,
 	}
 }
 
