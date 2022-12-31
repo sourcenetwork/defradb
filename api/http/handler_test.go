@@ -287,7 +287,7 @@ func TestTLSRequestResponseHeader(t *testing.T) {
 	}
 	dir := t.TempDir()
 
-	s := NewServer(nil, WithAddress("example.com"), WithRootDir(dir))
+	s := NewServer(nil, WithTLS(), WithAddress("example.com"), WithRootDir(dir))
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

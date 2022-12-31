@@ -318,6 +318,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if cfg.API.TLS {
 		sOpt = append(
 			sOpt,
+			httpapi.WithTLS(),
 			httpapi.WithSelfSignedCert(cfg.API.PubKeyPath, cfg.API.PrivKeyPath),
 			httpapi.WithCAEmail(cfg.API.Email),
 		)
