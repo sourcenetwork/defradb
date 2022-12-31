@@ -35,6 +35,7 @@ var (
 	ErrMissingGQLQuery      = errors.New("missing GraphQL query")
 	ErrPeerIdUnavailable    = errors.New("no peer ID available. P2P might be disabled")
 	ErrStreamingUnsupported = errors.New("streaming unsupported")
+	ErrNoEmail              = errors.New("email address must be specified for tls with autocert")
 )
 
 // ErrorResponse is the GQL top level object holding error items for the response payload.
