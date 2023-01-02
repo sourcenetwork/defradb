@@ -1,21 +1,23 @@
-## defradb client rpc
+## defradb client rpc replicator
 
-Interact with a DefraDB gRPC server
+Interact with the replicator system
 
 ### Synopsis
 
-Interact with a DefraDB gRPC server.
+Add, delete, or get the list of persisted replicators
 
 ### Options
 
 ```
-      --addr string   gRPC endpoint address (default "0.0.0.0:9161")
-  -h, --help          help for rpc
+  -c, --collection stringArray   Define the collection for the replicator
+  -f, --full                     Set the replicator to act on all collections
+  -h, --help                     help for replicator
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -28,6 +30,8 @@ Interact with a DefraDB gRPC server.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
-* [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
+* [defradb client rpc](defradb_client_rpc.md)	 - Interact with a DefraDB gRPC server
+* [defradb client rpc replicator delete](defradb_client_rpc_replicator_delete.md)	 - Delete a replicator
+* [defradb client rpc replicator getall](defradb_client_rpc_replicator_getall.md)	 - Get all replicators
+* [defradb client rpc replicator set](defradb_client_rpc_replicator_set.md)	 - Set a P2P replicator
 

@@ -1,21 +1,26 @@
-## defradb client rpc
+## defradb client rpc replicator delete
 
-Interact with a DefraDB gRPC server
+Delete a replicator
 
 ### Synopsis
 
-Interact with a DefraDB gRPC server.
+Use this command if you wish to remove the target replicator
+for the p2p data sync system.
+
+```
+defradb client rpc replicator delete [-f, --full | -c, --collection] <peer> [flags]
+```
 
 ### Options
 
 ```
-      --addr string   gRPC endpoint address (default "0.0.0.0:9161")
-  -h, --help          help for rpc
+  -h, --help   help for delete
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --addr string          gRPC endpoint address (default "0.0.0.0:9161")
       --logformat string     Log format to use. Options are csv, json (default "csv")
       --logger stringArray   Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...
       --loglevel string      Log level to use. Options are debug, info, error, fatal (default "info")
@@ -28,6 +33,5 @@ Interact with a DefraDB gRPC server.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a running DefraDB node as a client
 * [defradb client rpc replicator](defradb_client_rpc_replicator.md)	 - Interact with the replicator system
 
