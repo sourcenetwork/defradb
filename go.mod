@@ -200,4 +200,4 @@ replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.
 // tinygo forks
 replace github.com/ipfs/go-ipfs-util => github.com/tinygo-pkg/go-ipfs-util v0.0.3-0.20221204112252-4145c4c5cfe5
 
-replace github.com/cybergarage/go-cbor => ../../jsimnz/go-cbor
+replace github.com/cybergarage/go-cbor => ../../tinygo-pkg/go-cbor
