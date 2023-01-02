@@ -15,14 +15,39 @@ import (
 
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 
+	"github.com/sourcenetwork/defradb/client/schema"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/events"
 )
 
 type DB interface {
+	// This function gets reworked a bit, so that it becomes syntax sugar around `PatchSchemaS`.
+	// I think it is really nice being able to define the schemas as we do now and do not want to
+	// lose that (and force the use of the more complex patch for a simple schema create operation).
+	// The signature should stay the same, but internally it can call `PatchSchemaS` or something
+	// similar.
 	AddSchema(context.Context, string) error
 
+	// This function gets reworked a bit, so that it becomes syntax sugar around PatchSchema
+	// it does not nessecarily need to keep CollectionDescription as an input param (it might
+	// make sense to replace that with something more patch-like), we might also wish to rename
+	// it.
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)
+
+	// This applies the given patches, with transaction-like guarentees ensuring that if one
+	// patch-item fails, they all fail and the database will not be left in a partially updated
+	// state.  This includes JSONPatch `test` operations that can act as a kind of if-statement/
+	// user-controlled sanity check: https://jsonpatch.com/#test.
+	//
+	// Having just the single func (plus the string version) should be easier on the users than
+	// a function per operation.
+	PatchSchema(context.Context, ...[]schema.Patch) ([]Collection, error)
+
+	// Wraps `PatchSchema` allowing users to provide string based json patches. The implementation
+	// of this function will most likely parse the string to `[]schema.Patch` and pass it on to
+	// `PatchSchema`.
+	PatchSchemaS(context.Context, string) ([]Collection, error)
+
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
