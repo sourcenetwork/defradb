@@ -139,10 +139,8 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	key := core.NewCollectionKey(col.desc.Name)
-
 	// write the collection metadata to the system store
-	err = db.systemstore().Put(ctx, key.ToDS(), buf)
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), buf)
 	if err != nil {
 		return nil, err
 	}
