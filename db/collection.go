@@ -145,7 +145,9 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	buf, err = json.Marshal(struct {
+	// Local elements such as secondary indexes should be excluded
+	// from the (global) schemaId.
+	globalSchemaBuf, err := json.Marshal(struct {
 		Name   string
 		Schema client.SchemaDescription
 	}{col.desc.Name, col.desc.Schema})
@@ -154,7 +156,7 @@ func (db *db) CreateCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
+	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
