@@ -139,12 +139,6 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	// write the collection metadata to the system store
-	err = db.systemstore().Put(ctx, collectionKey.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
-
 	// Local elements such as secondary indexes should be excluded
 	// from the (global) schemaId.
 	globalSchemaBuf, err := json.Marshal(struct {
@@ -165,13 +159,23 @@ func (db *db) CreateCollection(
 
 	csKey := core.NewCollectionSchemaKey(schemaId)
 	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	if err != nil {
+		return nil, err
+	}
+
+	// write the collection metadata to the system store
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Debug(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("ID", col.SchemaID),
 	)
-	return col, err
+	return col, nil
 }
 
 // GetCollection returns an existing collection within the database.
