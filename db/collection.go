@@ -157,6 +157,16 @@ func (db *db) CreateCollection(
 	schemaId := cid.String()
 	col.schemaID = schemaId
 
+	// For new schemas the initial version id will match the schema id
+	schemaVersionId := schemaId
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	// Whilst the schemaVersionKey is global, the data persisted at the key's location
+	// is local to the node (the global only elements are not useful beyond key generation).
+	err = db.systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
 	collectionSchemaKey := core.NewCollectionSchemaKey(schemaId)
 	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(desc.Name))
 	if err != nil {
