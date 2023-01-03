@@ -85,6 +85,8 @@ type CollectionKey struct {
 
 var _ Key = (*CollectionKey)(nil)
 
+// CollectionSchemaKey points to the current/'head' SchemaVersionId for
+// the collection of the given schema id.
 type CollectionSchemaKey struct {
 	SchemaId string
 }

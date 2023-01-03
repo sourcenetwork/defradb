@@ -168,7 +168,7 @@ func (db *db) CreateCollection(
 	}
 
 	collectionSchemaKey := core.NewCollectionSchemaKey(schemaId)
-	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(desc.Name))
+	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionId))
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +186,56 @@ func (db *db) CreateCollection(
 		logging.NewKV("ID", col.SchemaID),
 	)
 	return col, nil
+}
+
+// getCollectionByVersionId returns the [client.Collection] at the given [schemaVersionId] version.
+//
+// Will return an error if the given key is empty, or not found.
+func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId string) (client.Collection, error) {
+	if schemaVersionId == "" {
+		return nil, ErrSchemaVersionIdEmpty
+	}
+
+	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return nil, err
+	}
+
+	var desc client.CollectionDescription
+	err = json.Unmarshal(buf, &desc)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err = json.Marshal(struct {
+		Name   string
+		Schema client.SchemaDescription
+	}{desc.Name, desc.Schema})
+	if err != nil {
+		return nil, err
+	}
+
+	// add a reference to this DB by desc hash
+	cid, err := core.NewSHA256CidV1(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	sid := cid.String()
+	log.Debug(
+		ctx,
+		"Retrieved collection",
+		logging.NewKV("Name", desc.Name),
+		logging.NewKV("ID", sid),
+	)
+
+	return &collection{
+		db:       db,
+		desc:     desc,
+		colID:    desc.ID,
+		schemaID: sid,
+	}, nil
 }
 
 // GetCollection returns an existing collection within the database.
@@ -251,8 +301,8 @@ func (db *db) GetCollectionBySchemaID(
 		return nil, err
 	}
 
-	name := string(buf)
-	return db.GetCollectionByName(ctx, name)
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
 }
 
 // GetAllCollections gets all the currently defined collections.
