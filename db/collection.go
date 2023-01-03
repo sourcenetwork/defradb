@@ -157,8 +157,8 @@ func (db *db) CreateCollection(
 	schemaId := cid.String()
 	col.schemaID = schemaId
 
-	csKey := core.NewCollectionSchemaKey(schemaId)
-	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaId)
+	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(desc.Name))
 	if err != nil {
 		return nil, err
 	}
