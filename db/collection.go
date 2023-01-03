@@ -111,8 +111,8 @@ func (db *db) CreateCollection(
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
 	// check if collection by this name exists
-	cKey := core.NewCollectionKey(desc.Name)
-	exists, err := db.systemstore().Has(ctx, cKey.ToDS())
+	collectionKey := core.NewCollectionKey(desc.Name)
+	exists, err := db.systemstore().Has(ctx, collectionKey.ToDS())
 	if err != nil {
 		return nil, err
 	}
