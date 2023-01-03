@@ -19,28 +19,22 @@ import (
 	"sync"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	dsq "github.com/ipfs/go-datastore/query"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/query/graphql"
 )
 
 var (
 	log = logging.MustNewLogger("defra.db")
-	// ErrDocVerification occurs when a documents contents fail the verification during a Create()
-	// call against the supplied Document Key.
-	ErrDocVerification = errors.New("The document verification failed")
-
-	ErrOptionsEmpty = errors.New("Empty options configuration provided")
 )
 
 // make sure we match our client interface
@@ -54,15 +48,14 @@ var (
 type db struct {
 	glock sync.RWMutex
 
-	rootstore  ds.Batching
+	rootstore  datastore.RootStore
 	multistore datastore.MultiStore
 
 	crdtFactory *crdt.Factory
 
-	broadcaster corenet.Broadcaster
+	events events.Events
 
-	schema        *schema.SchemaManager
-	queryExecutor *planner.QueryExecutor
+	parser core.Parser
 
 	// The options used to init the database
 	options any
@@ -71,31 +64,28 @@ type db struct {
 // functional option type
 type Option func(*db)
 
-func WithBroadcaster(bs corenet.Broadcaster) Option {
+const updateEventBufferSize = 100
+
+func WithUpdateEvents() Option {
 	return func(db *db) {
-		db.broadcaster = bs
+		db.events = events.Events{
+			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
+		}
 	}
 }
 
 // NewDB creates a new instance of the DB using the given options.
-func NewDB(ctx context.Context, rootstore ds.Batching, options ...Option) (client.DB, error) {
+func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (client.DB, error) {
 	return newDB(ctx, rootstore, options...)
 }
 
-func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, error) {
+func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*db, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
 	crdtFactory := crdt.DefaultFactory.WithStores(multistore)
 
-	log.Debug(ctx, "Loading: schema manager")
-	sm, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug(ctx, "Loading: query executor")
-	exec, err := planner.NewQueryExecutor(sm)
+	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +96,8 @@ func newDB(ctx context.Context, rootstore ds.Batching, options ...Option) (*db, 
 
 		crdtFactory: &crdtFactory,
 
-		schema:        sm,
-		queryExecutor: exec,
-		options:       options,
+		parser:  parser,
+		options: options,
 	}
 
 	// apply options
@@ -131,7 +120,7 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
-func (db *db) Root() ds.Batching {
+func (db *db) Root() datastore.RootStore {
 	return db.rootstore
 }
 
@@ -178,31 +167,22 @@ func (db *db) initialize(ctx context.Context) error {
 	return nil
 }
 
+func (db *db) Events() events.Events {
+	return db.events
+}
+
 func (db *db) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.multistore.Rootstore())
-}
-
-func (db *db) Executor() *planner.QueryExecutor {
-	return db.queryExecutor
-}
-
-func (db *db) GetRelationshipIdField(fieldName, targetType, thisType string) (string, error) {
-	rm := db.schema.Relations
-	rel := rm.GetRelationByDescription(fieldName, targetType, thisType)
-	if rel == nil {
-		return "", errors.New("Relation does not exists")
-	}
-	subtypefieldname, _, ok := rel.GetFieldFromSchemaType(targetType)
-	if !ok {
-		return "", errors.New("Relation is missing referenced field")
-	}
-	return subtypefieldname, nil
 }
 
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
 func (db *db) Close(ctx context.Context) {
 	log.Info(ctx, "Closing DefraDB process...")
+	if db.events.Updates.HasValue() {
+		db.events.Updates.Value().Close()
+	}
+
 	err := db.rootstore.Close()
 	if err != nil {
 		log.ErrorE(ctx, "Failure closing running process", err)
@@ -211,7 +191,7 @@ func (db *db) Close(ctx context.Context) {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := query.Query{
+	q := dsq.Query{
 		Prefix:   "",
 		KeysOnly: false,
 		Orders:   []dsq.Order{dsq.OrderByKey{}},

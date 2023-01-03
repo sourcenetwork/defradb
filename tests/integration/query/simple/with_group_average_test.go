@@ -33,7 +33,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndAverageOfUndefined(t
 			}`,
 			},
 		},
-		ExpectedError: "Aggregate must be provided with a property to aggregate.",
+		ExpectedError: "aggregate must be provided with a property to aggregate",
 	}
 
 	executeTestCase(t, test)

@@ -13,27 +13,17 @@ package db
 import (
 	"context"
 	"strings"
-	"time"
 
 	cbor "github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/query/graphql/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/parser"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-	"github.com/sourcenetwork/defradb/query/graphql/planner"
-)
-
-var (
-	ErrUpdateTargetEmpty     = errors.New("The doc update targeter cannot be empty")
-	ErrUpdateEmpty           = errors.New("The doc update cannot be empty")
-	ErrInvalidMergeValueType = errors.New(
-		"The type of value in the merge patch doesn't match the schema",
-	)
+	"github.com/sourcenetwork/defradb/events"
+	"github.com/sourcenetwork/defradb/planner"
 )
 
 // UpdateWith updates a target document using the given updater type. Target
@@ -47,7 +37,7 @@ func (c *collection) UpdateWith(
 	updater string,
 ) (*client.UpdateResult, error) {
 	switch t := target.(type) {
-	case string, map[string]any, *parser.Filter:
+	case string, map[string]any, *request.Filter:
 		return c.UpdateWithFilter(ctx, t, updater)
 	case client.DocKey:
 		return c.UpdateWithKey(ctx, t, updater)
@@ -276,7 +266,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc[parserTypes.DocKeyFieldName].(string))
+		results.DocKeys = append(results.DocKeys, doc[request.DocKeyFieldName].(string))
 		results.Count++
 	}
 
@@ -296,7 +286,7 @@ func (c *collection) applyPatch( //nolint:unused
 
 		pathVal := opObject.Get("path")
 		if pathVal == nil {
-			return errors.New("missing document field to update")
+			return ErrMissingDocFieldToUpdate
 		}
 
 		path, err := pathVal.StringBytes()
@@ -341,7 +331,7 @@ func (c *collection) applyMerge(
 ) error {
 	keyStr, ok := doc["_key"].(string)
 	if !ok {
-		return errors.New("document is missing key")
+		return ErrDocMissingKey
 	}
 	key := c.getPrimaryKey(keyStr)
 	links := make([]core.DAGLink, 0)
@@ -360,7 +350,7 @@ func (c *collection) applyMerge(
 
 		fd, valid := c.desc.GetField(mfield)
 		if !valid {
-			return errors.New("invalid field in Patch")
+			return client.NewErrFieldNotExist(mfield)
 		}
 
 		if c.isFieldDescriptionRelationID(&fd) {
@@ -379,14 +369,14 @@ func (c *collection) applyMerge(
 			return client.NewErrFieldNotExist(mfield)
 		}
 
-		c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+		c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 		if err != nil {
 			return err
 		}
 		// links[mfield] = c
 		links = append(links, core.DAGLink{
 			Name: mfield,
-			Cid:  c,
+			Cid:  c.Cid(),
 		})
 	}
 
@@ -399,31 +389,33 @@ func (c *collection) applyMerge(
 	if err != nil {
 		return err
 	}
-	if _, err := c.saveValueToMerkleCRDT(
+
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		key.ToDataStoreKey(),
 		client.COMPOSITE,
 		buf,
 		links,
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 
-	// If this a a Batch masked as a Transaction
-	// commit our writes so we can see them.
-	// Batches don't maintain serializability, or
-	// linearization, or any other transaction
-	// semantics, which the user already knows
-	// otherwise they wouldn't use a datastore
-	// that doesn't support proper transactions.
-	// So let's just commit, and keep going.
-	// @todo: Change this on the Txn.BatchShim
-	// structure
-	if txn.IsBatch() {
-		if err := txn.Commit(ctx); err != nil {
-			return err
-		}
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					events.Update{
+						DocKey:   keyStr,
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
 	}
 
 	return nil
@@ -462,8 +454,13 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 	case client.FieldKind_NILLABLE_FLOAT_ARRAY:
 		return getNillableArray(val, getFloat64)
 
-	case client.FieldKind_DATE:
-		return getDate(val)
+	case client.FieldKind_DATETIME:
+		// @TODO: Requires Typed Document refactor
+		// to handle this correctly.
+		// For now, we will persist DateTime as a
+		// RFC3339 string
+		// see https://github.com/sourcenetwork/defradb/issues/935
+		return getString(val)
 
 	case client.FieldKind_INT:
 		return getInt64(val)
@@ -476,10 +473,10 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 
 	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
 		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
-		return nil, errors.New("merge doesn't support sub types yet")
+		return nil, ErrMergeSubTypeNotSupported
 	}
 
-	return nil, errors.New("unsupported field kind")
+	return nil, client.NewErrUnhandledType("FieldKind", field.Kind)
 }
 
 func getString(v *fastjson.Value) (string, error) {
@@ -497,14 +494,6 @@ func getFloat64(v *fastjson.Value) (float64, error) {
 
 func getInt64(v *fastjson.Value) (int64, error) {
 	return v.Int64()
-}
-
-func getDate(v *fastjson.Value) (time.Time, error) {
-	s, err := getString(v)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Parse(time.RFC3339, s)
 }
 
 func getArray[T any](
@@ -580,79 +569,62 @@ func (c *collection) makeSelectionQuery(
 	txn datastore.Txn,
 	filter any,
 ) (planner.Query, error) {
-	mapping := c.createMapping()
-	var f *mapper.Filter
+	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
 	case string:
 		if fval == "" {
-			return nil, errors.New("Invalid filter")
+			return nil, ErrInvalidFilter
 		}
-		var p *parser.Filter
-		p, err = parser.NewFilterFromString(fval)
+
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}
-		f = mapper.ToFilter(p, mapping)
-	case *mapper.Filter:
+	case immutable.Option[request.Filter]:
 		f = fval
 	default:
-		return nil, errors.New("Invalid filter")
+		return nil, ErrInvalidFilter
 	}
 	if filter == "" {
-		return nil, errors.New("Invalid filter")
+		return nil, ErrInvalidFilter
 	}
-	slct, err := c.makeSelectLocal(f, mapping)
+	slct, err := c.makeSelectLocal(f)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.db.queryExecutor.MakeSelectQuery(ctx, c.db, txn, slct)
+	planner := planner.New(ctx, c.db, txn)
+	return planner.MakePlan(&request.Request{
+		Queries: []*request.OperationDefinition{
+			{
+				Selections: []request.Selection{
+					slct,
+				},
+			},
+		},
+	})
 }
 
-func (c *collection) makeSelectLocal(filter *mapper.Filter, mapping *core.DocumentMapping) (*mapper.Select, error) {
-	slct := &mapper.Select{
-		Targetable: mapper.Targetable{
-			Field: mapper.Field{
-				Name: c.Name(),
-			},
-			Filter: filter,
+func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
+	slct := &request.Select{
+		Field: request.Field{
+			Name: c.Name(),
 		},
-		Fields:          make([]mapper.Requestable, len(c.desc.Schema.Fields)),
-		DocumentMapping: *mapping,
+		Filter: filter,
+		Fields: make([]request.Selection, 0),
 	}
 
 	for _, fd := range c.Schema().Fields {
 		if fd.IsObject() {
 			continue
 		}
-		index := int(fd.ID)
-		slct.Fields = append(slct.Fields, &mapper.Field{
-			Index: index,
-			Name:  fd.Name,
+		slct.Fields = append(slct.Fields, &request.Field{
+			Name: fd.Name,
 		})
 	}
 
 	return slct, nil
-}
-
-func (c *collection) createMapping() *core.DocumentMapping {
-	mapping := core.NewDocumentMapping()
-	mapping.Add(core.DocKeyFieldIndex, parserTypes.DocKeyFieldName)
-	for _, fd := range c.Schema().Fields {
-		if fd.IsObject() {
-			continue
-		}
-		index := int(fd.ID)
-		mapping.Add(index, fd.Name)
-		mapping.RenderKeys = append(mapping.RenderKeys,
-			core.RenderKey{
-				Index: index,
-				Key:   fd.Name,
-			},
-		)
-	}
-	return mapping
 }
 
 // getTypeAndCollectionForPatch parses the Patch op path values
@@ -679,7 +651,7 @@ func (c *collection) getTargetKeyForPatchPath( //nolint:unused
 ) (string, error) {
 	_, length := splitPatchPath(path)
 	if length == 0 {
-		return "", errors.New("Invalid patch op path")
+		return "", ErrInvalidOpPath
 	}
 
 	return "", nil

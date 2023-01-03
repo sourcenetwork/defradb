@@ -22,6 +22,12 @@ var (
 	log = logging.MustNewLogger("defradb.store")
 )
 
+// RootStore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
+type RootStore interface {
+	ds.Batching
+	ds.TxnDatastore
+}
+
 // MultiStore is an interface wrapper around the 3 main types of stores needed for MerkleCRDTs.
 type MultiStore interface {
 	Rootstore() DSReaderWriter

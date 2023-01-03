@@ -13,13 +13,13 @@ package crdt
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -28,7 +28,7 @@ var (
 		func(
 			mstore datastore.MultiStore,
 			schemaID string,
-			bs corenet.Broadcaster,
+			uCh events.UpdateChannel,
 		) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
 				return NewMerkleCompositeDAG(
@@ -36,7 +36,7 @@ var (
 					mstore.Headstore(),
 					mstore.DAGstore(),
 					schemaID,
-					bs,
+					uCh,
 					core.DataStoreKey{},
 					key,
 				)
@@ -66,7 +66,7 @@ func NewMerkleCompositeDAG(
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
 	schemaID string,
-	bs corenet.Broadcaster,
+	uCh events.UpdateChannel,
 	ns,
 	key core.DataStoreKey,
 ) *MerkleCompositeDAG {
@@ -74,11 +74,11 @@ func NewMerkleCompositeDAG(
 		datastore,
 		schemaID,
 		ns,
-		key.ToString(), /* stuff like namespace and ID */
+		key, /* stuff like namespace and ID */
 	)
 
 	clock := clock.NewMerkleClock(headstore, dagstore, key.ToHeadStoreKey(), compositeDag)
-	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, broadcaster: bs}
+	base := &baseMerkleCRDT{clock: clock, crdt: compositeDag, updateChannel: uCh}
 
 	return &MerkleCompositeDAG{
 		baseMerkleCRDT: base,
@@ -91,17 +91,17 @@ func (m *MerkleCompositeDAG) Set(
 	ctx context.Context,
 	patch []byte,
 	links []core.DAGLink,
-) (cid.Cid, error) {
+) (ipld.Node, uint64, error) {
 	// Set() call on underlying CompositeDAG CRDT
 	// persist/publish delta
 	log.Debug(ctx, "Applying delta-mutator 'Set' on CompositeDAG")
 	delta := m.reg.Set(patch, links)
-	c, nd, err := m.Publish(ctx, delta)
+	nd, err := m.Publish(ctx, delta)
 	if err != nil {
-		return cid.Undef, err
+		return nil, 0, err
 	}
 
-	return c, m.Broadcast(ctx, nd, delta)
+	return nd, delta.GetPriority(), nil
 }
 
 // Value is a no-op for a CompositeDAG.

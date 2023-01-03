@@ -11,6 +11,8 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -24,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 
 	corecrdt "github.com/sourcenetwork/defradb/core/crdt"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 const (
@@ -108,7 +111,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			handleErr(
 				req.Context(),
 				rw,
-				errors.New("content type application/x-www-form-urlencoded not yet supported"),
+				ErrFormNotSupported,
 				http.StatusBadRequest,
 			)
 			return
@@ -118,7 +121,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 
 		default:
 			if req.Body == nil {
-				handleErr(req.Context(), rw, errors.New("body cannot be empty"), http.StatusBadRequest)
+				handleErr(req.Context(), rw, ErrBodyEmpty, http.StatusBadRequest)
 				return
 			}
 			body, err := io.ReadAll(req.Body)
@@ -132,7 +135,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 
 	// if at this point query is still empty, return an error
 	if query == "" {
-		handleErr(req.Context(), rw, errors.New("missing GraphQL query"), http.StatusBadRequest)
+		handleErr(req.Context(), rw, ErrMissingGQLQuery, http.StatusBadRequest)
 		return
 	}
 
@@ -143,7 +146,12 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 	result := db.ExecQuery(req.Context(), query)
 
-	sendJSON(req.Context(), rw, result, http.StatusOK)
+	if result.Pub != nil {
+		subscriptionHandler(result.Pub, rw, req)
+		return
+	}
+
+	sendJSON(req.Context(), rw, result.GQL, http.StatusOK)
 }
 
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
@@ -243,7 +251,7 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 	peerID, ok := req.Context().Value(ctxPeerID{}).(string)
 	if !ok || peerID == "" {
-		handleErr(req.Context(), rw, errors.New("no peer ID available. P2P might be disabled"), http.StatusNotFound)
+		handleErr(req.Context(), rw, ErrPeerIdUnavailable, http.StatusNotFound)
 		return
 	}
 
@@ -255,4 +263,35 @@ func peerIDHandler(rw http.ResponseWriter, req *http.Request) {
 		),
 		http.StatusOK,
 	)
+}
+
+func subscriptionHandler(pub *events.Publisher[events.Update], rw http.ResponseWriter, req *http.Request) {
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		handleErr(req.Context(), rw, ErrStreamingUnsupported, http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.Header().Set("Cache-Control", "no-cache")
+	rw.Header().Set("Connection", "keep-alive")
+
+	for {
+		select {
+		case <-req.Context().Done():
+			pub.Unsubscribe()
+			return
+		case s, open := <-pub.Stream():
+			if !open {
+				return
+			}
+			b, err := json.Marshal(s)
+			if err != nil {
+				handleErr(req.Context(), rw, err, http.StatusInternalServerError)
+				return
+			}
+			fmt.Fprintf(rw, "data: %s\n\n", b)
+			flusher.Flush()
+		}
+	}
 }

@@ -13,12 +13,16 @@ defradb start [flags]
 ### Options
 
 ```
+      --email string                Email address used by the CA for notifications (default "example@example.com")
   -h, --help                        help for start
       --no-p2p                      Disable the peer-to-peer network synchronization system
       --p2paddr string              Listener address for the p2p network (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9171")
       --peers string                List of peers to connect to
+      --privkeypath string          Path to the private key for tls (default "certs/server.crt")
+      --pubkeypath string           Path to the public key for tls (default "certs/server.key")
       --store string                Specify the datastore to use (supported: badger, memory) (default "badger")
       --tcpaddr string              Listener address for the tcp gRPC server (formatted as a libp2p MultiAddr) (default "/ip4/0.0.0.0/tcp/9161")
+      --tls                         Enable serving the API over https
       --valuelogfilesize ByteSize   Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1GiB)
 ```
 

@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type dataMap = map[string]any
-
 var userCollectionGQLSchema = (`
 	type users {
 		Name: String
@@ -25,6 +23,7 @@ var userCollectionGQLSchema = (`
 		Age: Int
 		HeightM: Float
 		Verified: Boolean
+		CreatedAt: DateTime
 	}
 `)
 

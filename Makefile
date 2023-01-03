@@ -32,9 +32,16 @@ default:
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
 
+# Usage:
+# 	- make build
+# 	- make build path="path/to/defradb-binary"
 .PHONY: build
 build:
+ifeq ($(path),)
 	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
+else
+	@go build $(BUILD_FLAGS) -o $(path) cmd/defradb/main.go
+endif
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
@@ -122,9 +129,25 @@ clean:
 clean\:test:
 	go clean -testcache
 
+.PHONY: tls-certs
+tls-certs:
+ifeq ($(path),)
+	openssl ecparam -genkey -name secp384r1 -out server.key
+	openssl req -new -x509 -sha256 -key server.key -out server.crt -days 365
+else
+	mkdir -p $(path)
+	openssl ecparam -genkey -name secp384r1 -out $(path)/server.key
+	openssl req -new -x509 -sha256 -key $(path)/server.key -out $(path)/server.crt -days 365
+endif
+
 .PHONY: test
 test:
 	gotestsum --format pkgname -- ./... -race -shuffle=on
+
+# Only build the tests (don't execute them).
+.PHONY: test\:build
+test\:build:
+	gotestsum --format pkgname -- ./... -race -shuffle=on -run=nope
 
 .PHONY: test\:ci
 test\:ci:

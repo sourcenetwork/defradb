@@ -11,7 +11,6 @@
 package core
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -19,7 +18,6 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -37,11 +35,12 @@ const (
 )
 
 const (
-	COLLECTION        = "collection/names"
+	COLLECTION        = "/collection/names"
 	COLLECTION_SCHEMA = "/collection/schema"
-	SCHEMA            = "schema"
-	SEQ               = "seq"
-	PRIMARY_KEY       = "pk"
+	SCHEMA            = "/schema"
+	SEQ               = "/seq"
+	PRIMARY_KEY       = "/pk"
+	REPLICATOR        = "/replicator/id"
 )
 
 type Key interface {
@@ -98,6 +97,12 @@ type SequenceKey struct {
 
 var _ Key = (*SequenceKey)(nil)
 
+type ReplicatorKey struct {
+	ReplicatorID string
+}
+
+var _ Key = (*ReplicatorKey)(nil)
+
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminater.  It assumes
 // that the input string is in the following format:
@@ -105,29 +110,37 @@ var _ Key = (*SequenceKey)(nil)
 // /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]
 //
 // Any properties before the above (assuming a '/' deliminator) are ignored
-func NewDataStoreKey(key string) DataStoreKey {
+func NewDataStoreKey(key string) (DataStoreKey, error) {
 	dataStoreKey := DataStoreKey{}
 	if key == "" {
-		return dataStoreKey
+		return dataStoreKey, ErrEmptyKey
 	}
 
-	elements := strings.Split(key, "/")
-
-	if isDataObjectMarker(elements) {
-		return DataStoreKey{
-			CollectionId: elements[3],
-			InstanceType: ValueKey,
-			DocKey:       elements[5],
-		}
-	}
+	elements := strings.Split(strings.TrimPrefix(key, "/"), "/")
 
 	numberOfElements := len(elements)
-	return DataStoreKey{
-		CollectionId: elements[numberOfElements-4],
-		InstanceType: InstanceType(elements[numberOfElements-3]),
-		DocKey:       elements[numberOfElements-2],
-		FieldId:      elements[numberOfElements-1],
+
+	// With less than 3 or more than 4 elements, we know it's an invalid key
+	if numberOfElements < 3 || numberOfElements > 4 {
+		return dataStoreKey, ErrInvalidKey
 	}
+
+	dataStoreKey.CollectionId = elements[0]
+	dataStoreKey.InstanceType = InstanceType(elements[1])
+	dataStoreKey.DocKey = elements[2]
+	if numberOfElements == 4 {
+		dataStoreKey.FieldId = elements[3]
+	}
+
+	return dataStoreKey, nil
+}
+
+func MustNewDataStoreKey(key string) DataStoreKey {
+	dsKey, err := NewDataStoreKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return dsKey
 }
 
 func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
@@ -146,7 +159,7 @@ func DataStoreKeyFromDocKey(dockey client.DocKey) DataStoreKey {
 func NewHeadStoreKey(key string) (HeadStoreKey, error) {
 	elements := strings.Split(key, "/")
 	if len(elements) != 4 {
-		return HeadStoreKey{}, errors.New(fmt.Sprintf("Given headstore key string is not in expected format: %s", key))
+		return HeadStoreKey{}, ErrInvalidKey
 	}
 
 	cid, err := cid.Decode(elements[3])
@@ -273,6 +286,13 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 		k.InstanceType == other.InstanceType
 }
 
+func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
+	return PrimaryDataStoreKey{
+		CollectionId: k.CollectionId,
+		DocKey:       k.DocKey,
+	}
+}
+
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionId: k.CollectionId,
@@ -294,7 +314,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 	if k.CollectionId != "" {
 		result = result + "/" + k.CollectionId
 	}
-	result = result + "/" + PRIMARY_KEY
+	result = result + PRIMARY_KEY
 	if k.DocKey != "" {
 		result = result + "/" + k.DocKey
 	}
@@ -303,7 +323,7 @@ func (k PrimaryDataStoreKey) ToString() string {
 }
 
 func (k CollectionKey) ToString() string {
-	result := "/" + COLLECTION
+	result := COLLECTION
 
 	if k.CollectionName != "" {
 		result = result + "/" + k.CollectionName
@@ -321,7 +341,7 @@ func (k CollectionKey) ToDS() ds.Key {
 }
 
 func (k CollectionSchemaKey) ToString() string {
-	result := "/" + COLLECTION_SCHEMA
+	result := COLLECTION_SCHEMA
 
 	if k.SchemaId != "" {
 		result = result + "/" + k.SchemaId
@@ -339,7 +359,7 @@ func (k CollectionSchemaKey) ToDS() ds.Key {
 }
 
 func (k SchemaKey) ToString() string {
-	result := "/" + SCHEMA
+	result := SCHEMA
 
 	if k.SchemaName != "" {
 		result = result + "/" + k.SchemaName
@@ -357,7 +377,7 @@ func (k SchemaKey) ToDS() ds.Key {
 }
 
 func (k SequenceKey) ToString() string {
-	result := "/" + SEQ
+	result := SEQ
 
 	if k.SequenceName != "" {
 		result = result + "/" + k.SequenceName
@@ -371,6 +391,28 @@ func (k SequenceKey) Bytes() []byte {
 }
 
 func (k SequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func NewReplicatorKey(id string) ReplicatorKey {
+	return ReplicatorKey{ReplicatorID: id}
+}
+
+func (k ReplicatorKey) ToString() string {
+	result := REPLICATOR
+
+	if k.ReplicatorID != "" {
+		result = result + "/" + k.ReplicatorID
+	}
+
+	return result
+}
+
+func (k ReplicatorKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k ReplicatorKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
@@ -432,7 +474,7 @@ func (k DataStoreKey) PrefixEnd() DataStoreKey {
 func (k DataStoreKey) FieldID() (uint32, error) {
 	fieldID, err := strconv.Atoi(k.FieldId)
 	if err != nil {
-		return 0, errors.Wrap("Failed to get FieldID of Key", err)
+		return 0, NewErrFailedToGetFieldIdOfKey(err)
 	}
 	return uint32(fieldID), nil
 }
@@ -449,22 +491,4 @@ func bytesPrefixEnd(b []byte) []byte {
 	// This statement will only be reached if the key is already a
 	// maximal byte string (i.e. already \xff...).
 	return b
-}
-
-func isDataObjectMarker(elements []string) bool {
-	numElements := len(elements)
-	// lenght is 6 because it has no FieldID
-	if numElements != 6 {
-		return false
-	}
-	if elements[1] != "db" {
-		return false
-	}
-	if elements[2] != "data" {
-		return false
-	}
-	if elements[4] != "v" {
-		return false
-	}
-	return true
 }

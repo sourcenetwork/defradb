@@ -27,12 +27,12 @@ func TestJoinPathsWithBase(t *testing.T) {
 
 func TestJoinPathsWithNoBase(t *testing.T) {
 	_, err := JoinPaths("", BlocksPath, "cid_of_some_sort")
-	assert.ErrorIs(t, errSchema, err)
+	assert.ErrorIs(t, ErrSchema, err)
 }
 
 func TestJoinPathsWithBaseWithoutHttpPrefix(t *testing.T) {
 	_, err := JoinPaths("localhost:9181", BlocksPath, "cid_of_some_sort")
-	assert.ErrorIs(t, errSchema, err)
+	assert.ErrorIs(t, ErrSchema, err)
 }
 
 func TestJoinPathsWithNoPaths(t *testing.T) {

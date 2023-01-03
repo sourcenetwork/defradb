@@ -139,7 +139,7 @@ func TestHandleErrOnDefault(t *testing.T) {
 	t.Cleanup(CleanupEnv)
 	env = "dev"
 	f := func(rw http.ResponseWriter, req *http.Request) {
-		handleErr(req.Context(), rw, errors.New("Unauthorized"), http.StatusUnauthorized)
+		handleErr(req.Context(), rw, errors.New("unauthorized"), http.StatusUnauthorized)
 	}
 	req, err := http.NewRequest("GET", "/test", nil)
 	if err != nil {
@@ -164,6 +164,6 @@ func TestHandleErrOnDefault(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, http.StatusText(http.StatusUnauthorized), errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "Unauthorized", errResponse.Errors[0].Message)
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] Unauthorized")
+	assert.Equal(t, "unauthorized", errResponse.Errors[0].Message)
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "[DEV] unauthorized")
 }

@@ -57,7 +57,31 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "A document with the given dockey already exists",
+		ExpectedError: "a document with the given dockey already exists",
+	}
+
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateSimpleDoesNotCreateDocEmptyData(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple create mutation with empty data param.",
+		Query: `mutation {
+					create_user(data: "") {
+						_key
+						name
+						age
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"name": "John",
+					"age": 27
+				}`,
+			},
+		},
+		ExpectedError: "given data payload is empty",
 	}
 
 	simpleTests.ExecuteTestCase(t, test)

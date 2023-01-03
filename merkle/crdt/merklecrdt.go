@@ -12,22 +12,17 @@ package crdt
 
 import (
 	"context"
-	"time"
 
-	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
 var (
 	log = logging.MustNewLogger("defra.merklecrdt")
 )
-
-const broadcasterTimeout = time.Second
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
@@ -48,7 +43,7 @@ type baseMerkleCRDT struct {
 	clock core.MerkleClock
 	crdt  core.ReplicatedData
 
-	broadcaster corenet.Broadcaster
+	updateChannel events.UpdateChannel
 }
 
 func (base *baseMerkleCRDT) Clock() core.MerkleClock {
@@ -75,53 +70,11 @@ func (base *baseMerkleCRDT) ID() string {
 func (base *baseMerkleCRDT) Publish(
 	ctx context.Context,
 	delta core.Delta,
-) (cid.Cid, ipld.Node, error) {
+) (ipld.Node, error) {
 	log.Debug(ctx, "Processing CRDT state", logging.NewKV("DocKey", base.crdt.ID()))
-	c, nd, err := base.clock.AddDAGNode(ctx, delta)
+	nd, err := base.clock.AddDAGNode(ctx, delta)
 	if err != nil {
-		return cid.Undef, nil, err
+		return nil, err
 	}
-	return c, nd, nil
-}
-
-func (base *baseMerkleCRDT) Broadcast(ctx context.Context, nd ipld.Node, delta core.Delta) error {
-	if base.broadcaster == nil {
-		return nil // just skip if we dont have a broadcaster set
-	}
-
-	dockey := core.NewDataStoreKey(base.crdt.ID()).DocKey
-
-	c := nd.Cid()
-	netdelta, ok := delta.(core.NetDelta)
-	if !ok {
-		return errors.New("Can't broadcast a delta payload that doesn't implement core.NetDelta")
-	}
-
-	log.Debug(
-		ctx,
-		"Broadcasting new DAG node",
-		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", c),
-	)
-	// we dont want to wait around for the broadcast
-	go func() {
-		lg := core.Log{
-			DocKey:   dockey,
-			Cid:      c,
-			SchemaID: netdelta.GetSchemaID(),
-			Block:    nd,
-			Priority: netdelta.GetPriority(),
-		}
-		if err := base.broadcaster.SendWithTimeout(lg, broadcasterTimeout); err != nil {
-			log.ErrorE(
-				ctx,
-				"Failed to broadcast MerkleCRDT update",
-				err,
-				logging.NewKV("DocKey", dockey),
-				logging.NewKV("CID", c),
-			)
-		}
-	}()
-
-	return nil
+	return nd, nil
 }

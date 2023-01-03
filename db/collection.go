@@ -21,6 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	ipld "github.com/ipfs/go-ipld-format"
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -28,14 +29,9 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-)
-
-var (
-	ErrDocumentAlreadyExists = errors.New("A document with the given dockey already exists")
-	ErrUnknownCRDTArgument   = errors.New("Invalid CRDT arguments")
-	ErrUnknownCRDT           = errors.New("")
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -62,29 +58,29 @@ type collection struct {
 // NewCollection returns a pointer to a newly instanciated DB Collection
 func (db *db) newCollection(desc client.CollectionDescription) (*collection, error) {
 	if desc.Name == "" {
-		return nil, errors.New("Collection requires name to not be empty")
+		return nil, client.NewErrUninitializeProperty("Collection", "Name")
 	}
 
 	if len(desc.Schema.Fields) == 0 {
-		return nil, errors.New("Collection schema has no fields")
+		return nil, client.NewErrUninitializeProperty("Collection", "Fields")
 	}
 
 	docKeyField := desc.Schema.Fields[0]
 	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != "_key" {
-		return nil, errors.New("Collection schema first field must be a DocKey")
+		return nil, ErrSchemaFirstFieldDocKey
 	}
 
 	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
 	for i, field := range desc.Schema.Fields {
 		if field.Name == "" {
-			return nil, errors.New("Collection schema field missing Name")
+			return nil, client.NewErrUninitializeProperty("Collection.Schema", "Name")
 		}
 		if field.Kind == client.FieldKind_None {
-			return nil, errors.New("Collection schema field missing FieldKind")
+			return nil, client.NewErrUninitializeProperty("Collection.Schema", "FieldKind")
 		}
 		if (field.Kind != client.FieldKind_DocKey && !field.IsObject()) &&
 			field.Typ == client.NONE_CRDT {
-			return nil, errors.New("Collection schema field missing CRDT type")
+			return nil, client.NewErrUninitializeProperty("Collection.Schema", "CRDT type")
 		}
 		desc.Schema.FieldIDs[i] = uint32(i)
 		desc.Schema.Fields[i].ID = client.FieldID(i)
@@ -121,7 +117,7 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 	if exists {
-		return nil, errors.New("Collection already exists")
+		return nil, ErrCollectionAlreadyExists
 	}
 
 	colSeq, err := db.getSequence(ctx, core.COLLECTION)
@@ -180,7 +176,7 @@ func (db *db) CreateCollection(
 // GetCollection returns an existing collection within the database
 func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
-		return nil, errors.New("Collection name can't be empty")
+		return nil, ErrCollectionNameEmpty
 	}
 
 	key := core.NewCollectionKey(name)
@@ -232,7 +228,7 @@ func (db *db) GetCollectionBySchemaID(
 	schemaID string,
 ) (client.Collection, error) {
 	if schemaID == "" {
-		return nil, errors.New("Schema ID can't be empty")
+		return nil, ErrSchemaIdEmpty
 	}
 
 	key := core.NewCollectionSchemaKey(schemaID)
@@ -255,7 +251,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, errors.Wrap("Failed to create collection prefix query", err)
+		return nil, NewErrFailedToCreateCollectionQuery(err)
 	}
 	defer func() {
 		if err := q.Close(); err != nil {
@@ -272,7 +268,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 		colName := ds.NewKey(res.Key).BaseNamespace()
 		col, err := db.GetCollectionByName(ctx, colName)
 		if err != nil {
-			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection (%s)", colName), err)
+			return nil, NewErrFailedToGetCollection(colName, err)
 		}
 		cols = append(cols, col)
 	}
@@ -464,7 +460,7 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	dockey := client.NewDocKeyV0(doccid)
 	key := c.getPrimaryKeyFromDocKey(dockey)
 	if key.DocKey != doc.Key().String() {
-		return errors.Wrap(fmt.Sprintf("Expected %s, got %s ", doc.Key(), key.DocKey), ErrDocVerification)
+		return NewErrDocVerification(doc.Key().String(), key.DocKey)
 	}
 
 	// check if doc already exists
@@ -476,15 +472,9 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 		return ErrDocumentAlreadyExists
 	}
 
-	// write primary key object marker
-	err = txn.Datastore().Put(ctx, key.ToDS(), []byte{base.ObjectMarker})
-	if err != nil {
-		return err
-	}
-
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		valueKey := c.getDatastoreFromDocKey(dockey)
+		valueKey := c.getDSKeyFromDockey(dockey)
 		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
@@ -493,20 +483,10 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 
 	// write data to DB via MerkleClock/CRDT
 	_, err = c.save(ctx, txn, doc)
-
-	// If this a Batch masked as a Transaction
-	// commit our writes so we can see them.
-	// Batches don't maintain serializability, or
-	// linearization, or any other transaction
-	// semantics, which the user already knows
-	// otherwise they wouldn't use a datastore
-	// that doesn't support proper transactions.
-	// So let's just commit, and keep going.
-	if txn.IsBatch() {
-		if err := txn.Commit(ctx); err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
+
 	return err
 }
 
@@ -607,7 +587,7 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			c, err := c.saveDocValue(ctx, txn, fieldKey, val)
+			c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
@@ -628,7 +608,7 @@ func (c *collection) save(
 
 			link := core.DAGLink{
 				Name: k,
-				Cid:  c,
+				Cid:  c.Cid(),
 			}
 			links = append(links, link)
 		}
@@ -643,7 +623,7 @@ func (c *collection) save(
 		return cid.Undef, nil
 	}
 
-	headCID, err := c.saveValueToMerkleCRDT(
+	headNode, priority, err := c.saveValueToMerkleCRDT(
 		ctx,
 		txn,
 		primaryKey.ToDataStoreKey(),
@@ -655,11 +635,27 @@ func (c *collection) save(
 		return cid.Undef, err
 	}
 
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					events.Update{
+						DocKey:   doc.Key().String(),
+						Cid:      headNode.Cid(),
+						SchemaID: c.schemaID,
+						Block:    headNode,
+						Priority: priority,
+					},
+				)
+			},
+		)
+	}
+
 	txn.OnSuccess(func() {
-		doc.SetHead(headCID)
+		doc.SetHead(headNode.Cid())
 	})
 
-	return headCID, nil
+	return headNode.Cid(), nil
 }
 
 // Delete will attempt to delete a document by key
@@ -725,7 +721,7 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 	}
 
 	if key.InstanceType == core.ValueKey {
-		err := txn.Datastore().Delete(ctx, core.NewDataStoreKey(key.ToString()).ToDS())
+		err := txn.Datastore().Delete(ctx, key.ToDS())
 		if err != nil {
 			return false, err
 		}
@@ -738,7 +734,12 @@ func (c *collection) deleteWithPrefix(ctx context.Context, txn datastore.Txn, ke
 			return false, err
 		}
 
-		err = txn.Datastore().Delete(ctx, core.NewDataStoreKey(e.Key).ToDS())
+		dsKey, err := core.NewDataStoreKey(e.Key)
+		if err != nil {
+			return false, err
+		}
+
+		err = txn.Datastore().Delete(ctx, dsKey.ToDS())
 		if err != nil {
 			return false, err
 		}
@@ -777,12 +778,12 @@ func (c *collection) saveDocValue(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	val client.Value,
-) (cid.Cid, error) {
+) (ipld.Node, uint64, error) {
 	switch val.Type() {
 	case client.LWW_REGISTER:
 		wval, ok := val.(client.WriteableValue)
 		if !ok {
-			return cid.Cid{}, client.ErrValueTypeMismatch
+			return nil, 0, client.ErrValueTypeMismatch
 		}
 		var bytes []byte
 		var err error
@@ -791,12 +792,12 @@ func (c *collection) saveDocValue(
 		} else {
 			bytes, err = wval.Bytes()
 			if err != nil {
-				return cid.Cid{}, err
+				return nil, 0, err
 			}
 		}
 		return c.saveValueToMerkleCRDT(ctx, txn, key, client.LWW_REGISTER, bytes)
 	default:
-		return cid.Cid{}, ErrUnknownCRDT
+		return nil, 0, ErrUnknownCRDT
 	}
 }
 
@@ -805,29 +806,29 @@ func (c *collection) saveValueToMerkleCRDT(
 	txn datastore.Txn,
 	key core.DataStoreKey,
 	ctype client.CType,
-	args ...any) (cid.Cid, error) {
+	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			c.schemaID,
-			c.db.broadcaster,
+			c.db.events.Updates,
 			ctype,
 			key,
 		)
 		if err != nil {
-			return cid.Cid{}, err
+			return nil, 0, err
 		}
 
 		var bytes []byte
 		var ok bool
 		// parse args
 		if len(args) != 1 {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		lwwreg := datatype.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
@@ -836,32 +837,32 @@ func (c *collection) saveValueToMerkleCRDT(
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			c.SchemaID(),
-			c.db.broadcaster,
+			c.db.events.Updates,
 			ctype,
 			key,
 		)
 		if err != nil {
-			return cid.Cid{}, err
+			return nil, 0, err
 		}
 		var bytes []byte
 		var links []core.DAGLink
 		var ok bool
 		// parse args
 		if len(args) != 2 {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		bytes, ok = args[0].([]byte)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		links, ok = args[1].([]core.DAGLink)
 		if !ok {
-			return cid.Cid{}, ErrUnknownCRDTArgument
+			return nil, 0, ErrUnknownCRDTArgument
 		}
 		comp := datatype.(*crdt.MerkleCompositeDAG)
 		return comp.Set(ctx, bytes, links)
 	}
-	return cid.Cid{}, ErrUnknownCRDT
+	return nil, 0, ErrUnknownCRDT
 }
 
 // getTxn gets or creates a new transaction from the underlying db.
@@ -907,7 +908,7 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 	}
 }
 
-func (c *collection) getDatastoreFromDocKey(docKey client.DocKey) core.DataStoreKey {
+func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
 		CollectionId: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),

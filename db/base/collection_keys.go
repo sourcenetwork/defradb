@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // MakeIndexPrefix generates a key prefix for the given collection/index descriptions
@@ -46,7 +45,7 @@ func MakePrimaryIndexKeyForCRDT(
 		fieldKey := getFieldKey(c, key, fieldName)
 		return MakeCollectionKey(c).WithInstanceInfo(fieldKey), nil
 	}
-	return core.DataStoreKey{}, errors.New("Invalid CRDT type")
+	return core.DataStoreKey{}, ErrInvalidCrdtType
 }
 
 func getFieldKey(

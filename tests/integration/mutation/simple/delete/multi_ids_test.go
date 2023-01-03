@@ -56,8 +56,6 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					Results: []map[string]any{},
 				},
 			},
-			// Map store does not support transactions
-			DisableMapStore: true,
 		},
 
 		{
@@ -306,7 +304,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Failure(t *testing.T) {
 				},
 			},
 			Results:       []map[string]any{},
-			ExpectedError: "[Field \"delete_user\" of type \"[user]\" must have a sub selection.]",
+			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
 		},
 
 		{

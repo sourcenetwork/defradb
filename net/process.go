@@ -19,7 +19,6 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	format "github.com/ipfs/go-ipld-format"
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -27,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
@@ -41,7 +41,7 @@ func (p *Peer) processLog(
 	c cid.Cid,
 	field string,
 	nd ipld.Node,
-	getter format.NodeGetter) ([]cid.Cid, error) {
+	getter ipld.NodeGetter) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
 	txn, err := p.db.NewTxn(ctx, false)
@@ -54,7 +54,7 @@ func (p *Peer) processLog(
 	// check if we already have this block
 	// exists, err := txn.DAGstore().Has(ctx, c)
 	// if err != nil {
-	// 	return nil, errors.Wrap("Failed to check for existing block %s", c, err)
+	// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
 	// }
 	// if exists {
 	// 	log.Debugf("Already have block %s locally, skipping.", c)
@@ -68,7 +68,7 @@ func (p *Peer) processLog(
 
 	delta, err := crdt.DeltaDecode(nd)
 	if err != nil {
-		return nil, errors.Wrap("Failed to decode delta object", err)
+		return nil, errors.Wrap("failed to decode delta object", err)
 	}
 
 	log.Debug(
@@ -124,20 +124,20 @@ func initCRDTForType(
 		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), nil, ctype, key)
+	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), events.EmptyUpdateChannel, ctype, key)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {
 	blk, err := blocks.NewBlockWithCid(buf, cid)
 	if err != nil {
-		return nil, errors.Wrap("Failed to create block", err)
+		return nil, errors.Wrap("failed to create block", err)
 	}
-	return format.Decode(blk)
+	return ipld.Decode(blk)
 }
 
 func (p *Peer) createNodeGetter(
 	crdt crdt.MerkleCRDT,
-	getter format.NodeGetter,
+	getter ipld.NodeGetter,
 ) *clock.CrdtNodeGetter {
 	return &clock.CrdtNodeGetter{
 		NodeGetter:     getter,

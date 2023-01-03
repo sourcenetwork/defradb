@@ -13,113 +13,90 @@ package parser
 import (
 	"strconv"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/core"
 )
 
-type CommitType int
-
-const (
-	NoneCommitType = CommitType(iota)
-	LatestCommits
-	AllCommits
-	OneCommit
-)
-
-var (
-	commitNameToType = map[string]CommitType{
-		"latestCommits": LatestCommits,
-		"allCommits":    AllCommits,
-		"commit":        OneCommit,
-	}
-
-	_ Selection = (*CommitSelect)(nil)
-)
-
-type CommitSelect struct {
-	Alias string
-	Name  string
-
-	Type      CommitType
-	DocKey    string
-	FieldName string
-	Cid       string
-
-	Limit   *parserTypes.Limit
-	OrderBy *parserTypes.OrderBy
-
-	Fields []Selection
-}
-
-func (c CommitSelect) GetRoot() parserTypes.SelectionType {
-	return parserTypes.CommitSelection
-}
-
-func (c CommitSelect) ToSelect() *Select {
-	return &Select{
-		Alias:   c.Alias,
-		Limit:   c.Limit,
-		OrderBy: c.OrderBy,
-		Fields:  c.Fields,
-		Root:    parserTypes.CommitSelection,
-	}
-}
-
-func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
-	commit := &CommitSelect{
-		Name:  field.Name.Value,
-		Alias: getFieldAlias(field),
-	}
-
-	var ok bool
-	commit.Type, ok = commitNameToType[commit.Name]
-	if !ok {
-		return nil, errors.New("Unknown Database query")
+func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.CommitSelect, error) {
+	commit := &request.CommitSelect{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 	}
 
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
-		if prop == parserTypes.DocKey {
+		if prop == request.DocKey {
 			raw := argument.Value.(*ast.StringValue)
-			commit.DocKey = raw.Value
-		} else if prop == parserTypes.Cid {
+			commit.DocKey = immutable.Some(raw.Value)
+		} else if prop == request.Cid {
 			raw := argument.Value.(*ast.StringValue)
-			commit.Cid = raw.Value
-		} else if prop == parserTypes.Field {
+			commit.Cid = immutable.Some(raw.Value)
+		} else if prop == request.FieldName {
 			raw := argument.Value.(*ast.StringValue)
-			commit.FieldName = raw.Value
-		} else if prop == parserTypes.OrderClause {
+			commit.FieldName = immutable.Some(raw.Value)
+		} else if prop == request.OrderClause {
 			obj := argument.Value.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			commit.OrderBy = &parserTypes.OrderBy{
-				Conditions: cond,
-				Statement:  obj,
-			}
-		} else if prop == parserTypes.LimitClause {
+			commit.OrderBy = immutable.Some(
+				request.OrderBy{
+					Conditions: cond,
+				},
+			)
+		} else if prop == request.LimitClause {
 			val := argument.Value.(*ast.IntValue)
-			limit, err := strconv.ParseInt(val.Value, 10, 64)
+			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
-			}
-			commit.Limit.Limit = limit
-		} else if prop == parserTypes.OffsetClause {
+			commit.Limit = immutable.Some(limit)
+		} else if prop == request.OffsetClause {
 			val := argument.Value.(*ast.IntValue)
-			offset, err := strconv.ParseInt(val.Value, 10, 64)
+			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if commit.Limit == nil {
-				commit.Limit = &parserTypes.Limit{}
+			commit.Offset = immutable.Some(offset)
+		} else if prop == request.DepthClause {
+			raw := argument.Value.(*ast.IntValue)
+			depth, err := strconv.ParseUint(raw.Value, 10, 64)
+			if err != nil {
+				return nil, err
 			}
-			commit.Limit.Offset = offset
+			commit.Depth = immutable.Some(depth)
+		} else if prop == request.GroupByClause {
+			obj := argument.Value.(*ast.ListValue)
+			fields := []string{}
+			for _, v := range obj.Values {
+				fields = append(fields, v.GetValue().(string))
+			}
+
+			commit.GroupBy = immutable.Some(
+				request.GroupBy{
+					Fields: fields,
+				},
+			)
+		}
+	}
+
+	// latestCommits is just syntax sugar around a commits query
+	if commit.Name == request.LatestCommitsQueryName {
+		// Depth is not exposed as an input parameter for latestCommits,
+		// so we can blindly set it here without worrying about existing
+		// values
+		commit.Depth = immutable.Some(uint64(1))
+
+		if !commit.FieldName.HasValue() {
+			// latest commits defaults to composite commits only at the moment
+			commit.FieldName = immutable.Some(core.COMPOSITE_NAMESPACE)
 		}
 	}
 
@@ -128,8 +105,14 @@ func parseCommitSelect(field *ast.Field) (*CommitSelect, error) {
 		return commit, nil
 	}
 
-	var err error
-	commit.Fields, err = parseSelectFields(commit.GetRoot(), field.SelectionSet)
+	fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
+
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
+	}
+
+	commit.Fields, err = parseSelectFields(schema, request.CommitSelection, fieldObject, field.SelectionSet)
 
 	return commit, err
 }

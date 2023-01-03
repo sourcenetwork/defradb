@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -19,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var getCmd = &cobra.Command{
@@ -27,45 +25,45 @@ var getCmd = &cobra.Command{
 	Short: "Get a block by its CID from the blockstore.",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		if len(args) != 1 {
-			return errors.New("missing argument: CID")
+			return NewErrMissingArg("CID")
 		}
 		cid := args[0]
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.BlocksPath, cid)
 		if err != nil {
-			return errors.Wrap("failed to join endpoint", err)
+			return NewErrFailedToJoinEndpoint(err)
 		}
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return errors.Wrap("failed to send get request", err)
+			return NewErrFailedToSendRequest(err)
 		}
 
 		defer func() {
 			if e := res.Body.Close(); e != nil {
-				err = errors.Wrap(fmt.Sprintf("failed to read response body: %v", e.Error()), err)
+				err = NewErrFailedToReadResponseBody(err)
 			}
 		}()
 
 		response, err := io.ReadAll(res.Body)
 		if err != nil {
-			return errors.Wrap("failed to read response body", err)
+			return NewErrFailedToReadResponseBody(err)
 		}
 
 		stdout, err := os.Stdout.Stat()
 		if err != nil {
-			return errors.Wrap("failed to stat stdout", err)
+			return NewErrFailedToStatStdOut(err)
 		}
 		if isFileInfoPipe(stdout) {
 			cmd.Println(string(response))
 		} else {
 			graphlErr, err := hasGraphQLErrors(response)
 			if err != nil {
-				return errors.Wrap("failed to handle GraphQL errors", err)
+				return NewErrFailedToHandleGQLErrors(err)
 			}
 			indentedResult, err := indentJSON(response)
 			if err != nil {
-				return errors.Wrap("failed to pretty print response", err)
+				return NewErrFailedToPrettyPrintResponse(err)
 			}
 			if graphlErr {
 				log.FeedbackError(cmd.Context(), indentedResult)

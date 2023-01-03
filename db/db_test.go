@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/stretchr/testify/assert"
 
@@ -52,7 +51,11 @@ func TestNewDB(t *testing.T) {
 
 func TestNewDBWithCollection_Errors_GivenNoSchema(t *testing.T) {
 	ctx := context.Background()
-	rootstore := ds.NewMapDatastore()
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		t.Error(err)
+	}
 
 	db, err := NewDB(ctx, rootstore)
 	if err != nil {

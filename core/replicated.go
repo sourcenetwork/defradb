@@ -15,13 +15,6 @@ import (
 
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
-
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-var (
-	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
-	ErrMismatchedMergeType = errors.New("Given type to merge does not match source")
 )
 
 // ReplicatedData is a data type that allows concurrent writers

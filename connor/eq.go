@@ -2,9 +2,12 @@ package connor
 
 import (
 	"reflect"
+	"time"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/connor/numbers"
+	ctime "github.com/sourcenetwork/defradb/connor/time"
 	"github.com/sourcenetwork/defradb/core"
 )
 
@@ -25,25 +28,25 @@ func eq(condition, data any) (bool, error) {
 		}
 		return false, nil
 
-	case client.Option[bool]:
+	case immutable.Option[bool]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[int64]:
+	case immutable.Option[int64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[float64]:
+	case immutable.Option[float64]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
 		data = arr.Value()
 
-	case client.Option[string]:
+	case immutable.Option[string]:
 		if !arr.HasValue() {
 			return condition == nil, nil
 		}
@@ -57,6 +60,8 @@ func eq(condition, data any) (bool, error) {
 		}
 		return false, nil
 	case int64:
+		return numbers.Equal(cn, data), nil
+	case int:
 		return numbers.Equal(cn, data), nil
 	case float64:
 		return numbers.Equal(cn, data), nil
@@ -76,6 +81,8 @@ func eq(condition, data any) (bool, error) {
 		}
 
 		return m, nil
+	case time.Time:
+		return ctime.Equal(cn, data), nil
 	default:
 		return reflect.DeepEqual(condition, data), nil
 	}

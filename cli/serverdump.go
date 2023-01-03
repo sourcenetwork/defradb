@@ -15,9 +15,9 @@ import (
 	"os"
 	"os/signal"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/spf13/cobra"
 
+	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -36,7 +36,7 @@ var serverDumpCmd = &cobra.Command{
 		signalCh := make(chan os.Signal, 1)
 		signal.Notify(signalCh, os.Interrupt)
 
-		var rootstore ds.Batching
+		var rootstore ds.RootStore
 		var err error
 		if datastore == badgerDatastoreName {
 			info, err := os.Stat(cfg.Datastore.Badger.Path)

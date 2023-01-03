@@ -40,6 +40,18 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
+// GetRelation returns the field that supports the relation of the given name.
+func (col CollectionDescription) GetRelation(name string) (FieldDescription, bool) {
+	if !col.Schema.IsEmpty() {
+		for _, field := range col.Schema.Fields {
+			if field.RelationName == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
 func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return col.Indexes[0]
 }
@@ -121,8 +133,8 @@ const (
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	FieldKind_DECIMAL      FieldKind = 8
-	FieldKind_DATE         FieldKind = 9
-	FieldKind_TIMESTAMP    FieldKind = 10
+	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
+	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
 	FieldKind_BYTES        FieldKind = 13
