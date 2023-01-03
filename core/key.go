@@ -38,12 +38,13 @@ const (
 )
 
 const (
-	COLLECTION        = "/collection/names"
-	COLLECTION_SCHEMA = "/collection/schema"
-	SCHEMA            = "/schema"
-	SEQ               = "/seq"
-	PRIMARY_KEY       = "/pk"
-	REPLICATOR        = "/replicator/id"
+	COLLECTION                = "/collection/names"
+	COLLECTION_SCHEMA         = "/collection/schema"
+	COLLECTION_SCHEMA_VERSION = "/collection/version"
+	SCHEMA                    = "/schema"
+	SEQ                       = "/seq"
+	PRIMARY_KEY               = "/pk"
+	REPLICATOR                = "/replicator/id"
 )
 
 // Key is an interface that represents a key in the database.
@@ -89,6 +90,14 @@ type CollectionSchemaKey struct {
 }
 
 var _ Key = (*CollectionSchemaKey)(nil)
+
+// CollectionSchemaVersionKey points to schema of a collection at a given
+// version.
+type CollectionSchemaVersionKey struct {
+	SchemaVersionId string
+}
+
+var _ Key = (*CollectionSchemaVersionKey)(nil)
 
 type SchemaKey struct {
 	SchemaName string
@@ -188,6 +197,10 @@ func NewCollectionKey(name string) CollectionKey {
 
 func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 	return CollectionSchemaKey{SchemaId: schemaId}
+}
+
+func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
+	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
 }
 
 // NewSchemaKey returns a formatted schema key for the system data store.
@@ -360,6 +373,24 @@ func (k CollectionSchemaKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+func (k CollectionSchemaVersionKey) ToString() string {
+	result := COLLECTION_SCHEMA_VERSION
+
+	if k.SchemaVersionId != "" {
+		result = result + "/" + k.SchemaVersionId
+	}
+
+	return result
+}
+
+func (k CollectionSchemaVersionKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k CollectionSchemaVersionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
