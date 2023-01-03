@@ -247,11 +247,10 @@ linters-settings:
         APL: "Apache License, Version 2.0"
 
       regexp:
-        # define here regexp type values, for example
-        # AUTHOR: .*@mycompany\.com
+        ANY-YEAR: (20\d\d)
 
     template: |-
-      Copyright {{ YEAR }} Democratized Data Foundation
+      Copyright {{ ANY-YEAR }} Democratized Data Foundation
 
       Use of this software is governed by the {{ BSL }}
       included in the file licenses/BSL.txt.
