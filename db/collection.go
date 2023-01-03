@@ -173,8 +173,7 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	// write the collection metadata to the system store
-	err = db.systemstore().Put(ctx, collectionKey.ToDS(), buf)
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionId))
 	if err != nil {
 		return nil, err
 	}
@@ -250,40 +249,8 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, err
 	}
 
-	var desc client.CollectionDescription
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err = json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{desc.Name, desc.Schema})
-	if err != nil {
-		return nil, err
-	}
-
-	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	sid := cid.String()
-	log.Debug(
-		ctx,
-		"Retrieved collection",
-		logging.NewKV("Name", desc.Name),
-		logging.NewKV("ID", sid),
-	)
-
-	return &collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		schemaID: sid,
-	}, nil
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
 }
 
 // GetCollectionBySchemaID returns an existing collection using the schema hash ID.
@@ -308,7 +275,7 @@ func (db *db) GetCollectionBySchemaID(
 // GetAllCollections gets all the currently defined collections.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
-	prefix := core.NewCollectionKey("")
+	prefix := core.NewCollectionSchemaVersionKey("")
 	q, err := db.systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -328,10 +295,10 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 			return nil, err
 		}
 
-		colName := ds.NewKey(res.Key).BaseNamespace()
-		col, err := db.GetCollectionByName(ctx, colName)
+		schemaVersionId := ds.NewKey(res.Key).BaseNamespace()
+		col, err := db.getCollectionByVersionId(ctx, schemaVersionId)
 		if err != nil {
-			return nil, NewErrFailedToGetCollection(colName, err)
+			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
 		}
 		cols = append(cols, col)
 	}

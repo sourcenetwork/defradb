@@ -43,22 +43,29 @@ func NewDescriptionsRepo(ctx context.Context, txn datastore.Txn) *DescriptionsRe
 // Will return nil and an error if a description of the given name is not found. Will first look
 // in the repo's cache for the description before querying the datastore.
 func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDescription, error) {
-	if desc, hasDesc := r.collectionDescriptionsByName[name]; hasDesc {
-		return desc, nil
-	}
-
-	key := core.NewCollectionKey(name)
-	buf, err := r.txn.Systemstore().Get(r.ctx, key.ToDS())
+	collectionKey := core.NewCollectionKey(name)
+	var desc client.CollectionDescription
+	collectionBuf, err := r.txn.Systemstore().Get(r.ctx, collectionKey.ToDS())
 	if err != nil {
-		return client.CollectionDescription{}, errors.Wrap("failed to get collection description", err)
+		return desc, errors.Wrap("failed to get collection description", err)
 	}
 
-	desc := client.CollectionDescription{}
+	schemaVersionId := string(collectionBuf)
+	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	buf, err := r.txn.Systemstore().Get(r.ctx, schemaVersionKey.ToDS())
+	if err != nil {
+		return desc, err
+	}
+
 	err = json.Unmarshal(buf, &desc)
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return desc, err
 	}
 
-	r.collectionDescriptionsByName[name] = desc
+	err = json.Unmarshal(buf, &desc)
+	if err != nil {
+		return desc, err
+	}
+
 	return desc, nil
 }

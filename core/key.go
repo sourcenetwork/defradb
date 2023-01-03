@@ -79,6 +79,8 @@ type HeadStoreKey struct {
 
 var _ Key = (*HeadStoreKey)(nil)
 
+// CollectionKey points to the current/'head' SchemaVersionId for
+// the collection of the given name.
 type CollectionKey struct {
 	CollectionName string
 }
