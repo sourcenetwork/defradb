@@ -14,10 +14,10 @@ import (
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 type EPTuple []encProperty
@@ -49,17 +49,13 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, errors.New(fmt.Sprintf(
-						"Could not convert type: %T, value: %v to bool.",
-						untypedValue,
-						untypedValue,
-					))
+					return ctype, nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
 				}
 			}
 			val = boolArray
 
 		case client.FieldKind_NILLABLE_BOOL_ARRAY:
-			val, err = convertNillableArray[bool](array)
+			val, err = convertNillableArray[bool](e.Desc.Name, array)
 			if err != nil {
 				return ctype, nil, err
 			}
@@ -67,7 +63,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 		case client.FieldKind_INT_ARRAY:
 			intArray := make([]int64, len(array))
 			for i, untypedValue := range array {
-				intArray[i], err = convertToInt(untypedValue)
+				intArray[i], err = convertToInt(fmt.Sprintf("%s[%v]", e.Desc.Name, i), untypedValue)
 				if err != nil {
 					return ctype, nil, err
 				}
@@ -75,7 +71,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			val = intArray
 
 		case client.FieldKind_NILLABLE_INT_ARRAY:
-			val, err = convertNillableArrayWithConverter(array, convertToInt)
+			val, err = convertNillableArrayWithConverter(e.Desc.Name, array, convertToInt)
 			if err != nil {
 				return ctype, nil, err
 			}
@@ -85,17 +81,13 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, errors.New(fmt.Sprintf(
-						"Could not convert type: %T, value: %v to float64.",
-						untypedValue,
-						untypedValue,
-					))
+					return ctype, nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
 				}
 			}
 			val = floatArray
 
 		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
-			val, err = convertNillableArray[float64](array)
+			val, err = convertNillableArray[float64](e.Desc.Name, array)
 			if err != nil {
 				return ctype, nil, err
 			}
@@ -105,17 +97,13 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, errors.New(fmt.Sprintf(
-						"Could not convert type: %T, value: %v to string.",
-						untypedValue,
-						untypedValue,
-					))
+					return ctype, nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
 				}
 			}
 			val = stringArray
 
 		case client.FieldKind_NILLABLE_STRING_ARRAY:
-			val, err = convertNillableArray[string](array)
+			val, err = convertNillableArray[string](e.Desc.Name, array)
 			if err != nil {
 				return ctype, nil, err
 			}
@@ -139,47 +127,43 @@ func (e encProperty) Decode() (client.CType, any, error) {
 	return ctype, val, nil
 }
 
-func convertNillableArray[T any](items []any) ([]client.Option[T], error) {
-	resultArray := make([]client.Option[T], len(items))
+func convertNillableArray[T any](propertyName string, items []any) ([]immutable.Option[T], error) {
+	resultArray := make([]immutable.Option[T], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[T]()
+			resultArray[i] = immutable.None[T]()
 			continue
 		}
 		value, ok := untypedValue.(T)
 		if !ok {
-			return nil, errors.New(fmt.Sprintf(
-				"Could not convert type: %T, value: %v to %T.",
-				untypedValue,
-				untypedValue,
-				*new(T),
-			))
+			return nil, client.NewErrUnexpectedType[T](fmt.Sprintf("%s[%v]", propertyName, i), untypedValue)
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutable.Some(value)
 	}
 	return resultArray, nil
 }
 
 func convertNillableArrayWithConverter[TOut any](
+	propertyName string,
 	items []any,
-	converter func(in any) (TOut, error),
-) ([]client.Option[TOut], error) {
-	resultArray := make([]client.Option[TOut], len(items))
+	converter func(propertyName string, in any) (TOut, error),
+) ([]immutable.Option[TOut], error) {
+	resultArray := make([]immutable.Option[TOut], len(items))
 	for i, untypedValue := range items {
 		if untypedValue == nil {
-			resultArray[i] = client.None[TOut]()
+			resultArray[i] = immutable.None[TOut]()
 			continue
 		}
-		value, err := converter(untypedValue)
+		value, err := converter(fmt.Sprintf("%s[%v]", propertyName, i), untypedValue)
 		if err != nil {
 			return nil, err
 		}
-		resultArray[i] = client.Some(value)
+		resultArray[i] = immutable.Some(value)
 	}
 	return resultArray, nil
 }
 
-func convertToInt(untypedValue any) (int64, error) {
+func convertToInt(propertyName string, untypedValue any) (int64, error) {
 	switch value := untypedValue.(type) {
 	case uint64:
 		return int64(value), nil
@@ -188,11 +172,7 @@ func convertToInt(untypedValue any) (int64, error) {
 	case float64:
 		return int64(value), nil
 	default:
-		return 0, errors.New(fmt.Sprintf(
-			"Could not convert type: %T, value: %v to int64.",
-			untypedValue,
-			untypedValue,
-		))
+		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
 	}
 }
 

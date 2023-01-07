@@ -42,14 +42,6 @@ import (
 // respective substores don't need to optimize or worry about Batching/Txn.
 // Hence the simplified DSReaderWriter.
 
-// ErrHashMismatch is an error returned when the hash of a block is different than expected.
-var ErrHashMismatch = errors.New("block in storage has different hash than requested")
-
-// defradb/store.ErrNotFound => error
-// ipfs-blockstore.ErrNotFound => error
-// ErrNotFound is an error returned when a block is not found.
-var ErrNotFound = errors.New("blockstore: block not found")
-
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
 func NewBlockstore(store DSReaderWriter) blockstore.Blockstore {
@@ -64,10 +56,12 @@ type bstore struct {
 	rehash bool
 }
 
+// HashOnRead enables or disables rehashing of blocks on read.
 func (bs *bstore) HashOnRead(enabled bool) {
 	bs.rehash = enabled
 }
 
+// Get returns a block from the blockstore.
 func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		log.Error(ctx, "Undefined CID in blockstore")
@@ -95,6 +89,7 @@ func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	return blocks.NewBlockWithCid(bdata, k)
 }
 
+// Put stores a block to the blockstore.
 func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
 	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
@@ -106,6 +101,7 @@ func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
 	return bs.store.Put(ctx, k, block.RawData())
 }
 
+// PutMany stores multiple blocks to the blockstore.
 func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
 		k := dshelp.MultihashToDsKey(b.Cid().Hash())
@@ -122,10 +118,12 @@ func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	return nil
 }
 
+// Has returns whether a block is stored in the blockstore.
 func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
 	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
+// GetSize returns the size of a block in the blockstore.
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
 	size, err := bs.store.GetSize(ctx, dshelp.MultihashToDsKey(k.Hash()))
 	if errors.Is(err, ds.ErrNotFound) {
@@ -134,14 +132,16 @@ func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
 	return size, err
 }
 
+// DeleteBlock removes a block from the blockstore.
 func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
 	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()))
 }
 
 // AllKeysChan runs a query for keys from the blockstore.
-// this is very simplistic, in the future, take dsq.Query as a param?
 //
 // AllKeysChan respects context.
+//
+// TODO this is very simplistic, in the future, take dsq.Query as a param?
 func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	// KeysOnly, because that would be _a lot_ of data.
 	q := dsq.Query{KeysOnly: true}

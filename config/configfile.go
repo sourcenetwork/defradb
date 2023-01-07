@@ -65,6 +65,14 @@ datastore:
 api:
   # Address of the HTTP API to listen on or connect to
   address: {{ .API.Address }}
+  # Whether the API server should listen over HTTPS
+  tls: {{ .API.TLS }}
+  # The path to the public key file. Ignored if domains is set.
+  pubkeypath: {{ .API.PubKeyPath }}
+  # The path to the private key file. Ignored if domains is set.
+  privkeypath: {{ .API.PrivKeyPath }}
+  # Email address to let the CA (Let's Encrypt) send notifications via email when there are issues (optional).
+  # email: {{ .API.Email }}
 
 net:
   # Whether the P2P is disabled

@@ -79,7 +79,7 @@ func SetupCollections(
 	// b.Logf("Loading schema: \n%s", schema)
 
 	if err := db.AddSchema(ctx, schema); err != nil {
-		return nil, errors.Wrap("Couldn't load schema", err)
+		return nil, errors.Wrap("couldn't load schema", err)
 	}
 
 	// loop to get collections
@@ -170,7 +170,7 @@ func BackfillBenchmarkDB(
 				go func(index int) {
 					docs, err := fixture.GenerateDocs()
 					if err != nil {
-						errCh <- errors.Wrap("Failed to generate document payload from fixtures", err)
+						errCh <- errors.Wrap("failed to generate document payload from fixtures", err)
 						return
 					}
 
@@ -179,7 +179,7 @@ func BackfillBenchmarkDB(
 					for j := 0; j < numTypes; j++ {
 						doc, err := client.NewDocFromJSON([]byte(docs[j]))
 						if err != nil {
-							errCh <- errors.Wrap("Failed to create document from fixture", err)
+							errCh <- errors.Wrap("failed to create document from fixture", err)
 							return
 						}
 
@@ -197,7 +197,7 @@ func BackfillBenchmarkDB(
 								)
 								continue
 							} else if err != nil {
-								errCh <- errors.Wrap("Failed to create document", err)
+								errCh <- errors.Wrap("failed to create document", err)
 							}
 							keys[j] = doc.Key()
 							break
@@ -251,14 +251,12 @@ func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
 		dbi, err = testutils.NewBadgerMemoryDB(ctx)
 	case "badger":
 		dbi, err = testutils.NewBadgerFileDB(ctx, t)
-	case "memorymap":
-		dbi, err = testutils.NewMapDB(ctx)
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid storage engine backend: %s", storage))
 	}
 
 	if err != nil {
-		return nil, errors.Wrap("Failed to create storage backend", err)
+		return nil, errors.Wrap("failed to create storage backend", err)
 	}
 	return dbi, err
 }

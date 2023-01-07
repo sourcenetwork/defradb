@@ -268,3 +268,45 @@ func TestCORSRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestTLSRequestResponseHeader(t *testing.T) {
+	cases := []struct {
+		name       string
+		method     string
+		reqHeaders map[string]string
+		resHeaders map[string]string
+	}{
+		{
+			"TLSHeader",
+			"GET",
+			map[string]string{},
+			map[string]string{
+				"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+			},
+		},
+	}
+	dir := t.TempDir()
+
+	s := NewServer(nil, WithTLS(), WithAddress("example.com"), WithRootDir(dir))
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(c.method, PingPath, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			for header, value := range c.reqHeaders {
+				req.Header.Add(header, value)
+			}
+
+			rec := httptest.NewRecorder()
+
+			s.Handler.ServeHTTP(rec, req)
+
+			for header, value := range c.resHeaders {
+				assert.Equal(t, value, rec.Result().Header.Get(header))
+			}
+		})
+	}
+}

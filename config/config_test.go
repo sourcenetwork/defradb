@@ -79,7 +79,7 @@ func TestConfigValidateBasic(t *testing.T) {
 	cfg := DefaultConfig()
 	assert.NoError(t, cfg.validate())
 	// Borked configuration gives out error
-	cfg.API.Address = "*%(*&"
+	cfg.API.Address = "localhost"
 
 	err := cfg.validate()
 

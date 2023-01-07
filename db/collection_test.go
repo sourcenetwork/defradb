@@ -101,7 +101,7 @@ func TestNewCollectionReturnsErrorGivenDuplicateSchema(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = newTestCollectionWithSchema(ctx, db)
-	assert.Errorf(t, err, "Collection already exists")
+	assert.Errorf(t, err, "collection already exists")
 }
 
 func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
@@ -117,7 +117,11 @@ func TestNewCollectionReturnsErrorGivenNoFields(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema has no fields")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection, PropertyName: Fields",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
@@ -133,7 +137,11 @@ func TestNewCollectionReturnsErrorGivenNoName(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection requires name to not be empty")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection, PropertyName: Name",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
@@ -155,7 +163,7 @@ func TestNewCollectionReturnsErrorGivenNoKeyField(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+	assert.EqualError(t, err, "collection schema first field must be a DocKey")
 }
 
 func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
@@ -181,7 +189,7 @@ func TestNewCollectionReturnsErrorGivenKeyFieldIsNotFirstField(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema first field must be a DocKey")
+	assert.EqualError(t, err, "collection schema first field must be a DocKey")
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
@@ -207,7 +215,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoName(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema field missing Name")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: Name",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
@@ -232,7 +244,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoKind(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema field missing FieldKind")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: FieldKind",
+	)
 }
 
 func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
@@ -257,7 +273,11 @@ func TestNewCollectionReturnsErrorGivenFieldWithNoType(t *testing.T) {
 	}
 
 	_, err = db.CreateCollection(ctx, desc)
-	assert.EqualError(t, err, "Collection schema field missing CRDT type")
+	assert.EqualError(
+		t,
+		err,
+		"invalid state, required property is uninitialized. Host: Collection.Schema, PropertyName: CRDT type",
+	)
 }
 
 func TestGetCollectionByName(t *testing.T) {
@@ -303,5 +323,5 @@ func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = db.GetCollectionByName(ctx, "")
-	assert.EqualError(t, err, "Collection name can't be empty")
+	assert.EqualError(t, err, "collection name can't be empty")
 }

@@ -26,9 +26,8 @@ type DocumentContainer struct {
 	docs []core.Doc
 }
 
-// NewDocumentContainer returns a new instance of the Document
-// Container, with its max buffer size set by capacity.
-// A capacity of 0 ignores any initial pre-allocation.
+// NewDocumentContainer returns a new instance of the Document Container, with
+// its max buffer size set by capacity. A capacity of 0 ignores any initial pre-allocation.
 func NewDocumentContainer(capacity int) *DocumentContainer {
 	return &DocumentContainer{
 		docs: make([]core.Doc, capacity),
@@ -40,6 +39,7 @@ func (c *DocumentContainer) At(index int) core.Doc {
 	return c.docs[index]
 }
 
+// Len returns the number of documents in the DocumentContainer.
 func (c *DocumentContainer) Len() int {
 	return len(c.docs)
 }
@@ -53,14 +53,14 @@ func (c *DocumentContainer) AddDoc(doc core.Doc) {
 	c.docs = append(c.docs, copyDoc)
 }
 
-// Swap switches the documents at index i and j
-// with one another.
+// Swap switches the documents at index i and j with one another.
 func (c *DocumentContainer) Swap(i, j int) {
 	tmp := c.docs[i]
 	c.docs[i] = c.docs[j]
 	c.docs[j] = tmp
 }
 
+// Close frees the DocumentContainer's documents.
 func (c *DocumentContainer) Close() {
 	c.docs = nil
 }

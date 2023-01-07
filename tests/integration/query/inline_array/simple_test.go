@@ -13,7 +13,8 @@ package inline_array
 import (
 	"testing"
 
-	. "github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -76,7 +77,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 			Docs: map[int][]string{
 				0: {
 					`{
-						"Name": "John",
+						"Name": "John", 
 						"LikedIndexes": [true, true, false, true]
 					}`,
 				},
@@ -114,8 +115,13 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":               "John",
-				"IndexLikesDislikes": []Option[bool]{Some(true), Some(true), Some(false), None[bool]()},
+				"Name": "John",
+				"IndexLikesDislikes": []immutable.Option[bool]{
+					immutable.Some(true),
+					immutable.Some(true),
+					immutable.Some(false),
+					immutable.None[bool](),
+				},
 			},
 		},
 	}
@@ -288,8 +294,14 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":       "John",
-				"TestScores": []Option[int64]{Some[int64](-1), None[int64](), Some[int64](-1), Some[int64](2), Some[int64](0)},
+				"Name": "John",
+				"TestScores": []immutable.Option[int64]{
+					immutable.Some[int64](-1),
+					immutable.None[int64](),
+					immutable.Some[int64](-1),
+					immutable.Some[int64](2),
+					immutable.Some[int64](0),
+				},
 			},
 		},
 	}
@@ -394,8 +406,13 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":        "John",
-				"PageRatings": []Option[float64]{Some(3.1425), None[float64](), Some(-0.00000000001), Some[float64](10)},
+				"Name": "John",
+				"PageRatings": []immutable.Option[float64]{
+					immutable.Some(3.1425),
+					immutable.None[float64](),
+					immutable.Some(-0.00000000001),
+					immutable.Some[float64](10),
+				},
 			},
 		},
 	}
@@ -500,8 +517,14 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"Name":        "John",
-				"PageHeaders": []Option[string]{Some(""), Some("the previous"), Some("the first"), Some("empty string"), None[string]()},
+				"Name": "John",
+				"PageHeaders": []immutable.Option[string]{
+					immutable.Some(""),
+					immutable.Some("the previous"),
+					immutable.Some("the first"),
+					immutable.Some("empty string"),
+					immutable.None[string](),
+				},
 			},
 		},
 	}

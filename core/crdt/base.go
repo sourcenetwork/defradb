@@ -47,7 +47,7 @@ func (base baseCRDT) setPriority(
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, priority+1)
 	if n == 0 {
-		return errors.New("error encoding priority")
+		return ErrEncodingPriority
 	}
 
 	return base.store.Put(ctx, prioK.ToDS(), buf[0:n])
@@ -66,7 +66,7 @@ func (base baseCRDT) getPriority(ctx context.Context, key core.DataStoreKey) (ui
 
 	prio, num := binary.Uvarint(pbuf)
 	if num <= 0 {
-		return 0, errors.New("failed to decode priority")
+		return 0, ErrDecodingPriority
 	}
 	return prio, nil
 }

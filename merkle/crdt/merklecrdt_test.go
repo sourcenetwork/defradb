@@ -46,14 +46,14 @@ func TestMerkleCRDTPublish(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	c, _, err := bCRDT.Publish(ctx, delta)
+	nd, err := bCRDT.Publish(ctx, delta)
 	if err != nil {
 		t.Error("Failed to publish delta to MerkleCRDT:", err)
 		return
 	}
 
-	if c == cid.Undef {
-		t.Error("Published returned invalid CID Undef:", c)
+	if nd.Cid() == cid.Undef {
+		t.Error("Published returned invalid CID Undef:", nd.Cid())
 		return
 	}
 

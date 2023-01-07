@@ -860,6 +860,70 @@ func TestLogDoesNotWriteMessagesToLogGivenOverrideUpdatedForLoggerRaisingLogLeve
 	assert.Len(t, logLines, 0)
 }
 
+func TestGetGoLogger(t *testing.T) {
+	l := GetGoLogger("TestLogName")
+	assert.NotNil(t, l.ZapEventLogger)
+	assert.NotNil(t, l.logger)
+}
+
+func TestGetGoLoggerAndApplyConfig(t *testing.T) {
+	l := GetGoLogger("TestLogName")
+	assert.NotNil(t, l.ZapEventLogger)
+	assert.NotNil(t, l.logger)
+
+	b := &bytes.Buffer{}
+	l.ApplyConfig(Config{
+		EncoderFormat: NewEncoderFormatOption(JSON),
+		pipe:          b,
+	})
+
+	l.ZapEventLogger.Info("some info")
+
+	logLines, err := parseLines(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+	assert.Equal(t, "some info", logLines[0]["msg"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
+	assert.Equal(t, "TestLogName", logLines[0]["logger"])
+}
+
+func TestGetGoLoggerV2(t *testing.T) {
+	l := GetGoLoggerV2("TestLogName")
+	assert.NotNil(t, l.ZapEventLogger)
+	assert.NotNil(t, l.logger)
+}
+
+func TestGetGoLoggerV2AndApplyConfig(t *testing.T) {
+	l := GetGoLoggerV2("TestLogName")
+	assert.NotNil(t, l.ZapEventLogger)
+	assert.NotNil(t, l.logger)
+
+	b := &bytes.Buffer{}
+	l.ApplyConfig(Config{
+		EncoderFormat: NewEncoderFormatOption(JSON),
+		pipe:          b,
+	})
+
+	l.ZapEventLogger.Info("some info")
+
+	logLines, err := parseLines(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(logLines) != 1 {
+		t.Fatalf("expecting exactly 1 log line but got %d lines", len(logLines))
+	}
+	assert.Equal(t, "some info", logLines[0]["msg"])
+	assert.Equal(t, "INFO", logLines[0]["level"])
+	assert.Equal(t, "TestLogName", logLines[0]["logger"])
+}
+
 type Option = func(*Config)
 
 func getLogger(t *testing.T, options ...Option) (Logger, string) {

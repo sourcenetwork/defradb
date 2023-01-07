@@ -17,6 +17,7 @@ import (
 )
 
 type (
+	// EncoderFormat is the format of the log output (JSON, CSV, ...).
 	EncoderFormat       = int8
 	EncoderFormatOption struct {
 		EncoderFormat EncoderFormat
@@ -24,6 +25,7 @@ type (
 	}
 )
 
+// NewEncoderFormatOption creates a new EncoderFormatOption with the given value.
 func NewEncoderFormatOption(v EncoderFormat) EncoderFormatOption {
 	return EncoderFormatOption{
 		EncoderFormat: v,
@@ -54,6 +56,7 @@ func NewLogLevelOption(v LogLevel) LogLevelOption {
 	}
 }
 
+// Log levels.
 const (
 	Debug LogLevel = -1
 	Info  LogLevel = 0

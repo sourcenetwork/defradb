@@ -18,8 +18,8 @@ import (
 	gql "github.com/graphql-go/graphql"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 		gql.Boolean:   client.FieldKind_BOOL,
 		gql.Int:       client.FieldKind_INT,
 		gql.Float:     client.FieldKind_FLOAT,
-		gql.DateTime:  client.FieldKind_DATE,
+		gql.DateTime:  client.FieldKind_DATETIME,
 		gql.String:    client.FieldKind_STRING,
 		&gql.Object{}: client.FieldKind_FOREIGN_OBJECT,
 		&gql.List{}:   client.FieldKind_FOREIGN_OBJECT_ARRAY,
@@ -55,7 +55,7 @@ var (
 		client.FieldKind_FLOAT:                 client.LWW_REGISTER,
 		client.FieldKind_FLOAT_ARRAY:           client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_FLOAT_ARRAY:  client.LWW_REGISTER,
-		client.FieldKind_DATE:                  client.LWW_REGISTER,
+		client.FieldKind_DATETIME:              client.LWW_REGISTER,
 		client.FieldKind_STRING:                client.LWW_REGISTER,
 		client.FieldKind_STRING_ARRAY:          client.LWW_REGISTER,
 		client.FieldKind_NILLABLE_STRING_ARRAY: client.LWW_REGISTER,
@@ -73,7 +73,7 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 		typeNotNullInt     string = "Int!"
 		typeFloat          string = "Float"
 		typeNotNullFloat   string = "Float!"
-		typeDate           string = "Date"
+		typeDateTime       string = "DateTime"
 		typeString         string = "String"
 		typeNotNullString  string = "String!"
 	)
@@ -89,8 +89,8 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 			return client.FieldKind_INT
 		case typeFloat:
 			return client.FieldKind_FLOAT
-		case typeDate:
-			return client.FieldKind_DATE
+		case typeDateTime:
+			return client.FieldKind_DATETIME
 		case typeString:
 			return client.FieldKind_STRING
 		}
@@ -146,7 +146,7 @@ func (g *Generator) CreateDescriptions(
 			Name: t.Name(),
 			Fields: []client.FieldDescription{
 				{
-					Name: parserTypes.DocKeyFieldName,
+					Name: request.DocKeyFieldName,
 					Kind: client.FieldKind_DocKey,
 					Typ:  client.NONE_CRDT,
 				},
@@ -154,7 +154,7 @@ func (g *Generator) CreateDescriptions(
 		}
 		// and schema fields
 		for fname, field := range t.Fields() {
-			if _, ok := parserTypes.ReservedFields[fname]; ok {
+			if _, ok := request.ReservedFields[fname]; ok {
 				continue
 			}
 
@@ -183,7 +183,7 @@ func (g *Generator) CreateDescriptions(
 				fd.Schema = schemaName
 
 				// check if its a one-to-one, one-to-many, many-to-many
-				rel := g.manager.Relations.GetRelationByDescription(
+				rel := g.manager.Relations.getRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
 					return nil, errors.New(fmt.Sprintf(
@@ -197,7 +197,7 @@ func (g *Generator) CreateDescriptions(
 
 				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {
-					return nil, errors.New("Relation is missing field")
+					return nil, errors.New("relation is missing field")
 				}
 
 				fd.RelationType = rel.Kind() | fieldRelationType
@@ -236,9 +236,9 @@ func (g *Generator) CreateDescriptions(
 		// sort the fields lexicographically
 		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
 			// make sure that the _key (DocKeyFieldName) is always at the beginning
-			if desc.Schema.Fields[i].Name == parserTypes.DocKeyFieldName {
+			if desc.Schema.Fields[i].Name == request.DocKeyFieldName {
 				return true
-			} else if desc.Schema.Fields[j].Name == parserTypes.DocKeyFieldName {
+			} else if desc.Schema.Fields[j].Name == request.DocKeyFieldName {
 				return false
 			}
 			return desc.Schema.Fields[i].Name < desc.Schema.Fields[j].Name

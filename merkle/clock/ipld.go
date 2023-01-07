@@ -125,12 +125,14 @@ func makeNode(delta core.Delta, heads []cid.Cid) (ipld.Node, error) {
 
 	nd := dag.NodeWithData(data)
 	// The cid builder defaults to v0, we want to be using v1 Cids
-	nd.SetCidBuilder(
-		cid.V1Builder{
-			Codec:    cid.DagProtobuf,
-			MhType:   mh.SHA2_256,
-			MhLength: -1,
-		})
+	err = nd.SetCidBuilder(cid.V1Builder{
+		Codec:    cid.DagProtobuf,
+		MhType:   mh.SHA2_256,
+		MhLength: -1,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	// add heads
 	for _, h := range heads {

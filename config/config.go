@@ -49,6 +49,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -137,7 +139,7 @@ func (cfg *Config) LoadWithoutRootDir() error {
 	}
 	rootDir, err := DefaultRootDir()
 	if err != nil {
-		log.FatalE(context.Background(), "Could not get home directory", err)
+		log.FatalE(context.Background(), "Could not get root directory", err)
 	}
 
 	cfg.handleParams(rootDir)
@@ -301,28 +303,76 @@ func (dbcfg DatastoreConfig) validate() error {
 
 // APIConfig configures the API endpoints.
 type APIConfig struct {
-	Address string
+	Address     string
+	TLS         bool
+	PubKeyPath  string
+	PrivKeyPath string
+	Email       string
 }
 
+var DefaultAPIEmail = "example@example.com"
+
 func defaultAPIConfig() *APIConfig {
-	return &APIConfig{
-		Address: "localhost:9181",
+	rootDir, err := DefaultRootDir()
+	if err != nil {
+		log.FatalE(context.Background(), "Could not get root directory", err)
 	}
+
+	return &APIConfig{
+		Address:     "localhost:9181",
+		TLS:         false,
+		PubKeyPath:  path.Join(rootDir, "certs/server.key"),
+		PrivKeyPath: path.Join(rootDir, "certs/server.crt"),
+		Email:       DefaultAPIEmail,
+	}
+}
+
+// expandHomeDir expands paths if they were passed in as `~` rather than `${HOME}`
+// converts `~/.defradb/certs/server.crt` to `/home/username/.defradb/certs/server.crt`.
+func expandHomeDir(path *string) error {
+	if *path == "~" {
+		return errors.New("path cannot be just ~ (home directory)")
+	} else if strings.HasPrefix(*path, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return errors.Wrap("unable to expand home directory", err)
+		}
+
+		// Use strings.HasPrefix so we don't match paths like "/x/~/x/"
+		*path = filepath.Join(homeDir, (*path)[2:])
+	}
+
+	return nil
 }
 
 func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
 		return errors.New("no database URL provided")
 	}
-	_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
-	if err != nil {
-		return errors.Wrap("invalid database URL", err)
+	ip := net.ParseIP(apicfg.Address)
+	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
+		_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
+		if err != nil {
+			return errors.Wrap("invalid database URL", err)
+		}
 	}
+
+	// Expand the passed in `~` if it wasn't expanded properly by the shell.
+	if err := expandHomeDir(&apicfg.PrivKeyPath); err != nil {
+		return err
+	}
+	if err := expandHomeDir(&apicfg.PubKeyPath); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // AddressToURL provides the API address as URL.
 func (apicfg *APIConfig) AddressToURL() string {
+	if apicfg.TLS {
+		return fmt.Sprintf("https://%s", apicfg.Address)
+	}
 	return fmt.Sprintf("http://%s", apicfg.Address)
 }
 

@@ -22,6 +22,7 @@ var userCollectionGQLSchema = (`
 		Age: Int
 		HeightM: Float
 		Verified: Boolean
+		CreatedAt: DateTime
 	}
 `)
 

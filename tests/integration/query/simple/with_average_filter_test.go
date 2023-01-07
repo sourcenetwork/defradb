@@ -47,3 +47,38 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query, average with datetime filter",
+		Query: `query {
+					_avg(users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"Age": 30,
+					"CreatedAt": "2018-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 32,
+					"CreatedAt": "2019-07-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"_avg": float64(31),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

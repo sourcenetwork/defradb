@@ -20,17 +20,16 @@ import (
 	"strings"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/textileio/go-threads/broadcast"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
 	httpapi "github.com/sourcenetwork/defradb/api/http"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	ds "github.com/sourcenetwork/defradb/datastore"
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
@@ -40,8 +39,6 @@ import (
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
-
-const busBufferSize = 100
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -138,6 +135,42 @@ func init() {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.p2pdisabled", err)
 	}
 
+	startCmd.Flags().Bool(
+		"tls", cfg.API.TLS,
+		"Enable serving the API over https",
+	)
+	err = viper.BindPFlag("api.tls", startCmd.Flags().Lookup("tls"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.tls", err)
+	}
+
+	startCmd.Flags().String(
+		"pubkeypath", cfg.API.PubKeyPath,
+		"Path to the public key for tls",
+	)
+	err = viper.BindPFlag("api.pubkeypath", startCmd.Flags().Lookup("pubkeypath"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.pubkeypath", err)
+	}
+
+	startCmd.Flags().String(
+		"privkeypath", cfg.API.PrivKeyPath,
+		"Path to the private key for tls",
+	)
+	err = viper.BindPFlag("api.privkeypath", startCmd.Flags().Lookup("privkeypath"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.privkeypath", err)
+	}
+
+	startCmd.Flags().String(
+		"email", cfg.API.Email,
+		"Email address used by the CA for notifications",
+	)
+	err = viper.BindPFlag("api.email", startCmd.Flags().Lookup("email"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind api.email", err)
+	}
+
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -170,7 +203,7 @@ func (di *defraInstance) close(ctx context.Context) {
 func start(ctx context.Context) (*defraInstance, error) {
 	log.FeedbackInfo(ctx, "Starting DefraDB service...")
 
-	var rootstore ds.Batching
+	var rootstore ds.RootStore
 
 	var err error
 	if cfg.Datastore.Store == badgerDatastoreName {
@@ -193,13 +226,8 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to open datastore", err)
 	}
 
-	var options []db.Option
-
-	// check for p2p
-	var bs *broadcast.Broadcaster
-	if !cfg.Net.P2PDisabled {
-		bs = broadcast.NewBroadcaster(busBufferSize)
-		options = append(options, db.WithBroadcaster(bs))
+	options := []db.Option{
+		db.WithUpdateEvents(),
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)
@@ -214,7 +242,6 @@ func start(ctx context.Context) (*defraInstance, error) {
 		n, err = node.NewNode(
 			ctx,
 			db,
-			bs,
 			cfg.NodeConfig(),
 		)
 		if err != nil {
@@ -274,12 +301,29 @@ func start(ctx context.Context) (*defraInstance, error) {
 		}()
 	}
 
+	rootDir, _, err := config.GetRootDir(rootDirParam)
+	if err != nil {
+		return nil, errors.Wrap("failed to get root dir", err)
+	}
+
 	sOpt := []func(*httpapi.Server){
 		httpapi.WithAddress(cfg.API.Address),
+		httpapi.WithRootDir(rootDir),
 	}
+
 	if n != nil {
 		sOpt = append(sOpt, httpapi.WithPeerID(n.PeerID().String()))
 	}
+
+	if cfg.API.TLS {
+		sOpt = append(
+			sOpt,
+			httpapi.WithTLS(),
+			httpapi.WithSelfSignedCert(cfg.API.PubKeyPath, cfg.API.PrivKeyPath),
+			httpapi.WithCAEmail(cfg.API.Email),
+		)
+	}
+
 	s := httpapi.NewServer(db, sOpt...)
 	if err := s.Listen(ctx); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("failed to listen on TCP address %v", s.Addr), err)
@@ -297,7 +341,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 				httpapi.RootPath,
 			),
 		)
-		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := s.Run(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FeedbackErrorE(ctx, "Failed to run the HTTP server", err)
 			if n != nil {
 				if err := n.Close(); err != nil {

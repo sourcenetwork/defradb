@@ -15,12 +15,13 @@ package node
 import (
 	"time"
 
-	cconnmgr "github.com/libp2p/go-libp2p-core/connmgr"
+	cconnmgr "github.com/libp2p/go-libp2p/core/connmgr"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 )
 
+// Options is the node options.
 type Options struct {
 	ListenAddrs       []ma.Multiaddr
 	TCPAddr           ma.Multiaddr

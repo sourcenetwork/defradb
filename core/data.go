@@ -29,6 +29,7 @@ type span struct {
 
 var _ Span = span{}
 
+// NewSpan creates a new Span from the provided start and end keys.
 func NewSpan(start, end DataStoreKey) Span {
 	return span{
 		start: start,
@@ -46,6 +47,7 @@ func (s span) End() DataStoreKey {
 	return s.end
 }
 
+// SpanComparisonResult is the result of comparing two spans.
 type SpanComparisonResult uint
 
 const (
@@ -146,6 +148,7 @@ type Spans struct {
 	Value    []Span
 }
 
+// NewSpans creates a new Spans from the provided spans.
 func NewSpans(spans ...Span) Spans {
 	return Spans{
 		HasValue: true,
@@ -159,6 +162,8 @@ type KeyValue struct {
 	Value []byte
 }
 
+// HeadKeyValue is a KV store response containing the resulting core.HeadStoreKey
+// and byte array value.
 type HeadKeyValue struct {
 	Key   HeadStoreKey
 	Value []byte
