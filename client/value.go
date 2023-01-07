@@ -14,8 +14,8 @@ import (
 	"github.com/fxamacker/cbor/v2"
 )
 
-// Value is an interface that points to a concrete Value implementation
-// May collapse this down without an interface
+// Value is an interface that points to a concrete Value implementation.
+// (TODO May collapse this down without an interface)
 type Value interface {
 	Value() any
 	IsDocument() bool
@@ -96,6 +96,7 @@ type cborValue struct {
 	*simpleValue
 }
 
+// NewCBORValue creates a new CBOR value from a CRDT type and a value.
 func NewCBORValue(t CType, val any) WriteableValue {
 	return newCBORValue(t, val)
 }

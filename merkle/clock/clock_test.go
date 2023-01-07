@@ -111,7 +111,7 @@ func TestMerkleClockAddDAGNode(t *testing.T) {
 		Data: []byte("test"),
 	}
 
-	_, _, err := clk.AddDAGNode(ctx, delta)
+	_, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
@@ -125,7 +125,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		Data: []byte("test1"),
 	}
 
-	_, _, err := clk.AddDAGNode(ctx, delta)
+	_, err := clk.AddDAGNode(ctx, delta)
 	if err != nil {
 		t.Error("Failed to add dag node:", err)
 		return
@@ -135,7 +135,7 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 		Data: []byte("test2"),
 	}
 
-	_, _, err = clk.AddDAGNode(ctx, delta2)
+	_, err = clk.AddDAGNode(ctx, delta2)
 	if err != nil {
 		t.Error("Failed to add second dag node with err:", err)
 		return
@@ -149,18 +149,6 @@ func TestMerkleClockAddDAGNodeWithHeads(t *testing.T) {
 			delta.GetPriority(),
 			delta2.GetPriority(),
 		)
-	}
-
-	// check if lww state is correct (val is test2)
-	// check if head/blockstore state is correct (one head, two blocks)
-	nHeads, err := clk.headset.Len(ctx)
-	if err != nil {
-		t.Error("Error getting MerkleClock heads size:", err)
-		return
-	}
-	if nHeads != 1 {
-		t.Errorf("Incorrect number of heads of current clock state, have %v, want %v", nHeads, 1)
-		return
 	}
 
 	numBlocks := 0

@@ -20,9 +20,10 @@ import (
 	dag "github.com/ipfs/go-merkledag"
 	"github.com/ugorji/go/codec"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/db/base"
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 	_ core.CompositeDelta = (*CompositeDAGDelta)(nil)
 )
 
+// CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
 	SchemaID string
 	Priority uint64
@@ -47,6 +49,7 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
+// Marshal will serialize this delta to a byte array.
 func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	h := &codec.CborHandle{}
 	buf := bytes.NewBuffer(nil)
@@ -62,22 +65,25 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Value returns the value of this delta.
 func (delta *CompositeDAGDelta) Value() any {
 	return delta.Data
 }
 
+// Links returns the links for this delta.
 func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 	return delta.SubDAGs
 }
 
+// GetSchemaID returns the schema ID for this delta.
 func (delta *CompositeDAGDelta) GetSchemaID() string {
 	return delta.SchemaID
 }
 
-// CompositeDAG is a CRDT structure that is used
-// to track a collection of sub MerkleCRDTs.
+// CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	key      string
+	store    datastore.DSReaderWriter
+	key      core.DataStoreKey
 	schemaID string
 }
 
@@ -85,22 +91,26 @@ func NewCompositeDAG(
 	store datastore.DSReaderWriter,
 	schemaID string,
 	namespace core.Key,
-	key string,
+	key core.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
+		store:    store,
 		key:      key,
 		schemaID: schemaID,
 	}
 }
 
+// GetSchemaID returns the schema ID of the composite DAG CRDT.
 func (c CompositeDAG) ID() string {
-	return c.key
+	return c.key.ToString()
 }
 
+// GetSchemaID returns the schema ID of the composite DAG CRDT.
 func (c CompositeDAG) Value(ctx context.Context) ([]byte, error) {
 	return nil, nil
 }
 
+// Set applies a delta to the composite DAG CRDT. TBD
 func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta {
 	// make sure the links are sorted lexicographically by CID
 	sort.Slice(links, func(i, j int) bool {
@@ -113,29 +123,30 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 	}
 }
 
-// Merge implements ReplicatedData interface
-// Merge two LWWRegistry based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-// @todo
+// Merge implements ReplicatedData interface.
+// It ensures that the object marker exists for the given key.
+// If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta, id string) error {
-	// d, ok := delta.(*CompositeDAGDelta)
-	// if !ok {
-	// 	return core.ErrMismatchedMergeType
-	// }
-
-	// return reg.setValue(d.Data, d.GetPriority())
+	// ensure object marker exists
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	if err != nil {
+		return err
+	}
+	if !exists {
+		// write object marker
+		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+	}
 	return nil
 }
 
-// DeltaDecode is a typed helper to extract
+// DeltaDecode is a typed helper to extract.
 // a LWWRegDelta from a ipld.Node
 // for now let's do cbor (quick to implement)
 func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
-		return nil, errors.New("Failed to cast ipld.Node to ProtoNode")
+		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
 	}
 	data := pbNode.Data()
 	h := &codec.CborHandle{}

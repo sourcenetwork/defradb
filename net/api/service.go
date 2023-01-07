@@ -15,7 +15,7 @@ package api
 import (
 	"context"
 
-	libpeer "github.com/libp2p/go-libp2p-core/peer"
+	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,27 +37,64 @@ func NewService(peer *net.Peer) *Service {
 	return &Service{peer: peer}
 }
 
-func (s *Service) AddReplicator(
+func (s *Service) SetReplicator(
 	ctx context.Context,
-	req *pb.AddReplicatorRequest,
-) (*pb.AddReplicatorReply, error) {
-	log.Debug(ctx, "Received AddReplicator request")
+	req *pb.SetReplicatorRequest,
+) (*pb.SetReplicatorReply, error) {
+	log.Debug(ctx, "Received SetReplicator request")
 
-	collection := string(req.Collection)
-	if len(collection) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Collection can't be empty")
-	}
 	addr, err := ma.NewMultiaddrBytes(req.Addr)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pid, err := s.peer.AddReplicator(ctx, collection, addr)
+	pid, err := s.peer.SetReplicator(ctx, addr, req.Collections...)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.AddReplicatorReply{
+	return &pb.SetReplicatorReply{
 		PeerID: marshalPeerID(pid),
+	}, nil
+}
+
+func (s *Service) DeleteReplicator(
+	ctx context.Context,
+	req *pb.DeleteReplicatorRequest,
+) (*pb.DeleteReplicatorReply, error) {
+	log.Debug(ctx, "Received DeleteReplicator request")
+	err := s.peer.DeleteReplicator(ctx, libpeer.ID(req.PeerID))
+	if err != nil {
+		return nil, err
+	}
+	return &pb.DeleteReplicatorReply{
+		PeerID: req.PeerID,
+	}, nil
+}
+
+func (s *Service) GetAllReplicators(
+	ctx context.Context,
+	req *pb.GetAllReplicatorRequest,
+) (*pb.GetAllReplicatorReply, error) {
+	log.Debug(ctx, "Received GetAllReplicators request")
+
+	reps, err := s.peer.GetAllReplicators(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pbReps := []*pb.GetAllReplicatorReply_Replicators{}
+	for _, rep := range reps {
+		pbReps = append(pbReps, &pb.GetAllReplicatorReply_Replicators{
+			Info: &pb.GetAllReplicatorReply_Replicators_Info{
+				Id:    []byte(rep.Info.ID),
+				Addrs: rep.Info.Addrs[0].Bytes(),
+			},
+			Schemas: rep.Schemas,
+		})
+	}
+
+	return &pb.GetAllReplicatorReply{
+		Replicators: pbReps,
 	}, nil
 }
 

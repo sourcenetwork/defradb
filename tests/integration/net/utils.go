@@ -13,13 +13,12 @@ package net
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
-	"sync"
 	"testing"
 
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
-	"github.com/textileio/go-threads/broadcast"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
@@ -33,28 +32,24 @@ import (
 
 var (
 	log = logging.MustNewLogger("defra.test.net")
-
-	usedPorts    = make(map[int]bool)
-	portSyncLock sync.Mutex
 )
 
 const (
-	busBufferSize = 100
-
 	userCollectionGQLSchema = `
-		type users {
+		type Users {
 			Name: String
 			Email: String
 			Age: Int 
-			HeightM: Float
+			Height: Float
 			Verified: Boolean
 		}
 	`
 
-	userCollection = "users"
+	userCollection = "Users"
 )
 
 type P2PTestCase struct {
+	Query string
 	// Configuration parameters for each peer
 	NodeConfig []*config.Config
 
@@ -62,11 +57,17 @@ type P2PTestCase struct {
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodePeers map[int][]int
 
-	SeedDocuments []string
+	// List of replicators for each node.
+	// Only peers with lower index than the node can be used in the list of peers.
+	NodeReplicators map[int][]int
+
+	SeedDocuments        []string
+	DocumentsToReplicate []*client.Document
 
 	// node/dockey/values
-	Updates map[int]map[int][]string
-	Results map[int]map[int]map[string]any
+	Updates          map[int]map[int][]string
+	Results          map[int]map[int]map[string]any
+	ReplicatorResult map[int]map[string]map[string]any
 }
 
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
@@ -74,8 +75,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	var err error
 
 	log.Info(ctx, "Building new memory store")
-	bs := broadcast.NewBroadcaster(busBufferSize)
-	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithBroadcaster(bs))
+	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,9 +90,7 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	dockeys := []client.DocKey{}
 	for _, document := range seeds {
 		dockey, err := seedDocument(ctx, db, document)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		dockeys = append(dockeys, dockey)
 	}
 
@@ -102,7 +100,6 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 	n, err = node.NewNode(
 		ctx,
 		db,
-		bs,
 		cfg.NodeConfig(),
 	)
 	if err != nil {
@@ -128,6 +125,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Nod
 		return nil, nil, errors.Wrap("unable to start P2P listeners", err)
 	}
 
+	cfg.Net.P2PAddress = n.ListenAddrs()[0].String()
+
 	return n, dockeys, nil
 }
 
@@ -152,6 +151,15 @@ func seedDocument(ctx context.Context, db client.DB, document string) (client.Do
 	}
 
 	return doc.Key(), nil
+}
+
+func saveDocument(ctx context.Context, db client.DB, document *client.Document) error {
+	col, err := db.GetCollectionByName(ctx, userCollection)
+	if err != nil {
+		return err
+	}
+
+	return col.Save(ctx, document)
 }
 
 func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
@@ -209,9 +217,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
 		}
 		n, d, err := setupDefraNode(t, cfg, test.SeedDocuments)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		if i == 0 {
 			dockeys = append(dockeys, d...)
@@ -219,18 +225,22 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		nodes = append(nodes, n)
 	}
 
+	//////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////
+	// PubSub related test logic
+
 	// wait for peers to connect to each other
-	for i, n := range nodes {
-		for j, p := range nodes {
-			if i == j {
-				continue
+	if len(test.NodePeers) > 0 {
+		for i, n := range nodes {
+			for j, p := range nodes {
+				if i == j {
+					continue
+				}
+				log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
+				err := n.WaitForPubSubEvent(p.PeerID())
+				require.NoError(t, err)
+				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 			}
-			log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
-			err := n.WaitForPubSubEvent(p.PeerID())
-			if err != nil {
-				t.Fatal(err)
-			}
-			log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 		}
 	}
 
@@ -244,9 +254,8 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		for d, updates := range updateMap {
 			for _, update := range updates {
 				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", n, d))
-				if err := updateDocument(ctx, nodes[n].DB, dockeys[d], update); err != nil {
-					t.Fatal(err)
-				}
+				err := updateDocument(ctx, nodes[n].DB, dockeys[d], update)
+				require.NoError(t, err)
 
 				// wait for peers to sync
 				for n2, p := range nodes {
@@ -255,9 +264,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
 					err := p.WaitForPushLogEvent(nodes[n].PeerID())
-					if err != nil {
-						t.Fatal(err)
-					}
+					require.NoError(t, err)
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
 			}
@@ -276,16 +283,61 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			for d, results := range resultsMap {
 				for field, result := range results {
 					doc, err := getDocument(ctx, nodes[n2].DB, dockeys[d])
-					if err != nil {
-						t.Fatal(err)
-					}
+					require.NoError(t, err)
 
 					val, err := doc.Get(field)
-					if err != nil {
-						t.Fatal(err)
-					}
+					require.NoError(t, err)
 
 					assert.Equal(t, result, val)
+				}
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////
+	// Replicator related test logic
+
+	if len(test.NodeReplicators) > 0 {
+		for i, n := range nodes {
+			if reps, ok := test.NodeReplicators[i]; ok {
+				for _, r := range reps {
+					addr, err := ma.NewMultiaddr(
+						fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
+					)
+					require.NoError(t, err)
+					_, err = n.Peer.SetReplicator(ctx, addr)
+					require.NoError(t, err)
+				}
+			}
+		}
+	}
+
+	if len(test.DocumentsToReplicate) > 0 {
+		for n, reps := range test.NodeReplicators {
+			for _, doc := range test.DocumentsToReplicate {
+				err := saveDocument(ctx, nodes[n].DB, doc)
+				require.NoError(t, err)
+			}
+			for _, rep := range reps {
+				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
+				err := nodes[rep].WaitForPushLogEvent(nodes[n].PeerID())
+				require.NoError(t, err)
+				log.Info(ctx, fmt.Sprintf("Node %d synced", rep))
+
+				for dockey, results := range test.ReplicatorResult[rep] {
+					for field, result := range results {
+						d, err := client.NewDocKeyFromString(dockey)
+						require.NoError(t, err)
+
+						doc, err := getDocument(ctx, nodes[rep].DB, d)
+						require.NoError(t, err)
+
+						val, err := doc.Get(field)
+						require.NoError(t, err)
+
+						assert.Equal(t, result, val)
+					}
 				}
 			}
 		}
@@ -300,27 +352,12 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 	}
 }
 
+const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
+
 func randomNetworkingConfig() *config.Config {
-	p2pPort := newPort()
-	tcpPort := newPort()
 	cfg := config.DefaultConfig()
-	cfg.Net.P2PAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort)
-	cfg.Net.RPCAddress = fmt.Sprintf("0.0.0.0:%d", tcpPort)
-	cfg.Net.TCPAddress = fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", tcpPort)
+	cfg.Net.P2PAddress = randomMultiaddr
+	cfg.Net.RPCAddress = "0.0.0.0:0"
+	cfg.Net.TCPAddress = randomMultiaddr
 	return cfg
-}
-
-// newPort returns a port number between 9000 and 9999 and ensures
-// it hasn't already been used by the test suite.
-func newPort() int {
-	portSyncLock.Lock()
-	defer portSyncLock.Unlock()
-
-	p := rand.Intn(1000) + 9000
-	for usedPorts[p] {
-		p = rand.Intn(1000) + 9000
-	}
-	usedPorts[p] = true
-
-	return p
 }

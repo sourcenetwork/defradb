@@ -22,7 +22,7 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 		Query: `query {
 					_sum
 				}`,
-		ExpectedError: "Aggregate must be provided with a property to aggregate.",
+		ExpectedError: "aggregate must be provided with a property to aggregate",
 	}
 
 	executeTestCase(t, test)

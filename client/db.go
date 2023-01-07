@@ -13,10 +13,10 @@ package client
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/events"
 )
 
 type DB interface {
@@ -26,9 +26,8 @@ type DB interface {
 	GetCollectionByName(context.Context, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
 	GetAllCollections(ctx context.Context) ([]Collection, error)
-	GetRelationshipIdField(fieldName, targetType, thisType string) (string, error)
 
-	Root() ds.Batching
+	Root() datastore.RootStore
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
@@ -36,10 +35,27 @@ type DB interface {
 	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
 	Close(context.Context)
 
+	Events() events.Events
+
 	PrintDump(ctx context.Context) error
+
+	// SetReplicator adds a replicator to the persisted list or adds
+	// schemas if the replicator already exists.
+	SetReplicator(ctx context.Context, rep Replicator) error
+	// DeleteReplicator deletes a replicator from the persisted list
+	// or specific schemas if they are specified.
+	DeleteReplicator(ctx context.Context, rep Replicator) error
+	// GetAllReplicators returns the full list of replicators with their
+	// subscribed schemas.
+	GetAllReplicators(ctx context.Context) ([]Replicator, error)
+}
+
+type GQLResult struct {
+	Errors []any `json:"errors,omitempty"`
+	Data   any   `json:"data"`
 }
 
 type QueryResult struct {
-	Errors []any `json:"errors,omitempty"`
-	Data   any   `json:"data"`
+	GQL GQLResult
+	Pub *events.Publisher[events.Update]
 }

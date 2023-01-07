@@ -139,3 +139,38 @@ func TestQueryOneToMany(t *testing.T) {
 		executeTestCase(t, test)
 	}
 }
+
+func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "One-to-many relation query from one side with non-existant parent",
+		Query: `query {
+						book {
+							name
+							rating
+							author {
+								name
+								age
+							}
+						}
+					}`,
+		Docs: map[int][]string{
+			//books
+			0: {
+				`{
+					"name": "Painted House",
+					"rating": 4.9,
+					"author_id": "bae-41598f0c-19bc-5da6-813b-e80f14a10df3"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"name":   "Painted House",
+				"rating": 4.9,
+				"author": nil,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

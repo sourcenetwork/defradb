@@ -1,6 +1,6 @@
 package connor
 
-import "github.com/sourcenetwork/defradb/errors"
+import "github.com/sourcenetwork/defradb/client"
 
 // in will determine whether a value exists within the
 // condition's array of available values.
@@ -17,6 +17,6 @@ func in(conditions, data any) (bool, error) {
 
 		return false, nil
 	default:
-		return false, errors.New("unknown value type")
+		return false, client.NewErrUnhandledType("condition", cn)
 	}
 }

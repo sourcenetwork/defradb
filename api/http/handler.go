@@ -31,9 +31,11 @@ type handler struct {
 	options serverOptions
 }
 
-type ctxDB struct{}
-
-type ctxPeerID struct{}
+// context variables
+type (
+	ctxDB     struct{}
+	ctxPeerID struct{}
+)
 
 // DataResponse is the GQL top level object holding data for the response payload.
 type DataResponse struct {
@@ -74,6 +76,9 @@ func newHandler(db client.DB, opts serverOptions) *handler {
 
 func (h *handler) handle(f http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		if h.options.tls.HasValue() {
+			rw.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		}
 		ctx := context.WithValue(req.Context(), ctxDB{}, h.db)
 		if h.options.peerID != "" {
 			ctx = context.WithValue(ctx, ctxPeerID{}, h.options.peerID)
@@ -113,7 +118,7 @@ func sendJSON(ctx context.Context, rw http.ResponseWriter, v any, code int) {
 func dbFromContext(ctx context.Context) (client.DB, error) {
 	db, ok := ctx.Value(ctxDB{}).(client.DB)
 	if !ok {
-		return nil, errors.New("no database available")
+		return nil, ErrDatabaseNotAvailable
 	}
 
 	return db, nil

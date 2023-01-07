@@ -12,15 +12,12 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // This is the main implementation starting point for accessing the internal Document API
@@ -63,6 +60,7 @@ type Document struct {
 	isDirty bool
 }
 
+// NewDocWithKey creates a new Document with a specified key.
 func NewDocWithKey(key DocKey) *Document {
 	doc := newEmptyDoc()
 	doc.key = key
@@ -76,6 +74,7 @@ func newEmptyDoc() *Document {
 	}
 }
 
+// NewDocFromMap creates a new Document from a data map.
 func NewDocFromMap(data map[string]any) (*Document, error) {
 	var err error
 	doc := &Document{
@@ -89,7 +88,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		delete(data, "_key") // remove the key so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
-			return nil, errors.New("Provided _key in document must be a string type")
+			return nil, NewErrUnexpectedType[string]("data[_key]", k)
 		}
 		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err
@@ -126,7 +125,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 	return doc, nil
 }
 
-// NewFromJSON creates a new instance of a Document from a raw JSON object byte array
+// NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
 func NewDocFromJSON(obj []byte) (*Document, error) {
 	data := make(map[string]any)
 	err := json.Unmarshal(obj, &data)
@@ -137,31 +136,30 @@ func NewDocFromJSON(obj []byte) (*Document, error) {
 	return NewDocFromMap(data)
 }
 
+// Head returns the current head CID of the document.
 func (doc *Document) Head() cid.Cid {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	return doc.head
 }
 
+// SetHead sets the current head CID of the document.
 func (doc *Document) SetHead(head cid.Cid) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	doc.head = head
 }
 
-// Key returns the generated DocKey for this document
+// Key returns the generated DocKey for this document.
 func (doc *Document) Key() DocKey {
 	// Reading without a read-lock as we assume the DocKey is immutable
 	return doc.key
 }
 
-// Get returns the raw value for a given field
-// Since Documents are objects with potentially sub objects
-// a supplied field string can be of the form "A/B/C"
-// Where field A is an object containing a object B which has
-// a field C
-// If no matching field exists then return an empty interface
-// and an error.
+// Get returns the raw value for a given field.
+// Since Documents are objects with potentially sub objects a supplied field string can be of the
+// form "A/B/C", where field A is an object containing a object B which has a field C.
+// If no matching field exists then return an empty interface and an error.
 func (doc *Document) Get(field string) (any, error) {
 	val, err := doc.GetValue(field)
 	if err != nil {
@@ -170,7 +168,7 @@ func (doc *Document) Get(field string) (any, error) {
 	return val.Value(), nil
 }
 
-// GetValue given a field as a string, return the Value type
+// GetValue given a field as a string, return the Value type.
 func (doc *Document) GetValue(field string) (Value, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
@@ -229,17 +227,17 @@ func (doc *Document) SetWithJSON(patch []byte) error {
 	return nil
 }
 
-// Set the value of a field
+// Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
 	return doc.setAndParseType(field, value)
 }
 
-// SetAs is the same as set, but you can manually set the CRDT type
+// SetAs is the same as set, but you can manually set the CRDT type.
 func (doc *Document) SetAs(field string, value any, t CType) error {
 	return doc.setCBOR(t, field, value)
 }
 
-// Delete removes a field, and marks it to be deleted on the following db.Update() call
+// Delete removes a field, and marks it to be deleted on the following db.Update() call.
 func (doc *Document) Delete(fields ...string) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -341,7 +339,7 @@ func (doc *Document) setAndParseType(field string, value any) error {
 		}
 
 	default:
-		return errors.New(fmt.Sprintf("Unhandled type in raw JSON: %v => %T", field, val))
+		return NewErrUnhandledType(field, val)
 	}
 	return nil
 }
@@ -356,22 +354,21 @@ func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	return nil
 }
 
-// Fields gets the document fields as a map
+// Fields gets the document fields as a map.
 func (doc *Document) Fields() map[string]Field {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	return doc.fields
 }
 
-// Values gets the document values as a map
+// Values gets the document values as a map.
 func (doc *Document) Values() map[Field]Value {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 	return doc.values
 }
 
-// Bytes returns the document as a serialzed byte array
-// using CBOR encoding
+// Bytes returns the document as a serialzed byte array using CBOR encoding.
 func (doc *Document) Bytes() ([]byte, error) {
 	docMap, err := doc.toMap()
 	if err != nil {
@@ -388,21 +385,20 @@ func (doc *Document) Bytes() ([]byte, error) {
 }
 
 // String returns the document as a stringified JSON Object.
-// Note: This representation should not be used for any
-// cryptographic operations, such as signatures, or hashes
-// as it does not guarantee canonical representation or
-// ordering.
-func (doc *Document) String() string {
+// Note: This representation should not be used for any cryptographic operations,
+// such as signatures, or hashes as it does not guarantee canonical representation or ordering.
+func (doc *Document) String() (string, error) {
 	docMap, err := doc.toMap()
 	if err != nil {
-		panic(err) //should we return (string, error)?
+		return "", err
 	}
 
 	j, err := json.MarshalIndent(docMap, "", "\t")
 	if err != nil {
-		panic(err) // same as above
+		return "", err
 	}
-	return string(j)
+
+	return string(j), nil
 }
 
 // ToMap returns the document as a map[string]any
@@ -411,6 +407,7 @@ func (doc *Document) ToMap() (map[string]any, error) {
 	return doc.toMapWithKey()
 }
 
+// Clean cleans the document by removing all dirty fields.
 func (doc *Document) Clean() {
 	for _, v := range doc.Fields() {
 		val, _ := doc.GetValueWithField(v)

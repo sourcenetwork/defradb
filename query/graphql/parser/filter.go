@@ -11,57 +11,58 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 	gqlp "github.com/graphql-go/graphql/language/parser"
 	gqls "github.com/graphql-go/graphql/language/source"
+	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
-
-// Filter contains the parsed condition map to be
-// run by the Filter Evaluator.
-// @todo: Cache filter structure for faster condition
-// evaluation.
-type Filter struct {
-	// parsed filter conditions
-	Conditions map[string]any
-}
 
 // type condition
 
 // NewFilter parses the given GraphQL ObjectValue AST type
 // and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue) (*Filter, error) {
-	conditions, err := ParseConditions(stmt)
+func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (immutable.Option[request.Filter], error) {
+	conditions, err := ParseConditions(stmt, inputType)
 	if err != nil {
-		return nil, err
+		return immutable.None[request.Filter](), err
 	}
-	return &Filter{
+	return immutable.Some(request.Filter{
 		Conditions: conditions,
-	}, nil
+	}), nil
 }
 
 // NewFilterFromString creates a new filter from a string.
-func NewFilterFromString(body string) (*Filter, error) {
+func NewFilterFromString(
+	schema gql.Schema,
+	collectionType string,
+	body string,
+) (immutable.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
 	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
 	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
 	if err != nil {
-		return nil, err
+		return immutable.None[request.Filter](), err
 	}
 	obj, err := gqlp.ParseObject(p, false)
 	if err != nil {
-		return nil, err
+		return immutable.None[request.Filter](), err
 	}
 
-	return NewFilter(obj)
+	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
+	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
+	if !ok {
+		return immutable.None[request.Filter](), errors.New("couldn't find filter argument type")
+	}
+	return NewFilter(obj, filterType)
 }
 
 type parseFn func(*ast.ObjectValue) (any, error)
@@ -72,20 +73,20 @@ type parseFn func(*ast.ObjectValue) (any, error)
 // This function is mostly used by the Order parser, which needs to parse
 // conditions in the same way as the Filter object, however the order
 // of the arguments is important.
-func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]parserTypes.OrderCondition, error) {
+func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]request.OrderCondition, error) {
 	cond, err := parseConditionsInOrder(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	if v, ok := cond.([]parserTypes.OrderCondition); ok {
+	if v, ok := cond.([]request.OrderCondition); ok {
 		return v, nil
 	}
-	return nil, errors.New("Failed to parse statement")
+	return nil, errors.New("failed to parse statement")
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
-	conditions := make([]parserTypes.OrderCondition, 0)
+	conditions := make([]request.OrderCondition, 0)
 	if stmt == nil {
 		return conditions, nil
 	}
@@ -98,28 +99,28 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 		switch v := val.(type) {
 		case string: // base direction parsed (hopefully, check NameToOrderDirection)
-			dir, ok := parserTypes.NameToOrderDirection[v]
+			dir, ok := request.NameToOrderDirection[v]
 			if !ok {
-				return nil, errors.New("Invalid order direction string")
+				return nil, errors.New("invalid order direction string")
 			}
-			conditions = append(conditions, parserTypes.OrderCondition{
-				Field:     name,
+			conditions = append(conditions, request.OrderCondition{
+				Fields:    []string{name},
 				Direction: dir,
 			})
 
-		case []parserTypes.OrderCondition: // flatten and incorporate the parsed slice into our current one
+		case []request.OrderCondition: // flatten and incorporate the parsed slice into our current one
 			for _, cond := range v {
 				// prepend the current field name, to the parsed condition from the slice
 				// Eg. order: {author: {name: ASC, birthday: DESC}}
 				// This results in an array of [name, birthday] converted to
 				// [author.name, author.birthday].
 				// etc.
-				cond.Field = fmt.Sprintf("%s.%s", name, cond.Field)
+				cond.Fields = append([]string{name}, cond.Fields...)
 				conditions = append(conditions, cond)
 			}
 
 		default:
-			return nil, errors.New("Unexpected parsed type for parseConditionInOrder")
+			return nil, errors.New("unexpected parsed type for parseConditionInOrder")
 		}
 	}
 
@@ -128,8 +129,8 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 
 // parseConditions loops over the stmt ObjectValue fields, and extracts
 // all the relevant name/value pairs.
-func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
-	cond, err := parseConditions(stmt)
+func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any, error) {
+	cond, err := parseConditions(stmt, inputType)
 	if err != nil {
 		return nil, err
 	}
@@ -137,23 +138,15 @@ func ParseConditions(stmt *ast.ObjectValue) (map[string]any, error) {
 	if v, ok := cond.(map[string]any); ok {
 		return v, nil
 	}
-	return nil, errors.New("Failed to parse statement")
+	return nil, errors.New("failed to parse statement")
 }
 
-func parseConditions(stmt *ast.ObjectValue) (any, error) {
-	conditions := make(map[string]any)
-	if stmt == nil {
-		return conditions, nil
+func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {
+	val := gql.ValueFromAST(stmt, inputArg, nil)
+	if val == nil {
+		return nil, errors.New("couldn't parse conditions value from AST")
 	}
-	for _, field := range stmt.Fields {
-		name := field.Name.Value
-		val, err := parseVal(field.Value, parseConditions)
-		if err != nil {
-			return nil, err
-		}
-		conditions[name] = val
-	}
-	return conditions, nil
+	return val, nil
 }
 
 // parseVal handles all the various input types, and extracts their
@@ -194,7 +187,7 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 		return conditions, nil
 	}
 
-	return nil, errors.New("Failed to parse condition value from query filter statement")
+	return nil, errors.New("failed to parse condition value from query filter statement")
 }
 
 /*

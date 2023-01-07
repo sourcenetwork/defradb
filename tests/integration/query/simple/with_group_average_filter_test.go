@@ -112,6 +112,65 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTimeFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, no children, average on rendered, unfiltered group",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
+						_group {
+							Age
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 34,
+					"CreatedAt": "2019-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "John",
+					"Age": 32,
+					"CreatedAt": "2018-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19,
+					"CreatedAt": "2011-07-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_avg": float64(33),
+				"_group": []map[string]any{
+					{
+						"Age": uint64(32),
+					},
+					{
+						"Age": uint64(34),
+					},
+				},
+			},
+			{
+				"Name": "Alice",
+				"_avg": float64(0),
+				"_group": []map[string]any{
+					{
+						"Age": uint64(19),
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, matching filtered group",
@@ -154,6 +213,58 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 						"Age": uint64(34),
 					},
 				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingDateTimeFilter(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by string, no children, average on rendered, matching datetime filtered group",
+		Query: `query {
+					users(groupBy: [Name]) {
+						Name
+						_avg(_group: {field: Age, filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}})
+						_group(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56.647Z"}}) {
+							Age
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 34,
+					"CreatedAt": "2017-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "John",
+					"Age": 32,
+					"CreatedAt": "2011-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"Age": 19,
+					"CreatedAt": "2010-07-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_avg": float64(34),
+				"_group": []map[string]any{
+					{
+						"Age": uint64(34),
+					},
+				},
+			},
+			{
+				"Name":   "Alice",
+				"_avg":   float64(0),
+				"_group": []map[string]any{},
 			},
 		},
 	}

@@ -13,7 +13,7 @@ package types
 import (
 	gql "github.com/graphql-go/graphql"
 
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 	// Any self referential type needs to be initalized
 	// inside the init() func
 	CommitObject = gql.NewObject(gql.ObjectConfig{
-		Name: "Commit",
+		Name: request.CommitTypeName,
 		Fields: gql.Fields{
 			"height": &gql.Field{
 				Type: gql.Int,
@@ -89,9 +89,9 @@ var (
 		},
 	})
 
-	AllCommitsOrderArg = gql.NewInputObject(
+	CommitsOrderArg = gql.NewInputObject(
 		gql.InputObjectConfig{
-			Name: "allCommitsOrderArg",
+			Name: "commitsOrderArg",
 			Fields: gql.InputObjectConfigFieldMap{
 				"height": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
@@ -103,16 +103,34 @@ var (
 		},
 	)
 
-	QueryAllCommits = &gql.Field{
-		Name: "allCommits",
+	commitFields = gql.NewEnum(
+		gql.EnumConfig{
+			Name: "commitFields",
+			Values: gql.EnumValueConfigMap{
+				"height": &gql.EnumValueConfig{Value: "height"},
+				"cid":    &gql.EnumValueConfig{Value: "cid"},
+			},
+		},
+	)
+
+	QueryCommits = &gql.Field{
+		Name: "commits",
 		Type: gql.NewList(CommitObject),
 		Args: gql.FieldConfigArgument{
-			"dockey":                 NewArgConfig(gql.NewNonNull(gql.ID)),
-			"field":                  NewArgConfig(gql.String),
-			"order":                  NewArgConfig(AllCommitsOrderArg),
-			"cid":                    NewArgConfig(gql.ID),
-			parserTypes.LimitClause:  NewArgConfig(gql.Int),
-			parserTypes.OffsetClause: NewArgConfig(gql.Int),
+			"dockey": NewArgConfig(gql.ID),
+			"field":  NewArgConfig(gql.String),
+			"order":  NewArgConfig(CommitsOrderArg),
+			"cid":    NewArgConfig(gql.ID),
+			"groupBy": NewArgConfig(
+				gql.NewList(
+					gql.NewNonNull(
+						commitFields,
+					),
+				),
+			),
+			request.LimitClause:  NewArgConfig(gql.Int),
+			request.OffsetClause: NewArgConfig(gql.Int),
+			request.DepthClause:  NewArgConfig(gql.Int),
 		},
 	}
 
@@ -122,14 +140,6 @@ var (
 		Args: gql.FieldConfigArgument{
 			"dockey": NewArgConfig(gql.NewNonNull(gql.ID)),
 			"field":  NewArgConfig(gql.String),
-		},
-	}
-
-	QueryCommit = &gql.Field{
-		Name: "commit",
-		Type: CommitObject,
-		Args: gql.FieldConfigArgument{
-			"cid": NewArgConfig(gql.NewNonNull(gql.ID)),
 		},
 	}
 )

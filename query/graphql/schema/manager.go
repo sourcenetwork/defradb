@@ -103,9 +103,8 @@ func defaultQueryType() *gql.Object {
 			},
 
 			// database API queries
-			schemaTypes.QueryAllCommits.Name:    schemaTypes.QueryAllCommits,
+			schemaTypes.QueryCommits.Name:       schemaTypes.QueryCommits,
 			schemaTypes.QueryLatestCommits.Name: schemaTypes.QueryLatestCommits,
-			schemaTypes.QueryCommit.Name:        schemaTypes.QueryCommit,
 		},
 	})
 }
@@ -170,7 +169,7 @@ func defaultTypes() []gql.Type {
 		schemaTypes.StringOperatorBlock,
 		schemaTypes.NotNullstringOperatorBlock,
 
-		schemaTypes.AllCommitsOrderArg,
+		schemaTypes.CommitsOrderArg,
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 		schemaTypes.DeltaObject,

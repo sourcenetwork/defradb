@@ -13,9 +13,19 @@ Package core provides commonly shared interfaces and building blocks.
 */
 package core
 
+import (
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client/request"
+)
+
+// DocKeyFieldIndex is the index of the key field in a document.
 const DocKeyFieldIndex int = 0
 
+// DocFields is a slice of fields in a document.
 type DocFields []any
+
+// Doc is a document.
 type Doc struct {
 	// If true, this Doc will not be rendered, but will still be passed through
 	// the plan graph just like any other document.
@@ -63,6 +73,7 @@ func (d *Doc) Clone() Doc {
 	return cp
 }
 
+// RenderKey is a key that should be rendered into the document.
 type RenderKey struct {
 	// The field index to be rendered.
 	Index int
@@ -71,7 +82,19 @@ type RenderKey struct {
 	Key string
 }
 
+type mappingTypeInfo struct {
+	// The index at which the type name is to be held
+	Index int
+
+	// The name of the host type
+	Name string
+}
+
+// DocumentMapping is a mapping of a document.
 type DocumentMapping struct {
+	// The type information for the object, if provided.
+	typeInfo immutable.Option[mappingTypeInfo]
+
 	// The set of fields that should be rendered.
 	//
 	// Fields not in this collection will not be rendered to the consumer.
@@ -109,6 +132,7 @@ func NewDocumentMapping() *DocumentMapping {
 // CloneWithoutRender deep copies the source mapping skipping over the RenderKeys.
 func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	result := DocumentMapping{
+		typeInfo:      source.typeInfo,
 		IndexesByName: make(map[string][]int, len(source.IndexesByName)),
 		nextIndex:     source.nextIndex,
 		ChildMappings: make([]*DocumentMapping, len(source.ChildMappings)),
@@ -188,7 +212,11 @@ func (mapping *DocumentMapping) ToMap(doc Doc) map[string]any {
 			innerMapping := mapping.ChildMappings[renderKey.Index]
 			renderValue = innerMapping.ToMap(innerV)
 		default:
-			renderValue = innerV
+			if mapping.typeInfo.HasValue() && renderKey.Index == mapping.typeInfo.Value().Index {
+				renderValue = mapping.typeInfo.Value().Name
+			} else {
+				renderValue = innerV
+			}
 		}
 		mappedDoc[renderKey.Key] = renderValue
 	}
@@ -204,6 +232,16 @@ func (mapping *DocumentMapping) Add(index int, name string) {
 	if index >= mapping.nextIndex {
 		mapping.nextIndex = index + 1
 	}
+}
+
+// SetTypeName sets the type name for this mapping.
+func (mapping *DocumentMapping) SetTypeName(typeName string) {
+	index := mapping.GetNextIndex()
+	mapping.Add(index, request.TypeNameFieldName)
+	mapping.typeInfo = immutable.Some(mappingTypeInfo{
+		Index: index,
+		Name:  typeName,
+	})
 }
 
 // SetChildAt sets the given child mapping at the given index.

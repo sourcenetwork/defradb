@@ -60,6 +60,50 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children",
+		Query: `query {
+					users(groupBy: [CreatedAt]) {
+						CreatedAt
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"CreatedAt": "2011-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Bob",
+					"CreatedAt": "2011-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Carlo",
+					"CreatedAt": "2012-07-23T03:46:56.647Z"
+				}`,
+				`{
+					"Name": "Alice",
+					"CreatedAt": "2013-07-23T03:46:56.647Z"
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"CreatedAt": "2013-07-23T03:46:56.647Z",
+			},
+			{
+				"CreatedAt": "2011-07-23T03:46:56.647Z",
+			},
+			{
+				"CreatedAt": "2012-07-23T03:46:56.647Z",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 	test := testUtils.QueryTestCase{
 		Description: "Simple query with group by string, child string",
@@ -545,6 +589,22 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 				},
 			},
 		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple query with group by number, no children",
+		Query: `query {
+					users(groupBy: [Age]) {
+						Age
+						Name
+					}
+				}`,
+		Docs:          map[int][]string{},
+		ExpectedError: "cannot select a non-group-by field at group-level",
 	}
 
 	executeTestCase(t, test)

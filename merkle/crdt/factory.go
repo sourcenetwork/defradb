@@ -13,13 +13,8 @@ package crdt
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	corenet "github.com/sourcenetwork/defradb/core/net"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-var (
-	ErrFactoryTypeNoExist = errors.New("No such factory for the given type exists")
+	"github.com/sourcenetwork/defradb/events"
 )
 
 // MerkleCRDTInitFn instantiates a MerkleCRDT with a given key.
@@ -30,7 +25,7 @@ type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 type MerkleCRDTFactory func(
 	mstore datastore.MultiStore,
 	schemaID string,
-	bs corenet.Broadcaster,
+	uCh events.UpdateChannel,
 ) MerkleCRDTInitFn
 
 // Factory is a helper utility for instantiating new MerkleCRDTs.
@@ -68,7 +63,7 @@ func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 // supplied with all the current stores (passed in as a datastore.MultiStore object).
 func (factory Factory) Instance(
 	schemaID string,
-	bs corenet.Broadcaster,
+	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
 ) (MerkleCRDT, error) {
@@ -78,7 +73,7 @@ func (factory Factory) Instance(
 	if err != nil {
 		return nil, err
 	}
-	return (*fn)(factory, schemaID, bs)(key), nil
+	return (*fn)(factory, schemaID, uCh)(key), nil
 }
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
@@ -86,7 +81,7 @@ func (factory Factory) Instance(
 func (factory Factory) InstanceWithStores(
 	store datastore.MultiStore,
 	schemaID string,
-	bs corenet.Broadcaster,
+	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
 ) (MerkleCRDT, error) {
@@ -95,7 +90,7 @@ func (factory Factory) InstanceWithStores(
 		return nil, err
 	}
 
-	return (*fn)(store, schemaID, bs)(key), nil
+	return (*fn)(store, schemaID, uCh)(key), nil
 }
 
 func (factory Factory) getRegisteredFactory(t client.CType) (*MerkleCRDTFactory, error) {

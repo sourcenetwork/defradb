@@ -12,18 +12,30 @@ package http
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var env = os.Getenv("DEFRA_ENV")
 
+// Errors returnable from this package.
+//
+// This list is incomplete. Undefined errors may also be returned.
+// Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	errNoListener = errors.New("cannot serve with no listener")
-	errSchema     = errors.New("base must start with the http or https scheme")
+	ErrNoListener           = errors.New("cannot serve with no listener")
+	ErrSchema               = errors.New("base must start with the http or https scheme")
+	ErrDatabaseNotAvailable = errors.New("no database available")
+	ErrFormNotSupported     = errors.New("content type application/x-www-form-urlencoded not yet supported")
+	ErrBodyEmpty            = errors.New("body cannot be empty")
+	ErrMissingGQLQuery      = errors.New("missing GraphQL query")
+	ErrPeerIdUnavailable    = errors.New("no peer ID available. P2P might be disabled")
+	ErrStreamingUnsupported = errors.New("streaming unsupported")
+	ErrNoEmail              = errors.New("email address must be specified for tls with autocert")
 )
 
 // ErrorResponse is the GQL top level object holding error items for the response payload.
@@ -31,7 +43,7 @@ type ErrorResponse struct {
 	Errors []ErrorItem `json:"errors"`
 }
 
-// ErrorItem hold an error message and extensions that might be pertinent to the request
+// ErrorItem hold an error message and extensions that might be pertinent to the request.
 type ErrorItem struct {
 	Message    string     `json:"message"`
 	Extensions extensions `json:"extensions,omitempty"`

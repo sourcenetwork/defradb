@@ -119,7 +119,7 @@ linters:
     - forbidigo
     - goconst
     - gofmt
-    - goheader
+    # - goheader
     - goimports
     - gosimple
     - govet
@@ -331,6 +331,35 @@ linters-settings:
         severity: error
       - name: use-any
         severity: error
+      - name: error-strings
+        severity: error
+      - name: string-format
+        severity: error
+        arguments:
+          - - 'errors.New'
+            - '/^([^A-Z]|$)/'
+            - must not start with a capital letter
+          - - 'errors.New'
+            - '/(^|[^\.!?])$/'
+            - must not end in punctuation
+          - - 'fmt.Errorf'
+            - '/^([^A-Z]|$)/'
+            - must not start with a capital letter
+          - - 'fmt.Errorf'
+            - '/(^|[^\.!?])$/'
+            - must not end in punctuation
+          - - 'errors.Wrap'
+            - '/^([^A-Z]|$)/'
+            - must not start with a capital letter
+          - - 'errors.Wrap'
+            - '/(^|[^\.!?])$/'
+            - must not end in punctuation
+          - - 'errors.WithStack'
+            - '/^([^A-Z]|$)/'
+            - must not start with a capital letter
+          - - 'errors.WithStack'
+            - '/(^|[^\.!?])$/'
+            - must not end in punctuation
 
   staticcheck:
     # Select the Go version to target.

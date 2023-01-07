@@ -22,8 +22,6 @@ import (
 type Txn interface {
 	MultiStore
 
-	IsBatch() bool
-
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
@@ -41,7 +39,6 @@ type Txn interface {
 type txn struct {
 	t ds.Txn
 	MultiStore
-	isBatch bool
 
 	successFns []func()
 	errorFns   []func()
@@ -49,7 +46,8 @@ type txn struct {
 
 var _ Txn = (*txn)(nil)
 
-func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (Txn, error) {
+// NewTxnFrom returns a new Txn from the rootstore.
+func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (Txn, error) {
 	// check if our datastore natively supports iterable transaction, transactions or batching
 	if iterableTxnStore, ok := rootstore.(iterable.IterableTxnDatastore); ok {
 		rootTxn, err := iterableTxnStore.NewIterableTransaction(ctx, readonly)
@@ -60,32 +58,14 @@ func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (Txn,
 		return &txn{
 			rootTxn,
 			multistore,
-			false,
 			[]func(){},
 			[]func(){},
 		}, nil
 	}
 
-	var rootTxn ds.Txn
-	var err error
-	var isBatch bool
-	if txnStore, ok := rootstore.(ds.TxnDatastore); ok {
-		rootTxn, err = txnStore.NewTransaction(ctx, readonly)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		batcher, err := rootstore.Batch(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// hide a ds.Batching store as a ds.Txn
-		rootTxn = ShimBatcherTxn{
-			Read:  rootstore,
-			Batch: batcher,
-		}
-		isBatch = true
+	rootTxn, err := rootstore.NewTransaction(ctx, readonly)
+	if err != nil {
+		return nil, err
 	}
 
 	root := AsDSReaderWriter(ShimTxnStore{rootTxn})
@@ -93,12 +73,12 @@ func NewTxnFrom(ctx context.Context, rootstore ds.Batching, readonly bool) (Txn,
 	return &txn{
 		rootTxn,
 		multistore,
-		isBatch,
 		[]func(){},
 		[]func(){},
 	}, nil
 }
 
+// Commit finalizes a transaction, attempting to commit it to the Datastore.
 func (t *txn) Commit(ctx context.Context) error {
 	if err := t.t.Commit(ctx); err != nil {
 		t.runErrorFns(ctx)
@@ -108,10 +88,12 @@ func (t *txn) Commit(ctx context.Context) error {
 	return nil
 }
 
+// Discard throws away changes recorded in a transaction without committing.
 func (t *txn) Discard(ctx context.Context) {
 	t.t.Discard(ctx)
 }
 
+// OnSuccess registers a function to be called when the transaction is committed.
 func (txn *txn) OnSuccess(fn func()) {
 	if fn == nil {
 		return
@@ -119,6 +101,7 @@ func (txn *txn) OnSuccess(fn func()) {
 	txn.successFns = append(txn.successFns, fn)
 }
 
+// OnError registers a function to be called when the transaction is rolled back.
 func (txn *txn) OnError(fn func()) {
 	if fn == nil {
 		return
@@ -138,66 +121,18 @@ func (txn *txn) runSuccessFns(ctx context.Context) {
 	}
 }
 
-/*
-// Systemstore returns the txn wrapped as a systemstore under the /system namespace
-func (t *txn) Systemstore() DSReaderWriter {
-	return t.systemstore
-}
-
-// Datastore returns the txn wrapped as a datastore under the /data namespace
-func (t *txn) Datastore() DSReaderWriter {
-	return t.datastore
-}
-
-// Headstore returns the txn wrapped as a headstore under the /heads namespace
-func (t *txn) Headstore() DSReaderWriter {
-	return t.headstore
-}
-
-// DAGstore returns the txn wrapped as a blockstore for a DAGStore under the /blocks namespace
-func (t *txn) DAGstore() DAGStore {
-	return t.dagstore
-}
-
-// Rootstore returns the underlying txn as a DSReaderWriter to implement
-// the MultiStore interface
-func (t *txn) Rootstore() DSReaderWriter {
-	return t.IterableTxn
-}*/
-
-func (txn *txn) IsBatch() bool {
-	return txn.isBatch
-}
-
-// func (txn *txn) Commit(ctx context.Context) error {
-// 	if err := txn.IterableTxn.Commit(ctx); err != nil {
-// 		txn.runErrorFns(ctx)
-// 		return err
-// 	}
-// 	txn.runSuccessFns(ctx)
-// 	return nil
-// }
-
-// Shim to make ds.Txn support ds.Datastore
+// Shim to make ds.Txn support ds.Datastore.
 type ShimTxnStore struct {
 	ds.Txn
 }
 
+// Sync executes the transaction.
 func (ts ShimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
 	return ts.Txn.Commit(ctx)
 }
 
+// Close discards the transaction.
 func (ts ShimTxnStore) Close() error {
 	ts.Discard(context.TODO())
 	return nil
-}
-
-// shim to make ds.Batch implement ds.Datastore
-type ShimBatcherTxn struct {
-	ds.Read
-	ds.Batch
-}
-
-func (ShimBatcherTxn) Discard(_ context.Context) {
-	// noop
 }

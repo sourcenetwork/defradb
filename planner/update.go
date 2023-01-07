@@ -1,0 +1,150 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package planner
+
+import (
+	"encoding/json"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/planner/mapper"
+)
+
+type updateNode struct {
+	documentIterator
+	docMapper
+
+	p *Planner
+
+	collection client.Collection
+
+	filter *mapper.Filter
+	ids    []string
+
+	patch string
+
+	isUpdating bool
+
+	results planNode
+}
+
+// Next only returns once.
+func (n *updateNode) Next() (bool, error) {
+	if n.isUpdating {
+		for {
+			next, err := n.results.Next()
+			if err != nil {
+				return false, err
+			}
+			if !next {
+				break
+			}
+
+			n.currentValue = n.results.Value()
+			key, err := client.NewDocKeyFromString(n.currentValue.GetKey())
+			if err != nil {
+				return false, err
+			}
+			_, err = n.collection.UpdateWithKey(n.p.ctx, key, n.patch)
+			if err != nil {
+				return false, err
+			}
+		}
+		n.isUpdating = false
+
+		// Re-init the results node, so that they can be properly yielded with the updated
+		// values, as well as any formatting (e.g. aggregates, groupings, etc)
+		err := n.results.Init()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	next, err := n.results.Next()
+	if err != nil {
+		return false, err
+	}
+	if !next {
+		return false, nil
+	}
+
+	n.currentValue = n.results.Value()
+	return true, nil
+}
+
+func (n *updateNode) Kind() string { return "updateNode" }
+
+func (n *updateNode) Spans(spans core.Spans) { n.results.Spans(spans) }
+
+func (n *updateNode) Init() error { return n.results.Init() }
+
+func (n *updateNode) Start() error {
+	return n.results.Start()
+}
+
+func (n *updateNode) Close() error {
+	return n.results.Close()
+}
+
+func (n *updateNode) Source() planNode { return n.results }
+
+// Explain method returns a map containing all attributes of this node that
+// are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
+func (n *updateNode) Explain() (map[string]any, error) {
+	explainerMap := map[string]any{}
+
+	// Add the document id(s) that request wants to update.
+	explainerMap[idsLabel] = n.ids
+
+	// Add the filter attribute if it exists, otherwise have it nil.
+	if n.filter == nil || n.filter.ExternalConditions == nil {
+		explainerMap[filterLabel] = nil
+	} else {
+		explainerMap[filterLabel] = n.filter.ExternalConditions
+	}
+
+	// Add the attribute that represents the patch to update with.
+	data := map[string]any{}
+	err := json.Unmarshal([]byte(n.patch), &data)
+	if err != nil {
+		return nil, err
+	}
+	explainerMap[dataLabel] = data
+
+	return explainerMap, nil
+}
+
+func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
+	update := &updateNode{
+		p:          p,
+		filter:     parsed.Filter,
+		ids:        parsed.DocKeys.Value(),
+		isUpdating: true,
+		patch:      parsed.Data,
+		docMapper:  docMapper{&parsed.DocumentMapping},
+	}
+
+	// get collection
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	if err != nil {
+		return nil, err
+	}
+	update.collection = col.WithTxn(p.txn)
+
+	// create the results Select node
+	resultsNode, err := p.Select(&parsed.Select)
+	if err != nil {
+		return nil, err
+	}
+	update.results = resultsNode
+
+	return update, nil
+}

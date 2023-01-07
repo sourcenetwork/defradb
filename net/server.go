@@ -19,8 +19,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	format "github.com/ipfs/go-ipld-format"
-	"github.com/libp2p/go-libp2p-core/event"
-	libpeer "github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/event"
+	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	rpc "github.com/textileio/go-libp2p-pubsub-rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -74,7 +74,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 		log.Debug(p.ctx, "Getting all existing DocKey...")
 		keyResults, err := s.listAllDocKeys()
 		if err != nil {
-			return nil, errors.Wrap("Failed to get DocKeys for pubsub topic registration", err)
+			return nil, errors.Wrap("failed to get DocKeys for pubsub topic registration", err)
 		}
 
 		i := 0
@@ -155,7 +155,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 	}
 
-	var getter format.NodeGetter = s.peer.ds
+	var getter format.NodeGetter = s.peer
 	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
 		log.Debug(ctx, "Upgrading DAGSyncer with a session")
 		getter = sessionMaker.Session(ctx)
@@ -164,7 +164,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// handleComposite
 	nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
 	if err != nil {
-		return nil, errors.Wrap("Failed to decode block to ipld.Node", err)
+		return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 	}
 	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
 	if err != nil {

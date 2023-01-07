@@ -15,6 +15,7 @@ import (
 	mh "github.com/multiformats/go-multihash"
 )
 
+// NewSHA256CidV1 returns a new CIDv1 with the SHA256 multihash.
 func NewSHA256CidV1(data []byte) (cid.Cid, error) {
 	pref := cid.Prefix{
 		Version:  1,

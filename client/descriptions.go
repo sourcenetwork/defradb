@@ -14,8 +14,7 @@ import (
 	"fmt"
 )
 
-// CollectionDescription describes a Collection and
-// all its associated metadata
+// CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
 	Name   string
 	ID     uint32
@@ -24,11 +23,12 @@ type CollectionDescription struct {
 	Indexes []IndexDescription
 }
 
-// IDString returns the collection ID as a string
+// IDString returns the collection ID as a string.
 func (col CollectionDescription) IDString() string {
 	return fmt.Sprint(col.ID)
 }
 
+// GetField returns the field of the given name.
 func (col CollectionDescription) GetField(name string) (FieldDescription, bool) {
 	if !col.Schema.IsEmpty() {
 		for _, field := range col.Schema.Fields {
@@ -40,12 +40,24 @@ func (col CollectionDescription) GetField(name string) (FieldDescription, bool) 
 	return FieldDescription{}, false
 }
 
+// GetRelation returns the field that supports the relation of the given name.
+func (col CollectionDescription) GetRelation(name string) (FieldDescription, bool) {
+	if !col.Schema.IsEmpty() {
+		for _, field := range col.Schema.Fields {
+			if field.RelationName == name {
+				return field, true
+			}
+		}
+	}
+	return FieldDescription{}, false
+}
+
+// GetPrimaryIndex returns the primary index of the collection.
 func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
 	return col.Indexes[0]
 }
 
-// IndexDescription describes an Index on a Collection
-// and its associated metadata.
+// IndexDescription describes an Index on a Collection and its associated metadata.
 type IndexDescription struct {
 	Name     string
 	ID       uint32
@@ -81,10 +93,12 @@ type IndexDescription struct {
 	RelationType string
 }
 
+// IDString returns the index ID as a string.
 func (index IndexDescription) IDString() string {
 	return fmt.Sprint(index.ID)
 }
 
+// SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
 	ID   uint32
 	Name string
@@ -94,11 +108,12 @@ type SchemaDescription struct {
 	Fields   []FieldDescription
 }
 
-//IsEmpty returns true if the SchemaDescription is empty and uninitialized
+// IsEmpty returns true if the SchemaDescription is empty and uninitialized
 func (sd SchemaDescription) IsEmpty() bool {
 	return len(sd.Fields) == 0
 }
 
+// GetFieldKey returns the field ID for the given field name.
 func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	for _, field := range sd.Fields {
 		if field.Name == fieldName {
@@ -108,9 +123,10 @@ func (sd SchemaDescription) GetFieldKey(fieldName string) uint32 {
 	return uint32(0)
 }
 
+// FieldKind describes the type of a field.
 type FieldKind uint8
 
-// Note: These values are serialized and persisted in the database, avoid modifying existing values
+// Note: These values are serialized and persisted in the database, avoid modifying existing values.
 const (
 	FieldKind_None         FieldKind = 0
 	FieldKind_DocKey       FieldKind = 1
@@ -121,8 +137,8 @@ const (
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
 	FieldKind_DECIMAL      FieldKind = 8
-	FieldKind_DATE         FieldKind = 9
-	FieldKind_TIMESTAMP    FieldKind = 10
+	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
+	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
 	FieldKind_BYTES        FieldKind = 13
@@ -145,6 +161,7 @@ const (
 	FieldKind_NILLABLE_STRING_ARRAY FieldKind = 21
 )
 
+// RelationType describes the type of relation between two types.
 type RelationType uint8
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values
@@ -159,12 +176,14 @@ const (
 	Relation_Type_Primary     RelationType = 128 // 0b1000 0000 Primary reference entity on relation
 )
 
+// FieldID is a unique identifier for a field in a schema.
 type FieldID uint32
 
 func (f FieldID) String() string {
 	return fmt.Sprint(uint32(f))
 }
 
+// FieldDescription describes a field on a Schema and its associated metadata.
 type FieldDescription struct {
 	Name         string
 	ID           FieldID
@@ -180,11 +199,13 @@ type FieldDescription struct {
 	// avoid collision.
 }
 
+// IsObject returns true if this field is an object type.
 func (f FieldDescription) IsObject() bool {
 	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
+// IsObjectArray returns true if this field is an object array type.
 func (f FieldDescription) IsObjectArray() bool {
 	return (f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
@@ -194,6 +215,7 @@ func (f FieldDescription) IsPrimaryRelation() bool {
 	return f.RelationType > 0 && f.RelationType&Relation_Type_Primary == 0
 }
 
+// IsSet returns true if the target relation type is set.
 func (m RelationType) IsSet(target RelationType) bool {
 	return m&target > 0
 }

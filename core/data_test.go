@@ -27,7 +27,7 @@ func TestMergeAscending_ReturnsEmpty_GivenEmpty(t *testing.T) {
 func TestMergeAscending_ReturnsSingle_GivenSingle(t *testing.T) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
-	input := []Span{NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1))}
+	input := []Span{NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1))}
 
 	result := MergeAscending(input)
 
@@ -43,8 +43,8 @@ func TestMergeAscending_ReturnsSecondBeforeFirst_GivenKeysInReverseOrder(t *test
 	end2 := "/p/0/0/k2"
 
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -65,9 +65,9 @@ func TestMergeAscending_ReturnsItemsInOrder_GivenKeysInMixedOrder(t *testing.T) 
 	end3 := "/p/0/0/k5"
 
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
 	}
 
 	result := MergeAscending(input)
@@ -88,8 +88,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqualToStart(t *testing
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k3"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -105,8 +105,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentToStart(t *test
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k2"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -122,8 +122,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithin(t *testing.T) {
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k3.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -139,8 +139,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithin(t *testing.T) 
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k2.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -156,8 +156,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndWithinEndPrefix(t *test
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k4.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -173,8 +173,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndWithinEndPrefix(t *te
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k3.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -190,8 +190,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndEqual(t *testing.T) {
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k4"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -207,8 +207,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndBefore(t *te
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k4"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -224,8 +224,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartBeforeEndAdjacentAndGreater(t *t
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -241,8 +241,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndEqual(t *testing.T) {
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k3"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -258,8 +258,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndBefore(t *
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k2"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -275,8 +275,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartPrefixesEndAdjacentAndAfter(t *t
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k4"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -298,11 +298,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenSpanCoveringMiddleSpans(t 
 	start5 := "/p/0/0/k4"
 	end5 := "/p/0/0/ka"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -323,8 +323,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithin(t *testing.T) {
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k1.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -340,8 +340,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartEqualEndWithinEndPrefix(t *testi
 	start2 := "/p/0/0/k1"
 	end2 := "/p/0/0/k2.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -355,8 +355,8 @@ func TestMergeAscending_ReturnsSingle_GivenDuplicates(t *testing.T) {
 	start1 := "/p/0/0/k1"
 	end1 := "/p/0/0/k2"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
 	}
 
 	result := MergeAscending(input)
@@ -372,8 +372,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithin(t *testing.T) {
 	start2 := "/p/0/0/k1.2"
 	end2 := "/p/0/0/k1.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -389,8 +389,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndWithinEndPrefix(t *test
 	start2 := "/p/0/0/k1.2"
 	end2 := "/p/0/0/k2.5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -406,8 +406,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndEqual(t *testing.T) {
 	start2 := "/p/0/0/k1.2"
 	end2 := "/p/0/0/k2"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -423,8 +423,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndBefore(t *te
 	start2 := "/p/0/0/k1.2"
 	end2 := "/p/0/0/k2"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -440,8 +440,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartWithinEndAdjacentAndAfter(t *tes
 	start2 := "/p/0/0/k1.2"
 	end2 := "/p/0/0/k4"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -465,11 +465,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualEndAfterSpanCove
 	start5 := "/p/0/0/k4" // equal to start2
 	end5 := "/p/0/0/ka"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -498,11 +498,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartWithinEndAfterSpanCov
 	start5 := "/p/0/0/k4.5" // within span2
 	end5 := "/p/0/0/ka"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -530,11 +530,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartEqualToEndEndAfterSpa
 	start5 := "/p/0/0/k5" // span2's end
 	end5 := "/p/0/0/ka"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -562,11 +562,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndBeforeEndE
 	start5 := "/p/0/0/k5" // adjacent but before span2's end
 	end5 := "/p/0/0/kb"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -594,11 +594,11 @@ func TestMergeAscending_ReturnsMiddleSpansMerged_GivenStartAdjacentAndAfterEndEn
 	start5 := "/p/0/0/k6" // adjacent and after span2's end
 	end5 := "/p/0/0/kb"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
-		NewSpan(NewDataStoreKey(start3), NewDataStoreKey(end3)),
-		NewSpan(NewDataStoreKey(start4), NewDataStoreKey(end4)),
-		NewSpan(NewDataStoreKey(start5), NewDataStoreKey(end5)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start3), MustNewDataStoreKey(end3)),
+		NewSpan(MustNewDataStoreKey(start4), MustNewDataStoreKey(end4)),
+		NewSpan(MustNewDataStoreKey(start5), MustNewDataStoreKey(end5)),
 	}
 
 	result := MergeAscending(input)
@@ -618,8 +618,8 @@ func TestMergeAscending_ReturnsTwoItems_GivenSecondItemAfterFirst(t *testing.T) 
 	start2 := "/p/0/0/k4"
 	end2 := "/p/0/0/k5"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -637,8 +637,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndEqual(t *
 	start2 := "/p/0/0/k5"
 	end2 := "/p/0/0/k6"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -656,8 +656,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAdjacentA
 	start2 := "/p/0/0/k5"
 	end2 := "/p/0/0/k7"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -673,8 +673,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndBeforeEndEndAfter(t *
 	start2 := "/p/0/0/k5"
 	end2 := "/p/0/0/k8"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)
@@ -690,8 +690,8 @@ func TestMergeAscending_ReturnsSingle_GivenStartAdjacentAndAfterEndEndAfter(t *t
 	start2 := "/p/0/0/k7"
 	end2 := "/p/0/0/k8"
 	input := []Span{
-		NewSpan(NewDataStoreKey(start1), NewDataStoreKey(end1)),
-		NewSpan(NewDataStoreKey(start2), NewDataStoreKey(end2)),
+		NewSpan(MustNewDataStoreKey(start1), MustNewDataStoreKey(end1)),
+		NewSpan(MustNewDataStoreKey(start2), MustNewDataStoreKey(end2)),
 	}
 
 	result := MergeAscending(input)

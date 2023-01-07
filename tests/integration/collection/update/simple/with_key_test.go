@@ -63,7 +63,7 @@ func TestUpdateWithKey(t *testing.T) {
 					},
 				},
 			},
-			ExpectedError: "The updater of a document is of invalid type",
+			ExpectedError: "the updater of a document is of invalid type",
 		}, {
 			Description: "Test update users with key and patch updator (not implemented so no change)",
 			Docs: map[string][]string{

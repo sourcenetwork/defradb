@@ -18,8 +18,6 @@ import (
 	"github.com/ipfs/go-cid"
 	mbase "github.com/multiformats/go-multibase"
 	uuid "github.com/satori/go.uuid"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // DocKey versions.
@@ -37,7 +35,7 @@ var (
 	SDNNamespaceV0 = uuid.Must(uuid.FromString("c94acbfa-dd53-40d0-97f3-29ce16c333fc"))
 )
 
-// DocKey is the root key identifier for documents in DefraDB
+// DocKey is the root key identifier for documents in DefraDB.
 type DocKey struct {
 	version uint16
 	uuid    uuid.UUID
@@ -53,10 +51,11 @@ func NewDocKeyV0(dataCID cid.Cid) DocKey {
 	}
 }
 
+// NewDocKeyFromString creates a new DocKey from a string.
 func NewDocKeyFromString(key string) (DocKey, error) {
 	parts := strings.SplitN(key, "-", 2)
 	if len(parts) != 2 {
-		return DocKey{}, errors.New("Malformed DocKey, missing either version or cid")
+		return DocKey{}, ErrMalformedDocKey
 	}
 	versionStr := parts[0]
 	_, data, err := mbase.Decode(versionStr)
@@ -69,7 +68,7 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 		return DocKey{}, err
 	}
 	if _, ok := ValidDocKeyVersions[uint16(version)]; !ok {
-		return DocKey{}, errors.New("Invalid DocKey version")
+		return DocKey{}, ErrInvalidDocKeyVersion
 	}
 
 	uuid, err := uuid.FromString(parts[1])
@@ -83,12 +82,12 @@ func NewDocKeyFromString(key string) (DocKey, error) {
 	}, nil
 }
 
-// UUID returns the doc key in UUID form
+// UUID returns the doc key in UUID form.
 func (key DocKey) UUID() uuid.UUID {
 	return key.uuid
 }
 
-// UUID returns the doc key in string form
+// UUID returns the doc key in string form.
 func (key DocKey) String() string {
 	buf := make([]byte, 1)
 	binary.PutUvarint(buf, uint64(key.version))
@@ -96,7 +95,7 @@ func (key DocKey) String() string {
 	return versionStr + "-" + key.uuid.String()
 }
 
-// Bytes returns the DocKey in Byte format
+// Bytes returns the DocKey in Byte format.
 func (key DocKey) Bytes() []byte {
 	buf := make([]byte, binary.MaxVarintLen16)
 	binary.PutUvarint(buf, uint64(key.version))

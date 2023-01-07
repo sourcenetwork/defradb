@@ -13,7 +13,6 @@ package fetcher
 import (
 	"container/list"
 	"context"
-	"fmt"
 
 	"github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
@@ -23,8 +22,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
 )
 
@@ -84,7 +85,7 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  ds.Datastore
+	root  datastore.RootStore
 	store datastore.Txn
 
 	key     core.DataStoreKey
@@ -97,10 +98,7 @@ type VersionedFetcher struct {
 	mCRDTs map[uint32]crdt.MerkleCRDT
 }
 
-// Init
-
-// Start
-
+// Init initializes the VersionedFetcher.
 func (vf *VersionedFetcher) Init(
 	col *client.CollectionDescription,
 	fields []*client.FieldDescription,
@@ -115,14 +113,14 @@ func (vf *VersionedFetcher) Init(
 	return vf.DocumentFetcher.Init(col, fields, reverse)
 }
 
-// Start serializes the correct state accoriding to the Key and CID
+// Start serializes the correct state according to the Key and CID.
 func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans core.Spans) error {
 	if vf.col == nil {
-		return errors.New("VersionedFetcher cannot be started without a CollectionDescription")
+		return client.NewErrUninitializeProperty("VersionedFetcher", "CollectionDescription")
 	}
 
 	if len(spans.Value) != 1 {
-		return errors.New("spans must contain only a single entry")
+		return ErrSingleSpanOnly
 	}
 
 	// For the VersionedFetcher, the spans needs to be in the format
@@ -130,9 +128,9 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	dk := spans.Value[0].Start()
 	cidRaw := spans.Value[0].End()
 	if dk.DocKey == "" {
-		return errors.New("spans missing start DocKey")
+		return client.NewErrUninitializeProperty("Spans", "DocKey")
 	} else if cidRaw.DocKey == "" { // todo: dont abuse DataStoreKey/Span like this!
-		return errors.New("span missing end CID")
+		return client.NewErrUninitializeProperty("Spans", "CID")
 	}
 
 	// decode cidRaw from core.Key to cid.Cid
@@ -140,10 +138,7 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 
 	c, err := cid.Decode(cidRaw.DocKey)
 	if err != nil {
-		return errors.Wrap(
-			fmt.Sprintf("Failed to decode CID for VersionedFetcher: %s", cidRaw.DocKey),
-			err,
-		)
+		return NewErrFailedToDecodeCIDForVFetcher(err)
 	}
 
 	vf.txn = txn
@@ -152,11 +147,12 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	vf.version = c
 
 	// create store
-	root := ds.NewMapDatastore()
+	root := memory.NewDatastore(ctx)
 	vf.root = root
+
 	vf.store, err = datastore.NewTxnFrom(
 		ctx,
-		root,
+		vf.root,
 		false,
 	) // were going to discard and nuke this later
 	if err != nil {
@@ -164,12 +160,13 @@ func (vf *VersionedFetcher) Start(ctx context.Context, txn datastore.Txn, spans 
 	}
 
 	if err := vf.seekTo(vf.version); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed seeking state to %v", c), err)
+		return NewErrFailedToSeek(c, err)
 	}
 
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
+// Rootstore returns the rootstore of the VersionedFetcher.
 func (vf *VersionedFetcher) Rootstore() ds.Datastore {
 	return vf.root
 }
@@ -188,7 +185,7 @@ err := VersionFetcher.Start(txn, spans) {
 }
 */
 
-// SeekTo exposes the private seekTo
+// SeekTo exposes the private seekTo.
 func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 	err := vf.seekTo(c)
 	if err != nil {
@@ -198,12 +195,10 @@ func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
 	return vf.DocumentFetcher.Start(ctx, vf.store, core.Spans{})
 }
 
-// seekTo seeks to the given CID version by steping through the CRDT
-// state graph from the beginning to the target state, creating the
-// serialized state at the given version. It starts by seeking to the
-// closest existing state snapshot in the transient Versioned stores,
-// which on the first run is 0. It seeks by iteratively jumping through
-// the state graph via the `_head` link.
+// seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
+// to the target state, creating the serialized state at the given version. It starts by seeking
+// to the closest existing state snapshot in the transient Versioned stores, which on the first
+// run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
 func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
@@ -212,16 +207,6 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	err := vf.seekNext(c, true)
 	if err != nil {
 		return err
-	}
-
-	// after seekNext is completed, we have a populated
-	// queuedCIDs list, and all the necessary
-	// blocks in our local store
-	// If we are using a batch store, then we need to commit
-	if vf.store.IsBatch() {
-		if err := vf.store.Commit(vf.ctx); err != nil {
-			return err
-		}
 	}
 
 	// if we have a queuedCIDs length of 0, means we don't need
@@ -240,18 +225,11 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
 		cc, ok := ccv.Value.(cid.Cid)
 		if !ok {
-			return errors.New("queueudCids contains an invalid CID value")
+			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
 		}
 		err := vf.merge(cc)
 		if err != nil {
-			return errors.Wrap("Failed merging state", err)
-		}
-	}
-
-	// If we are using a batch store, then we need to commit
-	if vf.store.IsBatch() {
-		if err := vf.store.Commit(vf.ctx); err != nil {
-			return err
+			return NewErrFailedToMergeState(err)
 		}
 	}
 
@@ -280,7 +258,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	hasLocalBlock, err := vf.store.DAGstore().Has(vf.ctx, c)
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to find block in blockstore", err)
+		return NewErrVFetcherFailedToFindBlock(err)
 	}
 	// skip if we already have it locally
 	if hasLocalBlock {
@@ -289,12 +267,12 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 
 	blk, err := vf.txn.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to get block in blockstore", err)
+		return NewErrVFetcherFailedToGetBlock(err)
 	}
 
 	// store the block in the local (transient store)
 	if err := vf.store.DAGstore().Put(vf.ctx, blk); err != nil {
-		return errors.Wrap("(version fetcher) failed to write block to blockstore ", err)
+		return NewErrVFetcherFailedToWriteBlock(err)
 	}
 
 	// add the CID to the queuedCIDs list
@@ -305,14 +283,14 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// decode the block
 	nd, err := dag.DecodeProtobuf(blk.RawData())
 	if err != nil {
-		return errors.Wrap("(version fetcher) failed to decode protobuf", err)
+		return NewErrVFetcherFailedToDecodeNode(err)
 	}
 
 	// subDAGLinks := make([]cid.Cid, 0) // @todo: set slice size
 	l, err := nd.GetNodeLink(core.HEAD)
 	// ErrLinkNotFound is fine, it just means we have no more head links
 	if err != nil && !errors.Is(err, dag.ErrLinkNotFound) {
-		return errors.Wrap("(version fetcher) failed to get node link from DAG", err)
+		return NewErrVFetcherFailedToGetDagLink(err)
 	}
 
 	// only seekNext on parent if we have a HEAD link
@@ -338,8 +316,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	return nil
 }
 
-// merge in the state of the IPLD Block identified by CID c into the
-// VersionedFetcher state.
+// merge in the state of the IPLD Block identified by CID c into the VersionedFetcher state.
 // Requires the CID to already exists in the DAGStore.
 // This function only works for merging Composite MerkleCRDT objects.
 //
@@ -347,7 +324,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // then extracts the delta object and priority from the block
 // gets the existing MerkleClock instance, or creates one.
 //
-// Currently we assume the CID is a CompositeDAG CRDT node
+// Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	// get node
 	nd, err := vf.getDAGNode(c)
@@ -375,7 +352,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 		fieldID := vf.col.Schema.GetFieldKey(l.Name)
 		if fieldID == uint32(0) {
-			return errors.New(fmt.Sprintf("Invalid sub graph field name: %s", l.Name))
+			return client.NewErrFieldNotExist(l.Name)
 		}
 		// @todo: Right now we ONLY handle LWW_REGISTER, need to swith on this and
 		//        get CType from descriptions
@@ -400,7 +377,7 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", nil, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", events.EmptyUpdateChannel, ctype, key)
 		if err != nil {
 			return err
 		}
@@ -422,7 +399,7 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	// get Block
 	blk, err := vf.store.DAGstore().Get(vf.ctx, c)
 	if err != nil {
-		return nil, errors.Wrap("Failed to get DAG Node", err)
+		return nil, NewErrFailedToGetDagNode(err)
 	}
 
 	// get node
@@ -430,8 +407,8 @@ func (vf *VersionedFetcher) getDAGNode(c cid.Cid) (*dag.ProtoNode, error) {
 	return dag.DecodeProtobuf(blk.RawData())
 }
 
+// Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
-	vf.store.Discard(vf.ctx)
 	if err := vf.root.Close(); err != nil {
 		return err
 	}
@@ -439,6 +416,7 @@ func (vf *VersionedFetcher) Close() error {
 	return vf.DocumentFetcher.Close()
 }
 
+// NewVersionedSpan creates a new VersionedSpan from a DataStoreKey and a version CID.
 func NewVersionedSpan(dockey core.DataStoreKey, version cid.Cid) core.Spans {
 	// Todo: Dont abuse DataStoreKey for version cid!
 	return core.NewSpans(core.NewSpan(dockey, core.DataStoreKey{DocKey: version.String()}))

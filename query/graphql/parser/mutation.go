@@ -13,89 +13,42 @@ package parser
 import (
 	"strings"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
-)
-
-type MutationType int
-
-const (
-	NoneMutationType = MutationType(iota)
-	CreateObjects
-	UpdateObjects
-	DeleteObjects
-)
-
-var (
-	mutationNameToType = map[string]MutationType{
-		"create": CreateObjects,
-		"update": UpdateObjects,
-		"delete": DeleteObjects,
-	}
 )
 
 var (
 	ErrEmptyDataPayload = errors.New("given data payload is empty")
 )
 
-// Mutation is a field on the MutationType
-// of a graphql query. It includes all the possible
-// arguments and all
-//
-// @todo: Change name to ObjectMutation to indicate
-// generated object mutation actions
-type Mutation struct {
-	Name  string
-	Alias string
-	Type  MutationType
-
-	// Schema is the target schema/collection
-	// if this mutation is on an object.
-	Schema string
-
-	IDs    parserTypes.OptionalDocKeys
-	Filter *Filter
-	Data   string
-
-	Fields []Selection
-}
-
-func (m Mutation) GetRoot() parserTypes.SelectionType {
-	return parserTypes.ObjectSelection
-}
-
-// ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
-// the Mutation object. Used to create a Select planNode for the mutation return objects.
-func (m Mutation) ToSelect() *Select {
-	return &Select{
-		Name:    m.Schema,
-		Alias:   m.Alias,
-		Fields:  m.Fields,
-		DocKeys: m.IDs,
-		Filter:  m.Filter,
+var (
+	mutationNameToType = map[string]request.MutationType{
+		"create": request.CreateObjects,
+		"update": request.UpdateObjects,
+		"delete": request.DeleteObjects,
 	}
-}
+)
 
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
-func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
-	qdef := &OperationDefinition{
-		Statement:  def,
-		Selections: make([]Selection, len(def.SelectionSet.Selections)),
-	}
-
-	if def.Name != nil {
-		qdef.Name = def.Name.Value
+func parseMutationOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition,
+) (*request.OperationDefinition, error) {
+	qdef := &request.OperationDefinition{
+		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
-	for i, selection := range qdef.Statement.SelectionSet.Selections {
+	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			mut, err := parseMutation(node)
+			mut, err := parseMutation(schema, schema.MutationType(), node)
 			if err != nil {
 				return nil, err
 			}
@@ -113,12 +66,15 @@ func parseMutationOperationDefinition(def *ast.OperationDefinition) (*OperationD
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(field *ast.Field) (*Mutation, error) {
-	mut := &Mutation{}
-	mut.Name = field.Name.Value
-	if field.Alias != nil {
-		mut.Alias = field.Alias.Value
+func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.Mutation, error) {
+	mut := &request.Mutation{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, mut.Name)
 
 	// parse the mutation type
 	// mutation names are either generated from a type
@@ -142,34 +98,35 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		// then the mutation name would be create_my_book
 		// so we need to recreate the string my_book, which
 		// has been split by "_", so we just join by "_"
-		mut.Schema = strings.Join(mutNameParts[1:], "_")
+		mut.Collection = strings.Join(mutNameParts[1:], "_")
 	}
 
 	// parse arguments
 	for _, argument := range field.Arguments {
 		prop := argument.Name.Value
 		// parse each individual arg type seperately
-		if prop == parserTypes.Data { // parse data
+		if prop == request.Data { // parse data
 			raw := argument.Value.(*ast.StringValue)
 			if raw.Value == "" {
 				return nil, ErrEmptyDataPayload
 			}
 			mut.Data = raw.Value
-		} else if prop == parserTypes.FilterClause { // parse filter
+		} else if prop == request.FilterClause { // parse filter
 			obj := argument.Value.(*ast.ObjectValue)
-			filter, err := NewFilter(obj)
+			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
+			if !ok {
+				return nil, errors.New("couldn't get argument type for filter")
+			}
+			filter, err := NewFilter(obj, filterType)
 			if err != nil {
 				return nil, err
 			}
 
 			mut.Filter = filter
-		} else if prop == parserTypes.Id {
+		} else if prop == request.Id {
 			raw := argument.Value.(*ast.StringValue)
-			mut.IDs = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    []string{raw.Value},
-			}
-		} else if prop == parserTypes.Ids {
+			mut.IDs = immutable.Some([]string{raw.Value})
+		} else if prop == request.Ids {
 			raw := argument.Value.(*ast.ListValue)
 			ids := make([]string, len(raw.Values))
 			for i, val := range raw.Values {
@@ -179,10 +136,7 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 				}
 				ids[i] = id.Value
 			}
-			mut.IDs = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    ids,
-			}
+			mut.IDs = immutable.Some(ids)
 		}
 	}
 
@@ -191,7 +145,11 @@ func parseMutation(field *ast.Field) (*Mutation, error) {
 		return mut, nil
 	}
 
-	var err error
-	mut.Fields, err = parseSelectFields(mut.GetRoot(), field.SelectionSet)
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
+	}
+
+	mut.Fields, err = parseSelectFields(schema, request.ObjectSelection, fieldObject, field.SelectionSet)
 	return mut, err
 }

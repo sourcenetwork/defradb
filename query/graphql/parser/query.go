@@ -13,126 +13,59 @@ package parser
 import (
 	"strconv"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
-	parserTypes "github.com/sourcenetwork/defradb/query/graphql/parser/types"
 )
-
-var dbAPIQueryNames = map[string]bool{
-	"latestCommits": true,
-	"allCommits":    true,
-	"commit":        true,
-}
-
-type Query struct {
-	Queries   []*OperationDefinition
-	Mutations []*OperationDefinition
-	Statement *ast.Document
-}
-
-type OperationDefinition struct {
-	Name       string
-	Selections []Selection
-	Statement  *ast.OperationDefinition
-	IsExplain  bool
-}
-
-func (q OperationDefinition) GetStatement() ast.Node {
-	return q.Statement
-}
-
-type Selection interface {
-	GetRoot() parserTypes.SelectionType
-}
-
-// Select is a complex Field with strong typing
-// It used for sub types in a query. Includes
-// fields, and query arguments like filters,
-// limits, etc.
-type Select struct {
-	Name string
-	// The identifier to be used in the rendered results, typically specified by
-	// the user.
-	Alias string
-
-	DocKeys parserTypes.OptionalDocKeys
-	CID     string
-
-	// QueryType indicates what kind of query this is
-	// Currently supports: ScanQuery, VersionedScanQuery
-	QueryType parserTypes.SelectQueryType
-
-	// Root is the top level query parsed type
-	Root parserTypes.SelectionType
-
-	Limit *parserTypes.Limit
-
-	OrderBy *parserTypes.OrderBy
-
-	GroupBy *parserTypes.GroupBy
-
-	Filter *Filter
-
-	Fields []Selection
-
-	// Raw graphql statement
-	Statement *ast.Field
-}
-
-func (s Select) GetRoot() parserTypes.SelectionType {
-	return s.Root
-}
-
-// Field implements Selection
-type Field struct {
-	Name  string
-	Alias string
-
-	Root parserTypes.SelectionType
-}
-
-func (c Field) GetRoot() parserTypes.SelectionType {
-	return c.Root
-}
 
 // ParseQuery parses a root ast.Document, and returns a
 // formatted Query object.
 // Requires a non-nil doc, will error if given a nil doc.
-func ParseQuery(doc *ast.Document) (*Query, error) {
+func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error) {
 	if doc == nil {
-		return nil, errors.New("ParseQuery requires a non-nil ast.Document")
+		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
 	}
-	q := &Query{
-		Statement: doc,
-		Queries:   make([]*OperationDefinition, 0),
-		Mutations: make([]*OperationDefinition, 0),
+	r := &request.Request{
+		Queries:      make([]*request.OperationDefinition, 0),
+		Mutations:    make([]*request.OperationDefinition, 0),
+		Subscription: make([]*request.OperationDefinition, 0),
 	}
 
-	for _, def := range q.Statement.Definitions {
+	for _, def := range doc.Definitions {
 		switch node := def.(type) {
 		case *ast.OperationDefinition:
-			if node.Operation == "query" {
+			switch node.Operation {
+			case "query":
 				// parse query operation definition.
-				qdef, err := parseQueryOperationDefinition(node)
+				qdef, err := parseQueryOperationDefinition(schema, node)
 				if err != nil {
 					return nil, err
 				}
-				q.Queries = append(q.Queries, qdef)
-			} else if node.Operation == "mutation" {
+				r.Queries = append(r.Queries, qdef)
+			case "mutation":
 				// parse mutation operation definition.
-				mdef, err := parseMutationOperationDefinition(node)
+				mdef, err := parseMutationOperationDefinition(schema, node)
 				if err != nil {
-					return nil, err
+					return nil, []error{err}
 				}
-				q.Mutations = append(q.Mutations, mdef)
-			} else {
-				return nil, errors.New("Unknown GraphQL operation type")
+				r.Mutations = append(r.Mutations, mdef)
+			case "subscription":
+				// parse subscription operation definition.
+				sdef, err := parseSubscriptionOperationDefinition(schema, node)
+				if err != nil {
+					return nil, []error{err}
+				}
+				r.Subscription = append(r.Subscription, sdef)
+			default:
+				return nil, []error{errors.New("unknown GraphQL operation type")}
 			}
 		}
 	}
 
-	return q, nil
+	return r, nil
 }
 
 // parseExplainDirective returns true if we parsed / detected the explain directive label
@@ -144,7 +77,7 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 	//         unless we add another directive named `@explain` at another location (which we should not).
 	for _, directive := range directives {
 		// The arguments pased to the directive are at `directive.Arguments`.
-		if directive.Name.Value == parserTypes.ExplainLabel {
+		if directive.Name.Value == request.ExplainLabel {
 			return true
 		}
 	}
@@ -154,38 +87,59 @@ func parseExplainDirective(directives []*ast.Directive) bool {
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
-func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefinition, error) {
-	qdef := &OperationDefinition{
-		Statement:  def,
-		Selections: make([]Selection, len(def.SelectionSet.Selections)),
-	}
-
-	if def.Name != nil {
-		qdef.Name = def.Name.Value
+func parseQueryOperationDefinition(
+	schema gql.Schema,
+	def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
+	qdef := &request.OperationDefinition{
+		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 
 	qdef.IsExplain = parseExplainDirective(def.Directives)
 
-	for i, selection := range qdef.Statement.SelectionSet.Selections {
-		var parsed Selection
-		var err error
+	for i, selection := range def.SelectionSet.Selections {
+		var parsedSelection request.Selection
 		switch node := selection.(type) {
 		case *ast.Field:
-			// which query type is this database API query object query etc.
-			_, exists := dbAPIQueryNames[node.Name.Value]
-			if exists {
-				// the query matches a reserved DB API query name
-				parsed, err = parseAPIQuery(node)
+			if _, isCommitQuery := request.CommitQueries[node.Name.Value]; isCommitQuery {
+				parsed, err := parseCommitSelect(schema, schema.QueryType(), node)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				parsedSelection = parsed
+			} else if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
+				parsed, err := parseAggregate(schema, schema.QueryType(), node, i)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				// Top-level aggregates must be wrapped in a top-level Select for now
+				parsedSelection = &request.Select{
+					Field: request.Field{
+						Name:  parsed.Name,
+						Alias: parsed.Alias,
+					},
+					Fields: []request.Selection{
+						parsed,
+					},
+				}
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err = parseSelect(parserTypes.ObjectSelection, node, i)
-			}
-			if err != nil {
-				return nil, err
+				parsed, err := parseSelect(schema, request.ObjectSelection, schema.QueryType(), node, i)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				errors := parsed.Validate()
+				if len(errors) > 0 {
+					return nil, errors
+				}
+
+				parsedSelection = parsed
 			}
 
-			qdef.Selections[i] = parsed
+			qdef.Selections[i] = parsedSelection
 		}
 	}
 	return qdef, nil
@@ -198,13 +152,22 @@ func parseQueryOperationDefinition(def *ast.OperationDefinition) (*OperationDefi
 // parseSelect parses a typed selection field
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
-func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int) (*Select, error) {
-	slct := &Select{
-		Alias:     getFieldAlias(field),
-		Name:      field.Name.Value,
-		Root:      rootType,
-		Statement: field,
+func parseSelect(
+	schema gql.Schema,
+	rootType request.SelectionType,
+	parent *gql.Object,
+	field *ast.Field,
+	index int,
+) (*request.Select, error) {
+	slct := &request.Select{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
+		Root: rootType,
 	}
+
+	fieldDef := gql.GetFieldDef(schema, parent, slct.Name)
 
 	// parse arguments
 	for _, argument := range field.Arguments {
@@ -212,79 +175,68 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 		astValue := argument.Value
 
 		// parse filter
-		if prop == parserTypes.FilterClause {
+		if prop == request.FilterClause {
 			obj := astValue.(*ast.ObjectValue)
-			filter, err := NewFilter(obj)
+			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
+			if !ok {
+				return nil, errors.New("couldn't get argument type for filter")
+			}
+			filter, err := NewFilter(obj, filterType)
 			if err != nil {
 				return slct, err
 			}
 
 			slct.Filter = filter
-		} else if prop == parserTypes.DocKey { // parse single dockey query field
+		} else if prop == request.DocKey { // parse single dockey query field
 			val := astValue.(*ast.StringValue)
-			slct.DocKeys = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    []string{val.Value},
-			}
-		} else if prop == parserTypes.DocKeys {
+			slct.DocKeys = immutable.Some([]string{val.Value})
+		} else if prop == request.DocKeys {
 			docKeyValues := astValue.(*ast.ListValue).Values
 			docKeys := make([]string, len(docKeyValues))
 			for i, value := range docKeyValues {
 				docKeys[i] = value.(*ast.StringValue).Value
 			}
-			slct.DocKeys = parserTypes.OptionalDocKeys{
-				HasValue: true,
-				Value:    docKeys,
-			}
-		} else if prop == parserTypes.Cid { // parse single CID query field
+			slct.DocKeys = immutable.Some(docKeys)
+		} else if prop == request.Cid { // parse single CID query field
 			val := astValue.(*ast.StringValue)
-			slct.CID = val.Value
-		} else if prop == parserTypes.LimitClause { // parse limit/offset
+			slct.CID = immutable.Some(val.Value)
+		} else if prop == request.LimitClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
-			i, err := strconv.ParseInt(val.Value, 10, 64)
+			limit, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
-				return slct, err
+				return nil, err
 			}
-			if slct.Limit == nil {
-				slct.Limit = &parserTypes.Limit{}
-			}
-			slct.Limit.Limit = i
-		} else if prop == parserTypes.OffsetClause { // parse limit/offset
+			slct.Limit = immutable.Some(limit)
+		} else if prop == request.OffsetClause { // parse limit/offset
 			val := astValue.(*ast.IntValue)
-			i, err := strconv.ParseInt(val.Value, 10, 64)
+			offset, err := strconv.ParseUint(val.Value, 10, 64)
 			if err != nil {
-				return slct, err
+				return nil, err
 			}
-			if slct.Limit == nil {
-				slct.Limit = &parserTypes.Limit{}
-			}
-			slct.Limit.Offset = i
-		} else if prop == parserTypes.OrderClause { // parse order by
+			slct.Offset = immutable.Some(offset)
+		} else if prop == request.OrderClause { // parse order by
 			obj := astValue.(*ast.ObjectValue)
 			cond, err := ParseConditionsInOrder(obj)
 			if err != nil {
 				return nil, err
 			}
-			slct.OrderBy = &parserTypes.OrderBy{
-				Conditions: cond,
-				Statement:  obj,
-			}
-		} else if prop == parserTypes.GroupByClause {
+			slct.OrderBy = immutable.Some(
+				request.OrderBy{
+					Conditions: cond,
+				},
+			)
+		} else if prop == request.GroupByClause {
 			obj := astValue.(*ast.ListValue)
 			fields := make([]string, 0)
 			for _, v := range obj.Values {
 				fields = append(fields, v.GetValue().(string))
 			}
 
-			slct.GroupBy = &parserTypes.GroupBy{
-				Fields: fields,
-			}
-		}
-
-		if len(slct.DocKeys.Value) != 0 && len(slct.CID) != 0 {
-			slct.QueryType = parserTypes.VersionedScanQuery
-		} else {
-			slct.QueryType = parserTypes.ScanQuery
+			slct.GroupBy = immutable.Some(
+				request.GroupBy{
+					Fields: fields,
+				},
+			)
 		}
 	}
 
@@ -294,8 +246,12 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 	}
 
 	// parse field selections
-	var err error
-	slct.Fields, err = parseSelectFields(slct.Root, field.SelectionSet)
+	fieldObject, err := typeFromFieldDef(fieldDef)
+	if err != nil {
+		return nil, err
+	}
+
+	slct.Fields, err = parseSelectFields(schema, slct.Root, fieldObject, field.SelectionSet)
 	if err != nil {
 		return nil, err
 	}
@@ -303,34 +259,39 @@ func parseSelect(rootType parserTypes.SelectionType, field *ast.Field, index int
 	return slct, err
 }
 
-func getFieldAlias(field *ast.Field) string {
+func getFieldAlias(field *ast.Field) immutable.Option[string] {
 	if field.Alias == nil {
-		return field.Name.Value
+		return immutable.None[string]()
 	}
-	return field.Alias.Value
+	return immutable.Some(field.Alias.Value)
 }
 
-func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet) ([]Selection, error) {
-	selections := make([]Selection, len(fields.Selections))
+func parseSelectFields(
+	schema gql.Schema,
+	root request.SelectionType,
+	parent *gql.Object,
+	fields *ast.SelectionSet) ([]request.Selection, error) {
+	selections := make([]request.Selection, len(fields.Selections))
 	// parse field selections
 	for i, selection := range fields.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
-			if _, isAggregate := parserTypes.Aggregates[node.Name.Value]; isAggregate {
-				s, err := parseSelect(root, node, i)
+			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
+				s, err := parseAggregate(schema, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
 				selections[i] = s
 			} else if node.SelectionSet == nil { // regular field
-				selections[i] = parseField(root, node)
+				selections[i] = parseField(node)
 			} else { // sub type with extra fields
 				subroot := root
 				switch node.Name.Value {
-				case parserTypes.VersionFieldName:
-					subroot = parserTypes.CommitSelection
+				case request.VersionFieldName:
+					subroot = request.CommitSelection
 				}
-				s, err := parseSelect(subroot, node, i)
+
+				s, err := parseSelect(schema, subroot, parent, node, i)
 				if err != nil {
 					return nil, err
 				}
@@ -344,19 +305,176 @@ func parseSelectFields(root parserTypes.SelectionType, fields *ast.SelectionSet)
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(root parserTypes.SelectionType, field *ast.Field) *Field {
-	return &Field{
-		Root:  root,
+func parseField(field *ast.Field) *request.Field {
+	return &request.Field{
 		Name:  field.Name.Value,
 		Alias: getFieldAlias(field),
 	}
 }
 
-func parseAPIQuery(field *ast.Field) (Selection, error) {
-	switch field.Name.Value {
-	case "latestCommits", "allCommits", "commit":
-		return parseCommitSelect(field)
-	default:
-		return nil, errors.New("Unknown query")
+func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, index int) (*request.Aggregate, error) {
+	targets := make([]*request.AggregateTarget, len(field.Arguments))
+
+	for i, argument := range field.Arguments {
+		switch argumentValue := argument.Value.GetValue().(type) {
+		case string:
+			targets[i] = &request.AggregateTarget{
+				HostName: argumentValue,
+			}
+		case []*ast.ObjectField:
+			hostName := argument.Name.Value
+			var childName string
+			var filter immutable.Option[request.Filter]
+			var limit immutable.Option[uint64]
+			var offset immutable.Option[uint64]
+			var order immutable.Option[request.OrderBy]
+
+			fieldArg, hasFieldArg := tryGet(argumentValue, request.FieldName)
+			if hasFieldArg {
+				if innerPathStringValue, isString := fieldArg.Value.GetValue().(string); isString {
+					childName = innerPathStringValue
+				}
+			}
+
+			filterArg, hasFilterArg := tryGet(argumentValue, request.FilterClause)
+			if hasFilterArg {
+				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
+				argType, ok := getArgumentType(fieldDef, hostName)
+				if !ok {
+					return nil, errors.New("couldn't get argument type for filter")
+				}
+				argTypeObject, ok := argType.(*gql.InputObject)
+				if !ok {
+					return nil, errors.New("expected arg type to be object")
+				}
+				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
+				if !ok {
+					return nil, errors.New("couldn't get argument type for filter")
+				}
+				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
+				if !ok {
+					return nil, errors.New("couldn't get object value type for filter")
+				}
+				filterValue, err := NewFilter(filterObjVal, filterType)
+				if err != nil {
+					return nil, err
+				}
+				filter = filterValue
+			}
+
+			limitArg, hasLimitArg := tryGet(argumentValue, request.LimitClause)
+			if hasLimitArg {
+				limitValue, err := strconv.ParseUint(limitArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				limit = immutable.Some(limitValue)
+			}
+
+			offsetArg, hasOffsetArg := tryGet(argumentValue, request.OffsetClause)
+			if hasOffsetArg {
+				offsetValue, err := strconv.ParseUint(offsetArg.Value.(*ast.IntValue).Value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				offset = immutable.Some(offsetValue)
+			}
+
+			orderArg, hasOrderArg := tryGet(argumentValue, request.OrderClause)
+			if hasOrderArg {
+				switch orderArgValue := orderArg.Value.(type) {
+				case *ast.EnumValue:
+					// For inline arrays the order arg will be a simple enum declaring the order direction
+					orderDirectionString := orderArgValue.Value
+					orderDirection := request.OrderDirection(orderDirectionString)
+
+					order = immutable.Some(
+						request.OrderBy{
+							Conditions: []request.OrderCondition{
+								{
+									Direction: orderDirection,
+								},
+							},
+						},
+					)
+
+				case *ast.ObjectValue:
+					// For relations the order arg will be the complex order object as used by the host object
+					// for non-aggregate ordering
+
+					// We use the parser package parsing for convienience here
+					orderConditions, err := ParseConditionsInOrder(orderArgValue)
+					if err != nil {
+						return nil, err
+					}
+
+					order = immutable.Some(
+						request.OrderBy{
+							Conditions: orderConditions,
+						},
+					)
+				}
+			}
+
+			targets[i] = &request.AggregateTarget{
+				HostName:  hostName,
+				ChildName: immutable.Some(childName),
+				Filter:    filter,
+				Limit:     limit,
+				Offset:    offset,
+				OrderBy:   order,
+			}
+		}
 	}
+
+	return &request.Aggregate{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
+		Targets: targets,
+	}, nil
+}
+
+func tryGet(fields []*ast.ObjectField, name string) (*ast.ObjectField, bool) {
+	for _, field := range fields {
+		if field.Name.Value == name {
+			return field, true
+		}
+	}
+	return nil, false
+}
+
+func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) {
+	for _, arg := range field.Args {
+		if arg.Name() == name {
+			return arg.Type, true
+		}
+	}
+	return nil, false
+}
+
+func getArgumentTypeFromInput(input *gql.InputObject, name string) (gql.Input, bool) {
+	for fname, ftype := range input.Fields() {
+		if fname == name {
+			return ftype.Type, true
+		}
+	}
+	return nil, false
+}
+
+// typeFromFieldDef will return the output gql.Object type from the given field.
+// The return type may be a gql.Object or a gql.List, if it is a List type, we
+// need to get the concrete "OfType".
+func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
+	var fieldObject *gql.Object
+	switch ftype := field.Type.(type) {
+	case *gql.Object:
+		fieldObject = ftype
+	case *gql.List:
+		fieldObject = ftype.OfType.(*gql.Object)
+	default:
+		return nil, errors.New("couldn't get field object from definition")
+	}
+	return fieldObject, nil
 }
