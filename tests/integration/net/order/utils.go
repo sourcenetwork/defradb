@@ -220,7 +220,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 		require.NoError(t, err)
 
 		if i == 0 {
-			dockeys = append(dockeys, d...)
+			dockeys = d
 		}
 		nodes = append(nodes, n)
 	}

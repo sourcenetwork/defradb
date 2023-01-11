@@ -244,9 +244,7 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 		require.NoError(t, err)
 
 		if i == 0 {
-			for id, key := range d {
-				docKeysById[id] = key
-			}
+			docKeysById = d
 		}
 		nodes = append(nodes, n)
 	}
