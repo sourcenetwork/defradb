@@ -8,74 +8,52 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package peer_replicator_test
+package replicator
 
-/*
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state_driven"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
 )
-*/
 
-/*
-// This test fails and should be uncommented once the behaviour is corrected
-// The mode of failure is somewhat flaky, possibly due to the test framework
-// however I do not believe the framework should accomodate this (the bug
-// looks to be a production issue).  Likely part of:
-// https://github.com/sourcenetwork/defradb/issues/1000
-func TestP2PPeerReplicatorWithCreate(t *testing.T) {
+func TestP2POneToOneReplicatorDoesNotUpdateNonReplicatedDoc(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
-			},
 		},
 		NodeReplicators: map[int][]int{
 			0: {
-				2,
+				1,
 			},
 		},
 		SeedDocuments: map[int]string{
+			// This document is created in all nodes before the replicator is set up.
+			// Updates should not be synced across nodes.
 			0: `{
 				"Name": "John",
 				"Age": 21
 			}`,
 		},
-		Creates: map[int]map[int]string{
+		Updates: map[int]map[int][]string{
 			0: {
-				1: `{
-					"Name": "Shahzad",
-					"Age": 3000
-				}`,
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(21),
-				},
-				1: {
-					"Age": uint64(3000),
+					"Age": uint64(60),
 				},
 			},
 			1: {
 				0: {
 					"Age": uint64(21),
-				},
-			},
-			2: {
-				0: {
-					"Age": uint64(21),
-				},
-				1: {
-					"Age": uint64(3000),
 				},
 			},
 		},
@@ -83,4 +61,3 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/

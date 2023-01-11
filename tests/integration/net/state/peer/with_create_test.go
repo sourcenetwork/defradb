@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state_driven"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
 )
 
 func TestP2PCreateDoesNotSync(t *testing.T) {
