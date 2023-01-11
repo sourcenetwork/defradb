@@ -14,7 +14,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -299,30 +301,47 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 		}
 	}
 
-	for sourceIndex, docsToCreate := range test.Creates {
-		for docIndex, doc := range docsToCreate {
-			docKey, err := createDocument(ctx, nodes[sourceIndex].DB, doc)
-			require.NoError(t, err)
+	creates := toCreateMutationSlice(test)
+	updates := toUpdateMutationSlice(test)
+	mutations := append(append([]mutation{}, creates...), updates...)
 
-			docKeysById[docIndex] = docKey
+	var wg sync.WaitGroup
+	// todo - this is incorrect I think, it does not allow for post initial syncs (for strong eventual consistency) to be sent
+	// however during manual tweaking of this wg number no additional syncs are made, strongly suggesting that both this
+	// and the production code is failing.
+	//
+	// note - +1 is for the temp hack with time.Sleep
+	wg.Add(len(creates) + len(updates) + 1)
 
-			nodeIndexesToSync := getNodeIndexesToSync(test, sourceIndex, true)
-			waitForNodesToSync(ctx, t, nodes, nodeIndexesToSync, sourceIndex)
-		}
+	for _, m := range mutations {
+		// copy the variable before using it in the routine
+		mutation := m
+		go func() {
+			// todo - this is incorrect and by queuing them all upfront they may all complete on the first completion
+			waitForNodesToSync(ctx, t, nodes, mutation.nodesToSync, mutation.sourceIndex)
+			wg.Done()
+		}()
+	}
+	// TEMP!!!! Do not keep this
+	go func() {
+		time.Sleep(5 * time.Second)
+		wg.Done()
+	}()
+
+	for _, create := range creates {
+		docKey, err := createDocument(ctx, nodes[create.sourceIndex].DB, create.payload)
+		require.NoError(t, err)
+
+		docKeysById[create.docIndex] = docKey
 	}
 
-	for sourceIndex, updateMap := range test.Updates {
-		for docIndex, updates := range updateMap {
-			for _, update := range updates {
-				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", sourceIndex, docIndex))
-				err := updateDocument(ctx, nodes[sourceIndex].DB, docKeysById[docIndex], update)
-				require.NoError(t, err)
-
-				nodeIndexesToSync := getNodeIndexesToSync(test, sourceIndex, false)
-				waitForNodesToSync(ctx, t, nodes, nodeIndexesToSync, sourceIndex)
-			}
-		}
+	for _, update := range updates {
+		log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", update.sourceIndex, update.docIndex))
+		err := updateDocument(ctx, nodes[update.sourceIndex].DB, docKeysById[update.docIndex], update.payload)
+		require.NoError(t, err)
 	}
+
+	wg.Wait()
 
 	docsByNodeId := map[int]map[string]*client.Document{}
 	for nodeIndex, node := range nodes {
@@ -448,6 +467,51 @@ func waitForNodesToSync(
 type docFieldKey struct {
 	docIndex  int
 	fieldName string
+}
+
+type mutation struct {
+	sourceIndex int
+	docIndex    int
+	payload     string
+	nodesToSync map[int]struct{}
+}
+
+func toCreateMutationSlice(test P2PTestCase) []mutation {
+	result := []mutation{}
+	for sourceIndex, payloadByDocIndex := range test.Creates {
+		for docIndex, payload := range payloadByDocIndex {
+			result = append(
+				result,
+				mutation{
+					sourceIndex: sourceIndex,
+					docIndex:    docIndex,
+					payload:     payload,
+					nodesToSync: getNodeIndexesToSync(test, sourceIndex, true),
+				},
+			)
+		}
+	}
+	return result
+}
+
+func toUpdateMutationSlice(test P2PTestCase) []mutation {
+	result := []mutation{}
+	for sourceIndex, updatesByDocIndex := range test.Updates {
+		for docIndex, updates := range updatesByDocIndex {
+			for _, payload := range updates {
+				result = append(
+					result,
+					mutation{
+						sourceIndex: sourceIndex,
+						docIndex:    docIndex,
+						payload:     payload,
+						nodesToSync: getNodeIndexesToSync(test, sourceIndex, false),
+					},
+				)
+			}
+		}
+	}
+	return result
 }
 
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"
