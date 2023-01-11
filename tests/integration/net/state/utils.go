@@ -300,11 +300,11 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 	}
 
 	for sourceIndex, docsToCreate := range test.Creates {
-		for id, doc := range docsToCreate {
+		for docIndex, doc := range docsToCreate {
 			docKey, err := createDocument(ctx, nodes[sourceIndex].DB, doc)
 			require.NoError(t, err)
 
-			docKeysById[id] = docKey
+			docKeysById[docIndex] = docKey
 
 			nodeIndexesToSync := getNodeIndexesToSync(test, sourceIndex, true)
 			waitForNodesToSync(ctx, t, nodes, nodeIndexesToSync, sourceIndex)
@@ -312,10 +312,10 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 	}
 
 	for sourceIndex, updateMap := range test.Updates {
-		for d, updates := range updateMap {
+		for docIndex, updates := range updateMap {
 			for _, update := range updates {
-				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", sourceIndex, d))
-				err := updateDocument(ctx, nodes[sourceIndex].DB, docKeysById[d], update)
+				log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", sourceIndex, docIndex))
+				err := updateDocument(ctx, nodes[sourceIndex].DB, docKeysById[docIndex], update)
 				require.NoError(t, err)
 
 				nodeIndexesToSync := getNodeIndexesToSync(test, sourceIndex, false)
