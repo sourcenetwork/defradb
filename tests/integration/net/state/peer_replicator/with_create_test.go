@@ -17,14 +17,17 @@ import (
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
 )
-*/
 
-/*
 // This test fails and should be uncommented once the behaviour is corrected
 // The mode of failure is somewhat flaky, possibly due to the test framework
 // however I do not believe the framework should accomodate this (the bug
 // looks to be a production issue).  Likely part of:
 // https://github.com/sourcenetwork/defradb/issues/1000
+//
+// It should not fail, and should pass as is however the result toggles between
+// only 1 (out of 2 expected) documents existing in node 2, and the second document
+// having a nil value (really bizare, and suggests a horrible bug in collection.Get(key),
+// or collection.GetAllDocKeys).
 func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
