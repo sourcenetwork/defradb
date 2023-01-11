@@ -404,6 +404,19 @@ func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, isCreate bool) map[
 		// We need to sync all NodePeer indexes that are not the source index
 		// (NodePeers map is bi-directional)
 		for s, dsts := range test.NodePeers {
+			containsSourceIndex := s == sourceIndex
+			for _, nodeIndex := range dsts {
+				if nodeIndex == sourceIndex {
+					containsSourceIndex = true
+					break
+				}
+			}
+			if !containsSourceIndex {
+				// If the current grouping doesn't contain the source index it is irrelevant
+				// here and should be skipped.
+				break
+			}
+
 			if s != sourceIndex {
 				nodeIndexesToSync[s] = struct{}{}
 			}

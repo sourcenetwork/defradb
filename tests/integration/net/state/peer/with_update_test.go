@@ -209,6 +209,116 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			// This node is unmapped, updates applied to this node should
+			// not be synced to the other nodes.
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]string{
+			0: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		Updates: map[int]map[int][]string{
+			2: {
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					// Update should not be synced to this node
+					"Age": uint64(21),
+				},
+			},
+			1: {
+				0: {
+					// Update should not be synced to this node
+					"Age": uint64(21),
+				},
+			},
+			2: {
+				0: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test should cover the same production code as the above
+// `TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode` test, however
+// it provides an additional sanity check for the somewhat complex test framework
+// to ensure that the test code is functioning correctly here.
+func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromNonPeerNode(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+			// Peer node is declared, but not mapped to the others. Updates applied
+			// to this node should not be synced to the other nodes.
+			2: {},
+		},
+		SeedDocuments: map[int]string{
+			0: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		},
+		Updates: map[int]map[int][]string{
+			2: {
+				0: {
+					`{
+						"Age": 60
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(21),
+				},
+			},
+			2: {
+				// Update should not be synced to this node
+				0: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
 func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 	test := testUtils.P2PTestCase{
