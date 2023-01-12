@@ -76,10 +76,5 @@ func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, 
 		return desc, err
 	}
 
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return desc, err
-	}
-
 	return desc, nil
 }

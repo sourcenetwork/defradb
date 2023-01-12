@@ -62,10 +62,5 @@ func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDesc
 		return desc, err
 	}
 
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return desc, err
-	}
-
 	return desc, nil
 }
