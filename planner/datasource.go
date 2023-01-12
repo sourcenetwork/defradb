@@ -59,12 +59,12 @@ func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, erro
 func (p *Planner) getCollectionDesc(name string) (client.CollectionDescription, error) {
 	collectionKey := core.NewCollectionKey(name)
 	var desc client.CollectionDescription
-	collectionBuf, err := p.txn.Systemstore().Get(p.ctx, collectionKey.ToDS())
+	schemaVersionIdBytes, err := p.txn.Systemstore().Get(p.ctx, collectionKey.ToDS())
 	if err != nil {
 		return desc, errors.Wrap("failed to get collection description", err)
 	}
 
-	schemaVersionId := string(collectionBuf)
+	schemaVersionId := string(schemaVersionIdBytes)
 	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
 	buf, err := p.txn.Systemstore().Get(p.ctx, schemaVersionKey.ToDS())
 	if err != nil {

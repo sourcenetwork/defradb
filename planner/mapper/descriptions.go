@@ -45,12 +45,12 @@ func NewDescriptionsRepo(ctx context.Context, txn datastore.Txn) *DescriptionsRe
 func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDescription, error) {
 	collectionKey := core.NewCollectionKey(name)
 	var desc client.CollectionDescription
-	collectionBuf, err := r.txn.Systemstore().Get(r.ctx, collectionKey.ToDS())
+	schemaVersionIdBytes, err := r.txn.Systemstore().Get(r.ctx, collectionKey.ToDS())
 	if err != nil {
 		return desc, errors.Wrap("failed to get collection description", err)
 	}
 
-	schemaVersionId := string(collectionBuf)
+	schemaVersionId := string(schemaVersionIdBytes)
 	schemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
 	buf, err := r.txn.Systemstore().Get(r.ctx, schemaVersionKey.ToDS())
 	if err != nil {
