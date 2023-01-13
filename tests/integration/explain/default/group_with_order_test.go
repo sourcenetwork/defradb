@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain_simple
+package test_explain_default
 
 import (
 	"testing"
@@ -16,17 +16,12 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
+func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
-
-		Description: "Explain query with limit and offset on parent groupBy.",
+		Description: "Explain query with ordered parent groupBy.",
 
 		Query: `query @explain {
-			author(
-				groupBy: [name],
-				limit: 1,
-				offset: 1
-			) {
+			author(groupBy: [name], order: {name: DESC}) {
 				name
 				_group {
 					age
@@ -44,8 +39,8 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 				}`,
 				`{
 					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
+					"verified": false,
+					"age": 2
 				}`,
 				`{
 					"name": "John Grisham",
@@ -74,16 +69,20 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"limitNode": dataMap{
-							"limit":  uint64(1),
-							"offset": uint64(1),
+						"orderNode": dataMap{
+							"orderings": []dataMap{
+								{
+									"direction": "DESC",
+									"fields":    []string{"name"},
+								},
+							},
 							"groupNode": dataMap{
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
 										"collectionName": "author",
-										"orderBy":        nil,
 										"docKeys":        nil,
+										"orderBy":        nil,
 										"groupBy":        nil,
 										"limit":          nil,
 										"filter":         nil,
@@ -114,15 +113,14 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
+func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
-
-		Description: "Explain query with limit and offset on child groupBy.",
+		Description: "Explain query with groupBy string, and child order ascending.",
 
 		Query: `query @explain {
 			author(groupBy: [name]) {
 				name
-				_group(limit: 2, offset: 1) {
+				_group (order: {age: ASC}){
 					age
 				}
 			}
@@ -138,8 +136,8 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 				}`,
 				`{
 					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
+					"verified": false,
+					"age": 2
 				}`,
 				`{
 					"name": "John Grisham",
@@ -169,20 +167,22 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 				"explain": dataMap{
 					"selectTopNode": dataMap{
 						"groupNode": dataMap{
+							"groupByFields": []string{"name"},
 							"childSelects": []dataMap{
 								{
 									"collectionName": "author",
-									"limit": dataMap{
-										"limit":  uint64(2),
-										"offset": uint64(1),
+									"orderBy": []dataMap{
+										{
+											"direction": "ASC",
+											"fields":    []string{"age"},
+										},
 									},
 									"docKeys": nil,
-									"filter":  nil,
 									"groupBy": nil,
-									"orderBy": nil,
+									"limit":   nil,
+									"filter":  nil,
 								},
 							},
-							"groupByFields": []string{"name"},
 							"selectNode": dataMap{
 								"filter": nil,
 								"scanNode": dataMap{
@@ -207,17 +207,14 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
+func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain query with limit on child groupBy (multiple rendered).",
+		Description: "Explain query with parent groupBy order, and child order.",
 
 		Query: `query @explain {
-			author(groupBy: [name]) {
+			author(groupBy: [name], order: {name: DESC}) {
 				name
-				innerFirstGroup: _group(limit: 1, offset: 2) {
-					age
-				}
-				innerSecondGroup: _group(limit: 2) {
+				_group (order: {age: ASC}){
 					age
 				}
 			}
@@ -233,8 +230,8 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 				}`,
 				`{
 					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
+					"verified": false,
+					"age": 2
 				}`,
 				`{
 					"name": "John Grisham",
@@ -263,127 +260,27 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 			{
 				"explain": dataMap{
 					"selectTopNode": dataMap{
-						"groupNode": dataMap{
-							"childSelects": []dataMap{
+						"orderNode": dataMap{
+							"orderings": []dataMap{
 								{
-									"collectionName": "author",
-									"limit": dataMap{
-										"limit":  uint64(1),
-										"offset": uint64(2),
-									},
-									"docKeys": nil,
-									"filter":  nil,
-									"groupBy": nil,
-									"orderBy": nil,
-								},
-								{
-									"collectionName": "author",
-									"limit": dataMap{
-										"limit":  uint64(2),
-										"offset": uint64(0),
-									},
-									"docKeys": nil,
-									"filter":  nil,
-									"groupBy": nil,
-									"orderBy": nil,
+									"direction": "DESC",
+									"fields":    []string{"name"},
 								},
 							},
-							"groupByFields": []string{"name"},
-							"selectNode": dataMap{
-								"filter": nil,
-								"scanNode": dataMap{
-									"collectionID":   "3",
-									"collectionName": "author",
-									"filter":         nil,
-									"spans": []dataMap{
-										{
-											"start": "/3",
-											"end":   "/4",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
-		Description: "Explain query with limit on parent and child groupBy.",
-
-		Query: `query @explain {
-			author(
-				groupBy: [name],
-				limit: 1
-			) {
-				name
-				_group(limit: 2) {
-					age
-				}
-			}
-		}`,
-
-		Docs: map[int][]string{
-			//authors
-			2: {
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 65
-				}`,
-				`{
-					"name": "John Grisham",
- 					"verified": false,
- 					"age": 2
-				}`,
-				`{
-					"name": "John Grisham",
-					"verified": true,
-					"age": 50
-				}`,
-				`{
-					"name": "Cornelia Funke",
-					"verified": true,
-					"age": 62
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-				`{
-					"name": "Twin",
-					"verified": true,
-					"age": 63
-				}`,
-			},
-		},
-
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"limitNode": dataMap{
-							"limit":  uint64(1),
-							"offset": uint64(0),
 							"groupNode": dataMap{
 								"groupByFields": []string{"name"},
 								"childSelects": []dataMap{
 									{
 										"collectionName": "author",
-										"limit": dataMap{
-											"limit":  uint64(2),
-											"offset": uint64(0),
+										"orderBy": []dataMap{
+											{
+												"direction": "ASC",
+												"fields":    []string{"age"},
+											},
 										},
-										"orderBy": nil,
 										"docKeys": nil,
 										"groupBy": nil,
+										"limit":   nil,
 										"filter":  nil,
 									},
 								},
@@ -398,6 +295,106 @@ func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
 												"start": "/3",
 												"end":   "/4",
 											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Explain query with parent groupBy order, and child order.",
+
+		Query: `query @explain {
+			author(groupBy: [name]) {
+				name
+				_group (
+					groupBy: [verified],
+					order: {verified: ASC}
+				){
+					verified
+					_group (order: {age: DESC}) {
+						age
+					}
+				}
+			}
+		}`,
+
+		Docs: map[int][]string{
+			//authors
+			2: {
+				`{
+					"name": "John Grisham",
+					"verified": true,
+					"age": 65
+				}`,
+				`{
+					"name": "John Grisham",
+					"verified": false,
+					"age": 2
+				}`,
+				`{
+					"name": "John Grisham",
+					"verified": true,
+					"age": 50
+				}`,
+				`{
+					"name": "Cornelia Funke",
+					"verified": true,
+					"age": 62
+				}`,
+				`{
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
+				`{
+					"name": "Twin",
+					"verified": true,
+					"age": 63
+				}`,
+			},
+		},
+
+		Results: []dataMap{
+			{
+				"explain": dataMap{
+					"selectTopNode": dataMap{
+						"groupNode": dataMap{
+							"groupByFields": []string{"name"},
+							"childSelects": []dataMap{
+								{
+									"collectionName": "author",
+									"orderBy": []dataMap{
+										{
+											"direction": "ASC",
+											"fields":    []string{"verified"},
+										},
+									},
+									"groupBy": []string{"verified", "name"},
+									"docKeys": nil,
+									"limit":   nil,
+									"filter":  nil,
+								},
+							},
+							"selectNode": dataMap{
+								"filter": nil,
+								"scanNode": dataMap{
+									"collectionID":   "3",
+									"collectionName": "author",
+									"filter":         nil,
+									"spans": []dataMap{
+										{
+											"start": "/3",
+											"end":   "/4",
 										},
 									},
 								},
