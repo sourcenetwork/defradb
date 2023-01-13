@@ -3,6 +3,7 @@
 # An image to run defradb.
 
 # Stage: BUILD
+# Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
 FROM docker.io/golang:1.18 AS BUILD
 WORKDIR /repo/
 COPY go.mod go.sum Makefile /repo/
