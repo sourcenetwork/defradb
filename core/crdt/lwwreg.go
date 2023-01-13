@@ -151,7 +151,10 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		curValue, _ := reg.store.Get(ctx, valueK.ToDS())
 		// Do not use the first byte of the current value in the comparison.
 		// It's metadata that will falsify the result.
-		if bytes.Compare(curValue[1:], val) >= 0 {
+		if len(curValue) > 0 {
+			curValue = curValue[1:]
+		}
+		if bytes.Compare(curValue, val) >= 0 {
 			return nil
 		}
 	}

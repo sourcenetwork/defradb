@@ -39,6 +39,7 @@ func setupLWWRegister() LWWRegister {
 func setupLoadedLWWRegster(ctx context.Context) LWWRegister {
 	lww := setupLWWRegister()
 	addDelta := lww.Set([]byte("test"))
+	addDelta.SetPriority(1)
 	lww.Merge(ctx, addDelta, "test")
 	return lww
 }
