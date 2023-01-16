@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -52,11 +51,6 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) Start() error {
-	// parse the doc
-	if n.newDocStr == "" {
-		return errors.New("invalid document to create")
-	}
-
 	doc, err := client.NewDocFromJSON([]byte(n.newDocStr))
 	if err != nil {
 		n.err = err

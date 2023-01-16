@@ -13,7 +13,6 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -164,7 +163,7 @@ func (n *topLevelNode) Next() (bool, error) {
 				return false, err
 			}
 			if !hasChild {
-				return false, errors.New("expected child value, however none was yielded")
+				return false, ErrMissingChildValue
 			}
 
 			n.currentValue = child.Value()

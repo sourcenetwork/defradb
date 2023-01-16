@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -283,7 +282,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	prio, ok := delta["Priority"].(uint64)
 	if !ok {
-		return core.Doc{}, nil, errors.New("commit Delta missing priority key")
+		return core.Doc{}, nil, ErrDeltaMissingPriority
 	}
 
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
