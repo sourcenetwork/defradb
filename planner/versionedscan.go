@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -65,8 +64,12 @@ func (n *versionedScanNode) Start() error {
 }
 
 func (n *versionedScanNode) initScan() error {
-	if n.key.DocKey == "" || n.version.Equals(emptyCID) {
-		return errors.New("versionedScan is missing either a DocKey or VersionCID")
+	if n.key.DocKey == "" {
+		return client.NewErrUninitializeProperty("versionedScan", "DocKey")
+	}
+
+	if n.version.Equals(emptyCID) {
+		return client.NewErrUninitializeProperty("versionedScan", "VersionCID")
 	}
 
 	// create a span of the form {DocKey, VersionCID}

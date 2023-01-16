@@ -12,7 +12,6 @@ package mapper
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -24,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // ToSelect converts the given [parser.Select] into a [Select].
@@ -291,16 +289,12 @@ func resolveAggregates(
 				hostSelect, isHostSelectable := host.AsSelect()
 				if !isHostSelectable {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, errors.New(
-						"aggregate target host must be selectable, but was not",
-					)
+					return nil, client.NewErrUnhandledType("host", host)
 				}
 
 				if len(hostSelect.IndexesByName[target.childExternalName]) == 0 {
 					// I believe this is dead code as the gql library should always catch this error first
-					return nil, errors.New(fmt.Sprintf(
-						"Unable to identify aggregate child: %s", target.childExternalName,
-					))
+					return nil, ErrUnableToIdAggregateChild
 				}
 
 				childTarget = OptionalChildTarget{
@@ -495,10 +489,7 @@ func getRequestables(
 
 			mapping.Add(index, f.Name)
 		default:
-			return nil, nil, errors.New(fmt.Sprintf(
-				"Unexpected field type: %T",
-				field,
-			))
+			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
 	}
 	return
@@ -518,9 +509,7 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 	}
 
 	if len(aggregateTargets) == 0 {
-		return aggregateRequest{}, errors.New(
-			"aggregate must be provided with a property to aggregate",
-		)
+		return aggregateRequest{}, ErrAggregateTargetMissing
 	}
 
 	return aggregateRequest{
@@ -746,7 +735,7 @@ func resolveInnerFilterDependencies(
 			host, isSelect := existingField.AsSelect()
 			if !isSelect {
 				// This should never be possible
-				return nil, errors.New("host must be a Select, but was not")
+				return nil, client.NewErrUnhandledType("host", existingField)
 			}
 			return host, nil
 		})
@@ -757,7 +746,7 @@ func resolveInnerFilterDependencies(
 		}
 		if !hasHost {
 			// This should never be possible
-			return nil, errors.New("failed to find host field")
+			return nil, ErrFailedToFindHostField
 		}
 
 		childFields, err := resolveInnerFilterDependencies(

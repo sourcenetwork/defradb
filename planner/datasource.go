@@ -37,9 +37,6 @@ func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 
 // @todo: Add field selection
 func (p *Planner) getCollectionScanPlan(parsed *mapper.Select) (planSource, error) {
-	if parsed.CollectionName == "" {
-		return planSource{}, errors.New("collection name cannot be empty")
-	}
 	colDesc, err := p.getCollectionDesc(parsed.CollectionName)
 	if err != nil {
 		return planSource{}, err

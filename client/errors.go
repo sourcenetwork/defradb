@@ -50,6 +50,12 @@ func NewErrFieldNotExist(name string) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
 }
 
+// NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
+// given location.
+func NewErrFieldIndexNotExist(index int) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Index", index))
+}
+
 // NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field
 // was selected at group-level.
 func NewErrSelectOfNonGroupField(name string) error {
