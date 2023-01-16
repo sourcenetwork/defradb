@@ -90,6 +90,15 @@ func init() {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.peers", err)
 	}
 
+	startCmd.Flags().Int(
+		"maxretries", cfg.Datastore.MaxRetries,
+		"Specify the maximum number of retries per transaction",
+	)
+	err = viper.BindPFlag("datastore.maxretries", startCmd.Flags().Lookup("maxretries"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind datastore.maxretries", err)
+	}
+
 	startCmd.Flags().String(
 		"store", cfg.Datastore.Store,
 		"Specify the datastore to use (supported: badger, memory)",
@@ -228,6 +237,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 
 	options := []db.Option{
 		db.WithUpdateEvents(),
+		db.WithMaxRetries(cfg.Datastore.MaxRetries),
 	}
 
 	db, err := db.NewDB(ctx, rootstore, options...)

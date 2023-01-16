@@ -46,7 +46,8 @@ func (p *Peer) processLog(
 
 	// TODO: Implement better transaction retry mechanics
 	// Github issue #1028
-	for {
+	var txErr error
+	for retry := 0; retry < p.db.MaxRetries(); retry++ {
 		txn, err := p.db.NewTxn(ctx, false)
 		if err != nil {
 			return nil, err
@@ -80,14 +81,13 @@ func (p *Peer) processLog(
 			logging.NewKV("DocKey", dockey),
 			logging.NewKV("CID", c),
 		)
-		height := delta.GetPriority()
 
 		if err := txn.DAGstore().Put(ctx, nd); err != nil {
 			return nil, err
 		}
 
 		ng := p.createNodeGetter(crdt, getter)
-		cids, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
+		cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta.GetPriority(), delta, nd)
 		if err != nil {
 			return nil, err
 		}
@@ -95,12 +95,14 @@ func (p *Peer) processLog(
 		// mark this obj as done
 		p.queuedChildren.Remove(c)
 
-		err = txn.Commit(ctx)
-		if err != nil {
+		txErr = txn.Commit(ctx)
+		if txErr != nil {
 			continue
 		}
-		return cids, err
+		return cids, txErr
 	}
+
+	return nil, txErr
 }
 
 func initCRDTForType(

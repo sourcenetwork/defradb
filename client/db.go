@@ -37,6 +37,8 @@ type DB interface {
 
 	Events() events.Events
 
+	MaxRetries() int
+
 	PrintDump(ctx context.Context) error
 
 	// SetReplicator adds a replicator to the persisted list or adds
