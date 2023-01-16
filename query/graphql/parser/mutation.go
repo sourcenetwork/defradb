@@ -17,12 +17,8 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-var (
-	ErrEmptyDataPayload = errors.New("given data payload is empty")
 )
 
 var (
@@ -89,7 +85,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 	var ok bool
 	mut.Type, ok = mutationNameToType[typeStr]
 	if !ok {
-		return nil, errors.New("unknown mutation name")
+		return nil, ErrUnknownMutationName
 	}
 
 	if len(mutNameParts) > 1 { // only generated object mutations
@@ -115,7 +111,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			obj := argument.Value.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("couldn't get argument type for filter")
+				return nil, ErrFilterMissingArgumentType
 			}
 			filter, err := NewFilter(obj, filterType)
 			if err != nil {
@@ -132,7 +128,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			for i, val := range raw.Values {
 				id, ok := val.(*ast.StringValue)
 				if !ok {
-					return nil, errors.New("ids argument has a non string value")
+					return nil, client.NewErrUnexpectedType[*ast.StringValue]("ids argument", val)
 				}
 				ids[i] = id.Value
 			}
