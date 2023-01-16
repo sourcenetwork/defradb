@@ -63,8 +63,6 @@ type Peer struct {
 
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
-	// The maximum number or retries of DB transactions
-	maxRetries int
 
 	jobQueue chan *dagJob
 	sendJobs chan *dagJob
