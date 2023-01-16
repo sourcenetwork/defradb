@@ -465,10 +465,6 @@ func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]any, error) {
-	if plan == nil {
-		return nil, errors.New("can't execute request of a nil plan")
-	}
-
 	if err := plan.Start(); err != nil {
 		return nil, multiErr(err, plan.Close())
 	}
