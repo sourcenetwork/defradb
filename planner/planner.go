@@ -446,10 +446,6 @@ func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]any, error) {
-	if plan == nil {
-		return nil, errors.New("can't explain request of a nil plan")
-	}
-
 	explainGraph, err := buildExplainGraph(plan)
 	if err != nil {
 		return nil, multiErr(err, plan.Close())
