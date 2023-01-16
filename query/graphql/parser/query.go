@@ -17,8 +17,8 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // ParseQuery parses a root ast.Document, and returns a
@@ -26,7 +26,7 @@ import (
 // Requires a non-nil doc, will error if given a nil doc.
 func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error) {
 	if doc == nil {
-		return nil, []error{errors.New("parseQuery requires a non-nil ast.Document")}
+		return nil, []error{client.NewErrUninitializeProperty("parseQuery", "doc")}
 	}
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -60,7 +60,7 @@ func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error
 				}
 				r.Subscription = append(r.Subscription, sdef)
 			default:
-				return nil, []error{errors.New("unknown GraphQL operation type")}
+				return nil, []error{ErrUnknownGQLOperation}
 			}
 		}
 	}
@@ -179,7 +179,7 @@ func parseSelect(
 			obj := astValue.(*ast.ObjectValue)
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("couldn't get argument type for filter")
+				return nil, ErrFilterMissingArgumentType
 			}
 			filter, err := NewFilter(obj, filterType)
 			if err != nil {
@@ -341,19 +341,19 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				fieldDef := gql.GetFieldDef(schema, parent, field.Name.Value)
 				argType, ok := getArgumentType(fieldDef, hostName)
 				if !ok {
-					return nil, errors.New("couldn't get argument type for filter")
+					return nil, ErrFilterMissingArgumentType
 				}
 				argTypeObject, ok := argType.(*gql.InputObject)
 				if !ok {
-					return nil, errors.New("expected arg type to be object")
+					return nil, client.NewErrUnexpectedType[*gql.InputObject]("arg type", argType)
 				}
 				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
 				if !ok {
-					return nil, errors.New("couldn't get argument type for filter")
+					return nil, ErrFilterMissingArgumentType
 				}
 				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
 				if !ok {
-					return nil, errors.New("couldn't get object value type for filter")
+					return nil, client.NewErrUnexpectedType[*gql.InputObject]("filter arg", filterArg.Value)
 				}
 				filterValue, err := NewFilter(filterObjVal, filterType)
 				if err != nil {
@@ -474,7 +474,7 @@ func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
-		return nil, errors.New("couldn't get field object from definition")
+		return nil, client.NewErrUnhandledType("field", field)
 	}
 	return fieldObject, nil
 }
