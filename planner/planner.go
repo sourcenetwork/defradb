@@ -109,12 +109,12 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		} else if len(n.Mutations) > 0 {
 			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
 		} else {
-			return nil, errors.New("query is missing query or mutation statements")
+			return nil, ErrMissingQueryOrMutation
 		}
 
 	case *request.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, errors.New("operationDefinition is missing selections")
+			return nil, ErrOperationDefinitionMissingSelection
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -148,7 +148,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newObjectMutationPlan(m)
 	}
 
-	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
+	return nil, client.NewErrUnhandledType("statement", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
@@ -163,7 +163,7 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 		return p.DeleteDocs(stmt)
 
 	default:
-		return nil, errors.New(fmt.Sprintf("Unknown mutation action %T", stmt.Type))
+		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
 	}
 }
 
@@ -311,7 +311,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return errors.New("unknown type index join plan")
+	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -323,7 +323,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	if !hasScanNode {
 		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
 		if !hasCommitNode {
-			return errors.New("failed to identify group source")
+			return ErrFailedToFindGroupSource
 		}
 		sourceNode = commitNode
 	}
@@ -417,7 +417,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
-		return errors.New(fmt.Sprintf("Unknown plan node type to replace: %T", node))
+		return client.NewErrUnhandledType("plan", node)
 	}
 
 	return nil

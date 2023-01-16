@@ -304,7 +304,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				}
 			} else if f.Name == request.GroupFieldName {
 				if parsed.GroupBy == nil {
-					return nil, errors.New("_group may only be referenced when within a groupBy query")
+					return nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
 			} else {

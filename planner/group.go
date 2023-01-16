@@ -11,11 +11,9 @@
 package planner
 
 import (
-	"fmt"
-
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -235,10 +233,7 @@ func (n *groupNode) Explain() (map[string]any, error) {
 						// Try to find the name of this index.
 						fieldName, found := n.documentMapping.TryToFindNameFromIndex(orderFieldIndex)
 						if !found {
-							return nil, errors.New(fmt.Sprintf(
-								"No order field name (for grouping) was found for index =%d",
-								orderFieldIndex,
-							))
+							return nil, client.NewErrFieldIndexNotExist(orderFieldIndex)
 						}
 
 						orderFieldNames = append(orderFieldNames, fieldName)
