@@ -20,8 +20,8 @@ import (
 	gqls "github.com/graphql-go/graphql/language/source"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // type condition
@@ -60,7 +60,7 @@ func NewFilterFromString(
 	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
 	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
 	if !ok {
-		return immutable.None[request.Filter](), errors.New("couldn't find filter argument type")
+		return immutable.None[request.Filter](), ErrFilterMissingArgumentType
 	}
 	return NewFilter(obj, filterType)
 }
@@ -82,7 +82,7 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]request.OrderCondition, er
 	if v, ok := cond.([]request.OrderCondition); ok {
 		return v, nil
 	}
-	return nil, errors.New("failed to parse statement")
+	return nil, client.NewErrUnexpectedType[[]request.OrderCondition]("condition", cond)
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
@@ -101,7 +101,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 		case string: // base direction parsed (hopefully, check NameToOrderDirection)
 			dir, ok := request.NameToOrderDirection[v]
 			if !ok {
-				return nil, errors.New("invalid order direction string")
+				return nil, ErrInvalidOrderDirection
 			}
 			conditions = append(conditions, request.OrderCondition{
 				Fields:    []string{name},
@@ -120,7 +120,7 @@ func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
 			}
 
 		default:
-			return nil, errors.New("unexpected parsed type for parseConditionInOrder")
+			return nil, client.NewErrUnhandledType("parseConditionInOrder", val)
 		}
 	}
 
@@ -138,13 +138,13 @@ func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any
 	if v, ok := cond.(map[string]any); ok {
 		return v, nil
 	}
-	return nil, errors.New("failed to parse statement")
+	return nil, client.NewErrUnexpectedType[map[string]any]("condition", cond)
 }
 
 func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {
 	val := gql.ValueFromAST(stmt, inputArg, nil)
 	if val == nil {
-		return nil, errors.New("couldn't parse conditions value from AST")
+		return nil, ErrFailedToParseConditionsFromAST
 	}
 	return val, nil
 }
@@ -187,7 +187,7 @@ func parseVal(val ast.Value, recurseFn parseFn) (any, error) {
 		return conditions, nil
 	}
 
-	return nil, errors.New("failed to parse condition value from query filter statement")
+	return nil, ErrFailedToParseConditionValue
 }
 
 /*

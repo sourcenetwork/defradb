@@ -15,7 +15,6 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // parseSubscriptionOperationDefinition parses the individual GraphQL
@@ -64,7 +63,7 @@ func parseSubscription(schema gql.Schema, field *ast.Field) (*request.ObjectSubs
 		if prop == request.FilterClause {
 			filterType, ok := getArgumentType(fieldDef, request.FilterClause)
 			if !ok {
-				return nil, errors.New("couldn't get argument type for subscription filter")
+				return nil, ErrFilterMissingArgumentType
 			}
 			obj := argument.Value.(*ast.ObjectValue)
 			filter, err := NewFilter(obj, filterType)
