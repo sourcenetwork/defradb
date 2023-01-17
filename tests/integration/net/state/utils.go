@@ -384,7 +384,7 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 					valueSet = append(valueSet, val)
 					anyOfByField[dfk] = valueSet
 				default:
-					assert.Equal(t, result, val)
+					assert.Equal(t, result, val, fmt.Sprintf("node: %v, doc: %v", nodeId, docIndex))
 				}
 			}
 		}
