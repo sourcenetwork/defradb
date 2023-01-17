@@ -297,6 +297,12 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 				require.NoError(t, err)
 				_, err = n.Peer.SetReplicator(ctx, addr)
 				require.NoError(t, err)
+
+				// If seed documents were provided the newly configured replicator will sync them
+				// this needs to be handled here or the wait group stuff may progress too early.
+				if len(test.SeedDocuments) > 0 {
+					waitForNodesToSync(ctx, t, nodes, r, i)
+				}
 			}
 		}
 	}
