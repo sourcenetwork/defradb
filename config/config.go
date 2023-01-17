@@ -190,10 +190,10 @@ func (cfg *Config) setBadgerVLogMaxSize() {
 
 // DatastoreConfig configures datastores.
 type DatastoreConfig struct {
-	Store      string
-	Memory     MemoryConfig
-	Badger     BadgerConfig
-	MaxRetries int
+	Store         string
+	Memory        MemoryConfig
+	Badger        BadgerConfig
+	MaxTxnRetries int
 }
 
 // BadgerConfig configures Badger's on-disk / filesystem mode.
@@ -290,7 +290,7 @@ func defaultDatastoreConfig() *DatastoreConfig {
 			ValueLogFileSize: 1 * GiB,
 			Options:          &opts,
 		},
-		MaxRetries: 5,
+		MaxTxnRetries: 5,
 	}
 }
 

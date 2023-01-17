@@ -43,6 +43,10 @@ var (
 	_ client.Collection = (*collection)(nil)
 )
 
+const (
+	defaultMaxTxnRetries = 5
+)
+
 // DB is the main interface for interacting with the
 // DefraDB storage system.
 type db struct {
@@ -58,7 +62,7 @@ type db struct {
 	parser core.Parser
 
 	// The maximum number of retries per transaction.
-	maxRetries immutable.Option[int]
+	maxTxnRetries immutable.Option[int]
 
 	// The options used to init the database
 	options any
@@ -81,7 +85,7 @@ func WithUpdateEvents() Option {
 // WithMaxRetries sets the maximum number of retries per transaction.
 func WithMaxRetries(num int) Option {
 	return func(db *db) {
-		db.maxRetries = immutable.Some(num)
+		db.maxTxnRetries = immutable.Some(num)
 	}
 }
 
@@ -186,12 +190,12 @@ func (db *db) Events() events.Events {
 }
 
 // MaxRetries returns the maximum number of retries per transaction.
-// Defaults to 5 if not explicitely set
-func (db *db) MaxRetries() int {
-	if db.maxRetries.HasValue() {
-		return db.maxRetries.Value()
+// Defaults to `defaultMaxTxnRetries` if not explicitely set
+func (db *db) MaxTxnRetries() int {
+	if db.maxTxnRetries.HasValue() {
+		return db.maxTxnRetries.Value()
 	}
-	return 5
+	return defaultMaxTxnRetries
 }
 
 // PrintDump prints the entire database to console.

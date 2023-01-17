@@ -37,7 +37,7 @@ type DB interface {
 
 	Events() events.Events
 
-	MaxRetries() int
+	MaxTxnRetries() int
 
 	PrintDump(ctx context.Context) error
 

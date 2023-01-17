@@ -46,8 +46,8 @@ func (p *Peer) processLog(
 
 	// TODO: Implement better transaction retry mechanics
 	// Github issue #1028
-	var txErr error
-	for retry := 0; retry < p.db.MaxRetries(); retry++ {
+	var txnErr error
+	for retry := 0; retry < p.db.MaxTxnRetries(); retry++ {
 		txn, err := p.db.NewTxn(ctx, false)
 		if err != nil {
 			return nil, err
@@ -95,14 +95,14 @@ func (p *Peer) processLog(
 		// mark this obj as done
 		p.queuedChildren.Remove(c)
 
-		txErr = txn.Commit(ctx)
-		if txErr != nil {
+		txnErr = txn.Commit(ctx)
+		if txnErr != nil {
 			continue
 		}
-		return cids, txErr
+		return cids, txnErr
 	}
 
-	return nil, txErr
+	return nil, client.NewErrMaxTxnRetries(txnErr)
 }
 
 func initCRDTForType(

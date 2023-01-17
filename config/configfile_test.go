@@ -110,7 +110,7 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	cfg.Datastore.Store = "badger"
 	cfg.Datastore.Badger.Path = "dataPath"
 	cfg.Datastore.Badger.ValueLogFileSize = 512 * MiB
-	cfg.Datastore.MaxRetries = 3
+	cfg.Datastore.MaxTxnRetries = 3
 
 	err := cfg.WriteConfigFileToRootDir(dir)
 	if err != nil {
@@ -133,5 +133,5 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	assert.Equal(t, cfg.Datastore.Store, cfgFromFile.Datastore.Store)
 	assert.Equal(t, dir+"/"+cfg.Datastore.Badger.Path, cfgFromFile.Datastore.Badger.Path)
 	assert.Equal(t, cfg.Datastore.Badger.ValueLogFileSize, cfgFromFile.Datastore.Badger.ValueLogFileSize)
-	assert.Equal(t, cfg.Datastore.MaxRetries, cfgFromFile.Datastore.MaxRetries)
+	assert.Equal(t, cfg.Datastore.MaxTxnRetries, cfgFromFile.Datastore.MaxTxnRetries)
 }
