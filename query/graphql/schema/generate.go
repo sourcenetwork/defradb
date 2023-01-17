@@ -20,7 +20,6 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
@@ -303,11 +302,7 @@ func (g *Generator) createExpandedFieldAggregate(
 					filterTypeName = targeted.Type.Name() + "FilterArg"
 				}
 			} else {
-				return errors.New(fmt.Sprintf(
-					"Aggregate target not found. HostObject: {%s}, Target: {%s}",
-					obj.Name(),
-					target,
-				))
+				return NewErrAggregateTargetNotFound(obj.Name(), target)
 			}
 		}
 
@@ -386,7 +381,7 @@ func (g *Generator) buildTypesFromAST(
 		case *ast.ObjectDefinition:
 			// check if type exists
 			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
-				return nil, errors.New(fmt.Sprintf("Schema type already exists: %s", defType.Name.Value))
+				return nil, NewErrSchemaTypeAlreadyExist(defType.Name.Value)
 			}
 
 			objconf := gql.ObjectConfig{}
@@ -487,10 +482,7 @@ func (g *Generator) buildTypesFromAST(
 
 				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
 				if !ok {
-					return nil, errors.New(fmt.Sprintf(
-						"object not found whilst executing fields thunk: %s",
-						defType.Name.Value,
-					))
+					return nil, NewErrObjectNotFoundDuringThunk(defType.Name.Value)
 				}
 
 				fields[request.GroupFieldName] = &gql.Field{
@@ -530,10 +522,7 @@ func getRelationshipName(
 				if argument.Name.Value == "name" {
 					name, isString := argument.Value.GetValue().(string)
 					if !isString {
-						return "", errors.New(fmt.Sprintf(
-							"Relationship name must be of type string, but was: %v",
-							argument.Value.GetKind(),
-						))
+						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
 					}
 					return name, nil
 				}
@@ -947,7 +936,7 @@ func appendCommitChildGroupField() {
 // The latter two are wrappers, and need to be further extracted
 func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error) {
 	if t == nil {
-		return nil, errors.New("type can't be nil")
+		return nil, client.NewErrUninitializeProperty("astNodeToGqlType", "t")
 	}
 
 	switch astTypeVal := t.(type) {
@@ -974,7 +963,7 @@ func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error)
 	name := t.(*ast.Named).Name.Value
 	ttype, ok := typeMap[name]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("No type found for given name: %s", name))
+		return nil, NewErrTypeNotFound(name)
 	}
 
 	return ttype, nil
@@ -1013,7 +1002,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 	typeName := obj.Name()
 	filter, ok := g.manager.schema.TypeMap()[typeName+"FilterArg"].(*gql.InputObject)
 	if !ok {
-		return nil, errors.New("missing filter arg for mutation type generation " + typeName)
+		return nil, NewErrTypeNotFound(typeName + "FilterArg")
 	}
 
 	return g.genTypeMutationFields(obj, filter)
@@ -1192,17 +1181,13 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 		operatorType, hasOperatorType := g.manager.schema.TypeMap()[operatorBlockName]
 		if !hasOperatorType {
 			// This should be impossible
-			return nil, errors.New("operator block not found", errors.NewKV("Name", operatorBlockName))
+			return nil, NewErrTypeNotFound(operatorBlockName)
 		}
 
 		operatorObject, isInputObj := operatorType.(*gql.InputObject)
 		if !isInputObj {
 			// This should be impossible
-			return nil, errors.New(
-				"invalid cast",
-				errors.NewKV("Expected type", "*gql.InputObject"),
-				errors.NewKV("Actual type", fmt.Sprintf("%T", operatorType)),
-			)
+			return nil, client.NewErrUnexpectedType[*gql.InputObject]("operatorType", operatorType)
 		}
 
 		for f, field := range operatorObject.Fields() {

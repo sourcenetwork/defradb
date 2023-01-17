@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -167,7 +166,7 @@ func (g *Generator) CreateDescriptions(
 				// let's make sure its an _id field, otherwise
 				// we might have an error here
 				if !strings.HasSuffix(fname, "_id") {
-					return nil, errors.New(fmt.Sprintf("Error: found a duplicate field '%s' for type %s", fname, t.Name()))
+					return nil, NewErrDuplicateField(fname, t.Name())
 				}
 				continue
 			}
@@ -186,18 +185,13 @@ func (g *Generator) CreateDescriptions(
 				rel := g.manager.Relations.getRelationByDescription(
 					fname, schemaName, t.Name())
 				if rel == nil {
-					return nil, errors.New(fmt.Sprintf(
-						"Field missing associated relation. FieldName: %s, SchemaType: %s, ObjectType: %s",
-						fname,
-						field.Type.Name(),
-						t.Name(),
-					))
+					return nil, NewErrFieldMissingRelation(field.Type.Name(), fname, t.Name())
 				}
 				fd.RelationName = rel.name
 
 				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
 				if !ok {
-					return nil, errors.New("relation is missing field")
+					return nil, NewErrRelationMissingField(field.Type.Name(), fname)
 				}
 
 				fd.RelationType = rel.Kind() | fieldRelationType
