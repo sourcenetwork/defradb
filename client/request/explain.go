@@ -10,23 +10,13 @@
 
 package request
 
-import (
-	"github.com/sourcenetwork/immutable"
+// ExplainType does not represent which type is currently the default explain request type.
+type ExplainType string
+
+// Types of explain requests.
+const (
+	DebugExplain   ExplainType = "debug"
+	ExecuteExplain ExplainType = "execute"
+	PredictExplain ExplainType = "predict"
+	SimpleExplain  ExplainType = "simple"
 )
-
-type Request struct {
-	Queries      []*OperationDefinition
-	Mutations    []*OperationDefinition
-	Subscription []*OperationDefinition
-}
-
-type Selection any
-
-type Directives struct {
-	ExplainType immutable.Option[ExplainType]
-}
-
-type OperationDefinition struct {
-	Selections []Selection
-	Directives Directives
-}
