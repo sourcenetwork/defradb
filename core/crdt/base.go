@@ -45,7 +45,7 @@ func (base baseCRDT) setPriority(
 ) error {
 	prioK := key.WithPriorityFlag()
 	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(buf, priority+1)
+	n := binary.PutUvarint(buf, priority)
 	if n == 0 {
 		return ErrEncodingPriority
 	}

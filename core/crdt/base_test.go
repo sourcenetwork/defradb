@@ -70,7 +70,7 @@ func TestBaseCRDTSetGetPriority(t *testing.T) {
 		return
 	}
 
-	if priority-1 != uint64(10) {
+	if priority != uint64(10) {
 		t.Errorf("baseCRDT incorrect priority. Have %v, want %v", priority, uint64(10))
 	}
 }

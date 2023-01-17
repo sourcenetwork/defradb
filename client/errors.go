@@ -22,6 +22,7 @@ const (
 	errUnexpectedType        string = "unexpected type"
 	errParsingFailed         string = "failed to parse argument"
 	errUninitializeProperty  string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries         string = "reached maximum transaction reties"
 )
 
 // Errors returnable from this package.
@@ -43,6 +44,7 @@ var (
 	ErrInvalidDeleteTarget   = errors.New("the target document to delete is of invalid type")
 	ErrMalformedDocKey       = errors.New("malformed DocKey, missing either version or cid")
 	ErrInvalidDocKeyVersion  = errors.New("invalid DocKey version")
+	ErrMaxTxnRetries         = errors.New(errMaxTxnRetries)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -96,4 +98,10 @@ func NewErrUninitializeProperty(host string, propertyName string) error {
 		errors.NewKV("Host", host),
 		errors.NewKV("PropertyName", propertyName),
 	)
+}
+
+// NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
+// given location.
+func NewErrMaxTxnRetries(inner error) error {
+	return errors.Wrap(errMaxTxnRetries, inner)
 }
