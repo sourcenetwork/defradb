@@ -162,7 +162,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.subTypeFieldName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +175,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.rootName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}
