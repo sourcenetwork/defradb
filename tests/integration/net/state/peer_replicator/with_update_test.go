@@ -17,8 +17,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
 )
 
-// This test documents a bug and the behaviour should be corrected
-// https://github.com/sourcenetwork/defradb/issues/1000
 func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
@@ -59,13 +57,13 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 			},
 			1: {
 				0: {
+					// Updated via peer
 					"Age": uint64(60),
 				},
 			},
 			2: {
 				0: {
-					// This is incorrect behaviour - node 2 should not
-					// be updated and this value should be `21`
+					// Updated via replicator
 					"Age": uint64(60),
 				},
 			},
