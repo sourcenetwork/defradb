@@ -37,7 +37,7 @@ func TestBasicDebugExplainRequest(t *testing.T) {
 			},
 		},
 
-		ExpectedError: "debug explain is not yet implemented!",
+		ExpectedError: "debug explain is not yet implemented",
 	}
 
 	executeTestCase(t, test)

@@ -37,7 +37,7 @@ func TestBasicExecuteExplainRequest(t *testing.T) {
 			},
 		},
 
-		ExpectedError: "execute explain is not yet implemented!",
+		ExpectedError: "execute explain is not yet implemented",
 	}
 
 	executeTestCase(t, test)
