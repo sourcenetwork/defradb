@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // type uint8 uint8
@@ -47,7 +46,7 @@ func (rm *RelationManager) GetRelations() {}
 func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	rel, ok := rm.relations[name]
 	if !ok {
-		return nil, errors.New("no relation found")
+		return nil, NewErrRelationNotFound(name)
 	}
 	return rel, nil
 }
@@ -105,12 +104,12 @@ func (rm *RelationManager) RegisterSingle(
 	relType client.RelationType,
 ) (bool, error) {
 	if name == "" {
-		return false, errors.New("relation name must be non empty")
+		return false, client.NewErrUninitializeProperty("RegisterSingle", "name")
 	}
 
 	// make sure the relation type is ONLY One or Many, not both
 	if relType.IsSet(client.Relation_Type_ONE) == relType.IsSet(client.Relation_Type_MANY) {
-		return false, errors.New("relation type can only be either One or Many, not both")
+		return false, ErrRelationMutlipleTypes
 	}
 
 	// make a copy of rel type, one goes to the relation.relType, and the other goes into the []types.
@@ -200,14 +199,14 @@ type Relation struct {
 func (r *Relation) finalize() error {
 	// make sure all the types/fields are set
 	if len(r.types) != 2 || len(r.schemaTypes) != 2 || len(r.fields) != 2 {
-		return errors.New("relation is missing its defined types and fields")
+		return ErrRelationMissingTypes
 	}
 
 	// make sure its one of One-to-One, One-to-Many, Many-to-Many
 	if !r.relType.IsSet(client.Relation_Type_ONEONE) &&
 		!r.relType.IsSet(client.Relation_Type_ONEMANY) &&
 		!r.relType.IsSet(client.Relation_Type_MANYMANY) {
-		return errors.New("relation has an invalid type to be finalize")
+		return ErrRelationInvalidType
 	}
 
 	// make sure we have a primary set if its a one-to-one or many-to-many
@@ -218,7 +217,7 @@ func (r *Relation) finalize() error {
 
 		// both types have primary set
 		if aBit.IsSet(client.Relation_Type_Primary) {
-			return errors.New("relation can only have a single field set as primary")
+			return ErrMultipleRelationPrimaries
 		} else if !xBit.IsSet(client.Relation_Type_Primary) {
 			// neither type has primary set, auto add to
 			// lexicographically first one by schema type name
@@ -320,7 +319,7 @@ func (r Relation) GetFieldFromSchemaType(schemaType string) (string, client.Rela
 
 func genRelationName(t1, t2 string) (string, error) {
 	if t1 == "" || t2 == "" {
-		return "", errors.New("relation types cannot be empty")
+		return "", client.NewErrUninitializeProperty("genRelationName", "relation types")
 	}
 	t1 = strings.ToLower(t1)
 	t2 = strings.ToLower(t2)

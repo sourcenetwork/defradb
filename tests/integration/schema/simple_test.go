@@ -55,7 +55,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedError: "Schema type already exists",
+		ExpectedError: "schema type already exists",
 	}
 
 	ExecuteQueryTestCase(t, test)
@@ -136,7 +136,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 				}
 			}
 		`,
-		ExpectedError: "No type found for given name",
+		ExpectedError: "no type found for given name",
 	}
 
 	ExecuteQueryTestCase(t, test)
