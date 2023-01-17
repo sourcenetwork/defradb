@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
 )
 
-func TestP2POneToOneReplicatorDoesNotUpdateNonReplicatedDoc(t *testing.T) {
+func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
 			testUtils.RandomNetworkingConfig(),
@@ -30,7 +30,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateNonReplicatedDoc(t *testing.T) {
 		},
 		SeedDocuments: map[int]string{
 			// This document is created in all nodes before the replicator is set up.
-			// Updates should not be synced across nodes.
+			// Updates should be synced across nodes.
 			0: `{
 				"Name": "John",
 				"Age": 21
@@ -53,7 +53,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateNonReplicatedDoc(t *testing.T) {
 			},
 			1: {
 				0: {
-					"Age": uint64(21),
+					"Age": uint64(60),
 				},
 			},
 		},
