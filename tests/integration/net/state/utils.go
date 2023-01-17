@@ -16,7 +16,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -176,7 +175,20 @@ func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, upd
 		return err
 	}
 
-	return col.Save(ctx, doc)
+	// If a P2P-sync commit for the given document is already in progress this
+	// Save call can fail as the transaction will conflict. We dont want to worry
+	// about this in our tests so we just retry a few times until it works (or the
+	// retry limit is breached - important incase this is a different error)
+	for i := 0; i < db.MaxTxnRetries(); i++ {
+		err = col.Save(ctx, doc)
+		if err != nil {
+			err = nil
+			continue
+		}
+		return nil
+	}
+
+	return err
 }
 
 func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*client.Document, error) {
@@ -309,30 +321,28 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 
 	creates := toCreateMutationSlice(test)
 	updates := toUpdateMutationSlice(test)
-	mutations := append(append([]mutation{}, creates...), updates...)
+	waitGroupings, totalWait := getExpectedWaitGroupings(test, creates, updates)
 
 	var wg sync.WaitGroup
-	// todo - this is incorrect I think, it does not allow for post initial syncs (for strong eventual consistency) to be sent
-	// however during manual tweaking of this wg number no additional syncs are made, strongly suggesting that both this
-	// and the production code is failing.
-	//
-	// note - +1 is for the temp hack with time.Sleep
-	wg.Add(len(creates) + len(updates) + 1)
+	wg.Add(totalWait)
 
-	for _, m := range mutations {
-		// copy the variable before using it in the routine
-		mutation := m
+	for k, c := range waitGroupings {
+		// copy the variables before using it in the routine otherwise the runtime
+		// may overwrite it before it is used.
+		grouping := k
+		waitCount := c
 		go func() {
-			// todo - this is incorrect and by queuing them all upfront they may all complete on the first completion
-			waitForNodesToSync(ctx, t, nodes, mutation.nodesToSync, mutation.sourceIndex)
-			wg.Done()
+			// Each grouping must be waited on synchronously for the given waitCount.
+			// The code cannot be allowed to progressed until all events have been
+			// synced for the given node-pairing. Due to the way WaitForPushLogEvent works
+			// we have to rely on event count, calling it multiple times concurrently for
+			// the same pairing will result on all calls completing on the first event.
+			for i := 1; i <= waitCount; i++ {
+				waitForNodesToSync(ctx, t, nodes, grouping.targetIndex, grouping.sourceIndex)
+				wg.Done()
+			}
 		}()
 	}
-	// TEMP!!!! Do not keep this
-	go func() {
-		time.Sleep(5 * time.Second)
-		wg.Done()
-	}()
 
 	for _, create := range creates {
 		docKey, err := createDocument(ctx, nodes[create.sourceIndex].DB, create.payload)
@@ -413,44 +423,42 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 }
 
 func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, isCreate bool) map[int]struct{} {
-	nodeIndexesToSync := map[int]struct{}{}
-
-	// We need to sync all the replicators for this source
-	for _, nodeIndex := range test.NodeReplicators[sourceIndex] {
-		if nodeIndex != sourceIndex {
-			nodeIndexesToSync[nodeIndex] = struct{}{}
-		}
-	}
+	nodeIndexesToSync := _getNodeIndexesToSync(test.NodeReplicators, sourceIndex)
 
 	// We should not wait for peers on create, as they do not sync new docs
 	if !isCreate {
-		// We need to sync all NodePeer indexes that are not the source index
-		// (NodePeers map is bi-directional)
-		for s, dsts := range test.NodePeers {
-			containsSourceIndex := s == sourceIndex
-			for _, nodeIndex := range dsts {
-				if nodeIndex == sourceIndex {
-					containsSourceIndex = true
-					break
-				}
-			}
-			if !containsSourceIndex {
-				// If the current grouping doesn't contain the source index it is irrelevant
-				// here and should be skipped.
-				break
-			}
-
-			if s != sourceIndex {
-				nodeIndexesToSync[s] = struct{}{}
-			}
-			for _, nodeIndex := range dsts {
-				if nodeIndex != sourceIndex {
-					nodeIndexesToSync[nodeIndex] = struct{}{}
-				}
-			}
+		for peerIndex := range _getNodeIndexesToSync(test.NodePeers, sourceIndex) {
+			nodeIndexesToSync[peerIndex] = struct{}{}
 		}
 	}
 
+	return nodeIndexesToSync
+}
+
+func _getNodeIndexesToSync(nodeMappings map[int][]int, sourceIndex int) map[int]struct{} {
+	nodeIndexesToSync := map[int]struct{}{}
+	for s, dsts := range nodeMappings {
+		containsSourceIndex := s == sourceIndex
+		for _, nodeIndex := range dsts {
+			if nodeIndex == sourceIndex {
+				containsSourceIndex = true
+				break
+			}
+		}
+		if !containsSourceIndex {
+			// If the current grouping doesn't contain the source index it is irrelevant
+			// here and should be skipped.
+			break
+		}
+		if s != sourceIndex {
+			nodeIndexesToSync[s] = struct{}{}
+		}
+		for _, nodeIndex := range dsts {
+			if nodeIndex != sourceIndex {
+				nodeIndexesToSync[nodeIndex] = struct{}{}
+			}
+		}
+	}
 	return nodeIndexesToSync
 }
 
@@ -458,15 +466,43 @@ func waitForNodesToSync(
 	ctx context.Context,
 	t *testing.T,
 	nodes []*node.Node,
-	nodeIds map[int]struct{},
+	targetIndex int,
 	sourceIndex int,
 ) {
-	for nodeId := range nodeIds {
-		log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", nodeId, sourceIndex))
-		err := nodes[nodeId].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
-		require.NoError(t, err)
-		log.Info(ctx, fmt.Sprintf("Node %d synced", nodeId))
+	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
+	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
+	require.NoError(t, err)
+	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
+}
+
+func getExpectedWaitGroupings(test P2PTestCase, mutationSets ...[]mutation) (map[soureToTargetIndexKey]int, int) {
+	totalWait := 0
+	waitCountByKey := map[soureToTargetIndexKey]int{}
+
+	for _, mutationSet := range mutationSets {
+		for _, mutation := range mutationSet {
+			for targetIndex := range mutation.nodesToSync {
+				// Each source-target pairing needs to be waited on independently. It also
+				// must handle multiple sync events for each pairing else the code may
+				// progress too early before all events have been synced.
+				key := soureToTargetIndexKey{
+					targetIndex: targetIndex,
+					sourceIndex: mutation.sourceIndex,
+				}
+				existingCount := waitCountByKey[key]
+				count := existingCount + 1
+				waitCountByKey[key] = count
+				totalWait++
+			}
+		}
 	}
+
+	return waitCountByKey, totalWait
+}
+
+type soureToTargetIndexKey struct {
+	targetIndex int
+	sourceIndex int
 }
 
 // docFieldKey is an internal key type that wraps docIndex and fieldName
