@@ -27,8 +27,6 @@ func parseSubscriptionOperationDefinition(
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
 
-	sdef.IsExplain = parseExplainDirective(def.Directives)
-
 	for i, selection := range def.SelectionSet.Selections {
 		switch node := selection.(type) {
 		case *ast.Field:
