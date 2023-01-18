@@ -317,16 +317,15 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 
 	creates := toCreateMutationSlice(test)
 	updates := toUpdateMutationSlice(test)
-	waitGroupings, totalWait := getExpectedWaitGroupings(test, creates, updates)
+	waitGroupings := getExpectedWaitGroupings(test, creates, updates)
 
 	var wg sync.WaitGroup
-	wg.Add(totalWait)
-
 	for k, c := range waitGroupings {
 		// copy the variables before using it in the routine otherwise the runtime
 		// may overwrite it before it is used.
 		grouping := k
 		waitCount := c
+		wg.Add(1)
 		go func() {
 			// Each grouping must be waited on synchronously for the given waitCount.
 			// The code cannot be allowed to progressed until all events have been
@@ -339,8 +338,8 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 			// calls completing on the first event.
 			for i := 1; i <= waitCount; i++ {
 				waitForNodesToSync(ctx, t, nodes, grouping.targetIndex, grouping.sourceIndex)
-				wg.Done()
 			}
+			wg.Done()
 		}()
 	}
 
@@ -475,8 +474,7 @@ func waitForNodesToSync(
 	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
 }
 
-func getExpectedWaitGroupings(test P2PTestCase, mutationSets ...[]mutation) (map[soureToTargetIndexKey]int, int) {
-	totalWait := 0
+func getExpectedWaitGroupings(test P2PTestCase, mutationSets ...[]mutation) map[soureToTargetIndexKey]int {
 	waitCountByKey := map[soureToTargetIndexKey]int{}
 
 	for _, mutationSet := range mutationSets {
@@ -492,12 +490,11 @@ func getExpectedWaitGroupings(test P2PTestCase, mutationSets ...[]mutation) (map
 				existingCount := waitCountByKey[key]
 				count := existingCount + 1
 				waitCountByKey[key] = count
-				totalWait++
 			}
 		}
 	}
 
-	return waitCountByKey, totalWait
+	return waitCountByKey
 }
 
 type soureToTargetIndexKey struct {
