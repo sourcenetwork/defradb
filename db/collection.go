@@ -111,8 +111,8 @@ func (db *db) CreateCollection(
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
 	// check if collection by this name exists
-	cKey := core.NewCollectionKey(desc.Name)
-	exists, err := db.systemstore().Has(ctx, cKey.ToDS())
+	collectionKey := core.NewCollectionKey(desc.Name)
+	exists, err := db.systemstore().Has(ctx, collectionKey.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -139,15 +139,9 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	key := core.NewCollectionKey(col.desc.Name)
-
-	// write the collection metadata to the system store
-	err = db.systemstore().Put(ctx, key.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err = json.Marshal(struct {
+	// Local elements such as secondary indexes should be excluded
+	// from the (global) schemaId.
+	globalSchemaBuf, err := json.Marshal(struct {
 		Name   string
 		Schema client.SchemaDescription
 	}{col.desc.Name, col.desc.Schema})
@@ -156,30 +150,52 @@ func (db *db) CreateCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
+	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
-	col.schemaID = cid.String()
+	schemaId := cid.String()
+	col.schemaID = schemaId
 
-	csKey := core.NewCollectionSchemaKey(cid.String())
-	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	// For new schemas the initial version id will match the schema id
+	schemaVersionId := schemaId
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	// Whilst the schemaVersionKey is global, the data persisted at the key's location
+	// is local to the node (the global only elements are not useful beyond key generation).
+	err = db.systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaId)
+	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionId))
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionId))
+	if err != nil {
+		return nil, err
+	}
+
 	log.Debug(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("ID", col.SchemaID),
 	)
-	return col, err
+	return col, nil
 }
 
-// GetCollection returns an existing collection within the database.
-func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
-	if name == "" {
-		return nil, ErrCollectionNameEmpty
+// getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
+//
+// Will return an error if the given key is empty, or not found.
+func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId string) (*collection, error) {
+	if schemaVersionId == "" {
+		return nil, ErrSchemaVersionIdEmpty
 	}
 
-	key := core.NewCollectionKey(name)
+	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
 	buf, err := db.systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return nil, err
@@ -221,6 +237,22 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	}, nil
 }
 
+// GetCollection returns an existing collection within the database.
+func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+	if name == "" {
+		return nil, ErrCollectionNameEmpty
+	}
+
+	key := core.NewCollectionKey(name)
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return nil, err
+	}
+
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
+}
+
 // GetCollectionBySchemaID returns an existing collection using the schema hash ID.
 func (db *db) GetCollectionBySchemaID(
 	ctx context.Context,
@@ -236,14 +268,14 @@ func (db *db) GetCollectionBySchemaID(
 		return nil, err
 	}
 
-	name := string(buf)
-	return db.GetCollectionByName(ctx, name)
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
 }
 
 // GetAllCollections gets all the currently defined collections.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
-	prefix := core.NewCollectionKey("")
+	prefix := core.NewCollectionSchemaVersionKey("")
 	q, err := db.systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -263,10 +295,10 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 			return nil, err
 		}
 
-		colName := ds.NewKey(res.Key).BaseNamespace()
-		col, err := db.GetCollectionByName(ctx, colName)
+		schemaVersionId := ds.NewKey(res.Key).BaseNamespace()
+		col, err := db.getCollectionByVersionId(ctx, schemaVersionId)
 		if err != nil {
-			return nil, NewErrFailedToGetCollection(colName, err)
+			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
 		}
 		cols = append(cols, col)
 	}
