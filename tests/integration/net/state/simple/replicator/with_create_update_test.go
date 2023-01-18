@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
 func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
@@ -28,23 +29,27 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 				1,
 			},
 		},
-		Creates: map[int]map[int]string{
-			0: {
-				// This document is created in node `0` after the replicator has
-				// been set up. Its creation and future updates should be synced
-				// across all configured nodes.
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
+					// This document is created in node `0` after the replicator has
+					// been set up. Its creation and future updates should be synced
+					// across all configured nodes.
+					0: `{
+						"Name": "John",
+						"Age": 21
 					}`,
+				},
+			},
+		},
+		Updates: map[int]map[int]map[int][]string{
+			0: {
+				0: {
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -62,5 +67,5 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }

@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
 // TestP2FullPReplicator tests document syncing between a node and a replicator.
@@ -29,12 +30,14 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				1,
 			},
 		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
+				0: {
+					0: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
@@ -51,7 +54,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToManyReplicator(t *testing.T) {
@@ -67,12 +70,14 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				2,
 			},
 		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
+				0: {
+					0: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
@@ -94,7 +99,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneOfManyReplicator(t *testing.T) {
@@ -110,12 +115,14 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				1,
 			},
 		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
+				0: {
+					0: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
@@ -135,7 +142,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
@@ -149,16 +156,18 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				1,
 			},
 		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-				1: `{
-					"Name": "Fred",
-					"Age": 22
-				}`,
+				0: {
+					0: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+					1: `{
+						"Name": "Fred",
+						"Age": 22
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
@@ -181,7 +190,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
@@ -197,16 +206,18 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				2,
 			},
 		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				0: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-				1: `{
-					"Name": "Fred",
-					"Age": 22
-				}`,
+				0: {
+					0: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+					1: `{
+						"Name": "Fred",
+						"Age": 22
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
@@ -237,5 +248,5 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }

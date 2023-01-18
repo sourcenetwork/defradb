@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
 func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
@@ -34,18 +35,22 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 				2,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -70,5 +75,5 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }

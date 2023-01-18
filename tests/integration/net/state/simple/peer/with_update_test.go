@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -30,18 +31,22 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -59,7 +64,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -75,18 +80,22 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			1: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -104,7 +113,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithSingleDocumentUpdatePerNode tests document syncing between two nodes with a single update per node
@@ -119,25 +128,31 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			1: {
 				0: {
-					`{
-						"Age": 45
-					}`,
+					0: {
+						`{
+							"Age": 45
+						}`,
+					},
 				},
 			},
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -155,7 +170,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T) {
@@ -171,18 +186,22 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -206,7 +225,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing.T) {
@@ -223,18 +242,22 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			2: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -259,7 +282,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 // This test should cover the same production code as the above
@@ -281,18 +304,22 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromNonPeerNode(t *testing.
 			// to this node should not be synced to the other nodes.
 			2: {},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			2: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -316,7 +343,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromNonPeerNode(t *testing.
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 // TestP2PWithMultipleDocumentUpdatesPerNode tests document syncing between two nodes with multiple updates per node.
@@ -331,37 +358,43 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				0,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
-					`{
-						"Age": 61
-					}`,
-					`{
-						"Age": 62
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+						`{
+							"Age": 61
+						}`,
+						`{
+							"Age": 62
+						}`,
+					},
 				},
 			},
 			1: {
 				0: {
-					`{
-						"Age": 45
-					}`,
-					`{
-						"Age": 46
-					}`,
-					`{
-						"Age": 47
-					}`,
+					0: {
+						`{
+							"Age": 45
+						}`,
+						`{
+							"Age": 46
+						}`,
+						`{
+							"Age": 47
+						}`,
+					},
 				},
 			},
 		},
@@ -379,5 +412,5 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
