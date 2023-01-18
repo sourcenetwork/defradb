@@ -330,9 +330,13 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 		go func() {
 			// Each grouping must be waited on synchronously for the given waitCount.
 			// The code cannot be allowed to progressed until all events have been
-			// synced for the given node-pairing. Due to the way WaitForPushLogEvent works
-			// we have to rely on event count, calling it multiple times concurrently for
-			// the same pairing will result on all calls completing on the first event.
+			// synced for the given node-pairing.
+			//
+			// Whilst currently WaitForPushLogEvent will block for a duration based on
+			// the number of callers to it, this behaviour is currently disputed. If it
+			// was changed to block until the next event syncs (regardless of other callers),
+			// calling it multiple times concurrently for the same pairing would result on all
+			// calls completing on the first event.
 			for i := 1; i <= waitCount; i++ {
 				waitForNodesToSync(ctx, t, nodes, grouping.targetIndex, grouping.sourceIndex)
 				wg.Done()
