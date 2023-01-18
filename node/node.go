@@ -312,6 +312,10 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 }
 
 // WaitForPushLogEvent listens to the event channel for a push log event from a given peer.
+//
+// It will block the calling thread until an event is yielded to an internal channel. This
+// event is not nessecarily the next event and is dependent on the number of concurrent callers
+// (each event will only notify a single caller, not all of them).
 func (n *Node) WaitForPushLogEvent(id peer.ID) error {
 	for {
 		select {
