@@ -48,6 +48,7 @@ var (
 	ErrCollectionAlreadyExists  = errors.New("collection already exists")
 	ErrCollectionNameEmpty      = errors.New("collection name can't be empty")
 	ErrSchemaIdEmpty            = errors.New("schema ID can't be empty")
+	ErrSchemaVersionIdEmpty     = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                 = errors.New("key cannot be empty")
 )
 
