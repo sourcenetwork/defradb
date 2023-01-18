@@ -187,10 +187,10 @@ func (db *db) CreateCollection(
 	return col, nil
 }
 
-// getCollectionByVersionId returns the [client.Collection] at the given [schemaVersionId] version.
+// getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
 //
 // Will return an error if the given key is empty, or not found.
-func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId string) (client.Collection, error) {
+func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId string) (*collection, error) {
 	if schemaVersionId == "" {
 		return nil, ErrSchemaVersionIdEmpty
 	}
