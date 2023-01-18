@@ -225,7 +225,8 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
 		cc, ok := ccv.Value.(cid.Cid)
 		if !ok {
-			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
+			var c cid.Cid
+			return client.NewErrUnexpectedType("queueudCids", c, ccv.Value)
 		}
 		err := vf.merge(cc)
 		if err != nil {

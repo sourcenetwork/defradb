@@ -146,7 +146,7 @@ func (c CompositeDAG) DeltaDecode(node ipld.Node) (core.Delta, error) {
 	delta := &CompositeDAGDelta{}
 	pbNode, ok := node.(*dag.ProtoNode)
 	if !ok {
-		return nil, client.NewErrUnexpectedType[*dag.ProtoNode]("ipld.Node", node)
+		return nil, client.NewErrUnexpectedType("ipld.Node", (*dag.ProtoNode)(nil), node)
 	}
 	data := pbNode.Data()
 	h := &codec.CborHandle{}

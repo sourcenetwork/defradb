@@ -19,6 +19,6 @@ import (
 func TestNewUnexpectedType(t *testing.T) {
 	someString := "defradb"
 	someLocation := "foo"
-	err := NewErrUnexpectedType[int](someLocation, someString)
+	err := NewErrUnexpectedType(someLocation, 0, someString)
 	assert.Equal(t, err.Error(), "unexpected type. Property: foo, Expected: int, Actual: string")
 }

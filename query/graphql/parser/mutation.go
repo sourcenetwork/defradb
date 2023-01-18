@@ -128,7 +128,7 @@ func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*re
 			for i, val := range raw.Values {
 				id, ok := val.(*ast.StringValue)
 				if !ok {
-					return nil, client.NewErrUnexpectedType[*ast.StringValue]("ids argument", val)
+					return nil, client.NewErrUnexpectedType("ids argument", (*ast.StringValue)(nil), val)
 				}
 				ids[i] = id.Value
 			}

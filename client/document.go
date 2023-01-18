@@ -88,7 +88,7 @@ func NewDocFromMap(data map[string]any) (*Document, error) {
 		delete(data, "_key") // remove the key so it isn't parsed further
 		kstr, ok := k.(string)
 		if !ok {
-			return nil, NewErrUnexpectedType[string]("data[_key]", k)
+			return nil, NewErrUnexpectedType("data[_key]", "", k)
 		}
 		if doc.key, err = NewDocKeyFromString(kstr); err != nil {
 			return nil, err

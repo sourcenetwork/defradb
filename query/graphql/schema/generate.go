@@ -522,7 +522,7 @@ func getRelationshipName(
 				if argument.Name.Value == "name" {
 					name, isString := argument.Value.GetValue().(string)
 					if !isString {
-						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
+						return "", client.NewErrUnexpectedType("Relationship name", "", argument.Value.GetValue())
 					}
 					return name, nil
 				}
@@ -1187,7 +1187,7 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 		operatorObject, isInputObj := operatorType.(*gql.InputObject)
 		if !isInputObj {
 			// This should be impossible
-			return nil, client.NewErrUnexpectedType[*gql.InputObject]("operatorType", operatorType)
+			return nil, client.NewErrUnexpectedType("operatorType", (*gql.InputObject)(nil), operatorType)
 		}
 
 		for f, field := range operatorObject.Fields() {

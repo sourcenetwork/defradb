@@ -82,7 +82,7 @@ func ParseConditionsInOrder(stmt *ast.ObjectValue) ([]request.OrderCondition, er
 	if v, ok := cond.([]request.OrderCondition); ok {
 		return v, nil
 	}
-	return nil, client.NewErrUnexpectedType[[]request.OrderCondition]("condition", cond)
+	return nil, client.NewErrUnexpectedType("condition", []request.OrderCondition{}, cond)
 }
 
 func parseConditionsInOrder(stmt *ast.ObjectValue) (any, error) {
@@ -138,7 +138,7 @@ func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any
 	if v, ok := cond.(map[string]any); ok {
 		return v, nil
 	}
-	return nil, client.NewErrUnexpectedType[map[string]any]("condition", cond)
+	return nil, client.NewErrUnexpectedType("condition", map[string]any{}, cond)
 }
 
 func parseConditions(stmt *ast.ObjectValue, inputArg gql.Input) (any, error) {

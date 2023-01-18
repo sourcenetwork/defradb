@@ -65,8 +65,7 @@ func NewErrSelectOfNonGroupField(name string) error {
 }
 
 // NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
-func NewErrUnexpectedType[TExpected any](property string, actual any) error {
-	var expected TExpected
+func NewErrUnexpectedType(property string, expected any, actual any) error {
 	return errors.WithStack(
 		ErrUnexpectedType,
 		errors.NewKV("Property", property),

@@ -49,7 +49,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				boolArray[i], ok = untypedValue.(bool)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[bool](e.Desc.Name, untypedValue)
+					return ctype, nil, client.NewErrUnexpectedType(e.Desc.Name, false, untypedValue)
 				}
 			}
 			val = boolArray
@@ -81,7 +81,8 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[float64](e.Desc.Name, untypedValue)
+					var f float64
+					return ctype, nil, client.NewErrUnexpectedType(e.Desc.Name, f, untypedValue)
 				}
 			}
 			val = floatArray
@@ -97,7 +98,7 @@ func (e encProperty) Decode() (client.CType, any, error) {
 			for i, untypedValue := range array {
 				stringArray[i], ok = untypedValue.(string)
 				if !ok {
-					return ctype, nil, client.NewErrUnexpectedType[string](e.Desc.Name, untypedValue)
+					return ctype, nil, client.NewErrUnexpectedType(e.Desc.Name, "", untypedValue)
 				}
 			}
 			val = stringArray
@@ -136,7 +137,8 @@ func convertNillableArray[T any](propertyName string, items []any) ([]immutable.
 		}
 		value, ok := untypedValue.(T)
 		if !ok {
-			return nil, client.NewErrUnexpectedType[T](fmt.Sprintf("%s[%v]", propertyName, i), untypedValue)
+			var t T
+			return nil, client.NewErrUnexpectedType(fmt.Sprintf("%s[%v]", propertyName, i), t, untypedValue)
 		}
 		resultArray[i] = immutable.Some(value)
 	}
@@ -172,7 +174,7 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 	case float64:
 		return int64(value), nil
 	default:
-		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
+		return 0, client.NewErrUnexpectedType(propertyName, "", untypedValue)
 	}
 }
 

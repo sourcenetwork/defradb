@@ -435,7 +435,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		case mergeNode:
 			multiscan, sourceIsMultiscan := node.Source().(*multiScanNode)
 			if !sourceIsMultiscan {
-				return client.NewErrUnexpectedType[*multiScanNode]("mergeNode", node.Source())
+				return client.NewErrUnexpectedType("mergeNode", (*multiScanNode)(nil), node.Source())
 			}
 
 			// replace our new node internal scanNode with our existing multiscanner

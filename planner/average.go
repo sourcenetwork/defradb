@@ -74,7 +74,8 @@ func (n *averageNode) Next() (bool, error) {
 	countProp := n.currentValue.Fields[n.countFieldIndex]
 	typedCount, isInt := countProp.(int)
 	if !isInt {
-		return false, client.NewErrUnexpectedType[int]("count", countProp)
+		var i int
+		return false, client.NewErrUnexpectedType("count", i, countProp)
 	}
 	count := typedCount
 

@@ -39,7 +39,7 @@ func (db *db) checkForClientSubsciptions(r *request.Request) (
 			return pub, subRequest, nil
 		}
 
-		return nil, nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubcriptionSelection", s)
+		return nil, nil, client.NewErrUnexpectedType("SubcriptionSelection", request.ObjectSubscription{}, s)
 	}
 	return nil, nil, nil
 }

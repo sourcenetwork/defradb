@@ -345,7 +345,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				}
 				argTypeObject, ok := argType.(*gql.InputObject)
 				if !ok {
-					return nil, client.NewErrUnexpectedType[*gql.InputObject]("arg type", argType)
+					return nil, client.NewErrUnexpectedType("arg type", (*gql.InputObject)(nil), argType)
 				}
 				filterType, ok := getArgumentTypeFromInput(argTypeObject, request.FilterClause)
 				if !ok {
@@ -353,7 +353,7 @@ func parseAggregate(schema gql.Schema, parent *gql.Object, field *ast.Field, ind
 				}
 				filterObjVal, ok := filterArg.Value.(*ast.ObjectValue)
 				if !ok {
-					return nil, client.NewErrUnexpectedType[*gql.InputObject]("filter arg", filterArg.Value)
+					return nil, client.NewErrUnexpectedType("filter arg", (*ast.ObjectValue)(nil), filterArg.Value)
 				}
 				filterValue, err := NewFilter(filterObjVal, filterType)
 				if err != nil {
