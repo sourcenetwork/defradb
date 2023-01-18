@@ -50,7 +50,6 @@ const (
 )
 
 type P2PTestCase struct {
-	Query string
 	// Configuration parameters for each peer
 	NodeConfig []*config.Config
 
