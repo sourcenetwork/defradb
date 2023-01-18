@@ -182,7 +182,6 @@ func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, upd
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		err = col.Save(ctx, doc)
 		if err != nil {
-			err = nil
 			continue
 		}
 		return nil
