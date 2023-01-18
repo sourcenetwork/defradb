@@ -278,43 +278,39 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 	}
 
 	// wait for peers to connect to each other
-	if len(test.NodePeers) > 0 {
-		for peer1, peers := range test.NodePeers {
-			peerIndexes := append([]int{peer1}, peers...)
+	for peer1, peers := range test.NodePeers {
+		peerIndexes := append([]int{peer1}, peers...)
 
-			for _, i := range peerIndexes {
-				n := nodes[i]
-				for _, j := range peerIndexes {
-					if i == j {
-						continue
-					}
-					p := nodes[j]
-
-					log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
-					err := n.WaitForPubSubEvent(p.PeerID())
-					require.NoError(t, err)
-					log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
+		for _, i := range peerIndexes {
+			n := nodes[i]
+			for _, j := range peerIndexes {
+				if i == j {
+					continue
 				}
+				p := nodes[j]
+
+				log.Info(ctx, fmt.Sprintf("Waiting for node %d to connect with peer %d", i, j))
+				err := n.WaitForPubSubEvent(p.PeerID())
+				require.NoError(t, err)
+				log.Info(ctx, fmt.Sprintf("Node %d connected to peer %d", i, j))
 			}
 		}
 	}
 
-	if len(test.NodeReplicators) > 0 {
-		for i, reps := range test.NodeReplicators {
-			n := nodes[i]
-			for _, r := range reps {
-				addr, err := ma.NewMultiaddr(
-					fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
-				)
-				require.NoError(t, err)
-				_, err = n.Peer.SetReplicator(ctx, addr)
-				require.NoError(t, err)
+	for i, reps := range test.NodeReplicators {
+		n := nodes[i]
+		for _, r := range reps {
+			addr, err := ma.NewMultiaddr(
+				fmt.Sprintf("%s/p2p/%s", test.NodeConfig[r].Net.P2PAddress, nodes[r].PeerID()),
+			)
+			require.NoError(t, err)
+			_, err = n.Peer.SetReplicator(ctx, addr)
+			require.NoError(t, err)
 
-				// If seed documents were provided the newly configured replicator will sync them
-				// this needs to be handled here or the wait group stuff may progress too early.
-				if len(test.SeedDocuments) > 0 {
-					waitForNodesToSync(ctx, t, nodes, r, i)
-				}
+			// If seed documents were provided the newly configured replicator will sync them
+			// this needs to be handled here or the wait group stuff may progress too early.
+			if len(test.SeedDocuments) > 0 {
+				waitForNodesToSync(ctx, t, nodes, r, i)
 			}
 		}
 	}
