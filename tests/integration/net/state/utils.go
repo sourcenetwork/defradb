@@ -468,7 +468,9 @@ func waitForNodesToSync(
 ) {
 	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
 	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
-	require.NoError(t, err)
+	// This must be an assert and not a require, a panic here will block the test as
+	// the wait group will never complete.
+	assert.NoError(t, err)
 	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
 }
 
