@@ -35,22 +35,7 @@ var (
 	log = logging.MustNewLogger("defra.test.net")
 )
 
-const (
-	userCollectionGQLSchema = `
-		type Users {
-			Name: String
-			Email: String
-			Age: Int 
-			Height: Float
-			Verified: Boolean
-		}
-	`
-
-	userCollection = "Users"
-)
-
 type P2PTestCase struct {
-	Query string
 	// Configuration parameters for each peer
 	NodeConfig []*config.Config
 
@@ -62,12 +47,13 @@ type P2PTestCase struct {
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodeReplicators map[int][]int
 
-	SeedDocuments map[int]string
+	// collection/dockey/value
+	SeedDocuments map[int]map[int]string
 
-	// node/dockey/value
-	Creates map[int]map[int]string
-	// node/dockey/values
-	Updates map[int]map[int][]string
+	// node/collection/dockey/value
+	Creates map[int]map[int]map[int]string
+	// node/collection/dockey/values
+	Updates map[int]map[int]map[int][]string
 	// node/dockey/values
 	Results map[int]map[int]map[string]any
 }
@@ -77,7 +63,13 @@ type P2PTestCase struct {
 // across all nodes due to strong eventual consistancy.
 type AnyOf []any
 
-func setupDefraNode(t *testing.T, cfg *config.Config, seeds map[int]string) (*node.Node, map[int]client.DocKey, error) {
+func setupDefraNode(
+	t *testing.T,
+	schema string,
+	collectionNames []string,
+	cfg *config.Config,
+	seeds map[int]map[int]string,
+) (*node.Node, map[int]client.DocKey, error) {
 	ctx := context.Background()
 	var err error
 
@@ -89,16 +81,19 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds map[int]string) (*no
 
 	db := dbi.DB()
 
-	if err := seedSchema(ctx, db); err != nil {
+	if err := db.AddSchema(ctx, schema); err != nil {
 		return nil, nil, err
 	}
 
 	// seed the database with a set of documents
 	docKeysById := map[int]client.DocKey{}
-	for id, document := range seeds {
-		dockey, err := createDocument(ctx, db, document)
-		require.NoError(t, err)
-		docKeysById[id] = dockey
+	for collectionIndex, collectionSeeds := range seeds {
+		collectionName := collectionNames[collectionIndex]
+		for id, document := range collectionSeeds {
+			dockey, err := createDocument(ctx, db, collectionName, document)
+			require.NoError(t, err)
+			docKeysById[id] = dockey
+		}
 	}
 
 	// init the p2p node
@@ -137,12 +132,8 @@ func setupDefraNode(t *testing.T, cfg *config.Config, seeds map[int]string) (*no
 	return n, docKeysById, nil
 }
 
-func seedSchema(ctx context.Context, db client.DB) error {
-	return db.AddSchema(ctx, userCollectionGQLSchema)
-}
-
-func createDocument(ctx context.Context, db client.DB, document string) (client.DocKey, error) {
-	col, err := db.GetCollectionByName(ctx, userCollection)
+func createDocument(ctx context.Context, db client.DB, collectionName string, document string) (client.DocKey, error) {
+	col, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return client.DocKey{}, err
 	}
@@ -160,13 +151,19 @@ func createDocument(ctx context.Context, db client.DB, document string) (client.
 	return doc.Key(), nil
 }
 
-func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, update string) error {
-	col, err := db.GetCollectionByName(ctx, userCollection)
+func updateDocument(
+	ctx context.Context,
+	db client.DB,
+	collectionName string,
+	dockey client.DocKey,
+	update string,
+) error {
+	col, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return err
 	}
 
-	doc, err := getDocument(ctx, db, dockey)
+	doc, err := getDocument(ctx, db, collectionName, dockey)
 	if err != nil {
 		return err
 	}
@@ -190,8 +187,13 @@ func updateDocument(ctx context.Context, db client.DB, dockey client.DocKey, upd
 	return err
 }
 
-func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*client.Document, error) {
-	col, err := db.GetCollectionByName(ctx, userCollection)
+func getDocument(
+	ctx context.Context,
+	db client.DB,
+	collectionName string,
+	dockey client.DocKey,
+) (*client.Document, error) {
+	col, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -204,33 +206,45 @@ func getDocument(ctx context.Context, db client.DB, dockey client.DocKey) (*clie
 }
 
 func getAllDocuments(ctx context.Context, db client.DB) (map[string]*client.Document, error) {
-	col, err := db.GetCollectionByName(ctx, userCollection)
-	if err != nil {
-		return nil, err
-	}
-
-	docKeys, err := col.GetAllDocKeys(ctx)
+	collections, err := db.GetAllCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	docs := map[string]*client.Document{}
-	for docKeyResult := range docKeys {
-		if docKeyResult.Err != nil {
-			return nil, docKeyResult.Err
-		}
-
-		doc, err := col.Get(ctx, docKeyResult.Key)
+	for _, collection := range collections {
+		col, err := db.GetCollectionByName(ctx, collection.Name())
 		if err != nil {
 			return nil, err
 		}
-		docs[docKeyResult.Key.String()] = doc
+
+		docKeys, err := col.GetAllDocKeys(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for docKeyResult := range docKeys {
+			if docKeyResult.Err != nil {
+				return nil, docKeyResult.Err
+			}
+
+			doc, err := col.Get(ctx, docKeyResult.Key)
+			if err != nil {
+				return nil, err
+			}
+			docs[docKeyResult.Key.String()] = doc
+		}
 	}
 
 	return docs, nil
 }
 
-func ExecuteTestCase(t *testing.T, test P2PTestCase) {
+func ExecuteTestCase(
+	t *testing.T,
+	schema string,
+	collectionNames []string,
+	test P2PTestCase,
+) {
 	ctx := context.Background()
 
 	docKeysById := map[int]client.DocKey{}
@@ -253,7 +267,7 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 			}
 			cfg.Net.Peers = strings.Join(peerAddresses, ",")
 		}
-		n, d, err := setupDefraNode(t, cfg, test.SeedDocuments)
+		n, d, err := setupDefraNode(t, schema, collectionNames, cfg, test.SeedDocuments)
 		require.NoError(t, err)
 
 		if i == 0 {
@@ -314,8 +328,8 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 		}
 	}
 
-	creates := toCreateMutationSlice(test)
-	updates := toUpdateMutationSlice(test)
+	creates := toCreateMutationSlice(test, collectionNames)
+	updates := toUpdateMutationSlice(test, collectionNames)
 	waitGroupings := getExpectedWaitGroupings(test, creates, updates)
 
 	var wg sync.WaitGroup
@@ -343,7 +357,7 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 	}
 
 	for _, create := range creates {
-		docKey, err := createDocument(ctx, nodes[create.sourceIndex].DB, create.payload)
+		docKey, err := createDocument(ctx, nodes[create.sourceIndex].DB, create.collectionName, create.payload)
 		require.NoError(t, err)
 
 		docKeysById[create.docIndex] = docKey
@@ -351,7 +365,13 @@ func ExecuteTestCase(t *testing.T, test P2PTestCase) {
 
 	for _, update := range updates {
 		log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", update.sourceIndex, update.docIndex))
-		err := updateDocument(ctx, nodes[update.sourceIndex].DB, docKeysById[update.docIndex], update.payload)
+		err := updateDocument(
+			ctx,
+			nodes[update.sourceIndex].DB,
+			update.collectionName,
+			docKeysById[update.docIndex],
+			update.payload,
+		)
 		require.NoError(t, err)
 	}
 
@@ -469,7 +489,9 @@ func waitForNodesToSync(
 ) {
 	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
 	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
-	require.NoError(t, err)
+	// This must be an assert and not a require, a panic here will block the test as
+	// the wait group will never complete.
+	assert.NoError(t, err)
 	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
 }
 
@@ -508,44 +530,83 @@ type docFieldKey struct {
 }
 
 type mutation struct {
-	sourceIndex int
-	docIndex    int
-	payload     string
-	nodesToSync map[int]struct{}
+	sourceIndex    int
+	collectionName string
+	docIndex       int
+	payload        string
+	nodesToSync    map[int]struct{}
 }
 
-func toCreateMutationSlice(test P2PTestCase) []mutation {
+func toCreateMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
 	result := []mutation{}
-	for sourceIndex, payloadByDocIndex := range test.Creates {
-		for docIndex, payload := range payloadByDocIndex {
-			result = append(
-				result,
-				mutation{
-					sourceIndex: sourceIndex,
-					docIndex:    docIndex,
-					payload:     payload,
-					nodesToSync: getNodeIndexesToSync(test, sourceIndex, true),
-				},
-			)
+	for sourceIndex, payloadByCollectionName := range test.Creates {
+		for collectionIndex, payloadByDocIndex := range payloadByCollectionName {
+			collectionName := collectionNames[collectionIndex]
+			for docIndex, payload := range payloadByDocIndex {
+				result = append(
+					result,
+					mutation{
+						sourceIndex:    sourceIndex,
+						collectionName: collectionName,
+						docIndex:       docIndex,
+						payload:        payload,
+						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, true),
+					},
+				)
+			}
 		}
 	}
 	return result
 }
 
-func toUpdateMutationSlice(test P2PTestCase) []mutation {
+func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
+	expectedDocIndexes := map[int]struct{}{}
+	for _, collection := range test.SeedDocuments {
+		for docIndex := range collection {
+			// All seeded documents are expected to sync updates, regardless of
+			// whether via a peer or replicator.
+			expectedDocIndexes[docIndex] = struct{}{}
+		}
+	}
+
+	replicatorIndexes := []int{}
+	for i, setIndexes := range test.NodeReplicators {
+		replicatorIndexes = append(replicatorIndexes, i)
+		for j := range setIndexes {
+			replicatorIndexes = append(replicatorIndexes, j)
+		}
+	}
+
+	for _, i := range replicatorIndexes {
+		for docIndex := range test.Creates[i] {
+			// Updates for documents created via replicators are also expected to
+			// sync (peers do not sync created documents).
+			expectedDocIndexes[docIndex] = struct{}{}
+		}
+	}
+
 	result := []mutation{}
-	for sourceIndex, updatesByDocIndex := range test.Updates {
-		for docIndex, updates := range updatesByDocIndex {
-			for _, payload := range updates {
-				result = append(
-					result,
-					mutation{
-						sourceIndex: sourceIndex,
-						docIndex:    docIndex,
-						payload:     payload,
-						nodesToSync: getNodeIndexesToSync(test, sourceIndex, false),
-					},
-				)
+	for sourceIndex, payloadByCollectionName := range test.Updates {
+		for collectionIndex, updatesByDocIndex := range payloadByCollectionName {
+			collectionName := collectionNames[collectionIndex]
+			for docIndex, updates := range updatesByDocIndex {
+				for _, payload := range updates {
+					nodesToSync := map[int]struct{}{}
+					if _, isExpectedToSync := expectedDocIndexes[docIndex]; isExpectedToSync {
+						nodesToSync = getNodeIndexesToSync(test, sourceIndex, false)
+					}
+
+					result = append(
+						result,
+						mutation{
+							sourceIndex:    sourceIndex,
+							collectionName: collectionName,
+							docIndex:       docIndex,
+							payload:        payload,
+							nodesToSync:    nodesToSync,
+						},
+					)
+				}
 			}
 		}
 	}

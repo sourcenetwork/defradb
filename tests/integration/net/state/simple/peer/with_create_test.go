@@ -8,42 +8,41 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package replicator
+package peer_test
 
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
-func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
+func TestP2PCreateDoesNotSync(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 		},
-		NodeReplicators: map[int][]int{
-			0: {
-				1,
+		NodePeers: map[int][]int{
+			1: {
+				0,
 			},
 		},
-		Creates: map[int]map[int]string{
+		SeedDocuments: map[int]map[int]string{
 			0: {
-				// This document is created in node `0` after the replicator has
-				// been set up. Its creation and future updates should be synced
-				// across all configured nodes.
 				0: `{
-					"Name": "John",
-					"Age": 21
+					"Name": "Shahzad",
+					"Age": 300
 				}`,
 			},
 		},
-		Updates: map[int]map[int][]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
+					1: `{
+						"Name": "John",
+						"Age": 21
 					}`,
 				},
 			},
@@ -51,16 +50,20 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(60),
+					"Age": uint64(300),
+				},
+				1: {
+					"Age": uint64(21),
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(60),
+					"Age": uint64(300),
 				},
+				// Peer sync should not sync new documents to nodes
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }

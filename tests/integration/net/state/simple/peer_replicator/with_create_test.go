@@ -15,9 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
-func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
+func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
 			testUtils.RandomNetworkingConfig(),
@@ -34,17 +35,20 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 				2,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
+					1: `{
+						"Name": "Shahzad",
+						"Age": 3000
 					}`,
 				},
 			},
@@ -52,23 +56,27 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(60),
+					"Age": uint64(21),
+				},
+				1: {
+					"Age": uint64(3000),
 				},
 			},
 			1: {
 				0: {
-					// Updated via peer
-					"Age": uint64(60),
+					"Age": uint64(21),
 				},
 			},
 			2: {
 				0: {
-					// Updated via replicator
-					"Age": uint64(60),
+					"Age": uint64(21),
+				},
+				1: {
+					"Age": uint64(3000),
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }

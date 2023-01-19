@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,70 +8,64 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package peer_replicator_test
+package replicator
 
 import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/one_to_many"
 )
 
-func TestP2PPeerReplicatorWithCreate(t *testing.T) {
+// TestP2FullPReplicator tests document syncing between a node and a replicator.
+func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.P2PTestCase{
 		NodeConfig: []*config.Config{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
-			},
 		},
 		NodeReplicators: map[int][]int{
 			0: {
-				2,
+				1,
 			},
 		},
-		SeedDocuments: map[int]string{
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
-		},
-		Creates: map[int]map[int]string{
+		Creates: map[int]map[int]map[int]string{
 			0: {
-				1: `{
-					"Name": "Shahzad",
-					"Age": 3000
-				}`,
+				0: {
+					0: `{
+						"Name": "Saadi"
+					}`,
+				},
+				1: {
+					1: `{
+						"Name": "Gulistan",
+						"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+					}`,
+				},
 			},
 		},
 		Results: map[int]map[int]map[string]any{
 			0: {
 				0: {
-					"Age": uint64(21),
+					"Name": "Saadi",
 				},
 				1: {
-					"Age": uint64(3000),
+					"Name":      "Gulistan",
+					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 				},
 			},
 			1: {
 				0: {
-					"Age": uint64(21),
-				},
-			},
-			2: {
-				0: {
-					"Age": uint64(21),
+					"Name": "Saadi",
 				},
 				1: {
-					"Age": uint64(3000),
+					"Name":      "Gulistan",
+					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 				},
 			},
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	one_to_many.ExecuteTestCase(t, test)
 }

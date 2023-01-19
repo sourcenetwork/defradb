@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/config"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
+	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
 )
 
 func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing.T) {
@@ -28,20 +29,24 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 				1,
 			},
 		},
-		SeedDocuments: map[int]string{
+		SeedDocuments: map[int]map[int]string{
 			// This document is created in all nodes before the replicator is set up.
 			// Updates should be synced across nodes.
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			0: {
 				0: {
-					`{
-						"Age": 60
-					}`,
+					0: {
+						`{
+							"Age": 60
+						}`,
+					},
 				},
 			},
 		},
@@ -59,7 +64,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
 
 func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
@@ -73,21 +78,25 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 				1,
 			},
 		},
-		SeedDocuments: map[int]string{
+		SeedDocuments: map[int]map[int]string{
 			// This document is created in all nodes before the replicator is set up.
 			// Updates should be synced across nodes.
-			0: `{
-				"Name": "John",
-				"Age": 21
-			}`,
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
 		},
-		Updates: map[int]map[int][]string{
+		Updates: map[int]map[int]map[int][]string{
 			// Note: The update is applied to the target node (not source) specified in the config.
 			1: {
 				0: {
-					`{
+					0: {
+						`{
 						"Age": 60
 					}`,
+					},
 				},
 			},
 		},
@@ -105,5 +114,5 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 		},
 	}
 
-	testUtils.ExecuteTestCase(t, test)
+	simple.ExecuteTestCase(t, test)
 }
