@@ -39,3 +39,5 @@ comment:
 ignore:
   - "tests"
   - "**/*_test.go"
+  - "net/pb/net.pb.go"
+  - "net/api/pb/api.pb.go"
