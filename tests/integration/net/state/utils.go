@@ -560,12 +560,42 @@ func toCreateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 }
 
 func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
+	expectedDocIndexes := map[int]struct{}{}
+	for _, collection := range test.SeedDocuments {
+		for docIndex := range collection {
+			// All seeded documents are expected to sync updates, regardless of
+			// whether via a peer or replicator.
+			expectedDocIndexes[docIndex] = struct{}{}
+		}
+	}
+
+	replicatorIndexes := []int{}
+	for i, setIndexes := range test.NodeReplicators {
+		replicatorIndexes = append(replicatorIndexes, i)
+		for j := range setIndexes {
+			replicatorIndexes = append(replicatorIndexes, j)
+		}
+	}
+
+	for _, i := range replicatorIndexes {
+		for docIndex := range test.Creates[i] {
+			// Updates for documents created via replicators are also expected to
+			// sync (peers do not sync created documents).
+			expectedDocIndexes[docIndex] = struct{}{}
+		}
+	}
+
 	result := []mutation{}
 	for sourceIndex, payloadByCollectionName := range test.Updates {
 		for collectionIndex, updatesByDocIndex := range payloadByCollectionName {
 			collectionName := collectionNames[collectionIndex]
 			for docIndex, updates := range updatesByDocIndex {
 				for _, payload := range updates {
+					nodesToSync := map[int]struct{}{}
+					if _, isExpectedToSync := expectedDocIndexes[docIndex]; isExpectedToSync {
+						nodesToSync = getNodeIndexesToSync(test, sourceIndex, false)
+					}
+
 					result = append(
 						result,
 						mutation{
@@ -573,7 +603,7 @@ func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 							collectionName: collectionName,
 							docIndex:       docIndex,
 							payload:        payload,
-							nodesToSync:    getNodeIndexesToSync(test, sourceIndex, false),
+							nodesToSync:    nodesToSync,
 						},
 					)
 				}
