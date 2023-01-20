@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
@@ -179,6 +180,7 @@ func updateDocument(
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		err = col.Save(ctx, doc)
 		if err != nil {
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		return nil
