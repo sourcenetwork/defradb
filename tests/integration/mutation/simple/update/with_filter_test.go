@@ -16,6 +16,34 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func TestSimpleMutationUpdateWithBooleanFilterWhereResultFilteredOut(t *testing.T) {
+	test := testUtils.QueryTestCase{
+		Description: "Simple update mutation with boolean equals filter",
+		// The update will result in a record that no longer matches the filter
+		Query: `mutation {
+					update_user(filter: {verified: {_eq: true}}, data: "{\"verified\":false}") {
+						_key
+						name
+						points
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42.1
+				}`,
+			},
+		},
+		// As the record no longer matches the filter it is not returned
+		Results: []map[string]any{},
+	}
+
+	ExecuteTestCase(t, test)
+}
+
 func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 	tests := []testUtils.QueryTestCase{
 		{

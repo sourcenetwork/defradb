@@ -20,6 +20,50 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration/collection"
 )
 
+func TestUpdateWithInvalidFilterType(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with invalid filter type",
+		Docs:        map[string][]string{},
+		CollectionCalls: map[string][]func(client.Collection) error{
+			"users": []func(c client.Collection) error{
+				func(c client.Collection) error {
+					ctx := context.Background()
+					// test with an invalid filter type
+					_, err := c.UpdateWithFilter(ctx, t, `{
+						"Name": "Eric"
+					}`)
+					return err
+				},
+			},
+		},
+		ExpectedError: "invalid filter",
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithEmptyFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test update users with empty filter",
+		Docs:        map[string][]string{},
+		CollectionCalls: map[string][]func(client.Collection) error{
+			"users": []func(c client.Collection) error{
+				func(c client.Collection) error {
+					ctx := context.Background()
+					// test with an empty filter
+					_, err := c.UpdateWithFilter(ctx, "", `{
+						"Name": "Eric"
+					}`)
+					return err
+				},
+			},
+		},
+		ExpectedError: "invalid filter",
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestUpdateWithFilter(t *testing.T) {
 	docStr := `{
 		"Name": "John",
