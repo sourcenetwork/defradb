@@ -22,7 +22,12 @@ type Request struct {
 
 type Selection any
 
+// Directives contains all the optional and non-optional
+// directives (and their additional data) that a request can have.
+//
+// An optional directive has a value if it's found in the request.
 type Directives struct {
+	// ExplainType is an optional directive (`@explain`) and it's type information.
 	ExplainType immutable.Option[ExplainType]
 }
 

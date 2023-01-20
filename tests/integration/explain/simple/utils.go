@@ -56,7 +56,7 @@ var bookAuthorGQLSchema = (`
 
 `)
 
-// TODO: This should be resolved in ISSUE#953 (github.com/sourcenetwork/defradb).
+// TODO: This should be resolved in https://github.com/sourcenetwork/defradb/issues/953.
 func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	testUtils.ExecuteQueryTestCase(
 		t,
@@ -66,7 +66,7 @@ func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
 	)
 }
 
-// TODO: This comment is removed in the work for ISSUE#953
+// TODO: This comment is removed in PR that resolves https://github.com/sourcenetwork/defradb/issues/953
 //func executeExplainTestCase(t *testing.T, test explainUtils.ExplainRequestTestCase) {
 //	explainUtils.ExecuteExplainRequestTestCase(
 //		t,

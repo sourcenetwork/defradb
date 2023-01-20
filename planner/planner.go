@@ -548,8 +548,12 @@ func (p *Planner) RunSubscriptionRequest(
 	return p.executeRequest(ctx, plan)
 }
 
-// MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
-// Note: Caller is responsible to call the `Close()` method to free the resourced of the returned result.
+// MakePlan makes a plan from the parsed query.
+//
+// Note: Caller is responsible to call the `Close()` method to free the allocated
+// resources of the returned plan.
+//
+// @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(query *request.Request) (planNode, error) {
 	return p.makePlan(query)
 }
