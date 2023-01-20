@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
@@ -273,56 +272,6 @@ func (c *collection) updateWithFilter(
 	return results, nil
 }
 
-func (c *collection) applyPatch( //nolint:unused
-	txn datastore.Txn,
-	doc map[string]any,
-	patch []*fastjson.Value,
-) error {
-	for _, op := range patch {
-		opObject, err := op.Object()
-		if err != nil {
-			return err
-		}
-
-		pathVal := opObject.Get("path")
-		if pathVal == nil {
-			return ErrMissingDocFieldToUpdate
-		}
-
-		path, err := pathVal.StringBytes()
-		if err != nil {
-			return err
-		}
-
-		targetCollection, _, err := c.getCollectionForPatchOpPath(txn, string(path))
-		if err != nil {
-			return err
-		}
-
-		key, err := c.getTargetKeyForPatchPath(txn, doc, string(path))
-		if err != nil {
-			return err
-		}
-		field, val, _ := getValFromDocForPatchPath(doc, string(path))
-		if err := targetCollection.applyPatchOp(txn, key, field, val, opObject); err != nil {
-			return err
-		}
-	}
-
-	// completed patch update
-	return nil
-}
-
-func (c *collection) applyPatchOp( //nolint:unused
-	txn datastore.Txn,
-	dockey string,
-	field string,
-	currentVal any,
-	patchOp *fastjson.Object,
-) error {
-	return nil
-}
-
 func (c *collection) applyMerge(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -551,15 +500,6 @@ func getNillableArray[T any](
 	return arr, nil
 }
 
-func (c *collection) applyMergePatchOp( //nolint:unused
-	txn datastore.Txn,
-	docKey string,
-	field string,
-	currentVal any,
-	targetVal any) error {
-	return nil
-}
-
 // makeQuery constructs a simple query of the collection using the given filter.
 // currently it doesn't support any other query operation other than filters.
 // (IE: No limit, order, etc)
@@ -586,9 +526,7 @@ func (c *collection) makeSelectionQuery(
 	default:
 		return nil, ErrInvalidFilter
 	}
-	if filter == "" {
-		return nil, ErrInvalidFilter
-	}
+
 	slct, err := c.makeSelectLocal(f)
 	if err != nil {
 		return nil, err
@@ -626,77 +564,3 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 
 	return slct, nil
 }
-
-// getTypeAndCollectionForPatch parses the Patch op path values
-// and compares it against the collection schema.
-// If it's within the schema, then patchIsSubType is false
-// subTypeName is empty.
-// If the target type is an array, isArray is true.
-// May need to query the database for other schema types
-// which requires a db transaction. It is recommended
-// to use collection.WithTxn(txn) for this function call.
-func (c *collection) getCollectionForPatchOpPath( //nolint:unused
-	txn datastore.Txn,
-	path string,
-) (col *collection, isArray bool, err error) {
-	return nil, false, nil
-}
-
-// getTargetKeyForPatchPath walks through the given doc and Patch path.
-// It returns the
-func (c *collection) getTargetKeyForPatchPath( //nolint:unused
-	txn datastore.Txn,
-	doc map[string]any,
-	path string,
-) (string, error) {
-	_, length := splitPatchPath(path)
-	if length == 0 {
-		return "", ErrInvalidOpPath
-	}
-
-	return "", nil
-}
-
-func splitPatchPath(path string) ([]string, int) { //nolint:unused
-	path = strings.TrimPrefix(path, "/")
-	pathParts := strings.Split(path, "/")
-	return pathParts, len(pathParts)
-}
-
-func getValFromDocForPatchPath( //nolint:unused
-	doc map[string]any,
-	path string,
-) (string, any, bool) {
-	pathParts, length := splitPatchPath(path)
-	if length == 0 {
-		return "", nil, false
-	}
-	return getMapProp(doc, pathParts, length)
-}
-
-func getMapProp( //nolint:unused
-	doc map[string]any,
-	paths []string,
-	length int,
-) (string, any, bool) {
-	val, ok := doc[paths[0]]
-	if !ok {
-		return "", nil, false
-	}
-	if length > 1 {
-		doc, ok := val.(map[string]any)
-		if !ok {
-			return "", nil, false
-		}
-		return getMapProp(doc, paths[1:], length-1)
-	}
-	return paths[0], val, true
-}
-
-/*
-
-filter := NewFilterFromString("Name: {_eq: 'bob'}")
-
-filter := db.NewQuery().And()
-
-*/
