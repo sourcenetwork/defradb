@@ -15,8 +15,5 @@ type ExplainType string
 
 // Types of explain requests.
 const (
-	DebugExplain   ExplainType = "debug"
-	ExecuteExplain ExplainType = "execute"
-	PredictExplain ExplainType = "predict"
-	SimpleExplain  ExplainType = "simple"
+	SimpleExplain ExplainType = "simple"
 )

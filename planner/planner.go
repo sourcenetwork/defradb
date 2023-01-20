@@ -461,15 +461,6 @@ func (p *Planner) explainRequest(
 
 		return explainResult, nil
 
-	case request.DebugExplain:
-		return nil, errors.New("debug explain is not yet implemented")
-
-	case request.ExecuteExplain:
-		return nil, errors.New("execute explain is not yet implemented")
-
-	case request.PredictExplain:
-		return nil, errors.New("predict explain is not yet implemented")
-
 	default:
 		return nil, errors.New("can't explain request of unknown type")
 	}

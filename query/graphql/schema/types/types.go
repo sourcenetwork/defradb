@@ -21,9 +21,6 @@ const (
 
 	ExplainArgNameType string = "type"
 	ExplainArgSimple   string = "simple"
-	ExplainArgDebug    string = "debug"
-	ExplainArgExecute  string = "execute"
-	ExplainArgPredict  string = "predict"
 )
 
 var (
@@ -46,21 +43,6 @@ var (
 			ExplainArgSimple: &gql.EnumValueConfig{
 				Value:       ExplainArgSimple,
 				Description: "Simple explaination - dump of the plan graph.",
-			},
-
-			ExplainArgDebug: &gql.EnumValueConfig{
-				Value:       ExplainArgDebug,
-				Description: "Like simple explain, but more verbose dump of the plan graph (all nodes).",
-			},
-
-			ExplainArgExecute: &gql.EnumValueConfig{
-				Value:       ExplainArgExecute,
-				Description: "Deeper explaination - insights gathered by executing the plan graph.",
-			},
-
-			ExplainArgPredict: &gql.EnumValueConfig{
-				Value:       ExplainArgPredict,
-				Description: "Insights and predictions gathered by analyzing the plan graph.",
 			},
 		},
 	})

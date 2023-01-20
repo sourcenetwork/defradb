@@ -151,16 +151,6 @@ func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[reques
 	switch arg.Value.GetValue() {
 	case schemaTypes.ExplainArgSimple:
 		return immutable.Some(request.SimpleExplain), nil
-
-	case schemaTypes.ExplainArgDebug:
-		return immutable.Some(request.DebugExplain), nil
-
-	case schemaTypes.ExplainArgExecute:
-		return immutable.Some(request.ExecuteExplain), nil
-
-	case schemaTypes.ExplainArgPredict:
-		return immutable.Some(request.PredictExplain), nil
-
 	default:
 		return immutable.None[request.ExplainType](),
 			errors.New("invalid / unknown explain type")
