@@ -526,9 +526,7 @@ func (c *collection) makeSelectionQuery(
 	default:
 		return nil, ErrInvalidFilter
 	}
-	if filter == "" {
-		return nil, ErrInvalidFilter
-	}
+
 	slct, err := c.makeSelectLocal(f)
 	if err != nil {
 		return nil, err
