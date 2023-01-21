@@ -18,6 +18,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
+
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
@@ -28,6 +31,7 @@ func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error
 	if doc == nil {
 		return nil, []error{client.NewErrUninitializeProperty("parseQuery", "doc")}
 	}
+
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
 		Mutations:    make([]*request.OperationDefinition, 0),
@@ -35,66 +39,126 @@ func ParseQuery(schema gql.Schema, doc *ast.Document) (*request.Request, []error
 	}
 
 	for _, def := range doc.Definitions {
-		switch node := def.(type) {
-		case *ast.OperationDefinition:
-			switch node.Operation {
-			case "query":
-				// parse query operation definition.
-				qdef, err := parseQueryOperationDefinition(schema, node)
-				if err != nil {
-					return nil, err
-				}
-				r.Queries = append(r.Queries, qdef)
-			case "mutation":
-				// parse mutation operation definition.
-				mdef, err := parseMutationOperationDefinition(schema, node)
-				if err != nil {
-					return nil, []error{err}
-				}
-				r.Mutations = append(r.Mutations, mdef)
-			case "subscription":
-				// parse subscription operation definition.
-				sdef, err := parseSubscriptionOperationDefinition(schema, node)
-				if err != nil {
-					return nil, []error{err}
-				}
-				r.Subscription = append(r.Subscription, sdef)
-			default:
-				return nil, []error{ErrUnknownGQLOperation}
+		astOpDef, isOpDef := def.(*ast.OperationDefinition)
+		if !isOpDef {
+			continue
+		}
+
+		switch astOpDef.Operation {
+		case "query":
+			parsedQueryOpDef, errs := parseQueryOperationDefinition(schema, astOpDef)
+			if errs != nil {
+				return nil, errs
 			}
+
+			parsedDirectives, err := parseDirectives(astOpDef.Directives)
+			if errs != nil {
+				return nil, []error{err}
+			}
+			parsedQueryOpDef.Directives = parsedDirectives
+
+			r.Queries = append(r.Queries, parsedQueryOpDef)
+
+		case "mutation":
+			parsedMutationOpDef, err := parseMutationOperationDefinition(schema, astOpDef)
+			if err != nil {
+				return nil, []error{err}
+			}
+
+			parsedDirectives, err := parseDirectives(astOpDef.Directives)
+			if err != nil {
+				return nil, []error{err}
+			}
+			parsedMutationOpDef.Directives = parsedDirectives
+
+			r.Mutations = append(r.Mutations, parsedMutationOpDef)
+
+		case "subscription":
+			parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(schema, astOpDef)
+			if err != nil {
+				return nil, []error{err}
+			}
+
+			parsedDirectives, err := parseDirectives(astOpDef.Directives)
+			if err != nil {
+				return nil, []error{err}
+			}
+			parsedSubscriptionOpDef.Directives = parsedDirectives
+
+			r.Subscription = append(r.Subscription, parsedSubscriptionOpDef)
+
+		default:
+			return nil, []error{ErrUnknownGQLOperation}
 		}
 	}
 
 	return r, nil
 }
 
-// parseExplainDirective returns true if we parsed / detected the explain directive label
-// in this ast, and false otherwise.
-func parseExplainDirective(directives []*ast.Directive) bool {
-	// Iterate through all directives and ensure that the directive is at there.
+// parseDirectives returns all directives that were found if parsing and validation succeeds,
+// otherwise returns the first error that is encountered.
+func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error) {
+	// Set the default states of the directives if they aren't found and no error(s) occur.
+	explainDirective := immutable.None[request.ExplainType]()
+
+	// Iterate through all directives and ensure that the directive we find are validated.
 	// - Note: the location we don't need to worry about as the schema takes care of it, as when
 	//         request is made there will be a syntax error for directive usage at the wrong location,
-	//         unless we add another directive named `@explain` at another location (which we should not).
-	for _, directive := range directives {
-		// The arguments pased to the directive are at `directive.Arguments`.
-		if directive.Name.Value == request.ExplainLabel {
-			return true
+	//         unless we add another directive with the same name, for example `@explain` is added
+	//         at another location (which we must avoid).
+	for _, astDirective := range astDirectives {
+		if astDirective == nil {
+			return request.Directives{}, errors.New("found a nil directive in the AST")
+		}
+
+		if astDirective.Name.Value == request.ExplainLabel {
+			// Explain directive found, lets parse and validate the directive.
+			parsedExplainDirctive, err := parseExplainDirective(astDirective)
+			if err != nil {
+				return request.Directives{}, err
+			}
+			explainDirective = parsedExplainDirctive
 		}
 	}
 
-	return false
+	return request.Directives{
+		ExplainType: explainDirective,
+	}, nil
+}
+
+// parseExplainDirective parses the explain directive AST and returns an error if the parsing or
+// validation goes wrong, otherwise returns the parsed explain type information.
+func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[request.ExplainType], error) {
+	if len(astDirective.Arguments) == 0 {
+		return immutable.Some(request.SimpleExplain), nil
+	}
+
+	if len(astDirective.Arguments) != 1 {
+		return immutable.None[request.ExplainType](), ErrInvalidNumberOfExplainArgs
+	}
+
+	arg := astDirective.Arguments[0]
+	if arg.Name.Value != schemaTypes.ExplainArgNameType {
+		return immutable.None[request.ExplainType](), ErrInvalidExplainTypeArg
+	}
+
+	switch arg.Value.GetValue() {
+	case schemaTypes.ExplainArgSimple:
+		return immutable.Some(request.SimpleExplain), nil
+	default:
+		return immutable.None[request.ExplainType](), ErrUnknownExplainType
+	}
 }
 
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
 	schema gql.Schema,
-	def *ast.OperationDefinition) (*request.OperationDefinition, []error) {
+	def *ast.OperationDefinition,
+) (*request.OperationDefinition, []error) {
 	qdef := &request.OperationDefinition{
 		Selections: make([]request.Selection, len(def.SelectionSet.Selections)),
 	}
-
-	qdef.IsExplain = parseExplainDirective(def.Directives)
 
 	for i, selection := range def.SelectionSet.Selections {
 		var parsedSelection request.Selection

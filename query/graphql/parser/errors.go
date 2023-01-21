@@ -19,5 +19,8 @@ var (
 	ErrFailedToParseConditionValue    = errors.New("failed to parse condition value from query filter statement")
 	ErrEmptyDataPayload               = errors.New("given data payload is empty")
 	ErrUnknownMutationName            = errors.New("unknown mutation name")
+	ErrInvalidExplainTypeArg          = errors.New("invalid explain request type argument")
+	ErrInvalidNumberOfExplainArgs     = errors.New("invalid number of arguments to an explain request")
+	ErrUnknownExplainType             = errors.New("invalid / unknown explain type")
 	ErrUnknownGQLOperation            = errors.New("unknown GraphQL operation type")
 )

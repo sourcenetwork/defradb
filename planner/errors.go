@@ -13,7 +13,8 @@ package planner
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errUnknownDependency string = "The given field does not exist"
+	errUnknownDependency string = "given field does not exist"
+	errFailedToClosePlan string = "failed to close the plan"
 )
 
 var (
@@ -22,13 +23,19 @@ var (
 	ErrMissingQueryOrMutation              = errors.New("query is missing query or mutation statements")
 	ErrOperationDefinitionMissingSelection = errors.New("operationDefinition is missing selections")
 	ErrFailedToFindGroupSource             = errors.New("failed to identify group source")
+	ErrCantExplainSubscriptionRequest      = errors.New("can not explain a subscription request")
 	ErrGroupOutsideOfGroupBy               = errors.New("_group may only be referenced when within a groupBy query")
 	ErrMissingChildSelect                  = errors.New("expected child select but none was found")
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
+	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
 	ErrUnknownDependency                   = errors.New(errUnknownDependency)
 )
 
 func NewErrUnknownDependency(name string) error {
 	return errors.New(errUnknownDependency, errors.NewKV("Name", name))
+}
+
+func NewErrFailedToClosePlan(inner error, location string) error {
+	return errors.Wrap(errFailedToClosePlan, inner, errors.NewKV("Location", location))
 }

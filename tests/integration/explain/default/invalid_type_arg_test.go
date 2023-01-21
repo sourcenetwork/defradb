@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain_simple
+package test_explain_default
 
 import (
 	"testing"
@@ -16,11 +16,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSimpleExplainRequest(t *testing.T) {
+func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain (simple) a basic request.",
+		Description: "Invalid type of explain request should error.",
 
-		Query: `query @explain(type: simple) {
+		Query: `query @explain(type: invalid) {
 			author {
 				_key
 				name
@@ -37,28 +37,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 			},
 		},
 
-		Results: []dataMap{
-			{
-				"explain": dataMap{
-					"selectTopNode": dataMap{
-						"selectNode": dataMap{
-							"filter": nil,
-							"scanNode": dataMap{
-								"filter":         nil,
-								"collectionID":   "3",
-								"collectionName": "author",
-								"spans": []dataMap{
-									{
-										"start": "/3",
-										"end":   "/4",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		ExpectedError: "Argument \"type\" has invalid value invalid.\nExpected type \"ExplainType\", found invalid.",
 	}
 
 	executeTestCase(t, test)
