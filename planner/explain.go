@@ -52,7 +52,7 @@ const (
 	spansLabel          = "spans"
 )
 
-// buildExplainGraph builds the explainGraph from the given top level plan.
+// buildSimpleExplainGraph builds the explainGraph from the given top level plan.
 //
 // Request:
 // query @explain {
@@ -80,7 +80,7 @@ const (
 //     }
 //   ]
 // }
-func buildExplainGraph(source planNode) (map[string]any, error) {
+func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 	explainGraph := map[string]any{}
 
 	if source == nil {
@@ -94,7 +94,7 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 		// List to store all explain graphs of explainable children of MultiNode.
 		multiChildExplainGraph := []map[string]any{}
 		for _, childSource := range node.Children() {
-			childExplainGraph, err := buildExplainGraph(childSource)
+			childExplainGraph, err := buildSimpleExplainGraph(childSource)
 			if err != nil {
 				return nil, err
 			}
@@ -116,7 +116,7 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 		// If not the last child then keep walking and explaining the root graph,
 		// as long as there are more explainable nodes left under root.
 		if node.Source() != nil {
-			indexJoinRootExplainGraph, err := buildExplainGraph(node.Source())
+			indexJoinRootExplainGraph, err := buildSimpleExplainGraph(node.Source())
 			if err != nil {
 				return nil, err
 			}
@@ -142,7 +142,7 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 		// If not the last child then keep walking the graph to find more explainable nodes.
 		// Also make sure the next source / child isn't a recursive `topLevelNode`.
 		if next := node.Source(); next != nil && next.Kind() != topLevelNodeKind {
-			nextExplainGraph, err := buildExplainGraph(next)
+			nextExplainGraph, err := buildSimpleExplainGraph(next)
 			if err != nil {
 				return nil, err
 			}
@@ -158,7 +158,7 @@ func buildExplainGraph(source planNode) (map[string]any, error) {
 	default:
 		// Node is neither a MultiNode nor an "explainable" node. Skip over it but walk it's child(ren).
 		var err error
-		explainGraph, err = buildExplainGraph(source.Source())
+		explainGraph, err = buildSimpleExplainGraph(source.Source())
 		if err != nil {
 			return nil, err
 		}

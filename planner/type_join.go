@@ -81,7 +81,6 @@ func (p *Planner) makeTypeIndexJoin(
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, errors.Wrap("Unknown field on sub selection")
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
@@ -162,7 +161,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.subTypeFieldName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +174,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.rootName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}

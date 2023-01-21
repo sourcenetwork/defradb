@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_explain_simple
+package test_explain_default
 
 import (
 	"testing"
@@ -16,12 +16,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestExplainTopLevelCountQuery(t *testing.T) {
+func TestExplainTopLevelSumQuery(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain top-level count query.",
+		Description: "Explain top-level sum query.",
 
 		Query: `query @explain {
-			_count(author: {})
+			_sum(
+				author: {
+					field: age
+				}
+			)
 		}`,
 
 		Docs: map[int][]string{
@@ -34,7 +38,7 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 				}`,
 				`{
 					"name": "Bob",
-					"verified": false,
+					"verified": true,
 					"age": 30
 				}`,
 			},
@@ -63,11 +67,12 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 							},
 						},
 						{
-							"countNode": dataMap{
+							"sumNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
-										"filter":    nil,
+										"fieldName":      "author",
+										"childFieldName": "age",
+										"filter":         nil,
 									},
 								},
 							},
@@ -81,13 +86,14 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
+func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
 	test := testUtils.QueryTestCase{
-		Description: "Explain top-level count query with filter.",
+		Description: "Explain top-level sum query with filter.",
 
 		Query: `query @explain {
-			_count(
+			_sum(
 				author: {
+					field: age,
 					filter: {
 						age: {
 							_gt: 26
@@ -145,10 +151,11 @@ func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
 							},
 						},
 						{
-							"countNode": dataMap{
+							"sumNode": dataMap{
 								"sources": []dataMap{
 									{
-										"fieldName": "author",
+										"fieldName":      "author",
+										"childFieldName": "age",
 										"filter": dataMap{
 											"age": dataMap{
 												"_gt": int(26),

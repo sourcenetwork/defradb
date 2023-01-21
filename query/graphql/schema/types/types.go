@@ -18,6 +18,9 @@ const (
 	ExplainLabel  string = "explain"
 	PrimaryLabel  string = "primary"
 	RelationLabel string = "relation"
+
+	ExplainArgNameType string = "type"
+	ExplainArgSimple   string = "simple"
 )
 
 var (
@@ -34,20 +37,21 @@ var (
 		},
 	})
 
+	ExplainEnum = gql.NewEnum(gql.EnumConfig{
+		Name: "ExplainType",
+		Values: gql.EnumValueConfigMap{
+			ExplainArgSimple: &gql.EnumValueConfig{
+				Value:       ExplainArgSimple,
+				Description: "Simple explaination - dump of the plan graph.",
+			},
+		},
+	})
+
 	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
 		Name: ExplainLabel,
 		Args: gql.FieldConfigArgument{
-			"simple": &gql.ArgumentConfig{
-				Type:         gql.Boolean,
-				DefaultValue: true,
-			},
-			"predict": &gql.ArgumentConfig{
-				Type:         gql.Boolean,
-				DefaultValue: false,
-			},
-			"execute": &gql.ArgumentConfig{
-				Type:         gql.Boolean,
-				DefaultValue: false,
+			ExplainArgNameType: &gql.ArgumentConfig{
+				Type: ExplainEnum,
 			},
 		},
 
