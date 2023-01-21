@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -462,7 +461,7 @@ func (p *Planner) explainRequest(
 		return explainResult, nil
 
 	default:
-		return nil, errors.New("can't explain request of unknown type")
+		return nil, ErrUnknownExplainRequestType
 	}
 }
 
@@ -508,13 +507,13 @@ func (p *Planner) RunRequest(
 
 	defer func() {
 		if e := plan.Close(); e != nil {
-			err = errors.Wrap("failed to close the plan after running request", e)
+			err = NewErrFailedToClosePlan(e, "running request")
 		}
 	}()
 
 	// Ensure subscription request doesn't ever end up with an explain directive.
 	if len(req.Subscription) > 0 && req.Subscription[0].Directives.ExplainType.HasValue() {
-		return nil, errors.New("subscription request can not be explained")
+		return nil, ErrCantExplainSubscriptionRequest
 	}
 
 	if len(req.Queries) > 0 && req.Queries[0].Directives.ExplainType.HasValue() {
@@ -541,7 +540,7 @@ func (p *Planner) RunSubscriptionRequest(
 
 	defer func() {
 		if e := plan.Close(); e != nil {
-			err = errors.Wrap("failed to close the plan after running subscription request", e)
+			err = NewErrFailedToClosePlan(e, "running subscription request")
 		}
 	}()
 

@@ -81,7 +81,6 @@ func (p *Planner) makeTypeIndexJoin(
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, errors.Wrap("Unknown field on sub selection")
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 

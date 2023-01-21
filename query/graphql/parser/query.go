@@ -134,22 +134,19 @@ func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[reques
 	}
 
 	if len(astDirective.Arguments) != 1 {
-		return immutable.None[request.ExplainType](),
-			errors.New("invalid number of arguments to an explain request")
+		return immutable.None[request.ExplainType](), ErrInvalidNumberOfExplainArgs
 	}
 
 	arg := astDirective.Arguments[0]
 	if arg.Name.Value != schemaTypes.ExplainArgNameType {
-		return immutable.None[request.ExplainType](),
-			errors.New("invalid explain request argument")
+		return immutable.None[request.ExplainType](), ErrInvalidExplainTypeArg
 	}
 
 	switch arg.Value.GetValue() {
 	case schemaTypes.ExplainArgSimple:
 		return immutable.Some(request.SimpleExplain), nil
 	default:
-		return immutable.None[request.ExplainType](),
-			errors.New("invalid / unknown explain type")
+		return immutable.None[request.ExplainType](), ErrUnknownExplainType
 	}
 }
 
