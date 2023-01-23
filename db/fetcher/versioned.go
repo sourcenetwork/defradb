@@ -377,7 +377,13 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", events.EmptyUpdateChannel, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(
+			vf.store,
+			"",
+			events.EmptyUpdateChannel,
+			ctype,
+			key,
+		)
 		if err != nil {
 			return err
 		}

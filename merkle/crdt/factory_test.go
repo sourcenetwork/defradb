@@ -128,7 +128,12 @@ func TestFactoryInstanceMissing(t *testing.T) {
 	m := newStores()
 	f := NewFactory(m)
 
-	_, err := f.Instance("", events.EmptyUpdateChannel, client.LWW_REGISTER, core.MustNewDataStoreKey("/1/0/MyKey"))
+	_, err := f.Instance(
+		"",
+		events.EmptyUpdateChannel,
+		client.LWW_REGISTER,
+		core.MustNewDataStoreKey("/1/0/MyKey"),
+	)
 	assert.Equal(t, err, ErrFactoryTypeNoExist)
 }
 
@@ -138,7 +143,12 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	f1.Register(client.LWW_REGISTER, &lwwFactoryFn)
 	f := f1.WithStores(m)
 
-	crdt, err := f.Instance("", events.EmptyUpdateChannel, client.LWW_REGISTER, core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance(
+		"",
+		events.EmptyUpdateChannel,
+		client.LWW_REGISTER,
+		core.MustNewDataStoreKey("/1/0/MyKey"),
+	)
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -151,7 +161,12 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 	f1.Register(client.COMPOSITE, &compFactoryFn)
 	f := f1.WithStores(m)
 
-	crdt, err := f.Instance("", events.EmptyUpdateChannel, client.COMPOSITE, core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance(
+		"",
+		events.EmptyUpdateChannel,
+		client.COMPOSITE,
+		core.MustNewDataStoreKey("/1/0/MyKey"),
+	)
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
@@ -163,7 +178,12 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	f := NewFactory(m)
 	f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 
-	crdt, err := f.Instance("", events.EmptyUpdateChannel, client.LWW_REGISTER, core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance(
+		"",
+		events.EmptyUpdateChannel,
+		client.LWW_REGISTER,
+		core.MustNewDataStoreKey("/1/0/MyKey"),
+	)
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleLWWRegister)
@@ -175,7 +195,12 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 	f := NewFactory(m)
 	f.Register(client.COMPOSITE, &compFactoryFn)
 
-	crdt, err := f.Instance("", events.EmptyUpdateChannel, client.COMPOSITE, core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt, err := f.Instance(
+		"",
+		events.EmptyUpdateChannel,
+		client.COMPOSITE,
+		core.MustNewDataStoreKey("/1/0/MyKey"),
+	)
 	assert.NoError(t, err)
 
 	_, ok := crdt.(*MerkleCompositeDAG)
