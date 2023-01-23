@@ -129,7 +129,7 @@ func TestFactoryInstanceMissing(t *testing.T) {
 	f := NewFactory(m)
 
 	_, err := f.Instance(
-		"",
+		core.CollectionSchemaVersionKey{},
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
@@ -144,7 +144,7 @@ func TestBlankFactoryInstanceWithLWWRegister(t *testing.T) {
 	f := f1.WithStores(m)
 
 	crdt, err := f.Instance(
-		"",
+		core.CollectionSchemaVersionKey{},
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
@@ -162,7 +162,7 @@ func TestBlankFactoryInstanceWithCompositeRegister(t *testing.T) {
 	f := f1.WithStores(m)
 
 	crdt, err := f.Instance(
-		"",
+		core.CollectionSchemaVersionKey{},
 		events.EmptyUpdateChannel,
 		client.COMPOSITE,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
@@ -179,7 +179,7 @@ func TestFullFactoryInstanceLWWRegister(t *testing.T) {
 	f.Register(client.LWW_REGISTER, &lwwFactoryFn)
 
 	crdt, err := f.Instance(
-		"",
+		core.CollectionSchemaVersionKey{},
 		events.EmptyUpdateChannel,
 		client.LWW_REGISTER,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
@@ -196,7 +196,7 @@ func TestFullFactoryInstanceCompositeRegister(t *testing.T) {
 	f.Register(client.COMPOSITE, &compFactoryFn)
 
 	crdt, err := f.Instance(
-		"",
+		core.CollectionSchemaVersionKey{},
 		events.EmptyUpdateChannel,
 		client.COMPOSITE,
 		core.MustNewDataStoreKey("/1/0/MyKey"),
@@ -211,7 +211,7 @@ func TestLWWRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
 	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
-	crdt := lwwFactoryFn(f, "", events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt := lwwFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
 
 	lwwreg, ok := crdt.(*MerkleLWWRegister)
 	assert.True(t, ok)
@@ -224,7 +224,7 @@ func TestCompositeRegisterFactoryFn(t *testing.T) {
 	ctx := context.Background()
 	m := newStores()
 	f := NewFactory(m) // here factory is only needed to satisfy datastore.MultiStore interface
-	crdt := compFactoryFn(f, "", events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
+	crdt := compFactoryFn(f, core.CollectionSchemaVersionKey{}, events.EmptyUpdateChannel)(core.MustNewDataStoreKey("/1/0/MyKey"))
 
 	merkleReg, ok := crdt.(*MerkleCompositeDAG)
 	assert.True(t, ok)

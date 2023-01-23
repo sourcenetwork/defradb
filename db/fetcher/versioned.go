@@ -379,7 +379,7 @@ func (vf *VersionedFetcher) processNode(
 		}
 		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(
 			vf.store,
-			"",
+			core.CollectionSchemaVersionKey{},
 			events.EmptyUpdateChannel,
 			ctype,
 			key,

@@ -33,10 +33,13 @@ var (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
-	SchemaID string
-	Priority uint64
-	Data     []byte
-	SubDAGs  []core.DAGLink
+	// SchemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	SchemaVersionKey string
+	Priority         uint64
+	Data             []byte
+	SubDAGs          []core.DAGLink
 }
 
 // GetPriority gets the current priority for this delta.
@@ -55,10 +58,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		SchemaID string
-		Priority uint64
-		Data     []byte
-	}{delta.SchemaID, delta.Priority, delta.Data})
+		SchemaVersionKey string
+		Priority         uint64
+		Data             []byte
+	}{delta.SchemaVersionKey, delta.Priority, delta.Data})
 	if err != nil {
 		return nil, err
 	}
@@ -77,21 +80,24 @@ func (delta *CompositeDAGDelta) Links() []core.DAGLink {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	store    datastore.DSReaderWriter
-	key      core.DataStoreKey
-	schemaID string
+	store datastore.DSReaderWriter
+	key   core.DataStoreKey
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
 }
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	namespace core.Key,
 	key core.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
-		store:    store,
-		key:      key,
-		schemaID: schemaID,
+		store:            store,
+		key:              key,
+		schemaVersionKey: schemaVersionKey,
 	}
 }
 
@@ -112,9 +118,9 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:     patch,
-		SubDAGs:  links,
-		SchemaID: c.schemaID,
+		Data:             patch,
+		SubDAGs:          links,
+		SchemaVersionKey: c.schemaVersionKey.ToString(),
 	}
 }
 

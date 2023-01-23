@@ -134,11 +134,6 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	buf, err := json.Marshal(col.desc)
-	if err != nil {
-		return nil, err
-	}
-
 	// Local elements such as secondary indexes should be excluded
 	// from the (global) schemaId.
 	globalSchemaBuf, err := json.Marshal(struct {
@@ -159,6 +154,16 @@ func (db *db) CreateCollection(
 
 	// For new schemas the initial version id will match the schema id
 	schemaVersionId := schemaId
+
+	col.desc.Schema.VersionId = schemaVersionId
+	col.desc.Schema.SchemaId = schemaId
+
+	// buffer must include all the ids, as it is saved and loaded from the store later.
+	buf, err := json.Marshal(col.desc)
+	if err != nil {
+		return nil, err
+	}
+
 	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
@@ -207,33 +212,11 @@ func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId stri
 		return nil, err
 	}
 
-	buf, err = json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{desc.Name, desc.Schema})
-	if err != nil {
-		return nil, err
-	}
-
-	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	sid := cid.String()
-	log.Debug(
-		ctx,
-		"Retrieved collection",
-		logging.NewKV("Name", desc.Name),
-		logging.NewKV("ID", sid),
-	)
-
 	return &collection{
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
-		schemaID: sid,
+		schemaID: desc.Schema.SchemaId,
 	}, nil
 }
 
@@ -838,7 +821,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			c.schemaID,
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionId),
 			c.db.events.Updates,
 			ctype,
 			key,
@@ -863,7 +846,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			c.SchemaID(),
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionId),
 			c.db.events.Updates,
 			ctype,
 			key,

@@ -22,7 +22,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 		Request: `query {
 					commits(
 						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
+						cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
 					) {
 						cid
 					}
@@ -47,7 +47,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 		Request: `query {
 					commits(
 						dockey: "bae-not-this-doc",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
+						cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
 					) {
 						cid
 					}
@@ -81,7 +81,7 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		Request: `query {
 					commits(
 						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
+						cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
 					) {
 						cid
 					}
@@ -105,7 +105,7 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid": "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny",
 			},
 		},
 	}
