@@ -101,7 +101,6 @@ func (index IndexDescription) IDString() string {
 
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
-	ID   uint32
 	Name string
 	Key  []byte // DocKey for versioned source schema
 	// Schema schema.Schema
