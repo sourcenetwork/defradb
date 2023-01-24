@@ -13,11 +13,12 @@ package parser
 import (
 	gql "github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
-	"github.com/sourcenetwork/immutable"
 )
 
 // ParseRequest parses a root ast.Document, and returns a formatted Request object.
