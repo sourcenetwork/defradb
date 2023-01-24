@@ -22,7 +22,7 @@ import (
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,
-// and creates the necessary collections, query types, etc.
+// and creates the necessary collections, request types, etc.
 func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 	err := db.parser.AddSchema(ctx, schemaString)
 	if err != nil {

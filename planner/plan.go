@@ -10,11 +10,11 @@
 
 package planner
 
-// Request is an external hook into the planNode
+// RequestPlan is an external hook into the planNode
 // system. It allows outside packages to
 // execute and manage a request plan graph directly.
 // Instead of using one of the available functions
 // like ExecRequest(...).
 // Currently, this is used by the collection.Update
 // system.
-type Request planNode
+type RequestPlan planNode

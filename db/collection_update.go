@@ -220,19 +220,19 @@ func (c *collection) updateWithFilter(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter)
+	// Make a selection request plan that will scan through only the documents with matching filter.
+	selectionRequest, err := c.makeSelectionRequestPlan(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err = query.Start(); err != nil {
+	if err = selectionRequest.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point log the error.
+	// If the request plan isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := query.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close query after filter update", err)
+		if err := selectionRequest.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close the request plan, after filter update", err)
 		}
 	}()
 
@@ -240,21 +240,21 @@ func (c *collection) updateWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	docMap := query.DocumentMap()
+	docMap := selectionRequest.DocumentMap()
 
-	// loop while we still have results from the filter query
+	// loop while we still have results from the filter request
 	for {
-		next, nextErr := query.Next()
+		next, nextErr := selectionRequest.Next()
 		if nextErr != nil {
 			return nil, err
 		}
-		// if theres no more records from the query, jump out of the loop
+		// if theres no more records from the request, jump out of the loop
 		if !next {
 			break
 		}
 
 		// Get the document, and apply the patch
-		doc := docMap.ToMap(query.Value())
+		doc := docMap.ToMap(selectionRequest.Value())
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
@@ -500,15 +500,15 @@ func getNillableArray[T any](
 	return arr, nil
 }
 
-// makeQuery constructs a simple query of the collection using the given filter.
-// currently it doesn't support any other query operation other than filters.
+// makeSelectionRequestPlan constructs a simple request plan of the collection using the given filter.
+// currently it doesn't support any other operations other than filters.
 // (IE: No limit, order, etc)
-// Additionally it only queries for the root scalar fields of the object
-func (c *collection) makeSelectionQuery(
+// Additionally it only requests for the root scalar fields of the object
+func (c *collection) makeSelectionRequestPlan(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter any,
-) (planner.Request, error) {
+) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {

@@ -183,19 +183,19 @@ func (c *collection) deleteWithFilter(
 	txn datastore.Txn,
 	filter any,
 ) (*client.DeleteResult, error) {
-	// Do a selection query to scan through documents using the given filter.
-	query, err := c.makeSelectionQuery(ctx, txn, filter)
+	// Make a selection request plan that will scan through only the documents with matching filter.
+	selectionRequestPlan, err := c.makeSelectionRequestPlan(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err := query.Start(); err != nil {
+	if err := selectionRequestPlan.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point log the error.
+	// If the request plan isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := query.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close query after filter delete", err)
+		if err := selectionRequestPlan.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close the request plan, after filter delete", err)
 		}
 	}()
 
@@ -203,9 +203,9 @@ func (c *collection) deleteWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	// Keep looping until results from the filter query have been iterated through.
+	// Keep looping until results from the filter request have been iterated through.
 	for {
-		next, err := query.Next()
+		next, err := selectionRequestPlan.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -215,7 +215,7 @@ func (c *collection) deleteWithFilter(
 			break
 		}
 
-		doc := query.Value()
+		doc := selectionRequestPlan.Value()
 		// Extract the dockey in the string format from the document value.
 		docKey := doc.GetKey()
 

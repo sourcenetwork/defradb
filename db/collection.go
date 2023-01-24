@@ -549,7 +549,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given key exists.
-// Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
+// Note: Should we CompareAndSet the update, IE: Query(read-only) the state, and update if changed
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
