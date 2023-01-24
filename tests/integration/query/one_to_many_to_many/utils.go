@@ -45,7 +45,7 @@ func executeTestCase(
 	t *testing.T,
 	test testUtils.RequestTestCase,
 ) {
-	testUtils.ExecuteQueryTestCase(
+	testUtils.ExecuteRequestTestCase(
 		t,
 		gqlSchemaOneToManyToMany,
 		[]string{

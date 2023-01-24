@@ -29,7 +29,7 @@ var sameFieldNameGQLSchema = (`
 `)
 
 func executeSameFieldNameTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteQueryTestCase(t, sameFieldNameGQLSchema, []string{"book", "author"}, test)
+	testUtils.ExecuteRequestTestCase(t, sameFieldNameGQLSchema, []string{"book", "author"}, test)
 }
 
 func TestQueryOneToManyWithSameFieldName(t *testing.T) {

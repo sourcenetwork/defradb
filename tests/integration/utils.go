@@ -330,7 +330,7 @@ func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	return databases, nil
 }
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	collectionNames []string,
@@ -389,9 +389,9 @@ func ExecuteQueryTestCase(
 			)
 		}
 
-		// Create the transactions before executing and queries
+		// Create the transactions before executing the requests.
 		transactions := make([]datastore.Txn, 0, len(test.TransactionalRequests))
-		erroredQueries := make([]bool, len(test.TransactionalRequests))
+		erroredRequests := make([]bool, len(test.TransactionalRequests))
 		for i, tq := range test.TransactionalRequests {
 			if len(transactions) < tq.TransactionId {
 				continue
@@ -400,7 +400,7 @@ func ExecuteQueryTestCase(
 			txn, err := dbi.db.NewTxn(ctx, false)
 			if err != nil {
 				if AssertError(t, test.Description, err, tq.ExpectedError) {
-					erroredQueries[i] = true
+					erroredRequests[i] = true
 				}
 			}
 			defer txn.Discard(ctx)
@@ -411,18 +411,18 @@ func ExecuteQueryTestCase(
 		}
 
 		for i, tq := range test.TransactionalRequests {
-			if erroredQueries[i] {
+			if erroredRequests[i] {
 				continue
 			}
 			result := dbi.db.ExecTransactionalRequest(ctx, tq.Request, transactions[tq.TransactionId])
-			if assertQueryResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
-				erroredQueries[i] = true
+			if assertRequestResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
+				erroredRequests[i] = true
 			}
 		}
 
 		txnIndexesCommited := map[int]struct{}{}
 		for i, tq := range test.TransactionalRequests {
-			if erroredQueries[i] {
+			if erroredRequests[i] {
 				continue
 			}
 			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
@@ -432,18 +432,18 @@ func ExecuteQueryTestCase(
 
 			err := transactions[tq.TransactionId].Commit(ctx)
 			if AssertError(t, test.Description, err, tq.ExpectedError) {
-				erroredQueries[i] = true
+				erroredRequests[i] = true
 			}
 		}
 
 		for i, tq := range test.TransactionalRequests {
-			if tq.ExpectedError != "" && !erroredQueries[i] {
+			if tq.ExpectedError != "" && !erroredRequests[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
 
-		// We run the core query after the explicitly transactional ones to permit tests to query
-		//  the commited result of the transactional queries
+		// We run the core request after the explicitly transactional ones to permit tests to actually
+		// call the request on the commited result of the transactional requests.
 		if !isTransactional || (isTransactional && test.Request != "") {
 			result := dbi.db.ExecRequest(ctx, test.Request)
 			if result.Pub != nil {
@@ -483,7 +483,7 @@ func ExecuteQueryTestCase(
 						Data:   data,
 						Errors: errs,
 					}
-					if assertQueryResults(
+					if assertRequestResults(
 						ctx,
 						t,
 						test.Description,
@@ -496,7 +496,7 @@ func ExecuteQueryTestCase(
 				}
 				result.Pub.Unsubscribe()
 			} else {
-				if assertQueryResults(
+				if assertRequestResults(
 					ctx,
 					t,
 					test.Description,
@@ -594,7 +594,7 @@ func DetectDbChangesPreTestChecks(
 	}
 
 	if isTransactional {
-		// Transactional queries are not yet supported by the database change
+		// Transactional requests are not yet supported by the database change
 		//  detector, so we skip the test
 		t.SkipNow()
 	}
@@ -750,7 +750,7 @@ func SetupDatabaseUsingTargetBranch(
 	return refreshedDb
 }
 
-func assertQueryResults(
+func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
 	description string,
@@ -765,7 +765,7 @@ func assertQueryResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
+	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)

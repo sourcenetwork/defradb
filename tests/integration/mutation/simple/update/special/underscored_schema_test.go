@@ -23,7 +23,7 @@ var myUserSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteQueryTestCase(t, myUserSchema, []string{"my_user"}, test)
+	testUtils.ExecuteRequestTestCase(t, myUserSchema, []string{"my_user"}, test)
 }
 
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {

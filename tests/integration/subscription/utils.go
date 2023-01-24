@@ -26,5 +26,5 @@ var userSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"User"}, test)
+	testUtils.ExecuteRequestTestCase(t, userSchema, []string{"User"}, test)
 }
