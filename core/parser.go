@@ -37,7 +37,7 @@ type Parser interface {
 	IsIntrospection(request string) bool
 
 	// Executes the given introspection request.
-	ExecuteIntrospection(request string) *client.QueryResult
+	ExecuteIntrospection(request string) *client.RequestResult
 
 	// Parses the given request, returning a strongly typed model of that request.
 	Parse(request string) (*request.Request, []error)

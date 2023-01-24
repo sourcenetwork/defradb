@@ -91,7 +91,7 @@ func ExecuteQueryTestCase(
 func assertSchemaResults(
 	ctx context.Context,
 	t *testing.T,
-	result *client.QueryResult,
+	result *client.RequestResult,
 	testCase QueryTestCase,
 ) bool {
 	if assertErrors(t, result.GQL.Errors, testCase.ExpectedError) {

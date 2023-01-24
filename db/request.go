@@ -20,8 +20,8 @@ import (
 )
 
 // ExecRequest executes a request against the database.
-func (db *db) ExecRequest(ctx context.Context, request string) *client.QueryResult {
-	res := &client.QueryResult{}
+func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+	res := &client.RequestResult{}
 	// check if its Introspection request
 	if strings.Contains(request, "IntrospectionQuery") {
 		return db.ExecIntrospection(request)
@@ -78,12 +78,12 @@ func (db *db) ExecTransactionalRequest(
 	ctx context.Context,
 	request string,
 	txn datastore.Txn,
-) *client.QueryResult {
+) *client.RequestResult {
 	if db.parser.IsIntrospection(request) {
 		return db.ExecIntrospection(request)
 	}
 
-	res := &client.QueryResult{}
+	res := &client.RequestResult{}
 
 	parsedRequest, errors := db.parser.Parse(request)
 	if len(errors) > 0 {
@@ -107,6 +107,6 @@ func (db *db) ExecTransactionalRequest(
 }
 
 // ExecIntrospection executes an introspection request against the database.
-func (db *db) ExecIntrospection(request string) *client.QueryResult {
+func (db *db) ExecIntrospection(request string) *client.RequestResult {
 	return db.parser.ExecuteIntrospection(request)
 }

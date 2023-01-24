@@ -50,12 +50,12 @@ func (p *parser) IsIntrospection(request string) bool {
 	return strings.Contains(request, "IntrospectionQuery")
 }
 
-func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
+func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	schema := p.schemaManager.Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
-	res := &client.QueryResult{
+	res := &client.RequestResult{
 		GQL: client.GQLResult{
 			Data:   r.Data,
 			Errors: make([]any, len(r.Errors)),
