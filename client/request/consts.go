@@ -42,11 +42,12 @@ const (
 	LatestCommitsName = "latestCommits"
 	CommitsName       = "commits"
 
-	CommitTypeName  = "Commit"
-	LinksFieldName  = "links"
-	HeightFieldName = "height"
-	CidFieldName    = "cid"
-	DeltaFieldName  = "delta"
+	CommitTypeName           = "Commit"
+	LinksFieldName           = "links"
+	HeightFieldName          = "height"
+	CidFieldName             = "cid"
+	SchemaVersionIDFieldName = "schemaVersionId"
+	DeltaFieldName           = "delta"
 
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
@@ -85,6 +86,7 @@ var (
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
+		SchemaVersionIDFieldName,
 		DeltaFieldName,
 	}
 

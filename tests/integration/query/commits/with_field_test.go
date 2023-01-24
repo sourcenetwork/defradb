@@ -95,3 +95,33 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+// This test is for documentation reasons only. This is not
+// desired behaviour (users should not be specifying field ids).
+func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple all commits query with dockey and field id",
+		Request: `query {
+					commits(field: "C") {
+						cid
+						schemaVersionId
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":             "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

@@ -92,3 +92,39 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple commits query yielding schemaVersionId",
+		Request: `query {
+					commits {
+						cid
+						schemaVersionId
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":             "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+			{
+				"cid":             "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+			{
+				"cid":             "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

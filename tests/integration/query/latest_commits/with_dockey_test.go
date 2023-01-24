@@ -55,3 +55,31 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple latest commits query with dockey and schema versiion id field",
+		Request: `query {
+					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						cid
+						schemaVersionId
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":             "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
