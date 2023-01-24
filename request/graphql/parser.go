@@ -90,7 +90,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseQuery(*schema, ast)
+	query, parsingErrors := defrap.ParseRequest(*schema, ast)
 	if len(parsingErrors) > 0 {
 		return nil, parsingErrors
 	}
