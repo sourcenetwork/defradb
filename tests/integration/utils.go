@@ -70,9 +70,9 @@ var (
 	inMemoryStore  bool
 )
 
-const subsciptionTimeout = 1 * time.Second
+const subscriptionTimeout = 1 * time.Second
 
-// Represents a subsciption request.
+// Represents a subscription request.
 type SubscriptionRequest struct {
 	Request string
 	// The expected (data) results of the issued request.
@@ -460,7 +460,7 @@ func ExecuteRequestTestCase(
 								errs = append(errs, sResult.Errors...)
 								data = append(data, sData...)
 							// a safety in case the stream hangs.
-							case <-time.After(subsciptionTimeout):
+							case <-time.After(subscriptionTimeout):
 								assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
 							}
 						}
@@ -472,7 +472,7 @@ func ExecuteRequestTestCase(
 							errs = append(errs, sResult.Errors...)
 							data = append(data, sData...)
 						// a safety in case the stream hangs or no results are expected.
-						case <-time.After(subsciptionTimeout):
+						case <-time.After(subscriptionTimeout):
 							if q.ExpectedTimout {
 								continue
 							}
