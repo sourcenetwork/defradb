@@ -39,7 +39,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
 			{
 				TransactionId: 0,
@@ -197,7 +197,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
 			{
 				TransactionId: 0,

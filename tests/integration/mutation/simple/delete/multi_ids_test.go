@@ -32,7 +32,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 				},
 			},
-			TransactionalQueries: []testUtils.TransactionRequest{
+			TransactionalRequests: []testUtils.TransactionRequest{
 				{
 					TransactionId: 0,
 					Request: `mutation {

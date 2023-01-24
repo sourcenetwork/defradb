@@ -101,12 +101,12 @@ type RequestTestCase struct {
 	Description string
 	Query       string
 
-	// A collection of queries to exucute after the subscriber is listening on the stream
-	PostSubscriptionQueries []SubscriptionRequest
+	// A collection of requests to exucute after the subscriber is listening on the stream
+	PostSubscriptionRequests []SubscriptionRequest
 
-	// A collection of queries tied to a specific transaction.
-	// These will be executed before `Query` (if specified), in the order that they are listed here.
-	TransactionalQueries []TransactionRequest
+	// A collection of requests that are tied to a specific transaction.
+	// These will be executed before `Request` (if specified), in the order that they are listed here.
+	TransactionalRequests []TransactionRequest
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -160,7 +160,7 @@ For each test:
 - Create a new (test/auto-deleted) temp dir for defra to live/run in
 - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
    if test does not exist in target and is new to this branch)
-- Run the test query and assert results (as per normal tests) using the current branch
+- Run the test request and assert results (as per normal tests) using the current branch
 */
 var DetectDbChanges bool
 var SetupOnly bool
@@ -336,7 +336,7 @@ func ExecuteQueryTestCase(
 	collectionNames []string,
 	test RequestTestCase,
 ) {
-	isTransactional := len(test.TransactionalQueries) > 0
+	isTransactional := len(test.TransactionalRequests) > 0
 
 	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames, isTransactional) {
 		return
@@ -390,9 +390,9 @@ func ExecuteQueryTestCase(
 		}
 
 		// Create the transactions before executing and queries
-		transactions := make([]datastore.Txn, 0, len(test.TransactionalQueries))
-		erroredQueries := make([]bool, len(test.TransactionalQueries))
-		for i, tq := range test.TransactionalQueries {
+		transactions := make([]datastore.Txn, 0, len(test.TransactionalRequests))
+		erroredQueries := make([]bool, len(test.TransactionalRequests))
+		for i, tq := range test.TransactionalRequests {
 			if len(transactions) < tq.TransactionId {
 				continue
 			}
@@ -410,7 +410,7 @@ func ExecuteQueryTestCase(
 			transactions[tq.TransactionId] = txn
 		}
 
-		for i, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalRequests {
 			if erroredQueries[i] {
 				continue
 			}
@@ -421,7 +421,7 @@ func ExecuteQueryTestCase(
 		}
 
 		txnIndexesCommited := map[int]struct{}{}
-		for i, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalRequests {
 			if erroredQueries[i] {
 				continue
 			}
@@ -436,7 +436,7 @@ func ExecuteQueryTestCase(
 			}
 		}
 
-		for i, tq := range test.TransactionalQueries {
+		for i, tq := range test.TransactionalRequests {
 			if tq.ExpectedError != "" && !erroredQueries[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
@@ -447,7 +447,7 @@ func ExecuteQueryTestCase(
 		if !isTransactional || (isTransactional && test.Query != "") {
 			result := dbi.db.ExecRequest(ctx, test.Query)
 			if result.Pub != nil {
-				for _, q := range test.PostSubscriptionQueries {
+				for _, q := range test.PostSubscriptionRequests {
 					dbi.db.ExecRequest(ctx, q.Request)
 					data := []map[string]any{}
 					errs := []any{}

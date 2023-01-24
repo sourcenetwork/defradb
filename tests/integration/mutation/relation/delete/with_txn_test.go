@@ -43,7 +43,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a liniked book that exists.
 			{
 				TransactionId: 0,
@@ -111,7 +111,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a liniked book that exists.
 			{
 				TransactionId: 0,
@@ -173,7 +173,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a liniked book that exists in transaction 0.
 			{
 				TransactionId: 0,
@@ -268,7 +268,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a liniked book that exists in transaction 0.
 			{
 				TransactionId: 0,
@@ -357,7 +357,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a publisher and outside the transaction ensure it's linked
 			// book gets correctly unlinked too.
 			{
@@ -420,7 +420,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionRequest{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Delete a publisher and outside the transaction ensure it's linked
 			// book gets correctly unlinked too.
 			{

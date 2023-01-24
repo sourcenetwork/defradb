@@ -26,7 +26,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
@@ -75,7 +75,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 						age
 					}
 				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
@@ -108,7 +108,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 						age
 					}
 				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
@@ -135,7 +135,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 						age
 					}
 				}`,
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
@@ -195,7 +195,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 				}`,
 			},
 		},
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					update_User(filter: {name: {_eq: "John"}}, data: "{\"points\": 45}") {
@@ -246,7 +246,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				}`,
 			},
 		},
-		PostSubscriptionQueries: []testUtils.SubscriptionRequest{
+		PostSubscriptionRequests: []testUtils.SubscriptionRequest{
 			{
 				Request: `mutation {
 					update_User(data: "{\"points\": 55}") {
