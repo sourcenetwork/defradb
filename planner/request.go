@@ -10,11 +10,11 @@
 
 package planner
 
-// Query is an external hook into the planNode
+// Request is an external hook into the planNode
 // system. It allows outside packages to
-// execute and manage a query plan graph directly.
+// execute and manage a request plan graph directly.
 // Instead of using one of the available functions
-// like ExecQuery(...).
+// like ExecRequest(...).
 // Currently, this is used by the collection.Update
 // system.
-type Query planNode
+type Request planNode

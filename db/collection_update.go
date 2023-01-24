@@ -508,7 +508,7 @@ func (c *collection) makeSelectionQuery(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter any,
-) (planner.Query, error) {
+) (planner.Request, error) {
 	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
