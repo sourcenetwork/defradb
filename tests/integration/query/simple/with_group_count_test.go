@@ -33,7 +33,7 @@ func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "_group may only be referenced when within a groupBy query",
+		ExpectedError: "_group may only be referenced when within a groupBy request",
 	}
 
 	executeTestCase(t, test)
@@ -59,7 +59,7 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 				}`,
 			},
 		},
-		ExpectedError: "_group may only be referenced when within a groupBy query",
+		ExpectedError: "_group may only be referenced when within a groupBy request",
 	}
 
 	executeTestCase(t, test)

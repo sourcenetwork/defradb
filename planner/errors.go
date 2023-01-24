@@ -20,11 +20,11 @@ const (
 var (
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
 	ErrFailedToFindScanNode                = errors.New("failed to find original scan node in plan graph")
-	ErrMissingQueryOrMutation              = errors.New("query is missing query or mutation statements")
+	ErrMissingQueryOrMutation              = errors.New("request is missing query or mutation operation statements")
 	ErrOperationDefinitionMissingSelection = errors.New("operationDefinition is missing selections")
 	ErrFailedToFindGroupSource             = errors.New("failed to identify group source")
 	ErrCantExplainSubscriptionRequest      = errors.New("can not explain a subscription request")
-	ErrGroupOutsideOfGroupBy               = errors.New("_group may only be referenced when within a groupBy query")
+	ErrGroupOutsideOfGroupBy               = errors.New("_group may only be referenced when within a groupBy request")
 	ErrMissingChildSelect                  = errors.New("expected child select but none was found")
 	ErrMissingChildValue                   = errors.New("expected child value, however none was yielded")
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")

@@ -41,7 +41,7 @@ func NewDescriptionsRepo(ctx context.Context, txn datastore.Txn) *DescriptionsRe
 // getCollectionDesc returns the description of the collection with the given name.
 //
 // Will return nil and an error if a description of the given name is not found. Will first look
-// in the repo's cache for the description before querying the datastore.
+// in the repo's cache for the description before doing a query operation on the datastore.
 func (r *DescriptionsRepo) getCollectionDesc(name string) (client.CollectionDescription, error) {
 	collectionKey := core.NewCollectionKey(name)
 	var desc client.CollectionDescription

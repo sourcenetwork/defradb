@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.query.planner")
+	log = logging.MustNewLogger("defra.planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -37,7 +37,7 @@ type planNode interface {
 	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Next processes the next result doc from the request. Can only be called *after* Start().
 	// Can't be called again if any previous call returns false.
 	Next() (bool, error)
 
@@ -83,7 +83,7 @@ type PlanContext struct {
 }
 
 // Planner combines session state and database state to
-// produce a query plan, which is run by the execution context.
+// produce a request plan, which is run by the execution context.
 type Planner struct {
 	txn datastore.Txn
 	db  client.DB
@@ -103,9 +103,9 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
 	case *request.Request:
 		if len(n.Queries) > 0 {
-			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
+			return p.newPlan(n.Queries[0]) // @todo, handle multiple query operation statements
 		} else if len(n.Mutations) > 0 {
-			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
+			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation operation statements
 		} else {
 			return nil, ErrMissingQueryOrMutation
 		}
@@ -531,9 +531,9 @@ func (p *Planner) RunRequest(
 // RunSubscriptionRequest plans a request specific to a subscription and returns the result.
 func (p *Planner) RunSubscriptionRequest(
 	ctx context.Context,
-	query *request.Select,
+	request *request.Select,
 ) (result []map[string]any, err error) {
-	plan, err := p.makePlan(query)
+	plan, err := p.makePlan(request)
 	if err != nil {
 		return nil, err
 	}
@@ -547,12 +547,12 @@ func (p *Planner) RunSubscriptionRequest(
 	return p.executeRequest(ctx, plan)
 }
 
-// MakePlan makes a plan from the parsed query.
+// MakePlan makes a plan from the parsed request.
 //
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
 //
 // @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(query *request.Request) (planNode, error) {
-	return p.makePlan(query)
+func (p *Planner) MakePlan(request *request.Request) (planNode, error) {
+	return p.makePlan(request)
 }
