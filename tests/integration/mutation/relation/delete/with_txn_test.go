@@ -63,7 +63,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 		},
 
 		// Assert after transaction(s) have been commited, to ensure the book was deleted.
-		Query: `query {
+		Request: `query {
 			publisher {
 				_key
 				name
@@ -131,7 +131,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 		},
 
 		// Assert after transaction(s) have been commited, to ensure the book was deleted.
-		Query: `query {
+		Request: `query {
 			book {
 				_key
 				name
@@ -220,7 +220,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 		},
 
 		// Assert after transaction(s) have been commited, to ensure the book was deleted.
-		Query: `query {
+		Request: `query {
 			publisher {
 				_key
 				name
@@ -315,7 +315,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 		},
 
 		// Assert after transaction(s) have been commited, to ensure the book was deleted.
-		Query: `query {
+		Request: `query {
 			book {
 				_key
 				name
@@ -378,7 +378,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 		},
 
 		// Assert after transaction(s) have been commited.
-		Query: `query {
+		Request: `query {
 			publisher {
 				_key
 				name
@@ -441,7 +441,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 		},
 
 		// Assert after transaction(s) have been commited.
-		Query: `query {
+		Request: `query {
 			book {
 				_key
 				name

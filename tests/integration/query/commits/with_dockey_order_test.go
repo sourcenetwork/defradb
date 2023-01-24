@@ -19,7 +19,7 @@ import (
 func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order height desc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: DESC}) {
 						cid
 						height
@@ -72,7 +72,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order height asc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}) {
 						cid
 						height
@@ -125,7 +125,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order cid desc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: DESC}) {
 						cid
 						height
@@ -178,7 +178,7 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order cid asc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: ASC}) {
 						cid
 						height

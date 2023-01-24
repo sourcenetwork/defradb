@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with logical compound filter (or)",
-		Query: `query {
+		Request: `query {
 					users(filter: {_or: [{Age: {_eq: 55}}, {Age: {_eq: 19}}]}) {
 						Name
 						Age

@@ -19,7 +19,7 @@ import (
 func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
+		Request: `query {
 					commits(
 						dockey: "bae-not-this-doc",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
@@ -44,7 +44,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
+		Request: `query {
 					commits(
 						dockey: "bae-not-this-doc",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"
@@ -78,7 +78,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
-		Query: `query {
+		Request: `query {
 					commits(
 						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 						cid: "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq"

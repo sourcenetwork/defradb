@@ -19,7 +19,7 @@ import (
 func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and limit",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2) {
 						cid
 					}

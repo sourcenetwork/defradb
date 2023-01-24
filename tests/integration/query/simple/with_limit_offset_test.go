@@ -20,7 +20,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic limit",
-			Query: `query {
+			Request: `query {
 						users(limit: 1) {
 							Name
 							Age
@@ -47,7 +47,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 		},
 		{
 			Description: "Simple query with basic limit, more rows",
-			Query: `query {
+			Request: `query {
 						users(limit: 2) {
 							Name
 							Age
@@ -95,7 +95,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic limit & offset",
-			Query: `query {
+			Request: `query {
 						users(limit: 1, offset: 1) {
 							Name
 							Age
@@ -122,7 +122,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 		},
 		{
 			Description: "Simple query with basic limit & offset, more rows",
-			Query: `query {
+			Request: `query {
 						users(limit: 2, offset: 2) {
 							Name
 							Age
@@ -170,7 +170,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with offset only",
-			Query: `query {
+			Request: `query {
 						users(offset: 1) {
 							Name
 							Age
@@ -197,7 +197,7 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 		},
 		{
 			Description: "Simple query with offset only, more rows",
-			Query: `query {
+			Request: `query {
 						users(offset: 2) {
 							Name
 							Age

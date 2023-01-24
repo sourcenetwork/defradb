@@ -21,7 +21,7 @@ func TestExplainQuerySimpleOnFieldDirective_BadUsage(t *testing.T) {
 
 		Description: "Explain a query by providing the directive on wrong location (field).",
 
-		Query: `query {
+		Request: `query {
 			author @explain {
 				_key
 				name
@@ -47,7 +47,7 @@ func TestExplainQuerySimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a query with no filter",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				_key
 				name
@@ -95,7 +95,7 @@ func TestExplainQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a query with alias, no filter",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				username: name
 				age: age
@@ -142,7 +142,7 @@ func TestExplainQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a query with no filter, mutiple rows",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				age

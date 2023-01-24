@@ -20,7 +20,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping with filter on parent.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (
 				groupBy: [age],
 				filter: {age: {_gt: 63}}
@@ -100,7 +100,7 @@ func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping with filter on the inner group selection.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [age]) {
 				age
 				_group(filter: {age: {_gt: 63}}) {

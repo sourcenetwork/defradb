@@ -21,7 +21,7 @@ import (
 func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
@@ -66,7 +66,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with  cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
 							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
@@ -115,7 +115,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
 							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
@@ -171,7 +171,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
 							cid: "bafybeigcxmx2mbkmmkujm6vv4eoa57vfg2a22sum4p46empn6fcqkzpdma",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"
@@ -227,7 +227,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
-		Query: `query {
+		Request: `query {
 					book (
 							cid: "bafybeifc33ql7a5vna3epx55lm2dwyhmq7souodlhnsrfwhz6gfqcb6wje",
 							dockey: "bae-fd541c25-229e-5280-b44b-e5c2af3e374d"

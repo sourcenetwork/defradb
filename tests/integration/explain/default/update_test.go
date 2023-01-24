@@ -21,7 +21,7 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 
 		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			update_author(
 				filter: {
 					verified: {
@@ -100,7 +100,7 @@ func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 
 		Description: "Explain simple update mutation with id in filter, multiple rows",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			update_author(
 				ids: [
 					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
@@ -177,7 +177,7 @@ func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 
 		Description: "Explain simple update mutation with id equals filter, multiple rows but single match",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			update_author(
 				id: "bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f",
 				data: "{\"age\": 59}"
@@ -246,7 +246,7 @@ func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
 
 		Description: "Explain simple update mutation with ids and filter, multiple rows",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			update_author(
 				filter: {
 					verified: {

@@ -20,7 +20,7 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a simple query using average on array field.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			book {
 				name
 				_avg(chapterPages: {})
@@ -91,7 +91,7 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a average query on joined field.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				_avg(books: {field: pages})
@@ -229,7 +229,7 @@ func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a average query on multiple joined fields with filter.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				_avg(

@@ -29,7 +29,7 @@ func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update of schema with underscored name",
-		Query: `mutation {
+		Request: `mutation {
 			update_my_user(data: "{\"name\": \"Fred\"}") {
 				_key
 				name

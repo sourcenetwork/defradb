@@ -19,7 +19,7 @@ import (
 func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple filter on sub type",
-		Query: `query {
+		Request: `query {
 					book {
 						name
 						rating
@@ -65,7 +65,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple filter on parent",
-		Query: `query {
+		Request: `query {
 					book(filter: {name: {_eq: "Painted House"}}) {
 						name
 						rating
@@ -111,7 +111,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple sub filter on child",
-		Query: `query {
+		Request: `query {
 					book(filter: {author: {verified: {_eq: true}}}) {
 						name
 						rating
@@ -157,7 +157,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with filter on parent referencing parent through child",
-		Query: `query {
+		Request: `query {
 					book(filter: {author: {published: {rating: {_eq: 4.9}}}}) {
 						name
 						rating
@@ -215,7 +215,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation with simple sub filter on child, but not child selections",
-		Query: `query {
+		Request: `query {
 					book(filter: {author: {verified: {_eq: true}}}) {
 						name
 						rating

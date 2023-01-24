@@ -20,7 +20,7 @@ import (
 func TestMutationCreateSimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
-		Query: `mutation {
+		Request: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_key
 						name
@@ -42,7 +42,7 @@ func TestMutationCreateSimple(t *testing.T) {
 func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation where document already exists.",
-		Query: `mutation {
+		Request: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27}") {
 						_key
 						name
@@ -66,7 +66,7 @@ func TestMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
 func TestMutationCreateSimpleDoesNotCreateDocEmptyData(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation with empty data param.",
-		Query: `mutation {
+		Request: `mutation {
 					create_user(data: "") {
 						_key
 						name

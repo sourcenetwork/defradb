@@ -19,7 +19,7 @@ import (
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
@@ -95,7 +95,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
@@ -170,7 +170,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					asc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
@@ -250,7 +250,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					byName: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
@@ -329,7 +329,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildrenOrderedAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
-		Query: `query {
+		Request: `query {
 				author {
 					name
 					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})

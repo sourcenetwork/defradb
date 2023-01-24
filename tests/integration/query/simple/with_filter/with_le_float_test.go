@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le float filter with equal value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_le: 1.82}}) {
 						Name
 					}
@@ -49,7 +49,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le float filter with greater value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_le: 1.820000000001}}) {
 						Name
 					}
@@ -79,7 +79,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le float filter with greater int value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_le: 2}}) {
 						Name
 					}
@@ -109,7 +109,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le float filter with null value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_le: null}}) {
 						Name
 					}

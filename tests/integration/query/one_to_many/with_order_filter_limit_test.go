@@ -21,7 +21,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 ) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, asc. order & limit on sub",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age
@@ -88,7 +88,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortDescend
 ) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, desc. order & limit on sub",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age

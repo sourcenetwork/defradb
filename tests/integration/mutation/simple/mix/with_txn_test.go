@@ -262,7 +262,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 			},
 		},
 		// Query after transactions have been commited:
-		Query: `query {
+		Request: `query {
 			user {
 				_key
 				name

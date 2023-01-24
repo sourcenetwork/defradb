@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average with filter",
-		Query: `query {
+		Request: `query {
 					_avg(users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 		Docs: map[int][]string{
@@ -51,7 +51,7 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average with datetime filter",
-		Query: `query {
+		Request: `query {
 					_avg(users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56.647Z"}}})
 				}`,
 		Docs: map[int][]string{

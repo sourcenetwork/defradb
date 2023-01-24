@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age
@@ -69,7 +69,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age

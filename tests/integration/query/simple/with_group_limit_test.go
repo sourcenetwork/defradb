@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, rendered, limited group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_group(limit: 1) {
@@ -69,7 +69,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, multiple rendered, limited groups",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						G1: _group(limit: 1) {
@@ -135,7 +135,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number and limit, no children, rendered, limited group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age], limit: 1) {
 						Age
 						_group(limit: 2) {
@@ -180,7 +180,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number and limit, no children, rendered, limited group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age], limit: 2) {
 						Age
 						_group(limit: 1) {

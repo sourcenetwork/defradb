@@ -19,7 +19,7 @@ import (
 func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and unknown field",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
 						cid
 					}
@@ -41,7 +41,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and unknown field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
 						cid
 					}
@@ -65,7 +65,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
 						cid
 					}
@@ -89,7 +89,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
 						cid
 					}
@@ -117,7 +117,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
 						cid
 					}

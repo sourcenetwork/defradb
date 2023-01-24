@@ -20,7 +20,7 @@ import (
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 deep orderby subtypes of both descending and ascending.",
-		Query: `query {
+		Request: `query {
 		    Author {
 				name
 				NewestPublishersBook: book(order: {publisher: {yearOpened: DESC}}, limit: 1) {

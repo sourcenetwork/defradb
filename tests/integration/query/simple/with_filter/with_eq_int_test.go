@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter(age)",
-		Query: `query {
+		Request: `query {
 					users(filter: {Age: {_eq: 21}}) {
 						Name
 						Age
@@ -51,7 +51,7 @@ func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 func TestQuerySimpleWithIntEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic int nil filter",
-		Query: `query {
+		Request: `query {
 					users(filter: {Age: {_eq: null}}) {
 						Name
 						Age

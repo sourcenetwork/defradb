@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 					}
@@ -63,7 +63,7 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [CreatedAt]) {
 						CreatedAt
 					}
@@ -107,7 +107,7 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, child string",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_group {
@@ -172,7 +172,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 func TestQuerySimpleWithGroupByString(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group {
@@ -237,7 +237,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group (groupBy: [Verified]){
@@ -337,7 +337,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string then by boolean",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name, Verified]) {
 						Name
 						Verified
@@ -424,7 +424,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by boolean then by string",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Verified, Name]) {
 						Name
 						Verified
@@ -511,7 +511,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, undefined group value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 					}
@@ -546,7 +546,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, with children, undefined group value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_group {
@@ -597,7 +597,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						Name

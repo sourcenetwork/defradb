@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt DateTime filter with equal value",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_lt: "2017-07-25T03:46:56.647Z"}}) {
 						Name
 					}
@@ -51,7 +51,7 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt DateTime filter with null value",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_lt: null}}) {
 						Name
 					}

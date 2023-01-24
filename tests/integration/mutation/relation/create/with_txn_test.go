@@ -141,7 +141,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 		},
 
 		// Assert books -> publisher direction outside the transactions.
-		Query: `query {
+		Request: `query {
 			book {
 				_key
 				name
@@ -287,7 +287,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 		},
 
 		// Assert publishers -> books direction outside the transactions.
-		Query: `query {
+		Request: `query {
 			publisher {
 				_key
 				name

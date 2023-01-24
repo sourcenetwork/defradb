@@ -20,7 +20,7 @@ func TestSimpleMutationUpdateWithBooleanFilterWhereResultFilteredOut(t *testing.
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with boolean equals filter",
 		// The update will result in a record that no longer matches the filter
-		Query: `mutation {
+		Request: `mutation {
 					update_user(filter: {verified: {_eq: true}}, data: "{\"verified\":false}") {
 						_key
 						name
@@ -48,7 +48,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with boolean equals filter",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
@@ -75,7 +75,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean equals filter, multiple rows but single match",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
@@ -108,7 +108,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 		{
 			Description: "Simple update mutation with boolean equals filter, multiple rows",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"points\": 59}") {
 							_key
 							name
@@ -154,7 +154,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id in filter, multiple rows",
-		Query: `mutation {
+		Request: `mutation {
 					update_user(ids: ["bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", "bae-958c9334-73cf-5695-bf06-cf06826babfa"], data: "{\"points\": 59}") {
 						_key
 						name
@@ -197,7 +197,7 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id equals filter, multiple rows but single match",
-		Query: `mutation {
+		Request: `mutation {
 					update_user(id: "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", data: "{\"points\": 59}") {
 						_key
 						name

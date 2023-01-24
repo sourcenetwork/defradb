@@ -20,7 +20,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain query with a dockey on parent groupBy.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(
 				groupBy: [age],
 				dockey: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
@@ -99,7 +99,7 @@ func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain query with a dockeys and filter on parent groupBy.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(
 				groupBy: [age],
 				filter: {age: {_eq: 20}},

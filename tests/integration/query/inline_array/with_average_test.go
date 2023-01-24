@@ -19,7 +19,7 @@ import (
 func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of nil integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteIntegers: {})
@@ -47,7 +47,7 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of empty integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteIntegers: {})
@@ -75,7 +75,7 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of zero integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteIntegers: {})
@@ -103,7 +103,7 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of populated integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteIntegers: {})
@@ -131,7 +131,7 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of populated nillable integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(TestScores: {})
@@ -159,7 +159,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of nil float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteFloats: {})
@@ -187,7 +187,7 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of empty float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteFloats: {})
@@ -215,7 +215,7 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of zero float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteFloats: {})
@@ -243,7 +243,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of populated float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(FavouriteFloats: {})
@@ -271,7 +271,7 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average of populated nillable float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_avg(PageRatings: {})

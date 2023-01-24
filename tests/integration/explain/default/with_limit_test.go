@@ -20,7 +20,7 @@ func TestExplainQueryWithOnlyLimitSpecified(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Only Limit Specified.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(limit: 2) {
 				name
 			}
@@ -94,7 +94,7 @@ func TestExplainQueryWithOnlyOffsetSpecified(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Only Offset Specified.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(offset: 2) {
 				name
 			}
@@ -168,7 +168,7 @@ func TestExplainQueryWithBothLimitAndOffset(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Limit and Offset.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(limit: 3, offset: 1) {
 				name
 			}
@@ -242,7 +242,7 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Only Limit On Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				articles(limit: 1) {
@@ -402,7 +402,7 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Only Offset On Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				articles(offset: 2) {
@@ -562,7 +562,7 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Both Limit And Offset On Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				articles(limit: 2, offset: 2) {
@@ -722,7 +722,7 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Limit On Child And Both Limit And Offset On Parent.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(limit: 3, offset: 1) {
 				name
 				articles(limit: 2) {
@@ -886,7 +886,7 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With multiple conflicting inner limit nodes.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				numberOfArts: _count(articles: {})
 				articles(limit: 2) {
@@ -1096,7 +1096,7 @@ func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With multiple conflicting inner limit nodes and an outer limit.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(limit: 3, offset: 1) {
 				numberOfArts: _count(articles: {})
 				articles(limit: 2) {

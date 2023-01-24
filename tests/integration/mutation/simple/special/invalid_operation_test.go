@@ -20,7 +20,7 @@ import (
 func TestMutationInvalidMutation(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple invalid mutation",
-		Query: `mutation {
+		Request: `mutation {
 			dostuff_user(data: "") {
 				_key
 			}

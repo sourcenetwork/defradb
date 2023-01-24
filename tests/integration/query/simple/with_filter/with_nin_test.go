@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithNotInFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with not-in filter",
-		Query: `query {
+		Request: `query {
 					users(filter: {Age: {_nin: [19, 40, 55, null]}}) {
 						Name
 					}

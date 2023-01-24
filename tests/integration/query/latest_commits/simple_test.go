@@ -21,7 +21,7 @@ import (
 func TestQueryLatestCommits(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query",
-		Query: `query {
+		Request: `query {
 					latestCommits {
 						cid
 						links {

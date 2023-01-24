@@ -20,7 +20,7 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with count, no child records",
-			Query: `query {
+			Request: `query {
 				author {
 					name
 					_count(published: {})
@@ -45,7 +45,7 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 		},
 		{
 			Description: "One-to-many relation query from many side with count",
-			Query: `query {
+			Request: `query {
 				author {
 					name
 					_count(published: {})

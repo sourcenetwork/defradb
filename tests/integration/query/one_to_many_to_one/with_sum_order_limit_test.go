@@ -19,7 +19,7 @@ import (
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, desc. directions.",
-		Query: `query {
+		Request: `query {
 		    Author {
 				name
 			    s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
@@ -163,7 +163,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, asc. directions.",
-		Query: `query {
+		Request: `query {
  		    Author {
  				name
  			    s1: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
@@ -307,7 +307,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
-		Query: `query {
+		Request: `query {
 		    Author {
 				name
 			    s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
@@ -422,7 +422,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
-		Query: `query {
+		Request: `query {
 		    Author {
 				name
 			    s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})

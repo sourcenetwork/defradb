@@ -19,7 +19,7 @@ import (
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age
@@ -88,7 +88,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter",
-		Query: `query {
+		Request: `query {
 			author(filter: {published: {rating: {_gt: 4.8}}}) {
 				name
 			}
@@ -141,7 +141,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
-		Query: `query {
+		Request: `query {
 			author(filter: {age: {_gt: 63}}) {
 				name
 				age
@@ -206,7 +206,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				age

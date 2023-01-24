@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of average on int",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _avg})
@@ -106,7 +106,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndSum(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})

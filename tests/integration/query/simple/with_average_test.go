@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on undefined object",
-		Query: `query {
+		Request: `query {
 					_avg
 				}`,
 		ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -31,7 +31,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on undefined field",
-		Query: `query {
+		Request: `query {
 					_avg(users: {})
 				}`,
 		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
@@ -43,7 +43,7 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on empty",
-		Query: `query {
+		Request: `query {
 					_avg(users: {field: Age})
 				}`,
 		Results: []map[string]any{
@@ -59,7 +59,7 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query, average",
-		Query: `query {
+		Request: `query {
 					_avg(users: {field: Age})
 				}`,
 		Docs: map[int][]string{

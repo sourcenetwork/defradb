@@ -23,7 +23,7 @@ import (
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(_group: {field: Age})

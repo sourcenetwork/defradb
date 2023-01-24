@@ -36,7 +36,7 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side, same field name",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							relationship1 {
@@ -70,7 +70,7 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 		},
 		{
 			Description: "One-to-many relation query from many side, same field name",
-			Query: `query {
+			Request: `query {
 						author {
 							name
 							relationship1 {

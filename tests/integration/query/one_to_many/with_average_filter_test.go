@@ -21,7 +21,7 @@ import (
 func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with average",
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				_avg(published: {field: rating})

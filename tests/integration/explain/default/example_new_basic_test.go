@@ -163,7 +163,7 @@ func TestExplainSimpleOld(t *testing.T) {
 
 		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			update_author(
 				filter: {
 					verified: {

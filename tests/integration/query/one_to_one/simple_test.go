@@ -20,7 +20,7 @@ func TestQueryOneToOne(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-one relation query with no filter",
-			Query: `query {
+			Request: `query {
 						book {
 							name
 							rating
@@ -61,7 +61,7 @@ func TestQueryOneToOne(t *testing.T) {
 		},
 		{
 			Description: "One-to-one relation secondary direction, no filter",
-			Query: `query {
+			Request: `query {
 						author {
 							name
 							age
@@ -110,7 +110,7 @@ func TestQueryOneToOne(t *testing.T) {
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, multiple records",
-		Query: `query {
+		Request: `query {
 			book {
 				name
 				author {
@@ -172,7 +172,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one-to-one relation secondary direction",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				published {
@@ -226,7 +226,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, nil child",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				published {
@@ -256,7 +256,7 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation primary direction, nil parent",
-		Query: `query {
+		Request: `query {
 			book {
 				name
 				author {

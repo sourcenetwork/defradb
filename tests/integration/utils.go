@@ -99,7 +99,7 @@ type TransactionRequest struct {
 
 type RequestTestCase struct {
 	Description string
-	Query       string
+	Request     string
 
 	// A collection of requests to exucute after the subscriber is listening on the stream
 	PostSubscriptionRequests []SubscriptionRequest
@@ -343,7 +343,7 @@ func ExecuteQueryTestCase(
 	}
 
 	// Must have a non-empty request.
-	if !isTransactional && test.Query == "" {
+	if !isTransactional && test.Request == "" {
 		assert.Fail(t, "Test must have a non-empty request.", test.Description)
 	}
 
@@ -444,8 +444,8 @@ func ExecuteQueryTestCase(
 
 		// We run the core query after the explicitly transactional ones to permit tests to query
 		//  the commited result of the transactional queries
-		if !isTransactional || (isTransactional && test.Query != "") {
-			result := dbi.db.ExecRequest(ctx, test.Query)
+		if !isTransactional || (isTransactional && test.Request != "") {
+			result := dbi.db.ExecRequest(ctx, test.Request)
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionRequests {
 					dbi.db.ExecRequest(ctx, q.Request)

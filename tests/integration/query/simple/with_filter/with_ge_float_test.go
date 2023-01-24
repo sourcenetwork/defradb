@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_ge: 2.1}}) {
 						Name
 					}
@@ -49,7 +49,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with lesser value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_ge: 2.0999999999999}}) {
 						Name
 					}
@@ -79,7 +79,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with lesser int value",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_ge: 2}}) {
 						Name
 					}
@@ -109,7 +109,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge float nil filter",
-		Query: `query {
+		Request: `query {
 					users(filter: {HeightM: {_ge: null}}) {
 						Name
 					}

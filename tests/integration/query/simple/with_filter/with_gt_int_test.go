@@ -20,7 +20,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic filter(age), greater than",
-			Query: `query {
+			Request: `query {
 						users(filter: {Age: {_gt: 20}}) {
 							Name
 							Age
@@ -47,7 +47,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 		},
 		{
 			Description: "Simple query with basic filter(age), no results",
-			Query: `query {
+			Request: `query {
 						users(filter: {Age: {_gt: 40}}) {
 							Name
 							Age
@@ -69,7 +69,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 		},
 		{
 			Description: "Simple query with basic filter(age), multiple results",
-			Query: `query {
+			Request: `query {
 						users(filter: {Age: {_gt: 20}}) {
 							Name
 							Age
@@ -108,7 +108,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic int greater than filter, with null filter value",
-		Query: `query {
+		Request: `query {
 					users(filter: {Age: {_gt: null}}) {
 						Name
 					}

@@ -19,7 +19,7 @@ import (
 func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {

@@ -23,7 +23,7 @@ import (
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, average and sum of populated integer array",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_avg(FavouriteIntegers: {})

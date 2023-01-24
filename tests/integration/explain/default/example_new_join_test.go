@@ -218,7 +218,7 @@ func TestExplainJoinsOld(t *testing.T) {
 
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				TotalPages: _sum(

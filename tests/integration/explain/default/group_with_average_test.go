@@ -20,7 +20,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average on an field.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [name]) {
 				name
 				_avg(_group: {field: age})
@@ -138,7 +138,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group (on a field).",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})
@@ -248,7 +248,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})
@@ -361,7 +361,7 @@ func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAver
 	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [name]) {
 				name
 				_avg(_group: {field: _avg})

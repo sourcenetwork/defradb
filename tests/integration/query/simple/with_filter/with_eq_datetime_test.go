@@ -19,7 +19,7 @@ import (
 func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter(age)",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_eq: "2017-07-23T03:46:56.647Z"}}) {
 						Name
 						Age
@@ -55,7 +55,7 @@ func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter(age)",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_eq: null}}) {
 						Name
 						Age

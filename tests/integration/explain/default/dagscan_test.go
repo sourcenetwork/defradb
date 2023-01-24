@@ -21,7 +21,7 @@ func TestExplainCommitsDagScan(t *testing.T) {
 
 		Description: "Explain commits query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
 				links {
 					cid
@@ -78,7 +78,7 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 
 		Description: "Explain commits query with only dockey (no field).",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			commits (dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 				links {
 					cid
@@ -135,7 +135,7 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 
 		Description: "Explain latestCommits query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3", field: "1") {
 				cid
 				links {
@@ -193,7 +193,7 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 
 		Description: "Explain latestCommits query with only dockey (no field).",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			latestCommits(dockey: "bae-41598f0c-19bc-5da6-813b-e80f14a10df3") {
 				cid
 				links {
@@ -251,7 +251,7 @@ func TestExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 
 		Description: "Explain latestCommits query without DocKey.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			latestCommits(field: "1") {
 				cid
 				links {
@@ -271,7 +271,7 @@ func TestExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
 
 		Description: "Explain latestCommits query without any arguments.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			latestCommits {
 				cid
 				links {

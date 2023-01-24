@@ -20,7 +20,7 @@ import (
 func TestMutationCreateOneToOneWrongSide(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Query: `mutation {
+		Request: `mutation {
 					create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 						_key
 					}
@@ -36,7 +36,7 @@ func TestMutationCreateOneToOneWrongSide(t *testing.T) {
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Query: `mutation {
+		Request: `mutation {
 					create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 						name
 					}

@@ -19,7 +19,7 @@ import (
 func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				_count(published: {filter: {rating: {_gt: 4.8}}})
@@ -78,7 +78,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				_count(published: {filter: {rating: {_ne: null}}})
@@ -159,7 +159,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				_count(published: {filter: {rating: {_ne: null}}})
@@ -241,7 +241,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count",
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				_count(published: {})

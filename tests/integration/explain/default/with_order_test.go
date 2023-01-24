@@ -20,7 +20,7 @@ func TestExplainAscendingOrderQueryOnParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain An Ascending Order Query On Parent Field.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(order: {age: ASC}) {
 				name
 				age
@@ -86,7 +86,7 @@ func TestExplainQueryWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Multiple Order Fields on the Parent.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(order: {name: ASC, age: DESC}) {
 				name
 				age
@@ -158,7 +158,7 @@ func TestExplainQueryWithOrderFieldOnChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Order Field On A Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				articles(order: {name: DESC}) {
@@ -267,7 +267,7 @@ func TestExplainQueryWithOrderOnBothTheParentAndChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain A Query With Order On Parent and An Order on Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(order: {name: ASC}) {
 				name
 				articles(order: {name: DESC}) {
@@ -386,7 +386,7 @@ func TestExplainQueryWhereParentIsOrderedByChild(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain Query Where The Parent Is Ordered By It's Child.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(
 				order: {
 					articles: {name: ASC}

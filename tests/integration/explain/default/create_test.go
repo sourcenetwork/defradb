@@ -20,7 +20,7 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation.",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
 				_key
 				name
@@ -63,7 +63,7 @@ func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T)
 	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation, where document already exists.",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
 				_key
 				name

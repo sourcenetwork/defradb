@@ -19,7 +19,7 @@ import (
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {offset: 1, limit: 3, order: ASC})
@@ -48,7 +48,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {offset: 1, limit: 3, order: DESC})
@@ -77,7 +77,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(TestScores: {offset: 1, limit: 3, order: ASC})
@@ -106,7 +106,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(TestScores: {offset: 1, limit: 3, order: DESC})
@@ -135,7 +135,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteFloats: {offset: 1, limit: 3, order: ASC})
@@ -164,7 +164,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteFloats: {offset: 1, limit: 3, order: DESC})
@@ -193,7 +193,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(PageRatings: {offset: 1, limit: 3, order: ASC})
@@ -222,7 +222,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, ordered offsetted limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(PageRatings: {offset: 1, limit: 3, order: DESC})

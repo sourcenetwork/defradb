@@ -21,7 +21,7 @@ import (
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with field",
-		Query: `query {
+		Request: `query {
 					commits (field: "Age") {
 						cid
 					}
@@ -45,7 +45,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with field id",
-		Query: `query {
+		Request: `query {
 					commits (field: "1") {
 						cid
 					}
@@ -73,7 +73,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					commits(field: "C") {
 						cid
 					}

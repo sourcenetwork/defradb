@@ -20,7 +20,7 @@ func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
 	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple DateTime update mutation with boolean equals filter",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"created_at\": \"2021-07-23T03:46:56.647Z\"}") {
 							_key
 							name
@@ -48,7 +48,7 @@ func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 		{
 			Description: "Simple DateTime update mutation with boolean equals filter, multiple rows but single match",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"created_at\": \"2021-07-23T03:46:56.647Z\"}") {
 							_key
 							name
@@ -83,7 +83,7 @@ func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
 		},
 		{
 			Description: "Simple DateTime update mutation with boolean equals filter, multiple rows",
-			Query: `mutation {
+			Request: `mutation {
 						update_user(filter: {verified: {_eq: true}}, data: "{\"created_at\": \"2021-07-23T03:46:56.647Z\"}") {
 							_key
 							name
@@ -131,7 +131,7 @@ func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
 func TestSimpleDateTimeMutationUpdateWithIdInFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple DateTime update mutation with id in filter, multiple rows",
-		Query: `mutation {
+		Request: `mutation {
 					update_user(ids: ["bae-e0374cf9-4e46-5494-bb8a-6dea31912d6b", "bae-b2f6bd19-56bb-5717-8367-a638e3ca52e0"], data: "{\"created_at\": \"2021-07-23T03:46:56.647Z\"}") {
 						_key
 						name

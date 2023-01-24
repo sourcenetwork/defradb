@@ -19,7 +19,7 @@ import (
 func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple descending order by sub type",
-		Query: `query {
+		Request: `query {
 			book(order: {author: {verified: DESC}}) {
 				name
 				rating
@@ -87,7 +87,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "One-to-one relation query with simple ascending order by sub type",
-		Query: `query {
+		Request: `query {
 			book(order: {author: {verified: ASC}}) {
 				name
 				rating
@@ -155,7 +155,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Relation query with descending order by sub-type's int field, but only parent fields are selected.",
-		Query: `query {
+		Request: `query {
 			book(order: {author: {age: DESC}}) {
 				name
 				rating
@@ -211,7 +211,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Relation query with ascending order by sub-type's int field, but only parent fields are selected.",
-		Query: `query {
+		Request: `query {
 			book(order: {author: {age: ASC}}) {
 				name
 				rating

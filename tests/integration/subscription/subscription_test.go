@@ -19,7 +19,7 @@ import (
 func TestSubscriptionWithCreateMutations(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
-		Query: `subscription {
+		Request: `subscription {
 					User {
 						_key
 						name
@@ -68,7 +68,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and one user creation",
-		Query: `subscription {
+		Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
 						_key
 						name
@@ -101,7 +101,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and one user creation outside of the filter",
-		Query: `subscription {
+		Request: `subscription {
 					User(filter: {age: {_gt: 30}}) {
 						_key
 						name
@@ -128,7 +128,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and user creation in and outside of the filter",
-		Query: `subscription {
+		Request: `subscription {
 					User(filter: {age: {_lt: 30}}) {
 						_key
 						name
@@ -171,7 +171,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
-		Query: `subscription {
+		Request: `subscription {
 					User {
 						_key
 						name
@@ -222,7 +222,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
-		Query: `subscription {
+		Request: `subscription {
 					User {
 						_key
 						name

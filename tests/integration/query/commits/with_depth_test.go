@@ -19,7 +19,7 @@ import (
 func TestQueryCommitsWithDepth1(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 					}
@@ -51,7 +51,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1, and doc updates",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 						height
@@ -98,7 +98,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 2, and doc updates",
-		Query: `query {
+		Request: `query {
 					commits(depth: 2) {
 						cid
 						height
@@ -159,7 +159,7 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 					}
