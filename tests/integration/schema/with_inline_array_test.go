@@ -15,7 +15,7 @@ import (
 )
 
 func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -23,7 +23,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -37,11 +37,11 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -54,7 +54,7 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "books") {
 					name
@@ -68,5 +68,5 @@ func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }

@@ -22,19 +22,19 @@ import (
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-type QueryTestCase struct {
+type RequestTestCase struct {
 	// The set of schema to add to the database.
 	//
 	// Each string may contain multiple schema - one string = one db.AddSchema call.
 	Schema []string
 
-	// The introspection query to use when fetching schema state.
+	// The introspection request to use when fetching schema state.
 	//
 	// Available properties can be found in the GQL spec:
 	// https://spec.graphql.org/October2021/#sec-Introspection
-	IntrospectionQuery string
+	IntrospectionRequest string
 
-	// The data expected to be returned from the introspection query.
+	// The data expected to be returned from the introspection request.
 	ExpectedData map[string]any
 
 	// If [ExpectedData] is nil and this is populated, the test framework will assert
@@ -57,9 +57,9 @@ type dbInfo interface {
 	DB() client.DB
 }
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
-	testCase QueryTestCase,
+	testCase RequestTestCase,
 ) {
 	var err error
 	ctx := context.Background()
@@ -79,7 +79,7 @@ func ExecuteQueryTestCase(
 		}
 	}
 
-	result := db.ExecRequest(ctx, testCase.IntrospectionQuery)
+	result := db.ExecRequest(ctx, testCase.IntrospectionRequest)
 
 	assertSchemaResults(ctx, t, result, testCase)
 
@@ -92,7 +92,7 @@ func assertSchemaResults(
 	ctx context.Context,
 	t *testing.T,
 	result *client.RequestResult,
-	testCase QueryTestCase,
+	testCase RequestTestCase,
 ) bool {
 	if assertErrors(t, result.GQL.Errors, testCase.ExpectedError) {
 		return true
@@ -117,7 +117,7 @@ func assertSchemaResults(
 }
 
 // Asserts that the `actual` contains the given `contains` value according to the logic
-// described on the [QueryTestCase.ContainsData] property.
+// described on the [RequestTestCase.ContainsData] property.
 func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
 	for k, expected := range contains {
 		innerActual := actual[k]

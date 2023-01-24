@@ -15,7 +15,7 @@ import (
 )
 
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type book {
@@ -32,7 +32,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "author") {
 					name
@@ -132,7 +132,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{

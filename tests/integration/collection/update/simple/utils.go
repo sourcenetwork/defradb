@@ -26,5 +26,5 @@ var userCollectionGQLSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteQueryTestCase(t, userCollectionGQLSchema, test)
+	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, test)
 }

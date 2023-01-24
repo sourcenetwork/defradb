@@ -67,7 +67,7 @@ type dbInfo interface {
 
 const eventTimeout = 100 * time.Millisecond
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	testCase TestCase,

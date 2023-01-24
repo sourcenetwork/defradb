@@ -17,13 +17,13 @@ import (
 )
 
 func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -105,17 +105,17 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -205,17 +205,17 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -305,5 +305,5 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
