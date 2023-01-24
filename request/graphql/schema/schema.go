@@ -19,5 +19,5 @@ import (
 )
 
 var (
-	log = logging.MustNewLogger("defra.query.schema")
+	log = logging.MustNewLogger("defra.request.schema")
 )
