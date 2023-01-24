@@ -20,12 +20,11 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// ParseRequest parses a root ast.Document, and returns a
-// formatted Query object.
-// Requires a non-nil doc, will error if given a nil doc.
+// ParseRequest parses a root ast.Document, and returns a formatted Request object.
+// Requires a non-nil doc, will error otherwise.
 func ParseRequest(schema gql.Schema, doc *ast.Document) (*request.Request, []error) {
 	if doc == nil {
-		return nil, []error{client.NewErrUninitializeProperty("parseQuery", "doc")}
+		return nil, []error{client.NewErrUninitializeProperty("ParseRequest", "doc")}
 	}
 
 	r := &request.Request{
