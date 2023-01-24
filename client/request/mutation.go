@@ -21,13 +21,9 @@ const (
 	DeleteObjects
 )
 
-// Mutation is a field on the MutationType
-// of a graphql query. It includes all the possible
-// arguments and all
-//
-// @todo: Change name to ObjectMutation to indicate
-// generated object mutation actions
-type Mutation struct {
+// ObjectMutation is a field on the `mutation` operation of a graphql request. It includes
+// all the possible arguments.
+type ObjectMutation struct {
 	Field
 	Type MutationType
 
@@ -44,7 +40,7 @@ type Mutation struct {
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
 // the Mutation object. Used to create a Select planNode for the mutation return objects.
-func (m Mutation) ToSelect() *Select {
+func (m ObjectMutation) ToSelect() *Select {
 	return &Select{
 		Field: Field{
 			Name:  m.Collection,

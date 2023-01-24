@@ -60,8 +60,8 @@ func parseMutationOperationDefinition(
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.Mutation, error) {
-	mut := &request.Mutation{
+func parseMutation(schema gql.Schema, parent *gql.Object, field *ast.Field) (*request.ObjectMutation, error) {
+	mut := &request.ObjectMutation{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),

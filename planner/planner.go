@@ -138,7 +138,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 		return p.CommitSelect(m)
 
-	case *request.Mutation:
+	case *request.ObjectMutation:
 		m, err := mapper.ToMutation(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err

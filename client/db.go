@@ -32,7 +32,7 @@ type DB interface {
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 	ExecRequest(context.Context, string) *RequestResult
-	ExecTransactionalRequest(ctx context.Context, query string, txn datastore.Txn) *RequestResult
+	ExecTransactionalRequest(context.Context, string, datastore.Txn) *RequestResult
 	Close(context.Context)
 
 	Events() events.Events
