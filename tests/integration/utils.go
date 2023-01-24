@@ -72,14 +72,14 @@ var (
 
 const subsciptionTimeout = 1 * time.Second
 
-// Represents a query assigned to a particular transaction.
-type SubscriptionQuery struct {
-	Query string
-	// The expected (data) results of the query
+// Represents a subsciption request.
+type SubscriptionRequest struct {
+	Request string
+	// The expected (data) results of the issued request.
 	Results []map[string]any
-	// The expected error resulting from the query.
+	// The expected error resulting from the issued request.
 	ExpectedError string
-	// If set to true, the query should yield no results.
+	// If set to true, the request should yield no results.
 	// The timeout is duration is that of subscriptionTimeout (1 second)
 	ExpectedTimout bool
 }
@@ -102,7 +102,7 @@ type QueryTestCase struct {
 	Query       string
 
 	// A collection of queries to exucute after the subscriber is listening on the stream
-	PostSubscriptionQueries []SubscriptionQuery
+	PostSubscriptionQueries []SubscriptionRequest
 
 	// A collection of queries tied to a specific transaction.
 	// These will be executed before `Query` (if specified), in the order that they are listed here.
@@ -448,7 +448,7 @@ func ExecuteQueryTestCase(
 			result := dbi.db.ExecRequest(ctx, test.Query)
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
-					dbi.db.ExecRequest(ctx, q.Query)
+					dbi.db.ExecRequest(ctx, q.Request)
 					data := []map[string]any{}
 					errs := []any{}
 					if len(q.Results) > 1 {
