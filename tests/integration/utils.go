@@ -84,16 +84,16 @@ type SubscriptionRequest struct {
 	ExpectedTimout bool
 }
 
-// Represents a query assigned to a particular transaction.
-type TransactionQuery struct {
+// Represents a request assigned to a particular transaction.
+type TransactionRequest struct {
 	// Used to identify the transaction for this to run against (allows multiple
-	//  queries to share a single transaction)
+	//  requtests to share a single transaction)
 	TransactionId int
-	// The query to run against the transaction
-	Query string
-	// The expected (data) results of the query
+	// The request to run against the transaction
+	Request string
+	// The expected (data) results of the issued request
 	Results []map[string]any
-	// The expected error resulting from the query.  Also checked against the txn commit.
+	// The expected error resulting from the issued request. Also checked against the txn commit.
 	ExpectedError string
 }
 
@@ -106,7 +106,7 @@ type QueryTestCase struct {
 
 	// A collection of queries tied to a specific transaction.
 	// These will be executed before `Query` (if specified), in the order that they are listed here.
-	TransactionalQueries []TransactionQuery
+	TransactionalQueries []TransactionRequest
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -414,7 +414,7 @@ func ExecuteQueryTestCase(
 			if erroredQueries[i] {
 				continue
 			}
-			result := dbi.db.ExecTransactionalRequest(ctx, tq.Query, transactions[tq.TransactionId])
+			result := dbi.db.ExecTransactionalRequest(ctx, tq.Request, transactions[tq.TransactionId])
 			if assertQueryResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}

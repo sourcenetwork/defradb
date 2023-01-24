@@ -32,10 +32,10 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 					}`,
 				},
 			},
-			TransactionalQueries: []testUtils.TransactionQuery{
+			TransactionalQueries: []testUtils.TransactionRequest{
 				{
 					TransactionId: 0,
-					Query: `mutation {
+					Request: `mutation {
 						delete_user(ids: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 							_key
 						}
@@ -48,7 +48,7 @@ func TestDeletionOfMultipleDocumentUsingMultipleKeys_Success(t *testing.T) {
 				},
 				{
 					TransactionId: 0,
-					Query: `query {
+					Request: `query {
 						user(dockeys: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507d"]) {
 							_key
 						}

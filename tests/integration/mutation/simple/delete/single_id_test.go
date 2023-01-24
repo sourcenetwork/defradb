@@ -32,10 +32,10 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 					}`,
 				},
 			},
-			TransactionalQueries: []testUtils.TransactionQuery{
+			TransactionalQueries: []testUtils.TransactionRequest{
 				{
 					TransactionId: 0,
-					Query: `mutation {
+					Request: `mutation {
 								delete_user(id: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
@@ -48,7 +48,7 @@ func TestDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 				},
 				{
 					TransactionId: 0,
-					Query: `query {
+					Request: `query {
 								user(dockey: "bae-8ca944fd-260e-5a44-b88f-326d9faca810") {
 									_key
 								}
