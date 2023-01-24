@@ -10,7 +10,7 @@
 
 package parser
 
-import "github.com/sourcenetwork/defradb/query/graphql/schema"
+import "github.com/sourcenetwork/defradb/request/graphql/schema"
 
 type Parser struct {
 	SchemaManager *schema.SchemaManager

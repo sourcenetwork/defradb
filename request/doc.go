@@ -9,6 +9,6 @@
 // licenses/APL.txt.
 
 /*
-Package query provides query language support.
+Package request provides requesting query language support.
 */
-package query
+package request

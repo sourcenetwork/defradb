@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 /*

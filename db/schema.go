@@ -18,7 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 // LoadSchema takes the provided schema in SDL format, and applies it to the database,

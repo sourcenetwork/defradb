@@ -19,7 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	schemaTypes "github.com/sourcenetwork/defradb/query/graphql/schema/types"
+	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
