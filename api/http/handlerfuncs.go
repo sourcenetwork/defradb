@@ -144,7 +144,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	result := db.ExecQuery(req.Context(), query)
+	result := db.ExecRequest(req.Context(), query)
 
 	if result.Pub != nil {
 		subscriptionHandler(result.Pub, rw, req)

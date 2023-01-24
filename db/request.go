@@ -19,8 +19,8 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-// ExecQuery executes a query against the database.
-func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
+// ExecRequest executes a request against the database.
+func (db *db) ExecRequest(ctx context.Context, query string) *client.QueryResult {
 	res := &client.QueryResult{}
 	// check if its Introspection query
 	if strings.Contains(query, "IntrospectionQuery") {
@@ -73,8 +73,8 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
-// ExecTransactionalQuery executes a transaction query against the database.
-func (db *db) ExecTransactionalQuery(
+// ExecTransactionalRequest executes a transaction request against the database.
+func (db *db) ExecTransactionalRequest(
 	ctx context.Context,
 	query string,
 	txn datastore.Txn,

@@ -414,7 +414,7 @@ func ExecuteQueryTestCase(
 			if erroredQueries[i] {
 				continue
 			}
-			result := dbi.db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
+			result := dbi.db.ExecTransactionalRequest(ctx, tq.Query, transactions[tq.TransactionId])
 			if assertQueryResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
 				erroredQueries[i] = true
 			}
@@ -445,10 +445,10 @@ func ExecuteQueryTestCase(
 		// We run the core query after the explicitly transactional ones to permit tests to query
 		//  the commited result of the transactional queries
 		if !isTransactional || (isTransactional && test.Query != "") {
-			result := dbi.db.ExecQuery(ctx, test.Query)
+			result := dbi.db.ExecRequest(ctx, test.Query)
 			if result.Pub != nil {
 				for _, q := range test.PostSubscriptionQueries {
-					dbi.db.ExecQuery(ctx, q.Query)
+					dbi.db.ExecRequest(ctx, q.Query)
 					data := []map[string]any{}
 					errs := []any{}
 					if len(q.Results) > 1 {

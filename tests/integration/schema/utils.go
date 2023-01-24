@@ -79,7 +79,7 @@ func ExecuteQueryTestCase(
 		}
 	}
 
-	result := db.ExecQuery(ctx, testCase.IntrospectionQuery)
+	result := db.ExecRequest(ctx, testCase.IntrospectionQuery)
 
 	assertSchemaResults(ctx, t, result, testCase)
 

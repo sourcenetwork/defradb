@@ -31,8 +31,8 @@ type DB interface {
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
-	ExecQuery(context.Context, string) *QueryResult
-	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
+	ExecRequest(context.Context, string) *QueryResult
+	ExecTransactionalRequest(ctx context.Context, query string, txn datastore.Txn) *QueryResult
 	Close(context.Context)
 
 	Events() events.Events

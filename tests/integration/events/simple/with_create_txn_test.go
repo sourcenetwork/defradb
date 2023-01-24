@@ -25,7 +25,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 	test := testUtils.TestCase{
 		DatabaseCalls: []func(context.Context, client.DB){
 			func(ctx context.Context, d client.DB) {
-				r := d.ExecQuery(
+				r := d.ExecRequest(
 					ctx,
 					`mutation {
 						create_users(data: "{\"Name\": \"John\"}") {
@@ -40,7 +40,7 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 			func(ctx context.Context, d client.DB) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
-				r := d.ExecTransactionalQuery(
+				r := d.ExecTransactionalRequest(
 					ctx,
 					`mutation {
 						create_users(data: "{\"Name\": \"Shahzad\"}") {
