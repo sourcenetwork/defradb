@@ -31,7 +31,7 @@ type SchemaDefinition struct {
 }
 
 // Parser represents the object responsible for handling stuff specific to a query language.
-// This includes schema and query parsing, and introspection.
+// This includes schema and request parsing, and introspection.
 type Parser interface {
 	// Returns true if the given string is an introspection request.
 	IsIntrospection(request string) bool

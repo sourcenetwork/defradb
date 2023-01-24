@@ -54,8 +54,8 @@ func (m *SchemaManager) NewGenerator() *Generator {
 	return m.Generator
 }
 
-// FromSDL generates the query type definitions from a
-// encoded GraphQL Schema Definition Language string
+// FromSDL generates the query-op and mutation-op type definitions from a
+// encoded GraphQL Schema Definition Language request.
 func (g *Generator) FromSDL(
 	ctx context.Context,
 	schema string,
@@ -105,8 +105,8 @@ func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql
 	return result, nil
 }
 
-// FromAST generates the query type definitions from a
-// parsed GraphQL Schema Definition Language AST document
+// FromAST generates the mutation-op and query-op type definitions from a
+// parsed request of GraphQL Schema Definition Language AST document
 func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypesFromAST(ctx, document)

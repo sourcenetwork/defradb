@@ -13,7 +13,7 @@ func Equal(condition, data any) bool {
 			// parsing incoming data here, or
 			// if the DB should handle this.
 			// (Note: This isnt the user provided
-			// condition on a query, but the data
+			// condition on a request, but the data
 			// stored in DB for a document
 			dt, err := time.Parse(time.RFC3339, d)
 			if err != nil {
