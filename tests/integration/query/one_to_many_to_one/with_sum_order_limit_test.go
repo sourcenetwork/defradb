@@ -17,7 +17,7 @@ import (
 )
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirections(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, desc. directions.",
 		Query: `query {
 		    Author {
@@ -161,7 +161,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 
 // TODO: Fix this panic in #833.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, asc. directions.",
 		Query: `query {
  		    Author {
@@ -305,7 +305,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 
 // TODO: Fix this panic in #833.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
 		Query: `query {
 		    Author {
@@ -420,7 +420,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 
 // TODO: Fix this panic in #833.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
 		Query: `query {
 		    Author {

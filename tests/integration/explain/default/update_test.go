@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
 
@@ -96,7 +96,7 @@ func TestExplainSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 }
 
 func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain simple update mutation with id in filter, multiple rows",
 
@@ -173,7 +173,7 @@ func TestExplainSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 }
 
 func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain simple update mutation with id equals filter, multiple rows but single match",
 
@@ -242,7 +242,7 @@ func TestExplainSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
 }
 
 func TestExplainSimpleMutationUpdateWithIdAndFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain simple update mutation with ids and filter, multiple rows",
 

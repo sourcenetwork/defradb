@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side",
 			Query: `query {
@@ -208,7 +208,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship(t *testing.T) {
 }
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from one side",
 			Query: `query {

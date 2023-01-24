@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainMutationCreateSimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation.",
 
 		Query: `mutation @explain {
@@ -60,7 +60,7 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 }
 
 func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation, where document already exists.",
 
 		Query: `mutation @explain {

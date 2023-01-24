@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average on an field.",
 
 		Query: `query @explain {
@@ -135,7 +135,7 @@ func TestExplainGroupByWithAverageOnAnInnerField(t *testing.T) {
 }
 
 func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group (on a field).",
 
 		Query: `query @explain {
@@ -245,7 +245,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupOnAField(t *testing.T) {
 }
 
 func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy.",
 
 		Query: `query @explain {
@@ -358,7 +358,7 @@ func TestExplainGroupByWithAnAverageInsideTheInnerGroupAndNestedGroupBy(t *testi
 }
 
 func TestExplainGroupByWihAnAverageInsideTheInnerGroupAndNestedGroupByWithAnAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a groupBy with average of inside the inner group with nested groupBy with and average.",
 
 		Query: `query @explain {

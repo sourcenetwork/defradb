@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryCommitsWithUnknownDockey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with unknown dockey",
 		Query: `query {
 					commits(dockey: "unknown dockey") {
@@ -39,7 +39,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey",
 		Query: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -71,7 +71,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, with links",
 		Query: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -119,7 +119,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, multiple results",
 		Query: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -175,7 +175,7 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
 func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, multiple results and links",
 		Query: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {

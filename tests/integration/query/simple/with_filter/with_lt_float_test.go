@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt float filter with greater value",
 		Query: `query {
 					users(filter: {HeightM: {_lt: 1.820000000001}}) {
@@ -47,7 +47,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt float filter with greater int value",
 		Query: `query {
 					users(filter: {HeightM: {_lt: 2}}) {
@@ -77,7 +77,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 }
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic lt float filter with null value",
 		Query: `query {
 					users(filter: {HeightM: {_lt: null}}) {

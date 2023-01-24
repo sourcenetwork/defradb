@@ -18,7 +18,7 @@ import (
 
 // TODO: Fix this panic in #833.
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-1 deep orderby subtypes of both descending and ascending.",
 		Query: `query {
 		    Author {

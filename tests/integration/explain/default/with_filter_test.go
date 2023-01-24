@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with basic filter (name)",
 
 		Query: `query @explain {
@@ -76,7 +76,7 @@ func TestExplainQuerySimpleWithStringFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter(name), no results",
 
@@ -133,7 +133,7 @@ func TestExplainQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with basic filter(age)",
 
 		Query: `query @explain {
@@ -192,7 +192,7 @@ func TestExplainQuerySimpleWithNumberEqualsFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter(age), greater than",
 
@@ -311,7 +311,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanFilterBlock(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with logical compound filter (and)",
 
 		Query: `query @explain {
@@ -383,7 +383,7 @@ func TestExplainQuerySimpleWithNumberGreaterThanAndNumberLessThanFilter(t *testi
 }
 
 func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with logical compound filter (or)",
 
 		Query: `query @explain {
@@ -455,7 +455,7 @@ func TestExplainQuerySimpleWithNumberEqualToXOrYFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithNumberInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with special filter (or)",
 
 		Query: `query @explain {

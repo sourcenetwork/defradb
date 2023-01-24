@@ -19,7 +19,7 @@ import (
 )
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Delete related doc with transaction from primary side (forward).",
 
 		Docs: map[int][]string{
@@ -87,7 +87,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 }
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Delete related doc with transaction from primary side (backward).",
 
 		Docs: map[int][]string{
@@ -149,7 +149,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 }
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Transaction can read a record that was deleted in a non-commited transaction (forward).",
 
 		Docs: map[int][]string{
@@ -244,7 +244,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 }
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Transaction can read a record that was deleted in a non-commited transaction (backward).",
 
 		Docs: map[int][]string{
@@ -333,7 +333,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Delete related doc with transaction from non-primary side (forward).",
 
 		Docs: map[int][]string{
@@ -396,7 +396,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Delete related doc with transaction from non-primary side (backward).",
 
 		Docs: map[int][]string{

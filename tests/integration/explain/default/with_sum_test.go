@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type.",
 
 		Query: `query @explain {
@@ -131,7 +131,7 @@ func TestExplainQuerySumOfRelatedOneToManyField(t *testing.T) {
 }
 
 func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with a filter.",
 
 		Query: `query @explain {
@@ -259,7 +259,7 @@ func TestExplainQuerySumOfRelatedOneToManyFieldWithFilter(t *testing.T) {
 }
 
 func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a simple sum query on an  inline array field (childFieldName is nil).",
 
 		Query: `query @explain {
@@ -332,7 +332,7 @@ func TestExplainQuerySumOfInlineArrayField_ShouldHaveEmptyChildField(t *testing.
 }
 
 func TestExplainQuerySumOfRelatedOneToManyFieldWithManySources(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
 
 		Query: `query @explain {

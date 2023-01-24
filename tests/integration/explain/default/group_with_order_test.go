@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with ordered parent groupBy.",
 
 		Query: `query @explain {
@@ -114,7 +114,7 @@ func TestExplainGroupByWithOrderOnParentGroup(t *testing.T) {
 }
 
 func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with groupBy string, and child order ascending.",
 
 		Query: `query @explain {
@@ -208,7 +208,7 @@ func TestExplainGroupByWithOrderOnTheChildGroup(t *testing.T) {
 }
 
 func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Query: `query @explain {
@@ -310,7 +310,7 @@ func TestExplainGroupByWithOrderOnTheChildGroupAndOnParentGroup(t *testing.T) {
 }
 
 func TestExplainGroupByWithOrderOnTheNestedChildOfChildGroup(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with parent groupBy order, and child order.",
 
 		Query: `query @explain {

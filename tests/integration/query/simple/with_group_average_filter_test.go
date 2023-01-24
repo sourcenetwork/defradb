@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -57,7 +57,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilt
 }
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -113,7 +113,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 }
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTimeFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -172,7 +172,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 }
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, matching filtered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -221,7 +221,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 }
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithMatchingDateTimeFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on rendered, matching datetime filtered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -273,7 +273,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 }
 
 func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageWithDifferentFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, different filtered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -326,7 +326,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDifferentFilters(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -370,7 +370,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAveragesWithDif
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildAverageWithFilterAndNilItem(t *testing.T) {
 	// This test checks that the appended/internal nil filter does not clash with the consumer-defined filter
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, no children, average with filter on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Name]) {

@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Query: `query {
 					users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56.647Z"}}) {
@@ -49,7 +49,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Query: `query {
 					users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56.647Z"}}) {
@@ -81,7 +81,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge int filter with equal value",
 		Query: `query {
 					users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56.647Z"}}) {
@@ -109,7 +109,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic ge nil filter",
 		Query: `query {
 					users(filter: {CreatedAt: {_ge: null}}) {

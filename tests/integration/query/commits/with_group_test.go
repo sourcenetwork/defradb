@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryCommitsWithGroupBy(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by height",
 		Query: `query {
 					commits(groupBy: [height]) {
@@ -55,7 +55,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by height",
 		Query: `query {
 					commits(groupBy: [height]) {
@@ -116,7 +116,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by cid",
 		Query: `query {
 					commits(groupBy: [cid]) {

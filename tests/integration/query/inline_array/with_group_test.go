@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by string",
 		Query: `query {
 					users (groupBy: [Name]) {
@@ -58,7 +58,7 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, mixed integers, group by array",
 		Query: `query {
 					users (groupBy: [FavouriteIntegers]) {

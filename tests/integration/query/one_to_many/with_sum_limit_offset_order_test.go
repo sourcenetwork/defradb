@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Query: `query {
 				author {
@@ -93,7 +93,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 }
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Query: `query {
 				author {
@@ -168,7 +168,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 }
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Query: `query {
 				author {
@@ -248,7 +248,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 }
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Query: `query {
 				author {
@@ -327,7 +327,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 }
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildrenOrderedAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Query: `query {
 				author {

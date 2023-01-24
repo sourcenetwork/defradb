@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count on undefined",
 		Query: `query {
 					_count
@@ -29,7 +29,7 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 }
 
 func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count on empty",
 		Query: `query {
 					_count(users: {})
@@ -45,7 +45,7 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, count",
 		Query: `query {
 					_count(users: {})

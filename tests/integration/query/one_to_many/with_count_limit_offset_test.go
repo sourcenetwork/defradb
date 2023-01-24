@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count and limit and offset",
 		Query: `query {
 				author {
@@ -98,7 +98,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count and limit and offset",
 		Query: `query {
 				author {
@@ -178,7 +178,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with limit with offset",
 		Query: `query {
 				author {

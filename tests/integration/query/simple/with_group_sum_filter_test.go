@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Age]) {
@@ -57,7 +57,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Age]) {
@@ -113,7 +113,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithMatchingFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on rendered, matching filtered group",
 		Query: `query {
 					users(groupBy: [Age]) {
@@ -162,7 +162,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithDifferentFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, different filtered group",
 		Query: `query {
 					users(groupBy: [Age]) {
@@ -211,7 +211,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 }
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDifferentFilters(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Query: `query {
 					users(groupBy: [Age]) {

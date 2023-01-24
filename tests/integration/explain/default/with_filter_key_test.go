@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (key by DocKey arg)",
 
@@ -121,7 +121,7 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (single key by DocKeys arg)",
 
@@ -290,7 +290,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 }
 
 func TestExplainSimpleFilterWithMatchingKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain with basic filter with matching key.",
 
 		Query: `query @explain {

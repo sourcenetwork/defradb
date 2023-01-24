@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le int filter with equal value",
 		Query: `query {
 					users(filter: {Age: {_le: 21}}) {
@@ -47,7 +47,7 @@ func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le int filter with greater value",
 		Query: `query {
 					users(filter: {Age: {_le: 22}}) {
@@ -77,7 +77,7 @@ func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic le int filter with null value",
 		Query: `query {
 					users(filter: {Age: {_le: null}}) {

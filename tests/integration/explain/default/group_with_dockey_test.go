@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with a dockey on parent groupBy.",
 
 		Query: `query @explain {
@@ -96,7 +96,7 @@ func TestExplainQueryWithDockeyOnParentGroupBy(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithDockeysAndFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with a dockeys and filter on parent groupBy.",
 
 		Query: `query @explain {

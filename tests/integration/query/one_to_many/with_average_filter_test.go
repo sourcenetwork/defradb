@@ -19,7 +19,7 @@ import (
 // This test asserts that only a single join is used - the _avg reuses the rendered join as they
 // have matching filters (average adds a ne nil filter).
 func TestQueryOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with average",
 		Query: `query @explain {
 			author {

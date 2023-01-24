@@ -18,7 +18,7 @@ import (
 )
 
 func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Delete using filter - One matching document, that exists.",
@@ -246,7 +246,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 }
 
 func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "No delete with filter: because no document matches filter.",
 

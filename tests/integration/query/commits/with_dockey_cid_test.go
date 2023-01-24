@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
 					commits(
@@ -42,7 +42,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
 					commits(
@@ -76,7 +76,7 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and cid",
 		Query: `query {
 					commits(

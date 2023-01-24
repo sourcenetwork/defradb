@@ -18,7 +18,7 @@ import (
 )
 
 func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One to one create mutation, from the wrong side",
 		Query: `mutation {
 					update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
@@ -41,7 +41,7 @@ func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One to one create mutation, from the wrong side",
 		Query: `mutation {
 					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {

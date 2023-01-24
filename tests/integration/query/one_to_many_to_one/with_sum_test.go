@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Sum of integer array, and sum of one-to-many field.",
 
 		Query: `query {

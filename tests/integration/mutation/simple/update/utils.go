@@ -26,6 +26,6 @@ var userSchema = (`
 	}
 `)
 
-func ExecuteTestCase(t *testing.T, test testUtils.QueryTestCase) {
+func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	testUtils.ExecuteQueryTestCase(t, userSchema, []string{"user"}, test)
 }

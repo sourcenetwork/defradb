@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryCommitsWithCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with cid",
 		Query: `query {
 					commits(
@@ -55,7 +55,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDockeyAndFieldId
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with cid",
 		Query: `query {
 					commits(
@@ -83,7 +83,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 }
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "query for a single block by invalid CID",
 		Query: `query {
 					commits(cid: "fhbnjfahfhfhanfhga") {
@@ -107,7 +107,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 }
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "query for a single block by invalid, short CID",
 		Query: `query {
 					commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
@@ -131,7 +131,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 }
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "query for a single block by unknown CID",
 		Query: `query {
 					commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {

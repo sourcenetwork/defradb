@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a simple query using average on array field.",
 
 		Query: `query @explain {
@@ -88,7 +88,7 @@ func TestExplainSimpleAverageQueryOnArrayField(t *testing.T) {
 }
 
 func TestExplainAverageQueryOnJoinedField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a average query on joined field.",
 
 		Query: `query @explain {
@@ -226,7 +226,7 @@ func TestExplainAverageQueryOnJoinedField(t *testing.T) {
 }
 
 func TestExplainAverageQueryOnMultipleJoinedFieldWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a average query on multiple joined fields with filter.",
 
 		Query: `query @explain {

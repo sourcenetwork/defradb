@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithGroupByWithGroupWithDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with DocKey filter on _group",
 		Query: `query {
 					users(groupBy: [Age]) {

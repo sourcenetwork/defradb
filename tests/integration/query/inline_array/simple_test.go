@@ -19,7 +19,7 @@ import (
 )
 
 func TestQueryInlineArrayWithBooleans(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil boolean array",
 			Query: `query {
@@ -97,7 +97,7 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, booleans",
 		Query: `query {
 					users {
@@ -130,7 +130,7 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithIntegers(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, default integer array",
 			Query: `query {
@@ -276,7 +276,7 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithNillableInts(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable ints",
 		Query: `query {
 					users {
@@ -310,7 +310,7 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithFloats(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil float array",
 			Query: `query {
@@ -388,7 +388,7 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable floats",
 		Query: `query {
 					users {
@@ -421,7 +421,7 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithStrings(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple inline array with no filter, nil string array",
 			Query: `query {
@@ -499,7 +499,7 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 }
 
 func TestQueryInlineArrayWithNillableString(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable strings",
 		Query: `query {
 					users {

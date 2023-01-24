@@ -17,7 +17,7 @@ import (
 )
 
 func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple DateTime update mutation with boolean equals filter",
 			Query: `mutation {
@@ -129,7 +129,7 @@ func TestSimpleDateTimeMutationUpdateWithBooleanFilter(t *testing.T) {
 }
 
 func TestSimpleDateTimeMutationUpdateWithIdInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple DateTime update mutation with id in filter, multiple rows",
 		Query: `mutation {
 					update_user(ids: ["bae-e0374cf9-4e46-5494-bb8a-6dea31912d6b", "bae-b2f6bd19-56bb-5717-8367-a638e3ca52e0"], data: "{\"created_at\": \"2021-07-23T03:46:56.647Z\"}") {

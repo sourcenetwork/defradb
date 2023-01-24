@@ -159,7 +159,7 @@ func TestExplainSimpleNew(t *testing.T) {
 }
 
 func TestExplainSimpleOld(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain simple update mutation with boolean equals filter, multiple rows",
 

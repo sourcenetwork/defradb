@@ -97,7 +97,7 @@ type TransactionRequest struct {
 	ExpectedError string
 }
 
-type QueryTestCase struct {
+type RequestTestCase struct {
 	Description string
 	Query       string
 
@@ -334,7 +334,7 @@ func ExecuteQueryTestCase(
 	t *testing.T,
 	schema string,
 	collectionNames []string,
-	test QueryTestCase,
+	test RequestTestCase,
 ) {
 	isTransactional := len(test.TransactionalQueries) > 0
 

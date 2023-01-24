@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on undefined object",
 		Query: `query {
 					_avg
@@ -29,7 +29,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 }
 
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on undefined field",
 		Query: `query {
 					_avg(users: {})
@@ -41,7 +41,7 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 }
 
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, average on empty",
 		Query: `query {
 					_avg(users: {field: Age})
@@ -57,7 +57,7 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, average",
 		Query: `query {
 					_avg(users: {field: Age})

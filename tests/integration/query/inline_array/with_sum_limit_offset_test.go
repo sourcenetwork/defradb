@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, offsetted limited sum of integer array",
 		Query: `query {
 					users {

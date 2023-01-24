@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithLimit(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic limit",
 			Query: `query {
@@ -92,7 +92,7 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 }
 
 func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic limit & offset",
 			Query: `query {
@@ -167,7 +167,7 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 }
 
 func TestQuerySimpleWithOffset(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with offset only",
 			Query: `query {

@@ -17,7 +17,7 @@ import (
 )
 
 func TestSimpleMutationUpdateWithBooleanFilterWhereResultFilteredOut(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with boolean equals filter",
 		// The update will result in a record that no longer matches the filter
 		Query: `mutation {
@@ -45,7 +45,7 @@ func TestSimpleMutationUpdateWithBooleanFilterWhereResultFilteredOut(t *testing.
 }
 
 func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with boolean equals filter",
 			Query: `mutation {
@@ -152,7 +152,7 @@ func TestSimpleMutationUpdateWithBooleanFilter(t *testing.T) {
 }
 
 func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id in filter, multiple rows",
 		Query: `mutation {
 					update_user(ids: ["bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", "bae-958c9334-73cf-5695-bf06-cf06826babfa"], data: "{\"points\": 59}") {
@@ -195,7 +195,7 @@ func TestSimpleMutationUpdateWithIdInFilter(t *testing.T) {
 }
 
 func TestSimpleMutationUpdateWithIdEqualsFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple update mutation with id equals filter, multiple rows but single match",
 		Query: `mutation {
 					update_user(id: "bae-0a24cf29-b2c2-5861-9d00-abd6250c475d", data: "{\"points\": 59}") {

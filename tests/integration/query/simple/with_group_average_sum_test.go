@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of average on int",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -104,7 +104,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 // verify that that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
 		Query: `query {
 					users(groupBy: [Name]) {

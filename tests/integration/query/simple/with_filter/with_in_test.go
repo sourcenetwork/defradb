@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithIntInFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with special filter (or)",
 		Query: `query {
 					users(filter: {Age: {_in: [19, 40, 55]}}) {
@@ -61,7 +61,7 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 }
 
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with special filter (or)",
 		Query: `query {
 					users(filter: {Age: {_in: [19, 40, 55, null]}}) {

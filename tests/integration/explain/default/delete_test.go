@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Explain simple multi-key delete mutation with one key that exists.",
@@ -267,7 +267,7 @@ func TestExplainDeletionUsingMultiAndSingleIDs_Success(t *testing.T) {
 }
 
 func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Explain deletion using filter - One matching document, that exists.",
@@ -502,7 +502,7 @@ func TestExplainDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 }
 
 func TestExplainDeletionUsingMultiIdsAndSingleIdAndFilter_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain deletion of one document using a list when it doesn't exist.",
 

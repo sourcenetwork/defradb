@@ -18,7 +18,7 @@ import (
 )
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create followed by delete in same transaction",
 		TransactionalQueries: []testUtils.TransactionRequest{
 			{
@@ -54,7 +54,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 }
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create followed by delete on 2nd transaction",
 		TransactionalQueries: []testUtils.TransactionRequest{
 			{
@@ -114,7 +114,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 }
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update followed by read in same transaction",
 		Docs: map[int][]string{
 			0: {
@@ -162,7 +162,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 }
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update followed by read in different transaction",
 		Docs: map[int][]string{
 			0: {
@@ -214,7 +214,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 }
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Update by two different transactions",
 		Docs: map[int][]string{
 			0: {

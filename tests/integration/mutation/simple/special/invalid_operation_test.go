@@ -18,7 +18,7 @@ import (
 )
 
 func TestMutationInvalidMutation(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple invalid mutation",
 		Query: `mutation {
 			dostuff_user(data: "") {

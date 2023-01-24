@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne true filter",
 		Query: `query {
 					users(filter: {Verified: {_ne: true}}) {
@@ -53,7 +53,7 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne nil filter",
 		Query: `query {
 					users(filter: {Verified: {_ne: null}}) {
@@ -89,7 +89,7 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with ne false filter",
 		Query: `query {
 					users(filter: {Verified: {_ne: false}}) {

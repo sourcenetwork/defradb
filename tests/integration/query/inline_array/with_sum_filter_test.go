@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered sum of integer array",
 		Query: `query {
 					users {
@@ -45,7 +45,7 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with filter, sum of nillable integer array",
 		Query: `query {
 					users {
@@ -73,7 +73,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, filtered sum of float array",
 		Query: `query {
 					users {
@@ -101,7 +101,7 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 }
 
 func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with filter, sum of nillable float array",
 		Query: `query {
 					users {

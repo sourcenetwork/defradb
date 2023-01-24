@@ -20,7 +20,7 @@ import (
 )
 
 func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with boolean array, replace with nil",
 			Query: `mutation {
@@ -144,7 +144,7 @@ func TestMutationInlineArrayUpdateWithBooleans(t *testing.T) {
 }
 
 func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, booleans",
 		Query: `mutation {
 					update_users(data: "{\"IndexLikesDislikes\": [true, true, false, true, null]}") {
@@ -178,7 +178,7 @@ func TestMutationInlineArrayWithNillableBooleans(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with integer array, replace with nil",
 			Query: `mutation {
@@ -325,7 +325,7 @@ func TestMutationInlineArrayUpdateWithIntegers(t *testing.T) {
 }
 
 func TestMutationInlineArrayWithNillableInts(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable ints",
 		Query: `mutation {
 					update_users(data: "{\"TestScores\": [null, 2, 3, null, 8]}") {
@@ -359,7 +359,7 @@ func TestMutationInlineArrayWithNillableInts(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with float array, replace with nil",
 			Query: `mutation {
@@ -483,7 +483,7 @@ func TestMutationInlineArrayUpdateWithFloats(t *testing.T) {
 }
 
 func TestMutationInlineArrayWithNillableFloats(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable floats",
 		Query: `mutation {
 					update_users(data: "{\"PageRatings\": [3.1425, -0.00000000001, null, 10]}") {
@@ -516,7 +516,7 @@ func TestMutationInlineArrayWithNillableFloats(t *testing.T) {
 }
 
 func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple update mutation with string array, replace with nil",
 			Query: `mutation {
@@ -647,7 +647,7 @@ func TestMutationInlineArrayUpdateWithStrings(t *testing.T) {
 }
 
 func TestMutationInlineArrayWithNillableStrings(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, nillable strings",
 		Query: `mutation {
 					update_users(data: "{\"PageHeaders\": [\"\", \"the previous\", null, \"empty string\", \"blank string\", \"hitchi\"]}") {

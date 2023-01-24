@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by with child filter",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -75,7 +75,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by with number filter",
 		Query: `query {
 					users(groupBy: [Name], filter: {Age: {_gt: 26}}) {
@@ -129,7 +129,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 }
 
 func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by with number filter",
 		Query: `query {
 					users(groupBy: [Name], filter: {Age: {_gt: 26}}) {
@@ -172,7 +172,7 @@ func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterThatExcludesAll(
 	t *testing.T,
 ) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, with child number filter that excludes all records",
 		Query: `query {
 					users(groupBy: [Name]) {
@@ -253,7 +253,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 }
 
 func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by with child filter",
 		Query: `query {
 					users(groupBy: [Name]) {

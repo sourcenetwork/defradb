@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainGroupByWithFilterOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping with filter on parent.",
 
 		Query: `query @explain {
@@ -97,7 +97,7 @@ func TestExplainGroupByWithFilterOnParent(t *testing.T) {
 }
 
 func TestExplainGroupByWithFilterOnInnerGroupSelection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping with filter on the inner group selection.",
 
 		Query: `query @explain {

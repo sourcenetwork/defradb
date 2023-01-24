@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic filter (single key by DocKeys arg)",
 			Query: `query {
@@ -129,7 +129,7 @@ func TestQuerySimpleWithDocKeysFilter(t *testing.T) {
 }
 
 func TestQuerySimpleReturnsNothinGivenEmptyDocKeysFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with empty DocKeys arg",
 		Query: `query {
 					users(dockeys: []) {

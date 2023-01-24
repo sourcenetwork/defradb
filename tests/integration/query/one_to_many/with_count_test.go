@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyWithCount(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with count, no child records",
 			Query: `query {

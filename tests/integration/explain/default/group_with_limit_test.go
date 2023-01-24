@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain query with limit and offset on parent groupBy.",
 
@@ -115,7 +115,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnParentGroupBy(t *testing.T) {
 }
 
 func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain query with limit and offset on child groupBy.",
 
@@ -208,7 +208,7 @@ func TestExplainGroupByWithGroupLimitAndOffsetOnChild(t *testing.T) {
 }
 
 func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with limit on child groupBy (multiple rendered).",
 
 		Query: `query @explain {
@@ -314,7 +314,7 @@ func TestExplainGroupByWithGroupLimitOnChildMultipleRendered(t *testing.T) {
 }
 
 func TestExplainGroupByWithGroupLimitOnParentAndChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain query with limit on parent and child groupBy.",
 
 		Query: `query @explain {

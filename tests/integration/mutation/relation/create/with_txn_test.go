@@ -19,7 +19,7 @@ import (
 )
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create relational documents, and check the links in forward direction.",
 
 		Docs: map[int][]string{
@@ -177,7 +177,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 }
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create relational documents, and check the links in backward direction.",
 
 		Docs: map[int][]string{

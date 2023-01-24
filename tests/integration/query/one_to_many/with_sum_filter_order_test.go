@@ -17,7 +17,7 @@ import (
 )
 
 func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N ascending order & filter on parent, with sum on on subtype field.",
 		Query: `query {
 			author(order: {age: ASC}, filter: {age: {_gt: 8}}) {
@@ -106,7 +106,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 }
 
 func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N descending order & filter on parent, with sum on on subtype field.",
 		Query: `query {
 			author(order: {age: DESC}, filter: {age: {_gt: 8}}) {
@@ -195,7 +195,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 }
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWithLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N sum subtype and sum subtype with desc. order on field with limit.",
 		Query: `query {
 			author {
@@ -293,7 +293,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 }
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWithLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N sum subtype and sum subtype with asc. order on field with limit.",
 		Query: `query {
 			author {
@@ -391,7 +391,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 }
 
 func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N sum of subtype float field with limit and asc. order, and non-sum query of same subtype fields.",
 		Query: `query {
 			author {
@@ -497,7 +497,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 }
 
 func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N sum of subtype float field with limit and desc. order, and non-sum query of same subtype fields.",
 		Query: `query {
 			author {

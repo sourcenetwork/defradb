@@ -19,7 +19,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for dockey-field).
 func TestQueryCommitsWithField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with field",
 		Query: `query {
 					commits (field: "Age") {
@@ -43,7 +43,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with field id",
 		Query: `query {
 					commits (field: "1") {
@@ -71,7 +71,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
 		Query: `query {
 					commits(field: "C") {

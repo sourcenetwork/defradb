@@ -44,7 +44,7 @@ var gqlSchemaOneToManyToOne = (`
 
 func executeTestCase(
 	t *testing.T,
-	test testUtils.QueryTestCase,
+	test testUtils.RequestTestCase,
 ) {
 	testUtils.ExecuteQueryTestCase(
 		t,

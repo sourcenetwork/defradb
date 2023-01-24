@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with averages with and without filters",
 		Query: `query {
 				author {
@@ -99,7 +99,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 }
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with averages with filters",
 		Query: `query {
 				author {

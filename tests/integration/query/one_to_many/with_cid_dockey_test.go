@@ -19,7 +19,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with unknown cid and dockey",
 		Query: `query {
 					book (
@@ -64,7 +64,7 @@ func TestQueryOneToManyWithUnknownCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with  cid and dockey",
 		Query: `query {
 					book (
@@ -113,7 +113,7 @@ func TestQueryOneToManyWithCidAndDocKey(t *testing.T) {
 // parent creation without explicit child cid, which is also not tied
 // to parent state).
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child update and parent cid and dockey",
 		Query: `query {
 					book (
@@ -169,7 +169,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Query: `query {
 					book (
@@ -225,7 +225,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with parent update and parent cid and dockey",
 		Query: `query {
 					book (

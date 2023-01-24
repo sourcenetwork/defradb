@@ -18,7 +18,7 @@ import (
 )
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Relational delete mutation where one element exists.",

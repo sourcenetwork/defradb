@@ -17,7 +17,7 @@ import (
 )
 
 func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Invalid type of explain request should error.",
 
 		Query: `query @explain(type: invalid) {

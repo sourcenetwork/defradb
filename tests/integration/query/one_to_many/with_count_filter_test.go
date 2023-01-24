@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Query: `query {
 			author {
@@ -76,7 +76,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 }
 
 func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Query: `query {
 			author {
@@ -157,7 +157,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 // This test asserts that only a single join is used - the _count reuses the rendered join as they
 // have matching filters.
 func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count with filter",
 		Query: `query @explain {
 			author {
@@ -239,7 +239,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testi
 // This test asserts that two joins are used - the _count cannot reuse the rendered join as they
 // dont have matching filters.
 func TestQueryOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with count",
 		Query: `query @explain {
 			author {

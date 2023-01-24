@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainCommitsDagScan(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain commits query.",
 
@@ -74,7 +74,7 @@ func TestExplainCommitsDagScan(t *testing.T) {
 }
 
 func TestExplainCommitsDagScanWithoutField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain commits query with only dockey (no field).",
 
@@ -131,7 +131,7 @@ func TestExplainCommitsDagScanWithoutField(t *testing.T) {
 }
 
 func TestExplainLatestCommitsDagScan(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain latestCommits query.",
 
@@ -189,7 +189,7 @@ func TestExplainLatestCommitsDagScan(t *testing.T) {
 }
 
 func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain latestCommits query with only dockey (no field).",
 
@@ -247,7 +247,7 @@ func TestExplainLatestCommitsDagScanWithoutField(t *testing.T) {
 }
 
 func TestExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain latestCommits query without DocKey.",
 
@@ -267,7 +267,7 @@ func TestExplainLatestCommitsDagScanWithoutDocKey_Failure(t *testing.T) {
 }
 
 func TestExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain latestCommits query without any arguments.",
 

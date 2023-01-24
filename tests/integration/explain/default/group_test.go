@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainSimpleGroupByOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping on parent.",
 
 		Query: `query @explain {
@@ -90,7 +90,7 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 }
 
 func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping by two fields.",
 
 		Query: `query @explain {

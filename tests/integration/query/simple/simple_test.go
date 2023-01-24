@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter",
 		Query: `query {
 					users {
@@ -47,7 +47,7 @@ func TestQuerySimple(t *testing.T) {
 }
 
 func TestQuerySimpleWithAlias(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with alias, no filter",
 		Query: `query {
 					users {
@@ -75,7 +75,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with no filter, mutiple rows",
 		Query: `query {
 					users {
@@ -111,7 +111,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 }
 
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query for undefined field",
 		Query: `query {
 					users {
@@ -126,7 +126,7 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 }
 
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with some default-value fields",
 		Query: `query {
 					users {
@@ -159,7 +159,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 }
 
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with default-value fields",
 		Query: `query {
 					users {

@@ -19,7 +19,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (it looks totally broken to me).
 func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field name",
 		Query: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
@@ -47,7 +47,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldName(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and field id",
 		Query: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
@@ -80,7 +80,7 @@ func TestQueryLatestCommitsWithDocKeyAndFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocKeyAndCompositeFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and composite field id",
 		Query: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {

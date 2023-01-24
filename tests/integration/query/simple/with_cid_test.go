@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid",
 		Query: `query {
 					users (cid: "any non-nil string value - this will be ignored") {

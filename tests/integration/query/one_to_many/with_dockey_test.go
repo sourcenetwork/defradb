@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryOneToManyWithChildDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from one side with child dockey",
 		Query: `query {
 					author {

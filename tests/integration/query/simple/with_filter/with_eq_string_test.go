@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter (Name)",
 		Query: `query {
 					users(filter: {Name: {_eq: "John"}}) {
@@ -49,7 +49,7 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic string nil filter",
 		Query: `query {
 					users(filter: {Name: {_eq: null}}) {
@@ -84,7 +84,7 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 }
 
 func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic filter and selection",
 			Query: `query {

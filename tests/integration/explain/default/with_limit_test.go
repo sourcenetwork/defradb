@@ -17,7 +17,7 @@ import (
 )
 
 func TestExplainQueryWithOnlyLimitSpecified(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Only Limit Specified.",
 
 		Query: `query @explain {
@@ -91,7 +91,7 @@ func TestExplainQueryWithOnlyLimitSpecified(t *testing.T) {
 }
 
 func TestExplainQueryWithOnlyOffsetSpecified(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Only Offset Specified.",
 
 		Query: `query @explain {
@@ -165,7 +165,7 @@ func TestExplainQueryWithOnlyOffsetSpecified(t *testing.T) {
 }
 
 func TestExplainQueryWithBothLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query Request With Limit and Offset.",
 
 		Query: `query @explain {
@@ -239,7 +239,7 @@ func TestExplainQueryWithBothLimitAndOffset(t *testing.T) {
 }
 
 func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Only Limit On Child.",
 
 		Query: `query @explain {
@@ -399,7 +399,7 @@ func TestExplainQueryWithOnlyLimitOnChild(t *testing.T) {
 }
 
 func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Only Offset On Child.",
 
 		Query: `query @explain {
@@ -559,7 +559,7 @@ func TestExplainQueryWithOnlyOffsetOnChild(t *testing.T) {
 }
 
 func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Both Limit And Offset On Child.",
 
 		Query: `query @explain {
@@ -719,7 +719,7 @@ func TestExplainQueryWithBothLimitAndOffsetOnChild(t *testing.T) {
 }
 
 func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With Limit On Child And Both Limit And Offset On Parent.",
 
 		Query: `query @explain {
@@ -883,7 +883,7 @@ func TestExplainQueryWithLimitOnChildAndBothLimitAndOffsetOnParent(t *testing.T)
 }
 
 func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With multiple conflicting inner limit nodes.",
 
 		Query: `query @explain {
@@ -1093,7 +1093,7 @@ func TestExplainQueryWithMultipleConflictingInnerLimits(t *testing.T) {
 }
 
 func TestExplainQueryWithMultipleConflictingInnerLimitsAndOuterLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain Query With multiple conflicting inner limit nodes and an outer limit.",
 
 		Query: `query @explain {

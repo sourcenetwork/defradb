@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with invalid cid and invalid dockey",
 		Query: `query {
 					users (
@@ -44,7 +44,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with unknown cid and invalid dockey",
 		Query: `query {
 					users (
@@ -69,7 +69,7 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with cid and dockey",
 		Query: `query {
 					users (
@@ -98,7 +98,7 @@ func TestQuerySimpleWithCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (first) cid and dockey",
 		Query: `query {
 					users (
@@ -139,7 +139,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (last) cid and dockey",
 		Query: `query {
 					users (
@@ -180,7 +180,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocKey(t *testing.T) {
 }
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with (middle) cid and dockey",
 		Query: `query {
 					users (

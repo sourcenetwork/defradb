@@ -57,7 +57,7 @@ var bookAuthorGQLSchema = (`
 `)
 
 // TODO: This should be resolved in https://github.com/sourcenetwork/defradb/issues/953.
-func executeTestCase(t *testing.T, test testUtils.QueryTestCase) {
+func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	testUtils.ExecuteQueryTestCase(
 		t,
 		bookAuthorGQLSchema,

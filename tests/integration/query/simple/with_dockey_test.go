@@ -17,7 +17,7 @@ import (
 )
 
 func TestQuerySimpleWithDocKeyFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Simple query with basic filter (key by DocKey arg)",
 			Query: `query {

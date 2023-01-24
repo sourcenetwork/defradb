@@ -17,7 +17,7 @@ import (
 )
 
 func TestSubscriptionWithCreateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
 					User {
@@ -66,7 +66,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 }
 
 func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and one user creation",
 		Query: `subscription {
 					User(filter: {age: {_lt: 30}}) {
@@ -99,7 +99,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 }
 
 func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and one user creation outside of the filter",
 		Query: `subscription {
 					User(filter: {age: {_gt: 30}}) {
@@ -126,7 +126,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 }
 
 func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with filter and user creation in and outside of the filter",
 		Query: `subscription {
 					User(filter: {age: {_lt: 30}}) {
@@ -169,7 +169,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 }
 
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
 					User {
@@ -220,7 +220,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 }
 
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Subscription with user creations",
 		Query: `subscription {
 					User {

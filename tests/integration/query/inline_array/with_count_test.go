@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of nil integer array",
 		Query: `query {
 					users {
@@ -45,7 +45,7 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of empty integer array",
 		Query: `query {
 					users {
@@ -73,7 +73,7 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of integer array",
 		Query: `query {
 					users {
@@ -101,7 +101,7 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 }
 
 func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, count of nillable bool array",
 		Query: `query {
 					users {
