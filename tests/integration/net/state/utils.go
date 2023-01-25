@@ -179,11 +179,11 @@ func updateDocument(
 	// retry limit is breached - important incase this is a different error)
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		err = col.Save(ctx, doc)
-		if err != nil {
+		if err != nil && err.Error() == "Transaction Conflict. Please retry" {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		return nil
+		break
 	}
 
 	return err

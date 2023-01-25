@@ -626,6 +626,10 @@ func (p *Peer) setupDAGService() {
 	p.DAGService = dag.NewDAGService(p.bserv)
 }
 
+func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) ipld.DAGService {
+	return dag.NewDAGService(blockservice.New(txn.DAGstore(), p.exch))
+}
+
 // Session returns a session-based NodeGetter.
 func (p *Peer) Session(ctx context.Context) ipld.NodeGetter {
 	ng := dag.NewSession(ctx, p.DAGService)
