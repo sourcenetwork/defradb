@@ -134,7 +134,12 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
-	// Add workers to the pool and close them once we are done.
+	// Since PushLog handles the DAG sync process for a single document and that each
+	// process is handled over a single transaction, it is possible that a single document ends up using all
+	// workers. Since the transaction uses a mutex to guarantee thread safety, some operations in those workers may
+	// temporarily blocked which would leave a concurrent PushLog call hanging waiting for some workers to free up.
+	// To eliviate this problem, we add new workers to the pool for every call to PushLog and discard them once
+	// the process is completed.
 	done := make(chan struct{})
 	defer close(done)
 	for i := 0; i < numWorkers; i++ {
@@ -164,6 +169,8 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
+		// To prevent a potential deadlock on DAG sync if an error occures mid process, we handle
+		// each process on a single transaction.
 		txn, err := s.db.NewTxn(ctx, false)
 		if err != nil {
 			return nil, err
