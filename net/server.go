@@ -227,6 +227,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			}
 		}
 
+		// Once processed, subscribe to the dockey topic on the pubsub network.
 		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey)
 	}
 
