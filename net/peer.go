@@ -598,8 +598,17 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 
 func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	// push to each peer (replicator)
+	peers := make(map[string]struct{})
+	for _, peer := range p.ps.ListPeers(lg.DocKey) {
+		peers[peer.String()] = struct{}{}
+	}
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {
+			// Don't push if pid is in the list of peers for the topic.
+			// It will be handled by the pubsub system.
+			if _, ok := peers[pid.String()]; ok {
+				continue
+			}
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
 					log.ErrorE(
