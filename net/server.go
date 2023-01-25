@@ -134,18 +134,6 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
-	// Since PushLog handles the DAG sync process for a single document and that each
-	// process is handled over a single transaction, it is possible that a single document ends up using all
-	// workers. Since the transaction uses a mutex to guarantee thread safety, some operations in those workers may
-	// temporarily blocked which would leave a concurrent PushLog call hanging waiting for some workers to free up.
-	// To eliviate this problem, we add new workers to the pool for every call to PushLog and discard them once
-	// the process is completed.
-	done := make(chan struct{})
-	defer close(done)
-	for i := 0; i < numWorkers; i++ {
-		go s.peer.dagWorker(done)
-	}
-
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -212,6 +200,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			var session sync.WaitGroup
 			s.peer.handleChildBlocks(&session, txn, col, docKey, "", nd, cids, getter)
 			session.Wait()
+			// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
+			// Once we are done with the dag syncing process, we can get rid of those workers.
+			s.peer.closeJob <- docKey.DocKey
 		} else {
 			log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
 		}

@@ -72,79 +72,93 @@ type dagJob struct {
 // workers without races by becoming the only sender for the store.jobQueue
 // channel.
 func (p *Peer) sendJobWorker() {
+	// The DAG sync process for a document is handled over a single transaction, it is possible that a single
+	// document ends up using all workers. Since the transaction uses a mutex to guarantee thread safety, some
+	// operations in those workers may temporarily blocked which would leave a concurrent document sync process
+	// hanging waiting for some workers to free up. To eliviate this problem, we add new workers dedicated to a
+	// document and discard them once the process is completed.
+	docWorkerQueue := make(map[string]chan *dagJob)
 	for {
 		select {
 		case <-p.ctx.Done():
-			close(p.jobQueue)
+			for _, job := range docWorkerQueue {
+				close(job)
+			}
 			return
-		case j := <-p.sendJobs:
-			p.jobQueue <- j
+
+		case newJob := <-p.sendJobs:
+			jobs, ok := docWorkerQueue[newJob.dockey.DocKey]
+			if !ok {
+				jobs = make(chan *dagJob, numWorkers)
+				for i := 0; i < numWorkers; i++ {
+					go p.dagWorker(jobs)
+				}
+			}
+			jobs <- newJob
+
+		case dockey := <-p.closeJob:
+			if jobs, ok := docWorkerQueue[dockey]; ok {
+				close(jobs)
+				delete(docWorkerQueue, dockey)
+			}
 		}
 	}
 }
 
 // dagWorker should run in its own goroutine. Workers are launched during
 // initialization in New().
-func (p *Peer) dagWorker(done chan struct{}) {
-	for {
+func (p *Peer) dagWorker(jobs chan *dagJob) {
+	for job := range jobs {
+		log.Debug(
+			p.ctx,
+			"Starting new job from DAG queue",
+			logging.NewKV("DocKey", job.dockey),
+			logging.NewKV("CID", job.node.Cid()),
+		)
+
 		select {
-		case <-done:
-			return
-		case job, isOpen := <-p.jobQueue:
-			if !isOpen {
-				return
-			}
-			log.Debug(
+		case <-p.ctx.Done():
+			// drain jobs from queue when we are done
+			job.session.Done()
+			continue
+		default:
+		}
+
+		children, err := p.processLog(
+			p.ctx,
+			job.txn,
+			job.collection,
+			job.dockey,
+			job.node.Cid(),
+			job.fieldName,
+			job.node,
+			job.nodeGetter,
+		)
+
+		if err != nil {
+			log.ErrorE(
 				p.ctx,
-				"Starting new job from DAG queue",
+				"Error processing log",
+				err,
 				logging.NewKV("DocKey", job.dockey),
 				logging.NewKV("CID", job.node.Cid()),
 			)
-
-			select {
-			case <-p.ctx.Done():
-				// drain jobs from queue when we are done
-				job.session.Done()
-				continue
-			default:
-			}
-
-			children, err := p.processLog(
-				p.ctx,
-				job.txn,
-				job.collection,
-				job.dockey,
-				job.node.Cid(),
-				job.fieldName,
-				job.node,
-				job.nodeGetter,
-			)
-
-			if err != nil {
-				log.ErrorE(
-					p.ctx,
-					"Error processing log",
-					err,
-					logging.NewKV("DocKey", job.dockey),
-					logging.NewKV("CID", job.node.Cid()),
-				)
-				job.session.Done()
-				continue
-			}
-			go func(j *dagJob) {
-				p.handleChildBlocks(
-					j.session,
-					j.txn,
-					j.collection,
-					j.dockey,
-					j.fieldName,
-					j.node,
-					children,
-					j.nodeGetter,
-				)
-				j.session.Done()
-			}(job)
+			job.session.Done()
+			continue
 		}
+		go func(j *dagJob) {
+			p.handleChildBlocks(
+				j.session,
+				j.txn,
+				j.collection,
+				j.dockey,
+				j.fieldName,
+				j.node,
+				children,
+				j.nodeGetter,
+			)
+			j.session.Done()
+		}(job)
 	}
 }
 

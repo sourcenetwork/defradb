@@ -64,7 +64,7 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
 
-	jobQueue chan *dagJob
+	closeJob chan string
 	sendJobs chan *dagJob
 
 	// outstanding log request currently being processed
@@ -107,7 +107,7 @@ func NewPeer(
 		p2pRPC:         grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
-		jobQueue:       make(chan *dagJob, numWorkers),
+		closeJob:       make(chan string),
 		sendJobs:       make(chan *dagJob),
 		replicators:    make(map[string]map[peer.ID]struct{}),
 		queuedChildren: newCidSafeSet(),
