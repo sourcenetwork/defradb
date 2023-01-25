@@ -83,58 +83,66 @@ func (p *Peer) sendJobWorker() {
 
 // dagWorker should run in its own goroutine. Workers are launched during
 // initialization in New().
-func (p *Peer) dagWorker() {
-	for job := range p.jobQueue {
-		log.Debug(
-			p.ctx,
-			"Starting new job from DAG queue",
-			logging.NewKV("DocKey", job.dockey),
-			logging.NewKV("CID", job.node.Cid()),
-		)
-
+func (p *Peer) dagWorker(done chan struct{}) {
+	for {
 		select {
-		case <-p.ctx.Done():
-			// drain jobs from queue when we are done
-			job.session.Done()
-			continue
-		default:
-		}
-
-		children, err := p.processLog(
-			p.ctx,
-			job.txn,
-			job.collection,
-			job.dockey,
-			job.node.Cid(),
-			job.fieldName,
-			job.node,
-			job.nodeGetter,
-		)
-
-		if err != nil {
-			log.ErrorE(
+		case <-done:
+			return
+		case job, isOpen := <-p.jobQueue:
+			if !isOpen {
+				return
+			}
+			log.Debug(
 				p.ctx,
-				"Error processing log",
-				err,
+				"Starting new job from DAG queue",
 				logging.NewKV("DocKey", job.dockey),
 				logging.NewKV("CID", job.node.Cid()),
 			)
-			job.session.Done()
-			continue
-		}
-		go func(j *dagJob) {
-			p.handleChildBlocks(
-				j.session,
-				j.txn,
-				j.collection,
-				j.dockey,
-				j.fieldName,
-				j.node,
-				children,
-				j.nodeGetter,
+
+			select {
+			case <-p.ctx.Done():
+				// drain jobs from queue when we are done
+				job.session.Done()
+				continue
+			default:
+			}
+
+			children, err := p.processLog(
+				p.ctx,
+				job.txn,
+				job.collection,
+				job.dockey,
+				job.node.Cid(),
+				job.fieldName,
+				job.node,
+				job.nodeGetter,
 			)
-			j.session.Done()
-		}(job)
+
+			if err != nil {
+				log.ErrorE(
+					p.ctx,
+					"Error processing log",
+					err,
+					logging.NewKV("DocKey", job.dockey),
+					logging.NewKV("CID", job.node.Cid()),
+				)
+				job.session.Done()
+				continue
+			}
+			go func(j *dagJob) {
+				p.handleChildBlocks(
+					j.session,
+					j.txn,
+					j.collection,
+					j.dockey,
+					j.fieldName,
+					j.node,
+					children,
+					j.nodeGetter,
+				)
+				j.session.Done()
+			}(job)
+		}
 	}
 }
 

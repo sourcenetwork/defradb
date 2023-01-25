@@ -134,6 +134,13 @@ func (s *server) GetLog(ctx context.Context, req *pb.GetLogRequest) (*pb.GetLogR
 
 // PushLog receives a push log request
 func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushLogReply, error) {
+	// Add workers to the pool and close them once we are done.
+	done := make(chan struct{})
+	defer close(done)
+	for i := 0; i < numWorkers; i++ {
+		go s.peer.dagWorker(done)
+	}
+
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err

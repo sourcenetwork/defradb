@@ -159,11 +159,8 @@ func (p *Peer) Start() error {
 		}
 	}()
 
-	// start sendJobWorker + NumWorkers goroutines
+	// start sendJobWorker
 	go p.sendJobWorker()
-	for i := 0; i < numWorkers; i++ {
-		go p.dagWorker()
-	}
 
 	return nil
 }
