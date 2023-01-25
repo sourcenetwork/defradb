@@ -58,7 +58,9 @@ type dagJob struct {
 	dockey     core.DataStoreKey // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
-	txn datastore.Txn // transaction common to a pushlog event
+	// Transaction common to a pushlog event. It is used to pass it along to processLog
+	// and handleChildBlocks within the dagWorker.
+	txn datastore.Txn
 
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
