@@ -103,7 +103,7 @@ func (index IndexDescription) IDString() string {
 type SchemaDescription struct {
 	// SchemaId is the version agnostic identifier for this schema.
 	//
-	// It remains constant throught the lifetime of this schema.
+	// It remains constant throughout the lifetime of this schema.
 	SchemaId string
 
 	// VersionId is the version-specific identifier for this schema.
