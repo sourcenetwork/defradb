@@ -101,16 +101,16 @@ func (index IndexDescription) IDString() string {
 
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
-	// SchemaId is the version agnostic identifier for this schema.
+	// SchemaID is the version agnostic identifier for this schema.
 	//
 	// It remains constant throughout the lifetime of this schema.
-	SchemaId string
+	SchemaID string
 
-	// VersionId is the version-specific identifier for this schema.
+	// VersionID is the version-specific identifier for this schema.
 	//
 	// It is generated on mutation of this schema and can be used to uniquely
 	// identify a schema at a specific version.
-	VersionId string
+	VersionID string
 	Name      string
 	// Schema schema.Schema
 	FieldIDs []uint32

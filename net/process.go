@@ -136,7 +136,7 @@ func initCRDTForType(
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
 	return crdt.DefaultFactory.InstanceWithStores(
 		txn,
-		core.NewCollectionSchemaVersionKey(col.Schema().VersionId),
+		core.NewCollectionSchemaVersionKey(col.Schema().VersionID),
 		events.EmptyUpdateChannel,
 		ctype,
 		key,

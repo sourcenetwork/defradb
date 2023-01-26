@@ -149,14 +149,14 @@ func (db *db) CreateCollection(
 	if err != nil {
 		return nil, err
 	}
-	schemaId := cid.String()
-	col.schemaID = schemaId
+	schemaID := cid.String()
+	col.schemaID = schemaID
 
 	// For new schemas the initial version id will match the schema id
-	schemaVersionId := schemaId
+	schemaVersionID := schemaID
 
-	col.desc.Schema.VersionId = schemaVersionId
-	col.desc.Schema.SchemaId = schemaId
+	col.desc.Schema.VersionID = schemaVersionID
+	col.desc.Schema.SchemaID = schemaID
 
 	// buffer must include all the ids, as it is saved and loaded from the store later.
 	buf, err := json.Marshal(col.desc)
@@ -164,7 +164,7 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
 	// Whilst the schemaVersionKey is global, the data persisted at the key's location
 	// is local to the node (the global only elements are not useful beyond key generation).
 	err = db.systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
@@ -172,13 +172,13 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	collectionSchemaKey := core.NewCollectionSchemaKey(schemaId)
-	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionId))
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
+	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionId))
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId stri
 		db:       db,
 		desc:     desc,
 		colID:    desc.ID,
-		schemaID: desc.Schema.SchemaId,
+		schemaID: desc.Schema.SchemaID,
 	}, nil
 }
 
@@ -821,7 +821,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionId),
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,
@@ -846,7 +846,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			core.NewCollectionSchemaVersionKey(c.Schema().VersionId),
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,
