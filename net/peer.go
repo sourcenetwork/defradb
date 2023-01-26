@@ -64,6 +64,8 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
 
+	// Used to close the dagWorker pool for a given document.
+	// The string represents a dockey.
 	closeJob chan string
 	sendJobs chan *dagJob
 
