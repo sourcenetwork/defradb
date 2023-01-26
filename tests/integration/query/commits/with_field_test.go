@@ -88,7 +88,7 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 		},
 	}
