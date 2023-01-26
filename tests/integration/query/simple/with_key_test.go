@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithKeyFilterBlock(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic filter (key by filter block)",
-		Query: `query {
+		Request: `query {
 					users(filter: {_key: {_eq: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"}}) {
 						Name
 						Age

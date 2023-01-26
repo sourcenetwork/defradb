@@ -170,7 +170,7 @@ func ExecuteExplainRequestTestCase(
 			)
 		}
 
-		result := dbi.DB().ExecQuery(ctx, explainTest.Request)
+		result := dbi.DB().ExecRequest(ctx, explainTest.Request)
 		if assertExplainRequestResults(
 			ctx,
 			t,

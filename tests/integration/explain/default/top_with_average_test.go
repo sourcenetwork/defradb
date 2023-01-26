@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainTopLevelAverageQuery(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level average query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_avg(
 				author: {
 					field: age
@@ -112,10 +112,10 @@ func TestExplainTopLevelAverageQuery(t *testing.T) {
 }
 
 func TestExplainTopLevelAverageQueryWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level average query with filter.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_avg(
 				author: {
 					field: age,

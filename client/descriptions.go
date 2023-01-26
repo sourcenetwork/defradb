@@ -84,9 +84,10 @@ type IndexDescription struct {
 	// A Book type can have many Categories,
 	// and Categories can belong to many Books.
 	//
-	// If we query more for Books, then Categories directly, then
+	// If we request Books more, then Categories directly, then
 	// we can set the Book type as the Primary type.
 	Junction bool
+
 	// RelationType is only used in the Index is a Junction Index.
 	// It specifies what the other type is in the Many-to-Many
 	// relationship.

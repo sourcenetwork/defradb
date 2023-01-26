@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 /*
@@ -221,8 +221,7 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 }
 
 // typeJoinOne is the plan node for a type index join
-// where the root type is the primary in a one-to-one relation
-// query.
+// where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
 	documentIterator
 	docMapper
@@ -418,7 +417,7 @@ type typeJoinMany struct {
 
 	p *Planner
 
-	// the main type that is a the parent level of the query.
+	// the main type that is at the parent level of the request.
 	root     planNode
 	rootName string
 	// the index to use to gather the subtype IDs

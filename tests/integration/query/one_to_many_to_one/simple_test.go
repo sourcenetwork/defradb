@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToOneRelations(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Multiple One-to-one relations query with no filter.",
-		Query: `query {
+		Request: `query {
 			Book {
 				name
 				author {

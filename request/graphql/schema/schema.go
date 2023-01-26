@@ -9,6 +9,15 @@
 // licenses/APL.txt.
 
 /*
-Package query provides query language support.
+Package schema provides the necessary schema tooling, including parsing, validation, and generation for developer
+defined types for the GraphQL implementation of DefraDB.
 */
-package query
+package schema
+
+import (
+	"github.com/sourcenetwork/defradb/logging"
+)
+
+var (
+	log = logging.MustNewLogger("defra.request.schema")
+)

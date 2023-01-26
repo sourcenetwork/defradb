@@ -17,11 +17,11 @@ import (
 )
 
 func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (key by DocKey arg)",
 
-			Query: `query @explain {
+			Request: `query @explain {
 				author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 					name
 					age
@@ -66,7 +66,7 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (key by DocKey arg), partial results",
 
-			Query: `query @explain {
+			Request: `query @explain {
 				author(dockey: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
 					name
 					age
@@ -121,11 +121,11 @@ func TestExplainQuerySimpleWithDocKeyFilter(t *testing.T) {
 }
 
 func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "Explain query with basic filter (single key by DocKeys arg)",
 
-			Query: `query @explain {
+			Request: `query @explain {
 				author(dockeys: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
 					name
 					age
@@ -170,7 +170,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (duplicate key by DocKeys arg), partial results",
 
-			Query: `query @explain {
+			Request: `query @explain {
 				author(dockeys: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"
@@ -228,7 +228,7 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 		{
 			Description: "Explain query with basic filter (multiple key by DocKeys arg), partial results",
 
-			Query: `query @explain {
+			Request: `query @explain {
 				author(dockeys: [
 					"bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d",
 					"bae-bfbfc89c-0d63-5ea4-81a3-3ebd295be67f"
@@ -290,10 +290,10 @@ func TestExplainQuerySimpleWithDocKeysFilter(t *testing.T) {
 }
 
 func TestExplainSimpleFilterWithMatchingKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain with basic filter with matching key.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author(filter: {_key: {_eq: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"}}) {
 				name
 				age

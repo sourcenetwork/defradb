@@ -214,11 +214,11 @@ func TestExplainJoinsNew(t *testing.T) {
 }
 
 func TestExplainJoinsOld(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain a simple sum query of a One-to-Many realted sub-type with many sources.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				name
 				TotalPages: _sum(

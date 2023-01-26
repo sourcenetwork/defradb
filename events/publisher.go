@@ -39,7 +39,7 @@ func NewPublisher[T any](ch Channel[T], streamBufferSize int) (*Publisher[T], er
 	}, nil
 }
 
-// Event returns the subsciption channel
+// Event returns the subscription channel
 func (p *Publisher[T]) Event() Subscription[T] {
 	return p.event
 }

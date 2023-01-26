@@ -18,9 +18,9 @@ import (
 )
 
 func TestMutationCreateSimpleReturnVersionCID(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
-		Query: `mutation {
+		Request: `mutation {
 					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_version {
 							cid

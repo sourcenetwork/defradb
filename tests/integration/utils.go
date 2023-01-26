@@ -70,43 +70,43 @@ var (
 	inMemoryStore  bool
 )
 
-const subsciptionTimeout = 1 * time.Second
+const subscriptionTimeout = 1 * time.Second
 
-// Represents a query assigned to a particular transaction.
-type SubscriptionQuery struct {
-	Query string
-	// The expected (data) results of the query
+// Represents a subscription request.
+type SubscriptionRequest struct {
+	Request string
+	// The expected (data) results of the issued request.
 	Results []map[string]any
-	// The expected error resulting from the query.
+	// The expected error resulting from the issued request.
 	ExpectedError string
-	// If set to true, the query should yield no results.
+	// If set to true, the request should yield no results.
 	// The timeout is duration is that of subscriptionTimeout (1 second)
 	ExpectedTimout bool
 }
 
-// Represents a query assigned to a particular transaction.
-type TransactionQuery struct {
+// Represents a request assigned to a particular transaction.
+type TransactionRequest struct {
 	// Used to identify the transaction for this to run against (allows multiple
-	//  queries to share a single transaction)
+	//  requtests to share a single transaction)
 	TransactionId int
-	// The query to run against the transaction
-	Query string
-	// The expected (data) results of the query
+	// The request to run against the transaction
+	Request string
+	// The expected (data) results of the issued request
 	Results []map[string]any
-	// The expected error resulting from the query.  Also checked against the txn commit.
+	// The expected error resulting from the issued request. Also checked against the txn commit.
 	ExpectedError string
 }
 
-type QueryTestCase struct {
+type RequestTestCase struct {
 	Description string
-	Query       string
+	Request     string
 
-	// A collection of queries to exucute after the subscriber is listening on the stream
-	PostSubscriptionQueries []SubscriptionQuery
+	// A collection of requests to exucute after the subscriber is listening on the stream
+	PostSubscriptionRequests []SubscriptionRequest
 
-	// A collection of queries tied to a specific transaction.
-	// These will be executed before `Query` (if specified), in the order that they are listed here.
-	TransactionalQueries []TransactionQuery
+	// A collection of requests that are tied to a specific transaction.
+	// These will be executed before `Request` (if specified), in the order that they are listed here.
+	TransactionalRequests []TransactionRequest
 
 	// docs is a map from Collection Index, to a list
 	// of docs in stringified JSON format
@@ -160,7 +160,7 @@ For each test:
 - Create a new (test/auto-deleted) temp dir for defra to live/run in
 - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
    if test does not exist in target and is new to this branch)
-- Run the test query and assert results (as per normal tests) using the current branch
+- Run the test request and assert results (as per normal tests) using the current branch
 */
 var DetectDbChanges bool
 var SetupOnly bool
@@ -330,20 +330,20 @@ func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	return databases, nil
 }
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	collectionNames []string,
-	test QueryTestCase,
+	test RequestTestCase,
 ) {
-	isTransactional := len(test.TransactionalQueries) > 0
+	isTransactional := len(test.TransactionalRequests) > 0
 
 	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames, isTransactional) {
 		return
 	}
 
 	// Must have a non-empty request.
-	if !isTransactional && test.Query == "" {
+	if !isTransactional && test.Request == "" {
 		assert.Fail(t, "Test must have a non-empty request.", test.Description)
 	}
 
@@ -389,10 +389,10 @@ func ExecuteQueryTestCase(
 			)
 		}
 
-		// Create the transactions before executing and queries
-		transactions := make([]datastore.Txn, 0, len(test.TransactionalQueries))
-		erroredQueries := make([]bool, len(test.TransactionalQueries))
-		for i, tq := range test.TransactionalQueries {
+		// Create the transactions before executing the requests.
+		transactions := make([]datastore.Txn, 0, len(test.TransactionalRequests))
+		erroredRequests := make([]bool, len(test.TransactionalRequests))
+		for i, tq := range test.TransactionalRequests {
 			if len(transactions) < tq.TransactionId {
 				continue
 			}
@@ -400,7 +400,7 @@ func ExecuteQueryTestCase(
 			txn, err := dbi.db.NewTxn(ctx, false)
 			if err != nil {
 				if AssertError(t, test.Description, err, tq.ExpectedError) {
-					erroredQueries[i] = true
+					erroredRequests[i] = true
 				}
 			}
 			defer txn.Discard(ctx)
@@ -410,19 +410,19 @@ func ExecuteQueryTestCase(
 			transactions[tq.TransactionId] = txn
 		}
 
-		for i, tq := range test.TransactionalQueries {
-			if erroredQueries[i] {
+		for i, tq := range test.TransactionalRequests {
+			if erroredRequests[i] {
 				continue
 			}
-			result := dbi.db.ExecTransactionalQuery(ctx, tq.Query, transactions[tq.TransactionId])
-			if assertQueryResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
-				erroredQueries[i] = true
+			result := dbi.db.ExecTransactionalRequest(ctx, tq.Request, transactions[tq.TransactionId])
+			if assertRequestResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
+				erroredRequests[i] = true
 			}
 		}
 
 		txnIndexesCommited := map[int]struct{}{}
-		for i, tq := range test.TransactionalQueries {
-			if erroredQueries[i] {
+		for i, tq := range test.TransactionalRequests {
+			if erroredRequests[i] {
 				continue
 			}
 			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
@@ -432,23 +432,23 @@ func ExecuteQueryTestCase(
 
 			err := transactions[tq.TransactionId].Commit(ctx)
 			if AssertError(t, test.Description, err, tq.ExpectedError) {
-				erroredQueries[i] = true
+				erroredRequests[i] = true
 			}
 		}
 
-		for i, tq := range test.TransactionalQueries {
-			if tq.ExpectedError != "" && !erroredQueries[i] {
+		for i, tq := range test.TransactionalRequests {
+			if tq.ExpectedError != "" && !erroredRequests[i] {
 				assert.Fail(t, "Expected an error however none was raised.", test.Description)
 			}
 		}
 
-		// We run the core query after the explicitly transactional ones to permit tests to query
-		//  the commited result of the transactional queries
-		if !isTransactional || (isTransactional && test.Query != "") {
-			result := dbi.db.ExecQuery(ctx, test.Query)
+		// We run the core request after the explicitly transactional ones to permit tests to actually
+		// call the request on the commited result of the transactional requests.
+		if !isTransactional || (isTransactional && test.Request != "") {
+			result := dbi.db.ExecRequest(ctx, test.Request)
 			if result.Pub != nil {
-				for _, q := range test.PostSubscriptionQueries {
-					dbi.db.ExecQuery(ctx, q.Query)
+				for _, q := range test.PostSubscriptionRequests {
+					dbi.db.ExecRequest(ctx, q.Request)
 					data := []map[string]any{}
 					errs := []any{}
 					if len(q.Results) > 1 {
@@ -460,7 +460,7 @@ func ExecuteQueryTestCase(
 								errs = append(errs, sResult.Errors...)
 								data = append(data, sData...)
 							// a safety in case the stream hangs.
-							case <-time.After(subsciptionTimeout):
+							case <-time.After(subscriptionTimeout):
 								assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
 							}
 						}
@@ -472,7 +472,7 @@ func ExecuteQueryTestCase(
 							errs = append(errs, sResult.Errors...)
 							data = append(data, sData...)
 						// a safety in case the stream hangs or no results are expected.
-						case <-time.After(subsciptionTimeout):
+						case <-time.After(subscriptionTimeout):
 							if q.ExpectedTimout {
 								continue
 							}
@@ -483,7 +483,7 @@ func ExecuteQueryTestCase(
 						Data:   data,
 						Errors: errs,
 					}
-					if assertQueryResults(
+					if assertRequestResults(
 						ctx,
 						t,
 						test.Description,
@@ -496,7 +496,7 @@ func ExecuteQueryTestCase(
 				}
 				result.Pub.Unsubscribe()
 			} else {
-				if assertQueryResults(
+				if assertRequestResults(
 					ctx,
 					t,
 					test.Description,
@@ -594,7 +594,7 @@ func DetectDbChangesPreTestChecks(
 	}
 
 	if isTransactional {
-		// Transactional queries are not yet supported by the database change
+		// Transactional requests are not yet supported by the database change
 		//  detector, so we skip the test
 		t.SkipNow()
 	}
@@ -750,7 +750,7 @@ func SetupDatabaseUsingTargetBranch(
 	return refreshedDb
 }
 
-func assertQueryResults(
+func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
 	description string,
@@ -765,7 +765,7 @@ func assertQueryResults(
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.([]map[string]any)
 
-	log.Info(ctx, "", logging.NewKV("QueryResults", result.Data))
+	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
 
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)

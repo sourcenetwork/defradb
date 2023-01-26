@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic gt datetime filter with equal value",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_gt: "2017-07-20T03:46:56.647Z"}}) {
 						Name
 					}
@@ -49,9 +49,9 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic gt DateTime filter with equal value",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_gt: "2017-07-22T03:46:56.647Z"}}) {
 						Name
 					}
@@ -81,9 +81,9 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic gt datetime filter with lesser value",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_gt: "2017-07-25T03:46:56.647Z"}}) {
 						Name
 					}
@@ -109,9 +109,9 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic gt datetime nil filter",
-		Query: `query {
+		Request: `query {
 					users(filter: {CreatedAt: {_gt: null}}) {
 						Name
 					}

@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many-to-one deep filter on rendered children.",
-		Query: `query {
+		Request: `query {
 			Author (filter: {book: {publisher: {yearOpened: {_gt: 2021}}}}) {
 				name
 				book {

@@ -87,8 +87,8 @@ func parseCommitSelect(schema gql.Schema, parent *gql.Object, field *ast.Field) 
 		}
 	}
 
-	// latestCommits is just syntax sugar around a commits query
-	if commit.Name == request.LatestCommitsQueryName {
+	// latestCommits is just syntax sugar around a commits operation.
+	if commit.Name == request.LatestCommitsName {
 		// Depth is not exposed as an input parameter for latestCommits,
 		// so we can blindly set it here without worrying about existing
 		// values

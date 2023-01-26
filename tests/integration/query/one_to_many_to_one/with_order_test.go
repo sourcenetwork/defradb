@@ -17,9 +17,9 @@ import (
 )
 
 func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Multiple orderby with depth greater than 1.",
-		Query: `query {
+		Request: `query {
 			Book (order: {rating: ASC, publisher: {yearOpened: DESC}}) {
 				name
 				rating
@@ -180,9 +180,9 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 }
 
 func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Multiple orderby with depth greater than 1, order switched.",
-		Query: `query {
+		Request: `query {
 			Book (order: {publisher: {yearOpened: DESC}, rating: ASC}) {
 				name
 				rating

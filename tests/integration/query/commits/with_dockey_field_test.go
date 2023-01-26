@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and unknown field",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
 						cid
 					}
@@ -39,9 +39,9 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and unknown field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
 						cid
 					}
@@ -63,9 +63,9 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all commits for dockey-field).
 func TestQueryCommitsWithDockeyAndField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
 						cid
 					}
@@ -87,9 +87,9 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
 						cid
 					}
@@ -115,9 +115,9 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 // This test is for documentation reasons only. This is not
 // desired behaviour (users should not be specifying field ids).
 func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and field id",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {
 						cid
 					}

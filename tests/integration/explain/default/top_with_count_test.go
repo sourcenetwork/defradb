@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainTopLevelCountQuery(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level count query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_count(author: {})
 		}`,
 
@@ -82,10 +82,10 @@ func TestExplainTopLevelCountQuery(t *testing.T) {
 }
 
 func TestExplainTopLevelCountQueryWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level count query with filter.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_count(
 				author: {
 					filter: {

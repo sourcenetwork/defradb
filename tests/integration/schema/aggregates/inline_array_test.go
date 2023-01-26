@@ -17,7 +17,7 @@ import (
 )
 
 func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -25,7 +25,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -133,11 +133,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -145,7 +145,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -251,11 +251,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -263,7 +263,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -369,7 +369,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 var aggregateGroupArg = map[string]any{
@@ -451,7 +451,7 @@ var aggregateVersionArg = map[string]any{
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -459,7 +459,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -569,11 +569,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -581,7 +581,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -691,11 +691,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -703,7 +703,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -837,11 +837,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -849,7 +849,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -983,11 +983,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -995,7 +995,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -1129,11 +1129,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -1141,7 +1141,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -1275,11 +1275,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -1287,7 +1287,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -1397,11 +1397,11 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -1409,7 +1409,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -1519,5 +1519,5 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }

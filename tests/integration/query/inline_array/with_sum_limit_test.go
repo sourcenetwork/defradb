@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumWithLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array, limited sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {limit: 2})

@@ -17,10 +17,10 @@ import (
 )
 
 func TestSimpleExplainRequest(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain (simple) a basic request.",
 
-		Query: `query @explain(type: simple) {
+		Request: `query @explain(type: simple) {
 			author {
 				_key
 				name

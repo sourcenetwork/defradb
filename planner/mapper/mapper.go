@@ -788,7 +788,7 @@ func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *request.Comm
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, txn datastore.Txn, parsed *request.Mutation) (*Mutation, error) {
+func ToMutation(ctx context.Context, txn datastore.Txn, parsed *request.ObjectMutation) (*Mutation, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
 	if err != nil {
 		return nil, err

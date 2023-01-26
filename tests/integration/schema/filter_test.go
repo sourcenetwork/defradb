@@ -15,7 +15,7 @@ import (
 )
 
 func TestFilterForSimpleSchema(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -23,7 +23,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__schema {
 					queryType {
@@ -112,7 +112,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 var testFilterForSimpleSchemaArgProps = map[string]any{
@@ -142,7 +142,7 @@ var defaultUserArgsWithoutFilter = trimFields(
 )
 
 func TestFilterForOneToOneSchema(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 			type book {
@@ -156,7 +156,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 			}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__schema {
 					queryType {
@@ -259,7 +259,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 var testFilterForOneToOneSchemaArgProps = map[string]any{

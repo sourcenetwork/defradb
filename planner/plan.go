@@ -8,10 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package parser
+package planner
 
-import "github.com/sourcenetwork/defradb/query/graphql/schema"
-
-type Parser struct {
-	SchemaManager *schema.SchemaManager
-}
+// RequestPlan is an external hook into the planNode
+// system. It allows outside packages to
+// execute and manage a request plan graph directly.
+// Instead of using one of the available functions
+// like ExecRequest(...).
+// Currently, this is used by the collection.Update
+// system.
+type RequestPlan planNode

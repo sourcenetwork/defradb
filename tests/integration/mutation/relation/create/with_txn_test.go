@@ -19,7 +19,7 @@ import (
 )
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create relational documents, and check the links in forward direction.",
 
 		Docs: map[int][]string{
@@ -39,12 +39,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
 			{
 				TransactionId: 0,
 
-				Query: `mutation {
+				Request: `mutation {
 					create_book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
 						_key
 					}
@@ -60,7 +60,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			{
 				TransactionId: 1,
 
-				Query: `mutation {
+				Request: `mutation {
 					create_book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
 						_key
 					}
@@ -77,7 +77,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			{
 				TransactionId: 0,
 
-				Query: `query {
+				Request: `query {
 					publisher {
 						_key
 						name
@@ -110,7 +110,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			{
 				TransactionId: 1,
 
-				Query: `query {
+				Request: `query {
 					publisher {
 						_key
 						name
@@ -141,7 +141,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 		},
 
 		// Assert books -> publisher direction outside the transactions.
-		Query: `query {
+		Request: `query {
 			book {
 				_key
 				name
@@ -177,7 +177,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 }
 
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Create relational documents, and check the links in backward direction.",
 
 		Docs: map[int][]string{
@@ -197,12 +197,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			},
 		},
 
-		TransactionalQueries: []testUtils.TransactionQuery{
+		TransactionalRequests: []testUtils.TransactionRequest{
 			// Create books related to publishers, and ensure they are correctly linked (in and out of transactions).
 			{
 				TransactionId: 0,
 
-				Query: `mutation {
+				Request: `mutation {
 					create_book(data: "{\"name\": \"Book By Website\",\"rating\": 4.0, \"publisher_id\": \"bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4\"}") {
 						_key
 					}
@@ -218,7 +218,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			{
 				TransactionId: 1,
 
-				Query: `mutation {
+				Request: `mutation {
 					create_book(data: "{\"name\": \"Book By Online\",\"rating\": 4.0, \"publisher_id\": \"bae-8a381044-9206-51e7-8bc8-dc683d5f2523\"}") {
 						_key
 					}
@@ -235,7 +235,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			{
 				TransactionId: 0,
 
-				Query: `query {
+				Request: `query {
 					book {
 						_key
 						name
@@ -262,7 +262,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			{
 				TransactionId: 1,
 
-				Query: `query {
+				Request: `query {
 					book {
 						_key
 						name
@@ -287,7 +287,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 		},
 
 		// Assert publishers -> books direction outside the transactions.
-		Query: `query {
+		Request: `query {
 			publisher {
 				_key
 				name

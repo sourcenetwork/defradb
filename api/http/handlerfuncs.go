@@ -78,12 +78,12 @@ func dumpHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 type gqlRequest struct {
-	Query string `json:"query"`
+	Request string `json:"query"`
 }
 
 func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query().Get("query")
-	if query == "" {
+	request := req.URL.Query().Get("query")
+	if request == "" {
 		// extract the media type from the content-type header
 		contentType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 		// mime.ParseMediaType will return an error (mime: no media type)
@@ -105,7 +105,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			query = gqlReq.Query
+			request = gqlReq.Request
 
 		case contentTypeFormURLEncoded:
 			handleErr(
@@ -129,13 +129,13 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
 				return
 			}
-			query = string(body)
+			request = string(body)
 		}
 	}
 
-	// if at this point query is still empty, return an error
-	if query == "" {
-		handleErr(req.Context(), rw, ErrMissingGQLQuery, http.StatusBadRequest)
+	// if at this point request is still empty, return an error
+	if request == "" {
+		handleErr(req.Context(), rw, ErrMissingGQLRequest, http.StatusBadRequest)
 		return
 	}
 
@@ -144,7 +144,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
-	result := db.ExecQuery(req.Context(), query)
+	result := db.ExecRequest(req.Context(), request)
 
 	if result.Pub != nil {
 		subscriptionHandler(result.Pub, rw, req)

@@ -22,8 +22,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
-	defrap "github.com/sourcenetwork/defradb/query/graphql/parser"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	defrap "github.com/sourcenetwork/defradb/request/graphql/parser"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 var _ core.Parser = (*parser)(nil)
@@ -50,12 +50,12 @@ func (p *parser) IsIntrospection(request string) bool {
 	return strings.Contains(request, "IntrospectionQuery")
 }
 
-func (p *parser) ExecuteIntrospection(request string) *client.QueryResult {
+func (p *parser) ExecuteIntrospection(request string) *client.RequestResult {
 	schema := p.schemaManager.Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
-	res := &client.QueryResult{
+	res := &client.RequestResult{
 		GQL: client.GQLResult{
 			Data:   r.Data,
 			Errors: make([]any, len(r.Errors)),
@@ -90,7 +90,7 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 		return nil, errors
 	}
 
-	query, parsingErrors := defrap.ParseQuery(*schema, ast)
+	query, parsingErrors := defrap.ParseRequest(*schema, ast)
 	if len(parsingErrors) > 0 {
 		return nil, parsingErrors
 	}

@@ -18,11 +18,11 @@ import (
 )
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Relational delete mutation where one element exists.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							_key
 						}
@@ -66,7 +66,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 
 		{
 			Description: "Relational delete mutation with an aliased _key name.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							AliasOfKey: _key
 						}
@@ -110,7 +110,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 
 		{
 			Description: "Relational Delete of an updated document and an aliased _key name.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							Key: _key
 					}

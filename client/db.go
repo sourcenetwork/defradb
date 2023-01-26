@@ -31,8 +31,8 @@ type DB interface {
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
-	ExecQuery(context.Context, string) *QueryResult
-	ExecTransactionalQuery(ctx context.Context, query string, txn datastore.Txn) *QueryResult
+	ExecRequest(context.Context, string) *RequestResult
+	ExecTransactionalRequest(context.Context, string, datastore.Txn) *RequestResult
 	Close(context.Context)
 
 	Events() events.Events
@@ -57,7 +57,7 @@ type GQLResult struct {
 	Data   any   `json:"data"`
 }
 
-type QueryResult struct {
+type RequestResult struct {
 	GQL GQLResult
 	Pub *events.Publisher[events.Update]
 }

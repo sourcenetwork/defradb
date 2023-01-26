@@ -110,9 +110,9 @@ type selectNode struct {
 	// filter is split between select, scan, and typeIndexJoin.
 	// The filters which only apply to the main collection
 	// are stored in the root scanNode.
-	// The filters that are defined on the root query, but apply
+	// The filters that are defined on the root request, but apply
 	// to the sub type are defined here in the select.
-	// The filters that are defined on the subtype query
+	// The filters that are defined on the subtype request
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
