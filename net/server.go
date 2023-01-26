@@ -28,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -208,7 +209,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		if txnErr = txn.Commit(ctx); txnErr != nil {
-			if txnErr.Error() == "Transaction Conflict. Please retry" {
+			if errors.Is(txnErr, badger.ErrTxnConflict) {
 				continue
 			}
 			return &pb.PushLogReply{}, txnErr
