@@ -33,13 +33,13 @@ var (
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
 type CompositeDAGDelta struct {
-	// SchemaVersionKey is the schema version datastore key at the time of commit.
+	// SchemaVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at time of commit.
-	SchemaVersionKey string
-	Priority         uint64
-	Data             []byte
-	SubDAGs          []core.DAGLink
+	SchemaVersionID string
+	Priority        uint64
+	Data            []byte
+	SubDAGs         []core.DAGLink
 }
 
 // GetPriority gets the current priority for this delta.
@@ -58,10 +58,10 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		SchemaVersionKey string
-		Priority         uint64
-		Data             []byte
-	}{delta.SchemaVersionKey, delta.Priority, delta.Data})
+		SchemaVersionID string
+		Priority        uint64
+		Data            []byte
+	}{delta.SchemaVersionID, delta.Priority, delta.Data})
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +118,9 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 	return &CompositeDAGDelta{
-		Data:             patch,
-		SubDAGs:          links,
-		SchemaVersionKey: c.schemaVersionKey.ToString(),
+		Data:            patch,
+		SubDAGs:         links,
+		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 	}
 }
 
