@@ -43,7 +43,7 @@ func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
 				"_count": 0,
 			},
 			{
-				"cid":    "bafybeih75uved5tzh5p7q4kzmkal7ezpjph7fnij6vn5krkgyc3jap2k5m",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"_count": 2,
 			},
 		},

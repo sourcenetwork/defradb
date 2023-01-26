@@ -90,7 +90,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"cid": "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
 					},
 					{
-						"cid": "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny",
+						"cid": "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 					},
 				},
 			},
@@ -104,7 +104,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 					},
 					{
-						"cid": "bafybeih75uved5tzh5p7q4kzmkal7ezpjph7fnij6vn5krkgyc3jap2k5m",
+						"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 					},
 				},
 			},
@@ -152,7 +152,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				},
 			},
 			{
-				"cid": "bafybeih75uved5tzh5p7q4kzmkal7ezpjph7fnij6vn5krkgyc3jap2k5m",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"_group": []map[string]any{
 					{
 						"height": int64(1),

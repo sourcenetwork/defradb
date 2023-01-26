@@ -46,7 +46,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeic2geebq5gwlklqdgmhf3u46x2odqmpg3fwzerwxvporfiyff3h7q",
+						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
 						"links": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
@@ -99,7 +99,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeic2geebq5gwlklqdgmhf3u46x2odqmpg3fwzerwxvporfiyff3h7q",
+						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
 						"L1": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
