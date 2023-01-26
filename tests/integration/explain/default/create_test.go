@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainMutationCreateSimple(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation.",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27,\"verified\": true}") {
 				_key
 				name
@@ -60,10 +60,10 @@ func TestExplainMutationCreateSimple(t *testing.T) {
 }
 
 func TestExplainMutationCreateSimpleDoesNotCreateDocGivenDuplicate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain simple create mutation, where document already exists.",
 
-		Query: `mutation @explain {
+		Request: `mutation @explain {
 			create_author(data: "{\"name\": \"Shahzad Lone\",\"age\": 27}") {
 				_key
 				name

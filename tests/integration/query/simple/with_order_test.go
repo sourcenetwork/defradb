@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order ASC",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: ASC}) {
 						Name
 						Age
@@ -69,9 +69,9 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order ASC",
-		Query: `query {
+		Request: `query {
 					users(order: {CreatedAt: ASC}) {
 						Name
 						Age
@@ -125,9 +125,9 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 }
 
 func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order DESC",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: DESC}) {
 						Name
 						Age
@@ -177,9 +177,9 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 }
 
 func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with basic order DESC",
-		Query: `query {
+		Request: `query {
 					users(order: {CreatedAt: DESC}) {
 						Name
 						Age
@@ -233,9 +233,9 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 }
 
 func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with compound order",
-		Query: `query {
+		Request: `query {
 					users(order: {Age: DESC, Verified: ASC}) {
 						Name
 						Age

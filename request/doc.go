@@ -8,13 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package planner
-
-// Query is an external hook into the planNode
-// system. It allows outside packages to
-// execute and manage a query plan graph directly.
-// Instead of using one of the available functions
-// like ExecQuery(...).
-// Currently, this is used by the collection.Update
-// system.
-type Query planNode
+/*
+Package request provides requesting query language support.
+*/
+package request

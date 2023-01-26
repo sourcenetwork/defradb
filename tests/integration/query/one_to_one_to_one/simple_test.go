@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToOneToOne(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-one-to-one relation primary direction",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				published {

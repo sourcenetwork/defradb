@@ -26,7 +26,7 @@ import (
 // Documents in this case refer to the core database type of DefraDB which is a
 // "NoSQL Document Datastore".
 //
-// This section is not concerned with the outer query layer used to interact with the
+// This section is not concerned with the outer request layer used to interact with the
 // Document API, but instead is solely concerned with carrying out the internal API
 // operations.
 //

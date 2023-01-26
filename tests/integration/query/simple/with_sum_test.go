@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum on undefined object",
-		Query: `query {
+		Request: `query {
 					_sum
 				}`,
 		ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -29,9 +29,9 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 }
 
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum on undefined field",
-		Query: `query {
+		Request: `query {
 					_sum(users: {})
 				}`,
 		ExpectedError: "Argument \"users\" has invalid value {}.\nIn field \"field\": Expected \"usersNumericFieldsArg!\", found null.",
@@ -41,9 +41,9 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 }
 
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum on empty",
-		Query: `query {
+		Request: `query {
 					_sum(users: {field: Age})
 				}`,
 		Results: []map[string]any{
@@ -57,9 +57,9 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 }
 
 func TestQuerySimpleWithSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum",
-		Query: `query {
+		Request: `query {
 					_sum(users: {field: Age})
 				}`,
 		Docs: map[int][]string{

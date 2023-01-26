@@ -19,12 +19,12 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-// ExecQuery executes a query against the database.
-func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
-	res := &client.QueryResult{}
-	// check if its Introspection query
-	if strings.Contains(query, "IntrospectionQuery") {
-		return db.ExecIntrospection(query)
+// ExecRequest executes a request against the database.
+func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+	res := &client.RequestResult{}
+	// check if its Introspection request
+	if strings.Contains(request, "IntrospectionQuery") {
+		return db.ExecIntrospection(request)
 	}
 
 	txn, err := db.NewTxn(ctx, false)
@@ -34,7 +34,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	}
 	defer txn.Discard(ctx)
 
-	request, errors := db.parser.Parse(query)
+	parsedRequest, errors := db.parser.Parse(request)
 	if len(errors) > 0 {
 		errorStrings := make([]any, len(errors))
 		for i, err := range errors {
@@ -44,7 +44,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 		return res
 	}
 
-	pub, subRequest, err := db.checkForClientSubsciptions(request)
+	pub, subRequest, err := db.checkForClientSubsciptions(parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res
@@ -58,7 +58,7 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 
 	planner := planner.New(ctx, db, txn)
 
-	results, err := planner.RunRequest(ctx, request)
+	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res
@@ -73,19 +73,19 @@ func (db *db) ExecQuery(ctx context.Context, query string) *client.QueryResult {
 	return res
 }
 
-// ExecTransactionalQuery executes a transaction query against the database.
-func (db *db) ExecTransactionalQuery(
+// ExecTransactionalRequest executes a transaction request against the database.
+func (db *db) ExecTransactionalRequest(
 	ctx context.Context,
-	query string,
+	request string,
 	txn datastore.Txn,
-) *client.QueryResult {
-	if db.parser.IsIntrospection(query) {
-		return db.ExecIntrospection(query)
+) *client.RequestResult {
+	if db.parser.IsIntrospection(request) {
+		return db.ExecIntrospection(request)
 	}
 
-	res := &client.QueryResult{}
+	res := &client.RequestResult{}
 
-	request, errors := db.parser.Parse(query)
+	parsedRequest, errors := db.parser.Parse(request)
 	if len(errors) > 0 {
 		errorStrings := make([]any, len(errors))
 		for i, err := range errors {
@@ -96,7 +96,7 @@ func (db *db) ExecTransactionalQuery(
 	}
 
 	planner := planner.New(ctx, db, txn)
-	results, err := planner.RunRequest(ctx, request)
+	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res
@@ -106,7 +106,7 @@ func (db *db) ExecTransactionalQuery(
 	return res
 }
 
-// ExecIntrospection executes an introspection query against the database.
-func (db *db) ExecIntrospection(query string) *client.QueryResult {
-	return db.parser.ExecuteIntrospection(query)
+// ExecIntrospection executes an introspection request against the database.
+func (db *db) ExecIntrospection(request string) *client.RequestResult {
+	return db.parser.ExecuteIntrospection(request)
 }

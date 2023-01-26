@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainSimpleGroupByOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping on parent.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [age]) {
 				age
 				_group {
@@ -90,10 +90,10 @@ func TestExplainSimpleGroupByOnParent(t *testing.T) {
 }
 
 func TestExplainGroupByTwoFieldsOnParent(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain a grouping by two fields.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author (groupBy: [age, name]) {
 				age
 				_group {

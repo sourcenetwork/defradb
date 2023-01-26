@@ -172,10 +172,10 @@ func TestExecGQLWithEmptyBody(t *testing.T) {
 		ResponseData:   &errResponse,
 	})
 
-	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL query")
+	assert.Contains(t, errResponse.Errors[0].Extensions.Stack, "missing GraphQL request")
 	assert.Equal(t, http.StatusBadRequest, errResponse.Errors[0].Extensions.Status)
 	assert.Equal(t, "Bad Request", errResponse.Errors[0].Extensions.HTTPError)
-	assert.Equal(t, "missing GraphQL query", errResponse.Errors[0].Message)
+	assert.Equal(t, "missing GraphQL request", errResponse.Errors[0].Message)
 }
 
 type mockReadCloser struct {

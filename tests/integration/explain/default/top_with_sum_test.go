@@ -17,10 +17,10 @@ import (
 )
 
 func TestExplainTopLevelSumQuery(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level sum query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_sum(
 				author: {
 					field: age
@@ -87,10 +87,10 @@ func TestExplainTopLevelSumQuery(t *testing.T) {
 }
 
 func TestExplainTopLevelSumQueryWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Explain top-level sum query with filter.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			_sum(
 				author: {
 					field: age,

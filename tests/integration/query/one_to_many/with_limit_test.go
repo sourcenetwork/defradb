@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with limit",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				published (limit: 1) {
@@ -89,9 +89,9 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 }
 
 func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with limit",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				p1: published (limit: 1) {

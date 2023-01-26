@@ -198,9 +198,9 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// the dagscan node can traverse into the merkle dag
 	// based on the specified depth limit.
-	// The default query 'latestCommit' only cares about
+	// The default query operation 'latestCommit' only cares about
 	// the current latest heads, so it has a depth limit
-	// of 1. The query 'commits' doesn't have a depth
+	// of 1. The query operation 'commits' doesn't have a depth
 	// limit, so it will continue to traverse the graph
 	// until there are no more links, and no more explored
 	// HEAD paths.
@@ -250,7 +250,7 @@ func (n *dagScanNode) Next() (bool, error) {
 // }
 
 /*
-dagScanNode is the query plan graph node responsible for scanning through the dag
+dagScanNode is the request plan graph node responsible for scanning through the dag
 blocks of the MerkleCRDTs.
 
 The current available endpoints are:

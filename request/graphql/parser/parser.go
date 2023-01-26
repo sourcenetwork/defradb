@@ -8,16 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-/*
-Package schema provides the necessary schema tooling, including parsing, validation, and generation for developer
-defined types for the GraphQL implementation of DefraDB.
-*/
-package schema
+package parser
 
-import (
-	"github.com/sourcenetwork/defradb/logging"
-)
+import "github.com/sourcenetwork/defradb/request/graphql/schema"
 
-var (
-	log = logging.MustNewLogger("defra.query.schema")
-)
+type Parser struct {
+	SchemaManager *schema.SchemaManager
+}

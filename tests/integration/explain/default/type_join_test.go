@@ -17,11 +17,11 @@ import (
 )
 
 func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain a one-to-one join relation query, with alias.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				OnlyEmail: contact {
 					email
@@ -168,11 +168,11 @@ func TestExplainQueryWithAOneToOneJoin(t *testing.T) {
 }
 
 func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain two one-to-one join relation query.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				OnlyEmail: contact {
 					email
@@ -366,11 +366,11 @@ func TestExplainQueryWithMultipleOneToOneJoins(t *testing.T) {
 }
 
 func TestExplainQueryWithTwoLeveLDeepNestedJoins(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 
 		Description: "Explain query with two nested level deep one to one join.",
 
-		Query: `query @explain {
+		Request: `query @explain {
 			author {
 				_key
 				name

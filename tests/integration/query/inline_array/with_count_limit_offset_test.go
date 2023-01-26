@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, offsetted limited count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {offset: 1, limit: 3})
@@ -45,9 +45,9 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t 
 }
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, offsetted limited count of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_count(FavouriteIntegers: {offset: 1, limit: 3})

@@ -23,23 +23,23 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-var queryCmd = &cobra.Command{
-	Use:   "query [query]",
-	Short: "Send a DefraDB GraphQL query",
-	Long: `Send a DefraDB GraphQL query to the database.
+var requestCmd = &cobra.Command{
+	Use:   "query [query request]",
+	Short: "Send a DefraDB GraphQL query request",
+	Long: `Send a DefraDB GraphQL query request to the database.
 
-A query can be sent as a single argument. Example command:
+A query request can be sent as a single argument. Example command:
 defradb client query 'query { ... }'
 
 Or it can be sent via stdin by using the '-' special syntax. Example command:
-cat query.graphql | defradb client query -
+cat request.graphql | defradb client query -
 
 A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
 with the database more conveniently.
 
 To learn more about the DefraDB GraphQL Query Language, refer to https://docs.source.network.`,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		var query string
+		var request string
 
 		fi, err := os.Stdin.Stat()
 		if err != nil {
@@ -71,16 +71,16 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.Wrap("failed to read stdin", err)
 			}
 			if len(stdin) == 0 {
-				return errors.New("no query in stdin provided")
+				return errors.New("no query request in stdin provided")
 			} else {
-				query = stdin
+				request = stdin
 			}
 		} else {
-			query = args[0]
+			request = args[0]
 		}
 
-		if query == "" {
-			return errors.New("query cannot be empty")
+		if request == "" {
+			return errors.New("request cannot be empty")
 		}
 
 		endpoint, err := httpapi.JoinPaths(cfg.API.AddressToURL(), httpapi.GraphQLPath)
@@ -89,12 +89,12 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 		}
 
 		p := url.Values{}
-		p.Add("query", query)
+		p.Add("query", request)
 		endpoint.RawQuery = p.Encode()
 
 		res, err := http.Get(endpoint.String())
 		if err != nil {
-			return errors.Wrap("failed query", err)
+			return errors.Wrap("failed request", err)
 		}
 
 		defer func() {
@@ -135,5 +135,5 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 }
 
 func init() {
-	clientCmd.AddCommand(queryCmd)
+	clientCmd.AddCommand(requestCmd)
 }

@@ -39,7 +39,7 @@ type dbInfo interface {
 	DB() client.DB
 }
 
-func ExecuteQueryTestCase(
+func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	testCase TestCase,

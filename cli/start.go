@@ -344,7 +344,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		log.FeedbackInfo(
 			ctx,
 			fmt.Sprintf(
-				"Providing HTTP API at %s%s. Use the GraphQL query endpoint at %s%s/graphql ",
+				"Providing HTTP API at %s%s. Use the GraphQL request endpoint at %s%s/graphql ",
 				cfg.API.AddressToURL(),
 				httpapi.RootPath,
 				cfg.API.AddressToURL(),

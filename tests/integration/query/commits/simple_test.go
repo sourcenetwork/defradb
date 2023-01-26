@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query",
-		Query: `query {
+		Request: `query {
 					commits {
 						cid
 					}
@@ -49,9 +49,9 @@ func TestQueryCommits(t *testing.T) {
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, multiple docs",
-		Query: `query {
+		Request: `query {
 					commits {
 						cid
 					}

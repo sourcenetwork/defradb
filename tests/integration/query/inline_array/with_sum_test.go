@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of nil integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {})
@@ -45,9 +45,9 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of empty integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {})
@@ -73,9 +73,9 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 }
 
 func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteIntegers: {})
@@ -101,9 +101,9 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 }
 
 func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of nillable integer array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(TestScores: {})
@@ -129,9 +129,9 @@ func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of nil float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteFloats: {})
@@ -157,9 +157,9 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of empty float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteFloats: {})
@@ -185,9 +185,9 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 }
 
 func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(FavouriteFloats: {})
@@ -213,9 +213,9 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 }
 
 func TestQueryInlineNillableFloatArrayWithSumAndPopulatedArray(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple inline array with no filter, sum of nillable float array",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						_sum(PageRatings: {})

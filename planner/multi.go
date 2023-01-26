@@ -51,8 +51,8 @@ type appendNode interface {
 
 // parallelNode implements the MultiNode interface. It
 // enables parallel execution of planNodes. This is needed
-// if a single query has multiple Select statements at the
-// same depth in the query.
+// if a single request has multiple Select statements at the
+// same depth in the request.
 // Eg:
 // user {
 //		_key
