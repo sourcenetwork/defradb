@@ -183,18 +183,18 @@ func (c *collection) deleteWithFilter(
 	txn datastore.Txn,
 	filter any,
 ) (*client.DeleteResult, error) {
-	// Make a selection request plan that will scan through only the documents with matching filter.
-	selectionRequestPlan, err := c.makeSelectionRequestPlan(ctx, txn, filter)
+	// Make a selection plan that will scan through only the documents with matching filter.
+	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err := selectionRequestPlan.Start(); err != nil {
+	if err := selectionPlan.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the request plan isn't properly closed at any exit point log the error.
+	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := selectionRequestPlan.Close(); err != nil {
+		if err := selectionPlan.Close(); err != nil {
 			log.ErrorE(ctx, "Failed to close the request plan, after filter delete", err)
 		}
 	}()
@@ -203,9 +203,9 @@ func (c *collection) deleteWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	// Keep looping until results from the filter request have been iterated through.
+	// Keep looping until results from the selection plan have been iterated through.
 	for {
-		next, err := selectionRequestPlan.Next()
+		next, err := selectionPlan.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -215,7 +215,7 @@ func (c *collection) deleteWithFilter(
 			break
 		}
 
-		doc := selectionRequestPlan.Value()
+		doc := selectionPlan.Value()
 		// Extract the dockey in the string format from the document value.
 		docKey := doc.GetKey()
 

@@ -220,19 +220,19 @@ func (c *collection) updateWithFilter(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	// Make a selection request plan that will scan through only the documents with matching filter.
-	selectionRequest, err := c.makeSelectionRequestPlan(ctx, txn, filter)
+	// Make a selection plan that will scan through only the documents with matching filter.
+	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err = selectionRequest.Start(); err != nil {
+	if err = selectionPlan.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the request plan isn't properly closed at any exit point log the error.
+	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := selectionRequest.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close the request plan, after filter update", err)
+		if err := selectionPlan.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close the selection plan, after filter update", err)
 		}
 	}()
 
@@ -240,11 +240,11 @@ func (c *collection) updateWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	docMap := selectionRequest.DocumentMap()
+	docMap := selectionPlan.DocumentMap()
 
-	// loop while we still have results from the filter request
+	// Keep looping until results from the selection plan have been iterated through.
 	for {
-		next, nextErr := selectionRequest.Next()
+		next, nextErr := selectionPlan.Next()
 		if nextErr != nil {
 			return nil, err
 		}
@@ -254,7 +254,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// Get the document, and apply the patch
-		doc := docMap.ToMap(selectionRequest.Value())
+		doc := docMap.ToMap(selectionPlan.Value())
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
@@ -500,11 +500,11 @@ func getNillableArray[T any](
 	return arr, nil
 }
 
-// makeSelectionRequestPlan constructs a simple request plan of the collection using the given filter.
+// makeSelectionPlan constructs a simple read-only plan of the collection using the given filter.
 // currently it doesn't support any other operations other than filters.
 // (IE: No limit, order, etc)
 // Additionally it only requests for the root scalar fields of the object
-func (c *collection) makeSelectionRequestPlan(
+func (c *collection) makeSelectionPlan(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter any,
