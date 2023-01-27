@@ -134,7 +134,6 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			job.node,
 			job.nodeGetter,
 		)
-
 		if err != nil {
 			log.ErrorE(
 				p.ctx,
@@ -146,6 +145,12 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			job.session.Done()
 			continue
 		}
+
+		if len(children) == 0 {
+			job.session.Done()
+			continue
+		}
+
 		go func(j *dagJob) {
 			p.handleChildBlocks(
 				j.session,
