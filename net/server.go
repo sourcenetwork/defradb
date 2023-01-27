@@ -160,7 +160,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
 		// To prevent a potential deadlock on DAG sync if an error occures mid process, we handle
 		// each process on a single transaction.
-		txn, err := s.db.NewTxn(ctx, false)
+		txn, err := s.db.NewConcurrentTxn(ctx, false)
 		if err != nil {
 			return nil, err
 		}

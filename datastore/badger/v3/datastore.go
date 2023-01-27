@@ -60,12 +60,6 @@ type txn struct {
 	// Whether this transaction has been implicitly created as a result of a direct Datastore
 	// method invocation.
 	implicit bool
-
-	// A given Badger transaction isn't made to be concurrently operated on. It is therefore not thread safe.
-	// Since the DAG sync process is highly concurrent and has been made to operate on a single transaction
-	// to eliminate the potential for deadlock (DAG being left in an incomplete state without a way to obviously
-	// detect it), we need to add a mutex to ensure thread safety.
-	mu sync.Mutex
 }
 
 // Options are the badger datastore options, reexported here for convenience.
@@ -226,21 +220,13 @@ func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, 
 		return nil, ErrClosed
 	}
 
-	return &txn{
-		ds:       d,
-		txn:      d.DB.NewTransaction(!readOnly),
-		implicit: false,
-	}, nil
+	return &txn{d, d.DB.NewTransaction(!readOnly), false}, nil
 }
 
 // newImplicitTransaction creates a transaction marked as 'implicit'.
 // Implicit transactions are created by Datastore methods performing single operations.
 func (d *Datastore) newImplicitTransaction(readOnly bool) *txn {
-	return &txn{
-		ds:       d,
-		txn:      d.DB.NewTransaction(!readOnly),
-		implicit: true,
-	}
+	return &txn{d, d.DB.NewTransaction(!readOnly), true}
 }
 
 func (d *Datastore) NewIterableTransaction(
@@ -253,11 +239,7 @@ func (d *Datastore) NewIterableTransaction(
 		return nil, ErrClosed
 	}
 
-	return &txn{
-		ds:       d,
-		txn:      d.DB.NewTransaction(!readOnly),
-		implicit: false,
-	}, nil
+	return &txn{d, d.DB.NewTransaction(!readOnly), false}, nil
 }
 
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) error {
@@ -558,8 +540,6 @@ func (t *txn) Put(ctx context.Context, key ds.Key, value []byte) error {
 }
 
 func (t *txn) put(key ds.Key, value []byte) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	return t.txn.Set(key.Bytes(), value)
 }
 
@@ -637,8 +617,6 @@ func (t *txn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
 }
 
 func (t *txn) get(key ds.Key) ([]byte, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	item, err := t.txn.Get(key.Bytes())
 	if errors.Is(err, badger.ErrKeyNotFound) {
 		err = ds.ErrNotFound
@@ -661,8 +639,6 @@ func (t *txn) Has(ctx context.Context, key ds.Key) (bool, error) {
 }
 
 func (t *txn) has(key ds.Key) (bool, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	_, err := t.txn.Get(key.Bytes())
 	switch {
 	case errors.Is(err, badger.ErrKeyNotFound):
@@ -707,8 +683,6 @@ func (t *txn) Delete(ctx context.Context, key ds.Key) error {
 }
 
 func (t *txn) delete(key ds.Key) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	return t.txn.Delete(key.Bytes())
 }
 

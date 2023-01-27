@@ -30,7 +30,7 @@ type BadgerIterator struct {
 	iterator       *badger.Iterator
 	resultsBuilder *dsq.ResultBuilder
 	query          dsq.Query
-	txn            *txn
+	txn            txn
 	skipped        int
 	sent           int
 	closedEarly    bool
@@ -63,7 +63,7 @@ func (t *txn) GetIterator(q dsq.Query) (iterable.Iterator, error) {
 
 	iterator := BadgerIterator{
 		iterator:      badgerIterator,
-		txn:           t,
+		txn:           *t,
 		reversedOrder: reversedOrder,
 	}
 
