@@ -22,7 +22,8 @@ import (
 type concurrentTxn struct {
 	ds.Txn
 
-	// A given Badger transaction isn't made to be concurrently operated on. It is therefore not thread safe.
+	// Some datastore don't support concurrent operation within a single transaction. `concurrentTxn` with its
+	// mutex enable those concurrent operations. This was implemented for DefraDB's DAG sync process.
 	// Since the DAG sync process is highly concurrent and has been made to operate on a single transaction
 	// to eliminate the potential for deadlock (DAG being left in an incomplete state without a way to obviously
 	// detect it), we need to add a mutex to ensure thread safety.
