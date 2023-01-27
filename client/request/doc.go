@@ -9,6 +9,6 @@
 // licenses/APL.txt.
 
 /*
-Package request defines the GraphQL types used by the query service.
+Package request defines the GraphQL types used by the request issuing service.
 */
 package request

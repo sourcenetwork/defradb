@@ -19,9 +19,9 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should return all latest commits).
 func TestQueryLatestCommits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query",
-		Query: `query {
+		Request: `query {
 					latestCommits {
 						cid
 						links {

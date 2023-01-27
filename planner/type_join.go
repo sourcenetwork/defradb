@@ -11,15 +11,12 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
-	"github.com/sourcenetwork/defradb/query/graphql/schema"
+	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 /*
@@ -84,8 +81,7 @@ func (p *Planner) makeTypeIndexJoin(
 	desc := parent.sourceInfo.collectionDescription
 	typeFieldDesc, ok := desc.GetField(subType.Name)
 	if !ok {
-		// return nil, errors.Wrap("Unknown field on sub selection")
-		return nil, errors.New(fmt.Sprintf("Unknown field %s on sub selection", subType.Name))
+		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
 	meta := typeFieldDesc.RelationType
@@ -94,7 +90,7 @@ func (p *Planner) makeTypeIndexJoin(
 	} else if schema.IsOneToMany(meta) { // Many side of One-to-Many
 		joinPlan, err = p.makeTypeJoinMany(parent, source, subType)
 	} else { // more to come, Many-to-Many, Embedded?
-		return nil, errors.New("failed sub selection, unknown relation type")
+		return nil, ErrUnknownRelationType
 	}
 	if err != nil {
 		return nil, err
@@ -165,7 +161,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.subTypeFieldName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +174,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinRootLabel] = joinType.rootName
 		explainerMap[joinSubTypeNameLabel] = joinType.subTypeName
 
-		subTypeExplainGraph, err := buildExplainGraph(joinType.subType)
+		subTypeExplainGraph, err := buildSimpleExplainGraph(joinType.subType)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +183,7 @@ func (n *typeIndexJoin) Explain() (map[string]any, error) {
 		explainerMap[joinSubTypeLabel] = subTypeExplainGraph
 
 	default:
-		return explainerMap, errors.New("unknown type of an index join to explain")
+		return explainerMap, client.NewErrUnhandledType("join plan", n.joinPlan)
 	}
 
 	return explainerMap, nil
@@ -225,8 +221,7 @@ func splitFilterByType(filter *mapper.Filter, subType int) (*mapper.Filter, *map
 }
 
 // typeJoinOne is the plan node for a type index join
-// where the root type is the primary in a one-to-one relation
-// query.
+// where the root type is the primary in a one-to-one relation request.
 type typeJoinOne struct {
 	documentIterator
 	docMapper
@@ -263,7 +258,7 @@ func (p *Planner) makeTypeJoinOne(
 	// get the correct sub field schema type (collection)
 	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
 	// determine relation direction (primary or secondary?)
@@ -277,7 +272,7 @@ func (p *Planner) makeTypeJoinOne(
 
 	subTypeField, subTypeFieldNameFound := subTypeCollectionDesc.GetRelation(subTypeFieldDesc.RelationName)
 	if !subTypeFieldNameFound {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
 	}
 
 	return &typeJoinOne{
@@ -422,7 +417,7 @@ type typeJoinMany struct {
 
 	p *Planner
 
-	// the main type that is a the parent level of the query.
+	// the main type that is at the parent level of the request.
 	root     planNode
 	rootName string
 	// the index to use to gather the subtype IDs
@@ -451,7 +446,7 @@ func (p *Planner) makeTypeJoinMany(
 
 	subTypeFieldDesc, ok := parent.sourceInfo.collectionDescription.GetField(subType.Name)
 	if !ok {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
 
 	subTypeCollectionDesc, err := p.getCollectionDesc(subType.CollectionName)
@@ -461,7 +456,7 @@ func (p *Planner) makeTypeJoinMany(
 
 	rootField, rootNameFound := subTypeCollectionDesc.GetRelation(subTypeFieldDesc.RelationName)
 	if !rootNameFound {
-		return nil, errors.New("couldn't find subtype field description for typeJoin node")
+		return nil, client.NewErrFieldNotExist(subTypeFieldDesc.RelationName)
 	}
 
 	return &typeJoinMany{

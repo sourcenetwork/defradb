@@ -24,7 +24,7 @@ type MerkleCRDTInitFn func(core.DataStoreKey) MerkleCRDT
 // Returns a MerkleCRDTInitFn with all the necessary stores set.
 type MerkleCRDTFactory func(
 	mstore datastore.MultiStore,
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	uCh events.UpdateChannel,
 ) MerkleCRDTInitFn
 
@@ -62,7 +62,7 @@ func (factory *Factory) Register(t client.CType, fn *MerkleCRDTFactory) error {
 // Instance and execute the registered factory function for a given MerkleCRDT type
 // supplied with all the current stores (passed in as a datastore.MultiStore object).
 func (factory Factory) Instance(
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
@@ -73,14 +73,14 @@ func (factory Factory) Instance(
 	if err != nil {
 		return nil, err
 	}
-	return (*fn)(factory, schemaID, uCh)(key), nil
+	return (*fn)(factory, schemaVersionKey, uCh)(key), nil
 }
 
 // InstanceWithStore executes the registered factory function for the given MerkleCRDT type
 // with the additional supplied datastore.MultiStore instead of the saved one on the main Factory.
 func (factory Factory) InstanceWithStores(
 	store datastore.MultiStore,
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	uCh events.UpdateChannel,
 	t client.CType,
 	key core.DataStoreKey,
@@ -90,7 +90,7 @@ func (factory Factory) InstanceWithStores(
 		return nil, err
 	}
 
-	return (*fn)(store, schemaID, uCh)(key), nil
+	return (*fn)(store, schemaVersionKey, uCh)(key), nil
 }
 
 func (factory Factory) getRegisteredFactory(t client.CType) (*MerkleCRDTFactory, error) {

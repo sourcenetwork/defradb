@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommits(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query",
-		Query: `query {
+		Request: `query {
 					commits {
 						cid
 					}
@@ -40,7 +40,7 @@ func TestQueryCommits(t *testing.T) {
 				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 		},
 	}
@@ -49,9 +49,9 @@ func TestQueryCommits(t *testing.T) {
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, multiple docs",
-		Query: `query {
+		Request: `query {
 					commits {
 						cid
 					}
@@ -76,7 +76,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 				"cid": "bafybeibek4lmrb5gtmahgsv33njmk3efty53n7z2rac7fuup7mwpho5zqa",
 			},
 			{
-				"cid": "bafybeidj2zxpwsfbqtny2svdpyan7vu4njfhydzrgpvupv3o673a3dpfku",
+				"cid": "bafybeibnwzoekenlil5sdltgmkmfngoifd5uwcpgzzry7rokrd5qurgdve",
 			},
 			{
 				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
@@ -85,7 +85,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 		},
 	}

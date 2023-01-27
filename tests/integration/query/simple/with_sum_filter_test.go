@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithSumWithFilter(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query, sum with filter",
-		Query: `query {
+		Request: `query {
 					_sum(users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 		Docs: map[int][]string{

@@ -32,5 +32,5 @@ var schema = `
 `
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteQueryTestCase(t, schema, test)
+	testUtils.ExecuteRequestTestCase(t, schema, test)
 }

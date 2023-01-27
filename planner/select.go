@@ -110,9 +110,9 @@ type selectNode struct {
 	// filter is split between select, scan, and typeIndexJoin.
 	// The filters which only apply to the main collection
 	// are stored in the root scanNode.
-	// The filters that are defined on the root query, but apply
+	// The filters that are defined on the root request, but apply
 	// to the sub type are defined here in the select.
-	// The filters that are defined on the subtype query
+	// The filters that are defined on the subtype request
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
@@ -304,7 +304,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				}
 			} else if f.Name == request.GroupFieldName {
 				if parsed.GroupBy == nil {
-					return nil, errors.New("_group may only be referenced when within a groupBy query")
+					return nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
 			} else {

@@ -27,7 +27,7 @@ var (
 	compFactoryFn = MerkleCRDTFactory(
 		func(
 			mstore datastore.MultiStore,
-			schemaID string,
+			schemaID core.CollectionSchemaVersionKey,
 			uCh events.UpdateChannel,
 		) MerkleCRDTInitFn {
 			return func(key core.DataStoreKey) MerkleCRDT {
@@ -65,14 +65,14 @@ func NewMerkleCompositeDAG(
 	datastore datastore.DSReaderWriter,
 	headstore datastore.DSReaderWriter,
 	dagstore datastore.DAGStore,
-	schemaID string,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	uCh events.UpdateChannel,
 	ns,
 	key core.DataStoreKey,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		datastore,
-		schemaID,
+		schemaVersionKey,
 		ns,
 		key, /* stuff like namespace and ID */
 	)

@@ -17,13 +17,13 @@ import (
 )
 
 func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__schema {
 					queryType {
@@ -87,17 +87,17 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__schema {
 					queryType {
@@ -189,17 +189,17 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__schema {
 					queryType {
@@ -291,5 +291,5 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteQueryTestCase(t, test)
+	testUtils.ExecuteRequestTestCase(t, test)
 }

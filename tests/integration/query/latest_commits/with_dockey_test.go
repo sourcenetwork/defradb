@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryLatestCommitsWithDocKey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey",
-		Query: `query {
+		Request: `query {
 					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {
@@ -38,7 +38,7 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",

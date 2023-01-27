@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, count with limit and offset on non-rendered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {offset: 1, limit: 1})
@@ -57,9 +57,9 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitA
 }
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, child limit, count with limit and offset on rendered group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_count(_group: {offset: 1, limit: 1})

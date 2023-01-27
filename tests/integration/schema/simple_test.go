@@ -15,13 +15,13 @@ import (
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -35,11 +35,11 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
@@ -48,21 +48,21 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
 				}
 			}
 		`,
-		ExpectedError: "Schema type already exists",
+		ExpectedError: "schema type already exists",
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
@@ -71,7 +71,7 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 				type books {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "books") {
 					name
@@ -85,17 +85,17 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -117,11 +117,11 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -129,21 +129,21 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
 				}
 			}
 		`,
-		ExpectedError: "No type found for given name",
+		ExpectedError: "no type found for given name",
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
-	test := QueryTestCase{
+	test := RequestTestCase{
 		Schema: []string{
 			`
 				type users {
@@ -151,7 +151,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 				}
 			`,
 		},
-		IntrospectionQuery: `
+		IntrospectionRequest: `
 			query IntrospectionQuery {
 				__type (name: "users") {
 					name
@@ -181,5 +181,5 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 		},
 	}
 
-	ExecuteQueryTestCase(t, test)
+	ExecuteRequestTestCase(t, test)
 }

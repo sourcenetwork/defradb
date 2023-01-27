@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order height desc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: DESC}) {
 						cid
 						height
@@ -44,7 +44,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 			{
@@ -52,7 +52,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"height": int64(1),
 			},
 			{
@@ -70,9 +70,9 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order height asc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}) {
 						cid
 						height
@@ -97,7 +97,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"height": int64(1),
 			},
 			{
@@ -109,7 +109,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 			{
@@ -123,9 +123,9 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order cid desc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: DESC}) {
 						cid
 						height
@@ -154,19 +154,19 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
+				"height": int64(2),
+			},
+			{
 				"cid":    "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"height": int64(1),
 			},
 			{
 				"cid":    "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
-				"height": int64(2),
-			},
-			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
 				"height": int64(2),
 			},
 		},
@@ -176,9 +176,9 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order cid asc",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {cid: ASC}) {
 						cid
 						height
@@ -203,20 +203,20 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
-				"height": int64(2),
-			},
-			{
 				"cid":    "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"height": int64(1),
 			},
 			{
 				"cid":    "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
 				"height": int64(1),
+			},
+			{
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
+				"height": int64(2),
 			},
 			{
 				"cid":    "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",

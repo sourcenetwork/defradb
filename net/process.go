@@ -44,55 +44,65 @@ func (p *Peer) processLog(
 	getter ipld.NodeGetter) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
-	txn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
+	// TODO: Implement better transaction retry mechanics
+	// Github issue #1028
+	var txnErr error
+	for retry := 0; retry < p.db.MaxTxnRetries(); retry++ {
+		txn, err := p.db.NewTxn(ctx, false)
+		if err != nil {
+			return nil, err
+		}
+		defer txn.Discard(ctx)
+
+		// KEEPING FOR REFERENCE FOR NOW
+		// check if we already have this block
+		// exists, err := txn.DAGstore().Has(ctx, c)
+		// if err != nil {
+		// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
+		// }
+		// if exists {
+		// 	log.Debugf("Already have block %s locally, skipping.", c)
+		// 	return nil, nil
+		// }
+
+		crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
+		if err != nil {
+			return nil, err
+		}
+
+		delta, err := crdt.DeltaDecode(nd)
+		if err != nil {
+			return nil, errors.Wrap("failed to decode delta object", err)
+		}
+
+		log.Debug(
+			ctx,
+			"Processing PushLog request",
+			logging.NewKV("DocKey", dockey),
+			logging.NewKV("CID", c),
+		)
+
+		if err := txn.DAGstore().Put(ctx, nd); err != nil {
+			return nil, err
+		}
+
+		ng := p.createNodeGetter(crdt, getter)
+		cids, err := crdt.Clock().ProcessNode(ctx, ng, c, delta.GetPriority(), delta, nd)
+		if err != nil {
+			return nil, err
+		}
+
+		// mark this obj as done
+		p.queuedChildren.Remove(c)
+
+		txnErr = txn.Commit(ctx)
+		if txnErr != nil {
+			continue
+		}
+		return cids, txnErr
 	}
-	defer txn.Discard(ctx)
 
-	// KEEPING FOR REFERENCE FOR NOW
-	// check if we already have this block
-	// exists, err := txn.DAGstore().Has(ctx, c)
-	// if err != nil {
-	// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
-	// }
-	// if exists {
-	// 	log.Debugf("Already have block %s locally, skipping.", c)
-	// 	return nil, nil
-	// }
-
-	crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
-	if err != nil {
-		return nil, err
-	}
-
-	delta, err := crdt.DeltaDecode(nd)
-	if err != nil {
-		return nil, errors.Wrap("failed to decode delta object", err)
-	}
-
-	log.Debug(
-		ctx,
-		"Processing PushLog request",
-		logging.NewKV("DocKey", dockey),
-		logging.NewKV("CID", c),
-	)
-	height := delta.GetPriority()
-
-	if err := txn.DAGstore().Put(ctx, nd); err != nil {
-		return nil, err
-	}
-
-	ng := p.createNodeGetter(crdt, getter)
-	cids, err := crdt.Clock().ProcessNode(ctx, ng, c, height, delta, nd)
-	if err != nil {
-		return nil, err
-	}
-
-	// mark this obj as done
-	p.queuedChildren.Remove(c)
-
-	return cids, txn.Commit(ctx)
+	return nil, client.NewErrMaxTxnRetries(txnErr)
 }
 
 func initCRDTForType(
@@ -124,7 +134,13 @@ func initCRDTForType(
 		key = base.MakeCollectionKey(description).WithInstanceInfo(docKey).WithFieldId(fieldID)
 	}
 	log.Debug(ctx, "Got CRDT Type", logging.NewKV("CType", ctype), logging.NewKV("Field", field))
-	return crdt.DefaultFactory.InstanceWithStores(txn, col.SchemaID(), events.EmptyUpdateChannel, ctype, key)
+	return crdt.DefaultFactory.InstanceWithStores(
+		txn,
+		core.NewCollectionSchemaVersionKey(col.Schema().VersionID),
+		events.EmptyUpdateChannel,
+		ctype,
+		key,
+	)
 }
 
 func decodeBlockBuffer(buf []byte, cid cid.Cid) (ipld.Node, error) {

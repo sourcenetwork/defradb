@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, rendered, limited and offset group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_group(limit: 1, offset: 1) {
@@ -63,9 +63,9 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number with limit and offset, no children, rendered, limited and offset group",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age], limit: 1, offset: 1) {
 						Age
 						_group(limit: 1, offset: 1) {

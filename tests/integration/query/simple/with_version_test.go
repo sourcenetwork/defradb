@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Embedded latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age
@@ -46,7 +46,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
 						"links": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
@@ -67,9 +67,9 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
-		Query: `query {
+		Request: `query {
 					users {
 						Name
 						Age
@@ -99,7 +99,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeiedurl3ntgwpork7xmgf7szju2gj2w5kmg2fyvicd4sodmpds5wii",
+						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
 						"L1": []map[string]any{
 							{
 								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",

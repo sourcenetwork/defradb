@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple latest commits query with dockey and link count",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						_count(field: links)
@@ -43,7 +43,7 @@ func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
 				"_count": 0,
 			},
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"_count": 2,
 			},
 		},

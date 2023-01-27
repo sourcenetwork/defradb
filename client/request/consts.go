@@ -39,8 +39,8 @@ const (
 
 	ExplainLabel = "explain"
 
-	LatestCommitsQueryName = "latestCommits"
-	CommitsQueryName       = "commits"
+	LatestCommitsName = "latestCommits"
+	CommitsName       = "commits"
 
 	CommitTypeName  = "Commit"
 	LinksFieldName  = "links"
@@ -78,8 +78,8 @@ var (
 	}
 
 	CommitQueries = map[string]struct{}{
-		LatestCommitsQueryName: {},
-		CommitsQueryName:       {},
+		LatestCommitsName: {},
+		CommitsName:       {},
 	}
 
 	VersionFields = []string{

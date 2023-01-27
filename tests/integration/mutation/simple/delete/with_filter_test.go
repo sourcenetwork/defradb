@@ -18,12 +18,12 @@ import (
 )
 
 func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 
 		{
 			Description: "Delete using filter - One matching document, that exists.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
@@ -51,7 +51,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 
 		{
 			Description: "Delete using filter - Multiple matching documents that exist.",
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
@@ -113,7 +113,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 		{
 			Description: "Delete using filter - Multiple matching documents that exist with alias.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {
 							_and: [
 								{age: {_lt: 26}},
@@ -177,7 +177,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 		{
 			Description: "Delete using filter - Match everything in this collection.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {}) {
 							DeletedKeyByFilter: _key
 						}
@@ -246,11 +246,11 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 }
 
 func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "No delete with filter: because no document matches filter.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Lone"}}) {
 							_key
 						}
@@ -275,7 +275,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 		{
 			Description: "No delete with filter: because the collection is empty.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
@@ -291,7 +291,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 		{
 			Description: "No delete with filter: because has no sub-selection.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Shahzad"}})
 					}`,
 
@@ -320,7 +320,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 		{
 			Description: "No delete with filter: because has no _key in sub-selection.",
 
-			Query: `mutation {
+			Request: `mutation {
 						delete_user(filter: {name: {_eq: "Shahzad"}}) {
 						}
 					}`,

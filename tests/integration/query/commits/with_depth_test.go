@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 					}
@@ -40,7 +40,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 		},
 	}
@@ -49,9 +49,9 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1, and doc updates",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 						height
@@ -86,7 +86,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 			},
 			{
 				// "Age" field head
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 		},
@@ -96,9 +96,9 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 2, and doc updates",
-		Query: `query {
+		Request: `query {
 					commits(depth: 2) {
 						cid
 						height
@@ -142,12 +142,12 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 			},
 			{
 				// "Age" field head
-				"cid":    "bafybeid2tudsm4go5boq7yvz6pprtgaiddkazq2dip6c4fsqt3afhzexbq",
+				"cid":    "bafybeia6yl5mfn4wwmvxu6ectnei6xgo2jr7esus54dbx2igb4y3kpypba",
 				"height": int64(3),
 			},
 			{
 				// "Age" field head -1
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 		},
@@ -157,9 +157,9 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with depth 1",
-		Query: `query {
+		Request: `query {
 					commits(depth: 1) {
 						cid
 					}
@@ -184,7 +184,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 			{
 				"cid": "bafybeiajhlicqju3thdnyemvparx35kg6vfb6sr3vuemhw7zjrulx2tkom",
@@ -193,7 +193,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				"cid": "bafybeifl4q2htt4sozl5dnxjqkpstpqbpkurgqc56dnn2bvtsora3srl2q",
 			},
 			{
-				"cid": "bafybeigbxr6aavljpcfruccoxi43kxjb46locbb7mwupwzjxbz5whplydu",
+				"cid": "bafybeibsooknzqfq4u277chnvag6lxc3q6uz4mj6525hwxofwqfbzyudvm",
 			},
 		},
 	}

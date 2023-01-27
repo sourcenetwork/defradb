@@ -12,19 +12,17 @@ package planner
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
 var (
-	log = logging.MustNewLogger("defra.query.planner")
+	log = logging.MustNewLogger("defra.planner")
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -39,7 +37,7 @@ type planNode interface {
 	// but based on the tree structure, may need to be propagated Eg. From a selectNode -> scanNode.
 	Spans(core.Spans)
 
-	// Next processes the next result doc from the query. Can only be called *after* Start().
+	// Next processes the next result doc from the request. Can only be called *after* Start().
 	// Can't be called again if any previous call returns false.
 	Next() (bool, error)
 
@@ -85,7 +83,7 @@ type PlanContext struct {
 }
 
 // Planner combines session state and database state to
-// produce a query plan, which is run by the execution context.
+// produce a request plan, which is run by the execution context.
 type Planner struct {
 	txn datastore.Txn
 	db  client.DB
@@ -105,16 +103,16 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 	switch n := stmt.(type) {
 	case *request.Request:
 		if len(n.Queries) > 0 {
-			return p.newPlan(n.Queries[0]) // @todo, handle multiple query statements
+			return p.newPlan(n.Queries[0]) // @todo, handle multiple query operation statements
 		} else if len(n.Mutations) > 0 {
-			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation statements
+			return p.newPlan(n.Mutations[0]) // @todo: handle multiple mutation operation statements
 		} else {
-			return nil, errors.New("query is missing query or mutation statements")
+			return nil, ErrMissingQueryOrMutation
 		}
 
 	case *request.OperationDefinition:
 		if len(n.Selections) == 0 {
-			return nil, errors.New("operationDefinition is missing selections")
+			return nil, ErrOperationDefinitionMissingSelection
 		}
 		return p.newPlan(n.Selections[0])
 
@@ -140,7 +138,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		}
 		return p.CommitSelect(m)
 
-	case *request.Mutation:
+	case *request.ObjectMutation:
 		m, err := mapper.ToMutation(p.ctx, p.txn, n)
 		if err != nil {
 			return nil, err
@@ -148,7 +146,7 @@ func (p *Planner) newPlan(stmt any) (planNode, error) {
 		return p.newObjectMutationPlan(m)
 	}
 
-	return nil, errors.New(fmt.Sprintf("Unknown statement type %T", stmt))
+	return nil, client.NewErrUnhandledType("statement", stmt)
 }
 
 func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error) {
@@ -163,7 +161,7 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 		return p.DeleteDocs(stmt)
 
 	default:
-		return nil, errors.New(fmt.Sprintf("Unknown mutation action %T", stmt.Type))
+		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
 	}
 }
 
@@ -311,7 +309,7 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	case *typeJoinMany:
 		return p.expandPlan(node.subType, parentPlan)
 	}
-	return errors.New("unknown type index join plan")
+	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
 
 func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
@@ -323,7 +321,7 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	if !hasScanNode {
 		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
 		if !hasCommitNode {
-			return errors.New("failed to identify group source")
+			return ErrFailedToFindGroupSource
 		}
 		sourceNode = commitNode
 	}
@@ -417,7 +415,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
 	default:
-		return errors.New(fmt.Sprintf("Unknown plan node type to replace: %T", node))
+		return client.NewErrUnhandledType("plan", node)
 	}
 
 	return nil
@@ -445,23 +443,26 @@ func walkAndFindPlanType[T planNode](plan planNode) (T, bool) {
 func (p *Planner) explainRequest(
 	ctx context.Context,
 	plan planNode,
+	explainType request.ExplainType,
 ) ([]map[string]any, error) {
-	if plan == nil {
-		return nil, errors.New("can't explain request of a nil plan")
-	}
+	switch explainType {
+	case request.SimpleExplain:
+		explainGraph, err := buildSimpleExplainGraph(plan)
+		if err != nil {
+			return nil, err
+		}
 
-	explainGraph, err := buildExplainGraph(plan)
-	if err != nil {
-		return nil, multiErr(err, plan.Close())
-	}
+		explainResult := []map[string]any{
+			{
+				request.ExplainLabel: explainGraph,
+			},
+		}
 
-	topExplainGraph := []map[string]any{
-		{
-			request.ExplainLabel: explainGraph,
-		},
-	}
+		return explainResult, nil
 
-	return topExplainGraph, plan.Close()
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }
 
 // executeRequest executes the plan graph that represents the request that was made.
@@ -469,17 +470,13 @@ func (p *Planner) executeRequest(
 	ctx context.Context,
 	plan planNode,
 ) ([]map[string]any, error) {
-	if plan == nil {
-		return nil, errors.New("can't execute request of a nil plan")
-	}
-
 	if err := plan.Start(); err != nil {
-		return nil, multiErr(err, plan.Close())
+		return nil, err
 	}
 
 	next, err := plan.Next()
 	if err != nil {
-		return nil, multiErr(err, plan.Close())
+		return nil, err
 	}
 
 	docs := []map[string]any{}
@@ -491,70 +488,71 @@ func (p *Planner) executeRequest(
 
 		next, err = plan.Next()
 		if err != nil {
-			return nil, multiErr(err, plan.Close())
+			return nil, err
 		}
-	}
-
-	if err = plan.Close(); err != nil {
-		return nil, err
 	}
 
 	return docs, err
 }
 
-// RunRequest plans how to run the request, then attempts to run the request and returns the results.
+// RunRequest classifies the type of request to run, runs it, and then returns the result(s).
 func (p *Planner) RunRequest(
 	ctx context.Context,
-	query *request.Request,
-) ([]map[string]any, error) {
-	plan, err := p.makePlan(query)
-
+	req *request.Request,
+) (result []map[string]any, err error) {
+	plan, err := p.makePlan(req)
 	if err != nil {
 		return nil, err
 	}
 
-	isAnExplainRequest :=
-		(len(query.Queries) > 0 && query.Queries[0].IsExplain) ||
-			(len(query.Mutations) > 0 && query.Mutations[0].IsExplain)
+	defer func() {
+		if e := plan.Close(); e != nil {
+			err = NewErrFailedToClosePlan(e, "running request")
+		}
+	}()
 
-	if isAnExplainRequest {
-		return p.explainRequest(ctx, plan)
+	// Ensure subscription request doesn't ever end up with an explain directive.
+	if len(req.Subscription) > 0 && req.Subscription[0].Directives.ExplainType.HasValue() {
+		return nil, ErrCantExplainSubscriptionRequest
 	}
 
-	// This won't execute if it's an explain request.
+	if len(req.Queries) > 0 && req.Queries[0].Directives.ExplainType.HasValue() {
+		return p.explainRequest(ctx, plan, req.Queries[0].Directives.ExplainType.Value())
+	}
+
+	if len(req.Mutations) > 0 && req.Mutations[0].Directives.ExplainType.HasValue() {
+		return p.explainRequest(ctx, plan, req.Mutations[0].Directives.ExplainType.Value())
+	}
+
+	// This won't / should NOT execute if it's any kind of explain request.
 	return p.executeRequest(ctx, plan)
 }
 
 // RunSubscriptionRequest plans a request specific to a subscription and returns the result.
 func (p *Planner) RunSubscriptionRequest(
 	ctx context.Context,
-	query *request.Select,
-) ([]map[string]any, error) {
-	plan, err := p.makePlan(query)
+	request *request.Select,
+) (result []map[string]any, err error) {
+	plan, err := p.makePlan(request)
 	if err != nil {
 		return nil, err
 	}
 
+	defer func() {
+		if e := plan.Close(); e != nil {
+			err = NewErrFailedToClosePlan(e, "running subscription request")
+		}
+	}()
+
 	return p.executeRequest(ctx, plan)
 }
 
-// MakePlan makes a plan from the parsed query. @TODO {defradb/issues/368}: Test this exported function.
-func (p *Planner) MakePlan(query *request.Request) (planNode, error) {
-	return p.makePlan(query)
-}
-
-// multiErr wraps all the non-nil errors and returns the wrapped error result.
-func multiErr(errorsToWrap ...error) error {
-	var errs error
-	for _, err := range errorsToWrap {
-		if err == nil {
-			continue
-		}
-		if errs == nil {
-			errs = errors.New(err.Error())
-			continue
-		}
-		errs = errors.Wrap(fmt.Sprintf("%s", errs), err)
-	}
-	return errs
+// MakePlan makes a plan from the parsed request.
+//
+// Note: Caller is responsible to call the `Close()` method to free the allocated
+// resources of the returned plan.
+//
+// @TODO {defradb/issues/368}: Test this exported function.
+func (p *Planner) MakePlan(request *request.Request) (planNode, error) {
+	return p.makePlan(request)
 }

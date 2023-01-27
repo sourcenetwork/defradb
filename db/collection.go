@@ -111,8 +111,8 @@ func (db *db) CreateCollection(
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
 	// check if collection by this name exists
-	cKey := core.NewCollectionKey(desc.Name)
-	exists, err := db.systemstore().Has(ctx, cKey.ToDS())
+	collectionKey := core.NewCollectionKey(desc.Name)
+	exists, err := db.systemstore().Has(ctx, collectionKey.ToDS())
 	if err != nil {
 		return nil, err
 	}
@@ -134,20 +134,9 @@ func (db *db) CreateCollection(
 		return nil, err
 	}
 
-	buf, err := json.Marshal(col.desc)
-	if err != nil {
-		return nil, err
-	}
-
-	key := core.NewCollectionKey(col.desc.Name)
-
-	// write the collection metadata to the system store
-	err = db.systemstore().Put(ctx, key.ToDS(), buf)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err = json.Marshal(struct {
+	// Local elements such as secondary indexes should be excluded
+	// from the (global) schemaId.
+	globalSchemaBuf, err := json.Marshal(struct {
 		Name   string
 		Schema client.SchemaDescription
 	}{col.desc.Name, col.desc.Schema})
@@ -156,21 +145,79 @@ func (db *db) CreateCollection(
 	}
 
 	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
+	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
 	if err != nil {
 		return nil, err
 	}
-	col.schemaID = cid.String()
+	schemaID := cid.String()
+	col.schemaID = schemaID
 
-	csKey := core.NewCollectionSchemaKey(cid.String())
-	err = db.systemstore().Put(ctx, csKey.ToDS(), []byte(desc.Name))
+	// For new schemas the initial version id will match the schema id
+	schemaVersionID := schemaID
+
+	col.desc.Schema.VersionID = schemaVersionID
+	col.desc.Schema.SchemaID = schemaID
+
+	// buffer must include all the ids, as it is saved and loaded from the store later.
+	buf, err := json.Marshal(col.desc)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	// Whilst the schemaVersionKey is global, the data persisted at the key's location
+	// is local to the node (the global only elements are not useful beyond key generation).
+	err = db.systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionSchemaKey := core.NewCollectionSchemaKey(schemaID)
+	err = db.systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
 	log.Debug(
 		ctx,
 		"Created collection",
 		logging.NewKV("Name", col.Name()),
 		logging.NewKV("ID", col.SchemaID),
 	)
-	return col, err
+	return col, nil
+}
+
+// getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.
+//
+// Will return an error if the given key is empty, or not found.
+func (db *db) getCollectionByVersionId(ctx context.Context, schemaVersionId string) (*collection, error) {
+	if schemaVersionId == "" {
+		return nil, ErrSchemaVersionIdEmpty
+	}
+
+	key := core.NewCollectionSchemaVersionKey(schemaVersionId)
+	buf, err := db.systemstore().Get(ctx, key.ToDS())
+	if err != nil {
+		return nil, err
+	}
+
+	var desc client.CollectionDescription
+	err = json.Unmarshal(buf, &desc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &collection{
+		db:       db,
+		desc:     desc,
+		colID:    desc.ID,
+		schemaID: desc.Schema.SchemaID,
+	}, nil
 }
 
 // GetCollection returns an existing collection within the database.
@@ -185,40 +232,8 @@ func (db *db) GetCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, err
 	}
 
-	var desc client.CollectionDescription
-	err = json.Unmarshal(buf, &desc)
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err = json.Marshal(struct {
-		Name   string
-		Schema client.SchemaDescription
-	}{desc.Name, desc.Schema})
-	if err != nil {
-		return nil, err
-	}
-
-	// add a reference to this DB by desc hash
-	cid, err := core.NewSHA256CidV1(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	sid := cid.String()
-	log.Debug(
-		ctx,
-		"Retrieved collection",
-		logging.NewKV("Name", desc.Name),
-		logging.NewKV("ID", sid),
-	)
-
-	return &collection{
-		db:       db,
-		desc:     desc,
-		colID:    desc.ID,
-		schemaID: sid,
-	}, nil
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
 }
 
 // GetCollectionBySchemaID returns an existing collection using the schema hash ID.
@@ -236,14 +251,14 @@ func (db *db) GetCollectionBySchemaID(
 		return nil, err
 	}
 
-	name := string(buf)
-	return db.GetCollectionByName(ctx, name)
+	schemaVersionId := string(buf)
+	return db.getCollectionByVersionId(ctx, schemaVersionId)
 }
 
 // GetAllCollections gets all the currently defined collections.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
-	prefix := core.NewCollectionKey("")
+	prefix := core.NewCollectionSchemaVersionKey("")
 	q, err := db.systemstore().Query(ctx, query.Query{
 		Prefix:   prefix.ToString(),
 		KeysOnly: true,
@@ -263,10 +278,10 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 			return nil, err
 		}
 
-		colName := ds.NewKey(res.Key).BaseNamespace()
-		col, err := db.GetCollectionByName(ctx, colName)
+		schemaVersionId := ds.NewKey(res.Key).BaseNamespace()
+		col, err := db.getCollectionByVersionId(ctx, schemaVersionId)
 		if err != nil {
-			return nil, NewErrFailedToGetCollection(colName, err)
+			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
 		}
 		cols = append(cols, col)
 	}
@@ -517,7 +532,7 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given key exists.
-// Note: Should we CompareAndSet the update, IE: Query the state, and update if changed
+// Note: Should we CompareAndSet the update, IE: Query(read-only) the state, and update if changed
 // or, just update everything regardless.
 // Should probably be smart about the update due to the MerkleCRDT overhead, shouldn't
 // add to the bloat.
@@ -806,7 +821,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	case client.LWW_REGISTER:
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			c.schemaID,
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,
@@ -831,7 +846,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
 		datatype, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
-			c.SchemaID(),
+			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
 			ctype,
 			key,

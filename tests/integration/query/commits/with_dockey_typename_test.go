@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey and typename",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						__typename
@@ -43,7 +43,7 @@ func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 				"__typename": "Commit",
 			},
 			{
-				"cid":        "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":        "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"__typename": "Commit",
 			},
 		},

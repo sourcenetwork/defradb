@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with sum on unspecified field",
-		Query: `query {
+		Request: `query {
 					users (groupBy: [Name]) {
 						Name
 						_sum
@@ -40,9 +40,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by number, no children, sum on non-rendered group, empty collection",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Age]) {
 						Age
 						_sum(_group: {field: Age})
@@ -55,9 +55,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group integer value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: Age})
@@ -96,9 +96,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group nil and integer values",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: Age})
@@ -136,9 +136,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of sum on int",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _sum})
@@ -219,9 +219,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group float (default) value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: HeightM})
@@ -258,9 +258,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 }
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, sum on non-rendered group float value",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: HeightM})
@@ -298,9 +298,9 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of sum on float",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _sum})
@@ -381,9 +381,9 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 }
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloat(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query with group by string, with child group by boolean, and sum of sum of sum of float",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_sum(_group: {field: _sum})

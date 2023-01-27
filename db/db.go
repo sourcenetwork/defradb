@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/merkle/crdt"
-	"github.com/sourcenetwork/defradb/query/graphql"
+	"github.com/sourcenetwork/defradb/request/graphql"
 )
 
 var (
@@ -41,6 +41,10 @@ var (
 var (
 	_ client.DB         = (*db)(nil)
 	_ client.Collection = (*collection)(nil)
+)
+
+const (
+	defaultMaxTxnRetries = 5
 )
 
 // DB is the main interface for interacting with the
@@ -57,6 +61,9 @@ type db struct {
 
 	parser core.Parser
 
+	// The maximum number of retries per transaction.
+	maxTxnRetries immutable.Option[int]
+
 	// The options used to init the database
 	options any
 }
@@ -72,6 +79,13 @@ func WithUpdateEvents() Option {
 		db.events = events.Events{
 			Updates: immutable.Some(events.New[events.Update](0, updateEventBufferSize)),
 		}
+	}
+}
+
+// WithMaxRetries sets the maximum number of retries per transaction.
+func WithMaxRetries(num int) Option {
+	return func(db *db) {
+		db.maxTxnRetries = immutable.Some(num)
 	}
 }
 
@@ -173,6 +187,15 @@ func (db *db) initialize(ctx context.Context) error {
 // Events returns the events Channel.
 func (db *db) Events() events.Events {
 	return db.events
+}
+
+// MaxRetries returns the maximum number of retries per transaction.
+// Defaults to `defaultMaxTxnRetries` if not explicitely set
+func (db *db) MaxTxnRetries() int {
+	if db.maxTxnRetries.HasValue() {
+		return db.maxTxnRetries.Value()
+	}
+	return defaultMaxTxnRetries
 }
 
 // PrintDump prints the entire database to console.

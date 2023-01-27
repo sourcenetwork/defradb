@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithUnknownDockey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with unknown dockey",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "unknown dockey") {
 						cid
 					}
@@ -39,9 +39,9 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 					}
@@ -62,7 +62,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 			},
 		},
 	}
@@ -71,9 +71,9 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, with links",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {
@@ -100,7 +100,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 				"links": []map[string]any{},
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
@@ -119,9 +119,9 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 }
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, multiple results",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						height
@@ -158,11 +158,11 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid":    "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"height": int64(1),
 			},
 		},
@@ -175,9 +175,9 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
 func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, multiple results and links",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 						cid
 						links {
@@ -222,20 +222,20 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 				"links": []map[string]any{},
 			},
 			{
-				"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid": "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"links": []map[string]any{
 					{
 						"cid":  "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
 						"name": "Age",
 					},
 					{
-						"cid":  "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+						"cid":  "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 						"name": "_head",
 					},
 				},
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"links": []map[string]any{
 					{
 						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",

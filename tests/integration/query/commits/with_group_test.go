@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithGroupBy(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by height",
-		Query: `query {
+		Request: `query {
 					commits(groupBy: [height]) {
 						height
 					}
@@ -55,9 +55,9 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by height",
-		Query: `query {
+		Request: `query {
 					commits(groupBy: [height]) {
 						height
 						_group {
@@ -90,7 +90,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"cid": "bafybeicvef4ugls2dl7j4hibt2ahxss2i2i4bbgps7tkjiaoybp6q73mca",
 					},
 					{
-						"cid": "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+						"cid": "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 					},
 				},
 			},
@@ -104,7 +104,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
 					},
 					{
-						"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+						"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 					},
 				},
 			},
@@ -116,9 +116,9 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query, group by cid",
-		Query: `query {
+		Request: `query {
 					commits(groupBy: [cid]) {
 						cid
 						_group {
@@ -152,7 +152,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				},
 			},
 			{
-				"cid": "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
+				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
 				"_group": []map[string]any{
 					{
 						"height": int64(1),

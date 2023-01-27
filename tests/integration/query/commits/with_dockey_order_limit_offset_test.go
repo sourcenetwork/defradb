@@ -17,9 +17,9 @@ import (
 )
 
 func TestQueryCommitsWithDockeyAndOrderAndLimitAndOffset(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple all commits query with dockey, order, limit and offset",
-		Query: `query {
+		Request: `query {
 					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}, limit: 2, offset: 4) {
 						cid
 						height
@@ -50,7 +50,7 @@ func TestQueryCommitsWithDockeyAndOrderAndLimitAndOffset(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeibrbfg35mwggcj4vnskak4qn45hp7fy5a4zp2n34sbq5vt5utr6pq",
+				"cid":    "bafybeigz4lfwqqunimseeok4w222e2vsje6dr53gpw3mtk7muuxkja3oiq",
 				"height": int64(2),
 			},
 			{

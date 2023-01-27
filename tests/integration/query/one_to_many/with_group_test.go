@@ -17,10 +17,10 @@ import (
 )
 
 func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with group inside of join",
-			Query: `query {
+			Request: `query {
 				author {
 					name
 					age
@@ -122,10 +122,10 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 }
 
 func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
-	tests := []testUtils.QueryTestCase{
+	tests := []testUtils.RequestTestCase{
 		{
 			Description: "One-to-many relation query from many side with parent level group",
-			Query: `query {
+			Request: `query {
 				author (groupBy: [age]) {
 					age
 					_group {
@@ -253,9 +253,9 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 }
 
 func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "One-to-many relation query from many side with group inside of join and invalid field",
-		Query: `query {
+		Request: `query {
 			author {
 				name
 				age

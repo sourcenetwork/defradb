@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"strings"
 
 	cbor "github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/immutable"
@@ -221,19 +220,19 @@ func (c *collection) updateWithFilter(
 		return nil, client.ErrInvalidUpdater
 	}
 
-	// scan through docs with filter
-	query, err := c.makeSelectionQuery(ctx, txn, filter)
+	// Make a selection plan that will scan through only the documents with matching filter.
+	selectionPlan, err := c.makeSelectionPlan(ctx, txn, filter)
 	if err != nil {
 		return nil, err
 	}
-	if err = query.Start(); err != nil {
+	if err = selectionPlan.Start(); err != nil {
 		return nil, err
 	}
 
-	// If the query object isn't properly closed at any exit point log the error.
+	// If the plan isn't properly closed at any exit point log the error.
 	defer func() {
-		if err := query.Close(); err != nil {
-			log.ErrorE(ctx, "Failed to close query after filter update", err)
+		if err := selectionPlan.Close(); err != nil {
+			log.ErrorE(ctx, "Failed to close the selection plan, after filter update", err)
 		}
 	}()
 
@@ -241,21 +240,21 @@ func (c *collection) updateWithFilter(
 		DocKeys: make([]string, 0),
 	}
 
-	docMap := query.DocumentMap()
+	docMap := selectionPlan.DocumentMap()
 
-	// loop while we still have results from the filter query
+	// Keep looping until results from the selection plan have been iterated through.
 	for {
-		next, nextErr := query.Next()
+		next, nextErr := selectionPlan.Next()
 		if nextErr != nil {
 			return nil, err
 		}
-		// if theres no more records from the query, jump out of the loop
+		// if theres no more records from the request, jump out of the loop
 		if !next {
 			break
 		}
 
 		// Get the document, and apply the patch
-		doc := docMap.ToMap(query.Value())
+		doc := docMap.ToMap(selectionPlan.Value())
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
@@ -271,56 +270,6 @@ func (c *collection) updateWithFilter(
 	}
 
 	return results, nil
-}
-
-func (c *collection) applyPatch( //nolint:unused
-	txn datastore.Txn,
-	doc map[string]any,
-	patch []*fastjson.Value,
-) error {
-	for _, op := range patch {
-		opObject, err := op.Object()
-		if err != nil {
-			return err
-		}
-
-		pathVal := opObject.Get("path")
-		if pathVal == nil {
-			return ErrMissingDocFieldToUpdate
-		}
-
-		path, err := pathVal.StringBytes()
-		if err != nil {
-			return err
-		}
-
-		targetCollection, _, err := c.getCollectionForPatchOpPath(txn, string(path))
-		if err != nil {
-			return err
-		}
-
-		key, err := c.getTargetKeyForPatchPath(txn, doc, string(path))
-		if err != nil {
-			return err
-		}
-		field, val, _ := getValFromDocForPatchPath(doc, string(path))
-		if err := targetCollection.applyPatchOp(txn, key, field, val, opObject); err != nil {
-			return err
-		}
-	}
-
-	// completed patch update
-	return nil
-}
-
-func (c *collection) applyPatchOp( //nolint:unused
-	txn datastore.Txn,
-	dockey string,
-	field string,
-	currentVal any,
-	patchOp *fastjson.Object,
-) error {
-	return nil
 }
 
 func (c *collection) applyMerge(
@@ -551,24 +500,15 @@ func getNillableArray[T any](
 	return arr, nil
 }
 
-func (c *collection) applyMergePatchOp( //nolint:unused
-	txn datastore.Txn,
-	docKey string,
-	field string,
-	currentVal any,
-	targetVal any) error {
-	return nil
-}
-
-// makeQuery constructs a simple query of the collection using the given filter.
-// currently it doesn't support any other query operation other than filters.
+// makeSelectionPlan constructs a simple read-only plan of the collection using the given filter.
+// currently it doesn't support any other operations other than filters.
 // (IE: No limit, order, etc)
-// Additionally it only queries for the root scalar fields of the object
-func (c *collection) makeSelectionQuery(
+// Additionally it only requests for the root scalar fields of the object
+func (c *collection) makeSelectionPlan(
 	ctx context.Context,
 	txn datastore.Txn,
 	filter any,
-) (planner.Query, error) {
+) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
@@ -586,9 +526,7 @@ func (c *collection) makeSelectionQuery(
 	default:
 		return nil, ErrInvalidFilter
 	}
-	if filter == "" {
-		return nil, ErrInvalidFilter
-	}
+
 	slct, err := c.makeSelectLocal(f)
 	if err != nil {
 		return nil, err
@@ -626,77 +564,3 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 
 	return slct, nil
 }
-
-// getTypeAndCollectionForPatch parses the Patch op path values
-// and compares it against the collection schema.
-// If it's within the schema, then patchIsSubType is false
-// subTypeName is empty.
-// If the target type is an array, isArray is true.
-// May need to query the database for other schema types
-// which requires a db transaction. It is recommended
-// to use collection.WithTxn(txn) for this function call.
-func (c *collection) getCollectionForPatchOpPath( //nolint:unused
-	txn datastore.Txn,
-	path string,
-) (col *collection, isArray bool, err error) {
-	return nil, false, nil
-}
-
-// getTargetKeyForPatchPath walks through the given doc and Patch path.
-// It returns the
-func (c *collection) getTargetKeyForPatchPath( //nolint:unused
-	txn datastore.Txn,
-	doc map[string]any,
-	path string,
-) (string, error) {
-	_, length := splitPatchPath(path)
-	if length == 0 {
-		return "", ErrInvalidOpPath
-	}
-
-	return "", nil
-}
-
-func splitPatchPath(path string) ([]string, int) { //nolint:unused
-	path = strings.TrimPrefix(path, "/")
-	pathParts := strings.Split(path, "/")
-	return pathParts, len(pathParts)
-}
-
-func getValFromDocForPatchPath( //nolint:unused
-	doc map[string]any,
-	path string,
-) (string, any, bool) {
-	pathParts, length := splitPatchPath(path)
-	if length == 0 {
-		return "", nil, false
-	}
-	return getMapProp(doc, pathParts, length)
-}
-
-func getMapProp( //nolint:unused
-	doc map[string]any,
-	paths []string,
-	length int,
-) (string, any, bool) {
-	val, ok := doc[paths[0]]
-	if !ok {
-		return "", nil, false
-	}
-	if length > 1 {
-		doc, ok := val.(map[string]any)
-		if !ok {
-			return "", nil, false
-		}
-		return getMapProp(doc, paths[1:], length-1)
-	}
-	return paths[0], val, true
-}
-
-/*
-
-filter := NewFilterFromString("Name: {_eq: 'bob'}")
-
-filter := db.NewQuery().And()
-
-*/

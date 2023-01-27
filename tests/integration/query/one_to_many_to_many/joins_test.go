@@ -17,9 +17,9 @@ import (
 )
 
 func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "1-N-M Query to ensure joins are linked properly.",
-		Query: `query {
+		Request: `query {
 			Author {
 				_key
 				name

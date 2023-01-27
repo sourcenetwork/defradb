@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
-	"github.com/sourcenetwork/defradb/query/graphql"
+	"github.com/sourcenetwork/defradb/request/graphql"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )

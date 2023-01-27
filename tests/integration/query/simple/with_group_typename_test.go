@@ -17,9 +17,9 @@ import (
 )
 
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query group by and parent typename",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						__typename
@@ -44,9 +44,9 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 }
 
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
-	test := testUtils.QueryTestCase{
+	test := testUtils.RequestTestCase{
 		Description: "Simple query group by and child typename",
-		Query: `query {
+		Request: `query {
 					users(groupBy: [Name]) {
 						Name
 						_group {

@@ -32,7 +32,7 @@ var (
 	ErrDatabaseNotAvailable = errors.New("no database available")
 	ErrFormNotSupported     = errors.New("content type application/x-www-form-urlencoded not yet supported")
 	ErrBodyEmpty            = errors.New("body cannot be empty")
-	ErrMissingGQLQuery      = errors.New("missing GraphQL query")
+	ErrMissingGQLRequest    = errors.New("missing GraphQL request")
 	ErrPeerIdUnavailable    = errors.New("no peer ID available. P2P might be disabled")
 	ErrStreamingUnsupported = errors.New("streaming unsupported")
 	ErrNoEmail              = errors.New("email address must be specified for tls with autocert")

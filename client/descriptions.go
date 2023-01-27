@@ -84,9 +84,10 @@ type IndexDescription struct {
 	// A Book type can have many Categories,
 	// and Categories can belong to many Books.
 	//
-	// If we query more for Books, then Categories directly, then
+	// If we request Books more, then Categories directly, then
 	// we can set the Book type as the Primary type.
 	Junction bool
+
 	// RelationType is only used in the Index is a Junction Index.
 	// It specifies what the other type is in the Many-to-Many
 	// relationship.
@@ -100,9 +101,17 @@ func (index IndexDescription) IDString() string {
 
 // SchemaDescription describes a Schema and its associated metadata.
 type SchemaDescription struct {
-	ID   uint32
-	Name string
-	Key  []byte // DocKey for versioned source schema
+	// SchemaID is the version agnostic identifier for this schema.
+	//
+	// It remains constant throughout the lifetime of this schema.
+	SchemaID string
+
+	// VersionID is the version-specific identifier for this schema.
+	//
+	// It is generated on mutation of this schema and can be used to uniquely
+	// identify a schema at a specific version.
+	VersionID string
+	Name      string
 	// Schema schema.Schema
 	FieldIDs []uint32
 	Fields   []FieldDescription

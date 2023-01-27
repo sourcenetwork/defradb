@@ -55,18 +55,18 @@ var (
 // in the MerkleDAG, until we reach the initial (genesis) state.
 //
 // Transient/Ephemeral datastores are intanciated for the lifetime of the
-// traversal query, on a per object basis. This should be a basic map based
+// traversal query request, on a per object basis. This should be a basic map based
 // ds.Datastore, abstracted into a DSReaderWriter.
 //
 // The goal of the VersionedFetcher is to implement the same external API/Interface as
 // the DocumentFetcher, and to have it return the encoded/decoded document as
 // defined in the version, so that it can be used as a drop in replacement within
-// the scanNode query planner system.
+// the scanNode request planner system.
 //
 // Current limitations:
 // - We can only return a single record from an VersionedFetcher
 // 	 instance.
-// - We can't query into related sub objects (at the moment, as related objects
+// - We can't request related sub objects (at the moment, as related objects
 //   ids aren't in the state graphs.
 // - Probably more...
 //
@@ -377,7 +377,13 @@ func (vf *VersionedFetcher) processNode(
 		if err != nil {
 			return err
 		}
-		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(vf.store, "", events.EmptyUpdateChannel, ctype, key)
+		mcrdt, err = crdt.DefaultFactory.InstanceWithStores(
+			vf.store,
+			core.CollectionSchemaVersionKey{},
+			events.EmptyUpdateChannel,
+			ctype,
+			key,
+		)
 		if err != nil {
 			return err
 		}

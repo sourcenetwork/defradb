@@ -38,8 +38,8 @@ var bookAuthorPublisherGQLSchema = (`
 	}
 `)
 
-func ExecuteTestCase(t *testing.T, test testUtils.QueryTestCase) {
-	testUtils.ExecuteQueryTestCase(
+func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
+	testUtils.ExecuteRequestTestCase(
 		t,
 		bookAuthorPublisherGQLSchema,
 		[]string{"book", "author", "publisher"},
