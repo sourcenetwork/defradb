@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/logging"
 )
 
@@ -57,6 +58,10 @@ type dagJob struct {
 	dockey     core.DataStoreKey // dockey of our document
 	fieldName  string            // field of the subgraph our node belongs to
 
+	// Transaction common to a pushlog event. It is used to pass it along to processLog
+	// and handleChildBlocks within the dagWorker.
+	txn datastore.Txn
+
 	// OLD FIELDS
 	// root       cid.Cid         // the root of the branch we are walking down
 	// rootPrio   uint64          // the priority of the root delta
@@ -67,21 +72,43 @@ type dagJob struct {
 // workers without races by becoming the only sender for the store.jobQueue
 // channel.
 func (p *Peer) sendJobWorker() {
+	// The DAG sync process for a document is handled over a single transaction, it is possible that a single
+	// document ends up using all workers. Since the transaction uses a mutex to guarantee thread safety, some
+	// operations in those workers may temporarily blocked which would leave a concurrent document sync process
+	// hanging waiting for some workers to free up. To eliviate this problem, we add new workers dedicated to a
+	// document and discard them once the process is completed.
+	docWorkerQueue := make(map[string]chan *dagJob)
 	for {
 		select {
 		case <-p.ctx.Done():
-			close(p.jobQueue)
+			for _, job := range docWorkerQueue {
+				close(job)
+			}
 			return
-		case j := <-p.sendJobs:
-			p.jobQueue <- j
+
+		case newJob := <-p.sendJobs:
+			jobs, ok := docWorkerQueue[newJob.dockey.DocKey]
+			if !ok {
+				jobs = make(chan *dagJob, numWorkers)
+				for i := 0; i < numWorkers; i++ {
+					go p.dagWorker(jobs)
+				}
+			}
+			jobs <- newJob
+
+		case dockey := <-p.closeJob:
+			if jobs, ok := docWorkerQueue[dockey]; ok {
+				close(jobs)
+				delete(docWorkerQueue, dockey)
+			}
 		}
 	}
 }
 
 // dagWorker should run in its own goroutine. Workers are launched during
 // initialization in New().
-func (p *Peer) dagWorker() {
-	for job := range p.jobQueue {
+func (p *Peer) dagWorker(jobs chan *dagJob) {
+	for job := range jobs {
 		log.Debug(
 			p.ctx,
 			"Starting new job from DAG queue",
@@ -99,6 +126,7 @@ func (p *Peer) dagWorker() {
 
 		children, err := p.processLog(
 			p.ctx,
+			job.txn,
 			job.collection,
 			job.dockey,
 			job.node.Cid(),
@@ -106,7 +134,6 @@ func (p *Peer) dagWorker() {
 			job.node,
 			job.nodeGetter,
 		)
-
 		if err != nil {
 			log.ErrorE(
 				p.ctx,
@@ -118,9 +145,16 @@ func (p *Peer) dagWorker() {
 			job.session.Done()
 			continue
 		}
+
+		if len(children) == 0 {
+			job.session.Done()
+			continue
+		}
+
 		go func(j *dagJob) {
 			p.handleChildBlocks(
 				j.session,
+				j.txn,
 				j.collection,
 				j.dockey,
 				j.fieldName,

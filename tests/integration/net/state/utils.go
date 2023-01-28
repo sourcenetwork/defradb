@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/config"
+	"github.com/sourcenetwork/defradb/datastore/badger/v3"
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
@@ -179,11 +180,11 @@ func updateDocument(
 	// retry limit is breached - important incase this is a different error)
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		err = col.Save(ctx, doc)
-		if err != nil {
+		if err != nil && errors.Is(err, badger.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		return nil
+		break
 	}
 
 	return err

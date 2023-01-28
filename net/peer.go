@@ -64,7 +64,9 @@ type Peer struct {
 	server *server
 	p2pRPC *grpc.Server // rpc server over the p2p network
 
-	jobQueue chan *dagJob
+	// Used to close the dagWorker pool for a given document.
+	// The string represents a dockey.
+	closeJob chan string
 	sendJobs chan *dagJob
 
 	// outstanding log request currently being processed
@@ -107,7 +109,7 @@ func NewPeer(
 		p2pRPC:         grpc.NewServer(serverOptions...),
 		ctx:            ctx,
 		cancel:         cancel,
-		jobQueue:       make(chan *dagJob, numWorkers),
+		closeJob:       make(chan string),
 		sendJobs:       make(chan *dagJob),
 		replicators:    make(map[string]map[peer.ID]struct{}),
 		queuedChildren: newCidSafeSet(),
@@ -159,11 +161,8 @@ func (p *Peer) Start() error {
 		}
 	}()
 
-	// start sendJobWorker + NumWorkers goroutines
+	// start sendJobWorker
 	go p.sendJobWorker()
-	for i := 0; i < numWorkers; i++ {
-		go p.dagWorker()
-	}
 
 	return nil
 }
@@ -601,8 +600,17 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 
 func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	// push to each peer (replicator)
+	peers := make(map[string]struct{})
+	for _, peer := range p.ps.ListPeers(lg.DocKey) {
+		peers[peer.String()] = struct{}{}
+	}
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {
+			// Don't push if pid is in the list of peers for the topic.
+			// It will be handled by the pubsub system.
+			if _, ok := peers[pid.String()]; ok {
+				continue
+			}
 			go func(peerID peer.ID) {
 				if err := p.server.pushLog(p.ctx, lg, peerID); err != nil {
 					log.ErrorE(
@@ -627,6 +635,10 @@ func (p *Peer) setupBlockService() {
 
 func (p *Peer) setupDAGService() {
 	p.DAGService = dag.NewDAGService(p.bserv)
+}
+
+func (p *Peer) newDAGSyncerTxn(txn datastore.Txn) ipld.DAGService {
+	return dag.NewDAGService(blockservice.New(txn.DAGstore(), p.exch))
 }
 
 // Session returns a session-based NodeGetter.
