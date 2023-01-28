@@ -136,6 +136,11 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 	return datastore.NewTxnFrom(ctx, db.rootstore, readonly)
 }
 
+// NewConcurrentTxn creates a new transaction that supports concurrent API calls.
+func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+}
+
 // Root returns the root datastore.
 func (db *db) Root() datastore.RootStore {
 	return db.rootstore

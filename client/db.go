@@ -31,6 +31,7 @@ type DB interface {
 	Blockstore() blockstore.Blockstore
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
+	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 	ExecRequest(context.Context, string) *RequestResult
 	ExecTransactionalRequest(context.Context, string, datastore.Txn) *RequestResult
 	Close(context.Context)

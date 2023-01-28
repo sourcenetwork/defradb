@@ -28,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore/badger/v3"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	pb "github.com/sourcenetwork/defradb/net/pb"
@@ -155,55 +156,81 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 	}
 
-	var getter format.NodeGetter = s.peer
-	if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
-		log.Debug(ctx, "Upgrading DAGSyncer with a session")
-		getter = sessionMaker.Session(ctx)
-	}
-
-	// handleComposite
-	nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
-	if err != nil {
-		return nil, errors.Wrap("failed to decode block to ipld.Node", err)
-	}
-	cids, err := s.peer.processLog(ctx, col, docKey, cid, "", nd, getter)
-	if err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to process PushLog node",
-			err,
-			logging.NewKV("DocKey", docKey),
-			logging.NewKV("CID", cid),
-		)
-	}
-
-	// handleChildren
-	if len(cids) > 0 { // we have child nodes to get
-		log.Debug(
-			ctx,
-			"Handling children for log",
-			logging.NewKV("NChildren", len(cids)),
-			logging.NewKV("CID", cid),
-		)
-		var session sync.WaitGroup
-		s.peer.handleChildBlocks(&session, col, docKey, "", nd, cids, getter)
-		session.Wait()
-	} else {
-		log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
-	}
-
-	if s.pushLogEmitter != nil {
-		err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-			Peer: pid,
-		})
+	var txnErr error
+	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
+		// To prevent a potential deadlock on DAG sync if an error occures mid process, we handle
+		// each process on a single transaction.
+		txn, err := s.db.NewConcurrentTxn(ctx, false)
 		if err != nil {
-			// logging instead of returning an error because the event bus should
-			// not break the PushLog execution.
-			log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+			return nil, err
 		}
+		defer txn.Discard(ctx)
+
+		// Create a new DAG service with the current transaction
+		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)
+		if sessionMaker, ok := getter.(SessionDAGSyncer); ok {
+			log.Debug(ctx, "Upgrading DAGSyncer with a session")
+			getter = sessionMaker.Session(ctx)
+		}
+
+		// handleComposite
+		nd, err := decodeBlockBuffer(req.Body.Log.Block, cid)
+		if err != nil {
+			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
+		}
+
+		cids, err := s.peer.processLog(ctx, txn, col, docKey, cid, "", nd, getter)
+		if err != nil {
+			log.ErrorE(
+				ctx,
+				"Failed to process PushLog node",
+				err,
+				logging.NewKV("DocKey", docKey),
+				logging.NewKV("CID", cid),
+			)
+		}
+
+		// handleChildren
+		if len(cids) > 0 { // we have child nodes to get
+			log.Debug(
+				ctx,
+				"Handling children for log",
+				logging.NewKV("NChildren", len(cids)),
+				logging.NewKV("CID", cid),
+			)
+			var session sync.WaitGroup
+			s.peer.handleChildBlocks(&session, txn, col, docKey, "", nd, cids, getter)
+			session.Wait()
+			// dagWorkers specific to the dockey will have been spawned within handleChildBlocks.
+			// Once we are done with the dag syncing process, we can get rid of those workers.
+			s.peer.closeJob <- docKey.DocKey
+		} else {
+			log.Debug(ctx, "No more children to process for log", logging.NewKV("CID", cid))
+		}
+
+		if txnErr = txn.Commit(ctx); txnErr != nil {
+			if errors.Is(txnErr, badger.ErrTxnConflict) {
+				continue
+			}
+			return &pb.PushLogReply{}, txnErr
+		}
+
+		if s.pushLogEmitter != nil {
+			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
+				Peer: pid,
+			})
+			if err != nil {
+				// logging instead of returning an error because the event bus should
+				// not break the PushLog execution.
+				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+			}
+		}
+
+		// Once processed, subscribe to the dockey topic on the pubsub network.
+		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey)
 	}
 
-	return &pb.PushLogReply{}, nil
+	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
 }
 
 // GetHeadLog receives a get head log request
