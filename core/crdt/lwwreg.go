@@ -77,7 +77,10 @@ type LWWRegister struct {
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
-func NewLWWRegister(store datastore.DSReaderWriter, key core.DataStoreKey) LWWRegister {
+func NewLWWRegister(
+	store datastore.DSReaderWriter,
+	key core.DataStoreKey,
+) LWWRegister {
 	return LWWRegister{
 		baseCRDT: newBaseCRDT(store, key),
 		// id:    id,
