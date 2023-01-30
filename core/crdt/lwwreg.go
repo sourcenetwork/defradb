@@ -34,9 +34,10 @@ var (
 // LWWRegDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWRegDelta struct {
-	Priority uint64
-	Data     []byte
-	DocKey   []byte
+	SchemaVersionID string
+	Priority        uint64
+	Data            []byte
+	DocKey          []byte
 }
 
 // GetPriority gets the current priority for this delta.
@@ -56,10 +57,11 @@ func (delta *LWWRegDelta) Marshal() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	enc := codec.NewEncoder(buf, h)
 	err := enc.Encode(struct {
-		Priority uint64
-		Data     []byte
-		DocKey   []byte
-	}{delta.Priority, delta.Data, delta.DocKey})
+		SchemaVersionID string
+		Priority        uint64
+		Data            []byte
+		DocKey          []byte
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey})
 	if err != nil {
 		return nil, err
 	}
@@ -74,15 +76,22 @@ func (delta *LWWRegDelta) Value() any {
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
 	baseCRDT
+
+	// schemaVersionKey is the schema version datastore key at the time of commit.
+	//
+	// It can be used to identify the collection datastructure state at time of commit.
+	schemaVersionKey core.CollectionSchemaVersionKey
 }
 
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(
 	store datastore.DSReaderWriter,
+	schemaVersionKey core.CollectionSchemaVersionKey,
 	key core.DataStoreKey,
 ) LWWRegister {
 	return LWWRegister{
-		baseCRDT: newBaseCRDT(store, key),
+		baseCRDT:         newBaseCRDT(store, key),
+		schemaVersionKey: schemaVersionKey,
 		// id:    id,
 		// data:  data,
 		// ts:    ts,
@@ -108,8 +117,9 @@ func (reg LWWRegister) Value(ctx context.Context) ([]byte, error) {
 func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 	// return NewLWWRegister(reg.id, value, reg.clock.Apply(), reg.clock)
 	return &LWWRegDelta{
-		Data:   value,
-		DocKey: reg.key.Bytes(),
+		Data:            value,
+		DocKey:          reg.key.Bytes(),
+		SchemaVersionID: reg.schemaVersionKey.SchemaVersionId,
 	}
 }
 

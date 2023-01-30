@@ -35,15 +35,15 @@ func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":        "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"cid":        "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 				"__typename": "Commit",
 			},
 			{
-				"cid":        "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+				"cid":        "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
 				"__typename": "Commit",
 			},
 			{
-				"cid":        "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
+				"cid":        "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
 				"__typename": "Commit",
 			},
 		},

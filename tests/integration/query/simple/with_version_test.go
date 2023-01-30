@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
+						"cid": "bafybeihmtkwi4ff2e5deo4xycxbbnqthlahuzgd5d72ggtytct2ibrndau",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+								"cid":  "bafybeihaytnuf3mzzgpwea54dyr5dstppeh7myrq4rt34c7vc72wwgj5j4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeicabeba6ve745cusbcgo72ugwvnzflgwg7lij642jv6tgis4u2gni",
+								"cid":  "bafybeibfnvmb5n7tmaalib5khp2fhay4lp3n2yb7beiq2l6s556ezmyzfq",
 								"name": "Name",
 							},
 						},
@@ -99,14 +99,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeicm4rzm2ep7turu26t5oynzt3s44zsxwwofzgsljooctuxd2gi3ke",
+						"cid": "bafybeihmtkwi4ff2e5deo4xycxbbnqthlahuzgd5d72ggtytct2ibrndau",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+								"cid":  "bafybeihaytnuf3mzzgpwea54dyr5dstppeh7myrq4rt34c7vc72wwgj5j4",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeicabeba6ve745cusbcgo72ugwvnzflgwg7lij642jv6tgis4u2gni",
+								"cid":  "bafybeibfnvmb5n7tmaalib5khp2fhay4lp3n2yb7beiq2l6s556ezmyzfq",
 								"name": "Name",
 							},
 						},
