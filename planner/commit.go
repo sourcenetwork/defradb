@@ -285,6 +285,11 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, ErrDeltaMissingPriority
 	}
 
+	schemaVersionId, ok := delta["SchemaVersionID"].(string)
+	if ok {
+		n.parsed.DocumentMapping.SetFirstOfName(&commit, "schemaVersionId", schemaVersionId)
+	}
+
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
 	n.parsed.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
 

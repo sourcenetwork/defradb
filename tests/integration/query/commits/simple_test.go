@@ -34,13 +34,13 @@ func TestQueryCommits(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"cid": "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 			},
 			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+				"cid": "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
 			},
 			{
-				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
+				"cid": "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
 			},
 		},
 	}
@@ -70,22 +70,58 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeidsa74vl7xvw6tzgt5gmux5ts7lxldxculzgpxl5xura45ckf7e5i",
+				"cid": "bafybeibmprk2bxsv2nj2sf5ofmu7yuqe7dz2dze546nxkzwwylxyzpruoy",
 			},
 			{
-				"cid": "bafybeibek4lmrb5gtmahgsv33njmk3efty53n7z2rac7fuup7mwpho5zqa",
+				"cid": "bafybeidbb4dv2smuzmeodcrbt2dk6loqj7i3a6fofl32ejbx2gtinxguye",
 			},
 			{
-				"cid": "bafybeibnwzoekenlil5sdltgmkmfngoifd5uwcpgzzry7rokrd5qurgdve",
+				"cid": "bafybeifmifbksnwuwxhkwjqdojbddw2274f7wzd4jamllaoud3llunm5xu",
 			},
 			{
-				"cid": "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+				"cid": "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 			},
 			{
-				"cid": "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+				"cid": "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
 			},
 			{
-				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
+				"cid": "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple commits query yielding schemaVersionId",
+		Request: `query {
+					commits {
+						cid
+						schemaVersionId
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":             "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+			{
+				"cid":             "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
+			},
+			{
+				"cid":             "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
 			},
 		},
 	}
