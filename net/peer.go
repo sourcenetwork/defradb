@@ -626,8 +626,18 @@ func (p *Peer) handleDocDeleteLog(evt events.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishDeleteLog(p.ctx, evt.DocKey, req); err != nil {
+	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
 		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
+	}
+
+	if err := p.server.removePubSubTopic(evt.DocKey); err != nil {
+		log.ErrorE(
+			p.ctx,
+			"Failed to remove new pubsub topic",
+			err,
+			logging.NewKV("DocKey", dockey),
+		)
+		return err
 	}
 
 	return nil

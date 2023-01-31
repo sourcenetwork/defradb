@@ -337,46 +337,6 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	return nil
 }
 
-// publishLog publishes the given PushLogRequest object on the PubSub network via the
-// corresponding topic
-func (s *server) publishDeleteLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
-	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
-		return nil
-	}
-	s.mu.Lock()
-	t, ok := s.topics[dockey]
-	s.mu.Unlock()
-	if !ok {
-		return errors.New(fmt.Sprintf("No pubsub topic found for doc %s", dockey))
-	}
-
-	data, err := req.Marshal()
-	if err != nil {
-		return errors.Wrap("failed marshling pubsub message", err)
-	}
-
-	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", dockey), err)
-	}
-	log.Debug(
-		ctx,
-		"Published Delete log",
-		logging.NewKV("DocKey", dockey),
-	)
-
-	// register topic
-	if err := s.removePubSubTopic(dockey); err != nil {
-		log.ErrorE(
-			ctx,
-			"Failed to remove new pubsub topic",
-			err,
-			logging.NewKV("DocKey", dockey),
-		)
-		return err
-	}
-	return nil
-}
-
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
 func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
 	log.Debug(
