@@ -38,17 +38,45 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeid2b6a5vbqzxyxrzvwvkakqlzgcdpcdpkpmufthy4hnasu4zcyzua",
+				"cid": "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
 				"links": []map[string]any{
 					{
-						"cid":  "bafybeidst2mzxhdoh4ayjdjoh4vibo7vwnuoxk3xgyk5mzmep55jklni2a",
+						"cid":  "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 						"name": "Age",
 					},
 					{
-						"cid":  "bafybeihhypcsqt7blkrqtcmpl43eo3yunrog5pchox5naji6hisdme4swm",
+						"cid":  "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
 						"name": "Name",
 					},
 				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple latest commits query with dockey and schema versiion id field",
+		Request: `query {
+					latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+						cid
+						schemaVersionId
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":             "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"schemaVersionId": "bafkreihaqmvbjvm2q4iwkjnuafavvsakiaztlqnridiybxystfm27uwlde",
 			},
 		},
 	}

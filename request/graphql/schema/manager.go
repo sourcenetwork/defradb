@@ -16,17 +16,6 @@ import (
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 
-var (
-	QueryLatestCommits = &gql.Field{
-		Name: "latestCommits",
-		Type: gql.NewList(schemaTypes.CommitObject),
-		Args: gql.FieldConfigArgument{
-			"dockey": schemaTypes.NewArgConfig(gql.NewNonNull(gql.ID)),
-			"field":  schemaTypes.NewArgConfig(gql.String),
-		},
-	}
-)
-
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
