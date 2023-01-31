@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/events"
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
@@ -262,7 +263,9 @@ func newDagDeleter(bstore datastore.DAGStore) dagDeleter {
 //   3) Deleting headstore state.
 func (c *collection) applyFullDelete(
 	ctx context.Context,
-	txn datastore.Txn, dockey core.PrimaryDataStoreKey) error {
+	txn datastore.Txn,
+	dockey core.PrimaryDataStoreKey,
+) error {
 	// Check the docKey we have been given to delete with actually has a corresponding
 	//  document (i.e. document actually exists in the collection).
 	found, err := c.exists(ctx, txn, dockey)
@@ -321,6 +324,21 @@ func (c *collection) applyFullDelete(
 			return err
 		}
 	} // ====================== Successfully deleted the headstore state of this document
+
+	if c.db.events.Updates.HasValue() {
+		txn.OnSuccess(
+			func() {
+				c.db.events.Updates.Value().Publish(
+					events.Update{
+						DocKey:   dockey.DocKey,
+						SchemaID: c.schemaID,
+						Cid:      cid.Cid{},
+						IsDelete: true,
+					},
+				)
+			},
+		)
+	}
 
 	return nil
 }

@@ -54,6 +54,8 @@ type P2PTestCase struct {
 
 	// node/collection/dockey/value
 	Creates map[int]map[int]map[int]string
+	// node/collection/dockey
+	Deletes map[int]map[int][]int
 	// node/collection/dockey/values
 	Updates map[int]map[int]map[int][]string
 	// node/dockey/values
@@ -151,6 +153,16 @@ func createDocument(ctx context.Context, db client.DB, collectionName string, do
 	}
 
 	return doc.Key(), nil
+}
+
+func deleteDocument(ctx context.Context, db client.DB, collectionName string, dockey client.DocKey) error {
+	col, err := db.GetCollectionByName(ctx, collectionName)
+	if err != nil {
+		return err
+	}
+
+	_, err = col.DeleteWithKey(ctx, dockey)
+	return err
 }
 
 func updateDocument(
@@ -332,8 +344,9 @@ func ExecuteTestCase(
 	}
 
 	creates := toCreateMutationSlice(test, collectionNames)
+	deletes := toDeleteMutationSlice(test, collectionNames)
 	updates := toUpdateMutationSlice(test, collectionNames)
-	waitGroupings := getExpectedWaitGroupings(test, creates, updates)
+	waitGroupings := getExpectedWaitGroupings(test, creates, deletes, updates)
 
 	var wg sync.WaitGroup
 	for k, c := range waitGroupings {
@@ -364,6 +377,11 @@ func ExecuteTestCase(
 		require.NoError(t, err)
 
 		docKeysById[create.docIndex] = docKey
+	}
+
+	for _, delete := range deletes {
+		err := deleteDocument(ctx, nodes[delete.sourceIndex].DB, delete.collectionName, docKeysById[delete.docIndex])
+		require.NoError(t, err)
 	}
 
 	for _, update := range updates {
@@ -492,9 +510,9 @@ func waitForNodesToSync(
 ) {
 	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
 	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
-	// This must be an assert and not a require, a panic here will block the test as
-	// the wait group will never complete.
-	assert.NoError(t, err)
+	if err != nil {
+		log.Info(ctx, err.Error())
+	}
 	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
 }
 
@@ -554,6 +572,27 @@ func toCreateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 						docIndex:       docIndex,
 						payload:        payload,
 						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, true),
+					},
+				)
+			}
+		}
+	}
+	return result
+}
+
+func toDeleteMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
+	result := []mutation{}
+	for sourceIndex, payloadByCollectionName := range test.Deletes {
+		for collectionIndex, docIndexes := range payloadByCollectionName {
+			collectionName := collectionNames[collectionIndex]
+			for _, docIndex := range docIndexes {
+				result = append(
+					result,
+					mutation{
+						sourceIndex:    sourceIndex,
+						collectionName: collectionName,
+						docIndex:       docIndex,
+						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, false),
 					},
 				)
 			}

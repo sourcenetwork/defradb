@@ -50,10 +50,15 @@ func (s *server) pushLog(ctx context.Context, evt events.Update, pid peer.ID) er
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
 		Cid:      &pb.ProtoCid{Cid: evt.Cid},
 		SchemaID: []byte(evt.SchemaID),
-		Log: &pb.Document_Log{
-			Block: evt.Block.RawData(),
-		},
+		IsDelete: evt.IsDelete,
 	}
+
+	if !evt.IsDelete {
+		body.Log = &pb.Document_Log{
+			Block: evt.Block.RawData(),
+		}
+	}
+
 	req := &pb.PushLogRequest{
 		Body: body,
 	}

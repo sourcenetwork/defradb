@@ -39,8 +39,10 @@ message PushLogRequest {
         bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
         //
         bytes schemaID = 3;
+        // isDelete is true if the log is to delete document.
+        bool isDelete = 4;                                  
         // record is the actual record payload.
-        Document.Log log = 4;
+        Document.Log log = 5;
     }
 }
 

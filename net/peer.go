@@ -218,14 +218,17 @@ func (p *Peer) handleBroadcastLoop() {
 			return
 		}
 
-		// check log priority, 1 is new doc log
-		// 2 is update log
+		// check if log is a deletion or check log priority,
+		// 1 is new doc log, 2 is update log
 		var err error
-		if update.Priority == 1 {
+		switch {
+		case update.IsDelete:
+			err = p.handleDocDeleteLog(update)
+		case update.Priority == 1:
 			err = p.handleDocCreateLog(update)
-		} else if update.Priority > 1 {
+		case update.Priority > 1:
 			err = p.handleDocUpdateLog(update)
-		} else {
+		default:
 			log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
 		}
 
@@ -595,6 +598,38 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
 		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
 	}
+	return nil
+}
+
+func (p *Peer) handleDocDeleteLog(evt events.Update) error {
+	dockey, err := client.NewDocKeyFromString(evt.DocKey)
+	if err != nil {
+		return errors.Wrap("failed to get DocKey from broadcast message", err)
+	}
+	log.Debug(
+		p.ctx,
+		"Preparing pubsub pushLog request from broadcast",
+		logging.NewKV("DocKey", dockey),
+		logging.NewKV("CID", evt.Cid),
+		logging.NewKV("SchemaId", evt.SchemaID))
+
+	body := &pb.PushLogRequest_Body{
+		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
+		SchemaID: []byte(evt.SchemaID),
+		Cid:      &pb.ProtoCid{Cid: evt.Cid},
+		IsDelete: evt.IsDelete,
+	}
+	req := &pb.PushLogRequest{
+		Body: body,
+	}
+
+	// push to each peer (replicator)
+	p.pushLogToReplicators(p.ctx, evt)
+
+	if err := p.server.publishDeleteLog(p.ctx, evt.DocKey, req); err != nil {
+		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
+	}
+
 	return nil
 }
 

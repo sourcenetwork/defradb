@@ -30,4 +30,5 @@ type Update struct {
 	SchemaID string
 	Block    ipld.Node
 	Priority uint64
+	IsDelete bool
 }

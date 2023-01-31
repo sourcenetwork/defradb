@@ -140,6 +140,37 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		return nil, err
 	}
 	log.Debug(ctx, "Received a PushLog request", logging.NewKV("PID", pid))
+	defer func() {
+		if s.pushLogEmitter != nil {
+			err := s.pushLogEmitter.Emit(EvtReceivedPushLog{
+				Peer: pid,
+			})
+			if err != nil {
+				// logging instead of returning an error because the event bus should
+				// not break the PushLog execution.
+				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
+			}
+		}
+	}()
+
+	schemaID := string(req.Body.SchemaID)
+	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
+	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
+	}
+
+	if req.Body.IsDelete {
+		dockey, err := client.NewDocKeyFromString(req.Body.DocKey.String())
+		if err != nil {
+			return &pb.PushLogReply{}, err
+		}
+		_, err = col.DeleteWithKey(ctx, dockey)
+		if err != nil && !errors.Is(err, client.ErrDocumentNotFound) {
+			return &pb.PushLogReply{}, err
+		}
+		return &pb.PushLogReply{}, nil
+	}
 
 	// parse request object
 	cid := req.Body.Cid.Cid
@@ -147,13 +178,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	// make sure were not processing twice
 	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
 		return &pb.PushLogReply{}, nil
-	}
-
-	schemaID := string(req.Body.SchemaID)
-	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
-	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
-	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 	}
 
 	var txnErr error
@@ -215,17 +239,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return &pb.PushLogReply{}, txnErr
 		}
 
-		if s.pushLogEmitter != nil {
-			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				Peer: pid,
-			})
-			if err != nil {
-				// logging instead of returning an error because the event bus should
-				// not break the PushLog execution.
-				log.Info(ctx, "could not emit push log event", logging.NewKV("Error", err.Error()))
-			}
-		}
-
 		// Once processed, subscribe to the dockey topic on the pubsub network.
 		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey)
 	}
@@ -265,7 +278,6 @@ func (s *server) addPubSubTopic(dockey string) error {
 }
 
 // removePubSubTopic unsubscribes to a DocKey topic
-//nolint:unused
 func (s *server) removePubSubTopic(dockey string) error {
 	if s.peer.ps == nil {
 		return nil
@@ -322,6 +334,46 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 		logging.NewKV("CID", req.Body.Cid.Cid),
 		logging.NewKV("DocKey", dockey),
 	)
+	return nil
+}
+
+// publishLog publishes the given PushLogRequest object on the PubSub network via the
+// corresponding topic
+func (s *server) publishDeleteLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
+	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
+		return nil
+	}
+	s.mu.Lock()
+	t, ok := s.topics[dockey]
+	s.mu.Unlock()
+	if !ok {
+		return errors.New(fmt.Sprintf("No pubsub topic found for doc %s", dockey))
+	}
+
+	data, err := req.Marshal()
+	if err != nil {
+		return errors.Wrap("failed marshling pubsub message", err)
+	}
+
+	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
+		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", dockey), err)
+	}
+	log.Debug(
+		ctx,
+		"Published Delete log",
+		logging.NewKV("DocKey", dockey),
+	)
+
+	// register topic
+	if err := s.removePubSubTopic(dockey); err != nil {
+		log.ErrorE(
+			ctx,
+			"Failed to remove new pubsub topic",
+			err,
+			logging.NewKV("DocKey", dockey),
+		)
+		return err
+	}
 	return nil
 }
 

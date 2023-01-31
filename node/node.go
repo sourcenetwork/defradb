@@ -53,7 +53,7 @@ var (
 	log = logging.MustNewLogger("defra.node")
 )
 
-const evtWaitTimeout = 10 * time.Second
+const evtWaitTimeout = 5 * time.Second
 
 // Node is a networked peer instance of DefraDB.
 type Node struct {
