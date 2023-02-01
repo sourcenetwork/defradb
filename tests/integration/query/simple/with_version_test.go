@@ -66,6 +66,40 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Embedded commits query within object query with schema version id",
+		Request: `query {
+					users {
+						Name
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_version": []map[string]any{
+					{
+						"schemaVersionId": "bafkreiav66sx3ywzldfhf4fugwqbmewpiy6thf6wp5woxcrogfyhnuh73m",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
