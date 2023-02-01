@@ -219,3 +219,52 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocKey(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithUpdateAndFirstCidAndDocKeyAndSchemaVersion(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with (first) cid and dockey and yielded schema version",
+		Request: `query {
+					users (
+							cid: "bafybeihmtkwi4ff2e5deo4xycxbbnqthlahuzgd5d72ggtytct2ibrndau",
+							dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+						) {
+						Name
+						Age
+						_version {
+							schemaVersionId
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					// update to change age to 22 on document 0
+					`{"Age": 22}`,
+					// then update it again to change age to 23 on document 0
+					`{"Age": 23}`,
+				},
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"Age":  uint64(21),
+				"_version": []map[string]any{
+					{
+						"schemaVersionId": "bafkreiav66sx3ywzldfhf4fugwqbmewpiy6thf6wp5woxcrogfyhnuh73m",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
