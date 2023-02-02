@@ -45,7 +45,7 @@ func TestErrorWithStack(t *testing.T) {
 	// Assert that the first line starts with the error message and contains this [test] function's stacktrace-line -
 	// including file, line number, and function reference. An exact string match should not be used as the stacktrace
 	// is machine dependent.
-	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/defradb\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
+	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/.*\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
 
 	// Assert that the error contains this function's name, and a print-out of the generating line.
 	assert.Regexp(t, "TestErrorWithStack: errWithStack := WithStack\\(err\\)", result)
@@ -145,7 +145,7 @@ func TestErrorFmtvWithStacktrace(t *testing.T) {
 	// Assert that the first line starts with the error message and contains this [test] function's stacktrace-line -
 	// including file, line number, and function reference. An exact string match should not be used as the stacktrace
 	// is machine dependent.
-	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/defradb\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
+	assert.Regexp(t, fmt.Sprintf("^%s\\. Stack: .*\\/.*\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
 
 	// Assert that the error contains this function's name, and a print-out of the generating line.
 	assert.Regexp(t, "TestErrorFmtvWithStacktrace: err := New\\(errorMessage\\)", result)
@@ -163,7 +163,7 @@ func TestErrorFmtvWithStacktraceAndKvps(t *testing.T) {
 	// Assert that the first line starts with the error message and contains this [test] function's stacktrace-line -
 	// including file, line number, and function reference. An exact string match should not be used as the stacktrace
 	// is machine dependent.
-	assert.Regexp(t, fmt.Sprintf("^%s\\. Kv1: 1, Kv2: 2\\. Stack: .*\\/defradb\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
+	assert.Regexp(t, fmt.Sprintf("^%s\\. Kv1: 1, Kv2: 2\\. Stack: .*\\/.*\\/errors\\/errors_test\\.go:[0-9]+ \\([a-zA-Z0-9]*\\)", errorMessage), result)
 
 	// Assert that the error contains this function's name, and a print-out of the generating line.
 	assert.Regexp(t, "TestErrorFmtvWithStacktraceAndKvps: err := New\\(errorMessage, NewKV\\(\"Kv1\", 1\\), NewKV\\(\"Kv2\", \"2\"\\)\\)", result)
