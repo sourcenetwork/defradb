@@ -222,10 +222,9 @@ func IsDetectingDbChanges() bool {
 }
 
 // AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
+// also ensures the change detection is skipped so no false fails happen.
 //
-//	also ensures the change detection is skipped so no false fails happen.
-//
-//	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+// Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
 	if IsDetectingDbChanges() {
 		// The `assert.Panics` call will falsely fail if this test is executed during
