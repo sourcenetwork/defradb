@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2023 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -30,7 +30,7 @@ var rootCmd = &cobra.Command{
 
 Start a database node, issue a request to a local or remote node, and much more.
 
-DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
+DefraDB is released under the BSL license, (c) 2023 Democratized Data Foundation.
 See https://docs.source.network/BSL.txt for more information.
 `,
 	// Runs on subcommands before their Run function, to handle configuration and top-level flags.

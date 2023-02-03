@@ -6,9 +6,9 @@ DefraDB Edge Database
 
 DefraDB is the edge database to power the user-centric future.
 
-Start a database node, query a local or remote node, and much more.
+Start a database node, issue a request to a local or remote node, and much more.
 
-DefraDB is released under the BSL license, (c) 2022 Democratized Data Foundation.
+DefraDB is released under the BSL license, (c) 2023 Democratized Data Foundation.
 See https://docs.source.network/BSL.txt for more information.
 
 
