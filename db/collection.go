@@ -70,7 +70,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 		return nil, ErrSchemaFirstFieldDocKey
 	}
 
-	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
 	for i, field := range desc.Schema.Fields {
 		if field.Name == "" {
 			return nil, client.NewErrUninitializeProperty("Collection.Schema", "Name")
@@ -82,7 +81,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 			field.Typ == client.NONE_CRDT {
 			return nil, client.NewErrUninitializeProperty("Collection.Schema", "CRDT type")
 		}
-		desc.Schema.FieldIDs[i] = uint32(i)
 		desc.Schema.Fields[i].ID = client.FieldID(i)
 	}
 

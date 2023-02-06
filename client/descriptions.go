@@ -112,7 +112,6 @@ type SchemaDescription struct {
 	// identify a schema at a specific version.
 	VersionID string
 	Name      string
-	FieldIDs  []uint32
 	Fields    []FieldDescription
 }
 

@@ -84,10 +84,8 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
-	assert.Equal(t, 4, len(schema.FieldIDs))
 
 	for i := 0; i < 4; i++ {
-		assert.Equal(t, uint32(i), schema.FieldIDs[i])
 		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
 	}
 }
@@ -300,10 +298,8 @@ func TestGetCollectionByName(t *testing.T) {
 	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
 	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
-	assert.Equal(t, 4, len(schema.FieldIDs))
 
 	for i := 0; i < 4; i++ {
-		assert.Equal(t, uint32(i), schema.FieldIDs[i])
 		assert.Equal(t, client.FieldID(i), schema.Fields[i].ID)
 	}
 }

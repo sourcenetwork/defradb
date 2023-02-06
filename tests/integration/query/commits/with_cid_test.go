@@ -21,7 +21,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 		Description: "Simple all commits query with cid",
 		Request: `query {
 					commits(
-						cid: "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq"
+						cid: "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4"
 					) {
 						cid
 					}
@@ -45,7 +45,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
 			},
 		},
 	}
@@ -59,7 +59,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 		Description: "Simple all commits query with cid",
 		Request: `query {
 					commits(
-						cid: "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny"
+						cid: "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu"
 					) {
 						cid
 					}
@@ -74,7 +74,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"cid": "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
 			},
 		},
 	}
