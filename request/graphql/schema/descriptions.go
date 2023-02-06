@@ -11,14 +11,9 @@
 package schema
 
 import (
-	"fmt"
-	"sort"
-	"strings"
-
 	gql "github.com/graphql-go/graphql"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 )
 
 var (
@@ -122,129 +117,6 @@ func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
 	}
 
 	return client.FieldKind_None
-}
-
-func (g *Generator) CreateDescriptions(
-	types []*gql.Object,
-) ([]client.CollectionDescription, error) {
-	// create a indexable cached map
-	typeMap := make(map[string]*gql.Object)
-	for _, t := range types {
-		typeMap[t.Name()] = t
-	}
-
-	descs := make([]client.CollectionDescription, len(types))
-	// do the real generation
-	for i, t := range types {
-		desc := client.CollectionDescription{
-			Name: t.Name(),
-		}
-
-		// add schema
-		desc.Schema = client.SchemaDescription{
-			Name: t.Name(),
-			Fields: []client.FieldDescription{
-				{
-					Name: request.DocKeyFieldName,
-					Kind: client.FieldKind_DocKey,
-					Typ:  client.NONE_CRDT,
-				},
-			},
-		}
-		// and schema fields
-		for fname, field := range t.Fields() {
-			if _, ok := request.ReservedFields[fname]; ok {
-				continue
-			}
-
-			// check if we already have a defined field
-			// with the same name.
-			// NOTE: This will happen for the virtual ID
-			// field associated with a related type, as
-			// its defined down below in the IsObject block.
-			if _, exists := desc.GetField(fname); exists {
-				// let's make sure its an _id field, otherwise
-				// we might have an error here
-				if !strings.HasSuffix(fname, "_id") {
-					return nil, NewErrDuplicateField(fname, t.Name())
-				}
-				continue
-			}
-
-			fd := client.FieldDescription{
-				Name: fname,
-				Kind: gqlTypeToFieldKind(field.Type),
-			}
-			fd.Typ = defaultCRDTForFieldKind[fd.Kind]
-
-			if fd.IsObject() {
-				schemaName := field.Type.Name()
-				fd.Schema = schemaName
-
-				// check if its a one-to-one, one-to-many, many-to-many
-				rel := g.manager.Relations.getRelationByDescription(
-					fname, schemaName, t.Name())
-				if rel == nil {
-					return nil, NewErrFieldMissingRelation(field.Type.Name(), fname, t.Name())
-				}
-				fd.RelationName = rel.name
-
-				_, fieldRelationType, ok := rel.GetField(schemaName, fname)
-				if !ok {
-					return nil, NewErrRelationMissingField(field.Type.Name(), fname)
-				}
-
-				fd.RelationType = rel.Kind() | fieldRelationType
-
-				// handle object id field, defined as {{object_name}}_id
-				// with type gql.ID
-				// If it exists we need to delete and redefine
-				// if it doesn't exist we simply define, and make sure we
-				// skip later
-
-				if !fd.IsObjectArray() {
-					for i, sf := range desc.Schema.Fields {
-						if sf.Name == fmt.Sprintf("%s_id", fname) {
-							// delete element matching
-							desc.Schema.Fields = append(
-								desc.Schema.Fields[:i],
-								desc.Schema.Fields[i+1:]...)
-							break
-						}
-					}
-
-					// create field
-					fdRelated := client.FieldDescription{
-						Name:         fmt.Sprintf("%s_id", fname),
-						Kind:         gqlTypeToFieldKind(gql.ID),
-						RelationType: client.Relation_Type_INTERNAL_ID,
-					}
-					fdRelated.Typ = defaultCRDTForFieldKind[fdRelated.Kind]
-					desc.Schema.Fields = append(desc.Schema.Fields, fdRelated)
-				}
-			}
-
-			desc.Schema.Fields = append(desc.Schema.Fields, fd)
-		}
-
-		// sort the fields lexicographically
-		sort.Slice(desc.Schema.Fields, func(i, j int) bool {
-			// make sure that the _key (DocKeyFieldName) is always at the beginning
-			if desc.Schema.Fields[i].Name == request.DocKeyFieldName {
-				return true
-			} else if desc.Schema.Fields[j].Name == request.DocKeyFieldName {
-				return false
-			}
-			return desc.Schema.Fields[i].Name < desc.Schema.Fields[j].Name
-		})
-
-		// @todo: Add additional indexes based on defined
-		// relations and directives
-
-		descs[i] = desc
-	}
-
-	return descs, nil
 }
 
 /*

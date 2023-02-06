@@ -76,19 +76,7 @@ func createDescriptions(
 	ctx context.Context,
 	schemaString string,
 ) ([]client.CollectionDescription, []core.SchemaDefinition, error) {
-	// We should not be using this package at all here, and should not be doing most of what this package does
-	// Rework: https://github.com/sourcenetwork/defradb/issues/923
-	schemaManager, err := schema.NewSchemaManager()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	types, astdoc, err := schemaManager.Generator.FromSDL(ctx, schemaString)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	colDesc, err := schemaManager.Generator.CreateDescriptions(types)
+	colDesc, astdoc, err := schema.FromString(ctx, schemaString)
 	if err != nil {
 		return nil, nil, err
 	}
