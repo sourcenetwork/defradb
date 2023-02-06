@@ -112,9 +112,8 @@ type SchemaDescription struct {
 	// identify a schema at a specific version.
 	VersionID string
 	Name      string
-	// Schema schema.Schema
-	FieldIDs []uint32
-	Fields   []FieldDescription
+	FieldIDs  []uint32
+	Fields    []FieldDescription
 }
 
 // IsEmpty returns true if the SchemaDescription is empty and uninitialized
