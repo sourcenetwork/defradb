@@ -47,14 +47,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 				},
 			},
 		},
-		Indexes: []client.IndexDescription{
-			{
-				Name:    "primary",
-				ID:      uint32(0),
-				Primary: true,
-				Unique:  true,
-			},
-		},
 	}
 }
 

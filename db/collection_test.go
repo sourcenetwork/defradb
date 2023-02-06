@@ -82,7 +82,6 @@ func TestNewCollectionWithSchema(t *testing.T) {
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
 	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
-	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
 
 	for i := 0; i < 4; i++ {
@@ -296,7 +295,6 @@ func TestGetCollectionByName(t *testing.T) {
 	assert.Equal(t, "users", col.Name())
 	assert.Equal(t, uint32(1), col.ID())
 	assert.False(t, reflect.DeepEqual(schema, client.SchemaDescription{}))
-	assert.Equal(t, 1, len(col.Indexes()))
 	assert.Equal(t, 4, len(schema.Fields))
 
 	for i := 0; i < 4; i++ {
