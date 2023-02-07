@@ -241,40 +241,40 @@ func (s *server) GetHeadLog(
 	return nil, nil
 }
 
-// addPubSubTopic subscribes to a DocKey topic
-func (s *server) addPubSubTopic(dockey string) error {
+// addPubSubTopic subscribes to a topic on the pubsub network
+func (s *server) addPubSubTopic(topic string) error {
 	if s.peer.ps == nil {
 		return nil
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.topics[dockey]; ok {
+	if _, ok := s.topics[topic]; ok {
 		return nil
 	}
 
-	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), dockey, true)
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, true)
 	if err != nil {
 		return err
 	}
 
 	t.SetEventHandler(s.pubSubEventHandler)
 	t.SetMessageHandler(s.pubSubMessageHandler)
-	s.topics[dockey] = t
+	s.topics[topic] = t
 	return nil
 }
 
-// removePubSubTopic unsubscribes to a DocKey topic
+// removePubSubTopic unsubscribes to a topic
 //nolint:unused
-func (s *server) removePubSubTopic(dockey string) error {
+func (s *server) removePubSubTopic(topic string) error {
 	if s.peer.ps == nil {
 		return nil
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if t, ok := s.topics[dockey]; ok {
-		delete(s.topics, dockey)
+	if t, ok := s.topics[topic]; ok {
+		delete(s.topics, topic)
 		return t.Close()
 	}
 	return nil
