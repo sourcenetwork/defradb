@@ -29,12 +29,6 @@ import (
 // create a fully DefraDB complaint GraphQL schema using a "code-first" dynamic
 // approach
 
-// Type represents a developer defined type, and its associated graphQL generated types
-type Type struct {
-	gql.ObjectConfig
-	Object *gql.Object
-}
-
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
