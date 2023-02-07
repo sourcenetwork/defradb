@@ -327,6 +327,11 @@ func executeTestCase(
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, dbi.db, collectionNames)
 
+		case SchemaPatch:
+			patchSchema(ctx, t, dbi.db, testCase, action)
+			// If the schema was updated we need to refresh the collection definitions.
+			collections = getCollections(ctx, t, dbi.db, collectionNames)
+
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, collections, documents, action)
 
@@ -473,6 +478,19 @@ func updateSchema(
 	action SchemaUpdate,
 ) {
 	err := db.AddSchema(ctx, action.Schema)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func patchSchema(
+	ctx context.Context,
+	t *testing.T,
+	db client.DB,
+	testCase TestCase,
+	action SchemaPatch,
+) {
+	err := db.PatchSchema(ctx, action.Patch)
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)

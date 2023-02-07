@@ -40,6 +40,11 @@ type SchemaUpdate struct {
 	ExpectedError string
 }
 
+type SchemaPatch struct {
+	Patch         string
+	ExpectedError string
+}
+
 // CreateDoc will attempt to create the given document in the given collection
 // using the collection api.
 type CreateDoc struct {

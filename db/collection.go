@@ -25,6 +25,7 @@ import (
 	mh "github.com/multiformats/go-multihash"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -66,7 +67,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	}
 
 	docKeyField := desc.Schema.Fields[0]
-	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != "_key" {
+	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.DocKeyFieldName {
 		return nil, ErrSchemaFirstFieldDocKey
 	}
 
@@ -197,6 +198,180 @@ func (db *db) CreateCollectionTxn(
 		logging.NewKV("ID", col.SchemaID),
 	)
 	return col, nil
+}
+
+// UpdateCollectionTxn updates the persisted collection description matching the name of the given
+// description, to the values in the given description.
+//
+// It will validate the given description using [ValidateUpdateCollectionTxn] before updating it.
+//
+// The collection (including the schema version ID) will only be updated if any changes have actually
+// been made, if the given description matches the current persisted description then no changes will be
+// applied.
+func (db *db) UpdateCollectionTxn(
+	ctx context.Context,
+	txn datastore.Txn,
+	desc client.CollectionDescription,
+) (client.Collection, error) {
+	hasChanged, err := db.ValidateUpdateCollectionTxn(ctx, txn, desc)
+	if err != nil {
+		return nil, err
+	}
+
+	if !hasChanged {
+		return db.GetCollectionByNameTxn(ctx, txn, desc.Name)
+	}
+
+	for i, field := range desc.Schema.Fields {
+		if field.ID == client.FieldID(0) {
+			// This is not wonderful and will probably break when we add the ability
+			// to delete fields, however it is good enough for now and matches the
+			// create behaviour.
+			field.ID = client.FieldID(i)
+			desc.Schema.Fields[i] = field
+		}
+	}
+
+	globalSchemaBuf, err := json.Marshal(desc.Schema)
+	if err != nil {
+		return nil, err
+	}
+
+	cid, err := core.NewSHA256CidV1(globalSchemaBuf)
+	if err != nil {
+		return nil, err
+	}
+	schemaVersionID := cid.String()
+	desc.Schema.VersionID = schemaVersionID
+
+	buf, err := json.Marshal(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionSchemaVersionKey := core.NewCollectionSchemaVersionKey(schemaVersionID)
+	// Whilst the schemaVersionKey is global, the data persisted at the key's location
+	// is local to the node (the global only elements are not useful beyond key generation).
+	err = txn.Systemstore().Put(ctx, collectionSchemaVersionKey.ToDS(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionSchemaKey := core.NewCollectionSchemaKey(desc.Schema.SchemaID)
+	err = txn.Systemstore().Put(ctx, collectionSchemaKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
+	collectionKey := core.NewCollectionKey(desc.Name)
+	err = txn.Systemstore().Put(ctx, collectionKey.ToDS(), []byte(schemaVersionID))
+	if err != nil {
+		return nil, err
+	}
+
+	return db.GetCollectionByNameTxn(ctx, txn, desc.Name)
+}
+
+// ValidateUpdateCollectionTxn validates that the given collection description is a valid update.
+//
+// Will return true if the given desctiption differs from the current persisted state of the
+// collection. Will return false and an error if it fails validation.
+func (db *db) ValidateUpdateCollectionTxn(
+	ctx context.Context,
+	txn datastore.Txn,
+	proposedDesc client.CollectionDescription,
+) (bool, error) {
+	var hasChanged bool
+	existingCollection, err := db.GetCollectionByNameTxn(ctx, txn, proposedDesc.Name)
+	if err != nil {
+		if err.Error() == "datastore: key not found" {
+			// Original error is quite unhelpful to users at the moment so we return a custom one
+			return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
+		}
+		return false, err
+	}
+	existingDesc := existingCollection.Description()
+
+	if proposedDesc.ID != existingDesc.ID {
+		return false, NewErrCollectionIDDoesntMatch(proposedDesc.Name, existingDesc.ID, proposedDesc.ID)
+	}
+
+	if proposedDesc.Schema.SchemaID != existingDesc.Schema.SchemaID {
+		return false, NewErrSchemaIDDoesntMatch(
+			proposedDesc.Name,
+			existingDesc.Schema.SchemaID,
+			proposedDesc.Schema.SchemaID,
+		)
+	}
+
+	if proposedDesc.Schema.Name != existingDesc.Schema.Name {
+		// There is actually little reason to not support this atm besides controlling the surface area
+		// of the new feature.  Changing this should not break anything, but it should be tested first.
+		return false, NewErrCannotModifySchemaName(existingDesc.Schema.Name, proposedDesc.Schema.Name)
+	}
+
+	if proposedDesc.Schema.VersionID != "" && proposedDesc.Schema.VersionID != existingDesc.Schema.VersionID {
+		// If users specify this it will be overwritten, an error is prefered to quietly ignoring it.
+		return false, ErrCannotSetVersionID
+	}
+
+	existingFieldsByID := map[client.FieldID]client.FieldDescription{}
+	existingFieldIndexesByName := map[string]int{}
+	for i, field := range existingDesc.Schema.Fields {
+		existingFieldIndexesByName[field.Name] = i
+		existingFieldsByID[field.ID] = field
+	}
+
+	newFieldNames := map[string]struct{}{}
+	newFieldIds := map[client.FieldID]struct{}{}
+	for proposedIndex, proposedField := range proposedDesc.Schema.Fields {
+		var existingField client.FieldDescription
+		var fieldAlreadyExists bool
+		if proposedField.ID != client.FieldID(0) ||
+			proposedField.Name == request.DocKeyFieldName {
+			existingField, fieldAlreadyExists = existingFieldsByID[proposedField.ID]
+		}
+
+		if proposedField.ID != client.FieldID(0) && !fieldAlreadyExists {
+			return false, NewErrCannotSetFieldID(proposedField.Name, proposedField.ID)
+		}
+
+		// If the field is new, then the collection has changed
+		hasChanged = hasChanged || !fieldAlreadyExists
+
+		if !fieldAlreadyExists && (proposedField.Kind == client.FieldKind_FOREIGN_OBJECT ||
+			proposedField.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY) {
+			return false, NewErrCannotAddRelationalField(proposedField.Name, proposedField.Kind)
+		}
+
+		if _, isDuplicate := newFieldNames[proposedField.Name]; isDuplicate {
+			return false, NewErrDuplicateField(proposedField.Name)
+		}
+
+		if fieldAlreadyExists && proposedField != existingField {
+			return false, NewErrCannotMutateField(proposedField.ID, proposedField.Name)
+		}
+
+		if existingIndex := existingFieldIndexesByName[proposedField.Name]; fieldAlreadyExists &&
+			proposedIndex != existingIndex {
+			return false, NewErrCannotMoveField(proposedField.Name, proposedIndex, existingIndex)
+		}
+
+		if proposedField.Typ != client.NONE_CRDT && proposedField.Typ != client.LWW_REGISTER {
+			return false, NewErrInvalidCRDTType(proposedField.Name, proposedField.Typ)
+		}
+
+		newFieldNames[proposedField.Name] = struct{}{}
+		newFieldIds[proposedField.ID] = struct{}{}
+	}
+
+	for _, field := range existingDesc.Schema.Fields {
+		if _, stillExists := newFieldIds[field.ID]; !stillExists {
+			return false, NewErrCannotDeleteField(field.Name, field.ID)
+		}
+	}
+
+	return hasChanged, nil
 }
 
 // getCollectionByVersionId returns the [*collection] at the given [schemaVersionId] version.

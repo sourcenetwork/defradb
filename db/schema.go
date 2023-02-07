@@ -12,6 +12,10 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
+
+	jsonpatch "github.com/evanphx/json-patch/v5"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -74,4 +78,86 @@ func (db *db) getCollectionDescriptions(
 	}
 
 	return descriptions, nil
+}
+
+// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
+// present in the database.
+//
+// It will also update the GQL types used by the query system. It will error and not apply any of the
+// requested, valid updates should the net result of the patch result in an invalid state.  The
+// individual operations defined in the patch do not need to result in a valid state, only the net result
+// of the full patch.
+//
+// The collections (including the schema version ID) will only be updated if any changes have actually
+// been made, if the net result of the patch matches the current persisted description then no changes
+// will be applied.
+func (db *db) PatchSchema(ctx context.Context, patchString string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	patch, err := jsonpatch.DecodePatch([]byte(patchString))
+	if err != nil {
+		return err
+	}
+
+	collectionsByName, err := db.getCollectionsByName(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	existingDescriptionJson, err := json.Marshal(collectionsByName)
+	if err != nil {
+		return err
+	}
+
+	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
+	if err != nil {
+		return err
+	}
+
+	var newDescriptionsByName map[string]client.CollectionDescription
+	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&newDescriptionsByName)
+	if err != nil {
+		return err
+	}
+
+	newDescriptions := []client.CollectionDescription{}
+	for _, desc := range newDescriptionsByName {
+		newDescriptions = append(newDescriptions, desc)
+	}
+
+	for _, desc := range newDescriptions {
+		if _, err := db.UpdateCollectionTxn(ctx, txn, desc); err != nil {
+			return err
+		}
+	}
+
+	err = db.parser.SetSchema(ctx, txn, newDescriptions)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+func (db *db) getCollectionsByName(
+	ctx context.Context,
+	txn datastore.Txn,
+) (map[string]client.CollectionDescription, error) {
+	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionsByName := map[string]client.CollectionDescription{}
+	for _, collection := range collections {
+		collectionsByName[collection.Name()] = collection.Description()
+	}
+
+	return collectionsByName, nil
 }

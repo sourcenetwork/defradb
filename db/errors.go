@@ -11,6 +11,7 @@
 package db
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -21,6 +22,18 @@ const (
 	errDocVerification               string = "the document verification failed"
 	errAddingP2PCollection           string = "cannot add collection ID"
 	errRemovingP2PCollection         string = "cannot remove collection ID"
+	errAddCollectionWithPatch        string = "unknown collection, adding collections via patch is not supported"
+	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
+	errSchemaIDDoesntMatch           string = "SchemaID does not match existing"
+	errCannotModifySchemaName        string = "modifying the schema name is not supported"
+	errCannotSetVersionID            string = "setting the VersionID is not supported. It is updated automatically"
+	errCannotSetFieldID              string = "explicitly setting a field ID value is not supported"
+	errCannotAddRelationalField      string = "the adding of new relation fields is not yet supported"
+	errDuplicateField                string = "duplicate field"
+	errCannotMutateField             string = "mutating an existing field is not supported"
+	errCannotMoveField               string = "moving fields is not currently supported"
+	errInvalidCRDTType               string = "only default or LWW (last writer wins) CRDT types are supported"
+	errCannotDeleteField             string = "deleting an existing field is not supported"
 )
 
 var (
@@ -54,6 +67,18 @@ var (
 	ErrKeyEmpty                 = errors.New("key cannot be empty")
 	ErrAddingP2PCollection      = errors.New(errAddingP2PCollection)
 	ErrRemovingP2PCollection    = errors.New(errRemovingP2PCollection)
+	ErrAddCollectionWithPatch   = errors.New(errAddCollectionWithPatch)
+	ErrCollectionIDDoesntMatch  = errors.New(errCollectionIDDoesntMatch)
+	ErrSchemaIDDoesntMatch      = errors.New(errSchemaIDDoesntMatch)
+	ErrCannotModifySchemaName   = errors.New(errCannotModifySchemaName)
+	ErrCannotSetVersionID       = errors.New(errCannotSetVersionID)
+	ErrCannotSetFieldID         = errors.New(errCannotSetFieldID)
+	ErrCannotAddRelationalField = errors.New(errCannotAddRelationalField)
+	ErrDuplicateField           = errors.New(errDuplicateField)
+	ErrCannotMutateField        = errors.New(errCannotMutateField)
+	ErrCannotMoveField          = errors.New(errCannotMoveField)
+	ErrInvalidCRDTType          = errors.New(errInvalidCRDTType)
+	ErrCannotDeleteField        = errors.New(errCannotDeleteField)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -92,4 +117,90 @@ func NewErrAddingP2PCollection(inner error) error {
 // persisted list of P2P collection IDs was not successful.
 func NewErrRemovingP2PCollection(inner error) error {
 	return errors.Wrap(errRemovingP2PCollection, inner)
+}
+
+func NewErrAddCollectionWithPatch(name string) error {
+	return errors.New(
+		errAddCollectionWithPatch,
+		errors.NewKV("Name", name),
+	)
+}
+
+func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) error {
+	return errors.New(
+		errCollectionIDDoesntMatch,
+		errors.NewKV("Name", name),
+		errors.NewKV("ExistingID", existingID),
+		errors.NewKV("ProposedID", proposedID),
+	)
+}
+
+func NewErrSchemaIDDoesntMatch(name, existingID, proposedID string) error {
+	return errors.New(
+		errSchemaIDDoesntMatch,
+		errors.NewKV("Name", name),
+		errors.NewKV("ExistingID", existingID),
+		errors.NewKV("ProposedID", proposedID),
+	)
+}
+
+func NewErrCannotModifySchemaName(existingName, proposedName string) error {
+	return errors.New(
+		errCannotModifySchemaName,
+		errors.NewKV("ExistingName", existingName),
+		errors.NewKV("ProposedName", proposedName),
+	)
+}
+
+func NewErrCannotSetFieldID(name string, id client.FieldID) error {
+	return errors.New(
+		errCannotSetFieldID,
+		errors.NewKV("Field", name),
+		errors.NewKV("ID", id),
+	)
+}
+
+func NewErrCannotAddRelationalField(name string, kind client.FieldKind) error {
+	return errors.New(
+		errCannotAddRelationalField,
+		errors.NewKV("Field", name),
+		errors.NewKV("Kind", kind),
+	)
+}
+
+func NewErrDuplicateField(name string) error {
+	return errors.New(errDuplicateField, errors.NewKV("Name", name))
+}
+
+func NewErrCannotMutateField(id client.FieldID, name string) error {
+	return errors.New(
+		errCannotMutateField,
+		errors.NewKV("ID", id),
+		errors.NewKV("ProposedName", name),
+	)
+}
+
+func NewErrCannotMoveField(name string, proposedIndex, existingIndex int) error {
+	return errors.New(
+		errCannotMoveField,
+		errors.NewKV("Name", name),
+		errors.NewKV("ProposedIndex", proposedIndex),
+		errors.NewKV("ExistingIndex", existingIndex),
+	)
+}
+
+func NewErrInvalidCRDTType(name string, crdtType client.CType) error {
+	return errors.New(
+		errInvalidCRDTType,
+		errors.NewKV("Name", name),
+		errors.NewKV("CRDTType", crdtType),
+	)
+}
+
+func NewErrCannotDeleteField(name string, id client.FieldID) error {
+	return errors.New(
+		errCannotDeleteField,
+		errors.NewKV("Name", name),
+		errors.NewKV("ID", id),
+	)
 }
