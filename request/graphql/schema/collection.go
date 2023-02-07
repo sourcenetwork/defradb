@@ -233,7 +233,6 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 	}
 }
 
-// find a given directive
 func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Directive, bool) {
 	for _, directive := range field.Directives {
 		if directive.Name.Value == directiveName {
