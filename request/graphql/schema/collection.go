@@ -38,18 +38,19 @@ func FromString(ctx context.Context, schemaString string) ([]client.CollectionDe
 		return nil, err
 	}
 
-	desc, err := FromAst(ctx, doc)
+	desc, err := fromAst(ctx, doc)
 	return desc, err
 }
 
-func FromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescription, error) {
+// fromAst parses a GQL AST into a set of collection descriptions.
+func fromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescription, error) {
 	relationManager := NewRelationManager()
 	descriptions := []client.CollectionDescription{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := FromAstDefinition(ctx, relationManager, defType)
+			description, err := fromAstDefinition(ctx, relationManager, defType)
 			if err != nil {
 				return nil, err
 			}
@@ -73,7 +74,8 @@ func FromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescrip
 	return descriptions, nil
 }
 
-func FromAstDefinition(
+// fromAstDefinition parses a AST object definition into a set of collection descriptions.
+func fromAstDefinition(
 	ctx context.Context,
 	relationManager *RelationManager,
 	def *ast.ObjectDefinition,
