@@ -98,6 +98,10 @@ func (p *parser) Parse(request string) (*request.Request, []error) {
 	return query, nil
 }
 
+func (p *parser) ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+	return schema.FromString(ctx, schemaString)
+}
+
 func (p *parser) AddSchema(ctx context.Context, collections []client.CollectionDescription) error {
 	_, err := p.schemaManager.Generator.Generate(ctx, collections)
 	return err
