@@ -1,3 +1,13 @@
+# Copyright 2022 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
 name: Lint Then Benchmark Workflow
 
 on:
@@ -12,6 +22,14 @@ on:
 
 ## These are the permissions for the lint check job.
 permissions:
+  # Must have a secret (`secrets.ONLY_DEFRADB_REPO_CI_PAT`) setup with the following permissions:
+  # - Actions: Read-Write
+  # - Administration: Read-Write
+  # - Pull Request: Read-Write
+  # - Contents: Read-Only
+  # - Metadata: Read-Only
+  # - Secrets: Read-Only
+
   # Allow read access to pull request (Required for the `only-new-issues` option.)
   pull-requests: read
   contents: read
@@ -141,7 +159,7 @@ jobs:
         uses: machulav/ec2-github-runner@v2
         with:
           mode: start
-          github-token: ${{ secrets.REPO_SCOPE_PAT }}
+          github-token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}
           ec2-image-id: ${{ secrets.EC2_IMAGE_ID }}
           ec2-instance-type: t3.xlarge
           subnet-id: ${{ secrets.SUBNET_ID }}
@@ -220,7 +238,7 @@ jobs:
         with:
           branch: develop
           workflow_id: lint-then-benchmark.yml
-          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+          github_token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}
 
       - name: Download the latest benchmark artifact on develop
         if: |
@@ -228,7 +246,7 @@ jobs:
           github.base_ref == 'develop'
         uses: dawidd6/action-download-artifact@v2
         with:
-          github_token: ${{ secrets.REPO_SCOPE_PAT }}
+          github_token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}
           workflow: lint-then-benchmark.yml
           branch: develop
           name: bench-artifact-${{ steps.last_successful_upload_on_develop.outputs.commit_hash }}
@@ -260,7 +278,7 @@ jobs:
           github.base_ref == 'develop'
         uses: machine-learning-apps/pr-comment@master
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_SCOPE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}
         with:
           path: pretty-comparison.md
 
@@ -295,6 +313,6 @@ jobs:
         uses: machulav/ec2-github-runner@v2
         with:
           mode: stop
-          github-token: ${{ secrets.REPO_SCOPE_PAT }}
+          github-token: ${{ secrets.ONLY_DEFRADB_REPO_CI_PAT }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
