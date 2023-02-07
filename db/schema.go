@@ -46,8 +46,8 @@ func (db *db) loadSchema(ctx context.Context) error {
 	}
 
 	descriptions := make([]client.CollectionDescription, len(collections))
-	for _, collection := range collections {
-		descriptions = append(descriptions, collection.Description())
+	for i, collection := range collections {
+		descriptions[i] = collection.Description()
 	}
 
 	return db.parser.AddSchema(ctx, descriptions)
