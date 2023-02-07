@@ -46,5 +46,5 @@ type Parser interface {
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
 	// Adds the given schema to this parser's model.
-	AddSchema(ctx context.Context, schema string) error
+	AddSchema(ctx context.Context, collections []client.CollectionDescription) error
 }

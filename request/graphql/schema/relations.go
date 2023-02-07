@@ -51,23 +51,6 @@ func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	return rel, nil
 }
 
-func (rm *RelationManager) getRelationByDescription(
-	field, schemaType, objectType string,
-) *Relation {
-	for _, rel := range rm.relations {
-		t1, t2 := rel.schemaTypes[0], rel.schemaTypes[1]
-		if (t1 == schemaType && t2 == objectType) ||
-			(t1 == objectType && t2 == schemaType) {
-			f1, f2 := rel.fields[0], rel.fields[1]
-			if field == f1 || field == f2 {
-				return rel
-			}
-		}
-	}
-
-	return nil
-}
-
 func (rm *RelationManager) NumRelations() int {
 	return len(rm.relations)
 }

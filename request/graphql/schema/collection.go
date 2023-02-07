@@ -24,7 +24,7 @@ import (
 )
 
 // FromString parses a GQL SDL string into a set of collection descriptions.
-func FromString(ctx context.Context, schemaString string) ([]client.CollectionDescription, *ast.Document, error) {
+func FromString(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
 	source := source.NewSource(&source.Source{
 		Body: []byte(schemaString),
 	})
@@ -35,11 +35,11 @@ func FromString(ctx context.Context, schemaString string) ([]client.CollectionDe
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	desc, err := FromAst(ctx, doc)
-	return desc, doc, err //todo - return of doc is temporary (for early test/commit) and will be removed soon
+	return desc, err
 }
 
 func FromAst(ctx context.Context, doc *ast.Document) ([]client.CollectionDescription, error) {
@@ -116,7 +116,7 @@ func FromAstDefinition(
 				relationType = client.Relation_Type_MANY
 			}
 
-			relationName, err = getRelationshipName2(field, def.Name.Value, schema)
+			relationName, err = getRelationshipName(field, def.Name.Value, schema)
 			if err != nil {
 				return client.CollectionDescription{}, err
 			}
@@ -229,33 +229,6 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 	default:
 		return 0, NewErrTypeNotFound(t.String())
 	}
-}
-
-// note to reviewers - this is copied from generate.go and the input types changed.
-// It will be deleted shortly once generate.go is reworked in a later commit - I would
-// not bother reviewing.
-func getRelationshipName2(
-	field *ast.FieldDefinition,
-	hostName string,
-	targetName string,
-) (string, error) {
-	// search for a @relation directive name, and return it if found
-	for _, directive := range field.Directives {
-		if directive.Name.Value == "relation" {
-			for _, argument := range directive.Arguments {
-				if argument.Name.Value == "name" {
-					name, isString := argument.Value.GetValue().(string)
-					if !isString {
-						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
-					}
-					return name, nil
-				}
-			}
-		}
-	}
-
-	// if no name is provided, generate one
-	return genRelationName(hostName, targetName)
 }
 
 func finalizeRelations(relationManager *RelationManager, descriptions []client.CollectionDescription) error {

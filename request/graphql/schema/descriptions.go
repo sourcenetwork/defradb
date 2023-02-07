@@ -37,6 +37,23 @@ var (
 		// - Counters
 	}
 
+	fieldKindToGQLType = map[client.FieldKind]gql.Type{
+		client.FieldKind_DocKey:                gql.ID,
+		client.FieldKind_BOOL:                  gql.Boolean,
+		client.FieldKind_BOOL_ARRAY:            gql.NewList(gql.NewNonNull(gql.Boolean)),
+		client.FieldKind_NILLABLE_BOOL_ARRAY:   gql.NewList(gql.Boolean),
+		client.FieldKind_INT:                   gql.Int,
+		client.FieldKind_INT_ARRAY:             gql.NewList(gql.NewNonNull(gql.Int)),
+		client.FieldKind_NILLABLE_INT_ARRAY:    gql.NewList(gql.Int),
+		client.FieldKind_FLOAT:                 gql.Float,
+		client.FieldKind_FLOAT_ARRAY:           gql.NewList(gql.NewNonNull(gql.Float)),
+		client.FieldKind_NILLABLE_FLOAT_ARRAY:  gql.NewList(gql.Float),
+		client.FieldKind_DATETIME:              gql.DateTime,
+		client.FieldKind_STRING:                gql.String,
+		client.FieldKind_STRING_ARRAY:          gql.NewList(gql.NewNonNull(gql.String)),
+		client.FieldKind_NILLABLE_STRING_ARRAY: gql.NewList(gql.String),
+	}
+
 	// This map is fine to use
 	defaultCRDTForFieldKind = map[client.FieldKind]client.CType{
 		client.FieldKind_DocKey:                client.LWW_REGISTER,
@@ -57,67 +74,6 @@ var (
 		client.FieldKind_FOREIGN_OBJECT_ARRAY:  client.NONE_CRDT,
 	}
 )
-
-func gqlTypeToFieldKind(t gql.Type) client.FieldKind {
-	const (
-		typeID             string = "ID"
-		typeBoolean        string = "Boolean"
-		typeNotNullBoolean string = "Boolean!"
-		typeInt            string = "Int"
-		typeNotNullInt     string = "Int!"
-		typeFloat          string = "Float"
-		typeNotNullFloat   string = "Float!"
-		typeDateTime       string = "DateTime"
-		typeString         string = "String"
-		typeNotNullString  string = "String!"
-	)
-
-	switch v := t.(type) {
-	case *gql.Scalar:
-		switch v.Name() {
-		case typeID:
-			return client.FieldKind_DocKey
-		case typeBoolean:
-			return client.FieldKind_BOOL
-		case typeInt:
-			return client.FieldKind_INT
-		case typeFloat:
-			return client.FieldKind_FLOAT
-		case typeDateTime:
-			return client.FieldKind_DATETIME
-		case typeString:
-			return client.FieldKind_STRING
-		}
-	case *gql.Object:
-		return client.FieldKind_FOREIGN_OBJECT
-	case *gql.List:
-		if notNull, isNotNull := v.OfType.(*gql.NonNull); isNotNull {
-			switch notNull.Name() {
-			case typeNotNullBoolean:
-				return client.FieldKind_BOOL_ARRAY
-			case typeNotNullInt:
-				return client.FieldKind_INT_ARRAY
-			case typeNotNullFloat:
-				return client.FieldKind_FLOAT_ARRAY
-			case typeNotNullString:
-				return client.FieldKind_STRING_ARRAY
-			}
-		}
-		switch v.OfType.Name() {
-		case typeBoolean:
-			return client.FieldKind_NILLABLE_BOOL_ARRAY
-		case typeInt:
-			return client.FieldKind_NILLABLE_INT_ARRAY
-		case typeFloat:
-			return client.FieldKind_NILLABLE_FLOAT_ARRAY
-		case typeString:
-			return client.FieldKind_NILLABLE_STRING_ARRAY
-		}
-		return client.FieldKind_FOREIGN_OBJECT_ARRAY
-	}
-
-	return client.FieldKind_None
-}
 
 /*
 

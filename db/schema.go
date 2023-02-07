@@ -13,23 +13,19 @@ package db
 import (
 	"context"
 
-	"github.com/graphql-go/graphql/language/ast"
-	dsq "github.com/ipfs/go-datastore/query"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
 
 // AddSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
 func (db *db) AddSchema(ctx context.Context, schemaString string) error {
-	err := db.parser.AddSchema(ctx, schemaString)
+	collectionDescriptions, err := schema.FromString(ctx, schemaString)
 	if err != nil {
 		return err
 	}
 
-	collectionDescriptions, schemaDefinitions, err := createDescriptions(ctx, schemaString)
+	err = db.parser.AddSchema(ctx, collectionDescriptions)
 	if err != nil {
 		return err
 	}
@@ -40,59 +36,19 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 		}
 	}
 
-	return db.saveSchema(ctx, schemaDefinitions)
+	return nil
 }
 
 func (db *db) loadSchema(ctx context.Context) error {
-	var sdl string
-	q := dsq.Query{
-		Prefix: "/schema",
-	}
-	res, err := db.systemstore().Query(ctx, q)
+	collections, err := db.GetAllCollections(ctx)
 	if err != nil {
 		return err
 	}
 
-	for kv := range res.Next() {
-		buf := kv.Value[:]
-		sdl += "\n" + string(buf)
+	descriptions := make([]client.CollectionDescription, len(collections))
+	for _, collection := range collections {
+		descriptions = append(descriptions, collection.Description())
 	}
 
-	return db.parser.AddSchema(ctx, sdl)
-}
-
-func (db *db) saveSchema(ctx context.Context, schemaDefinitions []core.SchemaDefinition) error {
-	// save each type individually
-	for _, def := range schemaDefinitions {
-		key := core.NewSchemaKey(def.Name)
-		if err := db.systemstore().Put(ctx, key.ToDS(), def.Body); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func createDescriptions(
-	ctx context.Context,
-	schemaString string,
-) ([]client.CollectionDescription, []core.SchemaDefinition, error) {
-	colDesc, astdoc, err := schema.FromString(ctx, schemaString)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	definitions := make([]core.SchemaDefinition, len(astdoc.Definitions))
-	for i, astDefinition := range astdoc.Definitions {
-		objDef, isObjDef := astDefinition.(*ast.ObjectDefinition)
-		if !isObjDef {
-			continue
-		}
-
-		definitions[i] = core.SchemaDefinition{
-			Name: objDef.Name.Value,
-			Body: objDef.Loc.Source.Body[objDef.Loc.Start:objDef.Loc.End],
-		}
-	}
-
-	return colDesc, definitions, nil
+	return db.parser.AddSchema(ctx, descriptions)
 }

@@ -42,7 +42,6 @@ const (
 	COLLECTION                = "/collection/names"
 	COLLECTION_SCHEMA         = "/collection/schema"
 	COLLECTION_SCHEMA_VERSION = "/collection/version"
-	SCHEMA                    = "/schema"
 	SEQ                       = "/seq"
 	PRIMARY_KEY               = "/pk"
 	REPLICATOR                = "/replicator/id"
@@ -110,12 +109,6 @@ type P2PCollectionKey struct {
 }
 
 var _ Key = (*P2PCollectionKey)(nil)
-
-type SchemaKey struct {
-	SchemaName string
-}
-
-var _ Key = (*SchemaKey)(nil)
 
 type SequenceKey struct {
 	SequenceName string
@@ -213,12 +206,6 @@ func NewCollectionSchemaKey(schemaId string) CollectionSchemaKey {
 
 func NewCollectionSchemaVersionKey(schemaVersionId string) CollectionSchemaVersionKey {
 	return CollectionSchemaVersionKey{SchemaVersionId: schemaVersionId}
-}
-
-// NewSchemaKey returns a formatted schema key for the system data store.
-// It assumes the name of the schema is non-empty.
-func NewSchemaKey(name string) SchemaKey {
-	return SchemaKey{SchemaName: name}
 }
 
 func NewSequenceKey(name string) SequenceKey {
@@ -403,24 +390,6 @@ func (k CollectionSchemaVersionKey) Bytes() []byte {
 }
 
 func (k CollectionSchemaVersionKey) ToDS() ds.Key {
-	return ds.NewKey(k.ToString())
-}
-
-func (k SchemaKey) ToString() string {
-	result := SCHEMA
-
-	if k.SchemaName != "" {
-		result = result + "/" + k.SchemaName
-	}
-
-	return result
-}
-
-func (k SchemaKey) Bytes() []byte {
-	return []byte(k.ToString())
-}
-
-func (k SchemaKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
