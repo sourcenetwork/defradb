@@ -65,7 +65,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint
 deps\:lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.3
 
 .PHONY: deps\:test
 deps\:test:
