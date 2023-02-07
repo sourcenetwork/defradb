@@ -231,6 +231,42 @@ func astTypeToKind(t ast.Type) (client.FieldKind, error) {
 	}
 }
 
+// find a given directive
+func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Directive, bool) {
+	for _, directive := range field.Directives {
+		if directive.Name.Value == directiveName {
+			return directive, true
+		}
+	}
+	return nil, false
+}
+
+// Gets the name of the relationship. Will return the provided name if one is specified,
+// otherwise will generate one
+func getRelationshipName(
+	field *ast.FieldDefinition,
+	hostName string,
+	targetName string,
+) (string, error) {
+	// search for a @relation directive name, and return it if found
+	for _, directive := range field.Directives {
+		if directive.Name.Value == "relation" {
+			for _, argument := range directive.Arguments {
+				if argument.Name.Value == "name" {
+					name, isString := argument.Value.GetValue().(string)
+					if !isString {
+						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
+					}
+					return name, nil
+				}
+			}
+		}
+	}
+
+	// if no name is provided, generate one
+	return genRelationName(hostName, targetName)
+}
+
 func finalizeRelations(relationManager *RelationManager, descriptions []client.CollectionDescription) error {
 	for _, description := range descriptions {
 		for i, field := range description.Schema.Fields {

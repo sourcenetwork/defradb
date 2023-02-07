@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
 
 	"github.com/sourcenetwork/defradb/client"
 
@@ -431,32 +430,6 @@ func (g *Generator) buildTypes(
 	}
 
 	return objs, nil
-}
-
-// Gets the name of the relationship. Will return the provided name if one is specified,
-// otherwise will generate one
-func getRelationshipName(
-	field *ast.FieldDefinition,
-	hostName string,
-	targetName string,
-) (string, error) {
-	// search for a @relation directive name, and return it if found
-	for _, directive := range field.Directives {
-		if directive.Name.Value == "relation" {
-			for _, argument := range directive.Arguments {
-				if argument.Name.Value == "name" {
-					name, isString := argument.Value.GetValue().(string)
-					if !isString {
-						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
-					}
-					return name, nil
-				}
-			}
-		}
-	}
-
-	// if no name is provided, generate one
-	return genRelationName(hostName, targetName)
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
@@ -1195,16 +1168,6 @@ func isNumericArray(list *gql.List) bool {
 		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
 		list.OfType == gql.Int ||
 		list.OfType == gql.Float
-}
-
-// find a given directive
-func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Directive, bool) {
-	for _, directive := range field.Directives {
-		if directive.Name.Value == directiveName {
-			return directive, true
-		}
-	}
-	return nil, false
 }
 
 /* Example
