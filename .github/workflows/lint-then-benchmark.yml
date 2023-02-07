@@ -12,6 +12,14 @@ on:
 
 ## These are the permissions for the lint check job.
 permissions:
+  # Must have a secret (`secrets.ONLY_DEFRADB_REPO_CI_PAT`) setup with the following permissions:
+  # - Actions: Read-Write
+  # - Administration: Read-Write
+  # - Pull Request: Read-Write
+  # - Contents: Read-Only
+  # - Metadata: Read-Only
+  # - Secrets: Read-Only
+
   # Allow read access to pull request (Required for the `only-new-issues` option.)
   pull-requests: read
   contents: read
