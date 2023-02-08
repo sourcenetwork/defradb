@@ -166,3 +166,11 @@ type DeleteResult struct {
 	// DocKeys contains the DocKeys of all the documents deleted by the delete call.
 	DocKeys []string
 }
+
+// P2PCollection is the gRPC response representation of a P2P collection topic
+type P2PCollection struct {
+	// The collection ID
+	ID string
+	// The Collection name
+	Name string
+}

@@ -45,6 +45,7 @@ const (
 	SEQ                       = "/seq"
 	PRIMARY_KEY               = "/pk"
 	REPLICATOR                = "/replicator/id"
+	P2P_COLLECTIONS           = "/p2p/collections"
 )
 
 // Key is an interface that represents a key in the database.

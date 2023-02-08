@@ -22,6 +22,7 @@ import (
 	"github.com/ipfs/go-bitswap/network"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
+	ds "github.com/ipfs/go-datastore"
 	exchange "github.com/ipfs/go-ipfs-exchange-interface"
 	ipld "github.com/ipfs/go-ipld-format"
 	dag "github.com/ipfs/go-merkledag"
@@ -121,6 +122,10 @@ func NewPeer(
 	}
 
 	err = p.loadReplicators(p.ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = p.loadP2PCollections(p.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +255,7 @@ func (p *Peer) RegisterNewDocument(
 	)
 
 	// register topic
-	if err := p.server.addPubSubTopic(dockey.String()); err != nil {
+	if err := p.server.addPubSubTopic(dockey.String(), true); err != nil {
 		log.ErrorE(
 			p.ctx,
 			"Failed to create new pubsub topic",
@@ -273,7 +278,15 @@ func (p *Peer) RegisterNewDocument(
 		Body: body,
 	}
 
-	return p.server.publishLog(p.ctx, dockey.String(), req)
+	if err := p.server.publishLog(p.ctx, dockey.String(), req); err != nil {
+		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", c.String(), dockey.String()), err)
+	}
+
+	if err := p.server.publishLog(p.ctx, schemaID, req); err != nil {
+		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", c.String(), schemaID), err)
+	}
+
+	return nil
 }
 
 // SetReplicator adds a target peer node as a replication destination for documents in our DB.
@@ -553,6 +566,22 @@ func (p *Peer) loadReplicators(ctx context.Context) error {
 	return nil
 }
 
+func (p *Peer) loadP2PCollections(ctx context.Context) error {
+	collections, err := p.db.GetAllP2PCollections(ctx)
+	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+		return err
+	}
+
+	for _, col := range collections {
+		err := p.server.addPubSubTopic(col, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (p *Peer) handleDocCreateLog(evt events.Update) error {
 	dockey, err := client.NewDocKeyFromString(evt.DocKey)
 	if err != nil {
@@ -593,7 +622,11 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	p.pushLogToReplicators(p.ctx, evt)
 
 	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
-		return errors.Wrap(fmt.Sprintf("Error publishing log %s for %s", evt.Cid, evt.DocKey), err)
+		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
+	}
+
+	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
+		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", evt.Cid, evt.SchemaID), err)
 	}
 	return nil
 }
@@ -604,6 +637,10 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 	for _, peer := range p.ps.ListPeers(lg.DocKey) {
 		peers[peer.String()] = struct{}{}
 	}
+	for _, peer := range p.ps.ListPeers(lg.SchemaID) {
+		peers[peer.String()] = struct{}{}
+	}
+
 	if reps, exists := p.replicators[lg.SchemaID]; exists {
 		for pid := range reps {
 			// Don't push if pid is in the list of peers for the topic.
@@ -672,4 +709,65 @@ type EvtReceivedPushLog struct {
 
 type EvtPubSub struct {
 	Peer peer.ID
+}
+
+// AddP2PCollectionTopic adds the collectionID to the pubsup topics
+func (p *Peer) AddP2PCollections(collections []string) error {
+	// first let's make sure the collections actually exists
+	for _, col := range collections {
+		_, err := p.db.GetCollectionBySchemaID(p.ctx, col)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, col := range collections {
+		err := p.db.AddP2PCollection(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		err = p.server.addPubSubTopic(col, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RemoveP2PCollectionTopics adds the collectionID from the pubsup topics
+func (p *Peer) RemoveP2PCollections(collections []string) error {
+	for _, col := range collections {
+		err := p.db.RemoveP2PCollection(p.ctx, col)
+		if err != nil {
+			return err
+		}
+		err = p.server.removePubSubTopic(col)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetAllP2PCollections gets all the collectionIDs from the pubsup topics
+func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
+	collections, err := p.db.GetAllP2PCollections(p.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var p2pCols []client.P2PCollection
+	for _, colID := range collections {
+		col, err := p.db.GetCollectionBySchemaID(p.ctx, colID)
+		if err != nil {
+			return nil, err
+		}
+		p2pCols = append(p2pCols, client.P2PCollection{
+			ID:   colID,
+			Name: col.Name(),
+		})
+	}
+
+	return p2pCols, nil
 }

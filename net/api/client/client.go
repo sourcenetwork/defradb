@@ -14,6 +14,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
@@ -106,4 +107,56 @@ func (c *Client) GetAllReplicators(
 		})
 	}
 	return reps, nil
+}
+
+// AddP2PCollections sends a request to add P2P collecctions to the stored list.
+func (c *Client) AddP2PCollections(
+	ctx context.Context,
+	collections ...string,
+) error {
+	resp, err := c.c.AddP2PCollections(ctx, &pb.AddP2PCollectionsRequest{
+		Collections: collections,
+	})
+	if err != nil {
+		return errors.Wrap("could not add P2P collection topics", err)
+	}
+	if resp.Err != "" {
+		return errors.New(fmt.Sprintf("could not add P2P collection topics: %s", resp))
+	}
+	return nil
+}
+
+// RemoveP2PCollections sends a request to remove P2P collecctions from the stored list.
+func (c *Client) RemoveP2PCollections(
+	ctx context.Context,
+	collections ...string,
+) error {
+	resp, err := c.c.RemoveP2PCollections(ctx, &pb.RemoveP2PCollectionsRequest{
+		Collections: collections,
+	})
+	if err != nil {
+		return errors.Wrap("could not remove P2P collection topics", err)
+	}
+	if resp.Err != "" {
+		return errors.New(fmt.Sprintf("could not remove P2P collection topics: %s", resp))
+	}
+	return nil
+}
+
+// RemoveP2PCollections sends a request to get all P2P collecctions from the stored list.
+func (c *Client) GetAllP2PCollections(
+	ctx context.Context,
+) ([]client.P2PCollection, error) {
+	resp, err := c.c.GetAllP2PCollections(ctx, &pb.GetAllP2PCollectionsRequest{})
+	if err != nil {
+		return nil, errors.Wrap("could not get all P2P collection topics", err)
+	}
+	var collections []client.P2PCollection
+	for _, col := range resp.Collections {
+		collections = append(collections, client.P2PCollection{
+			ID:   col.Id,
+			Name: col.Name,
+		})
+	}
+	return collections, nil
 }

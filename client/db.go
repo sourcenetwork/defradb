@@ -51,6 +51,13 @@ type DB interface {
 	// GetAllReplicators returns the full list of replicators with their
 	// subscribed schemas.
 	GetAllReplicators(ctx context.Context) ([]Replicator, error)
+
+	// AddP2PCollection adds a P2P collection to the stored list
+	AddP2PCollection(ctx context.Context, collectionID string) error
+	// RemoveP2PCollection removes P2P collection from the stored list
+	RemoveP2PCollection(ctx context.Context, collectionID string) error
+	// GetAllP2PCollections returns the full list of P2P collections
+	GetAllP2PCollections(ctx context.Context) ([]string, error)
 }
 
 type GQLResult struct {

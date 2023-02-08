@@ -314,6 +314,17 @@ About the flags:
 This starts two nodes and connect them via pubsub networking.
 
 
+### Collection subscription example
+
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections update on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+```shell
+defradb client rpc p2pcollection add --url localhost:9182 <collectionID>
+```
+Multiple collection IDs can be added at once.
+```shell
+defradb client rpc p2pcollection add --url localhost:9182 <collection1ID> <collection2ID> <collection3ID>
+```
+
 ### Replicator example
 
 Replicator peering is established in one direction. For example, a *nodeA* can be given a *nodeB* to actively send updates to, but *nodeB* won't send updates in return. However, nodes broadcast updates of documents over document-specific pubsub topics, therefore *nodeB* while it won't replicate directly to *nodeA*, it will *passively*.

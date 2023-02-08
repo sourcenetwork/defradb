@@ -44,7 +44,7 @@ type server struct {
 	opts []grpc.DialOption
 	db   client.DB
 
-	topics map[string]*rpc.Topic
+	topics map[string]pubsubTopic
 	mu     sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
@@ -53,13 +53,18 @@ type server struct {
 	pushLogEmitter event.Emitter
 }
 
+type pubsubTopic struct {
+	*rpc.Topic
+	subscribed bool
+}
+
 // newServer creates a new network server that handle/directs RPC requests to the
 // underlying DB instance.
 func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) {
 	s := &server{
 		peer:   p,
 		conns:  make(map[libpeer.ID]*grpc.ClientConn),
-		topics: make(map[string]*rpc.Topic),
+		topics: make(map[string]pubsubTopic),
 		db:     db,
 	}
 
@@ -90,7 +95,7 @@ func newServer(p *Peer, db client.DB, opts ...grpc.DialOption) (*server, error) 
 					"Registering existing DocKey pubsub topic",
 					logging.NewKV("DocKey", key.Key.String()),
 				)
-				if err := s.addPubSubTopic(key.Key.String()); err != nil {
+				if err := s.addPubSubTopic(key.Key.String(), true); err != nil {
 					return nil, err
 				}
 				i++
@@ -227,7 +232,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		// Once processed, subscribe to the dockey topic on the pubsub network.
-		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey)
+		return &pb.PushLogReply{}, s.addPubSubTopic(docKey.DocKey, true)
 	}
 
 	return &pb.PushLogReply{}, client.NewErrMaxTxnRetries(txnErr)
@@ -242,30 +247,39 @@ func (s *server) GetHeadLog(
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network
-func (s *server) addPubSubTopic(topic string) error {
+func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 	if s.peer.ps == nil {
 		return nil
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.topics[topic]; ok {
+	if t, ok := s.topics[topic]; ok {
+		// When the topic was previously set to publish only and we now want to subscribe,
+		// we need to close the existing topic and create a new one.
+		if !t.subscribed && subscribe {
+			if err := t.Close(); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
-	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, true)
+	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, subscribe)
 	if err != nil {
 		return err
 	}
 
 	t.SetEventHandler(s.pubSubEventHandler)
 	t.SetMessageHandler(s.pubSubMessageHandler)
-	s.topics[topic] = t
+	s.topics[topic] = pubsubTopic{
+		Topic:      t,
+		subscribed: subscribe,
+	}
 	return nil
 }
 
 // removePubSubTopic unsubscribes to a topic
-//nolint:unused
 func (s *server) removePubSubTopic(topic string) error {
 	if s.peer.ps == nil {
 		return nil
@@ -297,15 +311,19 @@ func (s *server) removeAllPubsubTopics() error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
-func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogRequest) error {
+func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRequest) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
 	s.mu.Lock()
-	t, ok := s.topics[dockey]
+	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		return errors.New(fmt.Sprintf("No pubsub topic found for doc %s", dockey))
+		err := s.addPubSubTopic(topic, false)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
+		}
+		return s.publishLog(ctx, topic, req)
 	}
 
 	data, err := req.Marshal()
@@ -314,13 +332,14 @@ func (s *server) publishLog(ctx context.Context, dockey string, req *pb.PushLogR
 	}
 
 	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", dockey), err)
+		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
 	}
 	log.Debug(
 		ctx,
 		"Published log",
 		logging.NewKV("CID", req.Body.Cid.Cid),
-		logging.NewKV("DocKey", dockey),
+		logging.NewKV("DocKey", req.Body.DocKey.String()),
+		logging.NewKV("SchemaID", string(req.Body.SchemaID)),
 	)
 	return nil
 }

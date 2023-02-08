@@ -49,6 +49,10 @@ type P2PTestCase struct {
 	// Only peers with lower index than the node can be used in the list of peers.
 	NodeReplicators map[int][]int
 
+	// List of collections to subscribe to on the pubsub system.
+	// node/collection
+	NodeP2PCollection map[int][]int
+
 	// collection/dockey/value
 	SeedDocuments map[int]map[int]string
 
@@ -331,6 +335,21 @@ func ExecuteTestCase(
 		}
 	}
 
+	// set P2P collection topics on each node
+	for i, collections := range test.NodeP2PCollection {
+		n := nodes[i]
+
+		var colIDs []string
+		for _, c := range collections {
+			col, err := n.DB.GetCollectionByName(ctx, collectionNames[c])
+			require.NoError(t, err)
+			colIDs = append(colIDs, col.SchemaID())
+		}
+
+		err := n.Peer.AddP2PCollections(colIDs)
+		require.NoError(t, err)
+	}
+
 	creates := toCreateMutationSlice(test, collectionNames)
 	updates := toUpdateMutationSlice(test, collectionNames)
 	waitGroupings := getExpectedWaitGroupings(test, creates, updates)
@@ -443,8 +462,19 @@ func ExecuteTestCase(
 	}
 }
 
-func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, isCreate bool) map[int]struct{} {
+func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, collectionIndex int, isCreate bool) map[int]struct{} {
 	nodeIndexesToSync := _getNodeIndexesToSync(test.NodeReplicators, sourceIndex)
+
+	for s, collections := range test.NodeP2PCollection {
+		if s == sourceIndex {
+			continue
+		}
+		for _, col := range collections {
+			if col == collectionIndex {
+				nodeIndexesToSync[s] = struct{}{}
+			}
+		}
+	}
 
 	// We should not wait for peers on create, as they do not sync new docs
 	if !isCreate {
@@ -553,7 +583,7 @@ func toCreateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 						collectionName: collectionName,
 						docIndex:       docIndex,
 						payload:        payload,
-						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, true),
+						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, collectionIndex, true),
 					},
 				)
 			}
@@ -588,6 +618,21 @@ func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 		}
 	}
 
+	for node, collections := range test.NodeP2PCollection {
+		for sourceIndex, mutCollections := range test.Creates {
+			if node == sourceIndex {
+				continue
+			}
+			for _, col := range collections {
+				if docIndexes, ok := mutCollections[col]; ok {
+					for docIndex := range docIndexes {
+						expectedDocIndexes[docIndex] = struct{}{}
+					}
+				}
+			}
+		}
+	}
+
 	result := []mutation{}
 	for sourceIndex, payloadByCollectionName := range test.Updates {
 		for collectionIndex, updatesByDocIndex := range payloadByCollectionName {
@@ -596,7 +641,7 @@ func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutatio
 				for _, payload := range updates {
 					nodesToSync := map[int]struct{}{}
 					if _, isExpectedToSync := expectedDocIndexes[docIndex]; isExpectedToSync {
-						nodesToSync = getNodeIndexesToSync(test, sourceIndex, false)
+						nodesToSync = getNodeIndexesToSync(test, sourceIndex, collectionIndex, false)
 					}
 
 					result = append(
