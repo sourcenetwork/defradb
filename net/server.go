@@ -53,6 +53,8 @@ type server struct {
 	pushLogEmitter event.Emitter
 }
 
+// pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has
+// been subscribed to.
 type pubsubTopic struct {
 	*rpc.Topic
 	subscribed bool
