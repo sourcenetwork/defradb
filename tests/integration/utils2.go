@@ -1,0 +1,781 @@
+// Copyright 2022 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package tests
+
+import (
+	"context"
+	"os"
+	"strings"
+	"syscall"
+	"testing"
+	"time"
+
+	badger "github.com/dgraph-io/badger/v3"
+	ds "github.com/ipfs/go-datastore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
+	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
+	"github.com/sourcenetwork/defradb/datastore/memory"
+	"github.com/sourcenetwork/defradb/db"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/logging"
+)
+
+const (
+	memoryBadgerEnvName        = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName          = "DEFRA_BADGER_FILE"
+	fileBadgerPathEnvName      = "DEFRA_BADGER_FILE_PATH"
+	inMemoryEnvName            = "DEFRA_IN_MEMORY"
+	setupOnlyEnvName           = "DEFRA_SETUP_ONLY"
+	detectDbChangesEnvName     = "DEFRA_DETECT_DATABASE_CHANGES"
+	repositoryEnvName          = "DEFRA_CODE_REPOSITORY"
+	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
+	documentationDirectoryName = "data_format_changes"
+)
+
+// The integration tests open many files. This increases the limits on the number of open files of
+// the process to fix this issue. This is done by default in Go 1.19.
+func init() {
+	var lim syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &lim); err == nil && lim.Cur != lim.Max {
+		lim.Cur = lim.Max
+		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &lim)
+		if err != nil {
+			log.ErrorE(context.Background(), "error setting rlimit", err)
+		}
+	}
+}
+
+var (
+	log            = logging.MustNewLogger("defra.tests.integration")
+	badgerInMemory bool
+	badgerFile     bool
+	inMemoryStore  bool
+)
+
+const subscriptionTimeout = 1 * time.Second
+
+type databaseInfo struct {
+	name      string
+	path      string
+	db        client.DB
+	rootstore ds.Batching
+}
+
+func (dbi databaseInfo) Name() string {
+	return dbi.name
+}
+
+func (dbi databaseInfo) Rootstore() ds.Batching {
+	return dbi.rootstore
+}
+
+func (dbi databaseInfo) DB() client.DB {
+	return dbi.db
+}
+
+var databaseDir string
+
+/*
+If this is set to true the integration test suite will instead of it's normal profile do
+the following:
+
+On [package] Init:
+  - Get the (local) latest commit from the target/parent branch // code assumes
+    git fetch has been done
+  - Check to see if a clone of that commit/branch is available in the temp dir, and
+    if not clone the target branch
+  - Check to see if there are any new .md files in the current branch's data_format_changes
+    dir (vs the target branch)
+
+For each test:
+  - If new documentation detected, pass the test and exit
+  - Create a new (test/auto-deleted) temp dir for defra to live/run in
+  - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
+    if test does not exist in target and is new to this branch)
+  - Run the test request and assert results (as per normal tests) using the current branch
+*/
+var DetectDbChanges bool
+var SetupOnly bool
+
+var detectDbChangesCodeDir string
+var areDatabaseFormatChangesDocumented bool
+var previousTestCaseTestName string
+
+func init() {
+	// We use environment variables instead of flags `go test ./...` throws for all packages
+	//  that don't have the flag defined
+	badgerFileValue, _ := os.LookupEnv(fileBadgerEnvName)
+	badgerInMemoryValue, _ := os.LookupEnv(memoryBadgerEnvName)
+	databaseDir, _ = os.LookupEnv(fileBadgerPathEnvName)
+	detectDbChangesValue, _ := os.LookupEnv(detectDbChangesEnvName)
+	inMemoryStoreValue, _ := os.LookupEnv(inMemoryEnvName)
+	repositoryValue, repositorySpecified := os.LookupEnv(repositoryEnvName)
+	setupOnlyValue, _ := os.LookupEnv(setupOnlyEnvName)
+	targetBranchValue, targetBranchSpecified := os.LookupEnv(targetBranchEnvName)
+
+	badgerFile = getBool(badgerFileValue)
+	badgerInMemory = getBool(badgerInMemoryValue)
+	inMemoryStore = getBool(inMemoryStoreValue)
+	DetectDbChanges = getBool(detectDbChangesValue)
+	SetupOnly = getBool(setupOnlyValue)
+
+	if !repositorySpecified {
+		repositoryValue = "git@github.com:sourcenetwork/defradb.git"
+	}
+
+	if !targetBranchSpecified {
+		targetBranchValue = "develop"
+	}
+
+	// default is to run against all
+	if !badgerInMemory && !badgerFile && !inMemoryStore && !DetectDbChanges {
+		badgerInMemory = true
+		// Testing against the file system is off by default
+		badgerFile = false
+		inMemoryStore = true
+	}
+
+	if DetectDbChanges {
+		detectDbChangesInit(repositoryValue, targetBranchValue)
+	}
+}
+
+func getBool(val string) bool {
+	switch strings.ToLower(val) {
+	case "true":
+		return true
+	default:
+		return false
+	}
+}
+
+// AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
+//
+//	also ensures the change detection is skipped so no false fails happen.
+//
+//	Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
+	if IsDetectingDbChanges() {
+		// The `assert.Panics` call will falsely fail if this test is executed during
+		// a detect changes test run
+		t.Skip()
+	}
+	return assert.Panics(t, f, "expected a panic, but none found.")
+}
+
+func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, error) {
+	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
+	rootstore, err := badgerds.NewDatastore("", &opts)
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	dbopts = append(dbopts, db.WithUpdateEvents())
+
+	db, err := db.NewDB(ctx, rootstore, dbopts...)
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	return databaseInfo{
+		name:      "badger-in-memory",
+		db:        db,
+		rootstore: rootstore,
+	}, nil
+}
+
+func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
+	rootstore := memory.NewDatastore(ctx)
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	return databaseInfo{
+		name:      "defra-memory-datastore",
+		db:        db,
+		rootstore: rootstore,
+	}, nil
+}
+
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
+	var path string
+	if databaseDir == "" {
+		path = t.TempDir()
+	} else {
+		path = databaseDir
+	}
+
+	return newBadgerFileDB(ctx, t, path)
+}
+
+func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseInfo, error) {
+	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
+	rootstore, err := badgerds.NewDatastore(path, &opts)
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
+	if err != nil {
+		return databaseInfo{}, err
+	}
+
+	return databaseInfo{
+		name:      "badger-file-system",
+		path:      path,
+		db:        db,
+		rootstore: rootstore,
+	}, nil
+}
+
+func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
+	databases := []databaseInfo{}
+
+	if badgerInMemory {
+		badgerIMDatabase, err := NewBadgerMemoryDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		databases = append(databases, badgerIMDatabase)
+	}
+
+	if badgerFile {
+		badgerIMDatabase, err := NewBadgerFileDB(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		databases = append(databases, badgerIMDatabase)
+	}
+
+	if inMemoryStore {
+		inMemoryDatabase, err := NewInMemoryDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		databases = append(databases, inMemoryDatabase)
+	}
+
+	return databases, nil
+}
+
+// ExecuteTestCase executes the given TestCase against the configured database
+// instances.
+//
+// Will also attempt to detect incompatible changes in the persisted data if
+// configured to do so (the CI will do so, but disabled by default as it is slow).
+func ExecuteTestCase(
+	t *testing.T,
+	collectionNames []string,
+	testCase TestCase,
+) {
+	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames) {
+		return
+	}
+
+	ctx := context.Background()
+	dbs, err := GetDatabases(ctx, t)
+	require.Nil(t, err)
+	// Assert that this is not empty to protect against accidental mis-configurations,
+	// otherwise an empty set would silently pass all the tests.
+	require.NotEmpty(t, dbs)
+
+	for _, dbi := range dbs {
+		executeTestCase(ctx, t, collectionNames, testCase, dbi)
+		dbi.db.Close(ctx)
+	}
+}
+
+func executeTestCase(
+	ctx context.Context,
+	t *testing.T,
+	collectionNames []string,
+	testCase TestCase,
+	dbi databaseInfo,
+) {
+	var done bool
+	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbi.name))
+
+	if DetectDbChanges && !SetupOnly {
+		// Setup the database using the target branch, and then refresh the current instance
+		dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
+	}
+
+	startActionIndex, endActionIndex := getActionRange(testCase)
+	collections := []client.Collection{}
+	documents := [][]*client.Document{}
+	txns := []datastore.Txn{}
+	allActionsDone := make(chan struct{})
+	resultsChans := []subscriptionResult{}
+
+	for i := startActionIndex; i <= endActionIndex; i++ {
+		switch action := testCase.Actions[i].(type) {
+		case SchemaUpdate:
+			if updateSchema(ctx, t, dbi.db, testCase, action) {
+				return
+			}
+			// If the schema was updated we need to refresh the collection definitions.
+			collections = getCollections(ctx, t, dbi.db, collectionNames)
+
+		case CreateDoc:
+			if documents, done = createDoc(ctx, t, testCase, collections, documents, action); done {
+				return
+			}
+
+		case UpdateDoc:
+			if updateDoc(ctx, t, testCase, collections, documents, action) {
+				return
+			}
+
+		case TransactionRequest2:
+			if txns, done = executeTransactionRequest(ctx, t, dbi.db, txns, testCase, action); done {
+				return
+			}
+
+		case TransactionCommit:
+			if commitTransaction(ctx, t, txns, testCase, action) {
+				return
+			}
+
+		case SubscriptionRequest2:
+			var resultsChan subscriptionResult
+			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, dbi.db, testCase, action)
+			if done {
+				return
+			}
+			resultsChans = append(resultsChans, resultsChan)
+
+		case Request:
+			if executeRequest(ctx, t, dbi.db, testCase, action) {
+				return
+			}
+
+		case SetupComplete:
+			// no-op, just continue.
+
+		default:
+			t.Fatalf("Unknown action type %T", action)
+		}
+	}
+
+	if len(resultsChans) > 0 {
+		// Notify any active subscriptions that all requests have been sent.
+		close(allActionsDone)
+	}
+	for _, rChans := range resultsChans {
+		select {
+		case subscriptionAssert := <-rChans.subscriptionAssert:
+			// We want to assert back in the main thread so failures get recorded properly
+			subscriptionAssert()
+
+		// a safety in case the stream hangs or no results are expected.
+		case <-time.After(subscriptionTimeout):
+			if rChans.expectedTimeout {
+				continue
+			}
+			assert.Fail(t, "timeout occured while waiting for data stream", testCase.Description)
+		}
+	}
+}
+
+// getActionRange returns the index of the first action to be run, and the last.
+//
+// Not all processes will run all actions - if this is a change detector run they
+// will be split.
+//
+// If a SetupComplete action is provided, the actions will be split there, if not
+// they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
+func getActionRange(testCase TestCase) (int, int) {
+	startIndex := 0
+	endIndex := len(testCase.Actions) - 1
+
+	if !DetectDbChanges {
+		return startIndex, endIndex
+	}
+
+	setupCompleteIndex := -1
+	firstNonSetupIndex := -1
+
+ActionLoop:
+	for i := range testCase.Actions {
+		switch testCase.Actions[i].(type) {
+		case SetupComplete:
+			setupCompleteIndex = i
+			// We dont care about anything else if this has been explicitly provided
+			break ActionLoop
+
+		case SchemaUpdate, CreateDoc, UpdateDoc:
+			continue
+
+		default:
+			firstNonSetupIndex = i
+			break ActionLoop
+		}
+	}
+
+	if SetupOnly {
+		if setupCompleteIndex > -1 {
+			endIndex = setupCompleteIndex
+		} else if firstNonSetupIndex > -1 {
+			// -1 to exclude this index
+			endIndex = firstNonSetupIndex - 1
+		}
+	} else {
+		if setupCompleteIndex > -1 {
+			// +1 to exclude the SetupComplete action
+			startIndex = setupCompleteIndex + 1
+		} else if firstNonSetupIndex > -1 {
+			// We must not set this to -1 :)
+			startIndex = firstNonSetupIndex
+		}
+	}
+
+	return startIndex, endIndex
+}
+
+// getCollections returns all the collections of the given name, preserving order.
+//
+// If a given collection is not present in the database the value at the corresponding
+// result-index will be nil.
+func getCollections(
+	ctx context.Context,
+	t *testing.T,
+	db client.DB,
+	collectionNames []string,
+) []client.Collection {
+	collections := make([]client.Collection, len(collectionNames))
+
+	allCollections, err := db.GetAllCollections(ctx)
+	require.Nil(t, err)
+
+	for i, collectionName := range collectionNames {
+		for _, collection := range allCollections {
+			if collection.Name() == collectionName {
+				collections[i] = collection
+				break
+			}
+		}
+	}
+	return collections
+}
+
+// updateSchema updates the schema using the given details.
+func updateSchema(
+	ctx context.Context,
+	t *testing.T,
+	db client.DB,
+	testCase TestCase,
+	action SchemaUpdate,
+) bool {
+	err := db.AddSchema(ctx, action.Schema)
+	return AssertError(t, testCase.Description, err, action.ExpectedError)
+}
+
+// createDoc creates a document using the collection api and caches it in the
+// given documents slice.
+func createDoc(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	collections []client.Collection,
+	documents [][]*client.Document,
+	action CreateDoc,
+) ([][]*client.Document, bool) {
+	doc, err := client.NewDocFromJSON([]byte(action.Doc))
+	if AssertError(t, testCase.Description, err, action.ExpectedError) {
+		return nil, true
+	}
+
+	err = collections[action.CollectionId].Save(ctx, doc)
+	if AssertError(t, testCase.Description, err, action.ExpectedError) {
+		return nil, true
+	}
+
+	if action.CollectionId >= len(documents) {
+		// Expand the slice if required, so that the document can be accessed by collection index
+		documents = append(documents, make([][]*client.Document, action.CollectionId-len(documents)+1)...)
+	}
+	documents[action.CollectionId] = append(documents[action.CollectionId], doc)
+
+	return documents, false
+}
+
+// updateDoc updates a document using the collection api.
+func updateDoc(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	collections []client.Collection,
+	documents [][]*client.Document,
+	action UpdateDoc,
+) bool {
+	doc := documents[action.CollectionId][action.DocId]
+
+	err := doc.SetWithJSON([]byte(action.Doc))
+	if AssertError(t, testCase.Description, err, action.ExpectedError) {
+		return true
+	}
+
+	err = collections[action.CollectionId].Save(ctx, doc)
+	return AssertError(t, testCase.Description, err, action.ExpectedError)
+}
+
+// executeTransactionRequest executes the given transactional request.
+//
+// It will create and cache a new transaction if it is the first of the given
+// TransactionId. If an error is returned the transaction will be discarded before
+// this function returns.
+func executeTransactionRequest(
+	ctx context.Context,
+	t *testing.T,
+	db client.DB,
+	txns []datastore.Txn,
+	testCase TestCase,
+	action TransactionRequest2,
+) ([]datastore.Txn, bool) {
+	if action.TransactionId >= len(txns) {
+		// Extend the txn slice so this txn can fit and be accessed by TransactionId
+		txns = append(txns, make([]datastore.Txn, action.TransactionId-len(txns)+1)...)
+	}
+
+	if txns[action.TransactionId] == nil {
+		// Create a new transaction if one does not already exist.
+		txn, err := db.NewTxn(ctx, false)
+		if AssertError(t, testCase.Description, err, action.ExpectedError) {
+			txn.Discard(ctx)
+			return nil, true
+		}
+
+		txns[action.TransactionId] = txn
+	}
+
+	result := db.ExecTransactionalRequest(ctx, action.Request, txns[action.TransactionId])
+	done := assertRequestResults(
+		ctx,
+		t,
+		testCase.Description,
+		&result.GQL,
+		action.Results,
+		action.ExpectedError,
+	)
+
+	if done {
+		// Make sure to discard the transaction before exit, else an unwanted error
+		// may surface later (e.g. on database close).
+		txns[action.TransactionId].Discard(ctx)
+		return nil, true
+	}
+
+	return txns, false
+}
+
+// commitTransaction commits the given transaction.
+//
+// Will panic if the given transaction does not exist. Discards the transaction if
+// an error is returned on commit.
+func commitTransaction(
+	ctx context.Context,
+	t *testing.T,
+	txns []datastore.Txn,
+	testCase TestCase,
+	action TransactionCommit,
+) bool {
+	err := txns[action.TransactionId].Commit(ctx)
+	if err != nil {
+		txns[action.TransactionId].Discard(ctx)
+	}
+
+	return AssertError(t, testCase.Description, err, action.ExpectedError)
+}
+
+// executeRequest executes the given request.
+func executeRequest(
+	ctx context.Context,
+	t *testing.T,
+	db client.DB,
+	testCase TestCase,
+	action Request,
+) bool {
+	result := db.ExecRequest(ctx, action.Request)
+	return assertRequestResults(
+		ctx,
+		t,
+		testCase.Description,
+		&result.GQL,
+		action.Results,
+		action.ExpectedError,
+	)
+}
+
+// subscriptionResult wraps details required to assert that the
+// subscription recieves all expected results whilst it remains
+// active.
+type subscriptionResult struct {
+	// If true, this subscription expects to timeout.
+	expectedTimeout bool
+
+	// A channel that will recieve a function that asserts that
+	// the subscription recieved all its expected results and no more.
+	// It should be called from the main test routine to ensure that
+	// failures are recorded properly. It will only yield once, once
+	// the subscription has terminated.
+	subscriptionAssert chan func()
+}
+
+// executeSubscriptionRequest executes the given subscription request, returning
+// a channel that will recieve a single event once the subscription has been completed.
+func executeSubscriptionRequest(
+	ctx context.Context,
+	t *testing.T,
+	allActionsDone chan struct{},
+	db client.DB,
+	testCase TestCase,
+	action SubscriptionRequest2,
+) (subscriptionResult, bool) {
+	resultChan := subscriptionResult{
+		expectedTimeout:    action.ExpectedTimout,
+		subscriptionAssert: make(chan func()),
+	}
+
+	result := db.ExecRequest(ctx, action.Request)
+	if AssertErrors(t, testCase.Description, result.GQL.Errors, action.ExpectedError) {
+		return subscriptionResult{}, true
+	}
+
+	go func() {
+		data := []map[string]any{}
+		errs := []any{}
+
+		stream := result.Pub.Stream()
+		for {
+			select {
+			case s := <-stream:
+				sResult, _ := s.(client.GQLResult)
+				sData, _ := sResult.Data.([]map[string]any)
+				errs = append(errs, sResult.Errors...)
+				data = append(data, sData...)
+
+			case <-allActionsDone:
+				// Once all other actions have been completed, sleep.
+				// This is a lazy way to allow the subscription to recieve
+				// the events generated, and to ensure that no more than are
+				// expected are recieved. It should probably be done in a better
+				// way than this at somepoint, but is good enough for now.
+				time.Sleep(subscriptionTimeout)
+
+				finalResult := &client.GQLResult{
+					Data:   data,
+					Errors: errs,
+				}
+
+				resultChan.subscriptionAssert <- func() {
+					// This assert should be executed from the main test routine
+					// so that failures will be properly handled.
+					assertRequestResults(
+						ctx,
+						t,
+						testCase.Description,
+						finalResult,
+						action.Results,
+						action.ExpectedError,
+					)
+				}
+
+				return
+			}
+		}
+	}()
+
+	return resultChan, false
+}
+
+// Asserts as to whether an error has been raised as expected (or not). If an expected
+// error has been raised it will return true, returns false in all other cases.
+func AssertError(t *testing.T, description string, err error, expectedError string) bool {
+	if err == nil {
+		return false
+	}
+
+	if expectedError == "" {
+		assert.NoError(t, err, description)
+		return false
+	} else {
+		if !strings.Contains(err.Error(), expectedError) {
+			assert.ErrorIs(t, err, errors.New(expectedError))
+			return false
+		}
+		return true
+	}
+}
+
+// Asserts as to whether an error has been raised as expected (or not). If an expected
+// error has been raised it will return true, returns false in all other cases.
+func AssertErrors(
+	t *testing.T,
+	description string,
+	errs []any,
+	expectedError string,
+) bool {
+	if expectedError == "" {
+		assert.Empty(t, errs, description)
+	} else {
+		for _, e := range errs {
+			// This is always a string at the moment, add support for other types as and when needed
+			errorString := e.(string)
+			if !strings.Contains(errorString, expectedError) {
+				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
+				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+				continue
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func assertRequestResults(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	result *client.GQLResult,
+	expectedResults []map[string]any,
+	expectedError string,
+) bool {
+	if AssertErrors(t, description, result.Errors, expectedError) {
+		return true
+	}
+
+	if expectedResults == nil && result.Data == nil {
+		return true
+	}
+
+	// Note: if result.Data == nil this panics (the panic seems useful while testing).
+	resultantData := result.Data.([]map[string]any)
+
+	log.Info(ctx, "", logging.NewKV("RequestResults", result.Data))
+
+	// compare results
+	assert.Equal(t, len(expectedResults), len(resultantData), description)
+	if len(expectedResults) == 0 {
+		assert.Equal(t, expectedResults, resultantData)
+	}
+	for i, result := range resultantData {
+		if len(expectedResults) > i {
+			assert.Equal(t, expectedResults[i], result, description)
+		}
+	}
+
+	return false
+}

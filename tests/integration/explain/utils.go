@@ -112,7 +112,7 @@ func ExecuteExplainRequestTestCase(
 	collectionNames []string,
 	explainTest ExplainRequestTestCase,
 ) {
-	if testUtils.DetectDbChanges && testUtils.DetectDbChangesPreTestChecks(t, collectionNames, false) {
+	if testUtils.DetectDbChanges && testUtils.DetectDbChangesPreTestChecks(t, collectionNames) {
 		return
 	}
 
