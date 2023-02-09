@@ -13,15 +13,10 @@ package tests
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/logging"
 )
 
 // Represents a subscription request.
@@ -80,187 +75,101 @@ func ExecuteRequestTestCase(
 	collectionNames []string,
 	test RequestTestCase,
 ) {
-	isTransactional := len(test.TransactionalRequests) > 0
-
-	if DetectDbChanges && DetectDbChangesPreTestChecks(t, collectionNames, isTransactional) {
-		return
+	actions := []any{
+		SchemaUpdate{
+			Schema: schema,
+		},
 	}
 
-	// Must have a non-empty request.
-	if !isTransactional && test.Request == "" {
-		assert.Fail(t, "Test must have a non-empty request.", test.Description)
-	}
-
-	ctx := context.Background()
-	dbs, err := GetDatabases(ctx, t)
-	if AssertError(t, test.Description, err, test.ExpectedError) {
-		return
-	}
-	require.NotEmpty(t, dbs)
-
-	for _, dbi := range dbs {
-		log.Info(ctx, test.Description, logging.NewKV("Database", dbi.name))
-
-		if DetectDbChanges {
-			if SetupOnly {
-				SetupDatabase(
-					ctx,
-					t,
-					dbi,
-					schema,
-					collectionNames,
-					test.Description,
-					test.ExpectedError,
-					test.Docs,
-					immutable.Some(test.Updates),
-				)
-				dbi.db.Close(ctx)
-				return
-			}
-
-			dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
-		} else {
-			SetupDatabase(
-				ctx,
-				t,
-				dbi,
-				schema,
-				collectionNames,
-				test.Description,
-				test.ExpectedError,
-				test.Docs,
-				immutable.Some(test.Updates),
+	for collectionIndex, docs := range test.Docs {
+		for _, doc := range docs {
+			actions = append(
+				actions,
+				CreateDoc{
+					CollectionId: collectionIndex,
+					Doc:          doc,
+				},
 			)
 		}
-
-		// Create the transactions before executing the requests.
-		transactions := make([]datastore.Txn, 0, len(test.TransactionalRequests))
-		erroredRequests := make([]bool, len(test.TransactionalRequests))
-		for i, tq := range test.TransactionalRequests {
-			if len(transactions) < tq.TransactionId {
-				continue
-			}
-
-			txn, err := dbi.db.NewTxn(ctx, false)
-			if err != nil {
-				if AssertError(t, test.Description, err, tq.ExpectedError) {
-					erroredRequests[i] = true
-				}
-			}
-			defer txn.Discard(ctx)
-			if len(transactions) <= tq.TransactionId {
-				transactions = transactions[:tq.TransactionId+1]
-			}
-			transactions[tq.TransactionId] = txn
-		}
-
-		for i, tq := range test.TransactionalRequests {
-			if erroredRequests[i] {
-				continue
-			}
-			result := dbi.db.ExecTransactionalRequest(ctx, tq.Request, transactions[tq.TransactionId])
-			if assertRequestResults(ctx, t, test.Description, &result.GQL, tq.Results, tq.ExpectedError) {
-				erroredRequests[i] = true
-			}
-		}
-
-		txnIndexesCommited := map[int]struct{}{}
-		for i, tq := range test.TransactionalRequests {
-			if erroredRequests[i] {
-				continue
-			}
-			if _, alreadyCommited := txnIndexesCommited[tq.TransactionId]; alreadyCommited {
-				continue
-			}
-			txnIndexesCommited[tq.TransactionId] = struct{}{}
-
-			err := transactions[tq.TransactionId].Commit(ctx)
-			if AssertError(t, test.Description, err, tq.ExpectedError) {
-				erroredRequests[i] = true
-			}
-		}
-
-		for i, tq := range test.TransactionalRequests {
-			if tq.ExpectedError != "" && !erroredRequests[i] {
-				assert.Fail(t, "Expected an error however none was raised.", test.Description)
-			}
-		}
-
-		// We run the core request after the explicitly transactional ones to permit tests to actually
-		// call the request on the commited result of the transactional requests.
-		if !isTransactional || (isTransactional && test.Request != "") {
-			result := dbi.db.ExecRequest(ctx, test.Request)
-			if result.Pub != nil {
-				for _, q := range test.PostSubscriptionRequests {
-					dbi.db.ExecRequest(ctx, q.Request)
-					data := []map[string]any{}
-					errs := []any{}
-					if len(q.Results) > 1 {
-						for range q.Results {
-							select {
-							case s := <-result.Pub.Stream():
-								sResult, _ := s.(client.GQLResult)
-								sData, _ := sResult.Data.([]map[string]any)
-								errs = append(errs, sResult.Errors...)
-								data = append(data, sData...)
-							// a safety in case the stream hangs.
-							case <-time.After(subscriptionTimeout):
-								assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
-							}
-						}
-					} else {
-						select {
-						case s := <-result.Pub.Stream():
-							sResult, _ := s.(client.GQLResult)
-							sData, _ := sResult.Data.([]map[string]any)
-							errs = append(errs, sResult.Errors...)
-							data = append(data, sData...)
-						// a safety in case the stream hangs or no results are expected.
-						case <-time.After(subscriptionTimeout):
-							if q.ExpectedTimout {
-								continue
-							}
-							assert.Fail(t, "timeout occured while waiting for data stream", test.Description)
-						}
-					}
-					gqlResult := &client.GQLResult{
-						Data:   data,
-						Errors: errs,
-					}
-					if assertRequestResults(
-						ctx,
-						t,
-						test.Description,
-						gqlResult,
-						q.Results,
-						q.ExpectedError,
-					) {
-						continue
-					}
-				}
-				result.Pub.Unsubscribe()
-			} else {
-				if assertRequestResults(
-					ctx,
-					t,
-					test.Description,
-					&result.GQL,
-					test.Results,
-					test.ExpectedError,
-				) {
-					continue
-				}
-
-				if test.ExpectedError != "" {
-					assert.Fail(t, "Expected an error however none was raised.", test.Description)
-				}
-			}
-		}
-
-		dbi.db.Close(ctx)
 	}
+
+	for collectionIndex, docUpdates := range test.Updates {
+		for docIndex, docs := range docUpdates {
+			for _, doc := range docs {
+				actions = append(
+					actions,
+					UpdateDoc{
+						CollectionId: collectionIndex,
+						DocId:        docIndex,
+						Doc:          doc,
+					},
+				)
+			}
+		}
+	}
+
+	for _, request := range test.TransactionalRequests {
+		actions = append(
+			actions,
+			TransactionRequest2(request),
+		)
+	}
+
+	// The old test framework commited all the transactions at the end
+	// so we can just lump these here, they must however be commited in
+	// the order in which they were first recieved.
+	txnIndexesCommited := map[int]struct{}{}
+	for _, request := range test.TransactionalRequests {
+		if _, alreadyCommited := txnIndexesCommited[request.TransactionId]; alreadyCommited {
+			// Only commit each transaction once.
+			continue
+		}
+
+		txnIndexesCommited[request.TransactionId] = struct{}{}
+		actions = append(
+			actions,
+			TransactionCommit{
+				TransactionId: request.TransactionId,
+				ExpectedError: request.ExpectedError,
+			},
+		)
+	}
+
+	if test.Request != "" {
+		actions = append(
+			actions,
+			Request{
+				ExpectedError: test.ExpectedError,
+				Request:       test.Request,
+				Results:       test.Results,
+			},
+		)
+	}
+
+	for _, request := range test.PostSubscriptionRequests {
+		actions = append(
+			actions,
+			SubscriptionRequest2{
+				ExpectedError:  request.ExpectedError,
+				Request:        request.Request,
+				Results:        request.Results,
+				ExpectedTimout: request.ExpectedTimout,
+			},
+		)
+	}
+
+	ExecuteTestCase(
+		t,
+		collectionNames,
+		TestCase{
+			Description: test.Description,
+			Actions:     actions,
+		},
+	)
 }
 
+// SetupDatabase is persisted for the sake of the explain tests as they use a different
+// test executor that calls this function.
 func SetupDatabase(
 	ctx context.Context,
 	t *testing.T,
