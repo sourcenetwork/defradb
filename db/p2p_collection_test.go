@@ -14,8 +14,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func newTestCollection(ctx context.Context, db client.DB, name string) (client.Collection, error) {
