@@ -373,8 +373,10 @@ func ExecuteTestCase(
 					wg.Add(1)
 					go waitForNodesToSync(ctx, t, nodes, targetIndex, sourceIndex, wg)
 				}
+
 				dockey, err := createDocument(ctx, n.DB, col.Name(), mutationString)
 				require.NoError(t, err)
+
 				docKeysById[docIndex] = dockey
 			}
 		}
@@ -397,6 +399,7 @@ func ExecuteTestCase(
 						wg.Add(1)
 						go waitForNodesToSync(ctx, t, nodes, targetIndex, sourceIndex, wg)
 					}
+
 					err := updateDocument(ctx, n.DB, col.Name(), docKeysById[docIndex], mutationString)
 					require.NoError(t, err)
 				}
