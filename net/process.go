@@ -46,17 +46,6 @@ func (p *Peer) processLog(
 ) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
-	// KEEPING FOR REFERENCE FOR NOW
-	// check if we already have this block
-	// exists, err := txn.DAGstore().Has(ctx, c)
-	// if err != nil {
-	// 	return nil, errors.Wrap("failed to check for existing block %s", c, err)
-	// }
-	// if exists {
-	// 	log.Debugf("Already have block %s locally, skipping.", c)
-	// 	return nil, nil
-	// }
-
 	crdt, err := initCRDTForType(ctx, txn, col, dockey, field)
 	if err != nil {
 		return nil, err

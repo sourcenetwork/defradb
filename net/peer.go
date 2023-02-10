@@ -33,6 +33,7 @@ import (
 	peerstore "github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/routing"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -84,6 +85,17 @@ type Peer struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	// ExpectedResponses is for testing purpose only. Do not use in produciton.
+	ExpectedResponses immutable.Option[*ExpectedResponses]
+}
+
+// ExpectedResponses is for integration testing only.
+type ExpectedResponses struct {
+	WG                  sync.WaitGroup
+	DockeyToNodes       map[string]map[string]struct{}
+	CollectionIDToNodes map[string]map[string]struct{}
+	Mu                  sync.Mutex
 }
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
@@ -225,17 +237,22 @@ func (p *Peer) handleBroadcastLoop() {
 
 		// check log priority, 1 is new doc log
 		// 2 is update log
-		var err error
 		if update.Priority == 1 {
-			err = p.handleDocCreateLog(update)
+			go func(update events.Update) {
+				err := p.handleDocCreateLog(update)
+				if err != nil {
+					log.ErrorE(p.ctx, "Error while handling broadcast log", err)
+				}
+			}(update)
 		} else if update.Priority > 1 {
-			err = p.handleDocUpdateLog(update)
+			go func(update events.Update) {
+				err := p.handleDocUpdateLog(update)
+				if err != nil {
+					log.ErrorE(p.ctx, "Error while handling broadcast log", err)
+				}
+			}(update)
 		} else {
 			log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
-		}
-
-		if err != nil {
-			log.ErrorE(p.ctx, "Error while handling broadcast log", err)
 		}
 	}
 }
@@ -278,14 +295,19 @@ func (p *Peer) RegisterNewDocument(
 		Body: body,
 	}
 
-	if err := p.server.publishLog(p.ctx, dockey.String(), req); err != nil {
-		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", c.String(), dockey.String()), err)
+	// This will only be true for integration testing.
+	if p.ExpectedResponses.HasValue() {
+		err := p.publishLogByCollectionID(schemaID, req)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", c.String(), schemaID), err)
+		}
+		p.ExpectedResponses.Value().WG.Done()
+		return nil
 	}
 
-	if err := p.server.publishLog(p.ctx, schemaID, req); err != nil {
+	if _, err := p.server.publishLog(p.ctx, schemaID, req, false); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", c.String(), schemaID), err)
 	}
-
 	return nil
 }
 
@@ -621,12 +643,104 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
+	// This will only be true for integration testing.
+	if p.ExpectedResponses.HasValue() {
+		err := p.publishLogByDockey(evt.DocKey, req)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
+		}
+		err = p.publishLogByCollectionID(evt.SchemaID, req)
+		if err != nil {
+			return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.SchemaID), err)
+		}
+		p.ExpectedResponses.Value().WG.Done()
+		return nil
+	}
+
+	if _, err := p.server.publishLog(p.ctx, evt.DocKey, req, false); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
 	}
 
-	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
+	if _, err := p.server.publishLog(p.ctx, evt.SchemaID, req, false); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", evt.Cid, evt.SchemaID), err)
+	}
+
+	return nil
+}
+
+// publishLogByDockey is only used during testing
+func (p *Peer) publishLogByDockey(dockey string, req *pb.PushLogRequest) error {
+	respChan, err := p.server.publishLog(p.ctx, dockey, req, true)
+	if err != nil {
+		return err
+	}
+	expected := 0
+	p.ExpectedResponses.Value().Mu.Lock()
+	for peerID := range p.ExpectedResponses.Value().DockeyToNodes[dockey] {
+		for _, peer := range p.ps.ListPeers(dockey) {
+			if peer.String() == peerID {
+				expected += 1
+			}
+		}
+	}
+	p.ExpectedResponses.Value().Mu.Unlock()
+
+	log.Info(
+		p.ctx,
+		"Waiting for dockey related responses",
+		logging.NewKV("Expected", expected),
+	)
+	for i := 0; i < expected; i++ {
+		select {
+		case <-time.After(10 * time.Second):
+			return errors.New("response channel timed out")
+		case <-p.ctx.Done():
+			return nil
+		case _, isOpen := <-respChan:
+			if !isOpen {
+				return nil
+			}
+			continue
+		}
+	}
+	return nil
+}
+
+// publishLogByCollectionID is only used during testing
+func (p *Peer) publishLogByCollectionID(collectionID string, req *pb.PushLogRequest) error {
+	respChan, err := p.server.publishLog(p.ctx, collectionID, req, true)
+	if err != nil {
+		return err
+	}
+
+	expected := 0
+	p.ExpectedResponses.Value().Mu.Lock()
+	for peerID := range p.ExpectedResponses.Value().CollectionIDToNodes[collectionID] {
+		for _, peer := range p.ps.ListPeers(collectionID) {
+			if peer.String() == peerID {
+				expected += 1
+			}
+		}
+	}
+	p.ExpectedResponses.Value().Mu.Unlock()
+
+	log.Info(
+		p.ctx,
+		"Waiting for collectionID related responses",
+		logging.NewKV("Expected", expected),
+	)
+	for i := 0; i < expected; i++ {
+		select {
+		case <-time.After(10 * time.Second):
+			return errors.New("response channel timed out")
+		case <-p.ctx.Done():
+			return nil
+		case _, isOpen := <-respChan:
+			if !isOpen {
+				return nil
+			}
+			continue
+		}
 	}
 	return nil
 }
@@ -646,6 +760,9 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 			// Don't push if pid is in the list of peers for the topic.
 			// It will be handled by the pubsub system.
 			if _, ok := peers[pid.String()]; ok {
+				if p.ExpectedResponses.HasValue() {
+					p.ExpectedResponses.Value().WG.Done()
+				}
 				continue
 			}
 			go func(peerID peer.ID) {
@@ -657,6 +774,9 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 						logging.NewKV("DocKey", lg.DocKey),
 						logging.NewKV("CID", lg.Cid),
 						logging.NewKV("PeerId", peerID))
+				}
+				if p.ExpectedResponses.HasValue() {
+					p.ExpectedResponses.Value().WG.Done()
 				}
 			}(pid)
 		}

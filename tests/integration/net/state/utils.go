@@ -14,11 +14,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,6 +28,7 @@ import (
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
@@ -277,6 +278,11 @@ func ExecuteTestCase(
 		n, d, err := setupDefraNode(t, schema, collectionNames, cfg, test.SeedDocuments)
 		require.NoError(t, err)
 
+		n.Peer.ExpectedResponses = immutable.Some(&net.ExpectedResponses{
+			DockeyToNodes:       make(map[string]map[string]struct{}),
+			CollectionIDToNodes: make(map[string]map[string]struct{}),
+		})
+
 		if i == 0 {
 			docKeysById = d
 		}
@@ -326,12 +332,6 @@ func ExecuteTestCase(
 			require.NoError(t, err)
 			_, err = n.Peer.SetReplicator(ctx, addr)
 			require.NoError(t, err)
-
-			// If seed documents were provided the newly configured replicator will sync them
-			// this needs to be handled here or the wait group stuff may progress too early.
-			if len(test.SeedDocuments) > 0 {
-				waitForNodesToSync(ctx, t, nodes, r, i)
-			}
 		}
 	}
 
@@ -344,60 +344,68 @@ func ExecuteTestCase(
 			col, err := n.DB.GetCollectionByName(ctx, collectionNames[c])
 			require.NoError(t, err)
 			colIDs = append(colIDs, col.SchemaID())
+
+			for nodeIndex, node := range nodes {
+				if nodeIndex != i {
+					if _, ok := node.Peer.ExpectedResponses.Value().CollectionIDToNodes[col.SchemaID()]; ok {
+						node.Peer.ExpectedResponses.Value().
+							CollectionIDToNodes[col.SchemaID()][n.PeerID().String()] = struct{}{}
+					} else {
+						node.Peer.ExpectedResponses.Value().CollectionIDToNodes[col.SchemaID()] = map[string]struct{}{
+							n.PeerID().String(): {},
+						}
+					}
+				}
+			}
 		}
 
 		err := n.Peer.AddP2PCollections(colIDs)
 		require.NoError(t, err)
 	}
 
-	creates := toCreateMutationSlice(test, collectionNames)
-	updates := toUpdateMutationSlice(test, collectionNames)
-	waitGroupings := getExpectedWaitGroupings(test, creates, updates)
-
-	var wg sync.WaitGroup
-	for k, c := range waitGroupings {
-		// copy the variables before using it in the routine otherwise the runtime
-		// may overwrite it before it is used.
-		grouping := k
-		waitCount := c
-		wg.Add(1)
-		go func() {
-			// Each grouping must be waited on synchronously for the given waitCount.
-			// The code cannot be allowed to progressed until all events have been
-			// synced for the given node-pairing.
-			//
-			// Whilst currently WaitForPushLogEvent will block for a duration based on
-			// the number of callers to it, this behaviour is currently disputed. If it
-			// was changed to block until the next event syncs (regardless of other callers),
-			// calling it multiple times concurrently for the same pairing would result on all
-			// calls completing on the first event.
-			for i := 1; i <= waitCount; i++ {
-				waitForNodesToSync(ctx, t, nodes, grouping.targetIndex, grouping.sourceIndex)
+	for sourceIndex, colMap := range test.Creates {
+		n := nodes[sourceIndex]
+		for colIndex, dockeyMap := range colMap {
+			col, err := n.DB.GetCollectionByName(ctx, collectionNames[colIndex])
+			require.NoError(t, err)
+			for dockeyIndex, mutationString := range dockeyMap {
+				if _, ok := docKeysById[dockeyIndex]; ok {
+					t.Error("canno't call create on an already existing dockey index")
+				}
+				n.Peer.ExpectedResponses.Value().WG.Add(1)
+				if peers, ok := test.NodeReplicators[sourceIndex]; ok {
+					n.Peer.ExpectedResponses.Value().WG.Add(len(peers))
+				}
+				dockey, err := createDocument(ctx, n.DB, col.Name(), mutationString)
+				require.NoError(t, err)
+				docKeysById[dockeyIndex] = dockey
 			}
-			wg.Done()
-		}()
+		}
 	}
 
-	for _, create := range creates {
-		docKey, err := createDocument(ctx, nodes[create.sourceIndex].DB, create.collectionName, create.payload)
-		require.NoError(t, err)
+	setExpectedResponses(test, nodes, docKeysById)
 
-		docKeysById[create.docIndex] = docKey
+	for sourceIndex, colMap := range test.Updates {
+		n := nodes[sourceIndex]
+		for colIndex, dockeyMap := range colMap {
+			col, err := n.DB.GetCollectionByName(ctx, collectionNames[colIndex])
+			require.NoError(t, err)
+			for docIndex, mutationStrings := range dockeyMap {
+				for _, mutationString := range mutationStrings {
+					n.Peer.ExpectedResponses.Value().WG.Add(1)
+					if peers, ok := test.NodeReplicators[sourceIndex]; ok {
+						n.Peer.ExpectedResponses.Value().WG.Add(len(peers))
+					}
+					err := updateDocument(ctx, n.DB, col.Name(), docKeysById[docIndex], mutationString)
+					require.NoError(t, err)
+				}
+			}
+		}
 	}
 
-	for _, update := range updates {
-		log.Info(ctx, fmt.Sprintf("Updating node %d with update %d", update.sourceIndex, update.docIndex))
-		err := updateDocument(
-			ctx,
-			nodes[update.sourceIndex].DB,
-			update.collectionName,
-			docKeysById[update.docIndex],
-			update.payload,
-		)
-		require.NoError(t, err)
+	for _, n := range nodes {
+		n.Peer.ExpectedResponses.Value().WG.Wait()
 	}
-
-	wg.Wait()
 
 	docsByNodeId := map[int]map[string]*client.Document{}
 	for nodeIndex, node := range nodes {
@@ -462,203 +470,72 @@ func ExecuteTestCase(
 	}
 }
 
-func getNodeIndexesToSync(test P2PTestCase, sourceIndex int, collectionIndex int, isCreate bool) map[int]struct{} {
-	nodeIndexesToSync := _getNodeIndexesToSync(test.NodeReplicators, sourceIndex)
-
-	for s, collections := range test.NodeP2PCollection {
-		if s == sourceIndex {
-			continue
-		}
-		for _, col := range collections {
-			if col == collectionIndex {
-				nodeIndexesToSync[s] = struct{}{}
+func setExpectedResponses(test P2PTestCase, nodes []*node.Node, docKeysById map[int]client.DocKey) {
+	// Map where the docs should be available
+	// docIndec/nodeIndex
+	docInNodes := make(map[int]map[int]struct{})
+	for _, docs := range test.SeedDocuments {
+		for docIndex := range docs {
+			docInNodes[docIndex] = make(map[int]struct{})
+			for i := range test.NodeConfig {
+				docInNodes[docIndex][i] = struct{}{}
 			}
 		}
 	}
-
-	// We should not wait for peers on create, as they do not sync new docs
-	if !isCreate {
-		for peerIndex := range _getNodeIndexesToSync(test.NodePeers, sourceIndex) {
-			nodeIndexesToSync[peerIndex] = struct{}{}
-		}
-	}
-
-	return nodeIndexesToSync
-}
-
-func _getNodeIndexesToSync(nodeMappings map[int][]int, sourceIndex int) map[int]struct{} {
-	nodeIndexesToSync := map[int]struct{}{}
-	for s, dsts := range nodeMappings {
-		containsSourceIndex := s == sourceIndex
-		for _, nodeIndex := range dsts {
-			if nodeIndex == sourceIndex {
-				containsSourceIndex = true
-				break
-			}
-		}
-		if !containsSourceIndex {
-			// If the current grouping doesn't contain the source index it is irrelevant
-			// here and should be skipped.
-			break
-		}
-		if s != sourceIndex {
-			nodeIndexesToSync[s] = struct{}{}
-		}
-		for _, nodeIndex := range dsts {
-			if nodeIndex != sourceIndex {
-				nodeIndexesToSync[nodeIndex] = struct{}{}
-			}
-		}
-	}
-	return nodeIndexesToSync
-}
-
-func waitForNodesToSync(
-	ctx context.Context,
-	t *testing.T,
-	nodes []*node.Node,
-	targetIndex int,
-	sourceIndex int,
-) {
-	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
-	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
-	// This must be an assert and not a require, a panic here will block the test as
-	// the wait group will never complete.
-	assert.NoError(t, err)
-	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
-}
-
-func getExpectedWaitGroupings(test P2PTestCase, mutationSets ...[]mutation) map[soureToTargetIndexKey]int {
-	waitCountByKey := map[soureToTargetIndexKey]int{}
-
-	for _, mutationSet := range mutationSets {
-		for _, mutation := range mutationSet {
-			for targetIndex := range mutation.nodesToSync {
-				// Each source-target pairing needs to be waited on independently. It also
-				// must handle multiple sync events for each pairing else the code may
-				// progress too early before all events have been synced.
-				key := soureToTargetIndexKey{
-					targetIndex: targetIndex,
-					sourceIndex: mutation.sourceIndex,
+	for nodeIndex, cols := range test.Creates {
+		for colIndex, docs := range cols {
+			for docIndex := range docs {
+				docInNodes[docIndex] = make(map[int]struct{})
+				docInNodes[docIndex][nodeIndex] = struct{}{}
+				for peer, p2pCols := range test.NodeP2PCollection {
+					if peer != nodeIndex {
+						for p2pColIndex := range p2pCols {
+							if colIndex == p2pColIndex {
+								docInNodes[docIndex][peer] = struct{}{}
+							}
+						}
+					}
 				}
-				existingCount := waitCountByKey[key]
-				count := existingCount + 1
-				waitCountByKey[key] = count
+				for replicator, peers := range test.NodeReplicators {
+					if replicator == nodeIndex {
+						for _, peer := range peers {
+							docInNodes[docIndex][peer] = struct{}{}
+						}
+					}
+				}
 			}
 		}
 	}
 
-	return waitCountByKey
-}
-
-type soureToTargetIndexKey struct {
-	targetIndex int
-	sourceIndex int
+	// Set the expected responses for each doc update before executing the updates.
+	for sourceIndex, colMap := range test.Updates {
+		n := nodes[sourceIndex]
+		for _, docMap := range colMap {
+			for docIndex := range docMap {
+				for peer := range docInNodes[docIndex] {
+					if peer != sourceIndex {
+						n.Peer.ExpectedResponses.Value().Mu.Lock()
+						if _, ok := n.Peer.ExpectedResponses.Value().DockeyToNodes[docKeysById[docIndex].String()]; ok {
+							v := n.Peer.ExpectedResponses.Value()
+							v.DockeyToNodes[docKeysById[docIndex].String()][nodes[peer].PeerID().String()] = struct{}{}
+						} else {
+							n.Peer.ExpectedResponses.Value().
+								DockeyToNodes[docKeysById[docIndex].String()] = map[string]struct{}{
+								nodes[peer].PeerID().String(): {},
+							}
+						}
+						n.Peer.ExpectedResponses.Value().Mu.Unlock()
+					}
+				}
+			}
+		}
+	}
 }
 
 // docFieldKey is an internal key type that wraps docIndex and fieldName
 type docFieldKey struct {
 	docIndex  int
 	fieldName string
-}
-
-type mutation struct {
-	sourceIndex    int
-	collectionName string
-	docIndex       int
-	payload        string
-	nodesToSync    map[int]struct{}
-}
-
-func toCreateMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
-	result := []mutation{}
-	for sourceIndex, payloadByCollectionName := range test.Creates {
-		for collectionIndex, payloadByDocIndex := range payloadByCollectionName {
-			collectionName := collectionNames[collectionIndex]
-			for docIndex, payload := range payloadByDocIndex {
-				result = append(
-					result,
-					mutation{
-						sourceIndex:    sourceIndex,
-						collectionName: collectionName,
-						docIndex:       docIndex,
-						payload:        payload,
-						nodesToSync:    getNodeIndexesToSync(test, sourceIndex, collectionIndex, true),
-					},
-				)
-			}
-		}
-	}
-	return result
-}
-
-func toUpdateMutationSlice(test P2PTestCase, collectionNames []string) []mutation {
-	expectedDocIndexes := map[int]struct{}{}
-	for _, collection := range test.SeedDocuments {
-		for docIndex := range collection {
-			// All seeded documents are expected to sync updates, regardless of
-			// whether via a peer or replicator.
-			expectedDocIndexes[docIndex] = struct{}{}
-		}
-	}
-
-	replicatorIndexes := []int{}
-	for i, setIndexes := range test.NodeReplicators {
-		replicatorIndexes = append(replicatorIndexes, i)
-		for j := range setIndexes {
-			replicatorIndexes = append(replicatorIndexes, j)
-		}
-	}
-
-	for _, i := range replicatorIndexes {
-		for docIndex := range test.Creates[i] {
-			// Updates for documents created via replicators are also expected to
-			// sync (peers do not sync created documents).
-			expectedDocIndexes[docIndex] = struct{}{}
-		}
-	}
-
-	for node, collections := range test.NodeP2PCollection {
-		for sourceIndex, mutCollections := range test.Creates {
-			if node == sourceIndex {
-				continue
-			}
-			for _, col := range collections {
-				if docIndexes, ok := mutCollections[col]; ok {
-					for docIndex := range docIndexes {
-						expectedDocIndexes[docIndex] = struct{}{}
-					}
-				}
-			}
-		}
-	}
-
-	result := []mutation{}
-	for sourceIndex, payloadByCollectionName := range test.Updates {
-		for collectionIndex, updatesByDocIndex := range payloadByCollectionName {
-			collectionName := collectionNames[collectionIndex]
-			for docIndex, updates := range updatesByDocIndex {
-				for _, payload := range updates {
-					nodesToSync := map[int]struct{}{}
-					if _, isExpectedToSync := expectedDocIndexes[docIndex]; isExpectedToSync {
-						nodesToSync = getNodeIndexesToSync(test, sourceIndex, collectionIndex, false)
-					}
-
-					result = append(
-						result,
-						mutation{
-							sourceIndex:    sourceIndex,
-							collectionName: collectionName,
-							docIndex:       docIndex,
-							payload:        payload,
-							nodesToSync:    nodesToSync,
-						},
-					)
-				}
-			}
-		}
-	}
-	return result
 }
 
 const randomMultiaddr = "/ip4/0.0.0.0/tcp/0"

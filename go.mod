@@ -197,4 +197,7 @@ require (
 )
 
 // SourceNetwork fork og graphql-go
-replace github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7
+replace (
+	github.com/graphql-go/graphql => github.com/sourcenetwork/graphql-go v0.7.10-0.20221119101706-0f80a1725ab7
+	github.com/textileio/go-libp2p-pubsub-rpc => github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.0-20230209220544-e16d5e34c4fc
+)

@@ -313,9 +313,14 @@ func (s *server) removeAllPubsubTopics() error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
-func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRequest) error {
+func (s *server) publishLog(
+	ctx context.Context,
+	topic string,
+	req *pb.PushLogRequest,
+	waitForResponse bool,
+) (<-chan rpc.Response, error) {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
-		return nil
+		return nil, nil
 	}
 	s.mu.Lock()
 	t, ok := s.topics[topic]
@@ -323,27 +328,20 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pb.PushLogRe
 	if !ok {
 		err := s.addPubSubTopic(topic, false)
 		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
+			return nil, errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
 		}
-		return s.publishLog(ctx, topic, req)
+		return s.publishLog(ctx, topic, req, waitForResponse)
 	}
 
 	data, err := req.Marshal()
 	if err != nil {
-		return errors.Wrap("failed marshling pubsub message", err)
+		return nil, errors.Wrap("failed marshling pubsub message", err)
 	}
 
-	if _, err := t.Publish(ctx, data, rpc.WithIgnoreResponse(true)); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
+	if waitForResponse {
+		return t.Publish(ctx, data, rpc.WithMultiResponse(true))
 	}
-	log.Debug(
-		ctx,
-		"Published log",
-		logging.NewKV("CID", req.Body.Cid.Cid),
-		logging.NewKV("DocKey", req.Body.DocKey.String()),
-		logging.NewKV("SchemaID", string(req.Body.SchemaID)),
-	)
-	return nil
+	return t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
