@@ -14,8 +14,30 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/stretchr/testify/require"
 )
+
+func newTestCollection(ctx context.Context, db client.DB, name string) (client.Collection, error) {
+	desc := client.CollectionDescription{
+		Name: name,
+		Schema: client.SchemaDescription{
+			Fields: []client.FieldDescription{
+				{
+					Name: "_key",
+					Kind: client.FieldKind_DocKey,
+				},
+				{
+					Name: "Name",
+					Kind: client.FieldKind_STRING,
+					Typ:  client.LWW_REGISTER,
+				},
+			},
+		},
+	}
+
+	return db.CreateCollection(ctx, desc)
+}
 
 func TestAddP2PCollection(t *testing.T) {
 	ctx := context.Background()
@@ -23,7 +45,10 @@ func TestAddP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	err = db.AddP2PCollection(ctx, "abc123")
+	col, err := newTestCollection(ctx, db, "test")
+	require.NoError(t, err)
+
+	err = db.AddP2PCollection(ctx, col.SchemaID())
 	require.NoError(t, err)
 }
 
@@ -33,16 +58,24 @@ func TestGetAllP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	err = db.AddP2PCollection(ctx, "abc123")
+	col1, err := newTestCollection(ctx, db, "test1")
 	require.NoError(t, err)
-	err = db.AddP2PCollection(ctx, "abc789")
+	err = db.AddP2PCollection(ctx, col1.SchemaID())
 	require.NoError(t, err)
-	err = db.AddP2PCollection(ctx, "qwe123")
+
+	col2, err := newTestCollection(ctx, db, "test2")
+	require.NoError(t, err)
+	err = db.AddP2PCollection(ctx, col2.SchemaID())
+	require.NoError(t, err)
+
+	col3, err := newTestCollection(ctx, db, "test3")
+	require.NoError(t, err)
+	err = db.AddP2PCollection(ctx, col3.SchemaID())
 	require.NoError(t, err)
 
 	collections, err := db.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.ElementsMatch(t, collections, []string{"abc123", "abc789", "qwe123"})
+	require.ElementsMatch(t, collections, []string{col1.SchemaID(), col2.SchemaID(), col3.SchemaID()})
 }
 
 func TestRemoveP2PCollection(t *testing.T) {
@@ -51,17 +84,25 @@ func TestRemoveP2PCollection(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close(ctx)
 
-	err = db.AddP2PCollection(ctx, "abc123")
+	col1, err := newTestCollection(ctx, db, "test1")
 	require.NoError(t, err)
-	err = db.AddP2PCollection(ctx, "abc789")
-	require.NoError(t, err)
-	err = db.AddP2PCollection(ctx, "qwe123")
+	err = db.AddP2PCollection(ctx, col1.SchemaID())
 	require.NoError(t, err)
 
-	err = db.RemoveP2PCollection(ctx, "abc789")
+	col2, err := newTestCollection(ctx, db, "test2")
+	require.NoError(t, err)
+	err = db.AddP2PCollection(ctx, col2.SchemaID())
+	require.NoError(t, err)
+
+	col3, err := newTestCollection(ctx, db, "test3")
+	require.NoError(t, err)
+	err = db.AddP2PCollection(ctx, col3.SchemaID())
+	require.NoError(t, err)
+
+	err = db.RemoveP2PCollection(ctx, col2.SchemaID())
 	require.NoError(t, err)
 
 	collections, err := db.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.ElementsMatch(t, collections, []string{"abc123", "qwe123"})
+	require.ElementsMatch(t, collections, []string{col1.SchemaID(), col3.SchemaID()})
 }
