@@ -14,11 +14,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	ma "github.com/multiformats/go-multiaddr"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,7 +28,6 @@ import (
 	coreDB "github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
-	"github.com/sourcenetwork/defradb/net"
 	netutils "github.com/sourcenetwork/defradb/net/utils"
 	"github.com/sourcenetwork/defradb/node"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
@@ -278,15 +277,15 @@ func ExecuteTestCase(
 		n, d, err := setupDefraNode(t, schema, collectionNames, cfg, test.SeedDocuments)
 		require.NoError(t, err)
 
-		n.Peer.ExpectedResponses = immutable.Some(&net.ExpectedResponses{
-			DockeyToNodes:       make(map[string]map[string]struct{}),
-			CollectionIDToNodes: make(map[string]map[string]struct{}),
-		})
-
 		if i == 0 {
 			docKeysById = d
 		}
 		nodes = append(nodes, n)
+	}
+
+	nodeLinks := map[int]map[int]struct{}{}
+	for i := range test.NodeConfig {
+		nodeLinks[i] = map[int]struct{}{}
 	}
 
 	nodeIndexes := map[int]struct{}{}
@@ -294,12 +293,16 @@ func ExecuteTestCase(
 		nodeIndexes[s] = struct{}{}
 		for _, nodeId := range n {
 			nodeIndexes[nodeId] = struct{}{}
+			nodeLinks[s][nodeId] = struct{}{}
+			nodeLinks[nodeId][s] = struct{}{}
 		}
 	}
 	for s, n := range test.NodePeers {
 		nodeIndexes[s] = struct{}{}
 		for _, nodeId := range n {
 			nodeIndexes[nodeId] = struct{}{}
+			nodeLinks[s][nodeId] = struct{}{}
+			nodeLinks[nodeId][s] = struct{}{}
 		}
 	}
 
@@ -344,57 +347,55 @@ func ExecuteTestCase(
 			col, err := n.DB.GetCollectionByName(ctx, collectionNames[c])
 			require.NoError(t, err)
 			colIDs = append(colIDs, col.SchemaID())
-
-			for nodeIndex, node := range nodes {
-				if nodeIndex != i {
-					if _, ok := node.Peer.ExpectedResponses.Value().CollectionIDToNodes[col.SchemaID()]; ok {
-						node.Peer.ExpectedResponses.Value().
-							CollectionIDToNodes[col.SchemaID()][n.PeerID().String()] = struct{}{}
-					} else {
-						node.Peer.ExpectedResponses.Value().CollectionIDToNodes[col.SchemaID()] = map[string]struct{}{
-							n.PeerID().String(): {},
-						}
-					}
-				}
-			}
 		}
 
 		err := n.Peer.AddP2PCollections(colIDs)
 		require.NoError(t, err)
 	}
 
+	docInNodes := mapNodesToDoc(test)
+
+	wg := &sync.WaitGroup{}
+
 	for sourceIndex, colMap := range test.Creates {
 		n := nodes[sourceIndex]
-		for colIndex, dockeyMap := range colMap {
+		for colIndex, docMap := range colMap {
 			col, err := n.DB.GetCollectionByName(ctx, collectionNames[colIndex])
 			require.NoError(t, err)
-			for dockeyIndex, mutationString := range dockeyMap {
-				if _, ok := docKeysById[dockeyIndex]; ok {
+			for docIndex, mutationString := range docMap {
+				if _, ok := docKeysById[docIndex]; ok {
 					t.Error("canno't call create on an already existing dockey index")
 				}
-				n.Peer.ExpectedResponses.Value().WG.Add(1)
-				if peers, ok := test.NodeReplicators[sourceIndex]; ok {
-					n.Peer.ExpectedResponses.Value().WG.Add(len(peers))
+				for targetIndex := range docInNodes[docIndex] {
+					if targetIndex == sourceIndex {
+						continue
+					}
+					wg.Add(1)
+					go waitForNodesToSync(ctx, t, nodes, targetIndex, sourceIndex, wg)
 				}
 				dockey, err := createDocument(ctx, n.DB, col.Name(), mutationString)
 				require.NoError(t, err)
-				docKeysById[dockeyIndex] = dockey
+				docKeysById[docIndex] = dockey
 			}
 		}
 	}
 
-	setExpectedResponses(test, nodes, docKeysById)
-
 	for sourceIndex, colMap := range test.Updates {
 		n := nodes[sourceIndex]
-		for colIndex, dockeyMap := range colMap {
+		for colIndex, docMap := range colMap {
 			col, err := n.DB.GetCollectionByName(ctx, collectionNames[colIndex])
 			require.NoError(t, err)
-			for docIndex, mutationStrings := range dockeyMap {
+			for docIndex, mutationStrings := range docMap {
 				for _, mutationString := range mutationStrings {
-					n.Peer.ExpectedResponses.Value().WG.Add(1)
-					if peers, ok := test.NodeReplicators[sourceIndex]; ok {
-						n.Peer.ExpectedResponses.Value().WG.Add(len(peers))
+					for targetIndex := range docInNodes[docIndex] {
+						if targetIndex == sourceIndex {
+							continue
+						}
+						if _, ok := nodeLinks[sourceIndex][targetIndex]; !ok {
+							continue
+						}
+						wg.Add(1)
+						go waitForNodesToSync(ctx, t, nodes, targetIndex, sourceIndex, wg)
 					}
 					err := updateDocument(ctx, n.DB, col.Name(), docKeysById[docIndex], mutationString)
 					require.NoError(t, err)
@@ -403,9 +404,7 @@ func ExecuteTestCase(
 		}
 	}
 
-	for _, n := range nodes {
-		n.Peer.ExpectedResponses.Value().WG.Wait()
-	}
+	wg.Wait()
 
 	docsByNodeId := map[int]map[string]*client.Document{}
 	for nodeIndex, node := range nodes {
@@ -470,9 +469,9 @@ func ExecuteTestCase(
 	}
 }
 
-func setExpectedResponses(test P2PTestCase, nodes []*node.Node, docKeysById map[int]client.DocKey) {
-	// Map where the docs should be available
-	// docIndec/nodeIndex
+// mapNodesToDoc maps where the docs should be available
+// docIndec/nodeIndex
+func mapNodesToDoc(test P2PTestCase) map[int]map[int]struct{} {
 	docInNodes := make(map[int]map[int]struct{})
 	for _, docs := range test.SeedDocuments {
 		for docIndex := range docs {
@@ -506,30 +505,24 @@ func setExpectedResponses(test P2PTestCase, nodes []*node.Node, docKeysById map[
 			}
 		}
 	}
+	return docInNodes
+}
 
-	// Set the expected responses for each doc update before executing the updates.
-	for sourceIndex, colMap := range test.Updates {
-		n := nodes[sourceIndex]
-		for _, docMap := range colMap {
-			for docIndex := range docMap {
-				for peer := range docInNodes[docIndex] {
-					if peer != sourceIndex {
-						n.Peer.ExpectedResponses.Value().Mu.Lock()
-						if _, ok := n.Peer.ExpectedResponses.Value().DockeyToNodes[docKeysById[docIndex].String()]; ok {
-							v := n.Peer.ExpectedResponses.Value()
-							v.DockeyToNodes[docKeysById[docIndex].String()][nodes[peer].PeerID().String()] = struct{}{}
-						} else {
-							n.Peer.ExpectedResponses.Value().
-								DockeyToNodes[docKeysById[docIndex].String()] = map[string]struct{}{
-								nodes[peer].PeerID().String(): {},
-							}
-						}
-						n.Peer.ExpectedResponses.Value().Mu.Unlock()
-					}
-				}
-			}
-		}
-	}
+func waitForNodesToSync(
+	ctx context.Context,
+	t *testing.T,
+	nodes []*node.Node,
+	targetIndex int,
+	sourceIndex int,
+	wg *sync.WaitGroup,
+) {
+	log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", targetIndex, sourceIndex))
+	err := nodes[targetIndex].WaitForPushLogEvent(nodes[sourceIndex].PeerID())
+	// This must be an assert and not a require, a panic here will block the test as
+	// the wait group will never complete.
+	assert.NoError(t, err)
+	log.Info(ctx, fmt.Sprintf("Node %d synced", targetIndex))
+	wg.Done()
 }
 
 // docFieldKey is an internal key type that wraps docIndex and fieldName

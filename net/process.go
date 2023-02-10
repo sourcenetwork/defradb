@@ -43,6 +43,7 @@ func (p *Peer) processLog(
 	field string,
 	nd ipld.Node,
 	getter ipld.NodeGetter,
+	removeChildren bool,
 ) ([]cid.Cid, error) {
 	log.Debug(ctx, "Running processLog")
 
@@ -73,8 +74,10 @@ func (p *Peer) processLog(
 		return nil, err
 	}
 
-	// mark this obj as done
-	p.queuedChildren.Remove(c)
+	if removeChildren {
+		// mark this obj as done
+		p.queuedChildren.Remove(c)
+	}
 
 	return cids, nil
 }

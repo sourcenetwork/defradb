@@ -155,6 +155,17 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 	if canVisit := s.peer.queuedChildren.Visit(cid); !canVisit {
 		return &pb.PushLogReply{}, nil
 	}
+	defer s.peer.queuedChildren.Remove(cid)
+
+	// check if we already have this block
+	exists, err := s.db.Blockstore().Has(ctx, cid)
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to check for existing block %s", cid), err)
+	}
+	if exists {
+		log.Debug(ctx, fmt.Sprintf("Already have block %s locally, skipping.", cid))
+		return &pb.PushLogReply{}, nil
+	}
 
 	schemaID := string(req.Body.SchemaID)
 	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
@@ -186,7 +197,7 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, errors.Wrap("failed to decode block to ipld.Node", err)
 		}
 
-		cids, err := s.peer.processLog(ctx, txn, col, docKey, cid, "", nd, getter)
+		cids, err := s.peer.processLog(ctx, txn, col, docKey, cid, "", nd, getter, false)
 		if err != nil {
 			log.ErrorE(
 				ctx,
