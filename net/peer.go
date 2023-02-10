@@ -278,10 +278,7 @@ func (p *Peer) RegisterNewDocument(
 		Body: body,
 	}
 
-	if _, err := p.server.publishLog(p.ctx, schemaID, req, false); err != nil {
-		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", c.String(), schemaID), err)
-	}
-	return nil
+	return p.server.publishLog(p.ctx, schemaID, req)
 }
 
 // SetReplicator adds a target peer node as a replication destination for documents in our DB.
@@ -616,11 +613,11 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(p.ctx, evt)
 
-	if _, err := p.server.publishLog(p.ctx, evt.DocKey, req, false); err != nil {
+	if err := p.server.publishLog(p.ctx, evt.DocKey, req); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for dockey %s", evt.Cid, evt.DocKey), err)
 	}
 
-	if _, err := p.server.publishLog(p.ctx, evt.SchemaID, req, false); err != nil {
+	if err := p.server.publishLog(p.ctx, evt.SchemaID, req); err != nil {
 		return errors.Wrap(fmt.Sprintf("can't publish log %s for schemaID %s", evt.Cid, evt.SchemaID), err)
 	}
 
