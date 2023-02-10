@@ -18,6 +18,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var (
@@ -45,7 +46,7 @@ const (
 	SEQ                       = "/seq"
 	PRIMARY_KEY               = "/pk"
 	REPLICATOR                = "/replicator/id"
-	P2P_COLLECTIONS           = "/p2p/collections"
+	P2P_COLLECTION            = "/p2p/collection"
 )
 
 // Key is an interface that represents a key in the database.
@@ -103,6 +104,12 @@ type CollectionSchemaVersionKey struct {
 }
 
 var _ Key = (*CollectionSchemaVersionKey)(nil)
+
+type P2PCollectionKey struct {
+	CollectionID string
+}
+
+var _ Key = (*P2PCollectionKey)(nil)
 
 type SchemaKey struct {
 	SchemaName string
@@ -432,6 +439,37 @@ func (k SequenceKey) Bytes() []byte {
 }
 
 func (k SequenceKey) ToDS() ds.Key {
+	return ds.NewKey(k.ToString())
+}
+
+// New
+func NewP2PCollectionKey(collectionID string) P2PCollectionKey {
+	return P2PCollectionKey{CollectionID: collectionID}
+}
+
+func NewP2PCollectionKeyFromString(key string) (P2PCollectionKey, error) {
+	keyArr := strings.Split(key, "/")
+	if len(keyArr) != 4 {
+		return P2PCollectionKey{}, errors.WithStack(ErrInvalidKey, errors.NewKV("Key", key))
+	}
+	return NewP2PCollectionKey(keyArr[3]), nil
+}
+
+func (k P2PCollectionKey) ToString() string {
+	result := P2P_COLLECTION
+
+	if k.CollectionID != "" {
+		result = result + "/" + k.CollectionID
+	}
+
+	return result
+}
+
+func (k P2PCollectionKey) Bytes() []byte {
+	return []byte(k.ToString())
+}
+
+func (k P2PCollectionKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
