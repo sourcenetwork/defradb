@@ -225,18 +225,17 @@ func (p *Peer) handleBroadcastLoop() {
 
 		// check log priority, 1 is new doc log
 		// 2 is update log
+		var err error
 		if update.Priority == 1 {
-			err := p.handleDocCreateLog(update)
-			if err != nil {
-				log.ErrorE(p.ctx, "Error while handling broadcast log", err)
-			}
+			err = p.handleDocCreateLog(update)
 		} else if update.Priority > 1 {
-			err := p.handleDocUpdateLog(update)
-			if err != nil {
-				log.ErrorE(p.ctx, "Error while handling broadcast log", err)
-			}
+			err = p.handleDocUpdateLog(update)
 		} else {
 			log.Info(p.ctx, "Skipping log with invalid priority of 0", logging.NewKV("CID", update.Cid))
+		}
+
+		if err != nil {
+			log.ErrorE(p.ctx, "Error while handling broadcast log", err)
 		}
 	}
 }
