@@ -19,6 +19,8 @@ const (
 	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
 	errFailedToGetCollection         string = "failed to get collection"
 	errDocVerification               string = "the document verification failed"
+	errAddingP2PCollection           string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot add collection ID"
 )
 
 var (
@@ -50,6 +52,8 @@ var (
 	ErrSchemaIdEmpty            = errors.New("schema ID can't be empty")
 	ErrSchemaVersionIdEmpty     = errors.New("schema version ID can't be empty")
 	ErrKeyEmpty                 = errors.New("key cannot be empty")
+	ErrAddingP2PCollection      = errors.New(errAddingP2PCollection)
+	ErrRemovingP2PCollection    = errors.New(errRemovingP2PCollection)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -76,4 +80,16 @@ func NewErrDocVerification(expected string, actual string) error {
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),
 	)
+}
+
+// NewErrAddingP2PCollection returns a new error indicating that adding a collection ID to the
+// persisted list of P2P collection IDs was not successful.
+func NewErrAddingP2PCollection(inner error) error {
+	return errors.Wrap(errAddingP2PCollection, inner)
+}
+
+// NewErrRemovingP2PCollection returns a new error indicating that removing a collection ID to the
+// persisted list of P2P collection IDs was not successful.
+func NewErrRemovingP2PCollection(inner error) error {
+	return errors.Wrap(errRemovingP2PCollection, inner)
 }

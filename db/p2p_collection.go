@@ -20,19 +20,32 @@ import (
 
 const marker = byte(0xff)
 
-// AddP2PCollection adds a P2P collection to the stored list
+// AddP2PCollection adds the given collection ID that the P2P system
+// subscribes to to the the persisted list. It will error if the provided
+// collection ID is invalid.
 func (db *db) AddP2PCollection(ctx context.Context, collectionID string) error {
+	_, err := db.GetCollectionBySchemaID(ctx, collectionID)
+	if err != nil {
+		return NewErrAddingP2PCollection(err)
+	}
 	key := core.NewP2PCollectionKey(collectionID)
 	return db.systemstore().Put(ctx, key.ToDS(), []byte{marker})
 }
 
-// RemoveP2PCollection removes P2P collection from the stored list
+// RemoveP2PCollection removes the given collection ID that the P2P system
+// subscribes to from the the persisted list. It will error if the provided
+// collection ID is invalid.
 func (db *db) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+	_, err := db.GetCollectionBySchemaID(ctx, collectionID)
+	if err != nil {
+		return NewErrRemovingP2PCollection(err)
+	}
 	key := core.NewP2PCollectionKey(collectionID)
 	return db.systemstore().Delete(ctx, key.ToDS())
 }
 
-// GetAllP2PCollections returns the full list of P2P collections
+// GetAllP2PCollections returns the list of persisted collection IDs that
+// the P2P system subscribes to.
 func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	prefix := core.NewP2PCollectionKey("")
 	results, err := db.systemstore().Query(ctx, dsq.Query{

@@ -42,22 +42,8 @@ type DB interface {
 
 	PrintDump(ctx context.Context) error
 
-	// SetReplicator adds a replicator to the persisted list or adds
-	// schemas if the replicator already exists.
-	SetReplicator(ctx context.Context, rep Replicator) error
-	// DeleteReplicator deletes a replicator from the persisted list
-	// or specific schemas if they are specified.
-	DeleteReplicator(ctx context.Context, rep Replicator) error
-	// GetAllReplicators returns the full list of replicators with their
-	// subscribed schemas.
-	GetAllReplicators(ctx context.Context) ([]Replicator, error)
-
-	// AddP2PCollection adds a P2P collection to the stored list
-	AddP2PCollection(ctx context.Context, collectionID string) error
-	// RemoveP2PCollection removes P2P collection from the stored list
-	RemoveP2PCollection(ctx context.Context, collectionID string) error
-	// GetAllP2PCollections returns the full list of P2P collections
-	GetAllP2PCollections(ctx context.Context) ([]string, error)
+	// P2P holds the P2P related methods that must be implemented by the database.
+	P2P
 }
 
 type GQLResult struct {
