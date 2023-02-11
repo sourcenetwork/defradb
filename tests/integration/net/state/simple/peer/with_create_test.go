@@ -67,3 +67,85 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 
 	simple.ExecuteTestCase(t, test)
 }
+
+// TestP2PCreateWithP2PCollection ensures that created documents reach the node that subscribes
+// to the P2P collection topic but not the one that doesn't.
+func TestP2PCreateWithP2PCollection(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		NodeP2PCollection: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "Shahzad",
+					"Age": 30
+				}`,
+			},
+		},
+		Creates: map[int]map[int]map[int]string{
+			0: {
+				0: {
+					1: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+					2: `{
+						"Name": "Addo",
+						"Age": 28
+					}`,
+				},
+			},
+			1: {
+				0: {
+					3: `{
+						"Name": "Fred",
+						"Age": 31
+					}`,
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(30),
+				},
+				1: {
+					"Age": uint64(21),
+				},
+				2: {
+					"Age": uint64(28),
+				},
+				// Peer sync should not sync new documents to nodes that is not subscribed
+				// to the P2P collection.
+			},
+			1: {
+				0: {
+					"Age": uint64(30),
+				},
+				1: {
+					"Age": uint64(21),
+				},
+				2: {
+					"Age": uint64(28),
+				},
+				3: {
+					"Age": uint64(31),
+				},
+			},
+		},
+	}
+
+	simple.ExecuteTestCase(t, test)
+}
