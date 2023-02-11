@@ -414,3 +414,170 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 
 	simple.ExecuteTestCase(t, test)
 }
+
+// TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection tests document syncing between two nodes by
+// ensuring that the created document and its update reach the node that subscribes to the P2P collection topic.
+func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		NodeP2PCollection: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Creates: map[int]map[int]map[int]string{
+			0: {
+				0: {
+					1: `{
+						"Name": "Fred",
+						"Age": 31
+					}`,
+				},
+			},
+		},
+		Updates: map[int]map[int]map[int][]string{
+			0: {
+				0: {
+					1: {
+						`{
+							"Age": 60
+						}`,
+					},
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": uint64(21),
+				},
+				1: {
+					"Age": uint64(60),
+				},
+			},
+			1: {
+				0: {
+					"Age": uint64(21),
+				},
+				1: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	simple.ExecuteTestCase(t, test)
+}
+
+// TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection tests document syncing between two nodes with multiple
+// updates per node as well as ensuring that the created document and its update reach the node that
+// subscribes to the P2P collection topic.
+func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
+	test := testUtils.P2PTestCase{
+		NodeConfig: []*config.Config{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+		},
+		NodePeers: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		NodeP2PCollection: map[int][]int{
+			1: {
+				0,
+			},
+		},
+		SeedDocuments: map[int]map[int]string{
+			0: {
+				0: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Creates: map[int]map[int]map[int]string{
+			0: {
+				0: {
+					1: `{
+						"Name": "Fred",
+						"Age": 31
+					}`,
+				},
+			},
+		},
+		Updates: map[int]map[int]map[int][]string{
+			0: {
+				0: {
+					0: {
+						`{
+							"Age": 60
+						}`,
+						`{
+							"Age": 61
+						}`,
+						`{
+							"Age": 62
+						}`,
+					},
+					1: {
+						`{
+							"Age": 60
+						}`,
+					},
+				},
+			},
+			1: {
+				0: {
+					0: {
+						`{
+							"Age": 45
+						}`,
+						`{
+							"Age": 46
+						}`,
+						`{
+							"Age": 47
+						}`,
+					},
+				},
+			},
+		},
+		Results: map[int]map[int]map[string]any{
+			0: {
+				0: {
+					"Age": testUtils.AnyOf{uint64(47), uint64(62)},
+				},
+				1: {
+					"Age": uint64(60),
+				},
+			},
+			1: {
+				0: {
+					"Age": testUtils.AnyOf{uint64(47), uint64(62)},
+				},
+				1: {
+					"Age": uint64(60),
+				},
+			},
+		},
+	}
+
+	simple.ExecuteTestCase(t, test)
+}

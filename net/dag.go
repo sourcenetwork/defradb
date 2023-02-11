@@ -133,6 +133,7 @@ func (p *Peer) dagWorker(jobs chan *dagJob) {
 			job.fieldName,
 			job.node,
 			job.nodeGetter,
+			true,
 		)
 		if err != nil {
 			log.ErrorE(
