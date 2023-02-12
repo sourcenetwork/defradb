@@ -27,7 +27,6 @@ func like(condition, data any) (bool, error) {
 				if cn[0] == '%' {
 					hasPrefix = true
 					cn = strings.TrimPrefix(cn, "%")
-
 				}
 				if cn[len(cn)-1] == '%' {
 					hasSuffix = true
@@ -49,7 +48,6 @@ func like(condition, data any) (bool, error) {
 			default:
 				return cn == d, nil
 			}
-
 		}
 		return false, nil
 	default:
