@@ -46,3 +46,21 @@ func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
 		test,
 	)
 }
+
+func Execute(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
+		t,
+		[]string{"book", "author", "publisher"},
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: bookAuthorPublisherGQLSchema,
+					},
+				},
+				test.Actions...,
+			),
+		},
+	)
+}
