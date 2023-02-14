@@ -45,6 +45,7 @@ func NewKV(key string, value any) KV {
 // A stacktrace will be yielded if formatting with a `+`, e.g `fmt.Sprintf("%+v", err)`.
 // This function will not be inlined by the compiler as it will spoil any stacktrace
 // generated.
+//
 //go:noinline
 func New(message string, keyvals ...KV) error {
 	return withStackTrace(message, 1, keyvals...)
@@ -54,6 +55,7 @@ func New(message string, keyvals ...KV) error {
 // the given inner error, suffixing any key-value pairs provided.
 // This function will not be inlined by the compiler as it will spoil any stacktrace
 // generated.
+//
 //go:noinline
 func Wrap(message string, inner error, keyvals ...KV) error {
 	err := withStackTrace(message, 1, keyvals...)
@@ -67,6 +69,7 @@ func Is(err, target error) bool {
 
 // This function will not be inlined by the compiler as it will spoil any stacktrace
 // generated.
+//
 //go:noinline
 func WithStack(err error, keyvals ...KV) error {
 	return withStackTrace(err.Error(), 1, keyvals...)
@@ -79,6 +82,7 @@ func WithStack(err error, keyvals ...KV) error {
 //
 // This function will not be inlined by the compiler as it will spoil any stacktrace
 // generated.
+//
 //go:noinline
 func withStackTrace(message string, depthToSkip int, keyvals ...KV) *defraError {
 	stackBuffer := make([]uintptr, MaxStackDepth)

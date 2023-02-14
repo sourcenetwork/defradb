@@ -55,31 +55,33 @@ const (
 // buildSimpleExplainGraph builds the explainGraph from the given top level plan.
 //
 // Request:
-// query @explain {
-//     user {
-//       _key
-//       age
-//       name
-//     }
-// }
 //
-//  Response:
-// {
-//   "data": [
-//     {
-//       "explain": {
-//         "selectTopNode": {
-//           "selectNode": {
-//	           ...
-//             "scanNode": {
-//               ...
-//             }
-//           }
-//         }
-//       }
-//     }
-//   ]
-// }
+//	query @explain {
+//	    user {
+//	      _key
+//	      age
+//	      name
+//	    }
+//	}
+//
+//	Response:
+//
+//	{
+//	  "data": [
+//	    {
+//	      "explain": {
+//	        "selectTopNode": {
+//	          "selectNode": {
+//		           ...
+//	            "scanNode": {
+//	              ...
+//	            }
+//	          }
+//	        }
+//	      }
+//	    }
+//	  ]
+//	}
 func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 	explainGraph := map[string]any{}
 

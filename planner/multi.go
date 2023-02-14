@@ -54,22 +54,22 @@ type appendNode interface {
 // if a single request has multiple Select statements at the
 // same depth in the request.
 // Eg:
-// user {
-//		_key
-// 		name
-// 		friends {
-// 			name
-// 		}
-// 		_version {
-// 			cid
-// 		}
-// }
+//
+//	user {
+//			_key
+//			name
+//			friends {
+//				name
+//			}
+//			_version {
+//				cid
+//			}
+//	}
 //
 // In this example, both the friends selection and the _version
 // selection require their own planNode sub graphs to complete.
 // However, they are entirely independent graphs, so they can
 // be executed in parallel.
-//
 type parallelNode struct { // serialNode?
 	documentIterator
 	docMapper
