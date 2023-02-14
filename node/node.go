@@ -316,7 +316,7 @@ func (n *Node) WaitForPubSubEvent(id peer.ID) error {
 // By refers to the log creator. It can be different than the log sender.
 //
 // It will block the calling thread until an event is yielded to an internal channel. This
-// event is not nessecarily the next event and is dependent on the number of concurrent callers
+// event is not necessarily the next event and is dependent on the number of concurrent callers
 // (each event will only notify a single caller, not all of them).
 func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 	for {
@@ -337,7 +337,7 @@ func (n *Node) WaitForPushLogByPeerEvent(id peer.ID) error {
 // From refers to the log sender. It can be different that the log creator.
 //
 // It will block the calling thread until an event is yielded to an internal channel. This
-// event is not nessecarily the next event and is dependent on the number of concurrent callers
+// event is not necessarily the next event and is dependent on the number of concurrent callers
 // (each event will only notify a single caller, not all of them).
 func (n *Node) WaitForPushLogFromPeerEvent(id peer.ID) error {
 	for {
