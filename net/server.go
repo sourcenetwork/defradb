@@ -274,8 +274,9 @@ func (s *server) addPubSubTopic(topic string, subscribe bool) error {
 			if err := t.Close(); err != nil {
 				return err
 			}
+		} else {
+			return nil
 		}
-		return nil
 	}
 
 	t, err := rpc.NewTopic(s.peer.ctx, s.peer.ps, s.peer.host.ID(), topic, subscribe)
