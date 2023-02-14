@@ -46,12 +46,12 @@ func like(condition, data any) (bool, error) {
 
 			case hasPrefix:
 				// if the condition has a prefix string `%`, this means that we are matching
-				// the condition has being a suffix to the data.
+				// the condition as being a suffix to the data.
 				return strings.HasSuffix(d, cn), nil
 
 			case hasSuffix:
 				// if the condition has a suffix string `%`, this means that we are matching
-				// the condition has being a prefix to the data.
+				// the condition as being a prefix to the data.
 				return strings.HasPrefix(d, cn), nil
 
 			case len(startAndEnd) == 2:

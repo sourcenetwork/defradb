@@ -254,3 +254,36 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic like-string filter with either strings",
+		Request: `query {
+					users(filter: {Name: {_like: "%King%"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+				`{
+					"HeightM": 1.92
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
