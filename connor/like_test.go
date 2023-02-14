@@ -33,4 +33,9 @@ func TestLike(t *testing.T) {
 	result, err = like("%glue%", testString)
 	require.NoError(t, err)
 	require.True(t, result)
+
+	// match start and end with
+	result, err = like("Source%web3", testString)
+	require.NoError(t, err)
+	require.True(t, result)
 }

@@ -161,3 +161,96 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsStringMuplitpleR
 
 	executeTestCase(t, test)
 }
+
+func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not like-string filter with string as start and end",
+		Request: `query {
+					users(filter: {Name: {_nlike: "Daenerys%Name"}}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasBoth(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not like-string filter with none of the strings",
+		Request: `query {
+					users(filter: {_and: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasEither(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple query with basic not like-string filter with either strings",
+		Request: `query {
+					users(filter: {_or: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
+						Name
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+					"HeightM": 1.65
+				}`,
+				`{
+					"Name": "Viserys I Targaryen, King of the Andals",
+					"HeightM": 1.82
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+			},
+			{
+				"Name": "Viserys I Targaryen, King of the Andals",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
