@@ -39,8 +39,10 @@ message PushLogRequest {
         bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
         //
         bytes schemaID = 3;
+        // from is the peer ID of the peer that created the log
+        string creator = 4;
         // record is the actual record payload.
-        Document.Log log = 4;
+        Document.Log log = 5;
     }
 }
 

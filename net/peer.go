@@ -270,6 +270,7 @@ func (p *Peer) RegisterNewDocument(
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
 		Cid:      &pb.ProtoCid{Cid: c},
 		SchemaID: []byte(schemaID),
+		Creator:  p.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: nd.RawData(),
 		},
@@ -602,6 +603,7 @@ func (p *Peer) handleDocUpdateLog(evt events.Update) error {
 		DocKey:   &pb.ProtoDocKey{DocKey: dockey},
 		Cid:      &pb.ProtoCid{Cid: evt.Cid},
 		SchemaID: []byte(evt.SchemaID),
+		Creator:  p.host.ID().String(),
 		Log: &pb.Document_Log{
 			Block: evt.Block.RawData(),
 		},
@@ -697,7 +699,8 @@ func stopGRPCServer(ctx context.Context, server *grpc.Server) {
 }
 
 type EvtReceivedPushLog struct {
-	Peer peer.ID
+	ByPeer   peer.ID
+	FromPeer peer.ID
 }
 
 type EvtPubSub struct {

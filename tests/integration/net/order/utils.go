@@ -263,7 +263,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 						continue
 					}
 					log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", n2, n))
-					err := p.WaitForPushLogEvent(nodes[n].PeerID())
+					err := p.WaitForPushLogByPeerEvent(nodes[n].PeerID())
 					require.NoError(t, err)
 					log.Info(ctx, fmt.Sprintf("Node %d synced", n2))
 				}
@@ -321,7 +321,7 @@ func executeTestCase(t *testing.T, test P2PTestCase) {
 			}
 			for _, rep := range reps {
 				log.Info(ctx, fmt.Sprintf("Waiting for node %d to sync with peer %d", rep, n))
-				err := nodes[rep].WaitForPushLogEvent(nodes[n].PeerID())
+				err := nodes[rep].WaitForPushLogByPeerEvent(nodes[n].PeerID())
 				require.NoError(t, err)
 				log.Info(ctx, fmt.Sprintf("Node %d synced", rep))
 

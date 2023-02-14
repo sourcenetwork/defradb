@@ -234,8 +234,13 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 		}
 
 		if s.pushLogEmitter != nil {
+			byPeer, err := libpeer.Decode(req.Body.Creator)
+			if err != nil {
+				log.Info(ctx, "could not decode the peer id of the log creater", logging.NewKV("Error", err.Error()))
+			}
 			err = s.pushLogEmitter.Emit(EvtReceivedPushLog{
-				Peer: pid,
+				FromPeer: pid,
+				ByPeer:   byPeer,
 			})
 			if err != nil {
 				// logging instead of returning an error because the event bus should
