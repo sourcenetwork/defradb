@@ -3,8 +3,9 @@ package connor
 import (
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // like is an operator which performs string equality
