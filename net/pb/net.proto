@@ -33,14 +33,16 @@ message PushLogRequest {
     Body body = 1;
 
     message Body {
-        // docKey is the target DocKey.
+        // docKey is the DocKey of the document that is affected by the log.
         bytes docKey = 1 [(gogoproto.customtype) = "ProtoDocKey"];
-        // cid is the target CID.
+        // cid is the CID of the composite of the document.
         bytes cid = 2 [(gogoproto.customtype) = "ProtoCid"];
-        //
+        // schemaID is the SchemaID of the collection that the document resides in.
         bytes schemaID = 3;
-        // record is the actual record payload.
-        Document.Log log = 4;
+        // creator is the peer ID of the peer that created the log.
+        string creator = 4;
+        // log hold the block that represent version of the document.
+        Document.Log log = 5;
     }
 }
 
