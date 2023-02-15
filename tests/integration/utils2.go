@@ -88,7 +88,7 @@ func (dbi databaseInfo) DB() client.DB {
 var databaseDir string
 
 /*
-If this is set to true the integration test suite will instead of it's normal profile do
+If this is set to true the integration test suite will instead of its normal profile do
 the following:
 
 On [package] Init:
@@ -445,7 +445,7 @@ ActionLoop:
 	return startIndex, endIndex
 }
 
-// getCollections returns all the collections of the given name, preserving order.
+// getCollections returns all the collections of the given names, preserving order.
 //
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
@@ -620,14 +620,14 @@ func executeRequest(
 }
 
 // subscriptionResult wraps details required to assert that the
-// subscription recieves all expected results whilst it remains
+// subscription receives all expected results whilst it remains
 // active.
 type subscriptionResult struct {
 	// If true, this subscription expects to timeout.
 	expectedTimeout bool
 
-	// A channel that will recieve a function that asserts that
-	// the subscription recieved all its expected results and no more.
+	// A channel that will receive a function that asserts that
+	// the subscription received all its expected results and no more.
 	// It should be called from the main test routine to ensure that
 	// failures are recorded properly. It will only yield once, once
 	// the subscription has terminated.
@@ -635,7 +635,7 @@ type subscriptionResult struct {
 }
 
 // executeSubscriptionRequest executes the given subscription request, returning
-// a channel that will recieve a single event once the subscription has been completed.
+// a channel that will receive a single event once the subscription has been completed.
 func executeSubscriptionRequest(
 	ctx context.Context,
 	t *testing.T,
@@ -645,7 +645,7 @@ func executeSubscriptionRequest(
 	action SubscriptionRequest2,
 ) (subscriptionResult, bool) {
 	resultChan := subscriptionResult{
-		expectedTimeout:    action.ExpectedTimout,
+		expectedTimeout:    action.ExpectedTimeout,
 		subscriptionAssert: make(chan func()),
 	}
 

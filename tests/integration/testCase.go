@@ -97,7 +97,7 @@ type Request struct {
 //
 // A new transaction will be created for the first TransactionRequest2 of any given
 // TransactionId. TransactionRequest2s will be submitted to the database in the order
-// in which they are recieved (interleaving amoungst other actions if provided), however
+// in which they are recieved (interleaving amongst other actions if provided), however
 // they will not be commited until a TransactionCommit of matching TransactionId is
 // provided.
 type TransactionRequest2 struct {
@@ -139,7 +139,7 @@ type SubscriptionRequest2 struct {
 
 	// If set to true, the request should yield no results and should instead timeout.
 	// The timeout is duration is that of subscriptionTimeout (1 second).
-	ExpectedTimout bool
+	ExpectedTimeout bool
 
 	// The expected (data) results yielded through the subscription across its lifetime.
 	Results []map[string]any

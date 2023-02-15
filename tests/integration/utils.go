@@ -150,10 +150,10 @@ func ExecuteRequestTestCase(
 		actions = append(
 			actions,
 			SubscriptionRequest2{
-				ExpectedError:  request.ExpectedError,
-				Request:        request.Request,
-				Results:        request.Results,
-				ExpectedTimout: request.ExpectedTimout,
+				ExpectedError:   request.ExpectedError,
+				Request:         request.Request,
+				Results:         request.Results,
+				ExpectedTimeout: request.ExpectedTimout,
 			},
 		)
 	}
