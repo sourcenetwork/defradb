@@ -225,7 +225,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				}`,
 			},
 			testUtils.TransactionRequest2{
-				TransactionId: 0,
+				TransactionID: 0,
 				Request: `mutation {
 					update_user(data: "{\"age\": 28}") {
 						_key
@@ -242,7 +242,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				},
 			},
 			testUtils.TransactionRequest2{
-				TransactionId: 1,
+				TransactionID: 1,
 				Request: `mutation {
 					update_user(data: "{\"age\": 29}") {
 						_key
@@ -259,10 +259,10 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				},
 			},
 			testUtils.TransactionCommit{
-				TransactionId: 0,
+				TransactionID: 0,
 			},
 			testUtils.TransactionCommit{
-				TransactionId: 1,
+				TransactionID: 1,
 				ExpectedError: "Transaction Conflict. Please retry",
 			},
 			testUtils.Request{

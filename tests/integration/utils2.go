@@ -545,12 +545,12 @@ func executeTransactionRequest(
 	testCase TestCase,
 	action TransactionRequest2,
 ) []datastore.Txn {
-	if action.TransactionId >= len(txns) {
+	if action.TransactionID >= len(txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		txns = append(txns, make([]datastore.Txn, action.TransactionId-len(txns)+1)...)
+		txns = append(txns, make([]datastore.Txn, action.TransactionID-len(txns)+1)...)
 	}
 
-	if txns[action.TransactionId] == nil {
+	if txns[action.TransactionID] == nil {
 		// Create a new transaction if one does not already exist.
 		txn, err := db.NewTxn(ctx, false)
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
@@ -558,10 +558,10 @@ func executeTransactionRequest(
 			return nil
 		}
 
-		txns[action.TransactionId] = txn
+		txns[action.TransactionID] = txn
 	}
 
-	result := db.ExecTransactionalRequest(ctx, action.Request, txns[action.TransactionId])
+	result := db.ExecTransactionalRequest(ctx, action.Request, txns[action.TransactionID])
 	expectedErrorRaised := assertRequestResults(
 		ctx,
 		t,
@@ -576,7 +576,7 @@ func executeTransactionRequest(
 	if expectedErrorRaised {
 		// Make sure to discard the transaction before exit, else an unwanted error
 		// may surface later (e.g. on database close).
-		txns[action.TransactionId].Discard(ctx)
+		txns[action.TransactionID].Discard(ctx)
 		return nil
 	}
 
@@ -594,9 +594,9 @@ func commitTransaction(
 	testCase TestCase,
 	action TransactionCommit,
 ) {
-	err := txns[action.TransactionId].Commit(ctx)
+	err := txns[action.TransactionID].Commit(ctx)
 	if err != nil {
-		txns[action.TransactionId].Discard(ctx)
+		txns[action.TransactionID].Discard(ctx)
 	}
 
 	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)

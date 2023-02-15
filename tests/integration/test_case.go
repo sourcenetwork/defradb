@@ -102,7 +102,7 @@ type Request struct {
 // provided.
 type TransactionRequest2 struct {
 	// Used to identify the transaction for this to run against.
-	TransactionId int
+	TransactionID int
 
 	// The request to run against the transaction.
 	Request string
@@ -120,7 +120,7 @@ type TransactionRequest2 struct {
 // TransactionCommit represents a commit request for a transaction of the given id.
 type TransactionCommit struct {
 	// Used to identify the transaction to commit.
-	TransactionId int
+	TransactionID int
 
 	// Any error expected from the action. Optional.
 	//

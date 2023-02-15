@@ -96,7 +96,12 @@ func ExecuteRequestTestCase(
 	for _, request := range test.TransactionalRequests {
 		actions = append(
 			actions,
-			TransactionRequest2(request),
+			TransactionRequest2{
+				TransactionID: request.TransactionId,
+				Request:       request.Request,
+				Results:       request.Results,
+				ExpectedError: request.ExpectedError,
+			},
 		)
 	}
 
@@ -114,7 +119,7 @@ func ExecuteRequestTestCase(
 		actions = append(
 			actions,
 			TransactionCommit{
-				TransactionId: request.TransactionId,
+				TransactionID: request.TransactionId,
 				ExpectedError: request.ExpectedError,
 			},
 		)
