@@ -308,10 +308,11 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 	executeTestCase(t, test)
 }
 
-// TODO: Fix this panic in #833.
+// TODO: Fix this panic in #833 and #920.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
+
 		Request: `query {
 		    Author {
 				name
@@ -423,7 +424,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 }
 
-// TODO: Fix this panic in #833.
+// TODO: Fix this panic in #833 and #920.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
