@@ -63,7 +63,6 @@ import (
 	"github.com/spf13/viper"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
 )
@@ -162,16 +161,16 @@ func DefaultConfig() *Config {
 
 func (cfg *Config) validate() error {
 	if err := cfg.Datastore.validate(); err != nil {
-		return errors.Wrap("failed to validate Datastore config", err)
+		return NewErrFailedToValidateConfig(err)
 	}
 	if err := cfg.API.validate(); err != nil {
-		return errors.Wrap("failed to validate API config", err)
+		return NewErrFailedToValidateConfig(err)
 	}
 	if err := cfg.Net.validate(); err != nil {
-		return errors.Wrap("failed to validate Net config", err)
+		return NewErrFailedToValidateConfig(err)
 	}
 	if err := cfg.Log.validate(); err != nil {
-		return errors.Wrap("failed to validate Log config", err)
+		return NewErrFailedToValidateConfig(err)
 	}
 	return nil
 }
@@ -298,7 +297,7 @@ func (dbcfg DatastoreConfig) validate() error {
 	switch dbcfg.Store {
 	case "badger", "memory":
 	default:
-		return errors.New(fmt.Sprintf("invalid store type: %s", dbcfg.Store))
+		return NewErrInvalidDatastoreType(dbcfg.Store)
 	}
 	return nil
 }
@@ -333,11 +332,11 @@ func defaultAPIConfig() *APIConfig {
 // converts `~/.defradb/certs/server.crt` to `/home/username/.defradb/certs/server.crt`.
 func expandHomeDir(path *string) error {
 	if *path == "~" {
-		return errors.New("path cannot be just ~ (home directory)")
+		return ErrPathCannotBeHomeDir
 	} else if strings.HasPrefix(*path, "~/") {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return errors.Wrap("unable to expand home directory", err)
+			return NewErrUnableToExpandHomeDir(err)
 		}
 
 		// Use strings.HasPrefix so we don't match paths like "/x/~/x/"
@@ -349,13 +348,13 @@ func expandHomeDir(path *string) error {
 
 func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
-		return errors.New("no database URL provided")
+		return ErrNoDatabaseURLProvided
 	}
 	ip := net.ParseIP(apicfg.Address)
 	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
 		_, err := net.ResolveTCPAddr("tcp", apicfg.Address)
 		if err != nil {
-			return errors.Wrap("invalid database URL", err)
+			return NewErrInvalidDatabaseURL(err)
 		}
 	}
 
@@ -408,19 +407,19 @@ func defaultNetConfig() *NetConfig {
 func (netcfg *NetConfig) validate() error {
 	_, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid RPC timeout: %s", netcfg.RPCTimeout))
+		return NewErrInvalidRPCTimeout(err, netcfg.RPCTimeout)
 	}
 	_, err = time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid RPC MaxConnectionIdle: %s", netcfg.RPCMaxConnectionIdle))
+		return NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
 	}
 	_, err = ma.NewMultiaddr(netcfg.P2PAddress)
 	if err != nil {
-		return errors.New(fmt.Sprintf("invalid P2P address: %s", netcfg.P2PAddress))
+		return NewErrInvalidP2PAddress(err, netcfg.P2PAddress)
 	}
 	_, err = net.ResolveTCPAddr("tcp", netcfg.RPCAddress)
 	if err != nil {
-		return errors.Wrap("invalid RPC address", err)
+		return NewErrInvalidRPCAddress(err, netcfg.RPCAddress)
 	}
 	if len(netcfg.Peers) > 0 {
 		peers := strings.Split(netcfg.Peers, ",")
@@ -428,7 +427,7 @@ func (netcfg *NetConfig) validate() error {
 		for i, addr := range peers {
 			maddrs[i], err = ma.NewMultiaddr(addr)
 			if err != nil {
-				return errors.New(fmt.Sprintf("failed to parse bootstrap peers: %s", netcfg.Peers))
+				return NewErrInvalidBootstrapPeers(err, netcfg.Peers)
 			}
 		}
 	}
@@ -520,7 +519,7 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	case logLevelFatal:
 		loglvl = logging.Fatal
 	default:
-		return logging.Config{}, errors.New(fmt.Sprintf("invalid log level: %s", logcfg.Level))
+		return logging.Config{}, NewErrInvalidLogLevel(logcfg.Level)
 	}
 	var encfmt logging.EncoderFormat
 	switch logcfg.Format {
@@ -529,14 +528,14 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	case "csv":
 		encfmt = logging.CSV
 	default:
-		return logging.Config{}, errors.New(fmt.Sprintf("invalid log format: %s", logcfg.Format))
+		return logging.Config{}, NewErrInvalidLogFormat(logcfg.Format)
 	}
 	// handle named overrides
 	overrides := make(map[string]logging.Config)
 	for name, cfg := range logcfg.NamedOverrides {
 		c, err := cfg.ToLoggerConfig()
 		if err != nil {
-			return logging.Config{}, errors.Wrap("couldn't convert override config", err)
+			return logging.Config{}, NewErrOverrideConfigConvertFailed(err, name)
 		}
 		overrides[name] = c
 	}
@@ -560,7 +559,7 @@ func (logcfg LoggingConfig) copy() LoggingConfig {
 
 func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
 	if name == "" {
-		return nil, errors.New("provided name can't be empty for named config")
+		return nil, NewErrInvalidNamedLoggerName(name)
 	}
 	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
 		return namedCfg, nil
@@ -584,7 +583,7 @@ func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
 func (c *Config) ToJSON() ([]byte, error) {
 	jsonbytes, err := json.Marshal(c)
 	if err != nil {
-		return []byte{}, errors.Wrap("failed to marshal Config to JSON", err)
+		return []byte{}, NewErrConfigToJSONFailed(err)
 	}
 	return jsonbytes, nil
 }
@@ -594,10 +593,10 @@ func (c *Config) toBytes() ([]byte, error) {
 	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
 	if err != nil {
-		return nil, errors.Wrap("could not parse config template", err)
+		return nil, NewErrConfigTemplateFailed(err)
 	}
 	if err := configTemplate.Execute(&buffer, c); err != nil {
-		return nil, errors.Wrap("could not execute config template", err)
+		return nil, NewErrConfigTemplateFailed(err)
 	}
 	return buffer.Bytes(), nil
 }
