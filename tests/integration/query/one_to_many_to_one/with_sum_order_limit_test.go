@@ -159,10 +159,10 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 	executeTestCase(t, test)
 }
 
-// TODO: Fix this panic in #833.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, asc. directions.",
+
 		Request: `query {
  		    Author {
  				name
@@ -270,16 +270,21 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
  			    }`,
 			},
 		},
+
 		Results: []map[string]any{
 			{
 				"name": "John Grisham",
-				"s1":   4.9 + 3.2, // Because in ascending order years for John are [1995, 1999].
+
+				// Because in ascending order years for John are:
+				// 'The Associate' as it has no publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+				"s1": float64(4.2) + float64(4.9),
+
 				"NewestPublishersBook": []map[string]any{
 					{
-						"name": "Painted House",
+						"name": "The Associate",
 					},
 					{
-						"name": "Sooley",
+						"name": "Painted House",
 					},
 				},
 			},
@@ -300,7 +305,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 		},
 	}
 
-	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+	executeTestCase(t, test)
 }
 
 // TODO: Fix this panic in #833.
