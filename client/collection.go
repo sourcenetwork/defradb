@@ -34,15 +34,6 @@ type Collection interface {
 	// SchemaID returns the ID of the Schema used to define this Collection.
 	SchemaID() string
 
-	// Indexes returns all the indexes defined on this Collection.
-	Indexes() []IndexDescription
-	// PrimaryIndex returns the primary index for the this Collection.
-	PrimaryIndex() IndexDescription
-	// Index returns the index with the given index ID.
-	//
-	// If no index is found with the given ID an ErrIndexNotFound error will be returned.
-	Index(uint32) (IndexDescription, error)
-
 	// Create a new document.
 	//
 	// Will verify the DocKey/CID to ensure that the new document is correctly formatted.

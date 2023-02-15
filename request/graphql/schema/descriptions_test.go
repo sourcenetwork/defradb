@@ -19,15 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-var testDefaultIndex = []client.IndexDescription{
-	{
-		Name:    "primary",
-		ID:      uint32(0),
-		Primary: true,
-		Unique:  true,
-	},
-}
-
 func TestSingleSimpleType(t *testing.T) {
 	cases := []descriptionTestCase{
 		{
@@ -67,7 +58,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -114,7 +104,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -143,7 +132,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -199,7 +187,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -237,7 +224,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -284,7 +270,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -313,7 +298,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -369,7 +353,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -407,7 +390,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -463,7 +445,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -501,7 +482,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -557,7 +537,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 				{
 					Name: "author",
@@ -589,7 +568,6 @@ func TestSingleSimpleType(t *testing.T) {
 							},
 						},
 					},
-					Indexes: testDefaultIndex,
 				},
 			},
 		},
@@ -602,15 +580,8 @@ func TestSingleSimpleType(t *testing.T) {
 
 func runCreateDescriptionTest(t *testing.T, testcase descriptionTestCase) {
 	ctx := context.Background()
-	sm, err := NewSchemaManager()
-	assert.NoError(t, err, testcase.description)
 
-	types, _, err := sm.Generator.FromSDL(ctx, testcase.sdl)
-	assert.NoError(t, err, testcase.description)
-
-	assert.Len(t, types, len(testcase.targetDescs), testcase.description)
-
-	descs, err := sm.Generator.CreateDescriptions(types)
+	descs, err := FromString(ctx, testcase.sdl)
 	assert.NoError(t, err, testcase.description)
 	assert.Equal(t, len(descs), len(testcase.targetDescs), testcase.description)
 

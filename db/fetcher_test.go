@@ -27,7 +27,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 		Name: "users",
 		ID:   uint32(1),
 		Schema: client.SchemaDescription{
-			FieldIDs: []uint32{1, 2, 3},
 			Fields: []client.FieldDescription{
 				{
 					Name: "_key",
@@ -46,14 +45,6 @@ func newTestCollectionDescription() client.CollectionDescription {
 					Kind: client.FieldKind_INT,
 					Typ:  client.LWW_REGISTER,
 				},
-			},
-		},
-		Indexes: []client.IndexDescription{
-			{
-				Name:    "primary",
-				ID:      uint32(0),
-				Primary: true,
-				Unique:  true,
 			},
 		},
 	}

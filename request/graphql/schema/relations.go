@@ -17,18 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// type uint8 uint8
-
-// const (
-// 	uint8_One uint8 = 1 << iota
-// 	uint8_Many
-// 	uint8_OneToOne
-// 	uint8_OneToMany
-// 	uint8_ManyToMany
-
-// 	uint8_Primary = 1 << 7
-// )
-
 // RelationManager keeps track of all the relations that exist
 // between schema types
 type RelationManager struct {
@@ -41,56 +29,12 @@ func NewRelationManager() *RelationManager {
 	}
 }
 
-func (rm *RelationManager) GetRelations() {}
-
 func (rm *RelationManager) GetRelation(name string) (*Relation, error) {
 	rel, ok := rm.relations[name]
 	if !ok {
 		return nil, NewErrRelationNotFound(name)
 	}
 	return rel, nil
-}
-
-func (rm *RelationManager) getRelationByDescription(
-	field, schemaType, objectType string,
-) *Relation {
-	for _, rel := range rm.relations {
-		t1, t2 := rel.schemaTypes[0], rel.schemaTypes[1]
-		if (t1 == schemaType && t2 == objectType) ||
-			(t1 == objectType && t2 == schemaType) {
-			f1, f2 := rel.fields[0], rel.fields[1]
-			if field == f1 || field == f2 {
-				return rel
-			}
-		}
-	}
-
-	return nil
-}
-
-func (rm *RelationManager) NumRelations() int {
-	return len(rm.relations)
-}
-
-// validate ensures that all the relations are finalized.
-// It returns any relations that aren't. Returns true if
-// everything is valid
-func (rm *RelationManager) validate() ([]*Relation, bool) {
-	unfinalized := make([]*Relation, 0)
-	for _, rel := range rm.relations {
-		if !rel.finalized {
-			unfinalized = append(unfinalized, rel)
-		}
-	}
-	if len(unfinalized) > 0 {
-		return unfinalized, false
-	}
-	return nil, true
-}
-
-func (rm *RelationManager) Exists(name string) bool {
-	_, exists := rm.relations[name]
-	return exists
 }
 
 // RegisterSingle is used if you only know a single side of the relation
@@ -152,7 +96,6 @@ func (rm *RelationManager) RegisterSingle(
 		rel.schemaTypes = append(rel.schemaTypes, schemaType)
 		rel.fields = append(rel.fields, schemaField)
 
-		// Try finalizing the relation.
 		if err := rel.finalize(); err != nil {
 			return false, err
 		}
@@ -162,34 +105,12 @@ func (rm *RelationManager) RegisterSingle(
 	return true, nil
 }
 
-// RegisterRelation adds a new relation to the RelationManager
-// if it doesn't already exist.
-func (rm *RelationManager) RegisterOneToOne(
-	name, primaryType, primaryField, secondaryType, secondaryField string,
-) (bool, error) {
-	return rm.register(nil)
-}
-
-func (rm *RelationManager) RegisterOneToMany(
-	name, oneType, oneField, manyType, manyField string,
-) (bool, error) {
-	return rm.register(nil)
-}
-
-func (rm *RelationManager) RegisterManyToMany(name, type1, type2 string) (bool, error) {
-	return rm.register(nil)
-}
-
-func (rm *RelationManager) register(rel *Relation) (bool, error) {
-	return true, nil
-}
-
 type Relation struct {
 	name        string
 	relType     client.RelationType
 	types       []client.RelationType
-	schemaTypes []string // []gql.Object??
-	fields      []string //
+	schemaTypes []string
+	fields      []string
 
 	// finalized indicates if we've properly
 	// updated both sides of the relation
@@ -241,77 +162,15 @@ func (r *Relation) finalize() error {
 	return nil
 }
 
-func (r Relation) GetFields() []string {
-	return r.fields
-}
-
-// Type returns what kind of relation it is
+// Kind returns what type of relation it is
 func (r Relation) Kind() client.RelationType {
 	return r.relType
-}
-
-func (r Relation) Valid() bool {
-	return r.finalized
-}
-
-// SchemaTypeIsPrimary returns true if the provided type of the relation
-// is the primary type. Only one-to-one and one-to-many have primaries.
-func (r Relation) SchemaTypeIsPrimary(t string) bool {
-	i, ok := r.schemaTypeExists(t)
-	if !ok {
-		return false
-	}
-
-	relType := r.types[i]
-	return relType.IsSet(client.Relation_Type_Primary)
-}
-
-// SchemaTypeIsOne returns true if the provided type of the relation
-// is the primary type. Only one-to-one and one-to-many have primaries.
-func (r Relation) SchemaTypeIsOne(t string) bool {
-	i, ok := r.schemaTypeExists(t)
-	if !ok {
-		return false
-	}
-
-	relType := r.types[i]
-	return relType.IsSet(client.Relation_Type_ONE)
-}
-
-// SchemaTypeIsMany returns true if the provided type of the relation
-// is the primary type. Only one-to-one and one-to-many have primaries.
-func (r Relation) SchemaTypeIsMany(t string) bool {
-	i, ok := r.schemaTypeExists(t)
-	if !ok {
-		return false
-	}
-
-	relType := r.types[i]
-	return relType.IsSet(client.Relation_Type_MANY)
-}
-
-func (r Relation) schemaTypeExists(t string) (int, bool) {
-	for i, schemaType := range r.schemaTypes {
-		if t == schemaType {
-			return i, true
-		}
-	}
-	return -1, false
 }
 
 func (r Relation) GetField(schemaType string, field string) (string, client.RelationType, bool) {
 	for i, f := range r.fields {
 		if f == field && r.schemaTypes[i] == schemaType {
 			return f, r.types[i], true
-		}
-	}
-	return "", client.RelationType(0), false
-}
-
-func (r Relation) GetFieldFromSchemaType(schemaType string) (string, client.RelationType, bool) {
-	for i, s := range r.schemaTypes {
-		if s == schemaType {
-			return r.fields[1-i], r.types[1-i], true
 		}
 	}
 	return "", client.RelationType(0), false
@@ -330,11 +189,6 @@ func genRelationName(t1, t2 string) (string, error) {
 	return fmt.Sprintf("%s_%s", t2, t1), nil
 }
 
-// IsPrimary returns true if the Relation_Primary bit is set
-func IsPrimary(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_Primary)
-}
-
 // IsOne returns true if the Relation_ONE bit is set
 func IsOne(fieldmeta client.RelationType) bool {
 	return fieldmeta.IsSet(client.Relation_Type_ONE)
@@ -343,11 +197,6 @@ func IsOne(fieldmeta client.RelationType) bool {
 // IsOneToOne returns true if the Relation_ONEONE bit is set
 func IsOneToOne(fieldmeta client.RelationType) bool {
 	return fieldmeta.IsSet(client.Relation_Type_ONEONE)
-}
-
-// IsMany returns true if the Relation_MANY bit is set
-func IsMany(fieldmeta client.RelationType) bool {
-	return fieldmeta.IsSet(client.Relation_Type_MANY)
 }
 
 // IsOneToMany returns true if the Relation_ONEMANY is set

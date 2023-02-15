@@ -35,15 +35,15 @@ func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"cid":    "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
 				"_count": 0,
 			},
 			{
-				"cid":    "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
+				"cid":    "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
 				"_count": 0,
 			},
 			{
-				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"cid":    "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
 				"_count": 2,
 			},
 		},
