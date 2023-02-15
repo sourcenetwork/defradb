@@ -138,7 +138,7 @@ type SubscriptionRequest2 struct {
 	Request string
 
 	// If set to true, the request should yield no results and should instead timeout.
-	// The timeout is duration is that of subscriptionTimeout (1 second).
+	// The timeout duration is that of subscriptionTimeout.
 	ExpectedTimeout bool
 
 	// The expected (data) results yielded through the subscription across its lifetime.
