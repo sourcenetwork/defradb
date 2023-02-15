@@ -56,9 +56,8 @@ run:
   allow-parallel-runners: false
 
   # Define the Go version limit.
-  # Mainly related to generics support since go1.18.
-  # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`, fallback on 1.18
-  go: "1.18"
+  # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`.
+  go: "1.19"
 
 #=====================================================================================[ Output Configuration Options ]
 output:
@@ -112,14 +111,13 @@ linters:
   disable-all: true
 
   enable:
-    - deadcode
     - errcheck
     - errorlint
     - exportloopref
     - forbidigo
     - goconst
     - gofmt
-    # - goheader
+    - goheader
     - goimports
     - gosimple
     - govet
@@ -130,12 +128,7 @@ linters:
     - staticcheck
     - typecheck
     - unused
-    - varcheck
     - whitespace
-
-  # https://github.com/golangci/golangci-lint/issues/2649
-  # Linters below are disabled for now because of go1.18 issue above^
-  # - structcheck
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
@@ -270,7 +263,7 @@ linters-settings:
 
   gosimple:
     # Select the Go version to target.
-    go: "1.18"
+    go: "1.19"
     # https://staticcheck.io/docs/options#checks
     checks: ["all", "-S1038"]
     # Turn on all except (these are disabled):
@@ -362,13 +355,13 @@ linters-settings:
 
   staticcheck:
     # Select the Go version to target.
-    go: "1.18"
+    go: "1.19"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
   unused:
     # Select the Go version to target.
-    go: "1.18"
+    go: "1.19"
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.

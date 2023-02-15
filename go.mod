@@ -1,6 +1,6 @@
 module github.com/sourcenetwork/defradb
 
-go 1.18
+go 1.19
 
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible

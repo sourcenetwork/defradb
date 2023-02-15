@@ -39,7 +39,6 @@ How to use, e.g. without using a rootdir:
 	err := cfg.LoadWithoutRootDir()
 	if err != nil {
 		...
-
 */
 package config
 

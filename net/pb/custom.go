@@ -77,7 +77,7 @@ func (id ProtoPeerID) Size() int {
 }
 
 // ProtoAddr is a custom type used by gogo to serde raw multiaddresses into
-//  the ma.Multiaddr type, and back.
+// the ma.Multiaddr type, and back.
 type ProtoAddr struct {
 	ma.Multiaddr
 }
