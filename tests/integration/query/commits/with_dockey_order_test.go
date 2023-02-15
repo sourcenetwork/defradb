@@ -44,15 +44,15 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeibz3vbkt75siz3zogke6tlzvpcxttpiy4xivjvgyeaorjz6wsbguq",
-				"height": int64(2),
-			},
-			{
 				"cid":    "bafybeiacqac6scm7pmtlvqptvtljmoroevnoedku42qi5bmfdpaelcu5fm",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"cid":    "bafybeibz3vbkt75siz3zogke6tlzvpcxttpiy4xivjvgyeaorjz6wsbguq",
+				"height": int64(2),
+			},
+			{
+				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 				"height": int64(1),
 			},
 			{
@@ -60,7 +60,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
 				"height": int64(1),
 			},
 		},
@@ -97,7 +97,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 				"height": int64(1),
 			},
 			{
@@ -105,15 +105,15 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeibz3vbkt75siz3zogke6tlzvpcxttpiy4xivjvgyeaorjz6wsbguq",
+				"cid":    "bafybeiacqac6scm7pmtlvqptvtljmoroevnoedku42qi5bmfdpaelcu5fm",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeiacqac6scm7pmtlvqptvtljmoroevnoedku42qi5bmfdpaelcu5fm",
+				"cid":    "bafybeibz3vbkt75siz3zogke6tlzvpcxttpiy4xivjvgyeaorjz6wsbguq",
 				"height": int64(2),
 			},
 		},
@@ -221,6 +221,81 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 			{
 				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
 				"height": int64(1),
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple all commits query with dockey, multiple updates with order cid asc",
+		Request: `query {
+                     commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", order: {height: ASC}) {
+                         cid
+                         height
+                     }
+                 }`,
+		Docs: map[int][]string{
+			0: {
+				`{
+                     "Name": "John",
+                     "Age": 21
+                 }`,
+			},
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+                         "Age": 22
+                     }`,
+					`{
+                         "Age": 23
+                     }`,
+					`{
+                         "Age": 24
+                     }`,
+				},
+			},
+		},
+		Results: []map[string]any{
+			{
+				"cid":    "bafybeigju7dgicfq3fxvtlxtjao7won4xc7kusykkvumngjfx5i2c7ibny",
+				"height": int64(1),
+			},
+			{
+				"cid":    "bafybeiaqarrcayyoly2gdiam6mhh72ls4azwa7brozxxc3q2srnggkkqkq",
+				"height": int64(1),
+			},
+			{
+				"cid":    "bafybeid5l577igkgcn6wjqjeqxlta4dcc3a3iykwkborf4fklaenjuctoq",
+				"height": int64(1),
+			},
+			{
+				"cid":    "bafybeiacqac6scm7pmtlvqptvtljmoroevnoedku42qi5bmfdpaelcu5fm",
+				"height": int64(2),
+			},
+			{
+				"cid":    "bafybeibz3vbkt75siz3zogke6tlzvpcxttpiy4xivjvgyeaorjz6wsbguq",
+				"height": int64(2),
+			},
+			{
+				"cid":    "bafybeiho5z6seahwxgbdyobylzyarrdschgzmood7rkdtp4qpd2uxebaxy",
+				"height": int64(3),
+			},
+			{
+				"cid":    "bafybeib6yxcmbg2gz5ss6d67u5mu6wcatfjtdp2rv44difyznp3rqlyu4m",
+				"height": int64(3),
+			},
+			{
+				"cid":    "bafybeihhlr6teynoy534b32kihulsmtdnnzp5woebvhubvofoxqx4g4lha",
+				"height": int64(4),
+			},
+			{
+				"cid":    "bafybeicgc6k47su6263dm3mv5j5gkv3bbt43nb66x6wjashjxpfm2ds5nu",
+				"height": int64(4),
 			},
 		},
 	}

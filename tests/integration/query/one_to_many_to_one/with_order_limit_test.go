@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TODO: Fix this panic in #833.
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 deep orderby subtypes of both descending and ascending.",
+
 		Request: `query {
 		    Author {
 				name
@@ -129,8 +129,41 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 			    }`,
 			},
 		},
-		Results: []map[string]any{},
+
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				"NewestPublishersBook": []map[string]any{
+					{
+						"name": "Theif Lord",
+					},
+				},
+				"OldestPublishersBook": []map[string]any{
+					{
+						"name": "The Associate", // oldest because has no publisher.
+					},
+				},
+			},
+			{
+				"name":                 "Not a Writer",
+				"NewestPublishersBook": []map[string]any{},
+				"OldestPublishersBook": []map[string]any{},
+			},
+			{
+				"name": "Cornelia Funke",
+				"NewestPublishersBook": []map[string]any{
+					{
+						"name": "The Rooster Bar",
+					},
+				},
+				"OldestPublishersBook": []map[string]any{
+					{
+						"name": "The Rooster Bar",
+					},
+				},
+			},
+		},
 	}
 
-	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+	executeTestCase(t, test)
 }
