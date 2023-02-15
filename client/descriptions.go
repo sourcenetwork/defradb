@@ -19,8 +19,6 @@ type CollectionDescription struct {
 	Name   string
 	ID     uint32
 	Schema SchemaDescription
-	// @todo: New system reserved indexes are NEGATIVE. Maybe we need a map here
-	Indexes []IndexDescription
 }
 
 // IDString returns the collection ID as a string.
@@ -50,11 +48,6 @@ func (col CollectionDescription) GetRelation(name string) (FieldDescription, boo
 		}
 	}
 	return FieldDescription{}, false
-}
-
-// GetPrimaryIndex returns the primary index of the collection.
-func (col CollectionDescription) GetPrimaryIndex() IndexDescription {
-	return col.Indexes[0]
 }
 
 // IndexDescription describes an Index on a Collection and its associated metadata.
@@ -112,9 +105,7 @@ type SchemaDescription struct {
 	// identify a schema at a specific version.
 	VersionID string
 	Name      string
-	// Schema schema.Schema
-	FieldIDs []uint32
-	Fields   []FieldDescription
+	Fields    []FieldDescription
 }
 
 // IsEmpty returns true if the SchemaDescription is empty and uninitialized

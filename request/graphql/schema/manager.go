@@ -21,7 +21,6 @@ import (
 type SchemaManager struct {
 	schema    gql.Schema
 	Generator *Generator
-	Relations *RelationManager
 }
 
 // NewSchemaManager returns a new instance of a SchemaManager
@@ -40,7 +39,6 @@ func NewSchemaManager() (*SchemaManager, error) {
 	sm.schema = schema
 
 	sm.NewGenerator()
-	sm.Relations = NewRelationManager()
 
 	return sm, nil
 }

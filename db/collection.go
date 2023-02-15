@@ -70,7 +70,6 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 		return nil, ErrSchemaFirstFieldDocKey
 	}
 
-	desc.Schema.FieldIDs = make([]uint32, len(desc.Schema.Fields))
 	for i, field := range desc.Schema.Fields {
 		if field.Name == "" {
 			return nil, client.NewErrUninitializeProperty("Collection.Schema", "Name")
@@ -82,19 +81,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 			field.Typ == client.NONE_CRDT {
 			return nil, client.NewErrUninitializeProperty("Collection.Schema", "CRDT type")
 		}
-		desc.Schema.FieldIDs[i] = uint32(i)
 		desc.Schema.Fields[i].ID = client.FieldID(i)
-	}
-
-	// for now, ignore any defined indexes, and overwrite the entire IndexDescription
-	// property with the correct default one.
-	desc.Indexes = []client.IndexDescription{
-		{
-			Name:    "primary",
-			ID:      uint32(0),
-			Primary: true,
-			Unique:  true,
-		},
 	}
 
 	return &collection{
@@ -378,28 +365,6 @@ func (c *collection) Schema() client.SchemaDescription {
 // ID returns the ID of the collection.
 func (c *collection) ID() uint32 {
 	return c.colID
-}
-
-// Indexes returns the defined indexes on the Collection.
-// @todo: Properly handle index creation/management
-func (c *collection) Indexes() []client.IndexDescription {
-	return c.desc.Indexes
-}
-
-// PrimaryIndex returns the primary index for the given collection.
-func (c *collection) PrimaryIndex() client.IndexDescription {
-	return c.desc.Indexes[0]
-}
-
-// Index returns the index with the given index ID.
-func (c *collection) Index(id uint32) (client.IndexDescription, error) {
-	for _, index := range c.desc.Indexes {
-		if index.ID == id {
-			return index, nil
-		}
-	}
-
-	return client.IndexDescription{}, client.ErrIndexNotFound
 }
 
 func (c *collection) SchemaID() string {

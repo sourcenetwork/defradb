@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
+	gqlSchema "github.com/sourcenetwork/defradb/request/graphql/schema"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
@@ -97,7 +98,13 @@ func buildParser(
 	if err != nil {
 		return nil, err
 	}
-	err = parser.AddSchema(ctx, schema)
+
+	collectionDescriptions, err := gqlSchema.FromString(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parser.AddSchema(ctx, collectionDescriptions)
 	if err != nil {
 		return nil, err
 	}

@@ -45,6 +45,9 @@ type Parser interface {
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
+	// ParseSDL parses an SDL string into a set of collection descriptions.
+	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDescription, error)
+
 	// Adds the given schema to this parser's model.
-	AddSchema(ctx context.Context, schema string) error
+	AddSchema(ctx context.Context, collections []client.CollectionDescription) error
 }

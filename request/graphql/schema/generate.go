@@ -15,9 +15,6 @@ import (
 	"fmt"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
-	gqlp "github.com/graphql-go/graphql/language/parser"
-	"github.com/graphql-go/graphql/language/source"
 
 	"github.com/sourcenetwork/defradb/client"
 
@@ -28,12 +25,6 @@ import (
 // Given a basic developer defined schema in GraphQL Schema Definition Language
 // create a fully DefraDB complaint GraphQL schema using a "code-first" dynamic
 // approach
-
-// Type represents a developer defined type, and its associated graphQL generated types
-type Type struct {
-	gql.ObjectConfig
-	Object *gql.Object
-}
 
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
@@ -54,28 +45,9 @@ func (m *SchemaManager) NewGenerator() *Generator {
 	return m.Generator
 }
 
-// FromSDL generates the query-op and mutation-op type definitions from a
-// encoded GraphQL Schema Definition Language request.
-func (g *Generator) FromSDL(
-	ctx context.Context,
-	schema string,
-) ([]*gql.Object, *ast.Document, error) {
-	// parse to AST
-	source := source.NewSource(&source.Source{
-		Body: []byte(schema),
-	})
-	doc, err := gqlp.Parse(gqlp.ParseParams{
-		Source: source,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	// generate from AST
-	types, err := g.FromAST(ctx, doc)
-	return types, doc, err
-}
-
-func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
+// Generate generates the query-op and mutation-op type definitions from
+// the given CollectionDescriptions.
+func (g *Generator) Generate(ctx context.Context, collections []client.CollectionDescription) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
@@ -83,7 +55,7 @@ func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql
 		typesBeforeMutation[typeName] = struct{}{}
 	}
 
-	result, err := g.fromAST(ctx, document)
+	result, err := g.generate(ctx, collections)
 
 	if err != nil {
 		// - If there is an error we should drop any new objects as they may be partial, polluting
@@ -105,11 +77,11 @@ func (g *Generator) FromAST(ctx context.Context, document *ast.Document) ([]*gql
 	return result, nil
 }
 
-// FromAST generates the mutation-op and query-op type definitions from a
-// parsed request of GraphQL Schema Definition Language AST document
-func (g *Generator) fromAST(ctx context.Context, document *ast.Document) ([]*gql.Object, error) {
+// generate generates the query-op and mutation-op type definitions from
+// the given CollectionDescriptions.
+func (g *Generator) generate(ctx context.Context, collections []client.CollectionDescription) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypesFromAST(ctx, document)
+	defs, err := g.buildTypes(ctx, collections)
 	if err != nil {
 		return nil, err
 	}
@@ -366,137 +338,89 @@ func (g *Generator) createExpandedFieldList(
 // @body: Type generation is only supported for Object type definitions.
 // Unions, Interfaces, etc are not currently supported.
 
-// Given a parsed AST of  developer defined types
+// Given a set of developer defined collection types
 // extract and return the correct gql.Object type(s)
-func (g *Generator) buildTypesFromAST(
+func (g *Generator) buildTypes(
 	ctx context.Context,
-	document *ast.Document,
+	collections []client.CollectionDescription,
 ) ([]*gql.Object, error) {
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
 
-	for _, def := range document.Definitions {
-		switch defType := def.(type) {
-		case *ast.ObjectDefinition:
-			// check if type exists
-			if _, ok := g.manager.schema.TypeMap()[defType.Name.Value]; ok {
-				return nil, NewErrSchemaTypeAlreadyExist(defType.Name.Value)
-			}
+	for _, c := range collections {
+		// Copy the loop variable before usage within the loop or it
+		// will be reassigned before the thunk is run
+		collection := c
+		fieldDescriptions := collection.Schema.Fields
 
-			objconf := gql.ObjectConfig{}
-			// otype.astDef = defType // keep a reference
-			if defType.Name != nil {
-				objconf.Name = defType.Name.Value
-			}
-			if defType.Description != nil {
-				objconf.Description = defType.Description.Value
-			}
-
-			// Wrap field definition in a thunk so we can
-			// handle any embedded object which is defined
-			// at a future point in time.
-			fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
-				fields := gql.Fields{}
-
-				// @todo: Check if this is a collection (relation) type
-				// or just a embedded only type (which doesn't need a key)
-				// automatically add the _key: ID field to the type
-				fields[request.DocKeyFieldName] = &gql.Field{Type: gql.ID}
-
-				for _, field := range defType.Fields {
-					fType := new(gql.Field)
-					if field.Name != nil {
-						fType.Name = field.Name.Value
-					}
-					if field.Description != nil {
-						fType.Description = field.Description.Value
-					}
-
-					t := field.Type
-					ttype, err := astNodeToGqlType(g.manager.schema.TypeMap(), t)
-					if err != nil {
-						return nil, err
-					}
-
-					// check if ttype is a Object value
-					// if so, add appropriate relationship data
-					// @todo check various directives for nature
-					// of object relationship
-					switch subobj := ttype.(type) {
-					case *gql.Object:
-						fields[fType.Name+"_id"] = &gql.Field{Type: gql.ID}
-
-						// register the relation
-						relName, err := getRelationshipName(field, objconf, ttype)
-						if err != nil {
-							return nil, err
-						}
-
-						// set the primary relation bit on the relation type if the directive exists on the
-						// field
-						relType := client.Relation_Type_ONE
-						if _, exists := findDirective(field, "primary"); exists {
-							relType |= client.Relation_Type_Primary
-						}
-
-						_, err = g.manager.Relations.RegisterSingle(
-							relName,
-							ttype.Name(),
-							fType.Name,
-							relType,
-						)
-						if err != nil {
-							log.ErrorE(ctx, "Error while registering single relation for object", err)
-						}
-
-					case *gql.List:
-						ltype := subobj.OfType
-						if !gql.IsLeafType(ltype) {
-							// We don't want to do this for inline-arrays (IsLeafType)
-							relName, err := getRelationshipName(field, objconf, ltype)
-							if err != nil {
-								return nil, err
-							}
-
-							_, err = g.manager.Relations.RegisterSingle(
-								relName,
-								ltype.Name(),
-								fType.Name,
-								client.Relation_Type_MANY,
-							)
-							if err != nil {
-								log.ErrorE(ctx, "Error while registering single relation for list", err)
-							}
-						}
-					}
-
-					fType.Type = ttype
-					fields[fType.Name] = fType
-				}
-
-				// add _version field
-				fields["_version"] = &gql.Field{
-					Type: gql.NewList(schemaTypes.CommitObject),
-				}
-
-				gqlType, ok := g.manager.schema.TypeMap()[defType.Name.Value]
-				if !ok {
-					return nil, NewErrObjectNotFoundDuringThunk(defType.Name.Value)
-				}
-
-				fields[request.GroupFieldName] = &gql.Field{
-					Type: gql.NewList(gqlType),
-				}
-
-				return fields, nil
-			})
-
-			objconf.Fields = fieldsThunk
-
-			obj := gql.NewObject(objconf)
-			objs = append(objs, obj)
+		// check if type exists
+		if _, ok := g.manager.schema.TypeMap()[collection.Name]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(collection.Name)
 		}
+
+		objconf := gql.ObjectConfig{
+			Name: collection.Name,
+		}
+
+		// Wrap field definition in a thunk so we can
+		// handle any embedded object which is defined
+		// at a future point in time.
+		fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
+			fields := gql.Fields{}
+
+			// automatically add the _key: ID field to the type
+			fields[request.DocKeyFieldName] = &gql.Field{Type: gql.ID}
+
+			for _, field := range fieldDescriptions {
+				var ttype gql.Type
+				if field.Kind == client.FieldKind_FOREIGN_OBJECT {
+					var ok bool
+					ttype, ok = g.manager.schema.TypeMap()[field.Schema]
+					if !ok {
+						return nil, NewErrTypeNotFound(field.Schema)
+					}
+				} else if field.Kind == client.FieldKind_FOREIGN_OBJECT_ARRAY {
+					t, ok := g.manager.schema.TypeMap()[field.Schema]
+					if !ok {
+						return nil, NewErrTypeNotFound(field.Schema)
+					}
+					ttype = gql.NewList(t)
+				} else {
+					var ok bool
+					ttype, ok = fieldKindToGQLType[field.Kind]
+					if !ok {
+						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
+					}
+				}
+
+				fields[field.Name] = &gql.Field{
+					Name: field.Name,
+					Type: ttype,
+				}
+			}
+
+			// add _version field
+			fields["_version"] = &gql.Field{
+				Type: gql.NewList(schemaTypes.CommitObject),
+			}
+
+			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
+			if !ok {
+				return nil, NewErrObjectNotFoundDuringThunk(collection.Name)
+			}
+
+			fields[request.GroupFieldName] = &gql.Field{
+				Type: gql.NewList(gqlType),
+			}
+
+			return fields, nil
+		})
+
+		objconf.Fields = fieldsThunk
+
+		obj := gql.NewObject(objconf)
+		objs = append(objs, obj)
 	}
 
 	// add all the new types now that they're converted to gql.Objects
@@ -506,32 +430,6 @@ func (g *Generator) buildTypesFromAST(
 	}
 
 	return objs, nil
-}
-
-// Gets the name of the relationship. Will return the provided name if one is specified,
-// otherwise will generate one
-func getRelationshipName(
-	field *ast.FieldDefinition,
-	hostName gql.ObjectConfig,
-	targetName gql.Type,
-) (string, error) {
-	// search for a @relation directive name, and return it if found
-	for _, directive := range field.Directives {
-		if directive.Name.Value == "relation" {
-			for _, argument := range directive.Arguments {
-				if argument.Name.Value == "name" {
-					name, isString := argument.Value.GetValue().(string)
-					if !isString {
-						return "", client.NewErrUnexpectedType[string]("Relationship name", argument.Value.GetValue())
-					}
-					return name, nil
-				}
-			}
-		}
-	}
-
-	// if no name is provided, generate one
-	return genRelationName(hostName.Name, targetName.Name())
 }
 
 func (g *Generator) genAggregateFields(ctx context.Context) error {
@@ -930,45 +828,6 @@ func appendCommitChildGroupField() {
 	}
 }
 
-// Given a parsed ast.Node object, lookup the type in the TypeMap and return if its there
-// otherwise return an error
-// ast.Node, can either be a ast.Named type, a ast.List, or a ast.NonNull.
-// The latter two are wrappers, and need to be further extracted
-func astNodeToGqlType(typeMap map[string]gql.Type, t ast.Type) (gql.Type, error) {
-	if t == nil {
-		return nil, client.NewErrUninitializeProperty("astNodeToGqlType", "t")
-	}
-
-	switch astTypeVal := t.(type) {
-	case *ast.List: // extract the underlying type and create a new
-		// list instance of that type
-		ttype, err := astNodeToGqlType(typeMap, astTypeVal.Type)
-		if err != nil {
-			return nil, err
-		}
-
-		return gql.NewList(ttype), nil
-
-	case *ast.NonNull: // extract the underlying type and create a new
-		// NonNull instance of that type
-		ttype, err := astNodeToGqlType(typeMap, astTypeVal.Type)
-		if err != nil {
-			return nil, err
-		}
-
-		return gql.NewNonNull(ttype), nil
-	}
-
-	// default case, named type
-	name := t.(*ast.Named).Name.Value
-	ttype, ok := typeMap[name]
-	if !ok {
-		return nil, NewErrTypeNotFound(name)
-	}
-
-	return ttype, nil
-}
-
 // GenerateQueryInputForGQLType is the main generation function
 // for creating the full DefraDB Query schema for a given
 // developer defined type
@@ -1309,16 +1168,6 @@ func isNumericArray(list *gql.List) bool {
 		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
 		list.OfType == gql.Int ||
 		list.OfType == gql.Float
-}
-
-// find a given directive
-func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Directive, bool) {
-	for _, directive := range field.Directives {
-		if directive.Name.Value == directiveName {
-			return directive, true
-		}
-	}
-	return nil, false
 }
 
 /* Example
