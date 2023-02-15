@@ -91,7 +91,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 		// This however is not a failing condition as not setting the content-type header
 		// should still make for a valid request and hit our default switch case.
 		if err != nil && err.Error() != "mime: no media type" {
-			handleErr(req.Context(), rw, err, http.StatusBadRequest)
+			handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -126,7 +126,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 			}
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
-				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusBadRequest)
+				handleErr(req.Context(), rw, errors.WithStack(err), http.StatusInternalServerError)
 				return
 			}
 			request = string(body)
@@ -157,7 +157,7 @@ func execGQLHandler(rw http.ResponseWriter, req *http.Request) {
 func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 	sdl, err := io.ReadAll(req.Body)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -169,7 +169,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 
 	err = db.AddSchema(req.Context(), string(sdl))
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -177,7 +177,7 @@ func loadSchemaHandler(rw http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		rw,
 		simpleDataResponse("result", "success"),
-		http.StatusBadRequest,
+		http.StatusOK,
 	)
 }
 
@@ -207,13 +207,13 @@ func getBlockHandler(rw http.ResponseWriter, req *http.Request) {
 
 	block, err := db.Blockstore().Get(req.Context(), cID)
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
 	nd, err := dag.DecodeProtobuf(block.RawData())
 	if err != nil {
-		handleErr(req.Context(), rw, err, http.StatusBadRequest)
+		handleErr(req.Context(), rw, err, http.StatusInternalServerError)
 		return
 	}
 
