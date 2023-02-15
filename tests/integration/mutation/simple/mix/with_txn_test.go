@@ -214,18 +214,17 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 }
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Update by two different transactions",
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "John",
 					"age": 27
 				}`,
 			},
-		},
-		TransactionalRequests: []testUtils.TransactionRequest{
-			{
+			testUtils.TransactionRequest2{
 				TransactionId: 0,
 				Request: `mutation {
 					update_user(data: "{\"age\": 28}") {
@@ -242,7 +241,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					},
 				},
 			},
-			{
+			testUtils.TransactionRequest2{
 				TransactionId: 1,
 				Request: `mutation {
 					update_user(data: "{\"age\": 29}") {
@@ -258,25 +257,33 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 						"age":  uint64(29),
 					},
 				},
+			},
+			testUtils.TransactionCommit{
+				TransactionId: 0,
+			},
+			testUtils.TransactionCommit{
+				TransactionId: 1,
 				ExpectedError: "Transaction Conflict. Please retry",
 			},
-		},
-		// Query after transactions have been commited:
-		Request: `query {
-			user {
-				_key
-				name
-				age
-			}
-		}`,
-		Results: []map[string]any{
-			{
-				"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
-				"name": "John",
-				"age":  uint64(28),
+			testUtils.Request{
+				// Query after transactions have been commited:
+				Request: `query {
+					user {
+						_key
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"_key": "bae-88b63198-7d38-5714-a9ff-21ba46374fd1",
+						"name": "John",
+						"age":  uint64(28),
+					},
+				},
 			},
 		},
 	}
 
-	simpleTests.ExecuteTestCase(t, test)
+	simpleTests.Execute(t, test)
 }

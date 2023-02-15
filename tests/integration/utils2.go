@@ -323,31 +323,21 @@ func executeTestCase(
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		switch action := testCase.Actions[i].(type) {
 		case SchemaUpdate:
-			if updateSchema(ctx, t, dbi.db, testCase, action) {
-				return
-			}
+			updateSchema(ctx, t, dbi.db, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
 			collections = getCollections(ctx, t, dbi.db, collectionNames)
 
 		case CreateDoc:
-			if documents, done = createDoc(ctx, t, testCase, collections, documents, action); done {
-				return
-			}
+			documents = createDoc(ctx, t, testCase, collections, documents, action)
 
 		case UpdateDoc:
-			if updateDoc(ctx, t, testCase, collections, documents, action) {
-				return
-			}
+			updateDoc(ctx, t, testCase, collections, documents, action)
 
 		case TransactionRequest2:
-			if txns, done = executeTransactionRequest(ctx, t, dbi.db, txns, testCase, action); done {
-				return
-			}
+			txns = executeTransactionRequest(ctx, t, dbi.db, txns, testCase, action)
 
 		case TransactionCommit:
-			if commitTransaction(ctx, t, txns, testCase, action) {
-				return
-			}
+			commitTransaction(ctx, t, txns, testCase, action)
 
 		case SubscriptionRequest:
 			var resultsChan subscriptionResult
@@ -358,9 +348,7 @@ func executeTestCase(
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			if executeRequest(ctx, t, dbi.db, testCase, action) {
-				return
-			}
+			executeRequest(ctx, t, dbi.db, testCase, action)
 
 		case SetupComplete:
 			// no-op, just continue.
@@ -483,9 +471,11 @@ func updateSchema(
 	db client.DB,
 	testCase TestCase,
 	action SchemaUpdate,
-) bool {
+) {
 	err := db.AddSchema(ctx, action.Schema)
-	return AssertError(t, testCase.Description, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // createDoc creates a document using the collection api and caches it in the
@@ -497,16 +487,19 @@ func createDoc(
 	collections []client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
-) ([][]*client.Document, bool) {
+) [][]*client.Document {
 	doc, err := client.NewDocFromJSON([]byte(action.Doc))
 	if AssertError(t, testCase.Description, err, action.ExpectedError) {
-		return nil, true
+		return nil
 	}
 
 	err = collections[action.CollectionID].Save(ctx, doc)
-	if AssertError(t, testCase.Description, err, action.ExpectedError) {
-		return nil, true
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	if expectedErrorRaised {
+		return nil
 	}
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.CollectionID >= len(documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
@@ -514,7 +507,7 @@ func createDoc(
 	}
 	documents[action.CollectionID] = append(documents[action.CollectionID], doc)
 
-	return documents, false
+	return documents
 }
 
 // updateDoc updates a document using the collection api.
@@ -525,16 +518,18 @@ func updateDoc(
 	collections []client.Collection,
 	documents [][]*client.Document,
 	action UpdateDoc,
-) bool {
+) {
 	doc := documents[action.CollectionID][action.DocID]
 
 	err := doc.SetWithJSON([]byte(action.Doc))
 	if AssertError(t, testCase.Description, err, action.ExpectedError) {
-		return true
+		return
 	}
 
 	err = collections[action.CollectionID].Save(ctx, doc)
-	return AssertError(t, testCase.Description, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeTransactionRequest executes the given transactional request.
@@ -549,7 +544,7 @@ func executeTransactionRequest(
 	txns []datastore.Txn,
 	testCase TestCase,
 	action TransactionRequest2,
-) ([]datastore.Txn, bool) {
+) []datastore.Txn {
 	if action.TransactionId >= len(txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
 		txns = append(txns, make([]datastore.Txn, action.TransactionId-len(txns)+1)...)
@@ -560,14 +555,14 @@ func executeTransactionRequest(
 		txn, err := db.NewTxn(ctx, false)
 		if AssertError(t, testCase.Description, err, action.ExpectedError) {
 			txn.Discard(ctx)
-			return nil, true
+			return nil
 		}
 
 		txns[action.TransactionId] = txn
 	}
 
 	result := db.ExecTransactionalRequest(ctx, action.Request, txns[action.TransactionId])
-	done := assertRequestResults(
+	expectedErrorRaised := assertRequestResults(
 		ctx,
 		t,
 		testCase.Description,
@@ -576,14 +571,16 @@ func executeTransactionRequest(
 		action.ExpectedError,
 	)
 
-	if done {
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if expectedErrorRaised {
 		// Make sure to discard the transaction before exit, else an unwanted error
 		// may surface later (e.g. on database close).
 		txns[action.TransactionId].Discard(ctx)
-		return nil, true
+		return nil
 	}
 
-	return txns, false
+	return txns
 }
 
 // commitTransaction commits the given transaction.
@@ -596,13 +593,15 @@ func commitTransaction(
 	txns []datastore.Txn,
 	testCase TestCase,
 	action TransactionCommit,
-) bool {
+) {
 	err := txns[action.TransactionId].Commit(ctx)
 	if err != nil {
 		txns[action.TransactionId].Discard(ctx)
 	}
 
-	return AssertError(t, testCase.Description, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeRequest executes the given request.
@@ -612,9 +611,9 @@ func executeRequest(
 	db client.DB,
 	testCase TestCase,
 	action Request,
-) bool {
+) {
 	result := db.ExecRequest(ctx, action.Request)
-	return assertRequestResults(
+	expectedErrorRaised := assertRequestResults(
 		ctx,
 		t,
 		testCase.Description,
@@ -622,6 +621,8 @@ func executeRequest(
 		action.Results,
 		action.ExpectedError,
 	)
+
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
 // subscriptionResult wraps details required to assert that the
@@ -677,7 +678,7 @@ func executeSubscriptionRequest(
 				resultChan.subscriptionAssert <- func() {
 					// This assert should be executed from the main test routine
 					// so that failures will be properly handled.
-					assertRequestResults(
+					expectedErrorRaised := assertRequestResults(
 						ctx,
 						t,
 						testCase.Description,
@@ -685,6 +686,8 @@ func executeSubscriptionRequest(
 						action.Results,
 						action.ExpectedError,
 					)
+
+					assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 				}
 
 				return
@@ -772,4 +775,10 @@ func assertRequestResults(
 	}
 
 	return false
+}
+
+func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {
+	if expectedError != "" && !wasRaised {
+		assert.Fail(t, "Expected an error however none was raised.", description)
+	}
 }
