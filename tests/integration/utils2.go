@@ -498,16 +498,16 @@ func createDoc(
 		return nil, true
 	}
 
-	err = collections[action.CollectionId].Save(ctx, doc)
+	err = collections[action.CollectionID].Save(ctx, doc)
 	if AssertError(t, testCase.Description, err, action.ExpectedError) {
 		return nil, true
 	}
 
-	if action.CollectionId >= len(documents) {
+	if action.CollectionID >= len(documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
-		documents = append(documents, make([][]*client.Document, action.CollectionId-len(documents)+1)...)
+		documents = append(documents, make([][]*client.Document, action.CollectionID-len(documents)+1)...)
 	}
-	documents[action.CollectionId] = append(documents[action.CollectionId], doc)
+	documents[action.CollectionID] = append(documents[action.CollectionID], doc)
 
 	return documents, false
 }
@@ -521,14 +521,14 @@ func updateDoc(
 	documents [][]*client.Document,
 	action UpdateDoc,
 ) bool {
-	doc := documents[action.CollectionId][action.DocId]
+	doc := documents[action.CollectionID][action.DocId]
 
 	err := doc.SetWithJSON([]byte(action.Doc))
 	if AssertError(t, testCase.Description, err, action.ExpectedError) {
 		return true
 	}
 
-	err = collections[action.CollectionId].Save(ctx, doc)
+	err = collections[action.CollectionID].Save(ctx, doc)
 	return AssertError(t, testCase.Description, err, action.ExpectedError)
 }
 

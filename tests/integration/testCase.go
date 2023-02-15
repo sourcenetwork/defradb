@@ -44,7 +44,7 @@ type SchemaUpdate struct {
 // using the collection api.
 type CreateDoc struct {
 	// The collection in which this document should be created.
-	CollectionId int
+	CollectionID int
 
 	// The document to create, in JSON string format.
 	Doc string
@@ -60,7 +60,7 @@ type CreateDoc struct {
 // using the collection api.
 type UpdateDoc struct {
 	// The collection in which this document exists.
-	CollectionId int
+	CollectionID int
 
 	// The index-identifier of the document within the collection.  This is based on
 	// the order in which it was created, not the ordering of the document within the

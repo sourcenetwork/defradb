@@ -86,7 +86,7 @@ func ExecuteRequestTestCase(
 			actions = append(
 				actions,
 				CreateDoc{
-					CollectionId: collectionIndex,
+					CollectionID: collectionIndex,
 					Doc:          doc,
 				},
 			)
@@ -99,7 +99,7 @@ func ExecuteRequestTestCase(
 				actions = append(
 					actions,
 					UpdateDoc{
-						CollectionId: collectionIndex,
+						CollectionID: collectionIndex,
 						DocId:        docIndex,
 						Doc:          doc,
 					},
