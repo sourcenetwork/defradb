@@ -100,7 +100,7 @@ func ExecuteRequestTestCase(
 					actions,
 					UpdateDoc{
 						CollectionID: collectionIndex,
-						DocId:        docIndex,
+						DocID:        docIndex,
 						Doc:          doc,
 					},
 				)

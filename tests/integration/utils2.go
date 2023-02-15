@@ -521,7 +521,7 @@ func updateDoc(
 	documents [][]*client.Document,
 	action UpdateDoc,
 ) bool {
-	doc := documents[action.CollectionID][action.DocId]
+	doc := documents[action.CollectionID][action.DocID]
 
 	err := doc.SetWithJSON([]byte(action.Doc))
 	if AssertError(t, testCase.Description, err, action.ExpectedError) {

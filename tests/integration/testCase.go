@@ -65,7 +65,7 @@ type UpdateDoc struct {
 	// The index-identifier of the document within the collection.  This is based on
 	// the order in which it was created, not the ordering of the document within the
 	// database.
-	DocId int
+	DocID int
 
 	// The document update, in JSON string format. Will only update the properties
 	// provided.
