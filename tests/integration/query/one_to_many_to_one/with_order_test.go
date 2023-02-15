@@ -300,19 +300,6 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 				},
 			},
 			{
-				"name":   "Sooley",
-				"rating": 3.2,
-				"publisher": map[string]any{
-					"name":       "Only Publisher of Sooley",
-					"yearOpened": uint64(1999),
-				},
-			},
-			{
-				"name":      "The Associate",
-				"rating":    4.2,
-				"publisher": nil,
-			},
-			{
 				"name":   "Theif Lord",
 				"rating": 4.8,
 				"publisher": map[string]any{
@@ -329,12 +316,25 @@ func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 				},
 			},
 			{
+				"name":   "Sooley",
+				"rating": 3.2,
+				"publisher": map[string]any{
+					"name":       "Only Publisher of Sooley",
+					"yearOpened": uint64(1999),
+				},
+			},
+			{
 				"name":   "Painted House",
 				"rating": 4.9,
 				"publisher": map[string]any{
 					"name":       "Only Publisher of Painted House",
 					"yearOpened": uint64(1995),
 				},
+			},
+			{
+				"name":      "The Associate",
+				"rating":    4.2,
+				"publisher": nil,
 			},
 		},
 	}
