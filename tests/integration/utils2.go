@@ -318,7 +318,7 @@ func executeTestCase(
 	documents := [][]*client.Document{}
 	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
-	resultsChans := []subscriptionResult{}
+	resultsChans := []chan func(){}
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		switch action := testCase.Actions[i].(type) {
@@ -340,7 +340,7 @@ func executeTestCase(
 			commitTransaction(ctx, t, txns, testCase, action)
 
 		case SubscriptionRequest:
-			var resultsChan subscriptionResult
+			var resultsChan chan func()
 			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, dbi.db, testCase, action)
 			if done {
 				return
@@ -370,9 +370,9 @@ func executeTestCase(
 		close(allActionsDone)
 	}
 
-	for _, rChans := range resultsChans {
+	for _, resultsChan := range resultsChans {
 		select {
-		case subscriptionAssert := <-rChans.subscriptionAssert:
+		case subscriptionAssert := <-resultsChan:
 			// We want to assert back in the main thread so failures get recorded properly
 			subscriptionAssert()
 
@@ -625,20 +625,14 @@ func executeRequest(
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
-// subscriptionResult wraps details required to assert that the
-// subscription receives all expected results whilst it remains
-// active.
-type subscriptionResult struct {
-	// A channel that will receive a function that asserts that
-	// the subscription received all its expected results and no more.
-	// It should be called from the main test routine to ensure that
-	// failures are recorded properly. It will only yield once, once
-	// the subscription has terminated.
-	subscriptionAssert chan func()
-}
-
 // executeSubscriptionRequest executes the given subscription request, returning
 // a channel that will receive a single event once the subscription has been completed.
+//
+// The returned channel will receive a function that asserts that
+// the subscription received all its expected results and no more.
+// It should be called from the main test routine to ensure that
+// failures are recorded properly. It will only yield once, once
+// the subscription has terminated.
 func executeSubscriptionRequest(
 	ctx context.Context,
 	t *testing.T,
@@ -646,14 +640,12 @@ func executeSubscriptionRequest(
 	db client.DB,
 	testCase TestCase,
 	action SubscriptionRequest,
-) (subscriptionResult, bool) {
-	resultChan := subscriptionResult{
-		subscriptionAssert: make(chan func()),
-	}
+) (chan func(), bool) {
+	subscriptionAssert := make(chan func())
 
 	result := db.ExecRequest(ctx, action.Request)
 	if AssertErrors(t, testCase.Description, result.GQL.Errors, action.ExpectedError) {
-		return subscriptionResult{}, true
+		return nil, true
 	}
 
 	go func() {
@@ -675,7 +667,7 @@ func executeSubscriptionRequest(
 					Errors: errs,
 				}
 
-				resultChan.subscriptionAssert <- func() {
+				subscriptionAssert <- func() {
 					// This assert should be executed from the main test routine
 					// so that failures will be properly handled.
 					expectedErrorRaised := assertRequestResults(
@@ -695,7 +687,7 @@ func executeSubscriptionRequest(
 		}
 	}()
 
-	return resultChan, false
+	return subscriptionAssert, false
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
