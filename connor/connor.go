@@ -36,6 +36,10 @@ func matchWith(op string, conditions, data any) (bool, error) {
 		return nin(conditions, data)
 	case "_or":
 		return or(conditions, data)
+	case "_like":
+		return like(conditions, data)
+	case "_nlike":
+		return nlike(conditions, data)
 	default:
 		return false, NewErrUnknownOperator(op)
 	}
