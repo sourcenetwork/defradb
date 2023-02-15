@@ -349,7 +349,7 @@ func executeTestCase(
 				return
 			}
 
-		case SubscriptionRequest2:
+		case SubscriptionRequest:
 			var resultsChan subscriptionResult
 			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, dbi.db, testCase, action)
 			if done {
@@ -371,20 +371,25 @@ func executeTestCase(
 	}
 
 	if len(resultsChans) > 0 {
+		// Once all other actions have been completed, sleep.
+		// This is a lazy way to allow the subscription to recieve
+		// the events generated, and to ensure that no more than are
+		// expected are recieved. It should probably be done in a better
+		// way than this at somepoint, but is good enough for now.
+		time.Sleep(subscriptionTimeout)
+
 		// Notify any active subscriptions that all requests have been sent.
 		close(allActionsDone)
 	}
+
 	for _, rChans := range resultsChans {
 		select {
 		case subscriptionAssert := <-rChans.subscriptionAssert:
 			// We want to assert back in the main thread so failures get recorded properly
 			subscriptionAssert()
 
-		// a safety in case the stream hangs or no results are expected.
+		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout):
-			if rChans.expectedTimeout {
-				continue
-			}
 			assert.Fail(t, "timeout occured while waiting for data stream", testCase.Description)
 		}
 	}
@@ -623,9 +628,6 @@ func executeRequest(
 // subscription receives all expected results whilst it remains
 // active.
 type subscriptionResult struct {
-	// If true, this subscription expects to timeout.
-	expectedTimeout bool
-
 	// A channel that will receive a function that asserts that
 	// the subscription received all its expected results and no more.
 	// It should be called from the main test routine to ensure that
@@ -642,10 +644,9 @@ func executeSubscriptionRequest(
 	allActionsDone chan struct{},
 	db client.DB,
 	testCase TestCase,
-	action SubscriptionRequest2,
+	action SubscriptionRequest,
 ) (subscriptionResult, bool) {
 	resultChan := subscriptionResult{
-		expectedTimeout:    action.ExpectedTimeout,
 		subscriptionAssert: make(chan func()),
 	}
 
@@ -668,13 +669,6 @@ func executeSubscriptionRequest(
 				data = append(data, sData...)
 
 			case <-allActionsDone:
-				// Once all other actions have been completed, sleep.
-				// This is a lazy way to allow the subscription to recieve
-				// the events generated, and to ensure that no more than are
-				// expected are recieved. It should probably be done in a better
-				// way than this at somepoint, but is good enough for now.
-				time.Sleep(subscriptionTimeout)
-
 				finalResult := &client.GQLResult{
 					Data:   data,
 					Errors: errs,

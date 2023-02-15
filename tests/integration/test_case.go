@@ -129,17 +129,13 @@ type TransactionCommit struct {
 	ExpectedError string
 }
 
-// SubscriptionRequest2 represents a subscription request.
+// SubscriptionRequest represents a subscription request.
 //
 // The subscription will remain active until shortly after all actions have been processed.
 // The results of the subscription will then be asserted upon.
-type SubscriptionRequest2 struct {
+type SubscriptionRequest struct {
 	// The subscription request to submit.
 	Request string
-
-	// If set to true, the request should yield no results and should instead timeout.
-	// The timeout duration is that of subscriptionTimeout.
-	ExpectedTimeout bool
 
 	// The expected (data) results yielded through the subscription across its lifetime.
 	Results []map[string]any

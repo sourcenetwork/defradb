@@ -19,18 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// Represents a subscription request.
-type SubscriptionRequest struct {
-	Request string
-	// The expected (data) results of the issued request.
-	Results []map[string]any
-	// The expected error resulting from the issued request.
-	ExpectedError string
-	// If set to true, the request should yield no results.
-	// The timeout is duration is that of subscriptionTimeout (1 second)
-	ExpectedTimout bool
-}
-
 // Represents a request assigned to a particular transaction.
 type TransactionRequest struct {
 	// Used to identify the transaction for this to run against (allows multiple
@@ -47,9 +35,6 @@ type TransactionRequest struct {
 type RequestTestCase struct {
 	Description string
 	Request     string
-
-	// A collection of requests to exucute after the subscriber is listening on the stream
-	PostSubscriptionRequests []SubscriptionRequest
 
 	// A collection of requests that are tied to a specific transaction.
 	// These will be executed before `Request` (if specified), in the order that they are listed here.
@@ -142,18 +127,6 @@ func ExecuteRequestTestCase(
 				ExpectedError: test.ExpectedError,
 				Request:       test.Request,
 				Results:       test.Results,
-			},
-		)
-	}
-
-	for _, request := range test.PostSubscriptionRequests {
-		actions = append(
-			actions,
-			SubscriptionRequest2{
-				ExpectedError:   request.ExpectedError,
-				Request:         request.Request,
-				Results:         request.Results,
-				ExpectedTimeout: request.ExpectedTimout,
 			},
 		)
 	}
