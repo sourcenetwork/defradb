@@ -38,13 +38,12 @@ var (
 // to a specific version in the documents history graph, and return the fetched
 // state at that point exactly.
 //
-// Given the following Document state graph
-//
+// Given the following Document state graph:
 // {} --> V1 --> V2 --> V3 --> V4
+//
 //		  ^					   ^
 //		  |					   |
-// 	Target Version		 Current State
-//
+//	Target Version		 Current State
 //
 // A regular DocumentFetcher fetches and returns the state at V4, but the
 // VersionsedFetcher would step backwards through the update graph, recompose
@@ -64,10 +63,9 @@ var (
 // the scanNode request planner system.
 //
 // Current limitations:
-// - We can only return a single record from an VersionedFetcher
-// 	 instance.
+// - We can only return a single record from an VersionedFetcher instance.
 // - We can't request related sub objects (at the moment, as related objects
-//   ids aren't in the state graphs.
+// ids aren't in the state graphs.
 // - Probably more...
 //
 // Future optimizations:

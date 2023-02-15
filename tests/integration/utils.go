@@ -19,7 +19,6 @@ import (
 	"path"
 	"runtime"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -49,19 +48,6 @@ const (
 	targetBranchEnvName        = "DEFRA_TARGET_BRANCH"
 	documentationDirectoryName = "data_format_changes"
 )
-
-// The integration tests open many files. This increases the limits on the number of open files of
-// the process to fix this issue. This is done by default in Go 1.19.
-func init() {
-	var lim syscall.Rlimit
-	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &lim); err == nil && lim.Cur != lim.Max {
-		lim.Cur = lim.Max
-		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &lim)
-		if err != nil {
-			log.ErrorE(context.Background(), "error setting rlimit", err)
-		}
-	}
-}
 
 var (
 	log            = logging.MustNewLogger("defra.tests.integration")
@@ -148,19 +134,19 @@ If this is set to true the integration test suite will instead of it's normal pr
 the following:
 
 On [package] Init:
-- Get the (local) latest commit from the target/parent branch // code assumes
-   git fetch has been done
-- Check to see if a clone of that commit/branch is available in the temp dir, and
-   if not clone the target branch
-- Check to see if there are any new .md files in the current branch's data_format_changes
-   dir (vs the target branch)
+  - Get the (local) latest commit from the target/parent branch // code assumes
+    git fetch has been done
+  - Check to see if a clone of that commit/branch is available in the temp dir, and
+    if not clone the target branch
+  - Check to see if there are any new .md files in the current branch's data_format_changes
+    dir (vs the target branch)
 
 For each test:
-- If new documentation detected, pass the test and exit
-- Create a new (test/auto-deleted) temp dir for defra to live/run in
-- Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
-   if test does not exist in target and is new to this branch)
-- Run the test request and assert results (as per normal tests) using the current branch
+  - If new documentation detected, pass the test and exit
+  - Create a new (test/auto-deleted) temp dir for defra to live/run in
+  - Run the test setup (add initial schema, docs, updates) using the target branch (test is skipped
+    if test does not exist in target and is new to this branch)
+  - Run the test request and assert results (as per normal tests) using the current branch
 */
 var DetectDbChanges bool
 var SetupOnly bool
@@ -222,9 +208,9 @@ func IsDetectingDbChanges() bool {
 }
 
 // AssertPanicAndSkipChangeDetection asserts that the code of function actually panics,
-//  also ensures the change detection is skipped so no false fails happen.
+// also ensures the change detection is skipped so no false fails happen.
 //
-//  Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+// Usage: AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
 func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) bool {
 	if IsDetectingDbChanges() {
 		// The `assert.Panics` call will falsely fail if this test is executed during
