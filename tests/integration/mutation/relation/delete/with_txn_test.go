@@ -319,66 +319,64 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Delete related doc with transaction from non-primary side (forward).",
-
-		Docs: map[int][]string{
-			// books
-			0: {
+		Actions: []any{
+			testUtils.CreateDoc{
+				// books
+				CollectionID: 0,
 				// "_key": "bae-edf7f0fc-f0fd-57e2-b695-569d87e1b251",
-				`{
+				Doc: `{
 					"name": "Book By Online",
 					"rating": 4.0,
 					"publisher_id": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523"
 				}`,
 			},
-
-			// publishers
-			2: {
+			testUtils.CreateDoc{
+				// publishers
+				CollectionID: 2,
 				// "_key": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
-				`{
+				Doc: `{
 					"name": "Online",
 					"address": "Manning Early Access Program (MEAP)"
 				}`,
 			},
-		},
-
-		TransactionalRequests: []testUtils.TransactionRequest{
-			// Delete a publisher and outside the transaction ensure it's linked
-			// book gets correctly unlinked too.
-			{
-				TransactionId: 0,
-
+			testUtils.TransactionRequest2{
+				// Delete a publisher and outside the transaction ensure it's linked
+				// book gets correctly unlinked too.
+				TransactionID: 0,
 				Request: `mutation {
-					delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
-						_key
-					}
-				}`,
-
+			        delete_publisher(id: "bae-8a381044-9206-51e7-8bc8-dc683d5f2523") {
+			            _key
+			        }
+			    }`,
 				Results: []map[string]any{
 					{
 						"_key": "bae-8a381044-9206-51e7-8bc8-dc683d5f2523",
 					},
 				},
 			},
+			testUtils.TransactionCommit{
+				TransactionID: 0,
+			},
+			testUtils.Request{
+				// Assert after transaction(s) have been commited.
+				Request: `query {
+					publisher {
+						_key
+						name
+						published {
+							_key
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{},
+			},
 		},
-
-		// Assert after transaction(s) have been commited.
-		Request: `query {
-			publisher {
-				_key
-				name
-				published {
-					_key
-					name
-				}
-			}
-		}`,
-
-		Results: []map[string]any{},
 	}
 
-	relationTests.ExecuteTestCase(t, test)
+	relationTests.Execute(t, test)
 }
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
