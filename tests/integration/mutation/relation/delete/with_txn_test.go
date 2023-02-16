@@ -42,7 +42,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 				}`,
 			},
 			testUtils.TransactionRequest2{
-				// Delete a liniked book that exists.
+				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
 			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
@@ -108,7 +108,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 				}`,
 			},
 			testUtils.TransactionRequest2{
-				// Delete a liniked book that exists.
+				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
 			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
@@ -168,7 +168,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				}`,
 			},
 			testUtils.TransactionRequest2{
-				// Delete a liniked book that exists.
+				// Delete a linked book that exists.
 				TransactionID: 0,
 				Request: `mutation {
 			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
@@ -258,7 +258,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				}`,
 			},
 			testUtils.TransactionRequest2{
-				// Delete a liniked book that exists in transaction 0.
+				// Delete a linked book that exists in transaction 0.
 				TransactionID: 0,
 				Request: `mutation {
 			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
