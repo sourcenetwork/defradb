@@ -161,8 +161,14 @@ func (db *db) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
 	log.Debug(ctx, "Checking if DB has already been initialized...")
-	exists, err := db.systemstore().Has(ctx, ds.NewKey("init"))
+	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return err
 	}
@@ -170,23 +176,31 @@ func (db *db) initialize(ctx context.Context) error {
 	// and finish initialization
 	if exists {
 		log.Debug(ctx, "DB has already been initialized, continuing")
-		return db.loadSchema(ctx)
+		err = db.loadSchema(ctx, txn)
+		if err != nil {
+			return err
+		}
+		// The query language types are only updated on successful commit
+		// so we must not forget to do so on success regardless of whether
+		// we have written to the datastores.
+		return txn.Commit(ctx)
 	}
 
 	log.Debug(ctx, "Opened a new DB, needs full initialization")
+
 	// init meta data
 	// collection sequence
-	_, err = db.getSequence(ctx, core.COLLECTION)
+	_, err = db.getSequence(ctx, txn, core.COLLECTION)
 	if err != nil {
 		return err
 	}
 
-	err = db.systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return txn.Commit(ctx)
 }
 
 // Events returns the events Channel.

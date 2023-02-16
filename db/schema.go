@@ -14,11 +14,18 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // AddSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
 func (db *db) AddSchema(ctx context.Context, schemaString string) error {
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
 	collectionDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return err
@@ -30,16 +37,16 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 	}
 
 	for _, desc := range collectionDescriptions {
-		if _, err := db.CreateCollection(ctx, desc); err != nil {
+		if _, err := db.CreateCollectionTxn(ctx, txn, desc); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return txn.Commit(ctx)
 }
 
-func (db *db) loadSchema(ctx context.Context) error {
-	collections, err := db.GetAllCollections(ctx)
+func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
+	collections, err := db.GetAllCollectionsTxn(ctx, txn)
 	if err != nil {
 		return err
 	}

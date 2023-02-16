@@ -23,9 +23,13 @@ type DB interface {
 	AddSchema(context.Context, string) error
 
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)
+	CreateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (Collection, error)
 	GetCollectionByName(context.Context, string) (Collection, error)
+	GetCollectionByNameTxn(context.Context, datastore.Txn, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
-	GetAllCollections(ctx context.Context) ([]Collection, error)
+	GetCollectionBySchemaIDTxn(context.Context, datastore.Txn, string) (Collection, error)
+	GetAllCollections(context.Context) ([]Collection, error)
+	GetAllCollectionsTxn(context.Context, datastore.Txn) ([]Collection, error)
 
 	Root() datastore.RootStore
 	Blockstore() blockstore.Blockstore
