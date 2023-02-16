@@ -25,7 +25,9 @@ func TestNewDefraVersion(t *testing.T) {
 	assert.NotEmpty(t, dv.NetProtocol)
 	assert.NotEmpty(t, dv.DocKeyVersions)
 
-	// because these are set by the build system, we expect them to be empty in this unit test...
+	// These variables are set in the Makefile via BUILD_FLAGS when building defradb.
+	// This test assumes the test suite is not using these BUILD_FLAGS.
+	// Therefore, we expect them to be empty in this unit test.
 	assert.Empty(t, dv.GoInfo)
 	assert.Empty(t, dv.Release)
 	assert.Empty(t, dv.Commit)
