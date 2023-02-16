@@ -26,17 +26,22 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 	}
 	defer txn.Discard(ctx)
 
-	collectionDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
+	existingDescriptions, err := db.getCollectionDescriptions(ctx, txn)
 	if err != nil {
 		return err
 	}
 
-	err = db.parser.AddSchema(ctx, collectionDescriptions)
+	newDescriptions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return err
 	}
 
-	for _, desc := range collectionDescriptions {
+	err = db.parser.SetSchema(ctx, txn, append(existingDescriptions, newDescriptions...))
+	if err != nil {
+		return err
+	}
+
+	for _, desc := range newDescriptions {
 		if _, err := db.CreateCollectionTxn(ctx, txn, desc); err != nil {
 			return err
 		}
@@ -46,9 +51,21 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 }
 
 func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
-	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	descriptions, err := db.getCollectionDescriptions(ctx, txn)
 	if err != nil {
 		return err
+	}
+
+	return db.parser.SetSchema(ctx, txn, descriptions)
+}
+
+func (db *db) getCollectionDescriptions(
+	ctx context.Context,
+	txn datastore.Txn,
+) ([]client.CollectionDescription, error) {
+	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	if err != nil {
+		return nil, err
 	}
 
 	descriptions := make([]client.CollectionDescription, len(collections))
@@ -56,5 +73,5 @@ func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
 		descriptions[i] = collection.Description()
 	}
 
-	return db.parser.AddSchema(ctx, descriptions)
+	return descriptions, nil
 }
