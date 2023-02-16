@@ -18,161 +18,170 @@ import (
 )
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
-	tests := []testUtils.RequestTestCase{
-
+	tests := []testUtils.TestCase{
 		{
 			Description: "Relational delete mutation where one element exists.",
-			Request: `mutation {
+			Actions: []any{
+				testUtils.CreateDoc{
+					// Books
+					CollectionID: 0,
+					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
+					Doc: `{
+						"name": "100 Go Mistakes to Avoid.",
+						"rating": 4.8,
+						"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
+					}`,
+				},
+				testUtils.CreateDoc{
+					// Authors
+					CollectionID: 1,
+					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
+					Doc: `{
+						"name": "Teiva Harsanyi",
+						"age": 48,
+						"verified": true,
+						"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
+					}`,
+				},
+				testUtils.CreateDoc{
+					// Publishers
+					CollectionID: 2,
+					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
+					Doc: `{
+						"name": "Manning Early Access Program (MEAP)",
+						"address": "Online"
+					}`,
+				},
+				testUtils.Request{
+					Request: `mutation {
 						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
 							_key
 						}
 					}`,
-			Docs: map[int][]string{
-				// Books
-				0: {
-					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
-					`{
-						"name": "100 Go Mistakes to Avoid.",
-						"rating": 4.8,
-						"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
-					}`,
-				},
-				// Authors
-				1: {
-					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
-					`{
-						"name": "Teiva Harsanyi",
-						"age": 48,
-						"verified": true,
-						"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
-					}`,
-				},
-				// Publishers
-				2: {
-					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
-					`{
-						"name": "Manning Early Access Program (MEAP)",
-						"address": "Online"
-					}`,
+					Results: []map[string]any{
+						{
+							"_key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+						},
+					},
 				},
 			},
-			Results: []map[string]any{
-				{
-					"_key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
-				},
-			},
-			ExpectedError: "",
 		},
 
 		{
 			Description: "Relational delete mutation with an aliased _key name.",
-			Request: `mutation {
-						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
-							AliasOfKey: _key
-						}
-					}`,
-			Docs: map[int][]string{
-				// Books
-				0: {
+			Actions: []any{
+				testUtils.CreateDoc{
+					// Books
+					CollectionID: 0,
 					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
-					`{
+					Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
 						"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
 					}`,
 				},
-				// Authors
-				1: {
+				testUtils.CreateDoc{
+					// Authors
+					CollectionID: 1,
 					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
-					`{
+					Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
 						"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
 					}`,
 				},
-				// Publishers
-				2: {
+				testUtils.CreateDoc{
+					// Publishers
+					CollectionID: 2,
 					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
-					`{
+					Doc: `{
 						"name": "Manning Early Access Program (MEAP)",
 						"address": "Online"
 					}`,
 				},
-			},
-			Results: []map[string]any{
-				{
-					"AliasOfKey": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+				testUtils.Request{
+					Request: `mutation {
+						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							AliasOfKey: _key
+						}
+					}`,
+					Results: []map[string]any{
+						{
+							"AliasOfKey": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+						},
+					},
 				},
 			},
-			ExpectedError: "",
 		},
 
 		{
 			Description: "Relational Delete of an updated document and an aliased _key name.",
-			Request: `mutation {
-						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
-							Key: _key
-					}
-				}`,
-
-			Docs: map[int][]string{
-				// Books
-				0: {
+			Actions: []any{
+				testUtils.CreateDoc{
+					// Books
+					CollectionID: 0,
 					// bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2
-					`{
+					Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
 						"publisher_id": "bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3"
 					}`,
 				},
-
-				// Authors
-				1: {
+				testUtils.CreateDoc{
+					// Authors
+					CollectionID: 1,
 					// bae-2f80f359-535d-508e-ba58-088a309ce3c3
-					`{
-					"name": "Teiva Harsanyi",
-					"age": 48,
-					"verified": true,
-					"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
+					Doc: `{
+						"name": "Teiva Harsanyi",
+						"age": 48,
+						"verified": true,
+						"wrote_id": "bae-80eded16-ee4b-5c9d-b33f-6a7b83958af2"
 					}`,
 				},
-
-				// Publishers
-				2: {
+				testUtils.CreateDoc{
+					// Publishers
+					CollectionID: 2,
 					// bae-176ebdf0-77e7-5b2f-91ae-f620e37a29e3
-					`{
+					Doc: `{
 						"name": "Manning Early Access Program (MEAP)",
 						"address": "Online"
 					}`,
-
+				},
+				testUtils.CreateDoc{
+					// Publishers
+					CollectionID: 2,
 					// bae-5c599633-d6d2-56ae-b3f0-1b65b4cee9fe
-					`{
+					Doc: `{
 						"name": "Manning Publications",
 						"address": "Website"
 					}`,
 				},
-			},
-			Updates: map[int]map[int][]string{
-				1: {
-					0: {
-						`{
-							"name": "Teiva Harsanyiiiiiiiiii",
-							"age": 49
-						}`,
+				testUtils.UpdateDoc{
+					CollectionID: 1,
+					DocID:        0,
+					Doc: `{
+						"name": "Teiva Harsanyiiiiiiiiii",
+						"age": 49
+					}`,
+				},
+				testUtils.Request{
+					Request: `mutation {
+						delete_author(id: "bae-2f80f359-535d-508e-ba58-088a309ce3c3") {
+							Key: _key
+						}
+					}`,
+					Results: []map[string]any{
+						{
+							"Key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
+						},
 					},
 				},
 			},
-			Results: []map[string]any{
-				{
-					"Key": "bae-2f80f359-535d-508e-ba58-088a309ce3c3",
-				},
-			},
-			ExpectedError: "",
 		},
 	}
 
 	for _, test := range tests {
-		relationTests.ExecuteTestCase(t, test)
+		relationTests.Execute(t, test)
 	}
 }

@@ -16,33 +16,40 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var bookAuthorPublisherGQLSchema = (`
-	type book {
-		name: String
-		rating: Float
-		author: author
-		publisher: publisher
-	}
-
-	type author {
-		name: String
-		age: Int
-		verified: Boolean
-		wrote: book @primary
-	}
-
-	type publisher {
-		name: String
-		address: String
-		published: book
-	}
-`)
-
-func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(
+func Execute(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
 		t,
-		bookAuthorPublisherGQLSchema,
 		[]string{"book", "author", "publisher"},
-		test,
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: `
+							type book {
+								name: String
+								rating: Float
+								author: author
+								publisher: publisher
+							}
+
+							type author {
+								name: String
+								age: Int
+								verified: Boolean
+								wrote: book @primary
+							}
+
+							type publisher {
+								name: String
+								address: String
+								published: book
+							}
+						`,
+					},
+				},
+				test.Actions...,
+			),
+		},
 	)
 }
