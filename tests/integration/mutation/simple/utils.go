@@ -28,3 +28,21 @@ var userSchema = (`
 func ExecuteTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	testUtils.ExecuteRequestTestCase(t, userSchema, []string{"user"}, test)
 }
+
+func Execute(t *testing.T, test testUtils.TestCase) {
+	testUtils.ExecuteTestCase(
+		t,
+		[]string{"user"},
+		testUtils.TestCase{
+			Description: test.Description,
+			Actions: append(
+				[]any{
+					testUtils.SchemaUpdate{
+						Schema: userSchema,
+					},
+				},
+				test.Actions...,
+			),
+		},
+	)
+}
