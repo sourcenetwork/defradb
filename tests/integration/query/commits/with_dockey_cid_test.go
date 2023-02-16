@@ -81,7 +81,7 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		Request: `query {
 					commits(
 						dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-						cid: "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4"
+						cid: "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m"
 					) {
 						cid
 					}
@@ -105,7 +105,7 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 			},
 		},
 	}

@@ -14,11 +14,11 @@ import (
 	"context"
 	"fmt"
 
-	block "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ds "github.com/ipfs/go-datastore"
 	query "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-libipfs/blocks"
 	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -368,7 +368,7 @@ func (d dagDeleter) run(ctx context.Context, targetCid cid.Cid) error {
 func (d dagDeleter) delete(
 	ctx context.Context,
 	targetCid cid.Cid,
-	targetBlock block.Block) error {
+	targetBlock blocks.Block) error {
 	targetNode, err := dag.DecodeProtobuf(targetBlock.RawData())
 	if err != nil {
 		return err

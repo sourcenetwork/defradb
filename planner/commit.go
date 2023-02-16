@@ -12,9 +12,9 @@ package planner
 
 import (
 	"github.com/fxamacker/cbor/v2"
-	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-libipfs/blocks"
 	dag "github.com/ipfs/go-merkledag"
 
 	"github.com/sourcenetwork/defradb/client/request"

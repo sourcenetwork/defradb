@@ -34,13 +34,13 @@ func TestQueryCommits(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
+				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 			},
 			{
-				"cid": "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
+				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
 			},
 		},
 	}
@@ -70,22 +70,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeiatyawo7gigqwns3qqeqlkfagulrg464zmeuizzafrt5czdbr2sxi",
+				"cid": "bafybeih23ppd7pcp2rbuntybstbt6hwhg4qqeoxl4hfelehmpxmljvtysm",
 			},
 			{
-				"cid": "bafybeigoafrgelnhvsgojbevdnsb4vmuds4q55eg22kpzfxtmaoxggph6e",
+				"cid": "bafybeifycjhxcrn3kspu3tajpk2qvlto5mmaxx22bb2tk5ly6dbhc43p5u",
 			},
 			{
-				"cid": "bafybeidaqmlnkrsnde6kqeour7eofatumj3a7voh5cc6hotwioy4bejxhi",
+				"cid": "bafybeid5s677eie3naujdwf6s6ffs2auoamlro2zzt6uk5eldumcvhxkxa",
 			},
 			{
-				"cid": "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
+				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 			},
 			{
-				"cid": "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
+				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
 			},
 		},
 	}
@@ -112,15 +112,15 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":             "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
+				"cid":             "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 			{
-				"cid":             "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
+				"cid":             "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 			{
-				"cid":             "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+				"cid":             "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 		},

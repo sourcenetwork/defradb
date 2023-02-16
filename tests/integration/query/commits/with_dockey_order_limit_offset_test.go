@@ -50,11 +50,11 @@ func TestQueryCommitsWithDockeyAndOrderAndLimitAndOffset(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":    "bafybeienj3ehxysao3xuhrsamnlgs7b4d7p24fsygg5stw3ckj4tevtr34",
+				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeibgqpp5sovdh73u7bhi33ib5tlz23evscveh5weflpxwkfn3ayaiq",
+				"cid":    "bafybeifaxl4u5wmokgr4jviru6dz7teg7f2fomusxrvh7o5nh2a32jk3va",
 				"height": int64(3),
 			},
 		},
