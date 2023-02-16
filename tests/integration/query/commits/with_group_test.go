@@ -87,10 +87,10 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 				"height": int64(2),
 				"_group": []map[string]any{
 					{
-						"cid": "bafybeib5nodgdzwhsrnwe6e4b56riltvtru6ai6ipyogrc6ilhczevjq4e",
+						"cid": "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
 					},
 					{
-						"cid": "bafybeienj3ehxysao3xuhrsamnlgs7b4d7p24fsygg5stw3ckj4tevtr34",
+						"cid": "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
 					},
 				},
 			},
@@ -98,13 +98,13 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 				"height": int64(1),
 				"_group": []map[string]any{
 					{
-						"cid": "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
+						"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 					},
 					{
-						"cid": "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
+						"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 					},
 					{
-						"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+						"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
 					},
 				},
 			},
@@ -136,7 +136,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeicovjpmtwu544e7hzgg7mcwabstmugesi3n62ju6kbimcsjqp23gu",
+				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 				"_group": []map[string]any{
 					{
 						"height": int64(1),
@@ -144,7 +144,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				},
 			},
 			{
-				"cid": "bafybeietvbhkavrhb6usprlsehh5cojgznzqv4zdah2bhbrmgc2ph3rxka",
+				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 				"_group": []map[string]any{
 					{
 						"height": int64(1),
@@ -152,7 +152,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				},
 			},
 			{
-				"cid": "bafybeignirnk6wuxtg2fzwfbvs26wmrldlhpqj243kwnxb4ewafbae23m4",
+				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
 				"_group": []map[string]any{
 					{
 						"height": int64(1),
