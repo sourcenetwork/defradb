@@ -85,65 +85,63 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 }
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Delete related doc with transaction from primary side (backward).",
-
-		Docs: map[int][]string{
-			// books
-			0: {
+		Actions: []any{
+			testUtils.CreateDoc{
+				// books
+				CollectionID: 0,
 				// "_key": "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722",
-				`{
+				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
 					"publisher_id": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"
 				}`,
 			},
-
-			// publishers
-			2: {
+			testUtils.CreateDoc{
+				// publishers
+				CollectionID: 2,
 				// "_key": "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4",
-				`{
+				Doc: `{
 					"name": "Website",
 					"address": "Manning Publications"
 				}`,
 			},
-		},
-
-		TransactionalRequests: []testUtils.TransactionRequest{
-			// Delete a liniked book that exists.
-			{
-				TransactionId: 0,
-
+			testUtils.TransactionRequest2{
+				// Delete a liniked book that exists.
+				TransactionID: 0,
 				Request: `mutation {
 			        delete_book(id: "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722") {
 			            _key
 			        }
 			    }`,
-
 				Results: []map[string]any{
 					{
 						"_key": "bae-5b16ccd7-9cae-5145-a56c-03cfe7787722",
 					},
 				},
 			},
+			testUtils.TransactionCommit{
+				TransactionID: 0,
+			},
+			testUtils.Request{
+				// Assert after transaction(s) have been commited, to ensure the book was deleted.
+				Request: `query {
+					book {
+						_key
+						name
+						publisher {
+							_key
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{},
+			},
 		},
-
-		// Assert after transaction(s) have been commited, to ensure the book was deleted.
-		Request: `query {
-			book {
-				_key
-				name
-				publisher {
-					_key
-					name
-				}
-			}
-		}`,
-
-		Results: []map[string]any{},
 	}
 
-	relationTests.ExecuteTestCase(t, test)
+	relationTests.Execute(t, test)
 }
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
