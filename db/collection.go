@@ -245,10 +245,9 @@ func (db *db) GetCollectionBySchemaID(
 // GetAllCollections gets all the currently defined collections.
 func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	// create collection system prefix query
-	prefix := core.NewCollectionSchemaVersionKey("")
+	prefix := core.NewCollectionKey("")
 	q, err := db.systemstore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
-		KeysOnly: true,
+		Prefix: prefix.ToString(),
 	})
 	if err != nil {
 		return nil, NewErrFailedToCreateCollectionQuery(err)
@@ -265,7 +264,7 @@ func (db *db) GetAllCollections(ctx context.Context) ([]client.Collection, error
 			return nil, err
 		}
 
-		schemaVersionId := ds.NewKey(res.Key).BaseNamespace()
+		schemaVersionId := string(res.Value)
 		col, err := db.getCollectionByVersionId(ctx, schemaVersionId)
 		if err != nil {
 			return nil, NewErrFailedToGetCollection(schemaVersionId, err)
