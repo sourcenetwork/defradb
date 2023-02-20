@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
@@ -37,35 +36,19 @@ See https://docs.source.network/BSL.txt for more information.
 	// Loads the rootDir containing the configuration file, otherwise warn about it and load a default configuration.
 	// This allows some subcommands (`init`, `start`) to override the PreRun to create a rootDir by default.
 	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-		rootDir, exists, err := config.GetRootDir(rootDirParam)
-		if err != nil {
-			return errors.Wrap("failed to get root dir", err)
+		if rootDirParam != "" {
+			cfg.Rootdir = rootDirParam
 		}
-		defaultConfig := false
-		if exists {
-			err := cfg.Load(rootDir)
-			if err != nil {
+		if config.FileExists(cfg.ConfigFilePath()) {
+			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}
+			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", cfg.Rootdir))
 		} else {
-			err := cfg.LoadWithoutRootDir()
-			if err != nil {
+			if err := cfg.LoadWithRootdir(false); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}
-			defaultConfig = true
-		}
-
-		// parse loglevel overrides
-		// we use `cfg.Logging.Level` as an argument since the viper.Bind already handles
-		// binding the flags / EnvVars to the struct
-		if err := parseAndConfigLog(cmd.Context(), cfg.Log, cmd); err != nil {
-			return err
-		}
-
-		if defaultConfig {
 			log.FeedbackInfo(cmd.Context(), "Using default configuration")
-		} else {
-			log.FeedbackInfo(cmd.Context(), fmt.Sprintf("Configuration loaded from DefraDB directory %v", rootDir))
 		}
 		return nil
 	},
@@ -81,21 +64,25 @@ func init() {
 		"loglevel", cfg.Log.Level,
 		"Log level to use. Options are debug, info, error, fatal",
 	)
-	err := viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
+	err := cfg.BindFlag("log.level", rootCmd.PersistentFlags().Lookup("loglevel"))
 	if err != nil {
-		log.FeedbackFatalE(context.Background(), "Could not bind logging.loglevel", err)
+		log.FeedbackFatalE(context.Background(), "Could not bind log.loglevel", err)
 	}
 
 	rootCmd.PersistentFlags().StringArray(
 		"logger", []string{},
 		"Override logger parameters. Usage: --logger <name>,level=<level>,output=<output>,...",
 	)
+	err = cfg.BindFlag("log.logger", rootCmd.PersistentFlags().Lookup("logger"))
+	if err != nil {
+		log.FeedbackFatalE(context.Background(), "Could not bind log.logger", err)
+	}
 
 	rootCmd.PersistentFlags().String(
 		"logoutput", cfg.Log.Output,
 		"Log output path",
 	)
-	err = viper.BindPFlag("log.output", rootCmd.PersistentFlags().Lookup("logoutput"))
+	err = cfg.BindFlag("log.output", rootCmd.PersistentFlags().Lookup("logoutput"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind log.output", err)
 	}
@@ -104,7 +91,7 @@ func init() {
 		"logformat", cfg.Log.Format,
 		"Log format to use. Options are csv, json",
 	)
-	err = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
+	err = cfg.BindFlag("log.format", rootCmd.PersistentFlags().Lookup("logformat"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind log.format", err)
 	}
@@ -113,7 +100,7 @@ func init() {
 		"logtrace", cfg.Log.Stacktrace,
 		"Include stacktrace in error and fatal logs",
 	)
-	err = viper.BindPFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
+	err = cfg.BindFlag("log.stacktrace", rootCmd.PersistentFlags().Lookup("logtrace"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind log.stacktrace", err)
 	}
@@ -122,7 +109,7 @@ func init() {
 		"lognocolor", cfg.Log.NoColor,
 		"Disable colored log output",
 	)
-	err = viper.BindPFlag("log.nocolor", rootCmd.PersistentFlags().Lookup("lognocolor"))
+	err = cfg.BindFlag("log.nocolor", rootCmd.PersistentFlags().Lookup("lognocolor"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind log.nocolor", err)
 	}
@@ -131,7 +118,7 @@ func init() {
 		"url", cfg.API.Address,
 		"URL of HTTP endpoint to listen on or connect to",
 	)
-	err = viper.BindPFlag("api.address", rootCmd.PersistentFlags().Lookup("url"))
+	err = cfg.BindFlag("api.address", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind api.address", err)
 	}
