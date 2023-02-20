@@ -459,7 +459,6 @@ func TestCreateAndLoadCustomConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, cfg.Net.PubSubEnabled, cfg2.Net.PubSubEnabled)
 	assert.Equal(t, cfg.Log.Level, cfg2.Log.Level)
-
 }
 
 // not sure how this behaves in parallel
