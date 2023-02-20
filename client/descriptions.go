@@ -142,12 +142,8 @@ const (
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
 	_                      FieldKind = 13 // safe to repurpose (was never used)
-
-	// Embedded object within the type
-	FieldKind_OBJECT FieldKind = 14
-
-	// Array of embedded objects
-	FieldKind_OBJECT_ARRAY FieldKind = 15
+	_                      FieldKind = 14 // safe to repurpose (was never used)
+	_                      FieldKind = 15 // safe to repurpose (was never used)
 
 	// Embedded object, but accessed via foreign keys
 	FieldKind_FOREIGN_OBJECT FieldKind = 16
@@ -201,7 +197,7 @@ type FieldDescription struct {
 
 // IsObject returns true if this field is an object type.
 func (f FieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
+	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 
