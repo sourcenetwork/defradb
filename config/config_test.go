@@ -534,22 +534,14 @@ func TestLoggerConfigFromEnv(t *testing.T) {
 }
 
 func TestLoggerConfigFromEnvBroken(t *testing.T) {
-	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor,true,level,debug;config,output,stdout,level,info;broken")
+	// logging config parameter not provided as <key>=<value> pair
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor,true,level,debug;config,output,stdout,level,info")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 
-	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "broken,broken,broken")
-	cfg = DefaultConfig()
-	err = cfg.LoadWithRootdir(false)
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-
-	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "13;2134;1234;1234;1")
-	cfg = DefaultConfig()
-	err = cfg.LoadWithRootdir(false)
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-
-	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "™¡£¡™£∞¡™∞¡™£¢")
+	// invalid logger names
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "13;2134;™¡£¡™£∞¡™∞¡™£¢;1234;1")
 	cfg = DefaultConfig()
 	err = cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
