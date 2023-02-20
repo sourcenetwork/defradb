@@ -439,18 +439,27 @@ func TestByteSizeToString(t *testing.T) {
 	mb := 10 * MiB
 	assert.Equal(t, "10MiB", mb.String())
 }
+func TestCreateAndLoadCustomConfig(t *testing.T) {
+	testdir := t.TempDir()
 
-func TestCreateRootDirWithDefaultConfig(t *testing.T) {
-	tmpdir := t.TempDir()
 	cfg := DefaultConfig()
-	cfg.Rootdir = tmpdir
-	err := cfg.CreateRootDirAndConfigFile()
+	cfg.Rootdir = testdir
+	// a few valid but non-default changes
+	cfg.Net.PubSubEnabled = false
+	cfg.Log.Level = "fatal"
 
-	_, errStat := os.Stat(tmpdir)
-	notExists := os.IsNotExist(errStat)
-	assert.Equal(t, false, notExists)
-	assert.NoError(t, errStat)
+	err := cfg.CreateRootDirAndConfigFile()
 	assert.NoError(t, err)
+
+	assert.True(t, cfg.ConfigFileExists())
+	// check that the config file loads properly
+	cfg2 := DefaultConfig()
+	cfg2.Rootdir = testdir
+	err = cfg2.LoadWithRootdir(true)
+	assert.NoError(t, err)
+	assert.Equal(t, cfg.Net.PubSubEnabled, cfg2.Net.PubSubEnabled)
+	assert.Equal(t, cfg.Log.Level, cfg2.Log.Level)
+
 }
 
 // not sure how this behaves in parallel
