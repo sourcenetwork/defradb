@@ -11,15 +11,18 @@
 package config
 
 import (
+	"context"
+	_ "embed"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const (
-	DefaultDefraDBConfigFileName = "config.yaml"
-	configType                   = "yaml"
-	defaultDirPerm               = 0o700
-	defaultConfigFilePerm        = 0o644
+	DefaultConfigFileName = "config.yaml"
+	configType            = "yaml"
+	defaultDirPerm        = 0o700
+	defaultConfigFilePerm = 0o644
 )
 
 // defaultConfigTemplate must reflect the Config struct in content and configuration.
@@ -29,6 +32,12 @@ const (
 //go:embed configfile_yaml.gotmpl
 var defaultConfigTemplate string
 
+func (cfg *Config) ConfigFilePath() string {
+	return filepath.Join(cfg.Rootdir, DefaultConfigFileName)
+}
+
+func (cfg *Config) WriteConfigFile() error {
+	path := cfg.ConfigFilePath()
 	buffer, err := cfg.toBytes()
 	if err != nil {
 		return err
@@ -36,13 +45,16 @@ var defaultConfigTemplate string
 	if err := os.WriteFile(path, buffer, defaultConfigFilePerm); err != nil {
 		return NewErrFailedToWriteFile(err, path)
 	}
+	log.FeedbackInfo(context.Background(), fmt.Sprintf("Created config file at %v", path))
 	return nil
 }
 
-// WriteConfigFile writes a config file in a given root directory.
-func (cfg *Config) WriteConfigFileToRootDir(rootDir string) error {
-	path := fmt.Sprintf("%v/%v", rootDir, DefaultDefraDBConfigFileName)
-	return cfg.writeConfigFile(path)
+func (cfg *Config) DeleteConfigFile() error {
+	if err := os.Remove(cfg.ConfigFilePath()); err != nil {
+		return NewErrFailedToRemoveConfigFile(err)
+	}
+	log.FeedbackInfo(context.Background(), fmt.Sprintf("Deleted config file at %v", cfg.ConfigFilePath()))
+	return nil
 }
 
 func (cfg *Config) CreateRootDirAndConfigFile() error {
