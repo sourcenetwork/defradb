@@ -631,7 +631,7 @@ func (logcfg LoggingConfig) copy() LoggingConfig {
 // GetOrCreateNamedLogger returns a named logger config, or creates a default one if it doesn't exist.
 func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
 	if name == "" {
-		return nil, NewErrInvalidNamedLoggerName("")
+		return nil, ErrLoggerNameEmpty
 	}
 	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
 		return namedCfg, nil
