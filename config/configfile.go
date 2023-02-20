@@ -68,18 +68,18 @@ func (cfg *Config) CreateRootDirAndConfigFile() error {
 	return nil
 }
 
+func (cfg *Config) ConfigFileExists() bool {
+	statInfo, err := os.Stat(cfg.ConfigFilePath())
+	existsAsFile := (err == nil && !statInfo.IsDir())
+	return existsAsFile
+}
+
 func DefaultRootDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.FatalE(context.Background(), "error determining user directory", err)
 	}
 	return filepath.Join(home, ".defradb")
-}
-
-func FileExists(filePath string) bool {
-	statInfo, err := os.Stat(filePath)
-	existsAsFile := (err == nil && !statInfo.IsDir())
-	return existsAsFile
 }
 
 func FolderExists(folderPath string) bool {

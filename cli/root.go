@@ -16,7 +16,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/config"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -39,7 +38,7 @@ See https://docs.source.network/BSL.txt for more information.
 		if rootDirParam != "" {
 			cfg.Rootdir = rootDirParam
 		}
-		if config.FileExists(cfg.ConfigFilePath()) {
+		if cfg.ConfigFileExists() {
 			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}

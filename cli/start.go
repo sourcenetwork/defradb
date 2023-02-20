@@ -48,7 +48,7 @@ var startCmd = &cobra.Command{
 		if rootDirParam != "" {
 			cfg.Rootdir = rootDirParam
 		}
-		if config.FileExists(cfg.ConfigFilePath()) {
+		if cfg.ConfigFileExists() {
 			if err := cfg.LoadWithRootdir(true); err != nil {
 				return errors.Wrap("failed to load config", err)
 			}

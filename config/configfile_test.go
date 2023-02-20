@@ -83,7 +83,7 @@ func TestReadConfigFileForLogger(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.True(t, FileExists(cfg.ConfigFilePath()))
+	assert.True(t, cfg.ConfigFileExists())
 
 	cfgFromFile := DefaultConfig()
 	cfgFromFile.Rootdir = tmpdir
@@ -142,40 +142,22 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 	assert.Equal(t, filepath.Join(tmpdir, cfg.Datastore.Badger.Path), cfgFromFile.Datastore.Badger.Path)
 	assert.Equal(t, cfg.Datastore.Badger.ValueLogFileSize, cfgFromFile.Datastore.Badger.ValueLogFileSize)
 }
-
-func TestFileExists(t *testing.T) {
-	tmpdir := t.TempDir()
-	// Verify that a file that doesn't exist returns false.
-	assert.False(t, FileExists(filepath.Join(tmpdir, "nonexistentfile")))
-
-	// Verify that a file that does exist returns true.
-	fpath := filepath.Join(tmpdir, "file")
-	f, err := os.Create(fpath)
-	f.Close()
-	assert.NoError(t, err)
-	assert.True(t, FileExists(fpath))
-
-	// Test that a directory is not considered a file.
-	dpath := filepath.Join(tmpdir, "dir")
-	err = os.Mkdir(dpath, 0755)
-	assert.NoError(t, err)
-	assert.False(t, FileExists(dpath))
-}
-
 func TestConfigFileExists(t *testing.T) {
 	cfg := DefaultConfig()
-	tmpdir := t.TempDir()
-	cfg.Rootdir = tmpdir
-	assert.False(t, FileExists(cfg.ConfigFilePath()))
+	cfg.Rootdir = t.TempDir()
+	// Verify that a file that doesn't exist returns false.
+	assert.False(t, cfg.ConfigFileExists())
+
 	err := cfg.WriteConfigFile()
 	assert.NoError(t, err)
-	assert.True(t, FileExists(cfg.ConfigFilePath()))
+	// Verify that a file that does exist returns true.
+	assert.True(t, cfg.ConfigFileExists())
 }
 
 func TestConfigFileExistsErroneousPath(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Rootdir = filepath.Join(t.TempDir(), "////*&^^(*8769876////bar")
-	assert.False(t, FileExists(cfg.ConfigFilePath()))
+	assert.False(t, cfg.ConfigFileExists())
 }
 
 func TestInvalidConfigDatastore(t *testing.T) {
@@ -193,9 +175,9 @@ func TestDeleteConfigFile(t *testing.T) {
 	err := cfg.WriteConfigFile()
 	assert.NoError(t, err)
 
-	assert.True(t, FileExists(cfg.ConfigFilePath()))
+	assert.True(t, cfg.ConfigFileExists())
 
 	err = cfg.DeleteConfigFile()
 	assert.NoError(t, err)
-	assert.False(t, FileExists(cfg.ConfigFilePath()))
+	assert.False(t, cfg.ConfigFileExists())
 }

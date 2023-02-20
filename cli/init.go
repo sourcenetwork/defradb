@@ -51,7 +51,7 @@ var initCmd = &cobra.Command{
 			return errors.New("init command requires one rootdir argument, or no argument")
 		}
 		if config.FolderExists(cfg.Rootdir) {
-			if config.FileExists(cfg.ConfigFilePath()) {
+			if cfg.ConfigFileExists() {
 				if reinitialize {
 					if err := cfg.DeleteConfigFile(); err != nil {
 						return err
