@@ -142,7 +142,12 @@ func (cfg *Config) loadDefaultViper() error {
 	cfg.v.SetConfigName(DefaultConfigFileName)
 	// To support a minimal configuration, we load and bind the default config first.
 	cfg.v.SetConfigType(configType)
-	// Load defaults into it (for AutomaticEnv's detection)
+	/*
+		We load the default config into the viper instance, from a default template, so that viper
+		can detect the environment variables that are set. This is because viper only detects environment
+		variables that are present in the config file (`AutomaticEnv`). So we load the default config into viper,
+		and then overwrite it with the actual config file.
+	*/
 	defaultConfigBytes, err := cfg.toBytes()
 	if err != nil {
 		return err
