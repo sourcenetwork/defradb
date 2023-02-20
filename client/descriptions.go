@@ -136,7 +136,7 @@ const (
 	FieldKind_INT_ARRAY    FieldKind = 5
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
-	FieldKind_DECIMAL      FieldKind = 8
+	_                      FieldKind = 8 // safe to repurpose (was never used)
 	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
