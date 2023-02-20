@@ -141,7 +141,7 @@ const (
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	FieldKind_BYTES        FieldKind = 13
+	_                      FieldKind = 13 // safe to repurpose (was never used)
 
 	// Embedded object within the type
 	FieldKind_OBJECT FieldKind = 14
