@@ -128,7 +128,7 @@ jobs:
 
       - name: Set the output to be the benchmark type
         id: set-benchmark-type
-        run: echo "::set-output name=type::${DEFAULT_BENCHMARK_TYPE}"
+        run: echo "type=${DEFAULT_BENCHMARK_TYPE}" >> $GITHUB_OUTPUT
 
   # ================== Step-3: Start the runner and get it registered as a github runner.
   start-runner:
