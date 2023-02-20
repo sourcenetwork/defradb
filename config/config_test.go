@@ -537,22 +537,22 @@ func TestLoggerConfigFromEnvBroken(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor,true,level,debug;config,output,stdout,level,info;broken")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "broken,broken,broken")
 	cfg = DefaultConfig()
 	err = cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "13;2134;1234;1234;1")
 	cfg = DefaultConfig()
 	err = cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "™¡£¡™£∞¡™∞¡™£¢")
 	cfg = DefaultConfig()
 	err = cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestLoggerConfigFromEnvExhaustive(t *testing.T) {
