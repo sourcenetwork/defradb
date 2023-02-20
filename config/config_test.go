@@ -476,12 +476,6 @@ func envSet(t *testing.T, envs map[string]string) (cleanup func()) {
 	}
 }
 
-func TestFolderExists(t *testing.T) {
-	tmpdir := t.TempDir()
-	assert.True(t, FolderExists(tmpdir))
-	assert.False(t, FolderExists(tmpdir+"/notexisting"))
-}
-
 func TestDoNotSupportRootdirFromEnv(t *testing.T) {
 	tmpdir := t.TempDir()
 	t.Cleanup(envSet(t, map[string]string{
