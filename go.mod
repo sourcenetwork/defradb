@@ -39,6 +39,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sourcenetwork/immutable v0.2.1
 	github.com/spf13/cobra v1.6.1
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
 	github.com/textileio/go-libp2p-pubsub-rpc v0.0.9
@@ -165,7 +166,6 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/textileio/go-log/v2 v2.1.3-gke-2 // indirect

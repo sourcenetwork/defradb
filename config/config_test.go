@@ -20,7 +20,6 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/logging"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -54,6 +53,14 @@ var envVarsInvalid = map[string]string{
 	"DEFRA_LOG_FORMAT":            "^=+()&**()*(&))",
 }
 
+func FixtureEnvKeyValue(t *testing.T, key, value string) {
+	t.Helper()
+	os.Setenv(key, value)
+	t.Cleanup(func() {
+		os.Unsetenv(key)
+	})
+}
+
 func FixtureEnvVars(envVars map[string]string) {
 	for k, v := range envVars {
 		os.Setenv(k, v)
@@ -70,8 +77,11 @@ func FixtureEnvVarsUnset(envVars map[string]string) {
 func FixtureDefaultConfigFile(t *testing.T) string {
 	dir := t.TempDir()
 	cfg := DefaultConfig()
-
-	cfg.writeConfigFile(dir)
+	cfg.Rootdir = dir
+	err := cfg.WriteConfigFile()
+	if err != nil {
+		t.Fatal(err)
+	}
 	return dir
 }
 
@@ -102,18 +112,19 @@ func TestJSONSerialization(t *testing.T) {
 // 2022-06-20T14:03:14.284-0500, WARN, defra.cli, WTF initConfig, {"cfg": "eyJEYXRhc3RvcmUiOnsiU3RvcmUiOiJiYWRnZXIiLCJNZW1vcnkiOnsiU2l6ZSI6MH0sIkJhZGdlciI6eyJQYXRoIjoiZGF0YSJ9fSwiQVBJIjp7IkFkZHJlc3MiOiJsb2NhbGhvc3Q6OTE4MSJ9LCJOZXQiOnsiUDJQQWRkcmVzcyI6Ii9pcDQvMC4wLjAuMC90Y3AvOTE3MSIsIlAyUERpc2FibGVkIjpmYWxzZSwiUGVlcnMiOiIiLCJQdWJTdWJFbmFibGVkIjp0cnVlLCJSZWxheUVuYWJsZWQiOnRydWUsIlJQQ0FkZHJlc3MiOiIwLjAuMC4wOjkxNjEiLCJSUENNYXhDb25uZWN0aW9uSWRsZSI6IjVtIiwiUlBDVGltZW91dCI6IjEwcyIsIlRDUEFkZHJlc3MiOiIvaXA0LzAuMC4wLjAvdGNwLzkxNjEifSwiTG9nZ2luZyI6eyJMZXZlbCI6ImRlYnVnIiwiU3RhY2t0cmFjZSI6ZmFsc2UsIkZvcm1hdCI6ImNzdiIsIk91dHB1dFBhdGgiOiJzdGRvdXQiLCJDb2xvciI6dHJ1ZX19"}
 
 func TestLoadDefaultsConfigFileEnv(t *testing.T) {
-	dir := t.TempDir()
+	tmpdir := t.TempDir()
 	cfg := DefaultConfig()
-	errWriteConfig := cfg.WriteConfigFileToRootDir(dir)
+	cfg.Rootdir = tmpdir
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+	errWriteConfig := cfg.WriteConfigFile()
 
-	errLoad := cfg.Load(dir)
+	errLoad := cfg.LoadWithRootdir(true)
 
-	assert.NoError(t, errLoad)
 	assert.NoError(t, errWriteConfig)
+	assert.NoError(t, errLoad)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
-	assert.Equal(t, filepath.Join(dir, "defra_data"), cfg.Datastore.Badger.Path)
+	assert.Equal(t, filepath.Join(tmpdir, "defra_data"), cfg.Datastore.Badger.Path)
 }
 
 func TestLoadDefaultsEnv(t *testing.T) {
@@ -121,12 +132,11 @@ func TestLoadDefaultsEnv(t *testing.T) {
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
 
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
-	defaultRootDir, _ := DefaultRootDir()
-	assert.Equal(t, filepath.Join(defaultRootDir, "defra_data"), cfg.Datastore.Badger.Path)
+	assert.Equal(t, filepath.Join(cfg.Rootdir, "defra_data"), cfg.Datastore.Badger.Path)
 }
 
 func TestEnvVariablesAllConsidered(t *testing.T) {
@@ -134,12 +144,11 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	FixtureEnvVars(envVarsDifferentThanDefault)
 	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
 
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "localhost:9999", cfg.API.Address)
-	defaultRootDir, _ := DefaultRootDir()
-	assert.Equal(t, filepath.Join(defaultRootDir, "defra_data"), cfg.Datastore.Badger.Path)
+	assert.Equal(t, filepath.Join(cfg.Rootdir, "defra_data"), cfg.Datastore.Badger.Path)
 	assert.Equal(t, "memory", cfg.Datastore.Store)
 	assert.Equal(t, true, cfg.Net.P2PDisabled)
 	assert.Equal(t, "/ip4/0.0.0.0/tcp/9876", cfg.Net.P2PAddress)
@@ -152,46 +161,26 @@ func TestEnvVariablesAllConsidered(t *testing.T) {
 	assert.Equal(t, "json", cfg.Log.Format)
 }
 
-func TestGetRootDirExists(t *testing.T) {
-	dir, exists, err := GetRootDir("/tmp/defra_cli/")
-
-	assert.NoError(t, err)
-	assert.Equal(t, "/tmp/defra_cli", dir)
-	assert.Equal(t, false, exists)
-}
-
-func TestGetRootDir(t *testing.T) {
-	os.Setenv("DEFRA_ROOT", "/tmp/defra_env/")
-	defer os.Unsetenv("DEFRA_ROOT")
-
-	dir, exists, err := GetRootDir("")
-
-	assert.NoError(t, err)
-	assert.Equal(t, "/tmp/defra_env", dir)
-	assert.Equal(t, false, exists)
-}
-
 func TestLoadNonExistingConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
-	dir := t.TempDir()
-
-	err := cfg.Load(dir)
-
+	cfg.Rootdir = t.TempDir()
+	err := cfg.LoadWithRootdir(true)
 	assert.Error(t, err)
 }
 
 func TestLoadInvalidConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
-	dir := t.TempDir()
+	tmpdir := t.TempDir()
 
 	errWrite := os.WriteFile(
-		filepath.Join(dir, DefaultDefraDBConfigFileName),
+		filepath.Join(tmpdir, DefaultConfigFileName),
 		[]byte("{"),
 		0644,
 	)
 	assert.NoError(t, errWrite)
 
-	errLoad := cfg.Load(dir)
+	cfg.Rootdir = tmpdir
+	errLoad := cfg.LoadWithRootdir(true)
 	assert.Error(t, errLoad)
 }
 
@@ -200,7 +189,7 @@ func TestInvalidEnvVars(t *testing.T) {
 	FixtureEnvVars(envVarsInvalid)
 	defer FixtureEnvVarsUnset(envVarsInvalid)
 
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.Error(t, err)
 }
@@ -209,7 +198,7 @@ func TestValidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
 
 	cfg.Net.Peers = "/ip4/127.0.0.1/udp/1234,/ip4/7.7.7.7/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N"
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.NoError(t, err)
 }
@@ -218,7 +207,7 @@ func TestInvalidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
 
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.Error(t, err)
 }
@@ -227,7 +216,7 @@ func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "123123"
 
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 
 	assert.Error(t, err)
 }
@@ -235,7 +224,7 @@ func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
 func TestInvalidRPCTimeout(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 	assert.Error(t, err)
 }
 
@@ -243,8 +232,11 @@ func TestValidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "1s"
 
-	cfg.LoadWithoutRootDir()
-	_, err := cfg.Net.RPCTimeoutDuration()
+	err := cfg.LoadWithRootdir(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = cfg.Net.RPCTimeoutDuration()
 
 	assert.NoError(t, err)
 }
@@ -252,7 +244,9 @@ func TestValidRPCTimeoutDuration(t *testing.T) {
 func TestInvalidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
-	cfg.LoadWithoutRootDir()
+
+	_ = cfg.LoadWithRootdir(false)
+
 	_, err := cfg.Net.RPCTimeoutDuration()
 	assert.Error(t, err)
 }
@@ -261,7 +255,7 @@ func TestValidRPCMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "1s"
 
-	cfg.LoadWithoutRootDir()
+	assert.NoError(t, cfg.LoadWithRootdir(false))
 	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
 
 	assert.NoError(t, err)
@@ -271,26 +265,10 @@ func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
 
-	cfg.LoadWithoutRootDir()
+	_ = cfg.LoadWithRootdir(false) // ignore error for purpose of this test
 	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
 
 	assert.Error(t, err)
-}
-
-func TestGetLoggingConfig(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Log.Level = "debug"
-	cfg.Log.Format = "json"
-	cfg.Log.Stacktrace = true
-	cfg.Log.Output = "stdout"
-
-	loggingConfig, err := cfg.GetLoggingConfig()
-
-	assert.NoError(t, err)
-	assert.Equal(t, logging.Debug, loggingConfig.Level.LogLevel)
-	assert.Equal(t, logging.JSON, loggingConfig.EncoderFormat.EncoderFormat)
-	assert.Equal(t, true, loggingConfig.EnableStackTrace.EnableStackTrace)
-	assert.Equal(t, "stdout", loggingConfig.OutputPaths[0])
 }
 
 func TestInvalidGetLoggingConfig(t *testing.T) {
@@ -298,9 +276,9 @@ func TestInvalidGetLoggingConfig(t *testing.T) {
 	cfg.Log.Level = "546578"
 	cfg.Log.Format = "*&)*&"
 
-	cfg.LoadWithoutRootDir()
-	_, err := cfg.GetLoggingConfig()
+	_ = cfg.LoadWithRootdir(false) // ignore config-loading error for the purpose of this test
 
+	err := cfg.Log.load()
 	assert.Error(t, err)
 }
 
@@ -313,7 +291,7 @@ func TestNodeConfig(t *testing.T) {
 	cfg.Net.RelayEnabled = true
 	cfg.Net.PubSubEnabled = true
 	cfg.Datastore.Badger.Path = "/tmp/defra_cli/badger"
-	cfg.LoadWithoutRootDir()
+	assert.NoError(t, cfg.LoadWithRootdir(false))
 
 	nodeConfig := cfg.NodeConfig()
 	options, errOptionsMerge := node.NewMergedOptions(nodeConfig)
@@ -460,4 +438,131 @@ func TestByteSizeToString(t *testing.T) {
 
 	mb := 10 * MiB
 	assert.Equal(t, "10MiB", mb.String())
+}
+
+func TestCreateRootDirWithDefaultConfig(t *testing.T) {
+	tmpdir := t.TempDir()
+	cfg := DefaultConfig()
+	cfg.Rootdir = tmpdir
+	err := cfg.CreateRootDirAndConfigFile()
+
+	_, errStat := os.Stat(tmpdir)
+	notExists := os.IsNotExist(errStat)
+	assert.Equal(t, false, notExists)
+	assert.NoError(t, errStat)
+	assert.NoError(t, err)
+}
+
+// not sure how this behaves in parallel
+func envSet(t *testing.T, envs map[string]string) (cleanup func()) {
+	originalEnvs := map[string]string{}
+
+	for k, v := range envs {
+		if orig, ok := os.LookupEnv(k); ok {
+			originalEnvs[k] = orig
+		}
+		t.Setenv(k, v)
+	}
+
+	return func() {
+		for k := range envs {
+			orig, has := originalEnvs[k]
+			if has {
+				t.Setenv(k, orig)
+			} else {
+				_ = os.Unsetenv(k)
+			}
+		}
+	}
+}
+
+func TestFolderExists(t *testing.T) {
+	tmpdir := t.TempDir()
+	assert.True(t, FolderExists(tmpdir))
+	assert.False(t, FolderExists(tmpdir+"/notexisting"))
+}
+
+func TestDoNotSupportRootdirFromEnv(t *testing.T) {
+	tmpdir := t.TempDir()
+	t.Cleanup(envSet(t, map[string]string{
+		"DEFRA_ROOTDIR": tmpdir,
+	}))
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.Equal(t, cfg.Rootdir, DefaultRootDir())
+	assert.NoError(t, err)
+}
+
+func TestLoggingConfigFromEnv(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LEVEL", "debug,net=info,log=error,cli=fatal")
+	cfg := DefaultConfig()
+	_ = cfg.LoadWithRootdir(false)
+	assert.Equal(t, "debug", cfg.Log.Level)
+	for _, override := range cfg.Log.NamedOverrides {
+		switch override.Name {
+		case "net":
+			assert.Equal(t, "info", override.Level)
+		case "log":
+			assert.Equal(t, "error", override.Level)
+		case "cli":
+			assert.Equal(t, "fatal", override.Level)
+		default:
+			t.Fatal("unexpected named override")
+		}
+	}
+}
+
+func TestLoggerConfigFromEnv(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor=true,level=debug;config,output=stdout,level=info")
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.NoError(t, err)
+	for _, override := range cfg.Log.NamedOverrides {
+		switch override.Name {
+		case "net":
+			assert.Equal(t, true, override.NoColor)
+			assert.Equal(t, "debug", override.Level)
+		case "config":
+			assert.Equal(t, "info", override.Level)
+			assert.Equal(t, "stdout", override.Output)
+		default:
+			t.Fatal("unexpected named override")
+		}
+	}
+}
+
+func TestLoggerConfigFromEnvBroken(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor,true,level,debug;config,output,stdout,level,info;broken")
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.Error(t, err)
+
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "broken,broken,broken")
+	cfg = DefaultConfig()
+	err = cfg.LoadWithRootdir(false)
+	assert.Error(t, err)
+
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "13;2134;1234;1234;1")
+	cfg = DefaultConfig()
+	err = cfg.LoadWithRootdir(false)
+	assert.Error(t, err)
+
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "™¡£¡™£∞¡™∞¡™£¢")
+	cfg = DefaultConfig()
+	err = cfg.LoadWithRootdir(false)
+	assert.Error(t, err)
+}
+
+func TestLoggerConfigFromEnvExhaustive(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor=true,level=debug;config,output=stdout,caller=false;logging,stacktrace=true,format=json")
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.NoError(t, err)
+}
+
+func TestLoggerConfigFromEnvUnknownParam(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,unknown=true,level=debug")
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.Error(t, err)
 }

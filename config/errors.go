@@ -35,6 +35,13 @@ const (
 	errInvalidLogFormat            string = "invalid log format"
 	errInvalidNamedLoggerName      string = "invalid named logger name"
 	errConfigTemplateFailed        string = "could not process config template"
+	errCouldNotObtainLoggerConfig  string = "could not get named logger config"
+	errNotProvidedAsKV             string = "logging config parameter was not provided as <key>=<value> pair"
+	errLoggerNameEmpty             string = "logger name cannot be empty"
+	errCouldNotParseType           string = "could not parse type"
+	errUnknownLoggerParameter      string = "unknown logger parameter"
+	errInvalidLoggerName           string = "invalid logger name"
+	errDuplicateLoggerName         string = "duplicate logger name"
 )
 
 var (
@@ -58,6 +65,13 @@ var (
 	ErrConfigToJSONFailed          = errors.New(errConfigToJSONFailed)
 	ErrInvalidNamedLoggerName      = errors.New(errInvalidNamedLoggerName)
 	ErrConfigTemplateFailed        = errors.New(errConfigTemplateFailed)
+	ErrCouldNotObtainLoggerConfig  = errors.New(errCouldNotObtainLoggerConfig)
+	ErrNotProvidedAsKV             = errors.New(errNotProvidedAsKV)
+	ErrLoggerNameEmpty             = errors.New(errLoggerNameEmpty)
+	ErrorCouldNotParseType         = errors.New(errCouldNotParseType)
+	ErrUnknownLoggerParameter      = errors.New(errUnknownLoggerParameter)
+	ErrInvalidLoggerName           = errors.New(errInvalidLoggerName)
+	ErrDuplicateLoggerName         = errors.New(errDuplicateLoggerName)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -138,4 +152,28 @@ func NewErrInvalidNamedLoggerName(name string) error {
 
 func NewErrConfigTemplateFailed(inner error) error {
 	return errors.Wrap(errConfigTemplateFailed, inner)
+}
+
+func NewErrCouldNotObtainLoggerConfig(inner error, name string) error {
+	return errors.Wrap(errCouldNotObtainLoggerConfig, inner, errors.NewKV("name", name))
+}
+
+func NewErrNotProvidedAsKV(kv string) error {
+	return errors.New(errNotProvidedAsKV, errors.NewKV("KV", kv))
+}
+
+func NewErrCouldNotParseType(inner error, name string) error {
+	return errors.Wrap(errCouldNotParseType, inner, errors.NewKV("name", name))
+}
+
+func NewErrUnknownLoggerParameter(name string) error {
+	return errors.New(errUnknownLoggerParameter, errors.NewKV("param", name))
+}
+
+func NewErrInvalidLoggerName(name string) error {
+	return errors.New(errInvalidLoggerName, errors.NewKV("name", name))
+}
+
+func NewErrDuplicateLoggerName(name string) error {
+	return errors.New(errDuplicateLoggerName, errors.NewKV("name", name))
 }
