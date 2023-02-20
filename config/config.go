@@ -12,14 +12,14 @@
 Package config provides the central point for DefraDB's configuration and related facilities.
 
 [Config] embeds component-specific config structs. Each config struct can have a function providing
-default options, a method providing test configurations, a method for validation, a method handling deprecated fields
-(e.g. with warnings). This is extensible.
+default options, a method providing test configurations, a method for validation, a method handling
+deprecated fields (e.g. with warnings). This is extensible.
 
-The 'root directory' is where the configuration file and data of a DefraDB instance exists. It is specified as a global
-flag `defradb --rootdir path/to/somewhere`, or with the DEFRA_ROOTDIR environment variable.
+The 'root directory' is where the configuration file and data of a DefraDB instance exists.
+It is specified as a global flag `defradb --rootdir path/to/somewhere.
 
-Some packages of DefraDB provide their own configuration approach (logging, node). For each, a way to go from top-level
-configuration to package-specific configuration is provided.
+Some packages of DefraDB provide their own configuration approach (logging, node).
+For each, a way to go from top-level configuration to package-specific configuration is provided.
 
 Parameters are determined by, in order of least importance: defaults, configuration file, env. variables, and then CLI
 flags. That is, CLI flags can override everything else.
@@ -36,7 +36,7 @@ How to use, e.g. without using a rootdir:
 
 	cfg := config.DefaultConfig()
 	cfg.NetConfig.P2PDisabled = true  // as example
-	err := cfg.Load(false)
+	err := cfg.LoadWithRootdir(false)
 	if err != nil {
 		...
 */
@@ -413,6 +413,7 @@ type LoggingConfig struct {
 	NamedOverrides map[string]*NamedLoggingConfig
 }
 
+// NamedLoggingConfig is a named logging config, used for named overrides of the default config.
 type NamedLoggingConfig struct {
 	Name string
 	LoggingConfig
@@ -651,6 +652,7 @@ func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingC
 	return namedCfg, nil
 }
 
+// BindFlag binds a CLI flag to a config key.
 func (cfg *Config) BindFlag(key string, flag *pflag.Flag) error {
 	return cfg.v.BindPFlag(key, flag)
 }
