@@ -188,6 +188,7 @@ func (cfg *Config) paramsPreprocessing() error {
 	}
 
 	// Expand the passed in `~` if it wasn't expanded properly by the shell.
+	// That can happen when the parameters are passed from outside of a shell.
 	if err := expandHomeDir(&cfg.API.PrivKeyPath); err != nil {
 		return err
 	}
