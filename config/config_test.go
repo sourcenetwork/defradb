@@ -79,9 +79,7 @@ func FixtureDefaultConfigFile(t *testing.T) string {
 	cfg := DefaultConfig()
 	cfg.Rootdir = dir
 	err := cfg.WriteConfigFile()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	return dir
 }
 
@@ -93,7 +91,7 @@ func TestConfigValidateBasic(t *testing.T) {
 
 	err := cfg.validate()
 
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestJSONSerialization(t *testing.T) {
@@ -105,11 +103,10 @@ func TestJSONSerialization(t *testing.T) {
 
 	assert.NoError(t, errUnmarshal)
 	assert.NoError(t, errSerialize)
-	assert.NotEmpty(t, b)
+	for _, v := range m {
+		assert.NotEmpty(t, v)
+	}
 }
-
-// TODO test more the JSON serialization
-// 2022-06-20T14:03:14.284-0500, WARN, defra.cli, WTF initConfig, {"cfg": "eyJEYXRhc3RvcmUiOnsiU3RvcmUiOiJiYWRnZXIiLCJNZW1vcnkiOnsiU2l6ZSI6MH0sIkJhZGdlciI6eyJQYXRoIjoiZGF0YSJ9fSwiQVBJIjp7IkFkZHJlc3MiOiJsb2NhbGhvc3Q6OTE4MSJ9LCJOZXQiOnsiUDJQQWRkcmVzcyI6Ii9pcDQvMC4wLjAuMC90Y3AvOTE3MSIsIlAyUERpc2FibGVkIjpmYWxzZSwiUGVlcnMiOiIiLCJQdWJTdWJFbmFibGVkIjp0cnVlLCJSZWxheUVuYWJsZWQiOnRydWUsIlJQQ0FkZHJlc3MiOiIwLjAuMC4wOjkxNjEiLCJSUENNYXhDb25uZWN0aW9uSWRsZSI6IjVtIiwiUlBDVGltZW91dCI6IjEwcyIsIlRDUEFkZHJlc3MiOiIvaXA0LzAuMC4wLjAvdGNwLzkxNjEifSwiTG9nZ2luZyI6eyJMZXZlbCI6ImRlYnVnIiwiU3RhY2t0cmFjZSI6ZmFsc2UsIkZvcm1hdCI6ImNzdiIsIk91dHB1dFBhdGgiOiJzdGRvdXQiLCJDb2xvciI6dHJ1ZX19"}
 
 func TestLoadDefaultsConfigFileEnv(t *testing.T) {
 	tmpdir := t.TempDir()
@@ -165,7 +162,7 @@ func TestLoadNonExistingConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Rootdir = t.TempDir()
 	err := cfg.LoadWithRootdir(true)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrReadingConfigFile)
 }
 
 func TestLoadInvalidConfigFile(t *testing.T) {
@@ -181,7 +178,7 @@ func TestLoadInvalidConfigFile(t *testing.T) {
 
 	cfg.Rootdir = tmpdir
 	errLoad := cfg.LoadWithRootdir(true)
-	assert.Error(t, errLoad)
+	assert.ErrorIs(t, errLoad, ErrReadingConfigFile)
 }
 
 func TestInvalidEnvVars(t *testing.T) {
@@ -191,7 +188,7 @@ func TestInvalidEnvVars(t *testing.T) {
 
 	err := cfg.LoadWithRootdir(false)
 
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrLoadingConfig)
 }
 
 func TestValidNetConfigPeers(t *testing.T) {
@@ -209,7 +206,9 @@ func TestInvalidNetConfigPeers(t *testing.T) {
 
 	err := cfg.LoadWithRootdir(false)
 
-	assert.Error(t, err)
+	// The following error is an artefact of the current LoadWithRootdir
+	// It should be a validation error
+	assert.ErrorIs(t, err, ErrReadingConfigFile)
 }
 
 func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
@@ -218,14 +217,14 @@ func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
 
 	err := cfg.LoadWithRootdir(false)
 
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestInvalidRPCTimeout(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
 	err := cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestValidRPCTimeoutDuration(t *testing.T) {
@@ -233,11 +232,9 @@ func TestValidRPCTimeoutDuration(t *testing.T) {
 	cfg.Net.RPCTimeout = "1s"
 
 	err := cfg.LoadWithRootdir(false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = cfg.Net.RPCTimeoutDuration()
+	assert.NoError(t, err)
 
+	_, err = cfg.Net.RPCTimeoutDuration()
 	assert.NoError(t, err)
 }
 
@@ -245,10 +242,11 @@ func TestInvalidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
 
-	_ = cfg.LoadWithRootdir(false)
+	err := cfg.LoadWithRootdir(false)
+	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
 
-	_, err := cfg.Net.RPCTimeoutDuration()
-	assert.Error(t, err)
+	_, err = cfg.Net.RPCTimeoutDuration()
+	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
 }
 
 func TestValidRPCMaxConnectionIdleDuration(t *testing.T) {
@@ -265,10 +263,13 @@ func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
 
-	_ = cfg.LoadWithRootdir(false) // ignore error for purpose of this test
-	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
+	err := cfg.LoadWithRootdir(false)
+	// The following error is an artefact of the current LoadWithRootdir
+	// It should be a validation error
+	assert.ErrorIs(t, err, ErrReadingConfigFile)
 
-	assert.Error(t, err)
+	_, err = cfg.Net.RPCMaxConnectionIdleDuration()
+	assert.ErrorIs(t, err, ErrInvalidRPCMaxConnectionIdle)
 }
 
 func TestInvalidGetLoggingConfig(t *testing.T) {
@@ -276,10 +277,10 @@ func TestInvalidGetLoggingConfig(t *testing.T) {
 	cfg.Log.Level = "546578"
 	cfg.Log.Format = "*&)*&"
 
-	_ = cfg.LoadWithRootdir(false) // ignore config-loading error for the purpose of this test
-
-	err := cfg.Log.load()
-	assert.Error(t, err)
+	err := cfg.LoadWithRootdir(false)
+	// The following error is an artefact of the current LoadWithRootdir
+	// It should be a validation error
+	assert.ErrorIs(t, err, ErrReadingConfigFile)
 }
 
 func TestNodeConfig(t *testing.T) {
@@ -326,105 +327,77 @@ func TestUnmarshalByteSize(t *testing.T) {
 
 	b := []byte("10")
 	err := bs.UnmarshalText(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*B, bs)
 
 	b = []byte("10B")
 	err = bs.UnmarshalText(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*B, bs)
 
 	b = []byte("10 B")
 	err = bs.UnmarshalText(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*B, bs)
 
 	kb := []byte("10KB")
 	err = bs.UnmarshalText(kb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*KiB, bs)
 
 	kb = []byte("10KiB")
 	err = bs.UnmarshalText(kb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*KiB, bs)
 
 	kb = []byte("10 kb")
 	err = bs.UnmarshalText(kb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*KiB, bs)
 
 	mb := []byte("10MB")
 	err = bs.UnmarshalText(mb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*MiB, bs)
 
 	mb = []byte("10MiB")
 	err = bs.UnmarshalText(mb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*MiB, bs)
 
 	gb := []byte("10GB")
 	err = bs.UnmarshalText(gb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*GiB, bs)
 
 	gb = []byte("10GiB")
 	err = bs.UnmarshalText(gb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*GiB, bs)
 
 	tb := []byte("10TB")
 	err = bs.UnmarshalText(tb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*TiB, bs)
 
 	tb = []byte("10TiB")
 	err = bs.UnmarshalText(tb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*TiB, bs)
 
 	pb := []byte("10PB")
 	err = bs.UnmarshalText(pb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*PiB, bs)
 
 	pb = []byte("10PiB")
 	err = bs.UnmarshalText(pb)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	assert.Equal(t, 10*PiB, bs)
 
 	eb := []byte("१")
 	err = bs.UnmarshalText(eb)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrUnableToParseByteSize)
 }
 
 func TestByteSizeType(t *testing.T) {
@@ -439,6 +412,7 @@ func TestByteSizeToString(t *testing.T) {
 	mb := 10 * MiB
 	assert.Equal(t, "10MiB", mb.String())
 }
+
 func TestCreateAndLoadCustomConfig(t *testing.T) {
 	testdir := t.TempDir()
 
@@ -498,7 +472,8 @@ func TestDoNotSupportRootdirFromEnv(t *testing.T) {
 func TestLoggingConfigFromEnv(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LEVEL", "debug,net=info,log=error,cli=fatal")
 	cfg := DefaultConfig()
-	_ = cfg.LoadWithRootdir(false)
+	err := cfg.LoadWithRootdir(false)
+	assert.NoError(t, err)
 	assert.Equal(t, "debug", cfg.Log.Level)
 	for _, override := range cfg.Log.NamedOverrides {
 		switch override.Name {
@@ -558,5 +533,5 @@ func TestLoggerConfigFromEnvUnknownParam(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,unknown=true,level=debug")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrUnknownLoggerParameter)
 }

@@ -68,7 +68,7 @@ func (bs *ByteSize) Set(s string) error {
 	}
 	digits, err := strconv.Atoi(digitString)
 	if err != nil {
-		return err
+		return NewErrUnableToParseByteSize(err)
 	}
 
 	switch strings.ToUpper(strings.Trim(unit, " ")) {

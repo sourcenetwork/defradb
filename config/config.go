@@ -112,9 +112,10 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	if withRootdir {
 		cfg.v.AddConfigPath(cfg.Rootdir)
 		if err := cfg.v.ReadInConfig(); err != nil {
-			return err
+			return NewErrReadingConfigFile(err)
 		}
 	}
+
 	cfg.v.AutomaticEnv()
 
 	if err := cfg.paramsPreprocessing(); err != nil {
@@ -122,7 +123,7 @@ func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	}
 	// We load the viper configuration in the Config struct.
 	if err := cfg.v.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc())); err != nil {
-		return err
+		return NewErrLoadingConfig(err)
 	}
 	if err := cfg.validate(); err != nil {
 		return err
@@ -153,7 +154,7 @@ func (cfg *Config) loadDefaultViper() error {
 		return err
 	}
 	if err = cfg.v.ReadConfig(bytes.NewReader(defaultConfigBytes)); err != nil {
-		return err
+		return NewErrReadingConfigFile(err)
 	}
 	return nil
 }
@@ -364,7 +365,7 @@ func (netcfg *NetConfig) validate() error {
 func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
-		return d, err
+		return d, NewErrInvalidRPCTimeout(err, netcfg.RPCTimeout)
 	}
 	return d, nil
 }
@@ -373,7 +374,7 @@ func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
-		return d, err
+		return d, NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
 	}
 	return d, nil
 }

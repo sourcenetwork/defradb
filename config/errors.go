@@ -42,6 +42,9 @@ const (
 	errUnknownLoggerParameter      string = "unknown logger parameter"
 	errInvalidLoggerName           string = "invalid logger name"
 	errDuplicateLoggerName         string = "duplicate logger name"
+	errReadingConfigFile           string = "failed to read config"
+	errLoadingConfig               string = "failed to load config"
+	errUnableToParseByteSize       string = "unable to parse byte size"
 )
 
 var (
@@ -68,10 +71,13 @@ var (
 	ErrCouldNotObtainLoggerConfig  = errors.New(errCouldNotObtainLoggerConfig)
 	ErrNotProvidedAsKV             = errors.New(errNotProvidedAsKV)
 	ErrLoggerNameEmpty             = errors.New(errLoggerNameEmpty)
-	ErrorCouldNotParseType         = errors.New(errCouldNotParseType)
+	ErrCouldNotParseType           = errors.New(errCouldNotParseType)
 	ErrUnknownLoggerParameter      = errors.New(errUnknownLoggerParameter)
 	ErrInvalidLoggerName           = errors.New(errInvalidLoggerName)
 	ErrDuplicateLoggerName         = errors.New(errDuplicateLoggerName)
+	ErrReadingConfigFile           = errors.New(errReadingConfigFile)
+	ErrLoadingConfig               = errors.New(errLoadingConfig)
+	ErrUnableToParseByteSize       = errors.New(errUnableToParseByteSize)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -176,4 +182,16 @@ func NewErrInvalidLoggerName(name string) error {
 
 func NewErrDuplicateLoggerName(name string) error {
 	return errors.New(errDuplicateLoggerName, errors.NewKV("name", name))
+}
+
+func NewErrReadingConfigFile(inner error) error {
+	return errors.Wrap(errReadingConfigFile, inner)
+}
+
+func NewErrLoadingConfig(inner error) error {
+	return errors.Wrap(errLoadingConfig, inner)
+}
+
+func NewErrUnableToParseByteSize(err error) error {
+	return errors.Wrap(errUnableToParseByteSize, err)
 }
