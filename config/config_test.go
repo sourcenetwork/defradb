@@ -527,6 +527,21 @@ func TestLoggerConfigFromEnvExhaustive(t *testing.T) {
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.NoError(t, err)
+	for _, override := range cfg.Log.NamedOverrides {
+		switch override.Name {
+		case "net":
+			assert.Equal(t, true, override.NoColor)
+			assert.Equal(t, "debug", override.Level)
+		case "config":
+			assert.Equal(t, "stdout", override.Output)
+			assert.Equal(t, false, override.Caller)
+		case "logging":
+			assert.Equal(t, true, override.Stacktrace)
+			assert.Equal(t, "json", override.Format)
+		default:
+			t.Fatal("unexpected named override")
+		}
+	}
 }
 
 func TestLoggerConfigFromEnvUnknownParam(t *testing.T) {
