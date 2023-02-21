@@ -535,3 +535,10 @@ func TestLoggerConfigFromEnvUnknownParam(t *testing.T) {
 	err := cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrUnknownLoggerParameter)
 }
+
+func TestInvalidDatastoreConfig(t *testing.T) {
+	FixtureEnvKeyValue(t, "DEFRA_DATASTORE_STORE", "antibadger")
+	cfg := DefaultConfig()
+	err := cfg.LoadWithRootdir(false)
+	assert.ErrorIs(t, err, ErrInvalidDatastoreType)
+}

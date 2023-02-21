@@ -31,7 +31,7 @@ const (
 	errInvalidRPCAddress           string = "invalid RPC address"
 	errInvalidBootstrapPeers       string = "invalid bootstrap peers"
 	errInvalidLogLevel             string = "invalid log level"
-	errInvalidStoreType            string = "invalid store type"
+	errInvalidDatastoreType        string = "invalid store type"
 	errInvalidLogFormat            string = "invalid log format"
 	errInvalidNamedLoggerName      string = "invalid named logger name"
 	errConfigTemplateFailed        string = "could not process config template"
@@ -62,7 +62,7 @@ var (
 	ErrInvalidRPCAddress           = errors.New(errInvalidRPCAddress)
 	ErrInvalidBootstrapPeers       = errors.New(errInvalidBootstrapPeers)
 	ErrInvalidLogLevel             = errors.New(errInvalidLogLevel)
-	ErrInvalidStoreType            = errors.New(errInvalidStoreType)
+	ErrInvalidDatastoreType        = errors.New(errInvalidDatastoreType)
 	ErrOverrideConfigConvertFailed = errors.New(errOverrideConfigConvertFailed)
 	ErrInvalidLogFormat            = errors.New(errInvalidLogFormat)
 	ErrConfigToJSONFailed          = errors.New(errConfigToJSONFailed)
@@ -137,7 +137,7 @@ func NewErrInvalidLogLevel(level string) error {
 }
 
 func NewErrInvalidDatastoreType(storeType string) error {
-	return errors.New(errInvalidStoreType, errors.NewKV("store_type", storeType))
+	return errors.New(errInvalidDatastoreType, errors.NewKV("store_type", storeType))
 }
 
 func NewErrOverrideConfigConvertFailed(inner error, name string) error {
