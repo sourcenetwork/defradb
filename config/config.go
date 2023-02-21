@@ -96,7 +96,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-// Load a Config with parameters from defaults, config file, environment variables, and CLI flags.
+// LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.
 // It loads from config file when `fromFile` is true, otherwise it loads directly from a default configuration.
 // Use on a Config struct already loaded with default values from DefaultConfig().
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
