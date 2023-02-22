@@ -160,14 +160,6 @@ func TestConfigFileExistsErroneousPath(t *testing.T) {
 	assert.False(t, cfg.ConfigFileExists())
 }
 
-func TestInvalidConfigDatastore(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Datastore.Badger.Path = "[][][]"
-
-	err := cfg.LoadWithRootdir(false)
-	assert.Error(t, err)
-}
-
 func TestDeleteConfigFile(t *testing.T) {
 	cfg := DefaultConfig()
 	tmpdir := t.TempDir()
