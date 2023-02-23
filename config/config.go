@@ -101,13 +101,13 @@ func DefaultConfig() *Config {
 // Use on a Config struct already loaded with default values from DefaultConfig().
 // To be executed once at the beginning of the program.
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
-	if err := cfg.loadDefaultViper(); err != nil {
+	//  Use default logging configuration here, so that we can log errors in a consistent way even in the case of early failure.
+	defaultLogCfg := defaultLogConfig()
+	if err := defaultLogCfg.load(); err != nil {
 		return err
 	}
 
-	//  Use default logging configuration early.
-	defaultCfg := DefaultConfig()
-	if err := defaultCfg.Log.load(); err != nil {
+	if err := cfg.loadDefaultViper(); err != nil {
 		return err
 	}
 
@@ -495,8 +495,7 @@ func (logcfg *LoggingConfig) validate() error {
 			if len(parts) < 2 {
 				return NewErrLoggerConfig("unexpected format (expected: `module,key=value;module,key=value;...`")
 			}
-			name := parts[0]
-			if name == "" {
+			if parts[0] == "" {
 				return ErrLoggerNameEmpty
 			}
 			for _, pair := range parts[1:] {
