@@ -196,14 +196,17 @@ func (cfg *Config) paramsPreprocessing() error {
 		return err
 	}
 
+	var bs ByteSize
+	if err := bs.Set(cfg.v.GetString("datastore.badger.valuelogfilesize")); err != nil {
+		return err
+	}
+	cfg.Datastore.Badger.ValueLogFileSize = bs
+
 	return nil
 }
 
 func (cfg *Config) load() error {
 	if err := cfg.Log.load(); err != nil {
-		return err
-	}
-	if err := cfg.dataStoreConfigLoad(); err != nil {
 		return err
 	}
 	return nil
@@ -215,15 +218,6 @@ type DatastoreConfig struct {
 	Memory        MemoryConfig
 	Badger        BadgerConfig
 	MaxTxnRetries int
-}
-
-func (cfg *Config) dataStoreConfigLoad() error {
-	var bs ByteSize
-	if err := bs.Set(cfg.v.GetString("datastore.badger.valuelogfilesize")); err != nil {
-		return err
-	}
-	cfg.Datastore.Badger.ValueLogFileSize = bs
-	return nil
 }
 
 // BadgerConfig configures Badger's on-disk / filesystem mode.
@@ -610,7 +604,6 @@ func (logcfg LoggingConfig) toLoggerConfig() (logging.Config, error) {
 	// handle logger named overrides
 	overrides := make(map[string]logging.Config)
 	for name, cfg := range logcfg.NamedOverrides {
-		// fmt.Println("handling logger named override", name, cfg.LoggingConfig)
 		c, err := cfg.toLoggerConfig()
 		if err != nil {
 			return logging.Config{}, NewErrOverrideConfigConvertFailed(err, name)
@@ -618,7 +611,7 @@ func (logcfg LoggingConfig) toLoggerConfig() (logging.Config, error) {
 		overrides[name] = c
 	}
 
-	return logging.Config{
+	c := logging.Config{
 		Level:                 logging.NewLogLevelOption(loglevel),
 		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
@@ -626,7 +619,8 @@ func (logcfg LoggingConfig) toLoggerConfig() (logging.Config, error) {
 		OutputPaths:           []string{logcfg.Output},
 		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
-	}, nil
+	}
+	return c, nil
 }
 
 // this is a copy that doesn't deep copy the NamedOverrides map
