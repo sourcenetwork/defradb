@@ -118,3 +118,14 @@ func isLowercaseAlpha(s string) bool {
 	}
 	return true
 }
+
+func parseKV(kv string) ([]string, error) {
+	parsedKV := strings.Split(kv, "=")
+	if len(parsedKV) != 2 {
+		return nil, NewErrNotProvidedAsKV(kv)
+	}
+	if parsedKV[0] == "" || parsedKV[1] == "" {
+		return nil, NewErrNotProvidedAsKV(kv)
+	}
+	return parsedKV, nil
+}

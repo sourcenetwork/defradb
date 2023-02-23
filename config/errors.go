@@ -34,6 +34,7 @@ const (
 	errInvalidDatastoreType        string = "invalid store type"
 	errInvalidLogFormat            string = "invalid log format"
 	errInvalidNamedLoggerName      string = "invalid named logger name"
+	errInvalidLoggerConfig         string = "invalid logger config"
 	errConfigTemplateFailed        string = "could not process config template"
 	errCouldNotObtainLoggerConfig  string = "could not get named logger config"
 	errNotProvidedAsKV             string = "logging config parameter was not provided as <key>=<value> pair"
@@ -45,6 +46,7 @@ const (
 	errReadingConfigFile           string = "failed to read config"
 	errLoadingConfig               string = "failed to load config"
 	errUnableToParseByteSize       string = "unable to parse byte size"
+	errInvalidDatastorePath        string = "invalid datastore path"
 )
 
 var (
@@ -78,6 +80,8 @@ var (
 	ErrReadingConfigFile           = errors.New(errReadingConfigFile)
 	ErrLoadingConfig               = errors.New(errLoadingConfig)
 	ErrUnableToParseByteSize       = errors.New(errUnableToParseByteSize)
+	ErrInvalidLoggerConfig         = errors.New(errInvalidLoggerConfig)
+	ErrorInvalidDatastorePath      = errors.New(errInvalidDatastorePath)
 )
 
 func NewErrFailedToWriteFile(inner error, path string) error {
@@ -194,4 +198,12 @@ func NewErrLoadingConfig(inner error) error {
 
 func NewErrUnableToParseByteSize(err error) error {
 	return errors.Wrap(errUnableToParseByteSize, err)
+}
+
+func NewErrLoggerConfig(s string) error {
+	return errors.New(errInvalidLoggerConfig, errors.NewKV("explanation", s))
+}
+
+func NewErrInvalidDatastorePath(path string) error {
+	return errors.New(errInvalidDatastorePath, errors.NewKV("path", path))
 }

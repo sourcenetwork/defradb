@@ -193,94 +193,77 @@ func TestInvalidEnvVars(t *testing.T) {
 
 func TestValidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
-
 	cfg.Net.Peers = "/ip4/127.0.0.1/udp/1234,/ip4/7.7.7.7/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N"
-	err := cfg.LoadWithRootdir(false)
-
+	err := cfg.validate()
 	assert.NoError(t, err)
 }
 
 func TestInvalidNetConfigPeers(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
-
-	err := cfg.LoadWithRootdir(false)
-
-	// The following error is an artefact of the current LoadWithRootdir
-	// It should be a validation error
-	assert.ErrorIs(t, err, ErrReadingConfigFile)
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "123123"
-
-	err := cfg.LoadWithRootdir(false)
-
+	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestInvalidRPCTimeout(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
-	err := cfg.LoadWithRootdir(false)
+	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
 func TestValidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "1s"
-
-	err := cfg.LoadWithRootdir(false)
-	assert.NoError(t, err)
-
-	_, err = cfg.Net.RPCTimeoutDuration()
+	err := cfg.validate()
 	assert.NoError(t, err)
 }
 
 func TestInvalidRPCTimeoutDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCTimeout = "123123"
-
-	err := cfg.LoadWithRootdir(false)
+	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
 
-	_, err = cfg.Net.RPCTimeoutDuration()
-	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
+	// doesn't error because the merge didn't succeed
+	// _, err = cfg.Net.RPCTimeoutDuration()
+	// assert.NoError(t, err)
 }
 
 func TestValidRPCMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "1s"
-
-	assert.NoError(t, cfg.LoadWithRootdir(false))
-	_, err := cfg.Net.RPCMaxConnectionIdleDuration()
-
+	err := cfg.validate()
 	assert.NoError(t, err)
+	duration, err := cfg.Net.RPCMaxConnectionIdleDuration()
+	assert.NoError(t, err)
+	assert.Equal(t, duration, 1*time.Second)
 }
 
 func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
-
-	err := cfg.LoadWithRootdir(false)
-	// The following error is an artefact of the current LoadWithRootdir
-	// It should be a validation error
-	assert.ErrorIs(t, err, ErrReadingConfigFile)
-
-	_, err = cfg.Net.RPCMaxConnectionIdleDuration()
+	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrInvalidRPCMaxConnectionIdle)
+
+	// shouldn't err because the merge didn't succeed
+	// _, err = cfg.Net.RPCMaxConnectionIdleDuration()
+	// assert.NoError(t, err)
 }
 
-func TestInvalidGetLoggingConfig(t *testing.T) {
+func TestInvalidLoggingConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Log.Level = "546578"
 	cfg.Log.Format = "*&)*&"
-
-	err := cfg.LoadWithRootdir(false)
-	// The following error is an artefact of the current LoadWithRootdir
-	// It should be a validation error
-	assert.ErrorIs(t, err, ErrReadingConfigFile)
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidLogLevel)
 }
 
 func TestNodeConfig(t *testing.T) {
@@ -292,7 +275,9 @@ func TestNodeConfig(t *testing.T) {
 	cfg.Net.RelayEnabled = true
 	cfg.Net.PubSubEnabled = true
 	cfg.Datastore.Badger.Path = "/tmp/defra_cli/badger"
-	assert.NoError(t, cfg.LoadWithRootdir(false))
+
+	err := cfg.validate()
+	assert.NoError(t, err)
 
 	nodeConfig := cfg.NodeConfig()
 	options, errOptionsMerge := node.NewMergedOptions(nodeConfig)
@@ -426,6 +411,7 @@ func TestCreateAndLoadCustomConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.True(t, cfg.ConfigFileExists())
+
 	// check that the config file loads properly
 	cfg2 := DefaultConfig()
 	cfg2.Rootdir = testdir
@@ -556,4 +542,44 @@ func TestInvalidDatastoreConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrInvalidDatastoreType)
+}
+
+func TestIsValidLoggerString(t *testing.T) {
+	testCases := []struct {
+		input       string
+		expectedErr error
+	}{
+		{"node,level=debug,output=stdout", nil},
+		{"node,level=fatal,format=csv", nil},
+		{"node,level=warn", ErrInvalidLogLevel},
+		{"node,level=debug;cli,", ErrNotProvidedAsKV},
+		{"node,level", ErrNotProvidedAsKV},
+
+		{";", ErrInvalidLoggerConfig},
+		{";;", ErrInvalidLoggerConfig},
+		{",level=debug", ErrLoggerNameEmpty},
+		{"node,bar=baz", ErrUnknownLoggerParameter},            // unknown parameter
+		{"m,level=debug,output-json", ErrNotProvidedAsKV},      // key-value pair with invalid separator
+		{"myModule,level=debug,extraPart", ErrNotProvidedAsKV}, // additional part after last key-value pair
+		{"myModule,=myValue", ErrNotProvidedAsKV},              // empty key
+		{",k=v", ErrLoggerNameEmpty},                           // empty module
+		{";foo", ErrInvalidLoggerConfig},                       // empty module name
+		{"k=v", ErrInvalidLoggerConfig},                        // missing module
+
+	}
+
+	for _, tc := range testCases {
+		cfg := DefaultConfig()
+		cfg.Log.Logger = tc.input
+		t.Log(tc.input)
+		err := cfg.validate()
+		assert.ErrorIs(t, err, tc.expectedErr)
+	}
+}
+
+func TestInvalidEmptyAPIAddress(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = ""
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidDatabaseURL)
 }

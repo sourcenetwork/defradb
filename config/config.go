@@ -99,13 +99,15 @@ func DefaultConfig() *Config {
 // LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.
 // It loads from config file when `fromFile` is true, otherwise it loads directly from a default configuration.
 // Use on a Config struct already loaded with default values from DefaultConfig().
+// To be executed once at the beginning of the program.
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
 	if err := cfg.loadDefaultViper(); err != nil {
 		return err
 	}
 
 	//  Use default logging configuration early.
-	if err := cfg.Log.load(); err != nil {
+	defaultCfg := DefaultConfig()
+	if err := defaultCfg.Log.load(); err != nil {
 		return err
 	}
 
@@ -149,7 +151,8 @@ func (cfg *Config) loadDefaultViper() error {
 		variables that are present in the config file (`AutomaticEnv`). So we load the default config into viper,
 		and then overwrite it with the actual config file.
 	*/
-	defaultConfigBytes, err := cfg.toBytes()
+	defaultConfig := DefaultConfig()
+	defaultConfigBytes, err := defaultConfig.toBytes()
 	if err != nil {
 		return err
 	}
@@ -469,9 +472,9 @@ func (logcfg *LoggingConfig) validate() error {
 			return NewErrInvalidLogLevel(parts[0])
 		}
 		for _, kv := range parts[1:] {
-			parsedKV := strings.Split(kv, "=")
-			if len(parsedKV) != 2 {
-				return NewErrNotProvidedAsKV(kv)
+			parsedKV, err := parseKV(kv)
+			if err != nil {
+				return err
 			}
 			// ensure each value is a valid loglevel validLevel
 			if !validLevel(parsedKV[1]) {
@@ -486,16 +489,34 @@ func (logcfg *LoggingConfig) validate() error {
 
 	// logger: expect format like: `net,nocolor=true,level=debug;config,output=stdout,level=info`
 	if len(logcfg.Logger) != 0 {
-		s := strings.Split(logcfg.Logger, ";")
-		for _, v := range s {
-			vs := strings.Split(v, ",")
-			if !isLowercaseAlpha(vs[0]) {
-				return NewErrInvalidLoggerName(vs[0])
+		namedconfigs := strings.Split(logcfg.Logger, ";")
+		for _, c := range namedconfigs {
+			parts := strings.Split(c, ",")
+			if len(parts) < 2 {
+				return NewErrLoggerConfig("unexpected format (expected: `module,key=value;module,key=value;...`")
 			}
-			for _, kv := range vs[1:] {
-				parsedKV := strings.Split(kv, "=")
-				if len(parsedKV) != 2 {
-					return NewErrNotProvidedAsKV(kv)
+			name := parts[0]
+			if name == "" {
+				return ErrLoggerNameEmpty
+			}
+			for _, pair := range parts[1:] {
+				parsedKV, err := parseKV(pair)
+				if err != nil {
+					return err
+				}
+				if !isLowercaseAlpha(parsedKV[0]) {
+					return NewErrInvalidLoggerName(parsedKV[0])
+				}
+				switch parsedKV[0] {
+				case "format", "output", "nocolor", "stacktrace", "caller": //nolint:goconst
+					// valid logger parameters
+				case "level": //nolint:goconst
+					// ensure each value is a valid loglevel validLevel
+					if !validLevel(parsedKV[1]) {
+						return NewErrInvalidLogLevel(parsedKV[1])
+					}
+				default:
+					return NewErrUnknownLoggerParameter(parsedKV[0])
 				}
 			}
 		}
