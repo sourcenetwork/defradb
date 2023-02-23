@@ -62,6 +62,7 @@ func FixtureEnvKeyValue(t *testing.T, key, value string) {
 }
 
 func FixtureEnvVars(t *testing.T, envVars map[string]string) {
+	t.Helper()
 	for k, v := range envVars {
 		os.Setenv(k, v)
 	}
@@ -70,6 +71,57 @@ func FixtureEnvVars(t *testing.T, envVars map[string]string) {
 			os.Unsetenv(k)
 		}
 	})
+}
+
+func TestDefaultConfig(t *testing.T) {
+	cfg := DefaultConfig()
+	assert.NotNil(t, cfg)
+	err := cfg.validate()
+	assert.NoError(t, err)
+	// asserting equality of some unlikely-to-change default values
+	assert.Equal(t, "stderr", cfg.Log.Output)
+	assert.Equal(t, "csv", cfg.Log.Format)
+	assert.Equal(t, false, cfg.API.TLS)
+	assert.Equal(t, false, cfg.Net.RelayEnabled)
+}
+
+func TestLoadIncorrectValuesFromConfigFile(t *testing.T) {
+	var cfg *Config
+
+	testcases := []struct {
+		setter func()
+		err    error
+	}{
+		{
+			setter: func() {
+				cfg.Datastore.Store = "antibadger"
+			},
+			err: ErrInvalidDatastoreType,
+		},
+		{
+			setter: func() {
+				cfg.Log.Level = "antilevel"
+			},
+			err: ErrInvalidLogLevel,
+		},
+		{
+			setter: func() {
+				cfg.Log.Format = "antiformat"
+			},
+
+			err: ErrInvalidLogFormat,
+		},
+	}
+
+	for _, tc := range testcases {
+		cfg = DefaultConfig()
+		cfg.Rootdir = t.TempDir()
+		tc.setter()
+		err := cfg.WriteConfigFile()
+		assert.NoError(t, err)
+		err = cfg.LoadWithRootdir(true)
+		assert.ErrorIs(t, err, tc.err)
+	}
 }
 
 func TestJSONSerialization(t *testing.T) {
