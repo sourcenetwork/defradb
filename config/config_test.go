@@ -400,6 +400,7 @@ func TestValidationLogger(t *testing.T) {
 		{",k=v", ErrLoggerNameEmpty},                           // empty module
 		{";foo", ErrInvalidLoggerConfig},                       // empty module name
 		{"k=v", ErrInvalidLoggerConfig},                        // missing module
+		{"debug,net=,log=error,cli=fatal", ErrNotProvidedAsKV}, // empty value
 
 	}
 

@@ -534,6 +534,9 @@ func (logcfg *LoggingConfig) load() error {
 	if len(parts) > 1 {
 		for _, kv := range parts[1:] {
 			parsedKV := strings.Split(kv, "=")
+			if len(parsedKV) != 2 {
+				return NewErrInvalidLogLevel(kv)
+			}
 			c, err := logcfg.GetOrCreateNamedLogger(parsedKV[0])
 			if err != nil {
 				return NewErrCouldNotObtainLoggerConfig(err, parsedKV[0])
@@ -556,6 +559,9 @@ func (logcfg *LoggingConfig) load() error {
 			override.Name = vs[0]
 			for _, v := range vs[1:] {
 				parsedKV := strings.Split(v, "=")
+				if len(parsedKV) != 2 {
+					return NewErrNotProvidedAsKV(v)
+				}
 				switch param := strings.ToLower(parsedKV[0]); param {
 				case "level": // string
 					override.Level = parsedKV[1]
