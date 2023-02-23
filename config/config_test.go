@@ -61,27 +61,15 @@ func FixtureEnvKeyValue(t *testing.T, key, value string) {
 	})
 }
 
-func FixtureEnvVars(envVars map[string]string) {
+func FixtureEnvVars(t *testing.T, envVars map[string]string) {
 	for k, v := range envVars {
 		os.Setenv(k, v)
 	}
-}
-
-func FixtureEnvVarsUnset(envVars map[string]string) {
-	for k := range envVars {
-		os.Unsetenv(k)
-	}
-}
-
-func TestConfigValidateBasic(t *testing.T) {
-	cfg := DefaultConfig()
-	assert.NoError(t, cfg.validate())
-	// Borked configuration gives out error
-	cfg.API.Address = "localhost"
-
-	err := cfg.validate()
-
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+	t.Cleanup(func() {
+		for k := range envVars {
+			os.Unsetenv(k)
+		}
+	})
 }
 
 func TestJSONSerialization(t *testing.T) {
@@ -98,12 +86,11 @@ func TestJSONSerialization(t *testing.T) {
 	}
 }
 
-func TestLoadDefaultsConfigFileEnv(t *testing.T) {
+func TestLoadValidationDefaultsConfigFileEnv(t *testing.T) {
 	tmpdir := t.TempDir()
 	cfg := DefaultConfig()
 	cfg.Rootdir = tmpdir
-	FixtureEnvVars(envVarsDifferentThanDefault)
-	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+	FixtureEnvVars(t, envVarsDifferentThanDefault)
 	errWriteConfig := cfg.WriteConfigFile()
 
 	errLoad := cfg.LoadWithRootdir(true)
@@ -116,8 +103,7 @@ func TestLoadDefaultsConfigFileEnv(t *testing.T) {
 
 func TestLoadDefaultsEnv(t *testing.T) {
 	cfg := DefaultConfig()
-	FixtureEnvVars(envVarsDifferentThanDefault)
-	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+	FixtureEnvVars(t, envVarsDifferentThanDefault)
 
 	err := cfg.LoadWithRootdir(false)
 
@@ -128,8 +114,7 @@ func TestLoadDefaultsEnv(t *testing.T) {
 
 func TestEnvVariablesAllConsidered(t *testing.T) {
 	cfg := DefaultConfig()
-	FixtureEnvVars(envVarsDifferentThanDefault)
-	defer FixtureEnvVarsUnset(envVarsDifferentThanDefault)
+	FixtureEnvVars(t, envVarsDifferentThanDefault)
 
 	err := cfg.LoadWithRootdir(false)
 
@@ -173,87 +158,11 @@ func TestLoadInvalidConfigFile(t *testing.T) {
 
 func TestInvalidEnvVars(t *testing.T) {
 	cfg := DefaultConfig()
-	FixtureEnvVars(envVarsInvalid)
-	defer FixtureEnvVarsUnset(envVarsInvalid)
+	FixtureEnvVars(t, envVarsInvalid)
 
 	err := cfg.LoadWithRootdir(false)
 
 	assert.ErrorIs(t, err, ErrLoadingConfig)
-}
-
-func TestValidNetConfigPeers(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.Peers = "/ip4/127.0.0.1/udp/1234,/ip4/7.7.7.7/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N"
-	err := cfg.validate()
-	assert.NoError(t, err)
-}
-
-func TestInvalidNetConfigPeers(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestInvalidRPCMaxConnectionIdle(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestInvalidRPCTimeout(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
-}
-
-func TestValidRPCTimeoutDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "1s"
-	err := cfg.validate()
-	assert.NoError(t, err)
-}
-
-func TestInvalidRPCTimeoutDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCTimeout = "123123"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
-
-	// doesn't error because the merge didn't succeed
-	// _, err = cfg.Net.RPCTimeoutDuration()
-	// assert.NoError(t, err)
-}
-
-func TestValidRPCMaxConnectionIdleDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "1s"
-	err := cfg.validate()
-	assert.NoError(t, err)
-	duration, err := cfg.Net.RPCMaxConnectionIdleDuration()
-	assert.NoError(t, err)
-	assert.Equal(t, duration, 1*time.Second)
-}
-
-func TestInvalidMaxConnectionIdleDuration(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidRPCMaxConnectionIdle)
-
-	// shouldn't err because the merge didn't succeed
-	// _, err = cfg.Net.RPCMaxConnectionIdleDuration()
-	// assert.NoError(t, err)
-}
-
-func TestInvalidLoggingConfig(t *testing.T) {
-	cfg := DefaultConfig()
-	cfg.Log.Level = "546578"
-	cfg.Log.Format = "*&)*&"
-	err := cfg.validate()
-	assert.ErrorIs(t, err, ErrInvalidLogLevel)
 }
 
 func TestNodeConfig(t *testing.T) {
@@ -320,41 +229,16 @@ func TestCreateAndLoadCustomConfig(t *testing.T) {
 	assert.Equal(t, cfg.Log.Level, cfg2.Log.Level)
 }
 
-// not sure how this behaves in parallel
-func envSet(t *testing.T, envs map[string]string) (cleanup func()) {
-	originalEnvs := map[string]string{}
-
-	for k, v := range envs {
-		if orig, ok := os.LookupEnv(k); ok {
-			originalEnvs[k] = orig
-		}
-		t.Setenv(k, v)
-	}
-
-	return func() {
-		for k := range envs {
-			orig, has := originalEnvs[k]
-			if has {
-				t.Setenv(k, orig)
-			} else {
-				_ = os.Unsetenv(k)
-			}
-		}
-	}
-}
-
-func TestDoNotSupportRootdirFromEnv(t *testing.T) {
+func TestLoadValidationEnvDoesntSupportRootdir(t *testing.T) {
 	tmpdir := t.TempDir()
-	t.Cleanup(envSet(t, map[string]string{
-		"DEFRA_ROOTDIR": tmpdir,
-	}))
+	FixtureEnvKeyValue(t, "DEFRA_ROOTDIR", tmpdir)
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.Equal(t, cfg.Rootdir, DefaultRootDir())
 	assert.NoError(t, err)
 }
 
-func TestLoggingConfigFromEnv(t *testing.T) {
+func TestLoadValidationEnvLoggingConfig(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LEVEL", "debug,net=info,log=error,cli=fatal")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
@@ -374,7 +258,7 @@ func TestLoggingConfigFromEnv(t *testing.T) {
 	}
 }
 
-func TestLoggerConfigFromEnv(t *testing.T) {
+func TestLoadValidationEnvLoggerConfig(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor=true,level=debug;config,output=stdout,level=info")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
@@ -393,7 +277,7 @@ func TestLoggerConfigFromEnv(t *testing.T) {
 	}
 }
 
-func TestLoggerConfigFromEnvBroken(t *testing.T) {
+func TestLoadValidationEnvLoggerConfigInvalid(t *testing.T) {
 	// logging config parameter not provided as <key>=<value> pair
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor,true,level,debug;config,output,stdout,level,info")
 	cfg := DefaultConfig()
@@ -407,7 +291,7 @@ func TestLoggerConfigFromEnvBroken(t *testing.T) {
 	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
 
-func TestLoggerConfigFromEnvExhaustive(t *testing.T) {
+func TestLoadValidationLoggerConfigFromEnvExhaustive(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,nocolor=true,level=debug;config,output=stdout,caller=false;logging,stacktrace=true,format=json")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
@@ -429,21 +313,21 @@ func TestLoggerConfigFromEnvExhaustive(t *testing.T) {
 	}
 }
 
-func TestLoggerConfigFromEnvUnknownParam(t *testing.T) {
+func TestLoadValidationLoggerConfigFromEnvUnknownParam(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_LOG_LOGGER", "net,unknown=true,level=debug")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrUnknownLoggerParameter)
 }
 
-func TestInvalidDatastoreConfig(t *testing.T) {
+func TestLoadValidationInvalidDatastoreConfig(t *testing.T) {
 	FixtureEnvKeyValue(t, "DEFRA_DATASTORE_STORE", "antibadger")
 	cfg := DefaultConfig()
 	err := cfg.LoadWithRootdir(false)
 	assert.ErrorIs(t, err, ErrInvalidDatastoreType)
 }
 
-func TestIsValidLoggerString(t *testing.T) {
+func TestValidationLogger(t *testing.T) {
 	testCases := []struct {
 		input       string
 		expectedErr error
@@ -476,9 +360,83 @@ func TestIsValidLoggerString(t *testing.T) {
 	}
 }
 
-func TestInvalidEmptyAPIAddress(t *testing.T) {
+func TestValidationInvalidEmptyAPIAddress(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.API.Address = ""
 	err := cfg.validate()
 	assert.ErrorIs(t, err, ErrInvalidDatabaseURL)
+}
+
+func TestValidationNetConfigPeers(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.Peers = "/ip4/127.0.0.1/udp/1234,/ip4/7.7.7.7/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N"
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
+
+func TestValidationInvalidNetConfigPeers(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.Peers = "&(*^(*&^(*&^(*&^))), mmmmh,123123"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+}
+
+func TestValidationInvalidRPCMaxConnectionIdle(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCMaxConnectionIdle = "123123"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+}
+
+func TestValidationInvalidRPCTimeout(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCTimeout = "123123"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
+}
+
+func TestValidationRPCTimeoutDuration(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCTimeout = "1s"
+	err := cfg.validate()
+	assert.NoError(t, err)
+}
+
+func TestValidationInvalidRPCTimeoutDuration(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCTimeout = "123123"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidRPCTimeout)
+}
+
+func TestValidationRPCMaxConnectionIdleDuration(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCMaxConnectionIdle = "1s"
+	err := cfg.validate()
+	assert.NoError(t, err)
+	duration, err := cfg.Net.RPCMaxConnectionIdleDuration()
+	assert.NoError(t, err)
+	assert.Equal(t, duration, 1*time.Second)
+}
+
+func TestValidationInvalidMaxConnectionIdleDuration(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Net.RPCMaxConnectionIdle = "*ˆ&%*&%"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidRPCMaxConnectionIdle)
+}
+
+func TestValidationInvalidLoggingConfig(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Log.Level = "546578"
+	cfg.Log.Format = "*&)*&"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrInvalidLogLevel)
+}
+
+func TestValidationAddressBasic(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.API.Address = "localhost"
+	err := cfg.validate()
+	assert.ErrorIs(t, err, ErrFailedToValidateConfig)
 }
