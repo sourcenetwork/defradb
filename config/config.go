@@ -101,7 +101,8 @@ func DefaultConfig() *Config {
 // Use on a Config struct already loaded with default values from DefaultConfig().
 // To be executed once at the beginning of the program.
 func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
-	//  Use default logging configuration here, so that we can log errors in a consistent way even in the case of early failure.
+	// Use default logging configuration here, so that
+	// we can log errors in a consistent way even in the case of early failure.
 	defaultLogCfg := defaultLogConfig()
 	if err := defaultLogCfg.load(); err != nil {
 		return err
