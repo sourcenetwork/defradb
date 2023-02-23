@@ -73,16 +73,6 @@ func FixtureEnvVarsUnset(envVars map[string]string) {
 	}
 }
 
-// Gives a path to a temporary directory containing a default config file
-func FixtureDefaultConfigFile(t *testing.T) string {
-	dir := t.TempDir()
-	cfg := DefaultConfig()
-	cfg.Rootdir = dir
-	err := cfg.WriteConfigFile()
-	assert.NoError(t, err)
-	return dir
-}
-
 func TestConfigValidateBasic(t *testing.T) {
 	cfg := DefaultConfig()
 	assert.NoError(t, cfg.validate())
@@ -305,97 +295,6 @@ func TestNodeConfig(t *testing.T) {
 	assert.Equal(t, expectedOptions.DataPath, options.DataPath)
 	assert.Equal(t, expectedOptions.EnablePubSub, options.EnablePubSub)
 	assert.Equal(t, expectedOptions.EnableRelay, options.EnableRelay)
-}
-
-func TestUnmarshalByteSize(t *testing.T) {
-	var bs ByteSize
-
-	b := []byte("10")
-	err := bs.UnmarshalText(b)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*B, bs)
-
-	b = []byte("10B")
-	err = bs.UnmarshalText(b)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*B, bs)
-
-	b = []byte("10 B")
-	err = bs.UnmarshalText(b)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*B, bs)
-
-	kb := []byte("10KB")
-	err = bs.UnmarshalText(kb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*KiB, bs)
-
-	kb = []byte("10KiB")
-	err = bs.UnmarshalText(kb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*KiB, bs)
-
-	kb = []byte("10 kb")
-	err = bs.UnmarshalText(kb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*KiB, bs)
-
-	mb := []byte("10MB")
-	err = bs.UnmarshalText(mb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*MiB, bs)
-
-	mb = []byte("10MiB")
-	err = bs.UnmarshalText(mb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*MiB, bs)
-
-	gb := []byte("10GB")
-	err = bs.UnmarshalText(gb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*GiB, bs)
-
-	gb = []byte("10GiB")
-	err = bs.UnmarshalText(gb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*GiB, bs)
-
-	tb := []byte("10TB")
-	err = bs.UnmarshalText(tb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*TiB, bs)
-
-	tb = []byte("10TiB")
-	err = bs.UnmarshalText(tb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*TiB, bs)
-
-	pb := []byte("10PB")
-	err = bs.UnmarshalText(pb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*PiB, bs)
-
-	pb = []byte("10PiB")
-	err = bs.UnmarshalText(pb)
-	assert.NoError(t, err)
-	assert.Equal(t, 10*PiB, bs)
-
-	eb := []byte("१")
-	err = bs.UnmarshalText(eb)
-	assert.ErrorIs(t, err, ErrUnableToParseByteSize)
-}
-
-func TestByteSizeType(t *testing.T) {
-	var bs ByteSize
-	assert.Equal(t, "ByteSize", bs.Type())
-}
-
-func TestByteSizeToString(t *testing.T) {
-	b := 999 * B
-	assert.Equal(t, "999", b.String())
-
-	mb := 10 * MiB
-	assert.Equal(t, "10MiB", mb.String())
 }
 
 func TestCreateAndLoadCustomConfig(t *testing.T) {

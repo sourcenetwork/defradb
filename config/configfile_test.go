@@ -25,15 +25,11 @@ func TestConfigTemplateSerialize(t *testing.T) {
 	cfg := DefaultConfig()
 	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
-	if err != nil {
-		t.Error(err)
-	}
-	if err := configTemplate.Execute(&buffer, cfg); err != nil {
-		t.Error(err)
-	}
-	if _, err := cfg.ToJSON(); err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+	err = configTemplate.Execute(&buffer, cfg)
+	assert.NoError(t, err)
+	_, err = cfg.ToJSON()
+	assert.NoError(t, err)
 }
 
 func TestConfigTemplateExecutes(t *testing.T) {
@@ -41,12 +37,9 @@ func TestConfigTemplateExecutes(t *testing.T) {
 	var buffer bytes.Buffer
 	tmpl := template.New("configTemplate")
 	configTemplate, err := tmpl.Parse(defaultConfigTemplate)
-	if err != nil {
-		t.Error(err)
-	}
-	if err := configTemplate.Execute(&buffer, cfg); err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+	err = configTemplate.Execute(&buffer, cfg)
+	assert.NoError(t, err)
 }
 
 func TestWritesConfigFile(t *testing.T) {
@@ -79,18 +72,14 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	cfg.Log.Stacktrace = true
 
 	err := cfg.WriteConfigFile()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	assert.True(t, cfg.ConfigFileExists())
 
 	cfgFromFile := DefaultConfig()
 	cfgFromFile.Rootdir = tmpdir
 	err = cfgFromFile.LoadWithRootdir(true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, cfg.Log.Caller, cfgFromFile.Log.Caller)
 	assert.Equal(t, cfg.Log.Format, cfgFromFile.Log.Format)
@@ -98,23 +87,6 @@ func TestReadConfigFileForLogger(t *testing.T) {
 	assert.Equal(t, cfg.Log.NoColor, cfgFromFile.Log.NoColor)
 	assert.Equal(t, cfg.Log.Output, cfgFromFile.Log.Output)
 	assert.Equal(t, cfg.Log.Stacktrace, cfgFromFile.Log.Stacktrace)
-}
-
-func ReadAndPrintFile(t *testing.T, path string) {
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-
-	buf := make([]byte, 1024)
-	for {
-		n, err := f.Read(buf)
-		if err != nil {
-			break
-		}
-		t.Log(string(buf[:n]))
-	}
 }
 
 func TestReadConfigFileForDatastore(t *testing.T) {
@@ -145,12 +117,10 @@ func TestReadConfigFileForDatastore(t *testing.T) {
 func TestConfigFileExists(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Rootdir = t.TempDir()
-	// Verify that a file that doesn't exist returns false.
 	assert.False(t, cfg.ConfigFileExists())
 
 	err := cfg.WriteConfigFile()
 	assert.NoError(t, err)
-	// Verify that a file that does exist returns true.
 	assert.True(t, cfg.ConfigFileExists())
 }
 
