@@ -181,8 +181,12 @@ func (f FieldID) String() string {
 
 // FieldDescription describes a field on a Schema and its associated metadata.
 type FieldDescription struct {
-	Name         string
-	ID           FieldID
+	Name string
+	ID   FieldID
+
+	// The data type that this field holds.
+	//
+	// Must contain a valid value.
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
