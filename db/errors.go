@@ -20,7 +20,7 @@ const (
 	errFailedToGetCollection         string = "failed to get collection"
 	errDocVerification               string = "the document verification failed"
 	errAddingP2PCollection           string = "cannot add collection ID"
-	errRemovingP2PCollection         string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot remove collection ID"
 )
 
 var (
