@@ -117,7 +117,8 @@ jobs:
         if: |
           github.event_name == 'pull_request' &&
           github.base_ref != 'develop' ||
-          contains(github.event.pull_request.labels.*.name, 'action/no-benchmark')
+          contains(github.event.pull_request.labels.*.name, 'action/no-benchmark') ||
+          github.actor == 'dependabot[bot]'
         run: echo "DEFAULT_BENCHMARK_TYPE=NONE" >> ${GITHUB_ENV}
 
       - name: Run full benchmarks if merged PR (push event) on develop
