@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var rpcCmd = &cobra.Command{
@@ -28,8 +27,7 @@ func init() {
 		"addr", cfg.Net.RPCAddress,
 		"gRPC endpoint address",
 	)
-	err := viper.BindPFlag("net.rpcaddress", rpcCmd.PersistentFlags().Lookup("addr"))
-	if err != nil {
+	if err := cfg.BindFlag("net.rpcaddress", rpcCmd.PersistentFlags().Lookup("addr")); err != nil {
 		log.FeedbackFatalE(context.Background(), "Could not bind net.rpcaddress", err)
 	}
 	clientCmd.AddCommand(rpcCmd)

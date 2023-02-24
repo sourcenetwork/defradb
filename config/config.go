@@ -12,14 +12,14 @@
 Package config provides the central point for DefraDB's configuration and related facilities.
 
 [Config] embeds component-specific config structs. Each config struct can have a function providing
-default options, a method providing test configurations, a method for validation, a method handling deprecated fields
-(e.g. with warnings). This is extensible.
+default options, a method providing test configurations, a method for validation, a method handling
+deprecated fields (e.g. with warnings). This is extensible.
 
-The 'root directory' is where the configuration file and data of a DefraDB instance exists. It is specified as a global
-flag `defradb --rootdir path/to/somewhere`, or with the DEFRA_ROOT environment variable.
+The 'root directory' is where the configuration file and data of a DefraDB instance exists.
+It is specified as a global flag `defradb --rootdir path/to/somewhere.
 
-Some packages of DefraDB provide their own configuration approach (logging, node). For each, a way to go from top-level
-configuration to package-specific configuration is provided.
+Some packages of DefraDB provide their own configuration approach (logging, node).
+For each, a way to go from top-level configuration to package-specific configuration is provided.
 
 Parameters are determined by, in order of least importance: defaults, configuration file, env. variables, and then CLI
 flags. That is, CLI flags can override everything else.
@@ -36,7 +36,7 @@ How to use, e.g. without using a rootdir:
 
 	cfg := config.DefaultConfig()
 	cfg.NetConfig.P2PDisabled = true  // as example
-	err := cfg.LoadWithoutRootDir()
+	err := cfg.LoadWithRootdir(false)
 	if err != nil {
 		...
 */
@@ -44,21 +44,18 @@ package config
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
-	"unicode"
 
 	"github.com/mitchellh/mapstructure"
 	ma "github.com/multiformats/go-multiaddr"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v3"
@@ -69,12 +66,12 @@ import (
 var log = logging.MustNewLogger("defra.config")
 
 const (
-	DefraEnvPrefix        = "DEFRA"
-	defaultDefraDBRootDir = ".defradb"
-	logLevelDebug         = "debug"
-	logLevelInfo          = "info"
-	logLevelError         = "error"
-	logLevelFatal         = "fatal"
+	DefaultAPIEmail = "example@example.com"
+	defraEnvPrefix  = "DEFRA"
+	logLevelDebug   = "debug"
+	logLevelInfo    = "info"
+	logLevelError   = "error"
+	logLevelFatal   = "fatal"
 )
 
 // Config is DefraDB's main configuration struct, embedding component-specific config structs.
@@ -83,69 +80,8 @@ type Config struct {
 	API       *APIConfig
 	Net       *NetConfig
 	Log       *LoggingConfig
-}
-
-// Load Config and handles parameters from config file, environment variables.
-// To use on a Config struct already loaded with default values from DefaultConfig().
-func (cfg *Config) Load(rootDirPath string) error {
-	viper.SetConfigName(DefaultDefraDBConfigFileName)
-	viper.SetConfigType(configType)
-	viper.AddConfigPath(rootDirPath)
-	if err := viper.ReadInConfig(); err != nil {
-		return err
-	}
-
-	viper.SetEnvPrefix(DefraEnvPrefix)
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	err := viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
-	if err != nil {
-		return err
-	}
-
-	cfg.handleParams(rootDirPath)
-	err = cfg.validate()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// LoadWithoutRootDir loads Config and handles parameters from defaults, environment variables, and CLI flags -
-// not from config file.
-// To use on a Config struct already loaded with default values from DefaultConfig().
-func (cfg *Config) LoadWithoutRootDir() error {
-	// With Viper, we use a config file to provide a basic structure and set defaults, for env. variables to load.
-	viper.SetConfigType(configType)
-	configbytes, err := cfg.toBytes()
-	if err != nil {
-		return err
-	}
-	err = viper.ReadConfig(bytes.NewReader(configbytes))
-	if err != nil {
-		return err
-	}
-
-	viper.SetEnvPrefix(DefraEnvPrefix)
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	err = viper.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
-	if err != nil {
-		return err
-	}
-	rootDir, err := DefaultRootDir()
-	if err != nil {
-		log.FatalE(context.Background(), "Could not get root directory", err)
-	}
-
-	cfg.handleParams(rootDir)
-	err = cfg.validate()
-	if err != nil {
-		return err
-	}
-	return nil
+	Rootdir   string
+	v         *viper.Viper
 }
 
 // DefaultConfig returns the default configuration.
@@ -155,7 +91,76 @@ func DefaultConfig() *Config {
 		API:       defaultAPIConfig(),
 		Net:       defaultNetConfig(),
 		Log:       defaultLogConfig(),
+		Rootdir:   DefaultRootDir(),
+		v:         viper.New(),
 	}
+}
+
+// LoadWithRootdir loads a Config with parameters from defaults, config file, environment variables, and CLI flags.
+// It loads from config file when `fromFile` is true, otherwise it loads directly from a default configuration.
+// Use on a Config struct already loaded with default values from DefaultConfig().
+// To be executed once at the beginning of the program.
+func (cfg *Config) LoadWithRootdir(withRootdir bool) error {
+	// Use default logging configuration here, so that
+	// we can log errors in a consistent way even in the case of early failure.
+	defaultLogCfg := defaultLogConfig()
+	if err := defaultLogCfg.load(); err != nil {
+		return err
+	}
+
+	if err := cfg.loadDefaultViper(); err != nil {
+		return err
+	}
+
+	if withRootdir {
+		cfg.v.AddConfigPath(cfg.Rootdir)
+		if err := cfg.v.ReadInConfig(); err != nil {
+			return NewErrReadingConfigFile(err)
+		}
+	}
+
+	cfg.v.AutomaticEnv()
+
+	if err := cfg.paramsPreprocessing(); err != nil {
+		return err
+	}
+	// We load the viper configuration in the Config struct.
+	if err := cfg.v.Unmarshal(cfg, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc())); err != nil {
+		return NewErrLoadingConfig(err)
+	}
+	if err := cfg.validate(); err != nil {
+		return err
+	}
+	if err := cfg.load(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cfg *Config) loadDefaultViper() error {
+	// for our DEFRA_ env vars
+	cfg.v.SetEnvPrefix(defraEnvPrefix)
+	cfg.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// for now, only one type with a specific filename supported
+	cfg.v.SetConfigName(DefaultConfigFileName)
+	// To support a minimal configuration, we load and bind the default config first.
+	cfg.v.SetConfigType(configType)
+	/*
+		We load the default config into the viper instance, from a default template, so that viper
+		can detect the environment variables that are set. This is because viper only detects environment
+		variables that are present in the config file (`AutomaticEnv`). So we load the default config into viper,
+		and then overwrite it with the actual config file.
+	*/
+	defaultConfig := DefaultConfig()
+	defaultConfigBytes, err := defaultConfig.toBytes()
+	if err != nil {
+		return err
+	}
+	if err = cfg.v.ReadConfig(bytes.NewReader(defaultConfigBytes)); err != nil {
+		return NewErrReadingConfigFile(err)
+	}
+	return nil
 }
 
 func (cfg *Config) validate() error {
@@ -174,16 +179,41 @@ func (cfg *Config) validate() error {
 	return nil
 }
 
-func (cfg *Config) handleParams(rootDir string) {
+func (cfg *Config) paramsPreprocessing() error {
 	// We prefer using absolute paths.
 	if !filepath.IsAbs(cfg.Datastore.Badger.Path) {
-		cfg.Datastore.Badger.Path = filepath.Join(rootDir, cfg.Datastore.Badger.Path)
+		cfg.v.Set("datastore.badger.path", filepath.Join(cfg.Rootdir, cfg.v.GetString("datastore.badger.path")))
 	}
-	cfg.setBadgerVLogMaxSize()
+
+	// log.logger configuration as a string
+	logloggerAsStringSlice := cfg.v.GetStringSlice("log.logger")
+	if logloggerAsStringSlice != nil {
+		cfg.v.Set("log.logger", strings.Join(logloggerAsStringSlice, ";"))
+	}
+
+	// Expand the passed in `~` if it wasn't expanded properly by the shell.
+	// That can happen when the parameters are passed from outside of a shell.
+	if err := expandHomeDir(&cfg.API.PrivKeyPath); err != nil {
+		return err
+	}
+	if err := expandHomeDir(&cfg.API.PubKeyPath); err != nil {
+		return err
+	}
+
+	var bs ByteSize
+	if err := bs.Set(cfg.v.GetString("datastore.badger.valuelogfilesize")); err != nil {
+		return err
+	}
+	cfg.Datastore.Badger.ValueLogFileSize = bs
+
+	return nil
 }
 
-func (cfg *Config) setBadgerVLogMaxSize() {
-	cfg.Datastore.Badger.Options.ValueLogFileSize = int64(cfg.Datastore.Badger.ValueLogFileSize)
+func (cfg *Config) load() error {
+	if err := cfg.Log.load(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // DatastoreConfig configures datastores.
@@ -199,78 +229,6 @@ type BadgerConfig struct {
 	Path             string
 	ValueLogFileSize ByteSize
 	*badgerds.Options
-}
-
-type ByteSize uint64
-
-const (
-	B   ByteSize = 1
-	KiB          = B << 10
-	MiB          = KiB << 10
-	GiB          = MiB << 10
-	TiB          = GiB << 10
-	PiB          = TiB << 10
-)
-
-// UnmarshalText calls Set on ByteSize with the given text
-func (bs *ByteSize) UnmarshalText(text []byte) error {
-	return bs.Set(string(text))
-}
-
-// Set parses a string into ByteSize
-func (bs *ByteSize) Set(s string) error {
-	digitString := ""
-	unit := ""
-	for _, char := range s {
-		if unicode.IsDigit(char) {
-			digitString += string(char)
-		} else {
-			unit += string(char)
-		}
-	}
-	digits, err := strconv.Atoi(digitString)
-	if err != nil {
-		return err
-	}
-
-	switch strings.ToUpper(strings.Trim(unit, " ")) {
-	case "B":
-		*bs = ByteSize(digits) * B
-	case "KB", "KIB":
-		*bs = ByteSize(digits) * KiB
-	case "MB", "MIB":
-		*bs = ByteSize(digits) * MiB
-	case "GB", "GIB":
-		*bs = ByteSize(digits) * GiB
-	case "TB", "TIB":
-		*bs = ByteSize(digits) * TiB
-	case "PB", "PIB":
-		*bs = ByteSize(digits) * PiB
-	default:
-		*bs = ByteSize(digits)
-	}
-
-	return nil
-}
-
-// String returns the string formatted output of ByteSize
-func (bs *ByteSize) String() string {
-	const unit = 1024
-	bsInt := int64(*bs)
-	if bsInt < unit {
-		return fmt.Sprintf("%d", bsInt)
-	}
-	div, exp := int64(unit), 0
-	for n := bsInt / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%d%ciB", bsInt/div, "KMGTP"[exp])
-}
-
-// Type returns the type as a string.
-func (bs *ByteSize) Type() string {
-	return "ByteSize"
 }
 
 // MemoryConfig configures of Badger's memory mode.
@@ -310,44 +268,20 @@ type APIConfig struct {
 	Email       string
 }
 
-var DefaultAPIEmail = "example@example.com"
-
 func defaultAPIConfig() *APIConfig {
-	rootDir, err := DefaultRootDir()
-	if err != nil {
-		log.FatalE(context.Background(), "Could not get root directory", err)
-	}
-
+	rootDir := DefaultRootDir()
 	return &APIConfig{
 		Address:     "localhost:9181",
 		TLS:         false,
-		PubKeyPath:  path.Join(rootDir, "certs/server.key"),
-		PrivKeyPath: path.Join(rootDir, "certs/server.crt"),
+		PubKeyPath:  filepath.Join(rootDir, "certs/server.key"),
+		PrivKeyPath: filepath.Join(rootDir, "certs/server.crt"),
 		Email:       DefaultAPIEmail,
 	}
 }
 
-// expandHomeDir expands paths if they were passed in as `~` rather than `${HOME}`
-// converts `~/.defradb/certs/server.crt` to `/home/username/.defradb/certs/server.crt`.
-func expandHomeDir(path *string) error {
-	if *path == "~" {
-		return ErrPathCannotBeHomeDir
-	} else if strings.HasPrefix(*path, "~/") {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return NewErrUnableToExpandHomeDir(err)
-		}
-
-		// Use strings.HasPrefix so we don't match paths like "/x/~/x/"
-		*path = filepath.Join(homeDir, (*path)[2:])
-	}
-
-	return nil
-}
-
 func (apicfg *APIConfig) validate() error {
 	if apicfg.Address == "" {
-		return ErrNoDatabaseURLProvided
+		return ErrInvalidDatabaseURL
 	}
 	ip := net.ParseIP(apicfg.Address)
 	if strings.HasPrefix(apicfg.Address, "localhost") || strings.HasPrefix(apicfg.Address, ":") || ip != nil {
@@ -355,16 +289,9 @@ func (apicfg *APIConfig) validate() error {
 		if err != nil {
 			return NewErrInvalidDatabaseURL(err)
 		}
+	} else if ip == nil {
+		return ErrInvalidDatabaseURL
 	}
-
-	// Expand the passed in `~` if it wasn't expanded properly by the shell.
-	if err := expandHomeDir(&apicfg.PrivKeyPath); err != nil {
-		return err
-	}
-	if err := expandHomeDir(&apicfg.PubKeyPath); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -437,7 +364,7 @@ func (netcfg *NetConfig) validate() error {
 func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCTimeout)
 	if err != nil {
-		return d, err
+		return d, NewErrInvalidRPCTimeout(err, netcfg.RPCTimeout)
 	}
 	return d, nil
 }
@@ -446,7 +373,7 @@ func (netcfg *NetConfig) RPCTimeoutDuration() (time.Duration, error) {
 func (netcfg *NetConfig) RPCMaxConnectionIdleDuration() (time.Duration, error) {
 	d, err := time.ParseDuration(netcfg.RPCMaxConnectionIdle)
 	if err != nil {
-		return d, err
+		return d, NewErrInvalidRPCMaxConnectionIdle(err, netcfg.RPCMaxConnectionIdle)
 	}
 	return d, nil
 }
@@ -482,12 +409,14 @@ type LoggingConfig struct {
 	Output         string // logging actually supports multiple output paths, but here only one is supported
 	Caller         bool
 	NoColor        bool
+	Logger         string
 	NamedOverrides map[string]*NamedLoggingConfig
 }
 
+// NamedLoggingConfig is a named logging config, used for named overrides of the default config.
 type NamedLoggingConfig struct {
-	LoggingConfig
 	Name string
+	LoggingConfig
 }
 
 func defaultLogConfig() *LoggingConfig {
@@ -498,28 +427,197 @@ func defaultLogConfig() *LoggingConfig {
 		Output:         "stderr",
 		Caller:         false,
 		NoColor:        false,
+		Logger:         "",
 		NamedOverrides: make(map[string]*NamedLoggingConfig),
 	}
 }
 
+// validate ensures that the logging config is valid.
 func (logcfg *LoggingConfig) validate() error {
+	/*
+		`loglevel` is either a single value, or a single value with comma-separated list of key=value pairs, for which
+		the key is the name of the logger and the value is the log level, each logger name is unique, and value is valid.
+
+			`--loglevels <default>,<loggerNname>=<value>,...`
+	*/
+	kvs := []map[string]string{}
+	validLevel := func(level string) bool {
+		for _, l := range []string{
+			logLevelDebug,
+			logLevelInfo,
+			logLevelError,
+			logLevelFatal,
+		} {
+			if l == level {
+				return true
+			}
+		}
+		return false
+	}
+	ensureUniqueKeys := func(kvs []map[string]string) error {
+		keys := make(map[string]bool)
+		for _, kv := range kvs {
+			for k := range kv {
+				if keys[k] {
+					return NewErrDuplicateLoggerName(k)
+				}
+				keys[k] = true
+			}
+		}
+		return nil
+	}
+
+	parts := strings.Split(logcfg.Level, ",")
+	if len(parts) > 0 {
+		if !validLevel(parts[0]) {
+			return NewErrInvalidLogLevel(parts[0])
+		}
+		for _, kv := range parts[1:] {
+			parsedKV, err := parseKV(kv)
+			if err != nil {
+				return err
+			}
+			// ensure each value is a valid loglevel validLevel
+			if !validLevel(parsedKV[1]) {
+				return NewErrInvalidLogLevel(parsedKV[1])
+			}
+			kvs = append(kvs, map[string]string{parsedKV[0]: parsedKV[1]})
+		}
+		if err := ensureUniqueKeys(kvs); err != nil {
+			return err
+		}
+	}
+
+	// logger: expect format like: `net,nocolor=true,level=debug;config,output=stdout,level=info`
+	if len(logcfg.Logger) != 0 {
+		namedconfigs := strings.Split(logcfg.Logger, ";")
+		for _, c := range namedconfigs {
+			parts := strings.Split(c, ",")
+			if len(parts) < 2 {
+				return NewErrLoggerConfig("unexpected format (expected: `module,key=value;module,key=value;...`")
+			}
+			if parts[0] == "" {
+				return ErrLoggerNameEmpty
+			}
+			for _, pair := range parts[1:] {
+				parsedKV, err := parseKV(pair)
+				if err != nil {
+					return err
+				}
+				if !isLowercaseAlpha(parsedKV[0]) {
+					return NewErrInvalidLoggerName(parsedKV[0])
+				}
+				switch parsedKV[0] {
+				case "format", "output", "nocolor", "stacktrace", "caller": //nolint:goconst
+					// valid logger parameters
+				case "level": //nolint:goconst
+					// ensure each value is a valid loglevel validLevel
+					if !validLevel(parsedKV[1]) {
+						return NewErrInvalidLogLevel(parsedKV[1])
+					}
+				default:
+					return NewErrUnknownLoggerParameter(parsedKV[0])
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
-func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
-	var loglvl logging.LogLevel
-	switch logcfg.Level {
-	case logLevelDebug:
-		loglvl = logging.Debug
-	case logLevelInfo:
-		loglvl = logging.Info
-	case logLevelError:
-		loglvl = logging.Error
-	case logLevelFatal:
-		loglvl = logging.Fatal
-	default:
-		return logging.Config{}, NewErrInvalidLogLevel(logcfg.Level)
+func (logcfg *LoggingConfig) load() error {
+	// load loglevel
+	parts := strings.Split(logcfg.Level, ",")
+	if len(parts) > 0 {
+		logcfg.Level = parts[0]
 	}
+	if len(parts) > 1 {
+		for _, kv := range parts[1:] {
+			parsedKV := strings.Split(kv, "=")
+			if len(parsedKV) != 2 {
+				return NewErrInvalidLogLevel(kv)
+			}
+			c, err := logcfg.GetOrCreateNamedLogger(parsedKV[0])
+			if err != nil {
+				return NewErrCouldNotObtainLoggerConfig(err, parsedKV[0])
+			}
+			c.Level = parsedKV[1]
+		}
+	}
+
+	// load logger
+	// e.g. `net,nocolor=true,level=debug;config,output=stdout,level=info`
+	// logger has higher priority over loglevel whenever both touch the same parameters
+	if len(logcfg.Logger) != 0 {
+		s := strings.Split(logcfg.Logger, ";")
+		for _, v := range s {
+			vs := strings.Split(v, ",")
+			override, err := logcfg.GetOrCreateNamedLogger(vs[0])
+			if err != nil {
+				return NewErrCouldNotObtainLoggerConfig(err, vs[0])
+			}
+			override.Name = vs[0]
+			for _, v := range vs[1:] {
+				parsedKV := strings.Split(v, "=")
+				if len(parsedKV) != 2 {
+					return NewErrNotProvidedAsKV(v)
+				}
+				switch param := strings.ToLower(parsedKV[0]); param {
+				case "level": // string
+					override.Level = parsedKV[1]
+				case "format": // string
+					override.Format = parsedKV[1]
+				case "output": // string
+					override.Output = parsedKV[1]
+				case "stacktrace": // bool
+					if override.Stacktrace, err = strconv.ParseBool(parsedKV[1]); err != nil {
+						return NewErrCouldNotParseType(err, "bool")
+					}
+				case "nocolor": // bool
+					if override.NoColor, err = strconv.ParseBool(parsedKV[1]); err != nil {
+						return NewErrCouldNotParseType(err, "bool")
+					}
+				case "caller": // bool
+					if override.Caller, err = strconv.ParseBool(parsedKV[1]); err != nil {
+						return NewErrCouldNotParseType(err, "bool")
+					}
+				default:
+					return NewErrUnknownLoggerParameter(param)
+				}
+			}
+		}
+	}
+
+	c, err := logcfg.toLoggerConfig()
+	if err != nil {
+		return err
+	}
+	logging.SetConfig(c)
+	return nil
+}
+
+func convertLoglevel(level string) (logging.LogLevel, error) {
+	switch level {
+	case logLevelDebug:
+		return logging.Debug, nil
+	case logLevelInfo:
+		return logging.Info, nil
+	case logLevelError:
+		return logging.Error, nil
+	case logLevelFatal:
+		return logging.Fatal, nil
+	default:
+		return logging.LogLevel(0), NewErrInvalidLogLevel(level)
+	}
+}
+
+// Exports the logging config to the logging library's config.
+func (logcfg LoggingConfig) toLoggerConfig() (logging.Config, error) {
+	loglevel, err := convertLoglevel(logcfg.Level)
+	if err != nil {
+		return logging.Config{}, err
+	}
+
 	var encfmt logging.EncoderFormat
 	switch logcfg.Format {
 	case "json":
@@ -529,24 +627,27 @@ func (logcfg LoggingConfig) ToLoggerConfig() (logging.Config, error) {
 	default:
 		return logging.Config{}, NewErrInvalidLogFormat(logcfg.Format)
 	}
-	// handle named overrides
+
+	// handle logger named overrides
 	overrides := make(map[string]logging.Config)
 	for name, cfg := range logcfg.NamedOverrides {
-		c, err := cfg.ToLoggerConfig()
+		c, err := cfg.toLoggerConfig()
 		if err != nil {
 			return logging.Config{}, NewErrOverrideConfigConvertFailed(err, name)
 		}
 		overrides[name] = c
 	}
-	return logging.Config{
-		Level:                 logging.NewLogLevelOption(loglvl),
+
+	c := logging.Config{
+		Level:                 logging.NewLogLevelOption(loglevel),
 		EnableStackTrace:      logging.NewEnableStackTraceOption(logcfg.Stacktrace),
 		DisableColor:          logging.NewDisableColorOption(logcfg.NoColor),
 		EncoderFormat:         logging.NewEncoderFormatOption(encfmt),
 		OutputPaths:           []string{logcfg.Output},
 		EnableCaller:          logging.NewEnableCallerOption(logcfg.Caller),
 		OverridesByLoggerName: overrides,
-	}, nil
+	}
+	return c, nil
 }
 
 // this is a copy that doesn't deep copy the NamedOverrides map
@@ -556,9 +657,10 @@ func (logcfg LoggingConfig) copy() LoggingConfig {
 	return logcfg
 }
 
+// GetOrCreateNamedLogger returns a named logger config, or creates a default one if it doesn't exist.
 func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingConfig, error) {
 	if name == "" {
-		return nil, NewErrInvalidNamedLoggerName(name)
+		return nil, ErrLoggerNameEmpty
 	}
 	if namedCfg, exists := logcfg.NamedOverrides[name]; exists {
 		return namedCfg, nil
@@ -573,9 +675,9 @@ func (logcfg *LoggingConfig) GetOrCreateNamedLogger(name string) (*NamedLoggingC
 	return namedCfg, nil
 }
 
-// GetLoggingConfig provides logging-specific configuration, from top-level Config.
-func (cfg *Config) GetLoggingConfig() (logging.Config, error) {
-	return cfg.Log.ToLoggerConfig()
+// BindFlag binds a CLI flag to a config key.
+func (cfg *Config) BindFlag(key string, flag *pflag.Flag) error {
+	return cfg.v.BindPFlag(key, flag)
 }
 
 // ToJSON serializes the config to a JSON string.
