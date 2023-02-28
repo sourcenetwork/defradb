@@ -19,7 +19,6 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,18 +66,13 @@ var (
 const subscriptionTimeout = 1 * time.Second
 
 type databaseInfo struct {
-	name      string
-	path      string
-	db        client.DB
-	rootstore ds.Batching
+	name string
+	path string
+	db   client.DB
 }
 
 func (dbi databaseInfo) Name() string {
 	return dbi.name
-}
-
-func (dbi databaseInfo) Rootstore() ds.Batching {
-	return dbi.rootstore
 }
 
 func (dbi databaseInfo) DB() client.DB {
@@ -190,9 +184,8 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 	}
 
 	return databaseInfo{
-		name:      "badger-in-memory",
-		db:        db,
-		rootstore: rootstore,
+		name: "badger-in-memory",
+		db:   db,
 	}, nil
 }
 
@@ -204,9 +197,8 @@ func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name:      "defra-memory-datastore",
-		db:        db,
-		rootstore: rootstore,
+		name: "defra-memory-datastore",
+		db:   db,
 	}, nil
 }
 
@@ -234,10 +226,9 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 	}
 
 	return databaseInfo{
-		name:      "badger-file-system",
-		path:      path,
-		db:        db,
-		rootstore: rootstore,
+		name: "badger-file-system",
+		path: path,
+		db:   db,
 	}, nil
 }
 

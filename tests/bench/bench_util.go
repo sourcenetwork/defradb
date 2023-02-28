@@ -228,7 +228,6 @@ func BackfillBenchmarkDB(
 }
 
 type dbInfo interface {
-	Rootstore() ds.Batching
 	DB() client.DB
 }
 
@@ -239,7 +238,7 @@ func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
 
 func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
-	return dbi.Rootstore(), err
+	return dbi.DB().Root(), err
 }
 
 func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
