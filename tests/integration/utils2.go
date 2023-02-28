@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 const (
@@ -75,7 +76,6 @@ const subscriptionTimeout = 1 * time.Second
 
 type databaseInfo struct {
 	name databaseType
-	path string
 	db   client.DB
 }
 
@@ -235,36 +235,71 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 
 	return databaseInfo{
 		name: badgerFileType,
-		path: path,
 		db:   db,
 	}, nil
+}
+
+func getDatabaseTypes() []databaseType {
+	databases := []databaseType{}
+
+	if badgerInMemory {
+		databases = append(databases, badgerIMType)
+	}
+
+	if badgerFile {
+		databases = append(databases, badgerFileType)
+	}
+
+	if inMemoryStore {
+		databases = append(databases, defraIMType)
+	}
+
+	return databases
+}
+
+func getDatabase(ctx context.Context, t *testing.T, dbt databaseType) (client.DB, error) {
+	switch dbt {
+	case badgerIMType:
+		db, err := NewBadgerMemoryDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return db.db, nil
+
+	case badgerFileType:
+		db, err := NewBadgerFileDB(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		return db.db, nil
+
+	case defraIMType:
+		db, err := NewInMemoryDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return db.db, nil
+	}
+
+	return nil, nil
 }
 
 func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
 	databases := []databaseInfo{}
 
-	if badgerInMemory {
-		badgerIMDatabase, err := NewBadgerMemoryDB(ctx)
+	for _, dbt := range getDatabaseTypes() {
+		db, err := getDatabase(ctx, t, dbt)
 		if err != nil {
 			return nil, err
 		}
-		databases = append(databases, badgerIMDatabase)
-	}
 
-	if badgerFile {
-		badgerIMDatabase, err := NewBadgerFileDB(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		databases = append(databases, badgerIMDatabase)
-	}
-
-	if inMemoryStore {
-		inMemoryDatabase, err := NewInMemoryDB(ctx)
-		if err != nil {
-			return nil, err
-		}
-		databases = append(databases, inMemoryDatabase)
+		databases = append(
+			databases,
+			databaseInfo{
+				name: dbt,
+				db:   db,
+			},
+		)
 	}
 
 	return databases, nil
@@ -285,15 +320,13 @@ func ExecuteTestCase(
 	}
 
 	ctx := context.Background()
-	dbs, err := GetDatabases(ctx, t)
-	require.Nil(t, err)
+	dbs := getDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, dbs)
 
-	for _, dbi := range dbs {
-		executeTestCase(ctx, t, collectionNames, testCase, dbi)
-		dbi.db.Close(ctx)
+	for _, db := range dbs {
+		executeTestCase(ctx, t, collectionNames, testCase, db)
 	}
 }
 
@@ -302,15 +335,10 @@ func executeTestCase(
 	t *testing.T,
 	collectionNames []string,
 	testCase TestCase,
-	dbi databaseInfo,
+	dbt databaseType,
 ) {
 	var done bool
-	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbi.name))
-
-	if DetectDbChanges && !SetupOnly {
-		// Setup the database using the target branch, and then refresh the current instance
-		dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
-	}
+	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
 	startActionIndex, endActionIndex := getActionRange(testCase)
 	// Documents and Collections may already exist in the database if actions have been split
@@ -320,13 +348,21 @@ func executeTestCase(
 	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
+	nodes, onExit := getStartingNodes(ctx, t, dbt, collectionNames)
+	defer onExit()
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
+		// declare default database for ease of use
+		var db client.DB
+		if len(nodes) > 0 {
+			db = nodes[0].DB
+		}
+
 		switch action := testCase.Actions[i].(type) {
 		case SchemaUpdate:
-			updateSchema(ctx, t, dbi.db, testCase, action)
+			updateSchema(ctx, t, db, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(ctx, t, dbi.db, collectionNames)
+			collections = getCollections(ctx, t, db, collectionNames)
 
 		case SchemaPatch:
 			patchSchema(ctx, t, dbi.db, testCase, action)
@@ -340,21 +376,21 @@ func executeTestCase(
 			updateDoc(ctx, t, testCase, collections, documents, action)
 
 		case TransactionRequest2:
-			txns = executeTransactionRequest(ctx, t, dbi.db, txns, testCase, action)
+			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
 
 		case TransactionCommit:
 			commitTransaction(ctx, t, txns, testCase, action)
 
 		case SubscriptionRequest:
 			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, dbi.db, testCase, action)
+			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, db, testCase, action)
 			if done {
 				return
 			}
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(ctx, t, dbi.db, testCase, action)
+			executeRequest(ctx, t, db, testCase, action)
 
 		case SetupComplete:
 			// no-op, just continue.
@@ -433,6 +469,29 @@ ActionLoop:
 	}
 
 	return startIndex, endIndex
+}
+
+func getStartingNodes(
+	ctx context.Context,
+	t *testing.T,
+	dbt databaseType,
+	collectionNames []string,
+) ([]*node.Node, func()) {
+	var db client.DB
+	if DetectDbChanges && !SetupOnly {
+		// Setup the database using the target branch, and then refresh the current instance
+		db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames).db
+	} else {
+		var err error
+		db, err = getDatabase(ctx, t, dbt)
+		require.Nil(t, err)
+	}
+
+	return []*node.Node{
+		{
+			DB: db,
+		},
+	}, func() { defer db.Close(ctx) }
 }
 
 // getCollections returns all the collections of the given names, preserving order.

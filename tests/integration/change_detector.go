@@ -113,13 +113,8 @@ func detectDbChangesInit(repository string, targetBranch string) {
 func SetupDatabaseUsingTargetBranch(
 	ctx context.Context,
 	t *testing.T,
-	dbi databaseInfo,
 	collectionNames []string,
 ) databaseInfo {
-	// Close this database instance so it may be re-inited in the child process,
-	//  and this one post-child
-	dbi.db.Close(ctx)
-
 	currentTestPackage, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -143,12 +138,14 @@ func SetupDatabaseUsingTargetBranch(
 		"-v",
 	)
 
+	path := t.TempDir()
+
 	goTestCmd.Dir = targetTestPackage
 	goTestCmd.Env = os.Environ()
 	goTestCmd.Env = append(
 		goTestCmd.Env,
 		setupOnlyEnvName+"=true",
-		fileBadgerPathEnvName+"="+dbi.path,
+		fileBadgerPathEnvName+"="+path,
 	)
 	out, err := goTestCmd.Output()
 
@@ -169,7 +166,7 @@ func SetupDatabaseUsingTargetBranch(
 		}
 	}
 
-	refreshedDb, err := newBadgerFileDB(ctx, t, dbi.path)
+	refreshedDb, err := newBadgerFileDB(ctx, t, path)
 	if err != nil {
 		panic(err)
 	}

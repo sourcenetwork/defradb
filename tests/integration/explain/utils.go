@@ -155,7 +155,8 @@ func ExecuteExplainRequestTestCase(
 				return
 			}
 
-			dbi = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
+			dbi.DB().Close(ctx)
+			dbi = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
 		} else {
 			testUtils.SetupDatabase(
 				ctx,
