@@ -56,6 +56,14 @@ func init() {
 	}
 }
 
+type databaseType string
+
+const (
+	badgerIMType   databaseType = "badger-in-memory"
+	defraIMType    databaseType = "defra-memory-datastore"
+	badgerFileType databaseType = "badger-file-system"
+)
+
 var (
 	log            = logging.MustNewLogger("defra.tests.integration")
 	badgerInMemory bool
@@ -66,13 +74,13 @@ var (
 const subscriptionTimeout = 1 * time.Second
 
 type databaseInfo struct {
-	name string
+	name databaseType
 	path string
 	db   client.DB
 }
 
 func (dbi databaseInfo) Name() string {
-	return dbi.name
+	return string(dbi.name)
 }
 
 func (dbi databaseInfo) DB() client.DB {
@@ -184,7 +192,7 @@ func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, 
 	}
 
 	return databaseInfo{
-		name: "badger-in-memory",
+		name: badgerIMType,
 		db:   db,
 	}, nil
 }
@@ -197,7 +205,7 @@ func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
 	}
 
 	return databaseInfo{
-		name: "defra-memory-datastore",
+		name: defraIMType,
 		db:   db,
 	}, nil
 }
@@ -226,7 +234,7 @@ func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseIn
 	}
 
 	return databaseInfo{
-		name: "badger-file-system",
+		name: badgerFileType,
 		path: path,
 		db:   db,
 	}, nil
