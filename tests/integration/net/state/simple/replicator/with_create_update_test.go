@@ -13,59 +13,60 @@ package replicator
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodeReplicators: map[int][]int{
-			0: {
-				1,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					// This document is created in node `0` after the replicator has
-					// been set up. Its creation and future updates should be synced
-					// across all configured nodes.
-					0: `{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
 			},
-		},
-		Updates: map[int]map[int]map[int][]string{
-			0: {
-				0: {
-					0: {
-						`{
-							"Age": 60
-						}`,
+			testUtils.CreateDoc{
+				// This document is created in node `0` after the replicator has
+				// been set up. Its creation and future updates should be synced
+				// across all configured nodes.
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(60),
 					},
-				},
-			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(60),
-				},
-			},
-			1: {
-				0: {
-					"Age": uint64(60),
 				},
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

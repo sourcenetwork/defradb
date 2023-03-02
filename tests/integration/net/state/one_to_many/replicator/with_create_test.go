@@ -13,59 +13,72 @@ package replicator
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/one_to_many"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // TestP2FullPReplicator tests document syncing between a node and a replicator.
 func TestP2POneToManyReplicator(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodeReplicators: map[int][]int{
-			0: {
-				1,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						Name: String
+						Books: [Book]
+					}
+					type Book {
+						Name: String
+						Author: Author
+					}
+				`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					0: `{
-						"Name": "Saadi"
-					}`,
-				},
-				1: {
-					1: `{
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create Saadi on the first node
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				Doc: `{
+					"Name": "Saadi"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				// Create Gulistan on the first node
+				CollectionID: 1,
+				Doc: `{
+					"Name": "Gulistan",
+					"Author_id": "bae-cf278a29-5680-565d-9c7f-4c46d3700cf0"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Both Saadi and Gulistan should be synced to all nodes and linked correctly
+				Request: `query {
+					Book {
+						Name
+						Author {
+							Name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
 						"Name": "Gulistan",
-						"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-					}`,
-				},
-			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Name": "Saadi",
-				},
-				1: {
-					"Name":      "Gulistan",
-					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-				},
-			},
-			1: {
-				0: {
-					"Name": "Saadi",
-				},
-				1: {
-					"Name":      "Gulistan",
-					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+						"Author": map[string]any{
+							"Name": "Saadi",
+						},
+					},
 				},
 			},
 		},
 	}
 
-	one_to_many.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
 }

@@ -13,74 +13,105 @@ package peer
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/one_to_many"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // This test asserts that relational documents do not fail to sync if their related
 // document does not exist at the destination.
 func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Author {
+						Name: String
+						Books: [Book]
+					}
+					type Book {
+						Name: String
+						Author: Author
+					}
+				`,
 			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			1: {
-				0: `{
+			testUtils.CreateDoc{
+				// Create Gulistan on all nodes
+				CollectionID: 1,
+				Doc: `{
 					"Name": "Gulistan"
 				}`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					// NodePeers do not sync new documents so this will not be synced
-					// to node 1.
-					1: `{
-						"Name": "Saadi"
-					}`,
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// Create Saadi on first node
+				// NodePeers do not sync new documents so this will not be synced
+				// to node 1.
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				Doc: `{
+					"Name": "Saadi"
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				DocID:        0,
+				Doc: `{
+					"Author_id": "bae-cf278a29-5680-565d-9c7f-4c46d3700cf0"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Book {
+						Name
+						Author_id
+						Author {
+							Name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":      "Gulistan",
+						"Author_id": "bae-cf278a29-5680-565d-9c7f-4c46d3700cf0",
+						"Author": map[string]any{
+							"Name": "Saadi",
+						},
+					},
 				},
 			},
-		},
-		Updates: map[int]map[int]map[int][]string{
-			0: {
-				1: {
-					0: {
-						`{
-							"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
-						}`,
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Book {
+						Name
+						Author_id
+						Author {
+							Name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name":      "Gulistan",
+						"Author_id": "bae-cf278a29-5680-565d-9c7f-4c46d3700cf0",
+						// "Saadi" was not synced to node 1, the update did not
+						// result in an error and synced to relational id even though "Saadi"
+						// does not exist in this node.
+						"Author": nil,
 					},
 				},
 			},
 		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				1: {
-					"Name": "Saadi",
-				},
-				0: {
-					"Name":      "Gulistan",
-					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-				},
-			},
-			1: {
-				0: {
-					"Name":      "Gulistan",
-					"Author_id": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
-				},
-				// "Saadi" was not synced to node 1, the update did not
-				// result in an error and synced to relational id even though "Saadi"
-				// does not exist in this node.
-			},
-		},
 	}
 
-	one_to_many.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Author", "Book"}, test)
 }
