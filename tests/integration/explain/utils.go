@@ -129,7 +129,8 @@ func ExecuteExplainRequestTestCase(
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
 	if explainTest.ExpectedFullGraph == nil &&
 		explainTest.ExpectedPatterns == nil &&
-		explainTest.ExpectedTargets == nil {
+		explainTest.ExpectedTargets == nil &&
+		explainTest.ExpectedError == "" {
 		assert.Fail(t, "Atleast one expected explain parameter must be provided.", explainTest.Description)
 	}
 
