@@ -53,24 +53,16 @@ type RequestTestCase struct {
 	ExpectedError string
 }
 
-type dbInfo interface {
-	DB() client.DB
-}
-
 func ExecuteRequestTestCase(
 	t *testing.T,
 	testCase RequestTestCase,
 ) {
-	var err error
 	ctx := context.Background()
 
-	var dbi dbInfo
-	dbi, err = testutils.NewBadgerMemoryDB(ctx)
+	db, err := testutils.NewBadgerMemoryDB(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	db := dbi.DB()
 
 	for _, schema := range testCase.Schema {
 		err = db.AddSchema(ctx, schema)

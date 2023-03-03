@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func IsDetectingDbChanges() bool {
@@ -114,7 +116,7 @@ func SetupDatabaseUsingTargetBranch(
 	ctx context.Context,
 	t *testing.T,
 	collectionNames []string,
-) databaseInfo {
+) client.DB {
 	currentTestPackage, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -171,7 +173,7 @@ func SetupDatabaseUsingTargetBranch(
 		panic(err)
 	}
 
-	_, err = refreshedDb.db.GetCollectionByName(ctx, collectionNames[0])
+	_, err = refreshedDb.GetCollectionByName(ctx, collectionNames[0])
 	if err != nil {
 		if err.Error() == "datastore: key not found" {
 			// If collection is not found - this must be a new test and

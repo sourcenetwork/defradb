@@ -35,25 +35,17 @@ type TestCase struct {
 	ExpectedError string
 }
 
-type dbInfo interface {
-	DB() client.DB
-}
-
 func ExecuteRequestTestCase(
 	t *testing.T,
 	schema string,
 	testCase TestCase,
 ) {
-	var err error
 	ctx := context.Background()
 
-	var dbi dbInfo
-	dbi, err = testUtils.NewBadgerMemoryDB(ctx)
+	db, err := testUtils.NewBadgerMemoryDB(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	db := dbi.DB()
 
 	err = db.AddSchema(ctx, schema)
 	if assertError(t, testCase.Description, err, testCase.ExpectedError) {

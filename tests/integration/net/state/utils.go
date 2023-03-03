@@ -77,15 +77,12 @@ func setupDefraNode(
 	seeds map[int]map[int]string,
 ) (*node.Node, map[int]client.DocKey, error) {
 	ctx := context.Background()
-	var err error
 
 	log.Info(ctx, "Building new memory store")
-	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
+	db, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
 	}
-
-	db := dbi.DB()
 
 	if err := db.AddSchema(ctx, schema); err != nil {
 		return nil, nil, err

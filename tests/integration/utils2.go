@@ -57,12 +57,12 @@ func init() {
 	}
 }
 
-type databaseType string
+type DatabaseType string
 
 const (
-	badgerIMType   databaseType = "badger-in-memory"
-	defraIMType    databaseType = "defra-memory-datastore"
-	badgerFileType databaseType = "badger-file-system"
+	badgerIMType   DatabaseType = "badger-in-memory"
+	defraIMType    DatabaseType = "defra-memory-datastore"
+	badgerFileType DatabaseType = "badger-file-system"
 )
 
 var (
@@ -73,19 +73,6 @@ var (
 )
 
 const subscriptionTimeout = 1 * time.Second
-
-type databaseInfo struct {
-	name databaseType
-	db   client.DB
-}
-
-func (dbi databaseInfo) Name() string {
-	return string(dbi.name)
-}
-
-func (dbi databaseInfo) DB() client.DB {
-	return dbi.db
-}
 
 var databaseDir string
 
@@ -177,40 +164,34 @@ func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) boo
 	return assert.Panics(t, f, "expected a panic, but none found.")
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, error) {
+func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
 	dbopts = append(dbopts, db.WithUpdateEvents())
 
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name: badgerIMType,
-		db:   db,
-	}, nil
+	return db, nil
 }
 
-func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
+func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 	rootstore := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name: defraIMType,
-		db:   db,
-	}, nil
+	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	var path string
 	if databaseDir == "" {
 		path = t.TempDir()
@@ -221,26 +202,23 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
 	return newBadgerFileDB(ctx, t, path)
 }
 
-func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseInfo, error) {
+func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
 	rootstore, err := badgerds.NewDatastore(path, &opts)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name: badgerFileType,
-		db:   db,
-	}, nil
+	return db, nil
 }
 
-func getDatabaseTypes() []databaseType {
-	databases := []databaseType{}
+func GetDatabaseTypes() []DatabaseType {
+	databases := []DatabaseType{}
 
 	if badgerInMemory {
 		databases = append(databases, badgerIMType)
@@ -257,52 +235,31 @@ func getDatabaseTypes() []databaseType {
 	return databases
 }
 
-func getDatabase(ctx context.Context, t *testing.T, dbt databaseType) (client.DB, error) {
+func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, error) {
 	switch dbt {
 	case badgerIMType:
 		db, err := NewBadgerMemoryDB(ctx)
 		if err != nil {
 			return nil, err
 		}
-		return db.db, nil
+		return db, nil
 
 	case badgerFileType:
 		db, err := NewBadgerFileDB(ctx, t)
 		if err != nil {
 			return nil, err
 		}
-		return db.db, nil
+		return db, nil
 
 	case defraIMType:
 		db, err := NewInMemoryDB(ctx)
 		if err != nil {
 			return nil, err
 		}
-		return db.db, nil
+		return db, nil
 	}
 
 	return nil, nil
-}
-
-func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
-	databases := []databaseInfo{}
-
-	for _, dbt := range getDatabaseTypes() {
-		db, err := getDatabase(ctx, t, dbt)
-		if err != nil {
-			return nil, err
-		}
-
-		databases = append(
-			databases,
-			databaseInfo{
-				name: dbt,
-				db:   db,
-			},
-		)
-	}
-
-	return databases, nil
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -320,7 +277,7 @@ func ExecuteTestCase(
 	}
 
 	ctx := context.Background()
-	dbs := getDatabaseTypes()
+	dbs := GetDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, dbs)
@@ -335,7 +292,7 @@ func executeTestCase(
 	t *testing.T,
 	collectionNames []string,
 	testCase TestCase,
-	dbt databaseType,
+	dbt DatabaseType,
 ) {
 	var done bool
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
@@ -474,16 +431,16 @@ ActionLoop:
 func getStartingNodes(
 	ctx context.Context,
 	t *testing.T,
-	dbt databaseType,
+	dbt DatabaseType,
 	collectionNames []string,
 ) ([]*node.Node, func()) {
 	var db client.DB
 	if DetectDbChanges && !SetupOnly {
 		// Setup the database using the target branch, and then refresh the current instance
-		db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames).db
+		db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
 	} else {
 		var err error
-		db, err = getDatabase(ctx, t, dbt)
+		db, err = GetDatabase(ctx, t, dbt)
 		require.Nil(t, err)
 	}
 
