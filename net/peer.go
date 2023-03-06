@@ -288,6 +288,27 @@ func (p *Peer) SetReplicator(
 	paddr ma.Multiaddr,
 	collectionNames ...string,
 ) (peer.ID, error) {
+	txn, err := p.db.NewTxn(ctx, true)
+	if err != nil {
+		return "", err
+	}
+
+	pid, err := p.setReplicator(ctx, txn, paddr, collectionNames...)
+	if err != nil {
+		txn.Discard(ctx)
+		return "", err
+	}
+
+	return pid, txn.Commit(ctx)
+}
+
+// setReplicator adds a target peer node as a replication destination for documents in our DB.
+func (p *Peer) setReplicator(
+	ctx context.Context,
+	txn datastore.Txn,
+	paddr ma.Multiaddr,
+	collectionNames ...string,
+) (peer.ID, error) {
 	var pid peer.ID
 
 	// verify collections
@@ -295,7 +316,7 @@ func (p *Peer) SetReplicator(
 	schemas := []string{}
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err = p.db.GetAllCollections(ctx)
+		collections, err = p.db.GetAllCollectionsTxn(ctx, txn)
 		if err != nil {
 			return pid, errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -304,7 +325,7 @@ func (p *Peer) SetReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByName(ctx, cName)
+			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
 			if err != nil {
 				return pid, errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -467,6 +488,27 @@ func (p *Peer) DeleteReplicator(
 	pid peer.ID,
 	collectionNames ...string,
 ) error {
+	txn, err := p.db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+
+	err = p.deleteReplicator(ctx, txn, pid, collectionNames...)
+	if err != nil {
+		txn.Discard(ctx)
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
+func (p *Peer) deleteReplicator(
+	ctx context.Context,
+	txn datastore.Txn,
+	pid peer.ID,
+	collectionNames ...string,
+) error {
 	// make sure it's not ourselves
 	if pid == p.host.ID() {
 		return errors.New("can't target ourselves as a replicator")
@@ -477,7 +519,7 @@ func (p *Peer) DeleteReplicator(
 	schemaMap := make(map[string]struct{})
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err := p.db.GetAllCollections(ctx)
+		collections, err := p.db.GetAllCollectionsTxn(ctx, txn)
 		if err != nil {
 			return errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -487,7 +529,7 @@ func (p *Peer) DeleteReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByName(ctx, cName)
+			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
 			if err != nil {
 				return errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -709,16 +751,22 @@ type EvtPubSub struct {
 
 // AddP2PCollectionTopic adds the collectionID to the pubsup topics
 func (p *Peer) AddP2PCollections(collections []string) error {
+	txn, err := p.db.NewTxn(p.ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(p.ctx)
+
 	// first let's make sure the collections actually exists
 	for _, col := range collections {
-		_, err := p.db.GetCollectionBySchemaID(p.ctx, col)
+		_, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, col)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, col := range collections {
-		err := p.db.AddP2PCollection(p.ctx, col)
+		err := p.db.AddP2PCollectionTxn(p.ctx, txn, col)
 		if err != nil {
 			return err
 		}
@@ -728,13 +776,19 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 		}
 	}
 
-	return nil
+	return txn.Commit(p.ctx)
 }
 
 // RemoveP2PCollectionTopics adds the collectionID from the pubsup topics
 func (p *Peer) RemoveP2PCollections(collections []string) error {
+	txn, err := p.db.NewTxn(p.ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(p.ctx)
+
 	for _, col := range collections {
-		err := p.db.RemoveP2PCollection(p.ctx, col)
+		err := p.db.RemoveP2PCollectionTxn(p.ctx, txn, col)
 		if err != nil {
 			return err
 		}
@@ -743,20 +797,27 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 			return err
 		}
 	}
-	return nil
+	return txn.Commit(p.ctx)
 }
 
 // GetAllP2PCollections gets all the collectionIDs from the pubsup topics
 func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
+	txn, err := p.db.NewTxn(p.ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
 	collections, err := p.db.GetAllP2PCollections(p.ctx)
 	if err != nil {
+		txn.Discard(p.ctx)
 		return nil, err
 	}
 
 	var p2pCols []client.P2PCollection
 	for _, colID := range collections {
-		col, err := p.db.GetCollectionBySchemaID(p.ctx, colID)
+		col, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, colID)
 		if err != nil {
+			txn.Discard(p.ctx)
 			return nil, err
 		}
 		p2pCols = append(p2pCols, client.P2PCollection{
@@ -765,5 +826,5 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 		})
 	}
 
-	return p2pCols, nil
+	return p2pCols, txn.Commit(p.ctx)
 }

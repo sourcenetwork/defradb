@@ -169,10 +169,6 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 
 	schemaID := string(req.Body.SchemaID)
 	docKey := core.DataStoreKeyFromDocKey(req.Body.DocKey.DocKey)
-	col, err := s.db.GetCollectionBySchemaID(ctx, schemaID)
-	if err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
-	}
 
 	var txnErr error
 	for retry := 0; retry < s.peer.db.MaxTxnRetries(); retry++ {
@@ -183,6 +179,11 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, err
 		}
 		defer txn.Discard(ctx)
+
+		col, err := s.db.GetCollectionBySchemaIDTxn(ctx, txn, schemaID)
+		if err != nil {
+			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
+		}
 
 		// Create a new DAG service with the current transaction
 		var getter format.NodeGetter = s.peer.newDAGSyncerTxn(txn)

@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dgraph-io/badger/v3 v3.2103.5
+	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/cors v1.2.1

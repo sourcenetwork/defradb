@@ -16,6 +16,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 const marker = byte(0xff)
@@ -24,24 +25,60 @@ const marker = byte(0xff)
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.
 func (db *db) AddP2PCollection(ctx context.Context, collectionID string) error {
-	_, err := db.GetCollectionBySchemaID(ctx, collectionID)
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.AddP2PCollectionTxn(ctx, txn, collectionID)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// AddP2PCollectionTxn adds the given collection ID that the P2P system
+// subscribes to to the the persisted list. It will error if the provided
+// collection ID is invalid.
+func (db *db) AddP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
+	_, err := db.GetCollectionBySchemaIDTxn(ctx, txn, collectionID)
 	if err != nil {
 		return NewErrAddingP2PCollection(err)
 	}
 	key := core.NewP2PCollectionKey(collectionID)
-	return db.systemstore().Put(ctx, key.ToDS(), []byte{marker})
+	return txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
 }
 
 // RemoveP2PCollection removes the given collection ID that the P2P system
 // subscribes to from the the persisted list. It will error if the provided
 // collection ID is invalid.
 func (db *db) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	_, err := db.GetCollectionBySchemaID(ctx, collectionID)
+	txn, err := db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = db.RemoveP2PCollectionTxn(ctx, txn, collectionID)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit(ctx)
+}
+
+// RemoveP2PCollectionTxn removes the given collection ID that the P2P system
+// subscribes to from the the persisted list. It will error if the provided
+// collection ID is invalid.
+func (db *db) RemoveP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
+	_, err := db.GetCollectionBySchemaIDTxn(ctx, txn, collectionID)
 	if err != nil {
 		return NewErrRemovingP2PCollection(err)
 	}
 	key := core.NewP2PCollectionKey(collectionID)
-	return db.systemstore().Delete(ctx, key.ToDS())
+	return txn.Systemstore().Delete(ctx, key.ToDS())
 }
 
 // GetAllP2PCollections returns the list of persisted collection IDs that

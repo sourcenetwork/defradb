@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // SchemaDefinition represents a schema definition.
@@ -49,5 +50,5 @@ type Parser interface {
 	ParseSDL(ctx context.Context, schemaString string) ([]client.CollectionDescription, error)
 
 	// Adds the given schema to this parser's model.
-	AddSchema(ctx context.Context, collections []client.CollectionDescription) error
+	SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDescription) error
 }

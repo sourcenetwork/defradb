@@ -421,10 +421,7 @@ func (g *Generator) buildTypes(
 
 		obj := gql.NewObject(objconf)
 		objs = append(objs, obj)
-	}
 
-	// add all the new types now that they're converted to gql.Objects
-	for _, obj := range objs {
 		g.manager.schema.TypeMap()[obj.Name()] = obj
 		g.typeDefs = append(g.typeDefs, obj)
 	}
