@@ -275,7 +275,7 @@ func (db *db) UpdateCollectionTxn(
 // ValidateUpdateCollectionTxn validates that the given collection description is a valid update.
 //
 // Will return true if the given desctiption differs from the current persisted state of the
-// collection. Will return false and an error if it fails validation.
+// collection. Will return an error if it fails validation.
 func (db *db) ValidateUpdateCollectionTxn(
 	ctx context.Context,
 	txn datastore.Txn,

@@ -51,7 +51,7 @@ type DB interface {
 	// ValidateUpdateCollectionTxn validates that the given collection description is a valid update.
 	//
 	// Will return true if the given desctiption differs from the current persisted state of the
-	// collection. Will return false and an error if it fails validation.
+	// collection. Will return an error if it fails validation.
 	ValidateUpdateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (bool, error)
 
 	GetCollectionByName(context.Context, string) (Collection, error)
