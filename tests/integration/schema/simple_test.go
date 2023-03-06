@@ -61,6 +61,20 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 	ExecuteRequestTestCase(t, test)
 }
 
+func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
+	test := RequestTestCase{
+		Schema: []string{
+			`
+				type users {}
+				type users {}
+			`,
+		},
+		ExpectedError: "schema type already exists",
+	}
+
+	ExecuteRequestTestCase(t, test)
+}
+
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 	test := RequestTestCase{
 		Schema: []string{

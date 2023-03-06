@@ -17,29 +17,28 @@ import (
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 type sequence struct {
-	db  *db
 	key core.SequenceKey
 	val uint64
 }
 
-func (db *db) getSequence(ctx context.Context, key string) (*sequence, error) {
+func (db *db) getSequence(ctx context.Context, txn datastore.Txn, key string) (*sequence, error) {
 	if key == "" {
 		return nil, ErrKeyEmpty
 	}
 	seqKey := core.NewSequenceKey(key)
 	seq := &sequence{
-		db:  db,
 		key: seqKey,
 		val: uint64(0),
 	}
 
-	_, err := seq.get(ctx)
+	_, err := seq.get(ctx, txn)
 	if errors.Is(err, ds.ErrNotFound) {
-		err = seq.update(ctx)
+		err = seq.update(ctx, txn)
 		if err != nil {
 			return nil, err
 		}
@@ -50,8 +49,8 @@ func (db *db) getSequence(ctx context.Context, key string) (*sequence, error) {
 	return seq, nil
 }
 
-func (seq *sequence) get(ctx context.Context) (uint64, error) {
-	val, err := seq.db.systemstore().Get(ctx, seq.key.ToDS())
+func (seq *sequence) get(ctx context.Context, txn datastore.Txn) (uint64, error) {
+	val, err := txn.Systemstore().Get(ctx, seq.key.ToDS())
 	if err != nil {
 		return 0, err
 	}
@@ -60,22 +59,22 @@ func (seq *sequence) get(ctx context.Context) (uint64, error) {
 	return seq.val, nil
 }
 
-func (seq *sequence) update(ctx context.Context) error {
+func (seq *sequence) update(ctx context.Context, txn datastore.Txn) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := seq.db.systemstore().Put(ctx, seq.key.ToDS(), buf[:]); err != nil {
+	if err := txn.Systemstore().Put(ctx, seq.key.ToDS(), buf[:]); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (seq *sequence) next(ctx context.Context) (uint64, error) {
-	_, err := seq.get(ctx)
+func (seq *sequence) next(ctx context.Context, txn datastore.Txn) (uint64, error) {
+	_, err := seq.get(ctx, txn)
 	if err != nil {
 		return 0, err
 	}
 
 	seq.val++
-	return seq.val, seq.update(ctx)
+	return seq.val, seq.update(ctx, txn)
 }

@@ -394,7 +394,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 	case client.FieldKind_NILLABLE_BOOL_ARRAY:
 		return getNillableArray(val, getBool)
 
-	case client.FieldKind_FLOAT, client.FieldKind_DECIMAL:
+	case client.FieldKind_FLOAT:
 		return getFloat64(val)
 
 	case client.FieldKind_FLOAT_ARRAY:
@@ -420,8 +420,7 @@ func validateFieldSchema(val *fastjson.Value, field client.FieldDescription) (an
 	case client.FieldKind_NILLABLE_INT_ARRAY:
 		return getNillableArray(val, getInt64)
 
-	case client.FieldKind_OBJECT, client.FieldKind_OBJECT_ARRAY,
-		client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
+	case client.FieldKind_FOREIGN_OBJECT, client.FieldKind_FOREIGN_OBJECT_ARRAY:
 		return nil, ErrMergeSubTypeNotSupported
 	}
 

@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	defrap "github.com/sourcenetwork/defradb/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/request/graphql/schema"
 )
@@ -29,7 +30,7 @@ import (
 var _ core.Parser = (*parser)(nil)
 
 type parser struct {
-	schemaManager schema.SchemaManager
+	schemaManager *schema.SchemaManager
 }
 
 func NewParser() (*parser, error) {
@@ -39,7 +40,7 @@ func NewParser() (*parser, error) {
 	}
 
 	p := &parser{
-		schemaManager: *schemaManager,
+		schemaManager: schemaManager,
 	}
 
 	return p, nil
@@ -102,8 +103,22 @@ func (p *parser) ParseSDL(ctx context.Context, schemaString string) ([]client.Co
 	return schema.FromString(ctx, schemaString)
 }
 
-func (p *parser) AddSchema(ctx context.Context, collections []client.CollectionDescription) error {
-	_, err := p.schemaManager.Generator.Generate(ctx, collections)
+func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDescription) error {
+	schemaManager, err := schema.NewSchemaManager()
+	if err != nil {
+		return err
+	}
+
+	_, err = schemaManager.Generator.Generate(ctx, collections)
+	if err != nil {
+		return err
+	}
+
+	txn.OnSuccess(
+		func() {
+			p.schemaManager = schemaManager
+		},
+	)
 	return err
 }
 

@@ -136,18 +136,14 @@ const (
 	FieldKind_INT_ARRAY    FieldKind = 5
 	FieldKind_FLOAT        FieldKind = 6
 	FieldKind_FLOAT_ARRAY  FieldKind = 7
-	FieldKind_DECIMAL      FieldKind = 8
+	_                      FieldKind = 8 // safe to repurpose (was never used)
 	_                      FieldKind = 9 // safe to repurpose (previoulsy old field)
 	FieldKind_DATETIME     FieldKind = 10
 	FieldKind_STRING       FieldKind = 11
 	FieldKind_STRING_ARRAY FieldKind = 12
-	FieldKind_BYTES        FieldKind = 13
-
-	// Embedded object within the type
-	FieldKind_OBJECT FieldKind = 14
-
-	// Array of embedded objects
-	FieldKind_OBJECT_ARRAY FieldKind = 15
+	_                      FieldKind = 13 // safe to repurpose (was never used)
+	_                      FieldKind = 14 // safe to repurpose (was never used)
+	_                      FieldKind = 15 // safe to repurpose (was never used)
 
 	// Embedded object, but accessed via foreign keys
 	FieldKind_FOREIGN_OBJECT FieldKind = 16
@@ -185,8 +181,12 @@ func (f FieldID) String() string {
 
 // FieldDescription describes a field on a Schema and its associated metadata.
 type FieldDescription struct {
-	Name         string
-	ID           FieldID
+	Name string
+	ID   FieldID
+
+	// The data type that this field holds.
+	//
+	// Must contain a valid value.
 	Kind         FieldKind
 	Schema       string // If the field is an OBJECT type, then it has a target schema
 	RelationName string // The name of the relation index if the field is of type FOREIGN_OBJECT
@@ -201,7 +201,7 @@ type FieldDescription struct {
 
 // IsObject returns true if this field is an object type.
 func (f FieldDescription) IsObject() bool {
-	return (f.Kind == FieldKind_OBJECT) || (f.Kind == FieldKind_FOREIGN_OBJECT) ||
+	return (f.Kind == FieldKind_FOREIGN_OBJECT) ||
 		(f.Kind == FieldKind_FOREIGN_OBJECT_ARRAY)
 }
 

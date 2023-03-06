@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner"
 	"github.com/sourcenetwork/defradb/request/graphql"
@@ -104,10 +105,24 @@ func buildParser(
 		return nil, err
 	}
 
-	err = parser.AddSchema(ctx, collectionDescriptions)
+	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDescriptions)
 	if err != nil {
 		return nil, err
 	}
 
 	return parser, nil
 }
+
+var _ datastore.Txn = (*dummyTxn)(nil)
+
+type dummyTxn struct{}
+
+func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
+func (*dummyTxn) DAGstore() datastore.DAGStore          { return nil }
+func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
+func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
+func (*dummyTxn) Discard(ctx context.Context)           {}
+func (*dummyTxn) OnSuccess(fn func())                   {}
+func (*dummyTxn) OnError(fn func())                     {}
