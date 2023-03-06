@@ -284,7 +284,7 @@ func (db *db) ValidateUpdateCollectionTxn(
 	var hasChanged bool
 	existingCollection, err := db.GetCollectionByNameTxn(ctx, txn, proposedDesc.Name)
 	if err != nil {
-		if err.Error() == "datastore: key not found" {
+		if errors.Is(err, ds.ErrNotFound) {
 			// Original error is quite unhelpful to users at the moment so we return a custom one
 			return false, NewErrAddCollectionWithPatch(proposedDesc.Name)
 		}
