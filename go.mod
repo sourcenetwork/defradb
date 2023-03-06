@@ -45,7 +45,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/textileio/go-libp2p-pubsub-rpc v0.0.9
 	github.com/tidwall/btree v1.6.0
-	github.com/ugorji/go/codec v1.2.9
+	github.com/ugorji/go/codec v1.2.10
 	github.com/valyala/fastjson v1.6.4
 	go.opentelemetry.io/otel/metric v0.36.0
 	go.opentelemetry.io/otel/sdk/metric v0.36.0
