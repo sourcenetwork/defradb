@@ -314,8 +314,10 @@ func executeTestCase(
 	}
 
 	startActionIndex, endActionIndex := getActionRange(testCase)
-	collections := []client.Collection{}
-	documents := [][]*client.Document{}
+	// Documents and Collections may already exist in the database if actions have been split
+	// by the change detector so we should fetch them here at the start too (if they exist).
+	collections := getCollections(ctx, t, dbi.db, collectionNames)
+	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
 	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
@@ -467,6 +469,48 @@ func getCollections(
 		}
 	}
 	return collections
+}
+
+func getDocuments(
+	ctx context.Context,
+	t *testing.T,
+	testCase TestCase,
+	collections []client.Collection,
+	startActionIndex int,
+) [][]*client.Document {
+	documentsByCollection := make([][]*client.Document, len(collections))
+
+	for i := range collections {
+		documentsByCollection[i] = []*client.Document{}
+	}
+
+	for i := 0; i < startActionIndex; i++ {
+		switch action := testCase.Actions[i].(type) {
+		case CreateDoc:
+			// We need to add the existing documents in the order in which the test case lists them
+			// otherwise they cannot be referenced correctly by other actions.
+			doc, err := client.NewDocFromJSON([]byte(action.Doc))
+			if err != nil {
+				// If an err has been returned, ignore it - it may be expected and if not
+				// the test will fail later anyway
+				continue
+			}
+
+			collection := collections[action.CollectionID]
+			// The document may have been mutated by other actions, so to be sure we have the latest
+			// version without having to worry about the individual update mechanics we fetch it.
+			doc, err = collection.Get(ctx, doc.Key())
+			if err != nil {
+				// If an err has been returned, ignore it - it may be expected and if not
+				// the test will fail later anyway
+				continue
+			}
+
+			documentsByCollection[action.CollectionID] = append(documentsByCollection[action.CollectionID], doc)
+		}
+	}
+
+	return documentsByCollection
 }
 
 // updateSchema updates the schema using the given details.
