@@ -44,9 +44,11 @@ type DB interface {
 	// WithTxn returns a new Store instanciated with a new transaction
 	WithTxn(context.Context, bool) (TxnStore, error)
 
-	// or... Instead of (implicitly) creating its own transaction, will
-	// be given a transaction.
-	// WithTxn(context.Context, datastore.Txn) (TxnStore, error)
+	// or... Instead of (implicitly) creating its own transaction, can
+	// be given an explicit transaction. Which would simplify this API
+	// further since we wouldn't need a dedicated `TxnStore` and instead
+	// this function only returns a `Store` as you can see.
+	// WithTxn(context.Context, datastore.Txn) (Store, error)
 
 	Events() events.Events
 
@@ -78,7 +80,6 @@ type Store interface {
 
 type Write interface {
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)
-	CreateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (Collection, error)
 
 	// UpdateCollectionTxn updates the persisted collection description matching the name of the given
 	// description, to the values in the given description.
