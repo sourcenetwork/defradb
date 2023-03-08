@@ -28,8 +28,8 @@ fi
 TITLE=${1};
 
 # Validate that the entire length of the title is less than or equal to our character limit.
-if [ "${#TITLE}" -gt 60 ]; then
-    printf "Error: The length of the title is too long (should be 60 or less).\n";
+if [ "${#TITLE}" -gt 75 ]; then
+    printf "Error: The length of the title is too long (should be 75 or less).\n";
     exit 3;
 fi
 
