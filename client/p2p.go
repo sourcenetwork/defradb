@@ -12,8 +12,6 @@ package client
 
 import (
 	"context"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type Peer interface {
@@ -42,17 +40,9 @@ type PeerWrite interface {
 	// subscribes to to the the persisted list. It will error if the provided
 	// collection ID is invalid.
 	AddP2PCollection(ctx context.Context, collectionID string) error
-	// AddP2PCollectionTxn adds the given collection ID that the P2P system
-	// subscribes to to the the persisted list. It will error if the provided
-	// collection ID is invalid.
-	AddP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error
 
 	// RemoveP2PCollection removes the given collection ID that the P2P system
 	// subscribes to from the the persisted list. It will error if the provided
 	// collection ID is invalid.
 	RemoveP2PCollection(ctx context.Context, collectionID string) error
-	// RemoveP2PCollectionTxn removes the given collection ID that the P2P system
-	// subscribes to from the the persisted list. It will error if the provided
-	// collection ID is invalid.
-	RemoveP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error
 }

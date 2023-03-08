@@ -42,13 +42,13 @@ type DB interface {
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 
 	// WithTxn returns a new Store instanciated with a new transaction
-	WithTxn(context.Context, bool) (TxnStore, error)
+	// WithTxn(context.Context, bool) (TxnStore, error)
 
 	// or... Instead of (implicitly) creating its own transaction, can
 	// be given an explicit transaction. Which would simplify this API
 	// further since we wouldn't need a dedicated `TxnStore` and instead
 	// this function only returns a `Store` as you can see.
-	// WithTxn(context.Context, datastore.Txn) (Store, error)
+	WithTxn(context.Context, datastore.Txn) (Store, error)
 
 	Events() events.Events
 
@@ -60,10 +60,10 @@ type DB interface {
 	Store
 }
 
-type TxnStore interface {
-	Store
-	datastore.Txn
-}
+// type TxnStore interface {
+// 	Store
+// 	datastore.Txn
+// }
 
 type Store interface {
 	Read
@@ -84,14 +84,14 @@ type Write interface {
 	// UpdateCollectionTxn updates the persisted collection description matching the name of the given
 	// description, to the values in the given description.
 	//
-	// It will validate the given description using [ValidateUpdateCollectionTxn] before updating it.
+	// It will validate the given description using [ValidateUpdateCollection] before updating it.
 	//
 	// The collection (including the schema version ID) will only be updated if any changes have actually
 	// been made, if the given description matches the current persisted description then no changes will be
 	// applied.
 	UpdateCollection(context.Context, CollectionDescription) (Collection, error)
 
-	// ValidateUpdateCollectionTxn validates that the given collection description is a valid update.
+	// ValidateUpdateCollection validates that the given collection description is a valid update.
 	//
 	// Will return true if the given desctiption differs from the current persisted state of the
 	// collection. Will return an error if it fails validation.
