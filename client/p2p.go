@@ -16,7 +16,10 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type Peer interface{}
+type Peer interface {
+	PeerRead
+	PeerWrite
+}
 
 type PeerRead interface {
 	// GetAllReplicators returns the full list of replicators with their
