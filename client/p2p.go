@@ -16,16 +16,24 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-type P2P interface {
+type Peer interface{}
+
+type PeerRead interface {
+	// GetAllReplicators returns the full list of replicators with their
+	// subscribed schemas.
+	GetAllReplicators(ctx context.Context) ([]Replicator, error)
+	// GetAllP2PCollections returns the list of persisted collection IDs that
+	// the P2P system subscribes to.
+	GetAllP2PCollections(ctx context.Context) ([]string, error)
+}
+
+type PeerWrite interface {
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
 	SetReplicator(ctx context.Context, rep Replicator) error
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
 	DeleteReplicator(ctx context.Context, rep Replicator) error
-	// GetAllReplicators returns the full list of replicators with their
-	// subscribed schemas.
-	GetAllReplicators(ctx context.Context) ([]Replicator, error)
 
 	// AddP2PCollection adds the given collection ID that the P2P system
 	// subscribes to to the the persisted list. It will error if the provided
@@ -44,8 +52,4 @@ type P2P interface {
 	// subscribes to from the the persisted list. It will error if the provided
 	// collection ID is invalid.
 	RemoveP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error
-
-	// GetAllP2PCollections returns the list of persisted collection IDs that
-	// the P2P system subscribes to.
-	GetAllP2PCollections(ctx context.Context) ([]string, error)
 }
