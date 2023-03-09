@@ -48,7 +48,7 @@ type DB interface {
 	// be given an explicit transaction. Which would simplify this API
 	// further since we wouldn't need a dedicated `TxnStore` and instead
 	// this function only returns a `Store` as you can see.
-	WithTxn(context.Context, datastore.Txn) (Store, error)
+	WithTxn(context.Context, datastore.Txn) Store
 
 	Events() events.Events
 
