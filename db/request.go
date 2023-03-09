@@ -63,7 +63,7 @@ func (db *innerDB) ExecRequest(ctx context.Context, request string) *client.Requ
 		return res
 	}
 
-	if err := txn.Commit(ctx); err != nil {
+	if err := db.commitImplicitTxn(ctx, txn); err != nil {
 		res.GQL.Errors = []any{err.Error()}
 		return res
 	}
