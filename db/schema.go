@@ -46,7 +46,7 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.CreateCollectionTxn(ctx, txn, desc); err != nil {
+		if _, err := db.createCollectionTxn(ctx, txn, desc); err != nil {
 			return err
 		}
 	}
@@ -67,7 +67,7 @@ func (db *db) getCollectionDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
-	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	collections, err := db.getAllCollectionsTxn(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (db *db) PatchSchema(ctx context.Context, patchString string) error {
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.UpdateCollectionTxn(ctx, txn, desc); err != nil {
+		if _, err := db.updateCollectionTxn(ctx, txn, desc); err != nil {
 			return err
 		}
 	}
@@ -145,11 +145,11 @@ func (db *db) PatchSchema(ctx context.Context, patchString string) error {
 	return txn.Commit(ctx)
 }
 
-func (db *db) getCollectionsByName(
+func (db *innerDB) getCollectionsByName(
 	ctx context.Context,
 	txn datastore.Txn,
 ) (map[string]client.CollectionDescription, error) {
-	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	collections, err := db.getAllCollectionsTxn(ctx, txn)
 	if err != nil {
 		return nil, err
 	}

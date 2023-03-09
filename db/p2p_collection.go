@@ -24,26 +24,26 @@ const marker = byte(0xff)
 // AddP2PCollection adds the given collection ID that the P2P system
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *db) AddP2PCollection(ctx context.Context, collectionID string) error {
-	txn, err := db.NewTxn(ctx, false)
+func (db *innerDB) AddP2PCollection(ctx context.Context, collectionID string) error {
+	txn, err := db.getTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer db.discardImplicitTxn(ctx, txn)
 
-	err = db.AddP2PCollectionTxn(ctx, txn, collectionID)
+	err = db.addP2PCollectionTxn(ctx, txn, collectionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return db.commitImplicitTxn(ctx, txn)
 }
 
 // AddP2PCollectionTxn adds the given collection ID that the P2P system
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *db) AddP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
-	_, err := db.GetCollectionBySchemaIDTxn(ctx, txn, collectionID)
+func (db *innerDB) addP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
+	_, err := db.getCollectionBySchemaIDTxn(ctx, txn, collectionID)
 	if err != nil {
 		return NewErrAddingP2PCollection(err)
 	}
@@ -54,26 +54,26 @@ func (db *db) AddP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collec
 // RemoveP2PCollection removes the given collection ID that the P2P system
 // subscribes to from the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *db) RemoveP2PCollection(ctx context.Context, collectionID string) error {
-	txn, err := db.NewTxn(ctx, false)
+func (db *innerDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+	txn, err := db.getTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer db.discardImplicitTxn(ctx, txn)
 
-	err = db.RemoveP2PCollectionTxn(ctx, txn, collectionID)
+	err = db.removeP2PCollectionTxn(ctx, txn, collectionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return db.commitImplicitTxn(ctx, txn)
 }
 
 // RemoveP2PCollectionTxn removes the given collection ID that the P2P system
 // subscribes to from the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *db) RemoveP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
-	_, err := db.GetCollectionBySchemaIDTxn(ctx, txn, collectionID)
+func (db *innerDB) removeP2PCollectionTxn(ctx context.Context, txn datastore.Txn, collectionID string) error {
+	_, err := db.getCollectionBySchemaIDTxn(ctx, txn, collectionID)
 	if err != nil {
 		return NewErrRemovingP2PCollection(err)
 	}
@@ -81,11 +81,27 @@ func (db *db) RemoveP2PCollectionTxn(ctx context.Context, txn datastore.Txn, col
 	return txn.Systemstore().Delete(ctx, key.ToDS())
 }
 
+func (db *innerDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	txn, err := db.getTxn(ctx, false)
+	if err != nil {
+		return []string{}, err
+	}
+	defer db.discardImplicitTxn(ctx, txn)
+
+	colIDs, err := db.getAllP2PCollectionsTxn(ctx, txn)
+	if err != nil {
+		return []string{}, err
+	}
+
+	err = db.commitImplicitTxn(ctx, txn)
+	return colIDs, err
+}
+
 // GetAllP2PCollections returns the list of persisted collection IDs that
 // the P2P system subscribes to.
-func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *innerDB) getAllP2PCollectionsTxn(ctx context.Context, txn datastore.Txn) ([]string, error) {
 	prefix := core.NewP2PCollectionKey("")
-	results, err := db.systemstore().Query(ctx, dsq.Query{
+	results, err := txn.Systemstore().Query(ctx, dsq.Query{
 		Prefix: prefix.ToString(),
 	})
 	if err != nil {

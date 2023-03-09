@@ -66,6 +66,42 @@ type db struct {
 
 	// The options used to init the database
 	options any
+
+	// embed the innerDB to handle CRUD operations
+	innerDB
+}
+
+// innerDB is the interal shared strutucture for actually
+// handling CRUD operations
+type innerDB struct {
+	outer *db
+	txn   datastore.Txn
+}
+
+func (db *innerDB) getTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+	if db.txn != nil {
+		return db.txn, nil
+	}
+	return db.outer.NewTxn(ctx, readonly)
+}
+
+// discardImplicitTxn is a proxy function used by the collection to execute the Discard()
+// transaction function only if its an implicit transaction.
+//
+// Implicit transactions are transactions that are created *during* an operation execution as a side effect.
+//
+// Explicit transactions are provided to the collection object via the "WithTxn(...)" function.
+func (db *innerDB) discardImplicitTxn(ctx context.Context, txn datastore.Txn) {
+	if db.txn == nil {
+		txn.Discard(ctx)
+	}
+}
+
+func (db *innerDB) commitImplicitTxn(ctx context.Context, txn datastore.Txn) error {
+	if db.txn == nil {
+		return txn.Commit(ctx)
+	}
+	return nil
 }
 
 // Functional option type.
@@ -139,6 +175,15 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+}
+
+// WithTxn returns a Store instanciated with a given
+// transactions
+func (db *db) WithTxn(ctx context.Context, txn datastore.Txn) (client.Store, error) {
+	return &innerDB{
+		outer: db,
+		txn:   txn,
+	}, nil
 }
 
 // Root returns the root datastore.

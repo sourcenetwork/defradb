@@ -145,7 +145,7 @@ func TestDeleteSchemaForReplicator(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	rep, err := db.getReplicator(ctx, *info)
+	rep, err := db.GetReplicator(ctx, *info)
 	require.NoError(t, err)
 
 	assert.Equal(t, client.Replicator{
@@ -178,7 +178,7 @@ func TestDeleteAllSchemasForReplicator(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = db.getReplicator(ctx, *info)
+	_, err = db.GetReplicator(ctx, *info)
 	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 

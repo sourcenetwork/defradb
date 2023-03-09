@@ -21,13 +21,29 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/core"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // SetReplicator adds a new replicator to the database.
-func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
-	existingRep, err := db.getReplicator(ctx, rep.Info)
+func (db *innerDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
+	txn, err := db.getTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer db.discardImplicitTxn(ctx, txn)
+
+	err = db.setReplicatorTxn(ctx, txn, rep)
+	if err != nil {
+		return err
+	}
+
+	return db.commitImplicitTxn(ctx, txn)
+}
+
+func (db *innerDB) setReplicatorTxn(ctx context.Context, txn datastore.Txn, rep client.Replicator) error {
+	existingRep, err := db.getReplicatorTxn(ctx, txn, rep.Info)
 	if errors.Is(err, ds.ErrNotFound) {
-		return db.saveReplicator(ctx, rep)
+		return db.saveReplicatorTxn(ctx, txn, rep)
 	}
 	if err != nil {
 		return err
@@ -47,24 +63,40 @@ func (db *db) SetReplicator(ctx context.Context, rep client.Replicator) error {
 		}
 	}
 	rep.Schemas = append(existingRep.Schemas, newSchemas...)
-	return db.saveReplicator(ctx, rep)
+	return db.saveReplicatorTxn(ctx, txn, rep)
 }
 
 // DeleteReplicator removes a replicator from the database.
-func (db *db) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
-	if len(rep.Schemas) == 0 {
-		return db.deleteReplicator(ctx, rep.Info.ID)
+func (db *innerDB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+	txn, err := db.getTxn(ctx, false)
+	if err != nil {
+		return err
 	}
-	return db.deleteSchemasForReplicator(ctx, rep)
+	defer db.discardImplicitTxn(ctx, txn)
+
+	err = db.deleteReplicatorWithSchemas(ctx, txn, rep)
+	if err != nil {
+		return err
+	}
+
+	err = db.commitImplicitTxn(ctx, txn)
+	return err
 }
 
-func (db *db) deleteReplicator(ctx context.Context, pid peer.ID) error {
+func (db *innerDB) deleteReplicatorWithSchemas(ctx context.Context, txn datastore.Txn, rep client.Replicator) error {
+	if len(rep.Schemas) == 0 {
+		return db.deleteReplicatorTxn(ctx, txn, rep.Info.ID)
+	}
+	return db.deleteSchemasForReplicatorTxn(ctx, txn, rep)
+}
+
+func (db *innerDB) deleteReplicatorTxn(ctx context.Context, txn datastore.Txn, pid peer.ID) error {
 	key := core.NewReplicatorKey(pid.String())
-	return db.systemstore().Delete(ctx, key.ToDS())
+	return txn.Systemstore().Delete(ctx, key.ToDS())
 }
 
-func (db *db) deleteSchemasForReplicator(ctx context.Context, rep client.Replicator) error {
-	existingRep, err := db.getReplicator(ctx, rep.Info)
+func (db *innerDB) deleteSchemasForReplicatorTxn(ctx context.Context, txn datastore.Txn, rep client.Replicator) error {
+	existingRep, err := db.getReplicatorTxn(ctx, txn, rep.Info)
 	if err != nil {
 		return err
 	}
@@ -84,19 +116,35 @@ func (db *db) deleteSchemasForReplicator(ctx context.Context, rep client.Replica
 	}
 
 	if len(updatedSchemaList) == 0 {
-		return db.deleteReplicator(ctx, rep.Info.ID)
+		return db.deleteReplicatorTxn(ctx, txn, rep.Info.ID)
 	}
 
 	existingRep.Schemas = updatedSchemaList
-	return db.saveReplicator(ctx, existingRep)
+	return db.saveReplicatorTxn(ctx, txn, existingRep)
 }
 
 // GetAllReplicators returns all replicators of the database.
-func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (db *innerDB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+	txn, err := db.getTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer db.discardImplicitTxn(ctx, txn)
+
+	reps, err := db.getAllReplicatorsTxn(ctx, txn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.commitImplicitTxn(ctx, txn)
+	return reps, err
+}
+
+func (db *innerDB) getAllReplicatorsTxn(ctx context.Context, txn datastore.Txn) ([]client.Replicator, error) {
 	reps := []client.Replicator{}
 	// create collection system prefix query
 	prefix := core.NewReplicatorKey("")
-	results, err := db.systemstore().Query(ctx, dsq.Query{
+	results, err := txn.Systemstore().Query(ctx, dsq.Query{
 		Prefix: prefix.ToString(),
 	})
 	if err != nil {
@@ -116,10 +164,27 @@ func (db *db) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 	return reps, nil
 }
 
-func (db *db) getReplicator(ctx context.Context, info peer.AddrInfo) (client.Replicator, error) {
+// GetReplicator
+func (db *innerDB) GetReplicator(ctx context.Context, info peer.AddrInfo) (client.Replicator, error) {
+	txn, err := db.getTxn(ctx, false)
+	if err != nil {
+		return client.Replicator{}, err
+	}
+	defer db.discardImplicitTxn(ctx, txn)
+
+	rep, err := db.getReplicatorTxn(ctx, txn, info)
+	if err != nil {
+		return client.Replicator{}, err
+	}
+
+	err = db.commitImplicitTxn(ctx, txn)
+	return rep, err
+}
+
+func (db *innerDB) getReplicatorTxn(ctx context.Context, txn datastore.Txn, info peer.AddrInfo) (client.Replicator, error) {
 	rep := client.Replicator{}
 	key := core.NewReplicatorKey(info.ID.String())
-	value, err := db.systemstore().Get(ctx, key.ToDS())
+	value, err := txn.Systemstore().Get(ctx, key.ToDS())
 	if err != nil {
 		return rep, err
 	}
@@ -132,11 +197,11 @@ func (db *db) getReplicator(ctx context.Context, info peer.AddrInfo) (client.Rep
 	return rep, nil
 }
 
-func (db *db) saveReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *innerDB) saveReplicatorTxn(ctx context.Context, txn datastore.Txn, rep client.Replicator) error {
 	key := core.NewReplicatorKey(rep.Info.ID.String())
 	repBytes, err := json.Marshal(rep)
 	if err != nil {
 		return err
 	}
-	return db.systemstore().Put(ctx, key.ToDS(), repBytes)
+	return txn.Systemstore().Put(ctx, key.ToDS(), repBytes)
 }
