@@ -466,7 +466,11 @@ func (db *innerDB) GetCollectionByName(ctx context.Context, name string) (client
 }
 
 // GetCollectionByNameTxn returns an existing collection within the database.
-func (db *innerDB) getCollectionByNameTxn(ctx context.Context, txn datastore.Txn, name string) (client.Collection, error) {
+func (db *innerDB) getCollectionByNameTxn(
+	ctx context.Context,
+	txn datastore.Txn,
+	name string,
+) (client.Collection, error) {
 	if name == "" {
 		return nil, ErrCollectionNameEmpty
 	}

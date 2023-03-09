@@ -199,9 +199,11 @@ func (db *db) Blockstore() blockstore.Blockstore {
 	return db.multistore.DAGstore()
 }
 
-func (db *db) systemstore() datastore.DSReaderWriter {
-	return db.multistore.Systemstore()
-}
+// uncommented to preserve during the discussion but the linter was complaining
+// todo: remove
+// func (db *db) systemstore() datastore.DSReaderWriter {
+// 	return db.multistore.Systemstore()
+// }
 
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.

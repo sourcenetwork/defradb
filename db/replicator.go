@@ -181,7 +181,11 @@ func (db *innerDB) GetReplicator(ctx context.Context, info peer.AddrInfo) (clien
 	return rep, err
 }
 
-func (db *innerDB) getReplicatorTxn(ctx context.Context, txn datastore.Txn, info peer.AddrInfo) (client.Replicator, error) {
+func (db *innerDB) getReplicatorTxn(
+	ctx context.Context,
+	txn datastore.Txn,
+	info peer.AddrInfo,
+) (client.Replicator, error) {
 	rep := client.Replicator{}
 	key := core.NewReplicatorKey(info.ID.String())
 	value, err := txn.Systemstore().Get(ctx, key.ToDS())
