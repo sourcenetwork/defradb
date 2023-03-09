@@ -29,10 +29,10 @@ import (
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select].
-func ToSelect(ctx context.Context, txn datastore.Txn, parsed *request.Select) (*Select, error) {
+func ToSelect(ctx context.Context, txn datastore.Txn, selectRequest *request.Select) (*Select, error) {
 	descriptionsRepo := NewDescriptionsRepo(ctx, txn)
 	// the top-level select will always have index=0, and no parent collection name
-	return toSelect(descriptionsRepo, 0, parsed, "")
+	return toSelect(descriptionsRepo, 0, selectRequest, "")
 }
 
 // toSelect converts the given [parser.Select] into a [Select].
@@ -42,39 +42,39 @@ func ToSelect(ctx context.Context, txn datastore.Txn, parsed *request.Select) (*
 func toSelect(
 	descriptionsRepo *DescriptionsRepo,
 	thisIndex int,
-	parsed *request.Select,
+	selectRequest *request.Select,
 	parentCollectionName string,
 ) (*Select, error) {
-	collectionName, err := getCollectionName(descriptionsRepo, parsed, parentCollectionName)
+	collectionName, err := getCollectionName(descriptionsRepo, selectRequest, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	mapping, desc, err := getTopLevelInfo(descriptionsRepo, parsed, collectionName)
+	mapping, desc, err := getTopLevelInfo(descriptionsRepo, selectRequest, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	fields, aggregates, err := getRequestables(parsed, mapping, desc, descriptionsRepo)
+	fields, aggregates, err := getRequestables(selectRequest, mapping, desc, descriptionsRepo)
 	if err != nil {
 		return nil, err
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
-	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, parsed.Filter, mapping, fields)
+	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
 	fields = append(fields, filterDependencies...)
 
 	// Resolve order dependencies that may have been missed due to not being rendered.
-	if err := resolveOrderDependencies(descriptionsRepo, collectionName, parsed.OrderBy, mapping, &fields); err != nil {
+	if err := resolveOrderDependencies(descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields); err != nil {
 		return nil, err
 	}
 
 	aggregates = appendUnderlyingAggregates(aggregates, mapping)
 	fields, err = resolveAggregates(
-		parsed,
+		selectRequest,
 		aggregates,
 		fields,
 		mapping,
@@ -85,8 +85,8 @@ func toSelect(
 		return nil, err
 	}
 
-	// If there is a groupby, and no inner group has been requested, we need to map the property here
-	if parsed.GroupBy.HasValue() {
+	// If there is a groupBy, and no inner group has been requested, we need to map the property here
+	if selectRequest.GroupBy.HasValue() {
 		if _, isGroupFieldMapped := mapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
 			index := mapping.GetNextIndex()
 			mapping.Add(index, request.GroupFieldName)
@@ -94,9 +94,9 @@ func toSelect(
 	}
 
 	return &Select{
-		Targetable:      toTargetable(thisIndex, parsed, mapping),
+		Targetable:      toTargetable(thisIndex, selectRequest, mapping),
 		DocumentMapping: *mapping,
-		Cid:             parsed.CID,
+		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
 		Fields:          fields,
 	}, nil
@@ -155,7 +155,7 @@ func resolveOrderDependencies(
 // append the new target field as well as the aggregate.  The mapping will also be
 // updated with any new fields/aggregates.
 func resolveAggregates(
-	parsed *request.Select,
+	selectRequest *request.Select,
 	aggregates []*aggregateRequest,
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
@@ -225,19 +225,19 @@ func resolveAggregates(
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
 
-				dummyParsed := &request.Select{
-					Root: parsed.Root,
+				hostSelectRequest := &request.Select{
+					Root: selectRequest.Root,
 					Field: request.Field{
 						Name: target.hostExternalName,
 					},
 				}
 
-				childCollectionName, err := getCollectionName(descriptionsRepo, dummyParsed, desc.Name)
+				childCollectionName, err := getCollectionName(descriptionsRepo, hostSelectRequest, desc.Name)
 				if err != nil {
 					return nil, err
 				}
 
-				childMapping, _, err := getTopLevelInfo(descriptionsRepo, dummyParsed, childCollectionName)
+				childMapping, _, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -369,7 +369,7 @@ func appendUnderlyingAggregates(
 		aggregate := aggregates[i]
 
 		dependencies, hasDependencies := aggregateDependencies[aggregate.field.Name]
-		// If the aggregate has no dependencies, then we dont need to do anything and we continue.
+		// If the aggregate has no dependencies, then we don't need to do anything and we continue.
 		if !hasDependencies {
 			continue
 		}
@@ -432,15 +432,15 @@ func appendIfNotExists(
 }
 
 // getRequestables returns a converted slice of consumer-requested Requestables
-// and aggregateRequests from the given parsed.Fields slice. It also mutates the
+// and aggregateRequests from the given selectRequest.Fields slice. It also mutates the
 // consumed mapping data.
 func getRequestables(
-	parsed *request.Select,
+	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
 	desc *client.CollectionDescription,
 	descriptionsRepo *DescriptionsRepo,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
-	for _, field := range parsed.Fields {
+	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
 		case *request.Field:
 			// We can map all fields to the first (and only index)
@@ -521,21 +521,21 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 	}, nil
 }
 
-// getCollectionName returns the name of the parsed collection.  This may be empty
+// getCollectionName returns the name of the selectRequest collection.  This may be empty
 // if this is a commit request.
 func getCollectionName(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *request.Select,
+	selectRequest *request.Select,
 	parentCollectionName string,
 ) (string, error) {
-	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// This string is not used or referenced, its value is only there to aid debugging
 		return "_topLevel", nil
 	}
 
-	if parsed.Name == request.GroupFieldName {
+	if selectRequest.Name == request.GroupFieldName {
 		return parentCollectionName, nil
-	} else if parsed.Root == request.CommitSelection {
+	} else if selectRequest.Root == request.CommitSelection {
 		return parentCollectionName, nil
 	}
 
@@ -545,7 +545,7 @@ func getCollectionName(
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentDescription.GetField(parsed.Name)
+		hostFieldDesc, parentHasField := parentDescription.GetField(selectRequest.Name)
 		if parentHasField && hostFieldDesc.RelationType != 0 {
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
@@ -553,24 +553,24 @@ func getCollectionName(
 		}
 	}
 
-	return parsed.Name, nil
+	return selectRequest.Name, nil
 }
 
 // getTopLevelInfo returns the collection description and maps the fields directly on the object.
 func getTopLevelInfo(
 	descriptionsRepo *DescriptionsRepo,
-	parsed *request.Select,
+	selectRequest *request.Select,
 	collectionName string,
 ) (*core.DocumentMapping, *client.CollectionDescription, error) {
 	mapping := core.NewDocumentMapping()
 
-	if _, isAggregate := request.Aggregates[parsed.Name]; isAggregate {
+	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
 		return mapping, &client.CollectionDescription{}, nil
 	}
 
-	if parsed.Root == request.ObjectSelection {
+	if selectRequest.Root == request.ObjectSelection {
 		mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
 
 		desc, err := descriptionsRepo.getCollectionDesc(collectionName)
@@ -595,7 +595,7 @@ func getTopLevelInfo(
 		return mapping, &desc, nil
 	}
 
-	if parsed.Name == request.LinksFieldName {
+	if selectRequest.Name == request.LinksFieldName {
 		for i, f := range request.LinksFields {
 			mapping.Add(i, f)
 		}
@@ -770,17 +770,17 @@ func resolveInnerFilterDependencies(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [CommitSelect].
-func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *request.CommitSelect) (*CommitSelect, error) {
-	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
+func ToCommitSelect(ctx context.Context, txn datastore.Txn, selectRequest *request.CommitSelect) (*CommitSelect, error) {
+	underlyingSelect, err := ToSelect(ctx, txn, selectRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}
 	return &CommitSelect{
 		Select:    *underlyingSelect,
-		DocKey:    parsed.DocKey,
-		FieldName: parsed.FieldName,
-		Depth:     parsed.Depth,
-		Cid:       parsed.Cid,
+		DocKey:    selectRequest.DocKey,
+		FieldName: selectRequest.FieldName,
+		Depth:     selectRequest.Depth,
+		Cid:       selectRequest.Cid,
 	}, nil
 }
 
@@ -788,34 +788,34 @@ func ToCommitSelect(ctx context.Context, txn datastore.Txn, parsed *request.Comm
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, txn datastore.Txn, parsed *request.ObjectMutation) (*Mutation, error) {
-	underlyingSelect, err := ToSelect(ctx, txn, parsed.ToSelect())
+func ToMutation(ctx context.Context, txn datastore.Txn, mutationRequest *request.ObjectMutation) (*Mutation, error) {
+	underlyingSelect, err := ToSelect(ctx, txn, mutationRequest.ToSelect())
 	if err != nil {
 		return nil, err
 	}
 
 	return &Mutation{
 		Select: *underlyingSelect,
-		Type:   MutationType(parsed.Type),
-		Data:   parsed.Data,
+		Type:   MutationType(mutationRequest.Type),
+		Data:   mutationRequest.Data,
 	}, nil
 }
 
-func toTargetable(index int, parsed *request.Select, docMap *core.DocumentMapping) Targetable {
+func toTargetable(index int, selectRequest *request.Select, docMap *core.DocumentMapping) Targetable {
 	return Targetable{
-		Field:   toField(index, parsed),
-		DocKeys: parsed.DocKeys,
-		Filter:  ToFilter(parsed.Filter, docMap),
-		Limit:   toLimit(parsed.Limit, parsed.Offset),
-		GroupBy: toGroupBy(parsed.GroupBy, docMap),
-		OrderBy: toOrderBy(parsed.OrderBy, docMap),
+		Field:   toField(index, selectRequest),
+		DocKeys: selectRequest.DocKeys,
+		Filter:  ToFilter(selectRequest.Filter, docMap),
+		Limit:   toLimit(selectRequest.Limit, selectRequest.Offset),
+		GroupBy: toGroupBy(selectRequest.GroupBy, docMap),
+		OrderBy: toOrderBy(selectRequest.OrderBy, docMap),
 	}
 }
 
-func toField(index int, parsed *request.Select) Field {
+func toField(index int, selectRequest *request.Select) Field {
 	return Field{
 		Index: index,
-		Name:  parsed.Name,
+		Name:  selectRequest.Name,
 	}
 }
 
