@@ -68,7 +68,7 @@ type db struct {
 	options any
 
 	// embed the innerDB to handle CRUD operations
-	innerDB
+	*innerDB
 }
 
 // innerDB is the interal shared strutucture for actually
@@ -150,6 +150,9 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 		parser:  parser,
 		options: options,
 	}
+	db.innerDB = &innerDB{
+		outer: db,
+	}
 
 	// apply options
 	for _, opt := range options {
@@ -179,11 +182,11 @@ func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Tx
 
 // WithTxn returns a Store instanciated with a given
 // transactions
-func (db *db) WithTxn(ctx context.Context, txn datastore.Txn) (client.Store, error) {
+func (db *db) WithTxn(ctx context.Context, txn datastore.Txn) client.Store {
 	return &innerDB{
 		outer: db,
 		txn:   txn,
-	}, nil
+	}
 }
 
 // Root returns the root datastore.

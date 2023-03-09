@@ -311,12 +311,13 @@ func (p *Peer) setReplicator(
 ) (peer.ID, error) {
 	var pid peer.ID
 
+	db := p.db.WithTxn(ctx, txn)
 	// verify collections
 	collections := []client.Collection{}
 	schemas := []string{}
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err = p.db.GetAllCollectionsTxn(ctx, txn)
+		collections, err = db.GetAllCollections(ctx)
 		if err != nil {
 			return pid, errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -325,7 +326,7 @@ func (p *Peer) setReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
+			col, err := db.GetCollectionByName(ctx, cName)
 			if err != nil {
 				return pid, errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -514,12 +515,14 @@ func (p *Peer) deleteReplicator(
 		return errors.New("can't target ourselves as a replicator")
 	}
 
+	db := p.db.WithTxn(ctx, txn)
+
 	// verify collections
 	schemas := []string{}
 	schemaMap := make(map[string]struct{})
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err := p.db.GetAllCollectionsTxn(ctx, txn)
+		collections, err := p.db.GetAllCollections(ctx)
 		if err != nil {
 			return errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -529,7 +532,7 @@ func (p *Peer) deleteReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
+			col, err := db.GetCollectionByName(ctx, cName)
 			if err != nil {
 				return errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -757,16 +760,18 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 	}
 	defer txn.Discard(p.ctx)
 
+	db := p.db.WithTxn(p.ctx, txn)
+
 	// first let's make sure the collections actually exists
 	for _, col := range collections {
-		_, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, col)
+		_, err := db.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, col := range collections {
-		err := p.db.AddP2PCollectionTxn(p.ctx, txn, col)
+		err := db.AddP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -787,8 +792,10 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 	}
 	defer txn.Discard(p.ctx)
 
+	db := p.db.WithTxn(p.ctx, txn)
+
 	for _, col := range collections {
-		err := p.db.RemoveP2PCollectionTxn(p.ctx, txn, col)
+		err := db.RemoveP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -807,7 +814,9 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 		return nil, err
 	}
 
-	collections, err := p.db.GetAllP2PCollections(p.ctx)
+	db := p.db.WithTxn(p.ctx, txn)
+
+	collections, err := db.GetAllP2PCollections(p.ctx)
 	if err != nil {
 		txn.Discard(p.ctx)
 		return nil, err
@@ -815,7 +824,7 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 
 	var p2pCols []client.P2PCollection
 	for _, colID := range collections {
-		col, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, colID)
+		col, err := db.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
 			txn.Discard(p.ctx)
 			return nil, err

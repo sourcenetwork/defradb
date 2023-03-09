@@ -86,7 +86,7 @@ type PlanContext struct {
 // produce a request plan, which is run by the execution context.
 type Planner struct {
 	txn datastore.Txn
-	db  client.DB
+	db  client.DB // this can likely be replaced by client.Store
 
 	ctx context.Context
 }

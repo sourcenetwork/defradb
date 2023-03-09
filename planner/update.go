@@ -133,7 +133,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByNameTxn(p.ctx, p.txn, parsed.Name)
+	col, err := p.db.WithTxn(p.ctx, p.txn).GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}
