@@ -40,14 +40,13 @@ func TestEventsSimpleWithCreateWithTxnDiscarded(t *testing.T) {
 			func(ctx context.Context, d client.DB) {
 				txn, err := d.NewTxn(ctx, false)
 				assert.Nil(t, err)
-				r := d.ExecTransactionalRequest(
+				r := d.WithTxn(ctx, txn).ExecRequest(
 					ctx,
 					`mutation {
 						create_users(data: "{\"Name\": \"Shahzad\"}") {
 							_key
 						}
 					}`,
-					txn,
 				)
 				for _, err := range r.GQL.Errors {
 					assert.Nil(t, err)

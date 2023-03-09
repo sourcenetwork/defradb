@@ -619,11 +619,10 @@ func executeTransactionRequest(
 			txn.Discard(ctx)
 			return nil
 		}
-
 		txns[action.TransactionID] = txn
 	}
 
-	result := db.ExecTransactionalRequest(ctx, action.Request, txns[action.TransactionID])
+	result := db.WithTxn(ctx, txns[action.TransactionID]).ExecRequest(ctx, action.Request)
 	expectedErrorRaised := assertRequestResults(
 		ctx,
 		t,
