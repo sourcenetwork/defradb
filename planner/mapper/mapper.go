@@ -250,6 +250,25 @@ func resolveAggregates(
 					}
 				}
 
+				if target.filter.HasValue() {
+					for topKey, topCond := range target.filter.Value().Conditions {
+						switch cond := topCond.(type) {
+						case map[string]interface{}:
+							for _, innerCond := range cond {
+								if _, isMap := innerCond.(map[string]interface{}); isMap {
+									hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
+										Root: selectRequest.Root,
+										Field: request.Field{
+											Name: topKey,
+										},
+									})
+									break
+								}
+							}
+						}
+					}
+				}
+
 				childMapping, childDesc, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
