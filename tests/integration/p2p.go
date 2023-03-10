@@ -221,9 +221,6 @@ func configureReplicator(
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case CreateDoc:
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents += 1
-			}
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents += 1
 			}
