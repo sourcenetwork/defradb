@@ -61,14 +61,16 @@ func toSelect(
 	}
 
 	// Needs to be done before resolving aggregates, else filter conversion may fail there
-	filterDependencies, err := resolveFilterDependencies(descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
+	filterDependencies, err := resolveFilterDependencies(
+		descriptionsRepo, collectionName, selectRequest.Filter, mapping, fields)
 	if err != nil {
 		return nil, err
 	}
 	fields = append(fields, filterDependencies...)
 
 	// Resolve order dependencies that may have been missed due to not being rendered.
-	if err := resolveOrderDependencies(descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields); err != nil {
+	if err := resolveOrderDependencies(
+		descriptionsRepo, collectionName, selectRequest.OrderBy, mapping, &fields); err != nil {
 		return nil, err
 	}
 
@@ -342,7 +344,8 @@ func resolveAggregates(
 	return fields, nil
 }
 
-func mapAggregateNestedTargets(target *aggregateRequestTarget, hostSelectRequest *request.Select, selectionType request.SelectionType) {
+func mapAggregateNestedTargets(target *aggregateRequestTarget,
+	hostSelectRequest *request.Select, selectionType request.SelectionType) {
 	if target.order.HasValue() {
 		for _, cond := range target.order.Value().Conditions {
 			if len(cond.Fields) > 1 {
@@ -359,9 +362,9 @@ func mapAggregateNestedTargets(target *aggregateRequestTarget, hostSelectRequest
 	if target.filter.HasValue() {
 		for topKey, topCond := range target.filter.Value().Conditions {
 			switch cond := topCond.(type) {
-			case map[string]interface{}:
+			case map[string]any:
 				for _, innerCond := range cond {
-					if _, isMap := innerCond.(map[string]interface{}); isMap {
+					if _, isMap := innerCond.(map[string]any); isMap {
 						hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
 							Root: selectionType,
 							Field: request.Field{
@@ -813,7 +816,8 @@ func resolveInnerFilterDependencies(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [CommitSelect].
-func ToCommitSelect(ctx context.Context, txn datastore.Txn, selectRequest *request.CommitSelect) (*CommitSelect, error) {
+func ToCommitSelect(ctx context.Context,
+	txn datastore.Txn, selectRequest *request.CommitSelect) (*CommitSelect, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, selectRequest.ToSelect())
 	if err != nil {
 		return nil, err
