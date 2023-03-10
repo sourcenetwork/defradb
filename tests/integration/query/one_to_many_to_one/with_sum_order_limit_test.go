@@ -308,7 +308,6 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 	executeTestCase(t, test)
 }
 
-// TODO: Fix this panic in #833 and #920.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
@@ -418,13 +417,30 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 			    }`,
 			},
 		},
-		Results: []map[string]any{},
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+				"s1": 4.8 + 4.5,
+				// 'The Associate' as it has no publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+				"s2": float64(4.2) + float64(4.9),
+			},
+			{
+				"name": "Not a Writer",
+				"s1":   0.0,
+				"s2":   0.0,
+			},
+			{
+				"name": "Cornelia Funke",
+				"s1":   4.0,
+				"s2":   4.0,
+			},
+		},
 	}
 
-	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+	executeTestCase(t, test)
 }
 
-// TODO: Fix this panic in #833 and #920.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
@@ -432,7 +448,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 		    Author {
 				name
 			    s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
- 				NewestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
+ 				OldestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
  					name
  				}
 			}
@@ -535,8 +551,36 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 			    }`,
 			},
 		},
-		Results: []map[string]any{},
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+				"s1":   4.8 + 4.5,
+				"OldestPublishersBook": []map[string]any{
+					{
+						"name": "The Associate",
+					},
+					{
+						"name": "Painted House",
+					},
+				},
+			},
+			{
+				"name":                 "Not a Writer",
+				"s1":                   0.0,
+				"OldestPublishersBook": []map[string]any{},
+			},
+			{
+				"name": "Cornelia Funke",
+				"s1":   4.0,
+				"OldestPublishersBook": []map[string]any{
+					{
+						"name": "The Rooster Bar",
+					},
+				},
+			},
+		},
 	}
 
-	testUtils.AssertPanicAndSkipChangeDetection(t, func() { executeTestCase(t, test) })
+	executeTestCase(t, test)
 }

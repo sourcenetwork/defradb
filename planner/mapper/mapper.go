@@ -237,10 +237,29 @@ func resolveAggregates(
 					return nil, err
 				}
 
-				childMapping, _, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
+				if target.order.HasValue() {
+					for _, cond := range target.order.Value().Conditions {
+						if len(cond.Fields) > 1 {
+							hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
+								Root: selectRequest.Root,
+								Field: request.Field{
+									Name: cond.Fields[0],
+								},
+							})
+						}
+					}
+				}
+
+				childMapping, childDesc, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
+
+				childFields, _, err := getRequestables(hostSelectRequest, childMapping, childDesc, descriptionsRepo)
+				if err != nil {
+					return nil, err
+				}
+
 				childMapping = childMapping.CloneWithoutRender()
 				mapping.SetChildAt(index, childMapping)
 
@@ -262,6 +281,7 @@ func resolveAggregates(
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: *childMapping,
+					Fields:          childFields,
 				}
 
 				fields = append(fields, dummyJoin)
