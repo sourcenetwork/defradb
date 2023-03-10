@@ -237,37 +237,7 @@ func resolveAggregates(
 					return nil, err
 				}
 
-				if target.order.HasValue() {
-					for _, cond := range target.order.Value().Conditions {
-						if len(cond.Fields) > 1 {
-							hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
-								Root: selectRequest.Root,
-								Field: request.Field{
-									Name: cond.Fields[0],
-								},
-							})
-						}
-					}
-				}
-
-				if target.filter.HasValue() {
-					for topKey, topCond := range target.filter.Value().Conditions {
-						switch cond := topCond.(type) {
-						case map[string]interface{}:
-							for _, innerCond := range cond {
-								if _, isMap := innerCond.(map[string]interface{}); isMap {
-									hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
-										Root: selectRequest.Root,
-										Field: request.Field{
-											Name: topKey,
-										},
-									})
-									break
-								}
-							}
-						}
-					}
-				}
+				mapAggregateNestedTargets(target, hostSelectRequest, selectRequest.Root)
 
 				childMapping, childDesc, err := getTopLevelInfo(descriptionsRepo, hostSelectRequest, childCollectionName)
 				if err != nil {
@@ -370,6 +340,40 @@ func resolveAggregates(
 	}
 
 	return fields, nil
+}
+
+func mapAggregateNestedTargets(target *aggregateRequestTarget, hostSelectRequest *request.Select, selectionType request.SelectionType) {
+	if target.order.HasValue() {
+		for _, cond := range target.order.Value().Conditions {
+			if len(cond.Fields) > 1 {
+				hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
+					Root: selectionType,
+					Field: request.Field{
+						Name: cond.Fields[0],
+					},
+				})
+			}
+		}
+	}
+
+	if target.filter.HasValue() {
+		for topKey, topCond := range target.filter.Value().Conditions {
+			switch cond := topCond.(type) {
+			case map[string]interface{}:
+				for _, innerCond := range cond {
+					if _, isMap := innerCond.(map[string]interface{}); isMap {
+						hostSelectRequest.Fields = append(hostSelectRequest.Fields, &request.Select{
+							Root: selectionType,
+							Field: request.Field{
+								Name: topKey,
+							},
+						})
+						break
+					}
+				}
+			}
+		}
+	}
 }
 
 func fieldAt(fields []Requestable, index int) Requestable {
