@@ -20,6 +20,27 @@ import (
 )
 
 type DB interface {
+	Store
+
+	NewTxn(context.Context, bool) (datastore.Txn, error)
+	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
+
+	Root() datastore.RootStore
+	Blockstore() blockstore.Blockstore
+
+	Close(context.Context)
+
+	Events() events.Events
+
+	MaxTxnRetries() int
+
+	PrintDump(ctx context.Context) error
+}
+
+type Store interface {
+	// P2P holds the P2P related methods that must be implemented by the database.
+	P2P
+
 	AddSchema(context.Context, string) error
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
@@ -61,23 +82,8 @@ type DB interface {
 	GetAllCollections(context.Context) ([]Collection, error)
 	GetAllCollectionsTxn(context.Context, datastore.Txn) ([]Collection, error)
 
-	Root() datastore.RootStore
-	Blockstore() blockstore.Blockstore
-
-	NewTxn(context.Context, bool) (datastore.Txn, error)
-	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
 	ExecRequest(context.Context, string) *RequestResult
 	ExecTransactionalRequest(context.Context, string, datastore.Txn) *RequestResult
-	Close(context.Context)
-
-	Events() events.Events
-
-	MaxTxnRetries() int
-
-	PrintDump(ctx context.Context) error
-
-	// P2P holds the P2P related methods that must be implemented by the database.
-	P2P
 }
 
 type GQLResult struct {
