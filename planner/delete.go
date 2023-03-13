@@ -93,7 +93,7 @@ func (n *deleteNode) Explain() (map[string]any, error) {
 }
 
 func (p *Planner) DeleteDocs(parsed *mapper.Mutation) (planNode, error) {
-	col, err := p.db.GetCollectionByNameTxn(p.ctx, p.txn, parsed.Name)
+	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,8 @@ type DB interface {
 
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
+	// WithTxn returns a new [client.Store] that respects the given transaction.
+	WithTxn(datastore.Txn) Store
 
 	Root() datastore.RootStore
 	Blockstore() blockstore.Blockstore
@@ -57,33 +59,28 @@ type Store interface {
 	PatchSchema(context.Context, string) error
 
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)
-	CreateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (Collection, error)
 
-	// UpdateCollectionTxn updates the persisted collection description matching the name of the given
+	// UpdateCollection updates the persisted collection description matching the name of the given
 	// description, to the values in the given description.
 	//
-	// It will validate the given description using [ValidateUpdateCollectionTxn] before updating it.
+	// It will validate the given description using [ValidateUpdateCollection] before updating it.
 	//
 	// The collection (including the schema version ID) will only be updated if any changes have actually
 	// been made, if the given description matches the current persisted description then no changes will be
 	// applied.
-	UpdateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (Collection, error)
+	UpdateCollection(context.Context, CollectionDescription) (Collection, error)
 
-	// ValidateUpdateCollectionTxn validates that the given collection description is a valid update.
+	// ValidateUpdateCollection validates that the given collection description is a valid update.
 	//
 	// Will return true if the given desctiption differs from the current persisted state of the
 	// collection. Will return an error if it fails validation.
-	ValidateUpdateCollectionTxn(context.Context, datastore.Txn, CollectionDescription) (bool, error)
+	ValidateUpdateCollection(context.Context, CollectionDescription) (bool, error)
 
 	GetCollectionByName(context.Context, string) (Collection, error)
-	GetCollectionByNameTxn(context.Context, datastore.Txn, string) (Collection, error)
 	GetCollectionBySchemaID(context.Context, string) (Collection, error)
-	GetCollectionBySchemaIDTxn(context.Context, datastore.Txn, string) (Collection, error)
 	GetAllCollections(context.Context) ([]Collection, error)
-	GetAllCollectionsTxn(context.Context, datastore.Txn) ([]Collection, error)
 
 	ExecRequest(context.Context, string) *RequestResult
-	ExecTransactionalRequest(context.Context, string, datastore.Txn) *RequestResult
 }
 
 type GQLResult struct {

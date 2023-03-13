@@ -56,7 +56,7 @@ func (db *db) handleSubscription(
 			continue
 		}
 
-		p := planner.New(ctx, db, txn)
+		p := planner.New(ctx, db.WithTxn(txn), txn)
 
 		s := r.ToSelect(evt.DocKey, evt.Cid.String())
 
