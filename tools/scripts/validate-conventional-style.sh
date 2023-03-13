@@ -18,7 +18,9 @@ readonly -a VALID_LABELS=("chore"
                           "perf"
                           "refactor"
                           "test"
-                          "tools");
+                          "tools"
+                          "deps"
+                          "deps(bot)");
 
 if [ "${#}" -ne 1 ]; then
     printf "Error: Invalid number of arguments (pass title as 1 string argument).\n";
