@@ -229,18 +229,28 @@ func configureReplicator(
 
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
+	docIDsSyncedToSource := map[int]struct{}{}
 	waitIndex := 0
+	currentdocID := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case CreateDoc:
+			if !action.NodeID.HasValue() || action.NodeID.Value() == cfg.SourceNodeID {
+				docIDsSyncedToSource[currentdocID] = struct{}{}
+			}
+
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}
 
+			currentdocID++
+
 		case UpdateDoc:
-			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
+			if _, shouldSyncFromTarget := docIDsSyncedToSource[action.DocID]; shouldSyncFromTarget &&
+				action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
 				targetToSourceEvents[waitIndex] += 1
 			}
+
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
 				sourceToTargetEvents[waitIndex] += 1
 			}

@@ -127,3 +127,64 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// This document is created in all nodes
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				// This document is created in the second node (target) only
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Name": "Fred",
+					"Age": 40
+				}`,
+			},
+			testUtils.UpdateDoc{
+				// Update Fred's Age
+				NodeID: immutable.Some(1),
+				DocID:  1,
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Assert that the target node only contains John
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Name
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
