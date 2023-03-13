@@ -13,70 +13,94 @@ package peer_replicator_test
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestP2PPeerReplicatorWithCreate(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		NodeReplicators: map[int][]int{
-			0: {
-				2,
-			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			0: {
-				0: `{
+			testUtils.CreateDoc{
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					1: `{
-						"Name": "Shahzad",
-						"Age": 3000
-					}`,
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "Shahzad",
+					"Age": 3000
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+					{
+						"Age": uint64(3000),
+					},
 				},
 			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(21),
-				},
-				1: {
-					"Age": uint64(3000),
-				},
-			},
-			1: {
-				0: {
-					"Age": uint64(21),
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
 				},
 			},
-			2: {
-				0: {
-					"Age": uint64(21),
-				},
-				1: {
-					"Age": uint64(3000),
+			testUtils.Request{
+				NodeID: immutable.Some(2),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+					{
+						"Age": uint64(3000),
+					},
 				},
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

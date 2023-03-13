@@ -227,30 +227,25 @@ func BackfillBenchmarkDB(
 	}
 }
 
-type dbInfo interface {
-	Rootstore() ds.Batching
-	DB() client.DB
-}
-
 func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
-	return dbi.DB(), err
+	return dbi, err
 }
 
 func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
-	return dbi.Rootstore(), err
+	return dbi.Root(), err
 }
 
-func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
-	var dbi dbInfo
+func newBenchStoreInfo(ctx context.Context, t testing.TB) (client.DB, error) {
+	var db client.DB
 	var err error
 
 	switch storage {
 	case "memory":
-		dbi, err = testutils.NewBadgerMemoryDB(ctx)
+		db, err = testutils.NewBadgerMemoryDB(ctx)
 	case "badger":
-		dbi, err = testutils.NewBadgerFileDB(ctx, t)
+		db, err = testutils.NewBadgerFileDB(ctx, t)
 	default:
 		return nil, errors.New(fmt.Sprintf("invalid storage engine backend: %s", storage))
 	}
@@ -258,5 +253,5 @@ func newBenchStoreInfo(ctx context.Context, t testing.TB) (dbInfo, error) {
 	if err != nil {
 		return nil, errors.Wrap("failed to create storage backend", err)
 	}
-	return dbi, err
+	return db, err
 }

@@ -137,6 +137,9 @@ func NewPeer(
 
 // Start all the internal workers/goroutines/loops that manage the P2P state.
 func (p *Peer) Start() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	p2plistener, err := gostream.Listen(p.host, corenet.Protocol)
 	if err != nil {
 		return err
@@ -678,7 +681,11 @@ func (p *Peer) pushLogToReplicators(ctx context.Context, lg events.Update) {
 		peers[peer.String()] = struct{}{}
 	}
 
-	if reps, exists := p.replicators[lg.SchemaID]; exists {
+	p.mu.Lock()
+	reps, exists := p.replicators[lg.SchemaID]
+	p.mu.Unlock()
+
+	if exists {
 		for pid := range reps {
 			// Don't push if pid is in the list of peers for the topic.
 			// It will be handled by the pubsub system.

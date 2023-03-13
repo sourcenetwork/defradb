@@ -72,15 +72,12 @@ type P2PTestCase struct {
 
 func setupDefraNode(t *testing.T, cfg *config.Config, seeds []string) (*node.Node, []client.DocKey, error) {
 	ctx := context.Background()
-	var err error
 
 	log.Info(ctx, "Building new memory store")
-	dbi, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
+	db, err := testutils.NewBadgerMemoryDB(ctx, coreDB.WithUpdateEvents())
 	if err != nil {
 		return nil, nil, err
 	}
-
-	db := dbi.DB()
 
 	if err := seedSchema(ctx, db); err != nil {
 		return nil, nil, err
