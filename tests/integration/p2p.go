@@ -61,12 +61,13 @@ type ConfigureReplicator struct {
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
 //
-// Any peers connected to this node in the network will have all document changes synced to
-// them from this node.
+// Changes made to subscribed collections in peers connected to this node will be synced from
+// them to this node.
 type SubscribeToCollection struct {
 	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
-	// Changes made in this node to the given collection will be synced to peers in the network.
+	// Changes made to subscribed collections in peers connected to this node will be synced from
+	// them to this node.
 	NodeID int
 
 	// CollectionID is the collection ID (index) of the collection to subscribe to.
