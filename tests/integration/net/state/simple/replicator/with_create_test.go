@@ -63,6 +63,51 @@ func TestP2POneToOneReplicator(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
+func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Create John on the first (source) node only
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			// Once configured the replicator should sync existing documents
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
 func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
