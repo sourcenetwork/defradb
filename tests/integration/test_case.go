@@ -10,6 +10,12 @@
 
 package tests
 
+import (
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/config"
+)
+
 // TestCase contains the details of the test case to execute.
 type TestCase struct {
 	// Test description, optional.
@@ -28,8 +34,25 @@ type TestCase struct {
 // the first item that is neither a SchemaUpdate, CreateDoc or UpdateDoc action.
 type SetupComplete struct{}
 
+// ConfigureNode allows the explicit configuration of new Defra nodes.
+//
+// If no nodes are explicitly configured, a default one will be setup.  There is no
+// upper limit to the number that can be configured.
+//
+// Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
+// If the action has a `NodeID` property and it is not specified, the action will be
+// effected on all nodes.
+type ConfigureNode struct {
+	config.Config
+}
+
 // SchemaUpdate is an action that will update the database schema.
 type SchemaUpdate struct {
+	// NodeID may hold the ID (index) of a node to apply this update to.
+	//
+	// If a value is not provided the update will be applied to all nodes.
+	NodeID immutable.Option[int]
+
 	// The schema update.
 	Schema string
 
@@ -41,6 +64,11 @@ type SchemaUpdate struct {
 }
 
 type SchemaPatch struct {
+	// NodeID may hold the ID (index) of a node to apply this patch to.
+	//
+	// If a value is not provided the patch will be applied to all nodes.
+	NodeID immutable.Option[int]
+
 	Patch         string
 	ExpectedError string
 }
@@ -48,6 +76,11 @@ type SchemaPatch struct {
 // CreateDoc will attempt to create the given document in the given collection
 // using the collection api.
 type CreateDoc struct {
+	// NodeID may hold the ID (index) of a node to apply this create to.
+	//
+	// If a value is not provided the document will be created in all nodes.
+	NodeID immutable.Option[int]
+
 	// The collection in which this document should be created.
 	CollectionID int
 
@@ -64,6 +97,11 @@ type CreateDoc struct {
 // UpdateDoc will attempt to update the given document in the given collection
 // using the collection api.
 type UpdateDoc struct {
+	// NodeID may hold the ID (index) of a node to apply this update to.
+	//
+	// If a value is not provided the update will be applied to all nodes.
+	NodeID immutable.Option[int]
+
 	// The collection in which this document exists.
 	CollectionID int
 
@@ -85,6 +123,12 @@ type UpdateDoc struct {
 
 // Request represents a standard Defra (GQL) request.
 type Request struct {
+	// NodeID may hold the ID (index) of a node to execute this request on.
+	//
+	// If a value is not provided the request will be executed against all nodes,
+	// in which case the expected results must all match across all nodes.
+	NodeID immutable.Option[int]
+
 	// The request to execute.
 	Request string
 

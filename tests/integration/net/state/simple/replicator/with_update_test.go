@@ -13,106 +13,111 @@ package replicator
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodeReplicators: map[int][]int{
-			0: {
-				1,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			// This document is created in all nodes before the replicator is set up.
-			// Updates should be synced across nodes.
-			0: {
-				0: `{
+			testUtils.CreateDoc{
+				// This document is created in first node before the replicator is set up.
+				// Updates should be synced across nodes.
+				NodeID: immutable.Some(0),
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-		},
-		Updates: map[int]map[int]map[int][]string{
-			0: {
-				0: {
-					0: {
-						`{
-							"Age": 60
-						}`,
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the first node only, and allow the value to sync
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(60),
 					},
-				},
-			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(60),
-				},
-			},
-			1: {
-				0: {
-					"Age": uint64(60),
 				},
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesInversed(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodeReplicators: map[int][]int{
-			0: {
-				1,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			// This document is created in all nodes before the replicator is set up.
-			// Updates should be synced across nodes.
-			0: {
-				0: `{
+			testUtils.CreateDoc{
+				// This document is created in second node before the replicator is set up.
+				// Updates should be synced across nodes.
+				NodeID: immutable.Some(1),
+				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-		},
-		Updates: map[int]map[int]map[int][]string{
-			// Note: The update is applied to the target node (not source) specified in the config.
-			1: {
-				0: {
-					0: {
-						`{
-						"Age": 60
-					}`,
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.UpdateDoc{
+				// Update John's Age on the second node only, and allow the value to sync
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(60),
 					},
-				},
-			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(60),
-				},
-			},
-			1: {
-				0: {
-					"Age": uint64(60),
 				},
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }

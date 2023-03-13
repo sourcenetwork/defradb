@@ -11,12 +11,7 @@
 package tests
 
 import (
-	"context"
 	"testing"
-
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 // Represents a request assigned to a particular transaction.
@@ -144,71 +139,4 @@ func ExecuteRequestTestCase(
 			Actions:     actions,
 		},
 	)
-}
-
-// SetupDatabase is persisted for the sake of the explain tests as they use a different
-// test executor that calls this function.
-func SetupDatabase(
-	ctx context.Context,
-	t *testing.T,
-	dbi databaseInfo,
-	schema string,
-	collectionNames []string,
-	description string,
-	expectedError string,
-	documents map[int][]string,
-	updates immutable.Option[map[int]map[int][]string],
-) {
-	db := dbi.db
-	err := db.AddSchema(ctx, schema)
-	if AssertError(t, description, err, expectedError) {
-		return
-	}
-
-	collections := []client.Collection{}
-	for _, collectionName := range collectionNames {
-		col, err := db.GetCollectionByName(ctx, collectionName)
-		if AssertError(t, description, err, expectedError) {
-			return
-		}
-		collections = append(collections, col)
-	}
-
-	// insert docs
-	for collectionIndex, docs := range documents {
-		hasCollectionUpdates := false
-		collectionUpdates := map[int][]string{}
-
-		if updates.HasValue() {
-			collectionUpdates, hasCollectionUpdates = updates.Value()[collectionIndex]
-		}
-
-		for documentIndex, docStr := range docs {
-			doc, err := client.NewDocFromJSON([]byte(docStr))
-			if AssertError(t, description, err, expectedError) {
-				return
-			}
-			err = collections[collectionIndex].Save(ctx, doc)
-			if AssertError(t, description, err, expectedError) {
-				return
-			}
-
-			if hasCollectionUpdates {
-				documentUpdates, hasDocumentUpdates := collectionUpdates[documentIndex]
-
-				if hasDocumentUpdates {
-					for _, u := range documentUpdates {
-						err = doc.SetWithJSON([]byte(u))
-						if AssertError(t, description, err, expectedError) {
-							return
-						}
-						err = collections[collectionIndex].Save(ctx, doc)
-						if AssertError(t, description, err, expectedError) {
-							return
-						}
-					}
-				}
-			}
-		}
-	}
 }

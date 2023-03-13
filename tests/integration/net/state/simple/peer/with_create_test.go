@@ -13,139 +13,176 @@ package peer_test
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/config"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/net/state"
-	"github.com/sourcenetwork/defradb/tests/integration/net/state/simple"
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestP2PCreateDoesNotSync(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			0: {
-				0: `{
+			testUtils.CreateDoc{
+				// Create Shahzad on all nodes
+				Doc: `{
 					"Name": "Shahzad",
 					"Age": 300
 				}`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					1: `{
-						"Name": "John",
-						"Age": 21
-					}`,
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+					{
+						"Age": uint64(300),
+					},
 				},
 			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(300),
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(300),
+					},
+					// Peer sync should not sync new documents to nodes
 				},
-				1: {
-					"Age": uint64(21),
-				},
-			},
-			1: {
-				0: {
-					"Age": uint64(300),
-				},
-				// Peer sync should not sync new documents to nodes
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
 // TestP2PCreateWithP2PCollection ensures that created documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
 func TestP2PCreateWithP2PCollection(t *testing.T) {
-	test := testUtils.P2PTestCase{
-		NodeConfig: []*config.Config{
+	test := testUtils.TestCase{
+		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-		},
-		NodePeers: map[int][]int{
-			1: {
-				0,
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
 			},
-		},
-		NodeP2PCollection: map[int][]int{
-			1: {
-				0,
-			},
-		},
-		SeedDocuments: map[int]map[int]string{
-			0: {
-				0: `{
+			testUtils.CreateDoc{
+				// Create Shahzad on all nodes
+				Doc: `{
 					"Name": "Shahzad",
 					"Age": 30
 				}`,
 			},
-		},
-		Creates: map[int]map[int]map[int]string{
-			0: {
-				0: {
-					1: `{
-						"Name": "John",
-						"Age": 21
-					}`,
-					2: `{
-						"Name": "Addo",
-						"Age": 28
-					}`,
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:       1,
+				CollectionID: 0,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "Addo",
+					"Age": 28
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Name": "Fred",
+					"Age": 31
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+					{
+						"Age": uint64(30),
+					},
+					{
+						"Age": uint64(28),
+					},
+					// Peer sync should not sync new documents to nodes that is not subscribed
+					// to the P2P collection.
 				},
 			},
-			1: {
-				0: {
-					3: `{
-						"Name": "Fred",
-						"Age": 31
-					}`,
-				},
-			},
-		},
-		Results: map[int]map[int]map[string]any{
-			0: {
-				0: {
-					"Age": uint64(30),
-				},
-				1: {
-					"Age": uint64(21),
-				},
-				2: {
-					"Age": uint64(28),
-				},
-				// Peer sync should not sync new documents to nodes that is not subscribed
-				// to the P2P collection.
-			},
-			1: {
-				0: {
-					"Age": uint64(30),
-				},
-				1: {
-					"Age": uint64(21),
-				},
-				2: {
-					"Age": uint64(28),
-				},
-				3: {
-					"Age": uint64(31),
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(21),
+					},
+					{
+						"Age": uint64(31),
+					},
+					{
+						"Age": uint64(30),
+					},
+					{
+						"Age": uint64(28),
+					},
 				},
 			},
 		},
 	}
 
-	simple.ExecuteTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
