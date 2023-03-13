@@ -32,7 +32,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 				`,
 			},
 			testUtils.CreateDoc{
-				// This document is created in all nodes before the replicator is set up.
+				// This document is created in first node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -84,7 +84,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 				`,
 			},
 			testUtils.CreateDoc{
-				// This document is created in all nodes before the replicator is set up.
+				// This document is created in second node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -97,7 +97,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 				TargetNodeID: 0,
 			},
 			testUtils.UpdateDoc{
-				// Update John's Age on the first node only, and allow the value to sync
+				// Update John's Age on the second node only, and allow the value to sync
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Age": 60
