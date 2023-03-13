@@ -30,9 +30,9 @@ fi
 TITLE=${1};
 IS_DEPENDABOT=false;
 
-# In case the title is known to be from dependabot, then we skip the title validation.
+# In case the title is known to be from dependabot, then we skip the length-related title validation.
 if [[ "${TITLE}" == *"Bump"* ]]; then
-    printf "Info: Title is from dependabot, skipping title validation.\n";
+    printf "Info: Title is from dependabot, skipping length-related title validation.\n";
     IS_DEPENDABOT=true;
 fi
 
