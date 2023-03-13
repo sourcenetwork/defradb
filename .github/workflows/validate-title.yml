@@ -24,8 +24,6 @@ jobs:
   validate-title:
     name: Validate title job
 
-    if: github.actor != 'dependabot[bot]'
-
     runs-on: ubuntu-latest
 
     steps:

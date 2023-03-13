@@ -26,9 +26,17 @@ if [ "${#}" -ne 1 ]; then
 fi
 
 TITLE=${1};
+IS_DEPENDABOT=false;
+
+# In case the title is known to be from dependabot, then we skip the title validation.
+if [[ "${TITLE}" == *"Bump"* ]]; then
+    printf "Info: Title is from dependabot, skipping title validation.\n";
+    IS_DEPENDABOT=true;
+    exit 0;
+fi
 
 # Validate that the entire length of the title is less than or equal to our character limit.
-if [ "${#TITLE}" -gt 60 ]; then
+if [ "${#TITLE}" -gt 60 ] && [ "${IS_DEPENDABOT}" = false ]; then
     printf "Error: The length of the title is too long (should be 60 or less).\n";
     exit 3;
 fi

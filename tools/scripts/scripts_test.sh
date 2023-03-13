@@ -47,3 +47,7 @@ TestReturnCode "${T1} 'perf: This is a valid title'" 0;
 TestReturnCode "${T1} 'refactor: This is a valid title'" 0;
 TestReturnCode "${T1} 'test: This is a valid title'" 0;
 TestReturnCode "${T1} 'tools: This is a valid title'" 0;
+TestReturnCode "${T1} 'deps: Bump github.com/alternativesourcenetwork/defradb from 1.1.0.1.0.0 to 1.1.0.1.0.1'" 0
+TestReturnCode "${T1} 'chore: Bump github.com/alternativesourcenetwork/defradb from 1.1.0.1.0.0 to 1.1.0.1.0.1'" 0
+TestReturnCode "${T1} 'deps(bot): Bump github.com/alternativesourcenetwork/defradb from 1.1.0.1.0.0 to 1.1.0.1.0.1'" 0
+TestReturnCode "${T1} 'deps: Update dependencies manually github.com/thisistoolong/topass from 1.1.0.1 1.0.1.2'" 3
