@@ -279,13 +279,13 @@ func ExecuteTestCase(
 	}
 
 	ctx := context.Background()
-	dbs := GetDatabaseTypes()
+	dbts := GetDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
-	require.NotEmpty(t, dbs)
+	require.NotEmpty(t, dbts)
 
-	for _, db := range dbs {
-		executeTestCase(ctx, t, collectionNames, testCase, db)
+	for _, dbt := range dbts {
+		executeTestCase(ctx, t, collectionNames, testCase, dbt)
 	}
 }
 
