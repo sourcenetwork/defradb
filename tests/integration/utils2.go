@@ -299,6 +299,7 @@ func executeTestCase(
 	var done bool
 	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
+	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
 	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
@@ -396,7 +397,7 @@ func executeTestCase(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout):
-			assert.Fail(t, "timeout occured while waiting for data stream", testCase.Description)
+			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
 
@@ -432,6 +433,80 @@ func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Col
 	return [][]client.Collection{collections[nodeID.Value()]}
 }
 
+func calculateLenForFlattenedActions(testCase *TestCase) int {
+	newLen := 0
+	for i := range testCase.Actions {
+		switch action := testCase.Actions[i].(type) {
+		case []SchemaUpdate:
+			newLen += len(action)
+		case []SchemaPatch:
+			newLen += len(action)
+		case []CreateDoc:
+			newLen += len(action)
+		case []UpdateDoc:
+			newLen += len(action)
+		case []Request:
+			newLen += len(action)
+		case []TransactionRequest:
+			newLen += len(action)
+		case []TransactionRequest2:
+			newLen += len(action)
+		case []TransactionCommit:
+			newLen += len(action)
+		default:
+			newLen++
+		}
+	}
+	return newLen
+}
+
+func flattenActions(testCase *TestCase) {
+	newLen := calculateLenForFlattenedActions(testCase)
+	if newLen == len(testCase.Actions) {
+		return
+	}
+	newActions := make([]any, 0, newLen)
+	for i := range testCase.Actions {
+		switch action := testCase.Actions[i].(type) {
+		case []SchemaUpdate:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []SchemaPatch:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []CreateDoc:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []UpdateDoc:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []Request:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionRequest:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionRequest2:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionCommit:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		default:
+			newActions = append(newActions, action)
+		}
+	}
+	testCase.Actions = newActions
+}
+
 // getActionRange returns the index of the first action to be run, and the last.
 //
 // Not all processes will run all actions - if this is a change detector run they
@@ -455,7 +530,7 @@ ActionLoop:
 		switch testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
-			// We dont care about anything else if this has been explicitly provided
+			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
 		case SchemaUpdate, CreateDoc, UpdateDoc:
@@ -973,7 +1048,7 @@ func AssertErrors(
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
 			if !strings.Contains(errorString, expectedError) {
-				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
+				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
 				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
