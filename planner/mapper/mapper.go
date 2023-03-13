@@ -344,8 +344,11 @@ func resolveAggregates(
 	return fields, nil
 }
 
-func mapAggregateNestedTargets(target *aggregateRequestTarget,
-	hostSelectRequest *request.Select, selectionType request.SelectionType) {
+func mapAggregateNestedTargets(
+	target *aggregateRequestTarget,
+	hostSelectRequest *request.Select,
+	selectionType request.SelectionType,
+) {
 	if target.order.HasValue() {
 		for _, cond := range target.order.Value().Conditions {
 			if len(cond.Fields) > 1 {
@@ -816,8 +819,11 @@ func resolveInnerFilterDependencies(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [CommitSelect].
-func ToCommitSelect(ctx context.Context,
-	txn datastore.Txn, selectRequest *request.CommitSelect) (*CommitSelect, error) {
+func ToCommitSelect(
+	ctx context.Context,
+	txn datastore.Txn,
+	selectRequest *request.CommitSelect,
+) (*CommitSelect, error) {
 	underlyingSelect, err := ToSelect(ctx, txn, selectRequest.ToSelect())
 	if err != nil {
 		return nil, err
