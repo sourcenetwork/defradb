@@ -32,7 +32,6 @@ IS_DEPENDABOT=false;
 if [[ "${TITLE}" == *"Bump"* ]]; then
     printf "Info: Title is from dependabot, skipping title validation.\n";
     IS_DEPENDABOT=true;
-    exit 0;
 fi
 
 # Validate that the entire length of the title is less than or equal to our character limit.
