@@ -268,9 +268,8 @@ func subscribeToCollection(
 	require.NoError(t, err)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
-	// for the pubsub subscription and those functions can take a bit of time to complete.
-	// Since it is possible to get to the create and update functions bellow before the subscription
-	// completes, we add a 100ms sleep to ensure the subsciption has time to finish.
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
 }
 
