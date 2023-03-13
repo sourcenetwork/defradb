@@ -70,3 +70,60 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				// This document is created in node `0` after the replicator has
+				// been set up. Its creation and future updates should be synced
+				// across all configured nodes.
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			// Wait for John to be synced to the target before attempting to update
+			// it.
+			testUtils.WaitForSync{},
+			testUtils.UpdateDoc{
+				// Update John's Age on the seond node only, and allow the value to sync
+				// back to the original node that created the document.
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 60
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Age": uint64(60),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

@@ -50,7 +50,9 @@ type ConnectPeers struct {
 // two nodes.
 //
 // All document changes made in the source node will be synced to the target node.
-// Changes made in the target node will not be synced to the source node.
+// New documents created in the target node will not be synced to the source node,
+// however updates in the target node to documents synced from the source node will
+// be synced back to the source node.
 type ConfigureReplicator struct {
 	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
 	SourceNodeID int
@@ -125,8 +127,9 @@ func connectPeers(
 		}
 	}
 
-	sourceToTargetEvents := 0
-	targetToSourceEvents := 0
+	sourceToTargetEvents := []int{0}
+	targetToSourceEvents := []int{0}
+	waitIndex := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case CreateDoc:
@@ -139,7 +142,7 @@ func connectPeers(
 			if (!action.NodeID.HasValue() ||
 				action.NodeID.Value() == cfg.TargetNodeID) &&
 				targetCollectionSubscribed {
-				sourceToTargetEvents += 1
+				sourceToTargetEvents[waitIndex] += 1
 			}
 
 			// Peers sync trigger sync events for documents that exist prior to configuration, even if they already
@@ -148,31 +151,38 @@ func connectPeers(
 			if (!action.NodeID.HasValue() ||
 				action.NodeID.Value() == cfg.SourceNodeID) &&
 				sourceCollectionSubscribed {
-				targetToSourceEvents += 1
+				targetToSourceEvents[waitIndex] += 1
 			}
 
 		case UpdateDoc:
 			// Updates to existing docs should always sync (no-sub required)
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents += 1
+				targetToSourceEvents[waitIndex] += 1
 			}
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents += 1
+				sourceToTargetEvents[waitIndex] += 1
 			}
+
+		case WaitForSync:
+			waitIndex += 1
+			targetToSourceEvents = append(targetToSourceEvents, 0)
+			sourceToTargetEvents = append(sourceToTargetEvents, 0)
 		}
 	}
 
 	nodeSynced := make(chan struct{})
 	go func() {
-		for i := 0; i < targetToSourceEvents; i++ {
-			err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
-			require.NoError(t, err)
+		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
+			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				require.NoError(t, err)
+			}
+			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				require.NoError(t, err)
+			}
+			nodeSynced <- struct{}{}
 		}
-		for i := 0; i < sourceToTargetEvents; i++ {
-			err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
-			require.NoError(t, err)
-		}
-		nodeSynced <- struct{}{}
 	}()
 
 	return nodeSynced
@@ -217,36 +227,44 @@ func configureReplicator(
 	_, err = sourceNode.Peer.SetReplicator(ctx, addr)
 	require.NoError(t, err)
 
-	sourceToTargetEvents := 0
-	targetToSourceEvents := 0
+	sourceToTargetEvents := []int{0}
+	targetToSourceEvents := []int{0}
+	waitIndex := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
 		case CreateDoc:
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents += 1
+				sourceToTargetEvents[waitIndex] += 1
 			}
 
 		case UpdateDoc:
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.TargetNodeID {
-				targetToSourceEvents += 1
+				targetToSourceEvents[waitIndex] += 1
 			}
 			if action.NodeID.HasValue() && action.NodeID.Value() == cfg.SourceNodeID {
-				sourceToTargetEvents += 1
+				sourceToTargetEvents[waitIndex] += 1
 			}
+
+		case WaitForSync:
+			waitIndex += 1
+			targetToSourceEvents = append(targetToSourceEvents, 0)
+			sourceToTargetEvents = append(sourceToTargetEvents, 0)
 		}
 	}
 
 	nodeSynced := make(chan struct{})
 	go func() {
-		for i := 0; i < targetToSourceEvents; i++ {
-			err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
-			require.NoError(t, err)
+		for waitIndex := 0; waitIndex < len(sourceToTargetEvents); waitIndex++ {
+			for i := 0; i < targetToSourceEvents[waitIndex]; i++ {
+				err := sourceNode.WaitForPushLogByPeerEvent(targetNode.PeerID())
+				require.NoError(t, err)
+			}
+			for i := 0; i < sourceToTargetEvents[waitIndex]; i++ {
+				err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
+				require.NoError(t, err)
+			}
+			nodeSynced <- struct{}{}
 		}
-		for i := 0; i < sourceToTargetEvents; i++ {
-			err := targetNode.WaitForPushLogByPeerEvent(sourceNode.PeerID())
-			require.NoError(t, err)
-		}
-		nodeSynced <- struct{}{}
 	}()
 
 	return nodeSynced
