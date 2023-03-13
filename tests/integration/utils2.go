@@ -365,17 +365,8 @@ func executeTestCase(
 		}
 	}
 
-	if len(resultsChans) > 0 {
-		// Once all other actions have been completed, sleep.
-		// This is a lazy way to allow the subscription to recieve
-		// the events generated, and to ensure that no more than are
-		// expected are recieved. It should probably be done in a better
-		// way than this at somepoint, but is good enough for now.
-		time.Sleep(subscriptionTimeout)
-
-		// Notify any active subscriptions that all requests have been sent.
-		close(allActionsDone)
-	}
+	// Notify any active subscriptions that all requests have been sent.
+	close(allActionsDone)
 
 	for _, resultsChan := range resultsChans {
 		select {
@@ -714,6 +705,8 @@ func executeSubscriptionRequest(
 		data := []map[string]any{}
 		errs := []any{}
 
+		allActionsAreDone := false
+		expectedDataRecieved := len(action.Results) == 0
 		stream := result.Pub.Stream()
 		for {
 			select {
@@ -723,7 +716,15 @@ func executeSubscriptionRequest(
 				errs = append(errs, sResult.Errors...)
 				data = append(data, sData...)
 
+				if len(data) >= len(action.Results) {
+					expectedDataRecieved = true
+				}
+
 			case <-allActionsDone:
+				allActionsAreDone = true
+			}
+
+			if expectedDataRecieved && allActionsAreDone {
 				finalResult := &client.GQLResult{
 					Data:   data,
 					Errors: errs,
