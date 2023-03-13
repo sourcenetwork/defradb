@@ -108,3 +108,84 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "1-N-1 sums of deep filter subtypes of both descending and ascending.",
+
+		Request: `query {
+		    Author {
+				name
+			    s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
+				s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_ge: 2020}}}})
+			}
+		}`,
+
+		Docs: getDocsQueriesWith6BooksAnd5Publishers(),
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				// 'Theif Lord' (4.8 rating) 2020, then 'A Time for Mercy' 2013 (4.5 rating).
+				"s1": 4.5,
+				// 'The Associate' as it has no publisher (4.2 rating), then 'Painted House' 1995 (4.9 rating).
+				"s2": 4.8,
+			},
+			{
+				"name": "Not a Writer",
+				"s1":   0.0,
+				"s2":   0.0,
+			},
+			{
+				"name": "Cornelia Funke",
+				"s1":   0.0,
+				"s2":   4.0,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "1-N-1 sum of deep filter subtypes and non-sum deep filter",
+		Request: `query {
+		    Author {
+				name
+			    s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
+ 				Publishers2020: book(filter: {publisher: {yearOpened: {_ge: 2020}}}) {
+ 					name
+ 				}
+			}
+		}`,
+
+		Docs: getDocsQueriesWith6BooksAnd5Publishers(),
+		Results: []map[string]any{
+			{
+				"name": "John Grisham",
+				"s1":   4.5,
+				"Publishers2020": []map[string]any{
+					{
+						"name": "Theif Lord",
+					},
+				},
+			},
+			{
+				"name":           "Not a Writer",
+				"s1":             0.0,
+				"Publishers2020": []map[string]any{},
+			},
+			{
+				"name": "Cornelia Funke",
+				"s1":   0.0,
+				"Publishers2020": []map[string]any{
+					{
+						"name": "The Rooster Bar",
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
