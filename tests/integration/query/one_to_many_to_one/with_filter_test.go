@@ -20,9 +20,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many-to-one deep filter on rendered children.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -132,9 +130,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "1-N-1 sums of deep filter subtypes of both descending and ascending.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
@@ -174,9 +170,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 	test := testUtils.TestCase{
 		Description: "1-N-1 sum of deep filter subtypes and non-sum deep filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {

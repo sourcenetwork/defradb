@@ -14,30 +14,33 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var gqlSchemaOneToManyToOne = (`
-	type Author {
-		name: String
-		age: Int
-		verified: Boolean
-		favouritePageNumbers: [Int!]
-		book: [Book]
+func gqlSchemaOneToManyToOne() testUtils.SchemaUpdate {
+	return testUtils.SchemaUpdate{
+		Schema: (`
+			type Author {
+				name: String
+				age: Int
+				verified: Boolean
+				favouritePageNumbers: [Int!]
+				book: [Book]
+			}
+
+			type Book {
+				name: String
+				rating: Float
+				author: Author
+				publisher: Publisher
+			}
+
+			type Publisher {
+				name: String
+				address: String
+				yearOpened: Int
+				book: Book @primary
+			}
+		`),
 	}
-
-	type Book {
-		name: String
-		rating: Float
-		author: Author
-        publisher: Publisher
-	}
-
-    type Publisher {
-        name: String
-        address: String
-        yearOpened: Int
-        book: Book @primary
-    }
-
-`)
+}
 
 func createDocsWith6BooksAnd5Publishers() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{

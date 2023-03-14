@@ -20,9 +20,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "1-N-1 Query to ensure joins are linked properly.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,

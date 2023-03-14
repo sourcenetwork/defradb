@@ -20,9 +20,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 	test := testUtils.TestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, desc. directions.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
@@ -72,9 +70,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 	test := testUtils.TestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, asc. directions.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
@@ -127,9 +123,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
@@ -169,9 +163,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 	test := testUtils.TestCase{
 		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {

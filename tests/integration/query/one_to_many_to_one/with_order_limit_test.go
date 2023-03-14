@@ -20,9 +20,7 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "1-N-1 deep orderby subtypes of both descending and ascending.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: gqlSchemaOneToManyToOne,
-			},
+			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			testUtils.Request{
 				Request: `query {
