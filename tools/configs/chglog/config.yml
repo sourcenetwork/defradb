@@ -16,7 +16,7 @@ options:
         - test
         - ci
         - chore
-        - deps
+        - bot
   commit_groups:
     title_maps:
       feat: Features
@@ -27,7 +27,7 @@ options:
       refactor: Refactoring
       test: Testing
       ci: Continuous integration
-      deps: Dependencies
+      bot: Bot
     sort_by: Custom
     title_order:
       - feat
@@ -39,7 +39,7 @@ options:
       - test
       - ci
       - chore
-      - deps
+      - bot
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
     pattern_maps:
