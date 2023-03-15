@@ -32,10 +32,10 @@ TITLE=${1};
 IS_BOT=false;
 
 # Detect if title is prefixed with `bot`
-if [[ "${TITLE}" =~ ^"${BOTPREFIX}" ]]; then
+if [[ "${TITLE}" =~ ^"${BOTPREFIX}:" ]]; then
     printf "Info: Title is from a bot, skipping length-related title validation.\n";
     IS_BOT=true;
-fi
+fi  
 
 # Validate that the entire length of the title is less than or equal to our character limit.
 if [ "${#TITLE}" -gt 60 ] && [ "${IS_BOT}" = false ]; then
