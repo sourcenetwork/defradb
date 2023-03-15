@@ -118,20 +118,16 @@ func connectPeers(
 	time.Sleep(100 * time.Millisecond)
 
 	nodeCollections := map[int][]int{}
-	for _, a := range testCase.Actions {
-		switch action := a.(type) {
-		case SubscribeToCollection:
-			// Node collections must be populated before re-iterating through the full action set as
-			// documents created before the subscription must still be waited on.
-			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
-		}
-	}
-
 	sourceToTargetEvents := []int{0}
 	targetToSourceEvents := []int{0}
 	waitIndex := 0
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
+		case SubscribeToCollection:
+			// This is order dependent, items should be added in the same action-loop that reads them
+			// as 'stuff' done before collection subscription should not be synced.
+			nodeCollections[action.NodeID] = append(nodeCollections[action.NodeID], action.CollectionID)
+
 		case CreateDoc:
 			sourceCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.SourceNodeID, action.CollectionID)
 			targetCollectionSubscribed := collectionSubscribedTo(nodeCollections, cfg.TargetNodeID, action.CollectionID)
@@ -141,8 +137,8 @@ func connectPeers(
 			// created on the target.
 			if (!action.NodeID.HasValue() ||
 				action.NodeID.Value() == cfg.TargetNodeID) &&
-				targetCollectionSubscribed {
-				sourceToTargetEvents[waitIndex] += 1
+				sourceCollectionSubscribed {
+				targetToSourceEvents[waitIndex] += 1
 			}
 
 			// Peers sync trigger sync events for documents that exist prior to configuration, even if they already
@@ -150,8 +146,8 @@ func connectPeers(
 			// created on the source.
 			if (!action.NodeID.HasValue() ||
 				action.NodeID.Value() == cfg.SourceNodeID) &&
-				sourceCollectionSubscribed {
-				targetToSourceEvents[waitIndex] += 1
+				targetCollectionSubscribed {
+				sourceToTargetEvents[waitIndex] += 1
 			}
 
 		case UpdateDoc:
