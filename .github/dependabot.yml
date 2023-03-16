@@ -3,8 +3,8 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
+      prefix: "bot"

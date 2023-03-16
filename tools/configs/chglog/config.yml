@@ -5,12 +5,18 @@ info:
   repository_url: https://github.com/sourcenetwork/defradb
 options:
   commits:
-  filters:
-    Type:
-      - feat
-      - fix
-      - perf
-      - refactor
+    filters:
+      Type:
+        - feat
+        - fix
+        - tools
+        - docs
+        - perf
+        - refactor
+        - test
+        - ci
+        - chore
+        - bot
   commit_groups:
     title_maps:
       feat: Features
@@ -21,6 +27,7 @@ options:
       refactor: Refactoring
       test: Testing
       ci: Continuous integration
+      bot: Bot
     sort_by: Custom
     title_order:
       - feat
@@ -32,6 +39,7 @@ options:
       - test
       - ci
       - chore
+      - bot
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
     pattern_maps:
