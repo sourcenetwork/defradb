@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -98,7 +99,7 @@ func (n *orderNode) Value() core.Doc {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *orderNode) Explain() (map[string]any, error) {
+func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	orderings := []map[string]any{}
 
 	for _, element := range n.ordering {

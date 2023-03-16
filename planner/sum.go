@@ -151,7 +151,7 @@ func (n *sumNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *sumNode) Explain() (map[string]any, error) {
+func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {

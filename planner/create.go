@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/planner/mapper"
@@ -123,7 +124,7 @@ func (n *createNode) Source() planNode { return n.results }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *createNode) Explain() (map[string]any, error) {
+func (n *createNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	data := map[string]any{}
 	err := json.Unmarshal([]byte(n.newDocStr), &data)
 	if err != nil {

@@ -20,7 +20,9 @@ import (
 
 type explainablePlanNode interface {
 	planNode
-	Explain() (map[string]any, error)
+
+	// Explain returns the node scoped explain attributes (only used for simple explain as of now).
+	Explain(explainType request.ExplainType) (map[string]any, error)
 }
 
 // Compile time check for all planNodes that should be explainable (satisfy explainablePlanNode).
@@ -114,7 +116,7 @@ func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 	// For typeIndexJoin restructure the graphs to show both `root` and `subType` at the same level.
 	case *typeIndexJoin:
 		// Get the non-restructured explain graph.
-		indexJoinGraph, err := node.Explain()
+		indexJoinGraph, err := node.Explain(request.SimpleExplain)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +137,7 @@ func buildSimpleExplainGraph(source planNode) (map[string]any, error) {
 	// If this node has subscribed to the optable-interface that makes a node explainable.
 	case explainablePlanNode:
 		// Start building the explain graph.
-		explainGraphBuilder, err := node.Explain()
+		explainGraphBuilder, err := node.Explain(request.SimpleExplain)
 		if err != nil {
 			return nil, err
 		}

@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/connor"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
@@ -132,7 +133,7 @@ func (n *typeIndexJoin) Source() planNode { return n.joinPlan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *typeIndexJoin) Explain() (map[string]any, error) {
+func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any, error) {
 	const (
 		joinTypeLabel               = "joinType"
 		joinDirectionLabel          = "direction"

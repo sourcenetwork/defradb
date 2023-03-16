@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -62,7 +63,7 @@ func (n *countNode) Source() planNode { return n.plan }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *countNode) Explain() (map[string]any, error) {
+func (n *countNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	sourceExplanations := make([]map[string]any, len(n.aggregateMapping))
 
 	for i, source := range n.aggregateMapping {

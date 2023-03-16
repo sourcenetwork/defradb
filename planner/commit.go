@@ -120,7 +120,7 @@ func (n *dagScanNode) Source() planNode { return nil }
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *dagScanNode) Explain() (map[string]any, error) {
+func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	explainerMap := map[string]any{}
 
 	// Add the field attribute to the explanation if it exists.

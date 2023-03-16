@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
@@ -80,7 +81,7 @@ func (n *limitNode) Next() (bool, error) {
 
 func (n *limitNode) Source() planNode { return n.plan }
 
-func (n *limitNode) Explain() (map[string]any, error) {
+func (n *limitNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	exp := map[string]any{
 		limitLabel:  n.limit,
 		offsetLabel: n.offset,

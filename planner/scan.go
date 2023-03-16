@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
@@ -134,7 +135,7 @@ func (n *scanNode) explainSpans() []map[string]any {
 
 // Explain method returns a map containing all attributes of this node that
 // are to be explained, subscribes / opts-in this node to be an explainablePlanNode.
-func (n *scanNode) Explain() (map[string]any, error) {
+func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	explainerMap := map[string]any{}
 
 	// Add the filter attribute if it exists.

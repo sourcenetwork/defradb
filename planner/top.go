@@ -120,7 +120,7 @@ func (p *topLevelNode) Children() []planNode {
 	return p.children
 }
 
-func (n *topLevelNode) Explain() (map[string]any, error) {
+func (n *topLevelNode) Explain(explainType request.ExplainType) (map[string]any, error) {
 	return map[string]any{}, nil
 }
 
