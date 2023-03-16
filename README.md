@@ -210,7 +210,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```gql
 defradb client query '
   query {
-    commit(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
+    commits(cid: "bafybeidembipteezluioakc2zyke4h5fnj4rr3uaougfyxd35u3qzefzhm") {
       cid
       delta
       height

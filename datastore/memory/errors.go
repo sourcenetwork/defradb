@@ -15,15 +15,6 @@ import "github.com/sourcenetwork/defradb/errors"
 var (
 	ErrReadOnlyTxn  = errors.New("read only transaction")
 	ErrTxnDiscarded = errors.New("transaction discarded")
-	ErrTxnConflict  = txnConflictError{errors.New("transaction conflict")}
+	//nolint:revive
+	ErrTxnConflict = errors.New("Transaction Conflict. Please retry")
 )
-
-type txnConflictError struct {
-	error
-}
-
-// custom error formatting that is non idiomatic but matches the
-// Badger transaction conflict message
-func (e txnConflictError) Error() string {
-	return "Transaction Conflict. Please retry"
-}

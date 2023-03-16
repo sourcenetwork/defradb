@@ -145,7 +145,9 @@ func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	}
 
 	for i, childMapping := range source.ChildMappings {
-		result.ChildMappings[i] = childMapping.CloneWithoutRender()
+		if childMapping != nil {
+			result.ChildMappings[i] = childMapping.CloneWithoutRender()
+		}
 	}
 
 	return &result

@@ -106,6 +106,11 @@ type ExplainRequestTestCase struct {
 	ExpectedError string
 }
 
+type databaseInfo struct {
+	name testUtils.DatabaseType
+	db   client.DB
+}
+
 func ExecuteExplainRequestTestCase(
 	t *testing.T,
 	schema string,
@@ -129,18 +134,19 @@ func ExecuteExplainRequestTestCase(
 	}
 
 	ctx := context.Background()
-	dbs, err := testUtils.GetDatabases(ctx, t)
+	dbs, err := getDatabases(ctx, t)
 	if testUtils.AssertError(t, explainTest.Description, err, explainTest.ExpectedError) {
 		return
 	}
 	require.NotEmpty(t, dbs)
 
 	for _, dbi := range dbs {
-		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.Name()))
+		db := dbi.db
+		log.Info(ctx, explainTest.Description, logging.NewKV("Database", dbi.name))
 
 		if testUtils.DetectDbChanges {
 			if testUtils.SetupOnly {
-				testUtils.SetupDatabase(
+				setupDatabase(
 					ctx,
 					t,
 					dbi,
@@ -151,13 +157,14 @@ func ExecuteExplainRequestTestCase(
 					explainTest.Docs,
 					immutable.None[map[int]map[int][]string](),
 				)
-				dbi.DB().Close(ctx)
+				dbi.db.Close(ctx)
 				return
 			}
 
-			dbi = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
+			dbi.db.Close(ctx)
+			db = testUtils.SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
 		} else {
-			testUtils.SetupDatabase(
+			setupDatabase(
 				ctx,
 				t,
 				dbi,
@@ -170,7 +177,7 @@ func ExecuteExplainRequestTestCase(
 			)
 		}
 
-		result := dbi.DB().ExecRequest(ctx, explainTest.Request)
+		result := db.ExecRequest(ctx, explainTest.Request)
 		if assertExplainRequestResults(
 			ctx,
 			t,
@@ -184,7 +191,7 @@ func ExecuteExplainRequestTestCase(
 			assert.Fail(t, "Expected an error however none was raised.", explainTest.Description)
 		}
 
-		dbi.DB().Close(ctx)
+		db.Close(ctx)
 	}
 }
 
@@ -469,4 +476,92 @@ func copyMap(originalMap map[string]any) map[string]any {
 		}
 	}
 	return newMap
+}
+
+func getDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
+	databases := []databaseInfo{}
+
+	for _, dbt := range testUtils.GetDatabaseTypes() {
+		db, err := testUtils.GetDatabase(ctx, t, dbt)
+		if err != nil {
+			return nil, err
+		}
+
+		databases = append(
+			databases,
+			databaseInfo{
+				name: dbt,
+				db:   db,
+			},
+		)
+	}
+
+	return databases, nil
+}
+
+// setupDatabase is persisted for the sake of the explain tests as they use a different
+// test executor that calls this function.
+func setupDatabase(
+	ctx context.Context,
+	t *testing.T,
+	dbi databaseInfo,
+	schema string,
+	collectionNames []string,
+	description string,
+	expectedError string,
+	documents map[int][]string,
+	updates immutable.Option[map[int]map[int][]string],
+) {
+	db := dbi.db
+	err := db.AddSchema(ctx, schema)
+	if testUtils.AssertError(t, description, err, expectedError) {
+		return
+	}
+
+	collections := []client.Collection{}
+	for _, collectionName := range collectionNames {
+		col, err := db.GetCollectionByName(ctx, collectionName)
+		if testUtils.AssertError(t, description, err, expectedError) {
+			return
+		}
+		collections = append(collections, col)
+	}
+
+	// insert docs
+	for collectionIndex, docs := range documents {
+		hasCollectionUpdates := false
+		collectionUpdates := map[int][]string{}
+
+		if updates.HasValue() {
+			collectionUpdates, hasCollectionUpdates = updates.Value()[collectionIndex]
+		}
+
+		for documentIndex, docStr := range docs {
+			doc, err := client.NewDocFromJSON([]byte(docStr))
+			if testUtils.AssertError(t, description, err, expectedError) {
+				return
+			}
+			err = collections[collectionIndex].Save(ctx, doc)
+			if testUtils.AssertError(t, description, err, expectedError) {
+				return
+			}
+
+			if hasCollectionUpdates {
+				documentUpdates, hasDocumentUpdates := collectionUpdates[documentIndex]
+
+				if hasDocumentUpdates {
+					for _, u := range documentUpdates {
+						err = doc.SetWithJSON([]byte(u))
+						if testUtils.AssertError(t, description, err, expectedError) {
+							return
+						}
+						err = collections[collectionIndex].Save(ctx, doc)
+						if testUtils.AssertError(t, description, err, expectedError) {
+							return
+						}
+					}
+				}
+			}
+		}
+	}
 }

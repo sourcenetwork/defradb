@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"syscall"
@@ -19,7 +20,7 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v3"
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/db"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/logging"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 const (
@@ -57,6 +59,14 @@ func init() {
 	}
 }
 
+type DatabaseType string
+
+const (
+	badgerIMType   DatabaseType = "badger-in-memory"
+	defraIMType    DatabaseType = "defra-memory-datastore"
+	badgerFileType DatabaseType = "badger-file-system"
+)
+
 var (
 	log            = logging.MustNewLogger("defra.tests.integration")
 	badgerInMemory bool
@@ -65,25 +75,6 @@ var (
 )
 
 const subscriptionTimeout = 1 * time.Second
-
-type databaseInfo struct {
-	name      string
-	path      string
-	db        client.DB
-	rootstore ds.Batching
-}
-
-func (dbi databaseInfo) Name() string {
-	return dbi.name
-}
-
-func (dbi databaseInfo) Rootstore() ds.Batching {
-	return dbi.rootstore
-}
-
-func (dbi databaseInfo) DB() client.DB {
-	return dbi.db
-}
 
 var databaseDir string
 
@@ -175,42 +166,34 @@ func AssertPanicAndSkipChangeDetection(t *testing.T, f assert.PanicTestFunc) boo
 	return assert.Panics(t, f, "expected a panic, but none found.")
 }
 
-func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (databaseInfo, error) {
+func NewBadgerMemoryDB(ctx context.Context, dbopts ...db.Option) (client.DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
 	dbopts = append(dbopts, db.WithUpdateEvents())
 
 	db, err := db.NewDB(ctx, rootstore, dbopts...)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name:      "badger-in-memory",
-		db:        db,
-		rootstore: rootstore,
-	}, nil
+	return db, nil
 }
 
-func NewInMemoryDB(ctx context.Context) (databaseInfo, error) {
+func NewInMemoryDB(ctx context.Context) (client.DB, error) {
 	rootstore := memory.NewDatastore(ctx)
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name:      "defra-memory-datastore",
-		db:        db,
-		rootstore: rootstore,
-	}, nil
+	return db, nil
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	var path string
 	if databaseDir == "" {
 		path = t.TempDir()
@@ -221,54 +204,64 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (databaseInfo, error) {
 	return newBadgerFileDB(ctx, t, path)
 }
 
-func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (databaseInfo, error) {
+func newBadgerFileDB(ctx context.Context, t testing.TB, path string) (client.DB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions(path)}
 	rootstore, err := badgerds.NewDatastore(path, &opts)
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
 	db, err := db.NewDB(ctx, rootstore, db.WithUpdateEvents())
 	if err != nil {
-		return databaseInfo{}, err
+		return nil, err
 	}
 
-	return databaseInfo{
-		name:      "badger-file-system",
-		path:      path,
-		db:        db,
-		rootstore: rootstore,
-	}, nil
+	return db, nil
 }
 
-func GetDatabases(ctx context.Context, t *testing.T) ([]databaseInfo, error) {
-	databases := []databaseInfo{}
+func GetDatabaseTypes() []DatabaseType {
+	databases := []DatabaseType{}
 
 	if badgerInMemory {
-		badgerIMDatabase, err := NewBadgerMemoryDB(ctx)
-		if err != nil {
-			return nil, err
-		}
-		databases = append(databases, badgerIMDatabase)
+		databases = append(databases, badgerIMType)
 	}
 
 	if badgerFile {
-		badgerIMDatabase, err := NewBadgerFileDB(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		databases = append(databases, badgerIMDatabase)
+		databases = append(databases, badgerFileType)
 	}
 
 	if inMemoryStore {
-		inMemoryDatabase, err := NewInMemoryDB(ctx)
+		databases = append(databases, defraIMType)
+	}
+
+	return databases
+}
+
+func GetDatabase(ctx context.Context, t *testing.T, dbt DatabaseType) (client.DB, error) {
+	switch dbt {
+	case badgerIMType:
+		db, err := NewBadgerMemoryDB(ctx, db.WithUpdateEvents())
 		if err != nil {
 			return nil, err
 		}
-		databases = append(databases, inMemoryDatabase)
+		return db, nil
+
+	case badgerFileType:
+		db, err := NewBadgerFileDB(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		return db, nil
+
+	case defraIMType:
+		db, err := NewInMemoryDB(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return db, nil
 	}
 
-	return databases, nil
+	return nil, nil
 }
 
 // ExecuteTestCase executes the given TestCase against the configured database
@@ -286,15 +279,13 @@ func ExecuteTestCase(
 	}
 
 	ctx := context.Background()
-	dbs, err := GetDatabases(ctx, t)
-	require.Nil(t, err)
+	dbts := GetDatabaseTypes()
 	// Assert that this is not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
-	require.NotEmpty(t, dbs)
+	require.NotEmpty(t, dbts)
 
-	for _, dbi := range dbs {
-		executeTestCase(ctx, t, collectionNames, testCase, dbi)
-		dbi.db.Close(ctx)
+	for _, dbt := range dbts {
+		executeTestCase(ctx, t, collectionNames, testCase, dbt)
 	}
 }
 
@@ -303,59 +294,89 @@ func executeTestCase(
 	t *testing.T,
 	collectionNames []string,
 	testCase TestCase,
-	dbi databaseInfo,
+	dbt DatabaseType,
 ) {
 	var done bool
-	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbi.name))
+	log.Info(ctx, testCase.Description, logging.NewKV("Database", dbt))
 
-	if DetectDbChanges && !SetupOnly {
-		// Setup the database using the target branch, and then refresh the current instance
-		dbi = SetupDatabaseUsingTargetBranch(ctx, t, dbi, collectionNames)
-	}
-
+	flattenActions(&testCase)
 	startActionIndex, endActionIndex := getActionRange(testCase)
-	// Documents and Collections may already exist in the database if actions have been split
-	// by the change detector so we should fetch them here at the start too (if they exist).
-	collections := getCollections(ctx, t, dbi.db, collectionNames)
-	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
 	txns := []datastore.Txn{}
 	allActionsDone := make(chan struct{})
 	resultsChans := []chan func(){}
+	syncChans := []chan struct{}{}
+	nodeAddresses := []string{}
+	nodes := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
+	// Documents and Collections may already exist in the database if actions have been split
+	// by the change detector so we should fetch them here at the start too (if they exist).
+	// collections are by node (index), as they are specific to nodes.
+	collections := getCollections(ctx, t, nodes, collectionNames)
+	// documents are by collection (index), these are not node specific.
+	documents := getDocuments(ctx, t, testCase, collections, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
+		// declare default database for ease of use
+		var db client.DB
+		if len(nodes) > 0 {
+			db = nodes[0].DB
+		}
+
 		switch action := testCase.Actions[i].(type) {
+		case ConfigureNode:
+			if DetectDbChanges {
+				// We do not yet support the change detector for tests running across multiple nodes.
+				t.SkipNow()
+				return
+			}
+
+			node, address := configureNode(ctx, t, dbt, action)
+			nodes = append(nodes, node)
+			nodeAddresses = append(nodeAddresses, address)
+
+		case ConnectPeers:
+			syncChans = append(syncChans, connectPeers(ctx, t, testCase, action, nodes, nodeAddresses))
+
+		case ConfigureReplicator:
+			syncChans = append(syncChans, configureReplicator(ctx, t, testCase, action, nodes, nodeAddresses))
+
+		case SubscribeToCollection:
+			subscribeToCollection(ctx, t, action, nodes, collections)
+
 		case SchemaUpdate:
-			updateSchema(ctx, t, dbi.db, testCase, action)
+			updateSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(ctx, t, dbi.db, collectionNames)
+			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case SchemaPatch:
-			patchSchema(ctx, t, dbi.db, testCase, action)
+			patchSchema(ctx, t, nodes, testCase, action)
 			// If the schema was updated we need to refresh the collection definitions.
-			collections = getCollections(ctx, t, dbi.db, collectionNames)
+			collections = getCollections(ctx, t, nodes, collectionNames)
 
 		case CreateDoc:
 			documents = createDoc(ctx, t, testCase, collections, documents, action)
 
 		case UpdateDoc:
-			updateDoc(ctx, t, testCase, collections, documents, action)
+			updateDoc(ctx, t, testCase, nodes, collections, documents, action)
 
 		case TransactionRequest2:
-			txns = executeTransactionRequest(ctx, t, dbi.db, txns, testCase, action)
+			txns = executeTransactionRequest(ctx, t, db, txns, testCase, action)
 
 		case TransactionCommit:
 			commitTransaction(ctx, t, txns, testCase, action)
 
 		case SubscriptionRequest:
 			var resultsChan chan func()
-			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, dbi.db, testCase, action)
+			resultsChan, done = executeSubscriptionRequest(ctx, t, allActionsDone, db, testCase, action)
 			if done {
 				return
 			}
 			resultsChans = append(resultsChans, resultsChan)
 
 		case Request:
-			executeRequest(ctx, t, dbi.db, testCase, action)
+			executeRequest(ctx, t, nodes, testCase, action)
+
+		case WaitForSync:
+			waitForSync(t, testCase, action, syncChans)
 
 		case SetupComplete:
 			// no-op, just continue.
@@ -365,17 +386,8 @@ func executeTestCase(
 		}
 	}
 
-	if len(resultsChans) > 0 {
-		// Once all other actions have been completed, sleep.
-		// This is a lazy way to allow the subscription to recieve
-		// the events generated, and to ensure that no more than are
-		// expected are recieved. It should probably be done in a better
-		// way than this at somepoint, but is good enough for now.
-		time.Sleep(subscriptionTimeout)
-
-		// Notify any active subscriptions that all requests have been sent.
-		close(allActionsDone)
-	}
+	// Notify any active subscriptions that all requests have been sent.
+	close(allActionsDone)
 
 	for _, resultsChan := range resultsChans {
 		select {
@@ -385,9 +397,114 @@ func executeTestCase(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout):
-			assert.Fail(t, "timeout occured while waiting for data stream", testCase.Description)
+			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+
+	for _, node := range nodes {
+		if node.Peer != nil {
+			err := node.Close()
+			require.NoError(t, err)
+		}
+		node.DB.Close(ctx)
+	}
+}
+
+// getNodes gets the set of applicable nodes for the given nodeID.
+//
+// If nodeID has a value it will return that node only, otherwise all nodes will be returned.
+func getNodes(nodeID immutable.Option[int], nodes []*node.Node) []*node.Node {
+	if !nodeID.HasValue() {
+		return nodes
+	}
+
+	return []*node.Node{nodes[nodeID.Value()]}
+}
+
+// getNodeCollections gets the set of applicable collections for the given nodeID.
+//
+// If nodeID has a value it will return collections for that node only, otherwise all collections across all
+// nodes will be returned.
+func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Collection) [][]client.Collection {
+	if !nodeID.HasValue() {
+		return collections
+	}
+
+	return [][]client.Collection{collections[nodeID.Value()]}
+}
+
+func calculateLenForFlattenedActions(testCase *TestCase) int {
+	newLen := 0
+	for i := range testCase.Actions {
+		switch action := testCase.Actions[i].(type) {
+		case []SchemaUpdate:
+			newLen += len(action)
+		case []SchemaPatch:
+			newLen += len(action)
+		case []CreateDoc:
+			newLen += len(action)
+		case []UpdateDoc:
+			newLen += len(action)
+		case []Request:
+			newLen += len(action)
+		case []TransactionRequest:
+			newLen += len(action)
+		case []TransactionRequest2:
+			newLen += len(action)
+		case []TransactionCommit:
+			newLen += len(action)
+		default:
+			newLen++
+		}
+	}
+	return newLen
+}
+
+func flattenActions(testCase *TestCase) {
+	newLen := calculateLenForFlattenedActions(testCase)
+	if newLen == len(testCase.Actions) {
+		return
+	}
+	newActions := make([]any, 0, newLen)
+	for i := range testCase.Actions {
+		switch action := testCase.Actions[i].(type) {
+		case []SchemaUpdate:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []SchemaPatch:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []CreateDoc:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []UpdateDoc:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []Request:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionRequest:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionRequest2:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		case []TransactionCommit:
+			for j := range action {
+				newActions = append(newActions, action[j])
+			}
+		default:
+			newActions = append(newActions, action)
+		}
+	}
+	testCase.Actions = newActions
 }
 
 // getActionRange returns the index of the first action to be run, and the last.
@@ -413,7 +530,7 @@ ActionLoop:
 		switch testCase.Actions[i].(type) {
 		case SetupComplete:
 			setupCompleteIndex = i
-			// We dont care about anything else if this has been explicitly provided
+			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
 		case SchemaUpdate, CreateDoc, UpdateDoc:
@@ -445,6 +562,47 @@ ActionLoop:
 	return startIndex, endIndex
 }
 
+// getStartingNodes returns a set of initial Defra nodes for the test to execute against.
+//
+// If a node(s) has been explicitly configured via a `ConfigureNode` action then an empty
+// set will be returned.
+func getStartingNodes(
+	ctx context.Context,
+	t *testing.T,
+	dbt DatabaseType,
+	collectionNames []string,
+	testCase TestCase,
+) []*node.Node {
+	hasExplicitNode := false
+	for _, action := range testCase.Actions {
+		switch action.(type) {
+		case ConfigureNode:
+			hasExplicitNode = true
+		}
+	}
+
+	// If nodes have not been explicitly configured via actions, setup a default one.
+	if !hasExplicitNode {
+		var db client.DB
+		if DetectDbChanges && !SetupOnly {
+			// Setup the database using the target branch, and then refresh the current instance
+			db = SetupDatabaseUsingTargetBranch(ctx, t, collectionNames)
+		} else {
+			var err error
+			db, err = GetDatabase(ctx, t, dbt)
+			require.Nil(t, err)
+		}
+
+		return []*node.Node{
+			{
+				DB: db,
+			},
+		}
+	}
+
+	return []*node.Node{}
+}
+
 // getCollections returns all the collections of the given names, preserving order.
 //
 // If a given collection is not present in the database the value at the corresponding
@@ -452,35 +610,88 @@ ActionLoop:
 func getCollections(
 	ctx context.Context,
 	t *testing.T,
-	db client.DB,
+	nodes []*node.Node,
 	collectionNames []string,
-) []client.Collection {
-	collections := make([]client.Collection, len(collectionNames))
+) [][]client.Collection {
+	collections := make([][]client.Collection, len(nodes))
 
-	allCollections, err := db.GetAllCollections(ctx)
-	require.Nil(t, err)
+	for nodeID, node := range nodes {
+		collections[nodeID] = make([]client.Collection, len(collectionNames))
+		allCollections, err := node.DB.GetAllCollections(ctx)
+		require.Nil(t, err)
 
-	for i, collectionName := range collectionNames {
-		for _, collection := range allCollections {
-			if collection.Name() == collectionName {
-				collections[i] = collection
-				break
+		for i, collectionName := range collectionNames {
+			for _, collection := range allCollections {
+				if collection.Name() == collectionName {
+					collections[nodeID][i] = collection
+					break
+				}
 			}
 		}
 	}
 	return collections
 }
 
+// configureNode configures and starts a new Defra node using the provided configuration.
+//
+// It returns the new node, and its peer address. Any errors generated during configuration
+// will result in a test failure.
+func configureNode(
+	ctx context.Context,
+	t *testing.T,
+	dbt DatabaseType,
+	cfg ConfigureNode,
+) (*node.Node, string) {
+	// WARNING: This is a horrible hack both deduplicates/randomizes peer IDs
+	// And affects where libp2p(?) stores some values on the file system, even when using
+	// an in memory store.
+	cfg.Datastore.Badger.Path = t.TempDir()
+
+	db, err := GetDatabase(ctx, t, dbt) //disable change dector, or allow it?
+	require.NoError(t, err)
+
+	var n *node.Node
+	log.Info(ctx, "Starting P2P node", logging.NewKV("P2P address", cfg.Net.P2PAddress))
+	n, err = node.NewNode(
+		ctx,
+		db,
+		cfg.NodeConfig(),
+	)
+	require.NoError(t, err)
+
+	if err := n.Start(); err != nil {
+		closeErr := n.Close()
+		if closeErr != nil {
+			t.Fatal(fmt.Sprintf("unable to start P2P listeners: %v: problem closing node", err), closeErr)
+		}
+		require.NoError(t, err)
+	}
+
+	address := fmt.Sprintf("%s/p2p/%s", n.ListenAddrs()[0].String(), n.PeerID())
+
+	return n, address
+}
+
 func getDocuments(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	collections []client.Collection,
+	collections [][]client.Collection,
 	startActionIndex int,
 ) [][]*client.Document {
-	documentsByCollection := make([][]*client.Document, len(collections))
+	if len(collections) == 0 {
+		// This should only be possible at the moment for P2P testing, for which the
+		// change detector is currently disabled.  We'll likely need some fancier logic
+		// here if/when we wish to enable it.
+		return [][]*client.Document{}
+	}
 
-	for i := range collections {
+	// For now just do the initial setup using the collections on the first node,
+	// this may need to become more involved at a later date depending on testing
+	// requirements.
+	documentsByCollection := make([][]*client.Document, len(collections[0]))
+
+	for i := range collections[0] {
 		documentsByCollection[i] = []*client.Document{}
 	}
 
@@ -496,7 +707,10 @@ func getDocuments(
 				continue
 			}
 
-			collection := collections[action.CollectionID]
+			// Just use the collection from the first relevant node, as all will be the same for this
+			// purpose.
+			collection := getNodeCollections(action.NodeID, collections)[0][action.CollectionID]
+
 			// The document may have been mutated by other actions, so to be sure we have the latest
 			// version without having to worry about the individual update mechanics we fetch it.
 			doc, err = collection.Get(ctx, doc.Key())
@@ -517,27 +731,31 @@ func getDocuments(
 func updateSchema(
 	ctx context.Context,
 	t *testing.T,
-	db client.DB,
+	nodes []*node.Node,
 	testCase TestCase,
 	action SchemaUpdate,
 ) {
-	err := db.AddSchema(ctx, action.Schema)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	for _, node := range getNodes(action.NodeID, nodes) {
+		err := node.DB.AddSchema(ctx, action.Schema)
+		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
 }
 
 func patchSchema(
 	ctx context.Context,
 	t *testing.T,
-	db client.DB,
+	nodes []*node.Node,
 	testCase TestCase,
 	action SchemaPatch,
 ) {
-	err := db.PatchSchema(ctx, action.Patch)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	for _, node := range getNodes(action.NodeID, nodes) {
+		err := node.DB.PatchSchema(ctx, action.Patch)
+		expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
 
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	}
 }
 
 // createDoc creates a document using the collection api and caches it in the
@@ -546,22 +764,27 @@ func createDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	collections []client.Collection,
+	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action CreateDoc,
 ) [][]*client.Document {
-	doc, err := client.NewDocFromJSON([]byte(action.Doc))
-	if AssertError(t, testCase.Description, err, action.ExpectedError) {
-		return nil
+	// All the docs should be identical, and we only need 1 copy so taking the last
+	// is okay.
+	var doc *client.Document
+	for _, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		var err error
+		doc, err = client.NewDocFromJSON([]byte(action.Doc))
+		if AssertError(t, testCase.Description, err, action.ExpectedError) {
+			return nil
+		}
+
+		err = collections[action.CollectionID].Save(ctx, doc)
+		if AssertError(t, testCase.Description, err, action.ExpectedError) {
+			return nil
+		}
 	}
 
-	err = collections[action.CollectionID].Save(ctx, doc)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
-	if expectedErrorRaised {
-		return nil
-	}
-
-	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, false)
 
 	if action.CollectionID >= len(documents) {
 		// Expand the slice if required, so that the document can be accessed by collection index
@@ -577,7 +800,8 @@ func updateDoc(
 	ctx context.Context,
 	t *testing.T,
 	testCase TestCase,
-	collections []client.Collection,
+	nodes []*node.Node,
+	nodeCollections [][]client.Collection,
 	documents [][]*client.Document,
 	action UpdateDoc,
 ) {
@@ -588,8 +812,23 @@ func updateDoc(
 		return
 	}
 
-	err = collections[action.CollectionID].Save(ctx, doc)
-	expectedErrorRaised := AssertError(t, testCase.Description, err, action.ExpectedError)
+	var expectedErrorRaised bool
+	actionNodes := getNodes(action.NodeID, nodes)
+	for nodeID, collections := range getNodeCollections(action.NodeID, nodeCollections) {
+		// If a P2P-sync commit for the given document is already in progress this
+		// Save call can fail as the transaction will conflict. We dont want to worry
+		// about this in our tests so we just retry a few times until it works (or the
+		// retry limit is breached - important incase this is a different error)
+		for i := 0; i < actionNodes[nodeID].MaxTxnRetries(); i++ {
+			err = collections[action.CollectionID].Save(ctx, doc)
+			if err != nil && errors.Is(err, badgerds.ErrTxnConflict) {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			break
+		}
+		expectedErrorRaised = AssertError(t, testCase.Description, err, action.ExpectedError)
+	}
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
@@ -631,6 +870,9 @@ func executeTransactionRequest(
 		&result.GQL,
 		action.Results,
 		action.ExpectedError,
+		// anyof is not yet supported by transactional requests
+		0,
+		map[docFieldKey][]any{},
 	)
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -670,19 +912,26 @@ func commitTransaction(
 func executeRequest(
 	ctx context.Context,
 	t *testing.T,
-	db client.DB,
+	nodes []*node.Node,
 	testCase TestCase,
 	action Request,
 ) {
-	result := db.ExecRequest(ctx, action.Request)
-	expectedErrorRaised := assertRequestResults(
-		ctx,
-		t,
-		testCase.Description,
-		&result.GQL,
-		action.Results,
-		action.ExpectedError,
-	)
+	var expectedErrorRaised bool
+	for nodeID, node := range getNodes(action.NodeID, nodes) {
+		result := node.DB.ExecRequest(ctx, action.Request)
+
+		anyOfByFieldKey := map[docFieldKey][]any{}
+		expectedErrorRaised = assertRequestResults(
+			ctx,
+			t,
+			testCase.Description,
+			&result.GQL,
+			action.Results,
+			action.ExpectedError,
+			nodeID,
+			anyOfByFieldKey,
+		)
+	}
 
 	assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
@@ -714,6 +963,8 @@ func executeSubscriptionRequest(
 		data := []map[string]any{}
 		errs := []any{}
 
+		allActionsAreDone := false
+		expectedDataRecieved := len(action.Results) == 0
 		stream := result.Pub.Stream()
 		for {
 			select {
@@ -723,7 +974,15 @@ func executeSubscriptionRequest(
 				errs = append(errs, sResult.Errors...)
 				data = append(data, sData...)
 
+				if len(data) >= len(action.Results) {
+					expectedDataRecieved = true
+				}
+
 			case <-allActionsDone:
+				allActionsAreDone = true
+			}
+
+			if expectedDataRecieved && allActionsAreDone {
 				finalResult := &client.GQLResult{
 					Data:   data,
 					Errors: errs,
@@ -739,6 +998,9 @@ func executeSubscriptionRequest(
 						finalResult,
 						action.Results,
 						action.ExpectedError,
+						// anyof is not yet supported by subscription requests
+						0,
+						map[docFieldKey][]any{},
 					)
 
 					assertExpectedErrorRaised(t, testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -786,7 +1048,7 @@ func AssertErrors(
 			// This is always a string at the moment, add support for other types as and when needed
 			errorString := e.(string)
 			if !strings.Contains(errorString, expectedError) {
-				// We use ErrorIs for clearer failures (is a error comparision even if it is just a string)
+				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
 				assert.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
 				continue
 			}
@@ -796,6 +1058,12 @@ func AssertErrors(
 	return false
 }
 
+// docFieldKey is an internal key type that wraps docIndex and fieldName
+type docFieldKey struct {
+	docIndex  int
+	fieldName string
+}
+
 func assertRequestResults(
 	ctx context.Context,
 	t *testing.T,
@@ -803,6 +1071,8 @@ func assertRequestResults(
 	result *client.GQLResult,
 	expectedResults []map[string]any,
 	expectedError string,
+	nodeID int,
+	anyOfByField map[docFieldKey][]any,
 ) bool {
 	if AssertErrors(t, description, result.Errors, expectedError) {
 		return true
@@ -822,9 +1092,23 @@ func assertRequestResults(
 	if len(expectedResults) == 0 {
 		assert.Equal(t, expectedResults, resultantData)
 	}
-	for i, result := range resultantData {
-		if len(expectedResults) > i {
-			assert.Equal(t, expectedResults[i], result, description)
+
+	for docIndex, result := range resultantData {
+		expectedResult := expectedResults[docIndex]
+		for field, actualValue := range result {
+			expectedValue := expectedResult[field]
+
+			switch r := expectedValue.(type) {
+			case AnyOf:
+				assert.Contains(t, r, actualValue)
+
+				dfk := docFieldKey{docIndex, field}
+				valueSet := anyOfByField[dfk]
+				valueSet = append(valueSet, actualValue)
+				anyOfByField[dfk] = valueSet
+			default:
+				assert.Equal(t, expectedValue, actualValue, fmt.Sprintf("node: %v, doc: %v", nodeID, docIndex))
+			}
 		}
 	}
 

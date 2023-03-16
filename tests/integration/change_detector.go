@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func IsDetectingDbChanges() bool {
@@ -113,13 +115,8 @@ func detectDbChangesInit(repository string, targetBranch string) {
 func SetupDatabaseUsingTargetBranch(
 	ctx context.Context,
 	t *testing.T,
-	dbi databaseInfo,
 	collectionNames []string,
-) databaseInfo {
-	// Close this database instance so it may be re-inited in the child process,
-	//  and this one post-child
-	dbi.db.Close(ctx)
-
+) client.DB {
 	currentTestPackage, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -143,12 +140,14 @@ func SetupDatabaseUsingTargetBranch(
 		"-v",
 	)
 
+	path := t.TempDir()
+
 	goTestCmd.Dir = targetTestPackage
 	goTestCmd.Env = os.Environ()
 	goTestCmd.Env = append(
 		goTestCmd.Env,
 		setupOnlyEnvName+"=true",
-		fileBadgerPathEnvName+"="+dbi.path,
+		fileBadgerPathEnvName+"="+path,
 	)
 	out, err := goTestCmd.Output()
 
@@ -169,12 +168,12 @@ func SetupDatabaseUsingTargetBranch(
 		}
 	}
 
-	refreshedDb, err := newBadgerFileDB(ctx, t, dbi.path)
+	refreshedDb, err := newBadgerFileDB(ctx, t, path)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = refreshedDb.db.GetCollectionByName(ctx, collectionNames[0])
+	_, err = refreshedDb.GetCollectionByName(ctx, collectionNames[0])
 	if err != nil {
 		if err.Error() == "datastore: key not found" {
 			// If collection is not found - this must be a new test and
