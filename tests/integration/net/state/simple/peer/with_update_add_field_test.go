@@ -129,7 +129,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				CollectionID: 0,
 			},
 			testUtils.SchemaPatch{
-				// Patch the schema on the node that we will directly create a doc on
+				// Patch the schema on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
