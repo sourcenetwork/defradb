@@ -17,21 +17,21 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-var _ client.DB = (*implicitDb)(nil)
-var _ client.DB = (*explicitDb)(nil)
-var _ client.Store = (*implicitDb)(nil)
-var _ client.Store = (*explicitDb)(nil)
+var _ client.DB = (*implicitTxnDB)(nil)
+var _ client.DB = (*explicitTxnDB)(nil)
+var _ client.Store = (*implicitTxnDB)(nil)
+var _ client.Store = (*explicitTxnDB)(nil)
 
-type implicitDb struct {
+type implicitTxnDB struct {
 	*db
 }
 
-type explicitDb struct {
+type explicitTxnDB struct {
 	*db
 	txn datastore.Txn
 }
 
-func (db *implicitDb) CreateCollection(
+func (db *implicitTxnDB) CreateCollection(
 	ctx context.Context,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
@@ -50,7 +50,7 @@ func (db *implicitDb) CreateCollection(
 	return col, err
 }
 
-func (db *explicitDb) CreateCollection(
+func (db *explicitTxnDB) CreateCollection(
 	ctx context.Context,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
@@ -58,7 +58,7 @@ func (db *explicitDb) CreateCollection(
 }
 
 // ExecRequest executes a request against the database.
-func (db *implicitDb) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+func (db *implicitTxnDB) ExecRequest(ctx context.Context, request string) *client.RequestResult {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		res := &client.RequestResult{}
@@ -78,7 +78,7 @@ func (db *implicitDb) ExecRequest(ctx context.Context, request string) *client.R
 }
 
 // ExecRequest executes a transaction request against the database.
-func (db *explicitDb) ExecRequest(
+func (db *explicitTxnDB) ExecRequest(
 	ctx context.Context,
 	request string,
 ) *client.RequestResult {
@@ -86,7 +86,7 @@ func (db *explicitDb) ExecRequest(
 }
 
 // GetCollectionByName returns an existing collection within the database.
-func (db *implicitDb) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *implicitTxnDB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -97,12 +97,12 @@ func (db *implicitDb) GetCollectionByName(ctx context.Context, name string) (cli
 }
 
 // GetCollectionByName returns an existing collection within the database.
-func (db *explicitDb) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *explicitTxnDB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	return db.getCollectionByName(ctx, db.txn, name)
 }
 
 // GetCollectionBySchemaID returns an existing collection using the schema hash ID.
-func (db *implicitDb) GetCollectionBySchemaID(
+func (db *implicitTxnDB) GetCollectionBySchemaID(
 	ctx context.Context,
 	schemaID string,
 ) (client.Collection, error) {
@@ -116,7 +116,7 @@ func (db *implicitDb) GetCollectionBySchemaID(
 }
 
 // GetCollectionBySchemaID returns an existing collection using the schema hash ID.
-func (db *explicitDb) GetCollectionBySchemaID(
+func (db *explicitTxnDB) GetCollectionBySchemaID(
 	ctx context.Context,
 	schemaID string,
 ) (client.Collection, error) {
@@ -126,7 +126,7 @@ func (db *explicitDb) GetCollectionBySchemaID(
 // AddP2PCollection adds the given collection ID that the P2P system
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *implicitDb) AddP2PCollection(ctx context.Context, collectionID string) error {
+func (db *implicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -144,14 +144,14 @@ func (db *implicitDb) AddP2PCollection(ctx context.Context, collectionID string)
 // AddP2PCollection adds the given collection ID that the P2P system
 // subscribes to to the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *explicitDb) AddP2PCollection(ctx context.Context, collectionID string) error {
+func (db *explicitTxnDB) AddP2PCollection(ctx context.Context, collectionID string) error {
 	return db.addP2PCollection(ctx, db.txn, collectionID)
 }
 
 // RemoveP2PCollection removes the given collection ID that the P2P system
 // subscribes to from the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *implicitDb) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+func (db *implicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -169,12 +169,12 @@ func (db *implicitDb) RemoveP2PCollection(ctx context.Context, collectionID stri
 // RemoveP2PCollection removes the given collection ID that the P2P system
 // subscribes to from the the persisted list. It will error if the provided
 // collection ID is invalid.
-func (db *explicitDb) RemoveP2PCollection(ctx context.Context, collectionID string) error {
+func (db *explicitTxnDB) RemoveP2PCollection(ctx context.Context, collectionID string) error {
 	return db.removeP2PCollection(ctx, db.txn, collectionID)
 }
 
 // GetAllCollections gets all the currently defined collections.
-func (db *implicitDb) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (db *implicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -185,13 +185,13 @@ func (db *implicitDb) GetAllCollections(ctx context.Context) ([]client.Collectio
 }
 
 // GetAllCollections gets all the currently defined collections.
-func (db *explicitDb) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
+func (db *explicitTxnDB) GetAllCollections(ctx context.Context) ([]client.Collection, error) {
 	return db.getAllCollections(ctx, db.txn)
 }
 
 // AddSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *implicitDb) AddSchema(ctx context.Context, schemaString string) error {
+func (db *implicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -208,7 +208,7 @@ func (db *implicitDb) AddSchema(ctx context.Context, schemaString string) error 
 
 // AddSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *explicitDb) AddSchema(ctx context.Context, schemaString string) error {
+func (db *explicitTxnDB) AddSchema(ctx context.Context, schemaString string) error {
 	return db.addSchema(ctx, db.txn, schemaString)
 }
 
@@ -223,7 +223,7 @@ func (db *explicitDb) AddSchema(ctx context.Context, schemaString string) error 
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *implicitDb) PatchSchema(ctx context.Context, patchString string) error {
+func (db *implicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -249,7 +249,7 @@ func (db *implicitDb) PatchSchema(ctx context.Context, patchString string) error
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *explicitDb) PatchSchema(ctx context.Context, patchString string) error {
+func (db *explicitTxnDB) PatchSchema(ctx context.Context, patchString string) error {
 	return db.patchSchema(ctx, db.txn, patchString)
 }
 
@@ -261,7 +261,7 @@ func (db *explicitDb) PatchSchema(ctx context.Context, patchString string) error
 // The collection (including the schema version ID) will only be updated if any changes have actually
 // been made, if the given description matches the current persisted description then no changes will be
 // applied.
-func (db *implicitDb) UpdateCollection(
+func (db *implicitTxnDB) UpdateCollection(
 	ctx context.Context,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
@@ -287,7 +287,7 @@ func (db *implicitDb) UpdateCollection(
 // The collection (including the schema version ID) will only be updated if any changes have actually
 // been made, if the given description matches the current persisted description then no changes will be
 // applied.
-func (db *explicitDb) UpdateCollection(
+func (db *explicitTxnDB) UpdateCollection(
 	ctx context.Context,
 	desc client.CollectionDescription,
 ) (client.Collection, error) {
@@ -298,7 +298,7 @@ func (db *explicitDb) UpdateCollection(
 //
 // Will return true if the given desctiption differs from the current persisted state of the
 // collection. Will return an error if it fails validation.
-func (db *implicitDb) ValidateUpdateCollection(
+func (db *implicitTxnDB) ValidateUpdateCollection(
 	ctx context.Context,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
@@ -315,7 +315,7 @@ func (db *implicitDb) ValidateUpdateCollection(
 //
 // Will return true if the given desctiption differs from the current persisted state of the
 // collection. Will return an error if it fails validation.
-func (db *explicitDb) ValidateUpdateCollection(
+func (db *explicitTxnDB) ValidateUpdateCollection(
 	ctx context.Context,
 	proposedDesc client.CollectionDescription,
 ) (bool, error) {
@@ -323,7 +323,7 @@ func (db *explicitDb) ValidateUpdateCollection(
 }
 
 // SetReplicator adds a new replicator to the database.
-func (db *implicitDb) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *implicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -339,12 +339,12 @@ func (db *implicitDb) SetReplicator(ctx context.Context, rep client.Replicator) 
 }
 
 // SetReplicator adds a new replicator to the database.
-func (db *explicitDb) SetReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *explicitTxnDB) SetReplicator(ctx context.Context, rep client.Replicator) error {
 	return db.setReplicator(ctx, db.txn, rep)
 }
 
 // DeleteReplicator removes a replicator from the database.
-func (db *implicitDb) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *implicitTxnDB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -360,12 +360,12 @@ func (db *implicitDb) DeleteReplicator(ctx context.Context, rep client.Replicato
 }
 
 // DeleteReplicator removes a replicator from the database.
-func (db *explicitDb) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
+func (db *explicitTxnDB) DeleteReplicator(ctx context.Context, rep client.Replicator) error {
 	return db.deleteReplicator(ctx, db.txn, rep)
 }
 
 // GetAllReplicators returns all replicators of the database.
-func (db *implicitDb) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (db *implicitTxnDB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -376,13 +376,13 @@ func (db *implicitDb) GetAllReplicators(ctx context.Context) ([]client.Replicato
 }
 
 // GetAllReplicators returns all replicators of the database.
-func (db *explicitDb) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (db *explicitTxnDB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	return db.getAllReplicators(ctx, db.txn)
 }
 
 // GetAllP2PCollections returns the list of persisted collection IDs that
 // the P2P system subscribes to.
-func (db *implicitDb) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *implicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -394,6 +394,6 @@ func (db *implicitDb) GetAllP2PCollections(ctx context.Context) ([]string, error
 
 // GetAllP2PCollections returns the list of persisted collection IDs that
 // the P2P system subscribes to.
-func (db *explicitDb) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *explicitTxnDB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return db.getAllP2PCollections(ctx, db.txn)
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/merkle/clock"
 )
 
-func newMemoryDB(ctx context.Context) (*implicitDb, error) {
+func newMemoryDB(ctx context.Context) (*implicitTxnDB, error) {
 	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
 	rootstore, err := badgerds.NewDatastore("", &opts)
 	if err != nil {
