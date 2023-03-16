@@ -48,7 +48,5 @@ TestReturnCode "${T1} 'refactor: This is a valid title'" 0;
 TestReturnCode "${T1} 'test: This is a valid title'" 0;
 TestReturnCode "${T1} 'tools: This is a valid title'" 0;
 TestReturnCode "${T1} 'bot: Bump github.com/alternativesourcenetwork/defradb from 1.1.0.1.0.0 to 1.1.0.1.0.1'" 0;
-
-
 TestReturnCode "${T1} 'bot Bump github.com/alternativesourcenetwork/defradb from 1.1.0.1.0.0 to 1.1.0.1.0.1'" 3;
 TestReturnCode "${T1} 'bot Bump github.com/short/short from 1.2.3 to 1.2.4'" 4; 
