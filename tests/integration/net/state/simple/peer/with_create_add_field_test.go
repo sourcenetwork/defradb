@@ -148,8 +148,9 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
-// Documentation test: This may be undesirable behaviour and the test should be
+// Documentation test: This is undesirable behaviour and the test should be
 // updated once the behaviour has been fixed.
+// Issue: https://github.com/sourcenetwork/defradb/issues/1185
 func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
