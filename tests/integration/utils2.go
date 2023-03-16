@@ -1069,7 +1069,9 @@ func assertRequestResults(
 	// compare results
 	assert.Equal(t, len(expectedResults), len(resultantData), description)
 	if len(expectedResults) == 0 {
-		assert.Equal(t, expectedResults, resultantData)
+		// Need `require` here otherwise will panic in the for loop that ranges over
+		// resultantData and tries to access expectedResults[0].
+		require.Equal(t, expectedResults, resultantData)
 	}
 
 	for docIndex, result := range resultantData {
