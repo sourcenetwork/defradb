@@ -18,7 +18,10 @@ readonly -a VALID_LABELS=("chore"
                           "perf"
                           "refactor"
                           "test"
-                          "tools");
+                          "tools"
+                          "bot");
+
+BOTPREFIX="bot"
 
 if [ "${#}" -ne 1 ]; then
     printf "Error: Invalid number of arguments (pass title as 1 string argument).\n";
@@ -26,9 +29,16 @@ if [ "${#}" -ne 1 ]; then
 fi
 
 TITLE=${1};
+IS_BOT=false;
+
+# Detect if title is prefixed with `bot`
+if [[ "${TITLE}" =~ ^"${BOTPREFIX}:" ]]; then
+    printf "Info: Title is from a bot, skipping length-related title validation.\n";
+    IS_BOT=true;
+fi  
 
 # Validate that the entire length of the title is less than or equal to our character limit.
-if [ "${#TITLE}" -gt 60 ]; then
+if [ "${#TITLE}" -gt 60 ] && [ "${IS_BOT}" = false ]; then
     printf "Error: The length of the title is too long (should be 60 or less).\n";
     exit 3;
 fi
