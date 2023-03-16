@@ -307,6 +307,10 @@ func executeTestCase(
 	syncChans := []chan struct{}{}
 	nodeAddresses := []string{}
 	nodes := getStartingNodes(ctx, t, dbt, collectionNames, testCase)
+	// It is very important that the databases are always closed, otherwise resources will leak
+	// as tests run.  This is particularly important for file based datastores.
+	defer closeNodes(ctx, t, &nodes)
+
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
@@ -400,8 +404,15 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
 		}
 	}
+}
 
-	for _, node := range nodes {
+// closeNodes closes all the given nodes, ensuring that resources are properly released.
+func closeNodes(
+	ctx context.Context,
+	t *testing.T,
+	nodes *[]*node.Node,
+) {
+	for _, node := range *nodes {
 		if node.Peer != nil {
 			err := node.Close()
 			require.NoError(t, err)
