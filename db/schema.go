@@ -21,15 +21,9 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
-// AddSchema takes the provided schema in SDL format, and applies it to the database,
+// addSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *db) AddSchema(ctx context.Context, schemaString string) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
+func (db *db) addSchema(ctx context.Context, txn datastore.Txn, schemaString string) error {
 	existingDescriptions, err := db.getCollectionDescriptions(ctx, txn)
 	if err != nil {
 		return err
@@ -46,12 +40,12 @@ func (db *db) AddSchema(ctx context.Context, schemaString string) error {
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.CreateCollectionTxn(ctx, txn, desc); err != nil {
+		if _, err := db.createCollection(ctx, txn, desc); err != nil {
 			return err
 		}
 	}
 
-	return txn.Commit(ctx)
+	return nil
 }
 
 func (db *db) loadSchema(ctx context.Context, txn datastore.Txn) error {
@@ -67,7 +61,7 @@ func (db *db) getCollectionDescriptions(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
-	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	collections, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +74,7 @@ func (db *db) getCollectionDescriptions(
 	return descriptions, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
+// patchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -91,13 +85,7 @@ func (db *db) getCollectionDescriptions(
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *db) PatchSchema(ctx context.Context, patchString string) error {
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
+func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString string) error {
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
@@ -132,24 +120,19 @@ func (db *db) PatchSchema(ctx context.Context, patchString string) error {
 	}
 
 	for _, desc := range newDescriptions {
-		if _, err := db.UpdateCollectionTxn(ctx, txn, desc); err != nil {
+		if _, err := db.updateCollection(ctx, txn, desc); err != nil {
 			return err
 		}
 	}
 
-	err = db.parser.SetSchema(ctx, txn, newDescriptions)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
+	return db.parser.SetSchema(ctx, txn, newDescriptions)
 }
 
 func (db *db) getCollectionsByName(
 	ctx context.Context,
 	txn datastore.Txn,
 ) (map[string]client.CollectionDescription, error) {
-	collections, err := db.GetAllCollectionsTxn(ctx, txn)
+	collections, err := db.getAllCollections(ctx, txn)
 	if err != nil {
 		return nil, err
 	}

@@ -19,20 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/planner"
 )
 
-// ExecRequest executes a request against the database.
-func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestResult {
+// execRequest executes a request against the database.
+func (db *db) execRequest(ctx context.Context, request string, txn datastore.Txn) *client.RequestResult {
 	res := &client.RequestResult{}
 	// check if its Introspection request
 	if strings.Contains(request, "IntrospectionQuery") {
 		return db.ExecIntrospection(request)
 	}
-
-	txn, err := db.NewTxn(ctx, false)
-	if err != nil {
-		res.GQL.Errors = []any{err.Error()}
-		return res
-	}
-	defer txn.Discard(ctx)
 
 	parsedRequest, errors := db.parser.Parse(request)
 	if len(errors) > 0 {
@@ -56,46 +49,8 @@ func (db *db) ExecRequest(ctx context.Context, request string) *client.RequestRe
 		return res
 	}
 
-	planner := planner.New(ctx, db, txn)
+	planner := planner.New(ctx, db.WithTxn(txn), txn)
 
-	results, err := planner.RunRequest(ctx, parsedRequest)
-	if err != nil {
-		res.GQL.Errors = []any{err.Error()}
-		return res
-	}
-
-	if err := txn.Commit(ctx); err != nil {
-		res.GQL.Errors = []any{err.Error()}
-		return res
-	}
-
-	res.GQL.Data = results
-	return res
-}
-
-// ExecTransactionalRequest executes a transaction request against the database.
-func (db *db) ExecTransactionalRequest(
-	ctx context.Context,
-	request string,
-	txn datastore.Txn,
-) *client.RequestResult {
-	if db.parser.IsIntrospection(request) {
-		return db.ExecIntrospection(request)
-	}
-
-	res := &client.RequestResult{}
-
-	parsedRequest, errors := db.parser.Parse(request)
-	if len(errors) > 0 {
-		errorStrings := make([]any, len(errors))
-		for i, err := range errors {
-			errorStrings[i] = err.Error()
-		}
-		res.GQL.Errors = errorStrings
-		return res
-	}
-
-	planner := planner.New(ctx, db, txn)
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {
 		res.GQL.Errors = []any{err.Error()}

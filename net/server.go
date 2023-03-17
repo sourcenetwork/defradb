@@ -179,8 +179,9 @@ func (s *server) PushLog(ctx context.Context, req *pb.PushLogRequest) (*pb.PushL
 			return nil, err
 		}
 		defer txn.Discard(ctx)
+		store := s.db.WithTxn(txn)
 
-		col, err := s.db.GetCollectionBySchemaIDTxn(ctx, txn, schemaID)
+		col, err := store.GetCollectionBySchemaID(ctx, schemaID)
 		if err != nil {
 			return nil, errors.Wrap(fmt.Sprintf("Failed to get collection from schemaID %s", schemaID), err)
 		}

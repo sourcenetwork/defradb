@@ -531,7 +531,7 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
-	planner := planner.New(ctx, c.db, txn)
+	planner := planner.New(ctx, c.db.WithTxn(txn), txn)
 	return planner.MakePlan(&request.Request{
 		Queries: []*request.OperationDefinition{
 			{

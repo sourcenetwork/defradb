@@ -295,8 +295,9 @@ func (p *Peer) SetReplicator(
 	if err != nil {
 		return "", err
 	}
+	store := p.db.WithTxn(txn)
 
-	pid, err := p.setReplicator(ctx, txn, paddr, collectionNames...)
+	pid, err := p.setReplicator(ctx, store, paddr, collectionNames...)
 	if err != nil {
 		txn.Discard(ctx)
 		return "", err
@@ -308,7 +309,7 @@ func (p *Peer) SetReplicator(
 // setReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) setReplicator(
 	ctx context.Context,
-	txn datastore.Txn,
+	store client.Store,
 	paddr ma.Multiaddr,
 	collectionNames ...string,
 ) (peer.ID, error) {
@@ -319,7 +320,7 @@ func (p *Peer) setReplicator(
 	schemas := []string{}
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err = p.db.GetAllCollectionsTxn(ctx, txn)
+		collections, err = store.GetAllCollections(ctx)
 		if err != nil {
 			return pid, errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -328,7 +329,7 @@ func (p *Peer) setReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
+			col, err := store.GetCollectionByName(ctx, cName)
 			if err != nil {
 				return pid, errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -495,8 +496,9 @@ func (p *Peer) DeleteReplicator(
 	if err != nil {
 		return err
 	}
+	store := p.db.WithTxn(txn)
 
-	err = p.deleteReplicator(ctx, txn, pid, collectionNames...)
+	err = p.deleteReplicator(ctx, store, pid, collectionNames...)
 	if err != nil {
 		txn.Discard(ctx)
 		return err
@@ -508,7 +510,7 @@ func (p *Peer) DeleteReplicator(
 // DeleteReplicator adds a target peer node as a replication destination for documents in our DB.
 func (p *Peer) deleteReplicator(
 	ctx context.Context,
-	txn datastore.Txn,
+	store client.Store,
 	pid peer.ID,
 	collectionNames ...string,
 ) error {
@@ -522,7 +524,7 @@ func (p *Peer) deleteReplicator(
 	schemaMap := make(map[string]struct{})
 	if len(collectionNames) == 0 {
 		var err error
-		collections, err := p.db.GetAllCollectionsTxn(ctx, txn)
+		collections, err := store.GetAllCollections(ctx)
 		if err != nil {
 			return errors.Wrap("failed to get all collections for replicator", err)
 		}
@@ -532,7 +534,7 @@ func (p *Peer) deleteReplicator(
 		}
 	} else {
 		for _, cName := range collectionNames {
-			col, err := p.db.GetCollectionByNameTxn(ctx, txn, cName)
+			col, err := store.GetCollectionByName(ctx, cName)
 			if err != nil {
 				return errors.Wrap("failed to get collection for replicator", err)
 			}
@@ -763,17 +765,18 @@ func (p *Peer) AddP2PCollections(collections []string) error {
 		return err
 	}
 	defer txn.Discard(p.ctx)
+	store := p.db.WithTxn(txn)
 
 	// first let's make sure the collections actually exists
 	for _, col := range collections {
-		_, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, col)
+		_, err := store.GetCollectionBySchemaID(p.ctx, col)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, col := range collections {
-		err := p.db.AddP2PCollectionTxn(p.ctx, txn, col)
+		err := store.AddP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -793,9 +796,10 @@ func (p *Peer) RemoveP2PCollections(collections []string) error {
 		return err
 	}
 	defer txn.Discard(p.ctx)
+	store := p.db.WithTxn(txn)
 
 	for _, col := range collections {
-		err := p.db.RemoveP2PCollectionTxn(p.ctx, txn, col)
+		err := store.RemoveP2PCollection(p.ctx, col)
 		if err != nil {
 			return err
 		}
@@ -813,6 +817,7 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 	if err != nil {
 		return nil, err
 	}
+	store := p.db.WithTxn(txn)
 
 	collections, err := p.db.GetAllP2PCollections(p.ctx)
 	if err != nil {
@@ -822,7 +827,7 @@ func (p *Peer) GetAllP2PCollections() ([]client.P2PCollection, error) {
 
 	var p2pCols []client.P2PCollection
 	for _, colID := range collections {
-		col, err := p.db.GetCollectionBySchemaIDTxn(p.ctx, txn, colID)
+		col, err := store.GetCollectionBySchemaID(p.ctx, colID)
 		if err != nil {
 			txn.Discard(p.ctx)
 			return nil, err

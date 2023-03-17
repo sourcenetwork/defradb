@@ -39,7 +39,6 @@ var (
 
 // make sure we match our client interface
 var (
-	_ client.DB         = (*db)(nil)
 	_ client.Collection = (*collection)(nil)
 )
 
@@ -94,7 +93,7 @@ func NewDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 	return newDB(ctx, rootstore, options...)
 }
 
-func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*db, error) {
+func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option) (*implicitTxnDB, error) {
 	log.Debug(ctx, "Loading: internal datastores")
 	root := datastore.AsDSReaderWriter(rootstore)
 	multistore := datastore.MultiStoreFrom(root)
@@ -128,7 +127,7 @@ func newDB(ctx context.Context, rootstore datastore.RootStore, options ...Option
 		return nil, err
 	}
 
-	return db, nil
+	return &implicitTxnDB{db}, nil
 }
 
 // NewTxn creates a new transaction.
@@ -139,6 +138,14 @@ func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, readonly)
+}
+
+// WithTxn returns a new [client.Store] that respects the given transaction.
+func (db *db) WithTxn(txn datastore.Txn) client.Store {
+	return &explicitTxnDB{
+		db:  db,
+		txn: txn,
+	}
 }
 
 // Root returns the root datastore.
