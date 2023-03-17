@@ -86,12 +86,12 @@ type PlanContext struct {
 // produce a request plan, which is run by the execution context.
 type Planner struct {
 	txn datastore.Txn
-	db  client.DB
+	db  client.Store
 
 	ctx context.Context
 }
 
-func New(ctx context.Context, db client.DB, txn datastore.Txn) *Planner {
+func New(ctx context.Context, db client.Store, txn datastore.Txn) *Planner {
 	return &Planner{
 		txn: txn,
 		db:  db,
