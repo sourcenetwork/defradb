@@ -160,34 +160,34 @@ func (mc *MerkleClock) ProcessNode(
 	children := []cid.Cid{}
 
 	for _, l := range links {
-		child := l.Cid
-		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", child))
-		isHead, err := mc.headset.IsHead(ctx, child)
+		linkCid := l.Cid
+		log.Debug(ctx, "Scanning for replacement heads", logging.NewKV("Child", linkCid))
+		isHead, err := mc.headset.IsHead(ctx, linkCid)
 		if err != nil {
-			return nil, NewErrCheckingHead(child, err)
+			return nil, NewErrCheckingHead(linkCid, err)
 		}
 
 		if isHead {
 			log.Debug(ctx, "Found head, replacing!")
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, child, root, rootPrio)
+			err = mc.headset.Replace(ctx, linkCid, root, rootPrio)
 			if err != nil {
-				return nil, NewErrReplacingHead(child, root, err)
+				return nil, NewErrReplacingHead(linkCid, root, err)
 			}
 
 			continue
 		}
 
-		known, err := mc.dagstore.Has(ctx, child)
+		known, err := mc.dagstore.Has(ctx, linkCid)
 		if err != nil {
-			return nil, NewErrCouldNotFindBlock(child, err)
+			return nil, NewErrCouldNotFindBlock(linkCid, err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
 			log.Debug(ctx, "Adding head")
-			err := mc.headset.Write(ctx, root, rootPrio)
+			err := mc.headset.Write(ctx, root, rootPrio) // @todo: optimize: don't write the same value in the loop
 			if err != nil {
 				log.ErrorE(
 					ctx,
@@ -201,7 +201,7 @@ func (mc *MerkleClock) ProcessNode(
 			continue
 		}
 
-		children = append(children, child)
+		children = append(children, linkCid)
 	}
 
 	return children, nil

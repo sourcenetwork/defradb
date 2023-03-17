@@ -87,7 +87,7 @@ func (key DocKey) UUID() uuid.UUID {
 	return key.uuid
 }
 
-// UUID returns the doc key in string form.
+// String returns the doc key in string form.
 func (key DocKey) String() string {
 	buf := make([]byte, 1)
 	binary.PutUvarint(buf, uint64(key.version))
