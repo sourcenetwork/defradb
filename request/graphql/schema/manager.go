@@ -160,5 +160,7 @@ func defaultTypes() []gql.Type {
 		schemaTypes.CommitLinkObject,
 		schemaTypes.CommitObject,
 		schemaTypes.DeltaObject,
+
+		schemaTypes.ExplainEnum,
 	}
 }

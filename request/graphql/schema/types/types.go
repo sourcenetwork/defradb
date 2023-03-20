@@ -37,6 +37,7 @@ var (
 		},
 	})
 
+	// ExplainEnum is an enum for the @explain directive.
 	ExplainEnum = gql.NewEnum(gql.EnumConfig{
 		Name: "ExplainType",
 		Values: gql.EnumValueConfigMap{
@@ -47,6 +48,7 @@ var (
 		},
 	})
 
+	// ExplainDirective @explain is used to explain the query.
 	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
 		Name: ExplainLabel,
 		Args: gql.FieldConfigArgument{
