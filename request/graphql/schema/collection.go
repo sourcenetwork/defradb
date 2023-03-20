@@ -82,7 +82,7 @@ func fromAstDefinition(
 ) (client.CollectionDescription, error) {
 	fieldDescriptions := []client.FieldDescription{
 		{
-			Name: request.DocKeyFieldName,
+			Name: request.KeyFieldName,
 			Kind: client.FieldKind_DocKey,
 			Typ:  client.NONE_CRDT,
 		},
@@ -150,10 +150,10 @@ func fromAstDefinition(
 
 	// sort the fields lexicographically
 	sort.Slice(fieldDescriptions, func(i, j int) bool {
-		// make sure that the _key (DocKeyFieldName) is always at the beginning
-		if fieldDescriptions[i].Name == request.DocKeyFieldName {
+		// make sure that the _key (KeyFieldName) is always at the beginning
+		if fieldDescriptions[i].Name == request.KeyFieldName {
 			return true
-		} else if fieldDescriptions[j].Name == request.DocKeyFieldName {
+		} else if fieldDescriptions[j].Name == request.KeyFieldName {
 			return false
 		}
 		return fieldDescriptions[i].Name < fieldDescriptions[j].Name

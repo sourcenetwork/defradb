@@ -370,7 +370,7 @@ func (g *Generator) buildTypes(
 			fields := gql.Fields{}
 
 			// automatically add the _key: ID field to the type
-			fields[request.DocKeyFieldName] = &gql.Field{Type: gql.ID}
+			fields[request.KeyFieldName] = &gql.Field{Type: gql.ID}
 
 			for _, field := range fieldDescriptions {
 				var ttype gql.Type
@@ -970,7 +970,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			// generate basic filter operator blocks
 			// @todo: Extract object field loop into its own utility func
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.DocKeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
 					continue
 				}
 				// scalars (leafs)
@@ -1069,7 +1069,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 
 			for f, field := range obj.Fields() {
-				if _, ok := request.ReservedFields[f]; ok && f != request.DocKeyFieldName {
+				if _, ok := request.ReservedFields[f]; ok && f != request.KeyFieldName {
 					continue
 				}
 				typeMap := g.manager.schema.TypeMap()

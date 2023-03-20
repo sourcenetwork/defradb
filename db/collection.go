@@ -67,7 +67,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	}
 
 	docKeyField := desc.Schema.Fields[0]
-	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.DocKeyFieldName {
+	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.KeyFieldName {
 		return nil, ErrSchemaFirstFieldDocKey
 	}
 
@@ -309,7 +309,7 @@ func (db *db) validateUpdateCollection(
 		var existingField client.FieldDescription
 		var fieldAlreadyExists bool
 		if proposedField.ID != client.FieldID(0) ||
-			proposedField.Name == request.DocKeyFieldName {
+			proposedField.Name == request.KeyFieldName {
 			existingField, fieldAlreadyExists = existingFieldsByID[proposedField.ID]
 		}
 

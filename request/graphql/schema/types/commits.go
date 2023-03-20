@@ -29,6 +29,7 @@ var (
 	// type Commit {
 	// 	Height: Int
 	// 	CID: String
+	// 	Dockey: String
 	// 	SchemaVersionID: String
 	// 	Delta: String
 	// 	Previous: [Commit]
@@ -44,6 +45,9 @@ var (
 				Type: gql.Int,
 			},
 			"cid": &gql.Field{
+				Type: gql.String,
+			},
+			"dockey": &gql.Field{
 				Type: gql.String,
 			},
 			"schemaVersionId": &gql.Field{
