@@ -32,7 +32,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "failed to propagate VersionFetcher span: invalid cid: selected encoding not supported",
+		ExpectedError: "invalid cid: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)
