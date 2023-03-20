@@ -35,7 +35,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocKey(t *testing.T) {
 				}`,
 			},
 		},
-		ExpectedError: "invalid CID",
+		ExpectedError: "failed to propagate VersionFetcher span: invalid cid: selected encoding not supported",
 	}
 
 	executeTestCase(t, test)
