@@ -53,26 +53,26 @@ type selectTopNode struct {
 	limit      *limitNode
 	aggregates []aggregateNode
 
-	// selectnode is used pre-wiring of the plan (before expansion and all).
-	selectnode *selectNode
+	// selectNode is used pre-wiring of the plan (before expansion and all).
+	selectNode *selectNode
 
 	// plan is the top of the plan graph (the wired and finalized plan graph).
-	plan planNode
+	planNode planNode
 }
 
 func (n *selectTopNode) Kind() string { return "selectTopNode" }
 
-func (n *selectTopNode) Init() error { return n.plan.Init() }
+func (n *selectTopNode) Init() error { return n.planNode.Init() }
 
-func (n *selectTopNode) Start() error { return n.plan.Start() }
+func (n *selectTopNode) Start() error { return n.planNode.Start() }
 
-func (n *selectTopNode) Next() (bool, error) { return n.plan.Next() }
+func (n *selectTopNode) Next() (bool, error) { return n.planNode.Next() }
 
-func (n *selectTopNode) Spans(spans core.Spans) { n.plan.Spans(spans) }
+func (n *selectTopNode) Spans(spans core.Spans) { n.planNode.Spans(spans) }
 
-func (n *selectTopNode) Value() core.Doc { return n.plan.Value() }
+func (n *selectTopNode) Value() core.Doc { return n.planNode.Value() }
 
-func (n *selectTopNode) Source() planNode { return n.plan }
+func (n *selectTopNode) Source() planNode { return n.planNode }
 
 // Explain method for selectTopNode returns no attributes but is used to
 // subscribe / opt-into being an explainablePlanNode.
@@ -82,10 +82,10 @@ func (n *selectTopNode) Explain() (map[string]any, error) {
 }
 
 func (n *selectTopNode) Close() error {
-	if n.plan == nil {
+	if n.planNode == nil {
 		return nil
 	}
-	return n.plan.Close()
+	return n.planNode.Close()
 }
 
 type selectNode struct {
@@ -117,7 +117,7 @@ type selectNode struct {
 
 	docKeys immutable.Option[[]string]
 
-	parsed       *mapper.Select
+	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
 }
 
@@ -139,7 +139,7 @@ func (n *selectNode) Start() error {
 // renders the doc.
 func (n *selectNode) Next() (bool, error) {
 	for {
-		if next, err := n.source.Next(); !next {
+		if hasNext, err := n.source.Next(); !hasNext {
 			return false, err
 		}
 
@@ -196,11 +196,11 @@ func (n *selectNode) Explain() (map[string]any, error) {
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
 func (n *selectNode) initSource() ([]aggregateNode, error) {
-	if n.parsed.CollectionName == "" {
-		n.parsed.CollectionName = n.parsed.Name
+	if n.selectReq.CollectionName == "" {
+		n.selectReq.CollectionName = n.selectReq.Name
 	}
 
-	sourcePlan, err := n.p.getSource(n.parsed)
+	sourcePlan, err := n.p.getSource(n.selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -220,25 +220,25 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		// If we have both a DocKey and a CID, then we need to run
 		// a TimeTravel (History-Traversing Versioned) query, which means
 		// we need to propagate the values to the underlying VersionedFetcher
-		if n.parsed.Cid.HasValue() {
-			c, err := cid.Decode(n.parsed.Cid.Value())
+		if n.selectReq.Cid.HasValue() {
+			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
 				return nil, err
 			}
 			spans := fetcher.NewVersionedSpan(
-				core.DataStoreKey{DocKey: n.parsed.DocKeys.Value()[0]},
+				core.DataStoreKey{DocKey: n.selectReq.DocKeys.Value()[0]},
 				c,
 			) // @todo check len
 			origScan.Spans(spans)
-		} else if n.parsed.DocKeys.HasValue() {
+		} else if n.selectReq.DocKeys.HasValue() {
 			// If we *just* have a DocKey(s), run a FindByDocKey(s) optimization
 			// if we have a FindByDockey filter, create a span for it
 			// and propagate it to the scanNode
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _key equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			spans := make([]core.Span, len(n.parsed.DocKeys.Value()))
-			for i, docKey := range n.parsed.DocKeys.Value() {
+			spans := make([]core.Span, len(n.selectReq.DocKeys.Value()))
+			for i, docKey := range n.selectReq.DocKeys.Value() {
 				dockeyIndexKey := base.MakeDocKey(sourcePlan.info.collectionDescription, docKey)
 				spans[i] = core.NewSpan(dockeyIndexKey, dockeyIndexKey.PrefixEnd())
 			}
@@ -246,14 +246,14 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		}
 	}
 
-	return n.initFields(n.parsed)
+	return n.initFields(n.selectReq)
 }
 
-func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) {
+func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
 	aggregates := []aggregateNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
-	for _, field := range parsed.Fields {
+	for _, field := range selectReq.Fields {
 		switch f := field.(type) {
 		case *mapper.Aggregate:
 			var plan aggregateNode
@@ -261,9 +261,9 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 
 			switch f.Name {
 			case request.CountFieldName:
-				plan, aggregateError = n.p.Count(f, parsed)
+				plan, aggregateError = n.p.Count(f, selectReq)
 			case request.SumFieldName:
-				plan, aggregateError = n.p.Sum(f, parsed)
+				plan, aggregateError = n.p.Sum(f, selectReq)
 			case request.AverageFieldName:
 				plan, aggregateError = n.p.Average(f)
 			}
@@ -283,14 +283,14 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 				// handle _version sub selection query differently
 				// if we are executing a regular Scan query
 				// or a TimeTravel query.
-				if parsed.Cid.HasValue() {
+				if selectReq.Cid.HasValue() {
 					// for a TimeTravel query, we don't need the Latest
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
 					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocKey = immutable.Some(parsed.DocKeys.Value()[0]) // @todo check length
-					commitSlct.Cid = parsed.Cid
+					commitSlct.DocKey = immutable.Some(selectReq.DocKeys.Value()[0]) // @todo check length
+					commitSlct.Cid = selectReq.Cid
 				}
 
 				commitPlan := n.p.DAGScan(commitSlct)
@@ -299,7 +299,7 @@ func (n *selectNode) initFields(parsed *mapper.Select) ([]aggregateNode, error) 
 					return nil, err
 				}
 			} else if f.Name == request.GroupFieldName {
-				if parsed.GroupBy == nil {
+				if selectReq.GroupBy == nil {
 					return nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
@@ -341,8 +341,8 @@ func (n *selectNode) Source() planNode { return n.source }
 // not to be used on the top level selection node.
 // This allows us to disable rendering on all sub Select nodes
 // and only run it at the end on the top level select node.
-func (p *Planner) SubSelect(parsed *mapper.Select) (planNode, error) {
-	plan, err := p.Select(parsed)
+func (p *Planner) SubSelect(selectReq *mapper.Select) (planNode, error) {
+	plan, err := p.Select(selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func (p *Planner) SubSelect(parsed *mapper.Select) (planNode, error) {
 }
 
 func (p *Planner) SelectFromSource(
-	parsed *mapper.Select,
+	selectReq *mapper.Select,
 	source planNode,
 	fromCollection bool,
 	providedSourceInfo *sourceInfo,
@@ -363,21 +363,21 @@ func (p *Planner) SelectFromSource(
 		p:          p,
 		source:     source,
 		origSource: source,
-		parsed:     parsed,
-		docMapper:  docMapper{&parsed.DocumentMapping},
-		filter:     parsed.Filter,
-		docKeys:    parsed.DocKeys,
+		selectReq:  selectReq,
+		docMapper:  docMapper{&selectReq.DocumentMapping},
+		filter:     selectReq.Filter,
+		docKeys:    selectReq.DocKeys,
 	}
-	limit := parsed.Limit
-	orderBy := parsed.OrderBy
-	groupBy := parsed.GroupBy
+	limit := selectReq.Limit
+	orderBy := selectReq.OrderBy
+	groupBy := selectReq.GroupBy
 
 	if providedSourceInfo != nil {
 		s.sourceInfo = *providedSourceInfo
 	}
 
 	if fromCollection {
-		desc, err := p.getCollectionDesc(parsed.Name)
+		desc, err := p.getCollectionDesc(selectReq.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -385,77 +385,77 @@ func (p *Planner) SelectFromSource(
 		s.sourceInfo = sourceInfo{desc}
 	}
 
-	aggregates, err := s.initFields(parsed)
+	aggregates, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, parsed, s.groupSelects)
+	groupPlan, err := p.GroupBy(groupBy, selectReq, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
 
-	limitPlan, err := p.Limit(parsed, limit)
+	limitPlan, err := p.Limit(selectReq, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	orderPlan, err := p.OrderBy(parsed, orderBy)
+	orderPlan, err := p.OrderBy(selectReq, orderBy)
 	if err != nil {
 		return nil, err
 	}
 
 	top := &selectTopNode{
-		selectnode: s,
+		selectNode: s,
 		limit:      limitPlan,
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
-		docMapper:  docMapper{&parsed.DocumentMapping},
+		docMapper:  docMapper{&selectReq.DocumentMapping},
 	}
 	return top, nil
 }
 
 // Select constructs a SelectPlan
-func (p *Planner) Select(parsed *mapper.Select) (planNode, error) {
+func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	s := &selectNode{
 		p:         p,
-		filter:    parsed.Filter,
-		docKeys:   parsed.DocKeys,
-		parsed:    parsed,
-		docMapper: docMapper{&parsed.DocumentMapping},
+		filter:    selectReq.Filter,
+		docKeys:   selectReq.DocKeys,
+		selectReq: selectReq,
+		docMapper: docMapper{&selectReq.DocumentMapping},
 	}
-	limit := parsed.Limit
-	orderBy := parsed.OrderBy
-	groupBy := parsed.GroupBy
+	limit := selectReq.Limit
+	orderBy := selectReq.OrderBy
+	groupBy := selectReq.GroupBy
 
 	aggregates, err := s.initSource()
 	if err != nil {
 		return nil, err
 	}
 
-	groupPlan, err := p.GroupBy(groupBy, parsed, s.groupSelects)
+	groupPlan, err := p.GroupBy(groupBy, selectReq, s.groupSelects)
 	if err != nil {
 		return nil, err
 	}
 
-	limitPlan, err := p.Limit(parsed, limit)
+	limitPlan, err := p.Limit(selectReq, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	orderPlan, err := p.OrderBy(parsed, orderBy)
+	orderPlan, err := p.OrderBy(selectReq, orderBy)
 	if err != nil {
 		return nil, err
 	}
 
 	top := &selectTopNode{
-		selectnode: s,
+		selectNode: s,
 		limit:      limitPlan,
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
-		docMapper:  docMapper{&parsed.DocumentMapping},
+		docMapper:  docMapper{&selectReq.DocumentMapping},
 	}
 	return top, nil
 }

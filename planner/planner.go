@@ -169,29 +169,29 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 // an initiated plan. The caller of makePlan is also responsible of calling Close()
 // on the plan to free it's resources.
 func (p *Planner) makePlan(stmt any) (planNode, error) {
-	plan, err := p.newPlan(stmt)
+	planNode, err := p.newPlan(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	err = p.optimizePlan(plan)
+	err = p.optimizePlan(planNode)
 	if err != nil {
 		return nil, err
 	}
 
-	err = plan.Init()
-	return plan, err
+	err = planNode.Init()
+	return planNode, err
 }
 
 // optimizePlan optimizes the plan using plan expansion and wiring.
-func (p *Planner) optimizePlan(plan planNode) error {
-	err := p.expandPlan(plan, nil)
+func (p *Planner) optimizePlan(planNode planNode) error {
+	err := p.expandPlan(planNode, nil)
 	return err
 }
 
 // expandPlan does a full plan graph expansion and other optimizations.
-func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
-	switch n := plan.(type) {
+func (p *Planner) expandPlan(planNode planNode, parentPlan *selectTopNode) error {
+	switch n := planNode.(type) {
 	case *selectTopNode:
 		return p.expandSelectTopNodePlan(n, parentPlan)
 
@@ -247,12 +247,12 @@ func (p *Planner) expandPlan(plan planNode, parentPlan *selectTopNode) error {
 }
 
 func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selectTopNode) error {
-	if err := p.expandPlan(plan.selectnode, plan); err != nil {
+	if err := p.expandPlan(plan.selectNode, plan); err != nil {
 		return err
 	}
 
 	// wire up source to plan
-	plan.plan = plan.selectnode
+	plan.planNode = plan.selectNode
 
 	// if group
 	if plan.group != nil {
@@ -260,15 +260,15 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		if err != nil {
 			return err
 		}
-		plan.plan = plan.group
+		plan.planNode = plan.group
 	}
 
 	p.expandAggregatePlans(plan)
 
 	// if order
 	if plan.order != nil {
-		plan.order.plan = plan.plan
-		plan.plan = plan.order
+		plan.order.plan = plan.planNode
+		plan.planNode = plan.order
 	}
 
 	if plan.limit != nil {
@@ -288,13 +288,13 @@ func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
 	// execute *before* any aggregate dependent on them.
 	for i := len(plan.aggregates) - 1; i >= 0; i-- {
 		aggregate := plan.aggregates[i]
-		aggregate.SetPlan(plan.plan)
-		plan.plan = aggregate
+		aggregate.SetPlan(plan.planNode)
+		plan.planNode = aggregate
 	}
 }
 
-func (p *Planner) expandMultiNode(plan MultiNode, parentPlan *selectTopNode) error {
-	for _, child := range plan.Children() {
+func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode) error {
+	for _, child := range multiNode.Children() {
 		if err := p.expandPlan(child, parentPlan); err != nil {
 			return err
 		}
@@ -312,22 +312,22 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
 
-func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
+func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 	var sourceNode planNode
 	var hasScanNode bool
-	// Find the first scan node in the plan, we assume that it will be for the correct collection.
+	// Find the first scan node in the topNodeSelect, we assume that it will be for the correct collection.
 	// This may be a commit node.
-	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](plan.plan)
+	sourceNode, hasScanNode = walkAndFindPlanType[*scanNode](topNodeSelect.planNode)
 	if !hasScanNode {
-		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](plan.plan)
+		commitNode, hasCommitNode := walkAndFindPlanType[*dagScanNode](topNodeSelect.planNode)
 		if !hasCommitNode {
 			return ErrFailedToFindGroupSource
 		}
 		sourceNode = commitNode
 	}
 
-	// Check for any existing pipe nodes in the plan, we should use it if there is one
-	pipe, hasPipe := walkAndFindPlanType[*pipeNode](plan.plan)
+	// Check for any existing pipe nodes in the topNodeSelect, we should use it if there is one
+	pipe, hasPipe := walkAndFindPlanType[*pipeNode](topNodeSelect.planNode)
 
 	if !hasPipe {
 		newPipeNode := newPipeNode(sourceNode.DocumentMap())
@@ -335,35 +335,35 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 		pipe.source = sourceNode
 	}
 
-	if len(plan.group.childSelects) == 0 {
-		dataSource := plan.group.dataSources[0]
-		dataSource.parentSource = plan.plan
+	if len(topNodeSelect.group.childSelects) == 0 {
+		dataSource := topNodeSelect.group.dataSources[0]
+		dataSource.parentSource = topNodeSelect.planNode
 		dataSource.pipeNode = pipe
 	}
 
-	for i, childSelect := range plan.group.childSelects {
+	for i, childSelect := range topNodeSelect.group.childSelects {
 		childSelectNode, err := p.SelectFromSource(
 			childSelect,
 			pipe,
 			false,
-			&plan.selectnode.sourceInfo,
+			&topNodeSelect.selectNode.sourceInfo,
 		)
 		if err != nil {
 			return err
 		}
 
-		dataSource := plan.group.dataSources[i]
+		dataSource := topNodeSelect.group.dataSources[i]
 		dataSource.childSource = childSelectNode
-		dataSource.parentSource = plan.plan
+		dataSource.parentSource = topNodeSelect.planNode
 		dataSource.pipeNode = pipe
 	}
 
-	if err := p.walkAndReplacePlan(plan.group, sourceNode, pipe); err != nil {
+	if err := p.walkAndReplacePlan(topNodeSelect.group, sourceNode, pipe); err != nil {
 		return err
 	}
 
-	for _, dataSource := range plan.group.dataSources {
-		err := p.expandPlan(dataSource.childSource, plan)
+	for _, dataSource := range topNodeSelect.group.dataSources {
+		err := p.expandPlan(dataSource.childSource, topNodeSelect)
 		if err != nil {
 			return err
 		}
@@ -372,26 +372,26 @@ func (p *Planner) expandGroupNodePlan(plan *selectTopNode) error {
 	return nil
 }
 
-func (p *Planner) expandLimitPlan(plan *selectTopNode, parentPlan *selectTopNode) {
-	if plan.limit == nil {
+func (p *Planner) expandLimitPlan(topNodeSelect *selectTopNode, parentPlan *selectTopNode) {
+	if topNodeSelect.limit == nil {
 		return
 	}
 
 	// Limits get more complicated with groups and have to be handled internally, so we ensure
-	// any limit plan is disabled here
+	// any limit topNodeSelect is disabled here
 	if parentPlan != nil && parentPlan.group != nil && len(parentPlan.group.childSelects) != 0 {
-		plan.limit = nil
+		topNodeSelect.limit = nil
 		return
 	}
 
-	plan.limit.plan = plan.plan
-	plan.plan = plan.limit
+	topNodeSelect.limit.plan = topNodeSelect.planNode
+	topNodeSelect.planNode = topNodeSelect.limit
 }
 
 // walkAndReplace walks through the provided plan, and searches for an instance
 // of the target plan, and replaces it with the replace plan
-func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
-	src := plan.Source()
+func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
+	src := planNode.Source()
 	if src == nil {
 		return nil
 	}
@@ -404,7 +404,7 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 
 	// We've found our plan, figure out what type our current plan is
 	// and update accordingly
-	switch node := plan.(type) {
+	switch node := planNode.(type) {
 	case *selectNode:
 		node.source = replace
 	case *typeJoinOne:
@@ -423,8 +423,8 @@ func (p *Planner) walkAndReplacePlan(plan, target, replace planNode) error {
 
 // walkAndFindPlanType walks through the plan graph, and returns the first
 // instance of a plan, that matches the given type.
-func walkAndFindPlanType[T planNode](plan planNode) (T, bool) {
-	src := plan
+func walkAndFindPlanType[T planNode](planNode planNode) (T, bool) {
+	src := planNode
 	if src == nil {
 		var defaultT T
 		return defaultT, false
@@ -432,7 +432,7 @@ func walkAndFindPlanType[T planNode](plan planNode) (T, bool) {
 
 	targetType, isTargetType := src.(T)
 	if !isTargetType {
-		return walkAndFindPlanType[T](plan.Source())
+		return walkAndFindPlanType[T](planNode.Source())
 	}
 
 	return targetType, true
@@ -442,12 +442,12 @@ func walkAndFindPlanType[T planNode](plan planNode) (T, bool) {
 // be executed, maintaing their order in the plan graph (does not actually execute them).
 func (p *Planner) explainRequest(
 	ctx context.Context,
-	plan planNode,
+	planNode planNode,
 	explainType request.ExplainType,
 ) ([]map[string]any, error) {
 	switch explainType {
 	case request.SimpleExplain:
-		explainGraph, err := buildSimpleExplainGraph(plan)
+		explainGraph, err := buildSimpleExplainGraph(planNode)
 		if err != nil {
 			return nil, err
 		}
@@ -468,25 +468,25 @@ func (p *Planner) explainRequest(
 // executeRequest executes the plan graph that represents the request that was made.
 func (p *Planner) executeRequest(
 	ctx context.Context,
-	plan planNode,
+	planNode planNode,
 ) ([]map[string]any, error) {
-	if err := plan.Start(); err != nil {
+	if err := planNode.Start(); err != nil {
 		return nil, err
 	}
 
-	next, err := plan.Next()
+	hasNext, err := planNode.Next()
 	if err != nil {
 		return nil, err
 	}
 
 	docs := []map[string]any{}
-	docMap := plan.DocumentMap()
+	docMap := planNode.DocumentMap()
 
-	for next {
-		copy := docMap.ToMap(plan.Value())
+	for hasNext {
+		copy := docMap.ToMap(planNode.Value())
 		docs = append(docs, copy)
 
-		next, err = plan.Next()
+		hasNext, err = planNode.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -500,13 +500,13 @@ func (p *Planner) RunRequest(
 	ctx context.Context,
 	req *request.Request,
 ) (result []map[string]any, err error) {
-	plan, err := p.makePlan(req)
+	planNode, err := p.makePlan(req)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		if e := plan.Close(); e != nil {
+		if e := planNode.Close(); e != nil {
 			err = NewErrFailedToClosePlan(e, "running request")
 		}
 	}()
@@ -517,15 +517,15 @@ func (p *Planner) RunRequest(
 	}
 
 	if len(req.Queries) > 0 && req.Queries[0].Directives.ExplainType.HasValue() {
-		return p.explainRequest(ctx, plan, req.Queries[0].Directives.ExplainType.Value())
+		return p.explainRequest(ctx, planNode, req.Queries[0].Directives.ExplainType.Value())
 	}
 
 	if len(req.Mutations) > 0 && req.Mutations[0].Directives.ExplainType.HasValue() {
-		return p.explainRequest(ctx, plan, req.Mutations[0].Directives.ExplainType.Value())
+		return p.explainRequest(ctx, planNode, req.Mutations[0].Directives.ExplainType.Value())
 	}
 
 	// This won't / should NOT execute if it's any kind of explain request.
-	return p.executeRequest(ctx, plan)
+	return p.executeRequest(ctx, planNode)
 }
 
 // RunSubscriptionRequest plans a request specific to a subscription and returns the result.
@@ -533,18 +533,18 @@ func (p *Planner) RunSubscriptionRequest(
 	ctx context.Context,
 	request *request.Select,
 ) (result []map[string]any, err error) {
-	plan, err := p.makePlan(request)
+	planNode, err := p.makePlan(request)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
-		if e := plan.Close(); e != nil {
+		if e := planNode.Close(); e != nil {
 			err = NewErrFailedToClosePlan(e, "running subscription request")
 		}
 	}()
 
-	return p.executeRequest(ctx, plan)
+	return p.executeRequest(ctx, planNode)
 }
 
 // MakePlan makes a plan from the parsed request.
