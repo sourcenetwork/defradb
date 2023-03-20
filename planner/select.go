@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/core"
 	"github.com/sourcenetwork/defradb/db/base"
 	"github.com/sourcenetwork/defradb/db/fetcher"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/planner/mapper"
 )
 
@@ -224,10 +223,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		if n.parsed.Cid.HasValue() {
 			c, err := cid.Decode(n.parsed.Cid.Value())
 			if err != nil {
-				return nil, errors.Wrap(
-					"failed to propagate VersionFetcher span, invalid CID",
-					err,
-				)
+				return nil, err
 			}
 			spans := fetcher.NewVersionedSpan(
 				core.DataStoreKey{DocKey: n.parsed.DocKeys.Value()[0]},
