@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -446,24 +447,11 @@ func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Col
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
 	newLen := 0
-	for i := range testCase.Actions {
-		switch action := testCase.Actions[i].(type) {
-		case []SchemaUpdate:
-			newLen += len(action)
-		case []SchemaPatch:
-			newLen += len(action)
-		case []CreateDoc:
-			newLen += len(action)
-		case []UpdateDoc:
-			newLen += len(action)
-		case []Request:
-			newLen += len(action)
-		case []TransactionRequest:
-			newLen += len(action)
-		case []TransactionRequest2:
-			newLen += len(action)
-		case []TransactionCommit:
-			newLen += len(action)
+	for _, a := range testCase.Actions {
+		actionGroup := reflect.ValueOf(a)
+		switch actionGroup.Kind() {
+		case reflect.Array, reflect.Slice:
+			newLen += actionGroup.Len()
 		default:
 			newLen++
 		}
@@ -477,42 +465,19 @@ func flattenActions(testCase *TestCase) {
 		return
 	}
 	newActions := make([]any, 0, newLen)
-	for i := range testCase.Actions {
-		switch action := testCase.Actions[i].(type) {
-		case []SchemaUpdate:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []SchemaPatch:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []CreateDoc:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []UpdateDoc:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []Request:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionRequest:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionRequest2:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionCommit:
-			for j := range action {
-				newActions = append(newActions, action[j])
+
+	for _, a := range testCase.Actions {
+		actionGroup := reflect.ValueOf(a)
+		switch actionGroup.Kind() {
+		case reflect.Array, reflect.Slice:
+			for i := 0; i < actionGroup.Len(); i++ {
+				newActions = append(
+					newActions,
+					actionGroup.Index(i).Interface(),
+				)
 			}
 		default:
-			newActions = append(newActions, action)
+			newActions = append(newActions, a)
 		}
 	}
 	testCase.Actions = newActions
