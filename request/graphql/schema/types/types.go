@@ -38,7 +38,8 @@ var (
 	})
 
 	ExplainEnum = gql.NewEnum(gql.EnumConfig{
-		Name: "ExplainType",
+		Name:        "ExplainType",
+		Description: "ExplainType is an enum selecting the type of explanation done by the @explain directive.",
 		Values: gql.EnumValueConfigMap{
 			ExplainArgSimple: &gql.EnumValueConfig{
 				Value:       ExplainArgSimple,
@@ -48,7 +49,8 @@ var (
 	})
 
 	ExplainDirective *gql.Directive = gql.NewDirective(gql.DirectiveConfig{
-		Name: ExplainLabel,
+		Name:        ExplainLabel,
+		Description: "@explain is a directive that can be used to explain the query.",
 		Args: gql.FieldConfigArgument{
 			ExplainArgNameType: &gql.ArgumentConfig{
 				Type: ExplainEnum,
