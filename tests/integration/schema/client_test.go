@@ -14,36 +14,40 @@ import (
 	"testing"
 
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // TestIntrospectionExplainTypeDefined tests that the introspection query returns a schema that
 // defines the ExplainType enum.
 func TestIntrospectionExplainTypeDefined(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					types {
-						kind
-						name
-						description
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							types {
+								kind
+								name
+								description
+							}
+						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"types": []any{
-					map[string]any{
-						"description": schemaTypes.ExplainEnum.Description(),
-						"kind":        "ENUM",
-						"name":        "ExplainType",
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"types": []any{
+							map[string]any{
+								"description": schemaTypes.ExplainEnum.Description(),
+								"kind":        "ENUM",
+								"name":        "ExplainType",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{}, test)
 }
