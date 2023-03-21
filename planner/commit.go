@@ -41,7 +41,7 @@ type dagScanNode struct {
 
 func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 	return &dagScanNode{
-		planner:            p,
+		planner:      p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   []*cid.Cid{},
 		commitSelect: commitSelect,
@@ -292,6 +292,16 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
+
+	dockey, ok := delta["DocKey"].([]byte)
+	if ok {
+		dockeyObj, err := core.NewDataStoreKey(string(dockey))
+		if err != nil {
+			return core.Doc{}, nil, err
+		}
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "dockey",
+			string(dockeyObj.InstanceType))
+	}
 
 	heads := make([]*ipld.Link, 0)
 

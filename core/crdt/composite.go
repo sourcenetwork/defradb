@@ -39,6 +39,7 @@ type CompositeDAGDelta struct {
 	SchemaVersionID string
 	Priority        uint64
 	Data            []byte
+	DocKey          []byte
 	SubDAGs         []core.DAGLink
 }
 
@@ -61,7 +62,8 @@ func (delta *CompositeDAGDelta) Marshal() ([]byte, error) {
 		SchemaVersionID string
 		Priority        uint64
 		Data            []byte
-	}{delta.SchemaVersionID, delta.Priority, delta.Data})
+		DocKey          []byte
+	}{delta.SchemaVersionID, delta.Priority, delta.Data, delta.DocKey})
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +121,7 @@ func (c CompositeDAG) Set(patch []byte, links []core.DAGLink) *CompositeDAGDelta
 	})
 	return &CompositeDAGDelta{
 		Data:            patch,
+		DocKey:          c.key.Bytes(),
 		SubDAGs:         links,
 		SchemaVersionID: c.schemaVersionKey.SchemaVersionId,
 	}
