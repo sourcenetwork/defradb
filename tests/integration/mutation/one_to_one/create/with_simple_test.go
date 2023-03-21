@@ -17,6 +17,9 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
+// This test documents incorrect behaviour. It should be possible to create author then book,
+// linking in the second create step (like in [TestMutationCreateOneToOne]).
+// https://github.com/sourcenetwork/defradb/issues/1213
 func TestMutationCreateOneToOneWrongSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
