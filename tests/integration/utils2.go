@@ -381,7 +381,7 @@ func executeTestCase(
 			executeRequest(ctx, t, nodes, testCase, action)
 
 		case IntrospectionRequest:
-			assertSchemaResults(ctx, t, testCase.Description, db, action)
+			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
 
 		case WaitForSync:
 			waitForSync(t, testCase, action, syncChans)
@@ -1100,7 +1100,7 @@ func assertExpectedErrorRaised(t *testing.T, description string, expectedError s
 	}
 }
 
-func assertSchemaResults(
+func assertIntrospectionResults(
 	ctx context.Context,
 	t *testing.T,
 	description string,
