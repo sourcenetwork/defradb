@@ -5,7 +5,7 @@ We value the work of well-intentioned security researchers in identifying securi
 
 ## Commitments
 
-1. We respond to security incidents and addressing vulnerabilities.
+1. We respond to security incidents and address vulnerabilities.
 2. We collaborate to establish a disclosure time frame for the reported vulnerability. During this time, we will either develop a fix or accept the risk, followed by disclosing the vulnerability.
 3. We are transparent, ensuring that our community remains informed about incidents affecting them.
 
