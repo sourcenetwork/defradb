@@ -48,7 +48,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 			{
@@ -60,7 +60,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightDesc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"height": int64(1),
 			},
 		},
@@ -105,7 +105,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"height": int64(1),
 			},
 			{
@@ -113,7 +113,7 @@ func TestQueryCommitsWithDockeyAndOrderHeightAsc(t *testing.T) {
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 		},
@@ -154,11 +154,11 @@ func TestQueryCommitsWithDockeyAndOrderCidDesc(t *testing.T) {
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"height": int64(1),
 			},
 			{
@@ -211,11 +211,11 @@ func TestQueryCommitsWithDockeyAndOrderCidAsc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 			{
@@ -270,7 +270,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 				"height": int64(1),
 			},
 			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"height": int64(1),
 			},
 			{
@@ -278,7 +278,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 				"height": int64(2),
 			},
 			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 			{
@@ -286,7 +286,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 				"height": int64(3),
 			},
 			{
-				"cid":    "bafybeifodfb4kakigrsaobafpz2xogmylr33qphdjjkumseu7dkzlpbvem",
+				"cid":    "bafybeieh6icybinqmuz7or7nqjt445zu2qbnxccuu64i5jhgonhlj2k5sy",
 				"height": int64(3),
 			},
 			{
@@ -294,7 +294,7 @@ func TestQueryCommitsWithDockeyAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 				"height": int64(4),
 			},
 			{
-				"cid":    "bafybeid6gm7723nfhmxqprclrnynxyyaf5mddxq2ggjqy4h344tykzpig4",
+				"cid":    "bafybeic4rhgl4pvsh3z5rtr5tzm3zzakyivju6mqemq5v4xqxh7otgrjri",
 				"height": int64(4),
 			},
 		},

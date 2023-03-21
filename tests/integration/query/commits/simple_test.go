@@ -40,7 +40,7 @@ func TestQueryCommits(t *testing.T) {
 				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 				"cid": "bafybeifycjhxcrn3kspu3tajpk2qvlto5mmaxx22bb2tk5ly6dbhc43p5u",
 			},
 			{
-				"cid": "bafybeid5s677eie3naujdwf6s6ffs2auoamlro2zzt6uk5eldumcvhxkxa",
+				"cid": "bafybeidzzv4pnmx4xzfopyznmud6swrh2labbvsczpnqjvshqqkrgrc2uu",
 			},
 			{
 				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
@@ -85,7 +85,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 			{
-				"cid":             "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":             "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 		},

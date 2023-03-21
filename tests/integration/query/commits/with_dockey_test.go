@@ -66,7 +66,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 						"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 					},
 					{
-						"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 					},
 				},
 			},
@@ -110,7 +110,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 						"links": []map[string]any{
 							{
 								"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
@@ -172,11 +172,11 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 						"height": int64(1),
 					},
 					{
-						"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+						"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 						"height": int64(2),
 					},
 					{
-						"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 						"height": int64(1),
 					},
 				},
@@ -240,20 +240,20 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 						"links": []map[string]any{},
 					},
 					{
-						"cid": "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+						"cid": "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 						"links": []map[string]any{
 							{
 								"cid":  "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+								"cid":  "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 								"name": "_head",
 							},
 						},
 					},
 					{
-						"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 						"links": []map[string]any{
 							{
 								"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",

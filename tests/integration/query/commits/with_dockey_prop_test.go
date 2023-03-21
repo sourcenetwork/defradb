@@ -47,7 +47,7 @@ func TestQueryCommitsWithDockeyProperty(t *testing.T) {
 						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 					{
-						"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 				},

@@ -40,7 +40,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 			},
 		},
 	}
@@ -86,7 +86,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 			},
 			{
 				// "Age" field head
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 		},
@@ -142,12 +142,12 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 			},
 			{
 				// "Age" field head
-				"cid":    "bafybeifodfb4kakigrsaobafpz2xogmylr33qphdjjkumseu7dkzlpbvem",
+				"cid":    "bafybeieh6icybinqmuz7or7nqjt445zu2qbnxccuu64i5jhgonhlj2k5sy",
 				"height": int64(3),
 			},
 			{
 				// "Age" field head -1
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
+				"cid":    "bafybeidxeexqpsbf2qqrrkrysdztf2q5mqfwabwrcxdkjuolf6fsyzzyh4",
 				"height": int64(2),
 			},
 		},
@@ -184,7 +184,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 			},
 			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid": "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 			},
 			{
 				"cid": "bafybeie4ciqu6dwoovbrzjuzlpy6ene3ahhiqz7ocrcxeb2h4zkifhqdr4",
@@ -193,7 +193,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				"cid": "bafybeifj66t5p5df7ksiod6asvyyk6zduejzd7pncbpnaospn5mmjdr5bq",
 			},
 			{
-				"cid": "bafybeifcai3fhjagpl533axa2yju2ayd53gwdipcuh4ywzqazk7k4xo5zi",
+				"cid": "bafybeielpy36cijvx3ffpq3oxd4knmui7h5hrruvcb5it4homf5krylpsi",
 			},
 		},
 	}
