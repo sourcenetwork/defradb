@@ -12,41 +12,37 @@ package schema
 
 import (
 	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type book {
-				    name: String
-				    rating: Float
-				    author: author
-				}
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type book {
+						name: String
+						rating: Float
+						author: author
+					}
 
-				type author {
-				    name: String
-				    age: Int
-				    verified: Boolean
-				    wrote: book @primary
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "author") {
-					name
-					fields {
-						name
-						args {
+					type author {
+						name: String
+						age: Int
+						verified: Boolean
+						wrote: book @primary
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "author") {
 							name
-							type {
+							fields {
 								name
-								ofType {
-									name
-									kind
-								}
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -54,85 +50,95 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 											name
 											kind
 										}
+										inputFields {
+											name
+											type {
+												name
+												ofType {
+													name
+													kind
+												}
+											}
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "author",
-				"fields": []any{
-					map[string]any{
-						// Asserting only on group, because it is the field that contains `order` info we are
-						// looking for, additionally wanted to reduce the noise of other elements that were getting
-						// dumped out which made the entire output horrible.
-						"name": "_group",
-						"args": append(
-							defaultGroupArgsWithoutOrder,
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "author",
+						"fields": []any{
 							map[string]any{
-								"name": "order",
-								"type": map[string]any{
-									"name":   "authorOrderArg",
-									"ofType": nil,
-									"inputFields": []any{
-										map[string]any{
-											"name": "_key",
-											"type": map[string]any{
-												"name":   "Ordering",
-												"ofType": nil,
-											},
-										},
-										map[string]any{
-											"name": "age",
-											"type": map[string]any{
-												"name":   "Ordering",
-												"ofType": nil,
-											},
-										},
-										map[string]any{
-											"name": "name",
-											"type": map[string]any{
-												"name":   "Ordering",
-												"ofType": nil,
-											},
-										},
-										map[string]any{
-											"name": "verified",
-											"type": map[string]any{
-												"name":   "Ordering",
-												"ofType": nil,
-											},
-										},
-										// Without the relation type we won't have the following ordering type(s).
-										map[string]any{
-											"name": "wrote",
-											"type": map[string]any{
-												"name":   "bookOrderArg",
-												"ofType": nil,
-											},
-										},
-										map[string]any{
-											"name": "wrote_id",
-											"type": map[string]any{
-												"name":   "Ordering",
-												"ofType": nil,
+								// Asserting only on group, because it is the field that contains `order` info we are
+								// looking for, additionally wanted to reduce the noise of other elements that were getting
+								// dumped out which made the entire output horrible.
+								"name": "_group",
+								"args": append(
+									defaultGroupArgsWithoutOrder,
+									map[string]any{
+										"name": "order",
+										"type": map[string]any{
+											"name":   "authorOrderArg",
+											"ofType": nil,
+											"inputFields": []any{
+												map[string]any{
+													"name": "_key",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
+												map[string]any{
+													"name": "age",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
+												map[string]any{
+													"name": "name",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
+												map[string]any{
+													"name": "verified",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
+												// Without the relation type we won't have the following ordering type(s).
+												map[string]any{
+													"name": "wrote",
+													"type": map[string]any{
+														"name":   "bookOrderArg",
+														"ofType": nil,
+													},
+												},
+												map[string]any{
+													"name": "wrote_id",
+													"type": map[string]any{
+														"name":   "Ordering",
+														"ofType": nil,
+													},
+												},
 											},
 										},
 									},
-								},
+								).tidy(),
 							},
-						).tidy(),
+						},
 					},
 				},
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"book", "author"}, test)
 }
 
 var testInputTypeOfOrderFieldWhereSchemaHasRelationTypeArgProps = map[string]any{
