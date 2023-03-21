@@ -18,14 +18,18 @@ import (
 )
 
 func TestMutationCreateOneToOneWrongSide(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Request: `mutation {
-					create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						_key
-					}
-				}`,
-		ExpectedError: "The given field does not exist",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+							create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+								_key
+							}
+						}`,
+				ExpectedError: "The given field does not exist",
+			},
+		},
 	}
 
 	simpleTests.ExecuteTestCase(t, test)
@@ -34,19 +38,22 @@ func TestMutationCreateOneToOneWrongSide(t *testing.T) {
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Request: `mutation {
-					create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
-				}`,
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+							create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+								name
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
 			},
 		},
 	}
-
 	simpleTests.ExecuteTestCase(t, test)
 }
