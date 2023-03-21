@@ -11,6 +11,7 @@
 package create
 
 import (
+	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -58,5 +59,62 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 			},
 		},
 	}
+	simpleTests.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateOneToOne(t *testing.T) {
+	bookKey := "bae-3d236f89-6a31-5add-a36a-27971a2eac76"
+
+	test := testUtils.TestCase{
+		Description: "One to one create mutation",
+		Actions: []any{
+			testUtils.Request{
+				Request: `mutation {
+						create_book(data: "{\"name\": \"Painted House\"}") {
+							_key
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"_key": bookKey,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: fmt.Sprintf(
+					`mutation {
+						create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
+							name
+						}
+					}`,
+					bookKey),
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						book {
+							name
+							author {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "Painted House",
+						"author": map[string]any{
+							"name": "John Grisham",
+						},
+					},
+				},
+			},
+		},
+	}
+
 	simpleTests.ExecuteTestCase(t, test)
 }
