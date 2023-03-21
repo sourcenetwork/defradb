@@ -13,114 +13,118 @@ package aggregates
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					FavouriteIntegers: [Int!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						FavouriteIntegers: [Int!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
+										inputFields {
+											name
+											type {
+												name
+											}
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "FavouriteIntegers",
-								"type": map[string]any{
-									"name": "users__FavouriteIntegers__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullIntFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "FavouriteIntegers",
+										"type": map[string]any{
+											"name": "users__FavouriteIntegers__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullIntFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
 											},
 										},
 									},
-								},
-							},
-							map[string]any{
-								"name": "_group",
-								"type": map[string]any{
-									"name": "users__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "usersFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
+									map[string]any{
+										"name": "_group",
+										"type": map[string]any{
+											"name": "users__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "usersFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
 											},
 										},
 									},
-								},
-							},
-							map[string]any{
-								"name": "_version",
-								"type": map[string]any{
-									"name": "users___version__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
+									map[string]any{
+										"name": "_version",
+										"type": map[string]any{
+											"name": "users___version__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
 											},
 										},
 									},
@@ -133,112 +137,116 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					FavouriteFloats: [Float!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						FavouriteFloats: [Float!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
+										inputFields {
+											name
+											type {
+												name
+											}
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_sum",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "FavouriteFloats",
-								"type": map[string]any{
-									"name": "users__FavouriteFloats__NumericSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullFloatFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "order",
-											"type": map[string]any{
-												"name": "Ordering",
+								"name": "_sum",
+								"args": []any{
+									map[string]any{
+										"name": "FavouriteFloats",
+										"type": map[string]any{
+											"name": "users__FavouriteFloats__NumericSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullFloatFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "order",
+													"type": map[string]any{
+														"name": "Ordering",
+													},
+												},
 											},
 										},
 									},
-								},
-							},
-							map[string]any{
-								"name": "_group",
-								"type": map[string]any{
-									"name": "users__NumericSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "field",
-											"type": map[string]any{
-												"name": nil,
-											},
-										},
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "usersFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "order",
-											"type": map[string]any{
-												"name": "usersOrderArg",
+									map[string]any{
+										"name": "_group",
+										"type": map[string]any{
+											"name": "users__NumericSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "field",
+													"type": map[string]any{
+														"name": nil,
+													},
+												},
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "usersFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "order",
+													"type": map[string]any{
+														"name": "usersOrderArg",
+													},
+												},
 											},
 										},
 									},
@@ -251,112 +259,116 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					FavouriteIntegers: [Int!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						FavouriteIntegers: [Int!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
+										inputFields {
+											name
+											type {
+												name
+											}
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_avg",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "FavouriteIntegers",
-								"type": map[string]any{
-									"name": "users__FavouriteIntegers__NumericSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullIntFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "order",
-											"type": map[string]any{
-												"name": "Ordering",
+								"name": "_avg",
+								"args": []any{
+									map[string]any{
+										"name": "FavouriteIntegers",
+										"type": map[string]any{
+											"name": "users__FavouriteIntegers__NumericSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullIntFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "order",
+													"type": map[string]any{
+														"name": "Ordering",
+													},
+												},
 											},
 										},
 									},
-								},
-							},
-							map[string]any{
-								"name": "_group",
-								"type": map[string]any{
-									"name": "users__NumericSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "field",
-											"type": map[string]any{
-												"name": nil,
-											},
-										},
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "usersFilterArg",
-											},
-										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name": "Int",
-											},
-										},
-										map[string]any{
-											"name": "order",
-											"type": map[string]any{
-												"name": "usersOrderArg",
+									map[string]any{
+										"name": "_group",
+										"type": map[string]any{
+											"name": "users__NumericSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "field",
+													"type": map[string]any{
+														"name": nil,
+													},
+												},
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "usersFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "order",
+													"type": map[string]any{
+														"name": "usersOrderArg",
+													},
+												},
 											},
 										},
 									},
@@ -369,7 +381,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 var aggregateGroupArg = map[string]any{
@@ -451,25 +463,23 @@ var aggregateVersionArg = map[string]any{
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Boolean]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Boolean]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -477,6 +487,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -484,84 +500,84 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "BooleanFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "BooleanFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Boolean",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Boolean",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Boolean",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Boolean",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -569,29 +585,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Boolean!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Boolean!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -599,6 +613,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -606,84 +626,84 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullBooleanFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullBooleanFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Boolean",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Boolean",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Boolean",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Boolean",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -691,29 +711,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Int]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Int]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -721,6 +739,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -728,108 +752,108 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "IntFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "IntFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_ge",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_gt",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_le",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_lt",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Int",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_ge",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_gt",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_le",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_lt",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -837,29 +861,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Int!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Int!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -867,6 +889,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -874,108 +902,108 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullIntFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullIntFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_ge",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_gt",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_le",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_lt",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Int",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Int",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_ge",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_gt",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_le",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_lt",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Int",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -983,29 +1011,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Float]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Float]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -1013,6 +1039,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -1020,108 +1052,108 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "FloatFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "FloatFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_ge",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_gt",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_le",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_lt",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Float",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_ge",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_gt",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_le",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_lt",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -1129,29 +1161,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [Float!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [Float!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -1159,6 +1189,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -1166,108 +1202,108 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullFloatFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullFloatFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_ge",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_gt",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_le",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_lt",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "Float",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "Float",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_ge",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_gt",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_le",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_lt",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "Float",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -1275,29 +1311,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [String]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [String]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -1305,6 +1339,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -1312,96 +1352,96 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "StringFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "StringFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_like",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_nlike",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "String",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_like",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_nlike",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -1409,29 +1449,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Favourites: [String!]
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						args {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Favourites: [String!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
 							name
-							type {
+							fields {
 								name
-								inputFields {
+								args {
 									name
 									type {
 										name
@@ -1439,6 +1477,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 											name
 											type {
 												name
+												inputFields {
+													name
+													type {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -1446,96 +1490,96 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": []any{
-					map[string]any{
-						"name": "_count",
-						"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": []any{
 							map[string]any{
-								"name": "Favourites",
-								"type": map[string]any{
-									"name": "users__Favourites__CountSelector",
-									"inputFields": []any{
-										map[string]any{
-											"name": "filter",
-											"type": map[string]any{
-												"name": "NotNullStringFilterArg",
-												"inputFields": []any{
-													map[string]any{
-														"name": "_and",
-														"type": map[string]any{
-															"name": nil,
+								"name": "_count",
+								"args": []any{
+									map[string]any{
+										"name": "Favourites",
+										"type": map[string]any{
+											"name": "users__Favourites__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullStringFilterArg",
+														"inputFields": []any{
+															map[string]any{
+																"name": "_and",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_eq",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_in",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_like",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_ne",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_nin",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_nlike",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
+															map[string]any{
+																"name": "_or",
+																"type": map[string]any{
+																	"name": nil,
+																},
+															},
 														},
 													},
-													map[string]any{
-														"name": "_eq",
-														"type": map[string]any{
-															"name": "String",
-														},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
-													map[string]any{
-														"name": "_in",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_like",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_ne",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_nin",
-														"type": map[string]any{
-															"name": nil,
-														},
-													},
-													map[string]any{
-														"name": "_nlike",
-														"type": map[string]any{
-															"name": "String",
-														},
-													},
-													map[string]any{
-														"name": "_or",
-														"type": map[string]any{
-															"name": nil,
-														},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name":        "Int",
+														"inputFields": nil,
 													},
 												},
 											},
 										},
-										map[string]any{
-											"name": "limit",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
-										map[string]any{
-											"name": "offset",
-											"type": map[string]any{
-												"name":        "Int",
-												"inputFields": nil,
-											},
-										},
 									},
+									aggregateGroupArg,
+									aggregateVersionArg,
 								},
 							},
-							aggregateGroupArg,
-							aggregateVersionArg,
 						},
 					},
 				},
@@ -1543,5 +1587,5 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

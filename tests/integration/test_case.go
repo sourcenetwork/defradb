@@ -195,3 +195,30 @@ type SubscriptionRequest struct {
 	// contains this string.
 	ExpectedError string
 }
+
+type IntrospectionRequest struct {
+	// The introspection request to use when fetching schema state.
+	//
+	// Available properties can be found in the GQL spec:
+	// https://spec.graphql.org/October2021/#sec-Introspection
+	Request string
+
+	// The full data expected to be returned from the introspection request.
+	ExpectedData map[string]any
+
+	// If [ExpectedData] is nil and this is populated, the test framework will assert
+	// that the value given exists in the actual results.
+	//
+	// If this contains nested maps it only requires the last (i.e. non-map) value to
+	// be present along the given path.  If an array/slice is present in this chain,
+	// it will assert that the items in the expected-array have exact matches in the
+	// corresponding result-array (inner maps are not traversed beyond the array,
+	// the full array-item must match exactly).
+	ContainsData map[string]any
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}

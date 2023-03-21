@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -379,6 +380,9 @@ func executeTestCase(
 		case Request:
 			executeRequest(ctx, t, nodes, testCase, action)
 
+		case IntrospectionRequest:
+			assertIntrospectionResults(ctx, t, testCase.Description, db, action)
+
 		case WaitForSync:
 			waitForSync(t, testCase, action, syncChans)
 
@@ -446,24 +450,11 @@ func getNodeCollections(nodeID immutable.Option[int], collections [][]client.Col
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
 	newLen := 0
-	for i := range testCase.Actions {
-		switch action := testCase.Actions[i].(type) {
-		case []SchemaUpdate:
-			newLen += len(action)
-		case []SchemaPatch:
-			newLen += len(action)
-		case []CreateDoc:
-			newLen += len(action)
-		case []UpdateDoc:
-			newLen += len(action)
-		case []Request:
-			newLen += len(action)
-		case []TransactionRequest:
-			newLen += len(action)
-		case []TransactionRequest2:
-			newLen += len(action)
-		case []TransactionCommit:
-			newLen += len(action)
+	for _, a := range testCase.Actions {
+		actionGroup := reflect.ValueOf(a)
+		switch actionGroup.Kind() {
+		case reflect.Array, reflect.Slice:
+			newLen += actionGroup.Len()
 		default:
 			newLen++
 		}
@@ -477,42 +468,19 @@ func flattenActions(testCase *TestCase) {
 		return
 	}
 	newActions := make([]any, 0, newLen)
-	for i := range testCase.Actions {
-		switch action := testCase.Actions[i].(type) {
-		case []SchemaUpdate:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []SchemaPatch:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []CreateDoc:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []UpdateDoc:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []Request:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionRequest:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionRequest2:
-			for j := range action {
-				newActions = append(newActions, action[j])
-			}
-		case []TransactionCommit:
-			for j := range action {
-				newActions = append(newActions, action[j])
+
+	for _, a := range testCase.Actions {
+		actionGroup := reflect.ValueOf(a)
+		switch actionGroup.Kind() {
+		case reflect.Array, reflect.Slice:
+			for i := 0; i < actionGroup.Len(); i++ {
+				newActions = append(
+					newActions,
+					actionGroup.Index(i).Interface(),
+				)
 			}
 		default:
-			newActions = append(newActions, action)
+			newActions = append(newActions, a)
 		}
 	}
 	testCase.Actions = newActions
@@ -1129,5 +1097,69 @@ func assertRequestResults(
 func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {
 	if expectedError != "" && !wasRaised {
 		assert.Fail(t, "Expected an error however none was raised.", description)
+	}
+}
+
+func assertIntrospectionResults(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	db client.DB,
+	action IntrospectionRequest,
+) bool {
+	result := db.ExecRequest(ctx, action.Request)
+
+	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
+		return true
+	}
+	resultantData := result.GQL.Data.(map[string]any)
+
+	if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
+		require.Equal(t, action.ExpectedData, resultantData)
+	}
+
+	if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
+		assertContains(t, action.ContainsData, resultantData)
+	} else {
+		require.Equal(t, len(action.ExpectedData), len(resultantData))
+
+		for k, result := range resultantData {
+			assert.Equal(t, action.ExpectedData[k], result)
+		}
+	}
+
+	return false
+}
+
+// Asserts that the `actual` contains the given `contains` value according to the logic
+// described on the [RequestTestCase.ContainsData] property.
+func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
+	for k, expected := range contains {
+		innerActual := actual[k]
+		if innerExpected, innerIsMap := expected.(map[string]any); innerIsMap {
+			if innerActual == nil {
+				assert.Equal(t, innerExpected, innerActual)
+			} else if innerActualMap, isMap := innerActual.(map[string]any); isMap {
+				// If the inner is another map then we continue down the chain
+				assertContains(t, innerExpected, innerActualMap)
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, innerExpected, innerActual)
+			}
+		} else if innerExpected, innerIsArray := expected.([]any); innerIsArray {
+			if actualArray, isActualArray := innerActual.([]any); isActualArray {
+				// If the inner is an array/slice, then assert that each expected item is present
+				// in the actual.  Note how the actual may contain additional items - this should
+				// not result in a test failure.
+				for _, innerExpectedItem := range innerExpected {
+					assert.Contains(t, actualArray, innerExpectedItem)
+				}
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, expected, innerActual)
+			}
+		} else {
+			assert.Equal(t, expected, innerActual)
+		}
 	}
 }
