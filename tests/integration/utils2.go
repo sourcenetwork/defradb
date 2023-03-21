@@ -380,6 +380,9 @@ func executeTestCase(
 		case Request:
 			executeRequest(ctx, t, nodes, testCase, action)
 
+		case IntrospectionRequest:
+			assertSchemaResults(ctx, t, testCase.Description, db, action)
+
 		case WaitForSync:
 			waitForSync(t, testCase, action, syncChans)
 
@@ -1094,5 +1097,69 @@ func assertRequestResults(
 func assertExpectedErrorRaised(t *testing.T, description string, expectedError string, wasRaised bool) {
 	if expectedError != "" && !wasRaised {
 		assert.Fail(t, "Expected an error however none was raised.", description)
+	}
+}
+
+func assertSchemaResults(
+	ctx context.Context,
+	t *testing.T,
+	description string,
+	db client.DB,
+	action IntrospectionRequest,
+) bool {
+	result := db.ExecRequest(ctx, action.Request)
+
+	if AssertErrors(t, description, result.GQL.Errors, action.ExpectedError) {
+		return true
+	}
+	resultantData := result.GQL.Data.(map[string]any)
+
+	if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
+		assert.Equal(t, action.ExpectedData, resultantData)
+	}
+
+	if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
+		assertContains(t, action.ContainsData, resultantData)
+	} else {
+		assert.Equal(t, len(action.ExpectedData), len(resultantData))
+
+		for k, result := range resultantData {
+			assert.Equal(t, action.ExpectedData[k], result)
+		}
+	}
+
+	return false
+}
+
+// Asserts that the `actual` contains the given `contains` value according to the logic
+// described on the [RequestTestCase.ContainsData] property.
+func assertContains(t *testing.T, contains map[string]any, actual map[string]any) {
+	for k, expected := range contains {
+		innerActual := actual[k]
+		if innerExpected, innerIsMap := expected.(map[string]any); innerIsMap {
+			if innerActual == nil {
+				assert.Equal(t, innerExpected, innerActual)
+			} else if innerActualMap, isMap := innerActual.(map[string]any); isMap {
+				// If the inner is another map then we continue down the chain
+				assertContains(t, innerExpected, innerActualMap)
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, innerExpected, innerActual)
+			}
+		} else if innerExpected, innerIsArray := expected.([]any); innerIsArray {
+			if actualArray, isActualArray := innerActual.([]any); isActualArray {
+				// If the inner is an array/slice, then assert that each expected item is present
+				// in the actual.  Note how the actual may contain additional items - this should
+				// not result in a test failure.
+				for _, innerExpectedItem := range innerExpected {
+					assert.Contains(t, actualArray, innerExpectedItem)
+				}
+			} else {
+				// If the types don't match then we use assert.Equal for a clean failure message
+				assert.Equal(t, expected, innerActual)
+			}
+		} else {
+			assert.Equal(t, expected, innerActual)
+		}
 	}
 }
