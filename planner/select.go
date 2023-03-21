@@ -92,7 +92,7 @@ type selectNode struct {
 	documentIterator
 	docMapper
 
-	p *Planner
+	planner *Planner
 
 	// main data source for the select node.
 	source planNode
@@ -200,7 +200,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		n.selectReq.CollectionName = n.selectReq.Name
 	}
 
-	sourcePlan, err := n.p.getSource(n.selectReq)
+	sourcePlan, err := n.planner.getSource(n.selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -261,11 +261,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 
 			switch f.Name {
 			case request.CountFieldName:
-				plan, aggregateError = n.p.Count(f, selectReq)
+				plan, aggregateError = n.planner.Count(f, selectReq)
 			case request.SumFieldName:
-				plan, aggregateError = n.p.Sum(f, selectReq)
+				plan, aggregateError = n.planner.Sum(f, selectReq)
 			case request.AverageFieldName:
-				plan, aggregateError = n.p.Average(f)
+				plan, aggregateError = n.planner.Average(f)
 			}
 
 			if aggregateError != nil {
@@ -293,7 +293,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 					commitSlct.Cid = selectReq.Cid
 				}
 
-				commitPlan := n.p.DAGScan(commitSlct)
+				commitPlan := n.planner.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
 					return nil, err
@@ -314,7 +314,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
-	typeIndexJoin, err := n.p.makeTypeIndexJoin(n, n.origSource, subSelect)
+	typeIndexJoin, err := n.planner.makeTypeIndexJoin(n, n.origSource, subSelect)
 	if err != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func (n *selectNode) Source() planNode { return n.source }
 //     fields []*client.FieldDescription,
 //     aliases []string,
 //) error {
-// 	return n.p.render(fields, aliases)
+// 	return n.planner.render(fields, aliases)
 // }
 
 // SubSelect is used for creating Select nodes used on sub selections,
@@ -360,7 +360,7 @@ func (p *Planner) SelectFromSource(
 	providedSourceInfo *sourceInfo,
 ) (planNode, error) {
 	s := &selectNode{
-		p:          p,
+		planner:    p,
 		source:     source,
 		origSource: source,
 		selectReq:  selectReq,
@@ -419,7 +419,7 @@ func (p *Planner) SelectFromSource(
 // Select constructs a SelectPlan
 func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	s := &selectNode{
-		p:         p,
+		planner:   p,
 		filter:    selectReq.Filter,
 		docKeys:   selectReq.DocKeys,
 		selectReq: selectReq,

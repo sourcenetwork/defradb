@@ -385,7 +385,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			s.source = plan
 		case appendNode:
 			m := &parallelNode{
-				p:         s.p,
+				p:         s.planner,
 				docMapper: docMapper{src.DocumentMap()},
 			}
 			m.addChild(-1, src)
@@ -404,19 +404,19 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 		// create our new multiscanner
 		multiscan := &multiScanNode{scanNode: origScan}
 		// replace our current source internal scanNode with our new multiscanner
-		if err := s.p.walkAndReplacePlan(src, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(src, origScan, multiscan); err != nil {
 			return err
 		}
 		// create multinode
 		multinode := &parallelNode{
-			p:         s.p,
+			p:         s.planner,
 			multiscan: multiscan,
 			docMapper: docMapper{src.DocumentMap()},
 		}
 		multinode.addChild(-1, src)
 		multiscan.addReader()
 		// replace our new node internal scanNode with our new multiscanner
-		if err := s.p.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
+		if err := s.planner.walkAndReplacePlan(plan, origScan, multiscan); err != nil {
 			return err
 		}
 		// add our newly updated plan to the multinode
@@ -439,7 +439,7 @@ func (s *selectNode) addSubPlan(fieldIndex int, plan planNode) error {
 			}
 
 			// replace our new node internal scanNode with our existing multiscanner
-			if err := s.p.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
+			if err := s.planner.walkAndReplacePlan(plan, multiscan.Source(), multiscan); err != nil {
 				return err
 			}
 			multiscan.addReader()
