@@ -13,67 +13,71 @@ package aggregates
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					queryType {
-						fields {
-							name
-							args {
-								name
-								type {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							queryType {
+								fields {
 									name
-									inputFields {
+									args {
 										name
 										type {
 											name
+											inputFields {
+												name
+												type {
+													name
+												}
+											}
 										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"queryType": map[string]any{
-					"fields": []any{
-						map[string]any{
-							"name": "_count",
-							"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
 								map[string]any{
-									"name": "users",
-									"type": map[string]any{
-										"name": "users__CountSelector",
-										"inputFields": []any{
-											map[string]any{
-												"name": "filter",
-												"type": map[string]any{
-													"name": "usersFilterArg",
-												},
-											},
-											map[string]any{
-												"name": "limit",
-												"type": map[string]any{
-													"name": "Int",
-												},
-											},
-											map[string]any{
-												"name": "offset",
-												"type": map[string]any{
-													"name": "Int",
+									"name": "_count",
+									"args": []any{
+										map[string]any{
+											"name": "users",
+											"type": map[string]any{
+												"name": "users__CountSelector",
+												"inputFields": []any{
+													map[string]any{
+														"name": "filter",
+														"type": map[string]any{
+															"name": "usersFilterArg",
+														},
+													},
+													map[string]any{
+														"name": "limit",
+														"type": map[string]any{
+															"name": "Int",
+														},
+													},
+													map[string]any{
+														"name": "offset",
+														"type": map[string]any{
+															"name": "Int",
+														},
+													},
 												},
 											},
 										},
@@ -87,33 +91,37 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					queryType {
-						fields {
-							name
-							args {
-								name
-								type {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							queryType {
+								fields {
 									name
-									inputFields {
+									args {
 										name
 										type {
 											name
-											kind
-											ofType {
+											inputFields {
 												name
+												type {
+													name
+													kind
+													ofType {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -121,61 +129,61 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"queryType": map[string]any{
-					"fields": []any{
-						map[string]any{
-							"name": "_sum",
-							"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
 								map[string]any{
-									"name": "users",
-									"type": map[string]any{
-										"name": "users__NumericSelector",
-										"inputFields": []any{
-											map[string]any{
-												"name": "field",
-												"type": map[string]any{
-													"name": nil,
-													"kind": "NON_NULL",
-													"ofType": map[string]any{
-														"name": "usersNumericFieldsArg",
+									"name": "_sum",
+									"args": []any{
+										map[string]any{
+											"name": "users",
+											"type": map[string]any{
+												"name": "users__NumericSelector",
+												"inputFields": []any{
+													map[string]any{
+														"name": "field",
+														"type": map[string]any{
+															"name": nil,
+															"kind": "NON_NULL",
+															"ofType": map[string]any{
+																"name": "usersNumericFieldsArg",
+															},
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "filter",
-												"type": map[string]any{
-													"name":   "usersFilterArg",
-													"kind":   "INPUT_OBJECT",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "limit",
-												"type": map[string]any{
-													"name":   "Int",
-													"kind":   "SCALAR",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "offset",
-												"type": map[string]any{
-													"name":   "Int",
-													"kind":   "SCALAR",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "order",
-												"type": map[string]any{
-													"name":   "usersOrderArg",
-													"kind":   "INPUT_OBJECT",
-													"ofType": nil,
+													map[string]any{
+														"name": "filter",
+														"type": map[string]any{
+															"name":   "usersFilterArg",
+															"kind":   "INPUT_OBJECT",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "limit",
+														"type": map[string]any{
+															"name":   "Int",
+															"kind":   "SCALAR",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "offset",
+														"type": map[string]any{
+															"name":   "Int",
+															"kind":   "SCALAR",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "order",
+														"type": map[string]any{
+															"name":   "usersOrderArg",
+															"kind":   "INPUT_OBJECT",
+															"ofType": nil,
+														},
+													},
 												},
 											},
 										},
@@ -189,33 +197,37 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
-	test := testUtils.RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					queryType {
-						fields {
-							name
-							args {
-								name
-								type {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							queryType {
+								fields {
 									name
-									inputFields {
+									args {
 										name
 										type {
 											name
-											kind
-											ofType {
+											inputFields {
 												name
+												type {
+													name
+													kind
+													ofType {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -223,61 +235,61 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"queryType": map[string]any{
-					"fields": []any{
-						map[string]any{
-							"name": "_avg",
-							"args": []any{
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
 								map[string]any{
-									"name": "users",
-									"type": map[string]any{
-										"name": "users__NumericSelector",
-										"inputFields": []any{
-											map[string]any{
-												"name": "field",
-												"type": map[string]any{
-													"name": nil,
-													"kind": "NON_NULL",
-													"ofType": map[string]any{
-														"name": "usersNumericFieldsArg",
+									"name": "_avg",
+									"args": []any{
+										map[string]any{
+											"name": "users",
+											"type": map[string]any{
+												"name": "users__NumericSelector",
+												"inputFields": []any{
+													map[string]any{
+														"name": "field",
+														"type": map[string]any{
+															"name": nil,
+															"kind": "NON_NULL",
+															"ofType": map[string]any{
+																"name": "usersNumericFieldsArg",
+															},
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "filter",
-												"type": map[string]any{
-													"name":   "usersFilterArg",
-													"kind":   "INPUT_OBJECT",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "limit",
-												"type": map[string]any{
-													"name":   "Int",
-													"kind":   "SCALAR",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "offset",
-												"type": map[string]any{
-													"name":   "Int",
-													"kind":   "SCALAR",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "order",
-												"type": map[string]any{
-													"name":   "usersOrderArg",
-													"kind":   "INPUT_OBJECT",
-													"ofType": nil,
+													map[string]any{
+														"name": "filter",
+														"type": map[string]any{
+															"name":   "usersFilterArg",
+															"kind":   "INPUT_OBJECT",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "limit",
+														"type": map[string]any{
+															"name":   "Int",
+															"kind":   "SCALAR",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "offset",
+														"type": map[string]any{
+															"name":   "Int",
+															"kind":   "SCALAR",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "order",
+														"type": map[string]any{
+															"name":   "usersOrderArg",
+															"kind":   "INPUT_OBJECT",
+															"ofType": nil,
+														},
+													},
 												},
 											},
 										},
@@ -291,5 +303,5 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 		},
 	}
 
-	testUtils.ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
