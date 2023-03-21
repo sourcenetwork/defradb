@@ -17,6 +17,8 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
+// This test documents incorrect behaviour. It should be possible to update book to point to author.
+// https://github.com/sourcenetwork/defradb/issues/1214
 func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
