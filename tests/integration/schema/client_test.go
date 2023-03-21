@@ -16,24 +16,22 @@ import (
 	schemaTypes "github.com/sourcenetwork/defradb/request/graphql/schema/types"
 )
 
-const clientIntrospectionRequest string = `
-query IntrospectionQuery {
-	__schema {
-		types {
-			kind
-			name
-			description
-		}
-	}
-}
-  `
-
-// TestClientIntrospectionExplainTypeDefined tests that the introspection query returns a schema that
+// TestIntrospectionExplainTypeDefined tests that the introspection query returns a schema that
 // defines the ExplainType enum.
-func TestClientIntrospectionExplainTypeDefined(t *testing.T) {
+func TestIntrospectionExplainTypeDefined(t *testing.T) {
 	test := RequestTestCase{
-		Schema:               []string{},
-		IntrospectionRequest: clientIntrospectionRequest,
+		Schema: []string{},
+		IntrospectionRequest: `
+			query IntrospectionQuery {
+				__schema {
+					types {
+						kind
+						name
+						description
+					}
+				}
+			}
+		`,
 		ContainsData: map[string]any{
 			"__schema": map[string]any{
 				"types": []any{
