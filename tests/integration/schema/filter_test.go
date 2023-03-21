@@ -12,33 +12,39 @@ package schema
 
 import (
 	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestFilterForSimpleSchema(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					name: String
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					queryType {
-						fields {
-							name
-							args {
-								name
-								type {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						name: String
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							queryType {
+								fields {
 									name
-									inputFields {
+									args {
 										name
 										type {
 											name
-											ofType {
+											inputFields {
 												name
+												type {
+													name
+													ofType {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -46,65 +52,65 @@ func TestFilterForSimpleSchema(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"queryType": map[string]any{
-					"fields": []any{
-						map[string]any{
-							"name": "users",
-							"args": append(
-								defaultUserArgsWithoutFilter,
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
 								map[string]any{
-									"name": "filter",
-									"type": map[string]any{
-										"name": "usersFilterArg",
-										"inputFields": []any{
-											map[string]any{
-												"name": "_and",
-												"type": map[string]any{
-													"name": nil,
-													"ofType": map[string]any{
-														"name": "usersFilterArg",
+									"name": "users",
+									"args": append(
+										defaultUserArgsWithoutFilter,
+										map[string]any{
+											"name": "filter",
+											"type": map[string]any{
+												"name": "usersFilterArg",
+												"inputFields": []any{
+													map[string]any{
+														"name": "_and",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": "usersFilterArg",
+															},
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "_key",
-												"type": map[string]any{
-													"name":   "IDOperatorBlock",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "_not",
-												"type": map[string]any{
-													"name":   "usersFilterArg",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "_or",
-												"type": map[string]any{
-													"name": nil,
-													"ofType": map[string]any{
-														"name": "usersFilterArg",
+													map[string]any{
+														"name": "_key",
+														"type": map[string]any{
+															"name":   "IDOperatorBlock",
+															"ofType": nil,
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "name",
-												"type": map[string]any{
-													"name":   "StringOperatorBlock",
-													"ofType": nil,
+													map[string]any{
+														"name": "_not",
+														"type": map[string]any{
+															"name":   "usersFilterArg",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "_or",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": "usersFilterArg",
+															},
+														},
+													},
+													map[string]any{
+														"name": "name",
+														"type": map[string]any{
+															"name":   "StringOperatorBlock",
+															"ofType": nil,
+														},
+													},
 												},
 											},
 										},
-									},
+									).tidy(),
 								},
-							).tidy(),
+							},
 						},
 					},
 				},
@@ -112,7 +118,7 @@ func TestFilterForSimpleSchema(t *testing.T) {
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 var testFilterForSimpleSchemaArgProps = map[string]any{
@@ -142,36 +148,40 @@ var defaultUserArgsWithoutFilter = trimFields(
 )
 
 func TestFilterForOneToOneSchema(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-			type book {
-				name: String
-				author: author
-			}
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type book {
+						name: String
+						author: author
+					}
 
-			type author {
-				age: Int
-				wrote: book @primary
-			}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__schema {
-					queryType {
-						fields {
-							name
-							args {
-								name
-								type {
+					type author {
+						age: Int
+						wrote: book @primary
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__schema {
+							queryType {
+								fields {
 									name
-									inputFields {
+									args {
 										name
 										type {
 											name
-											ofType {
+											inputFields {
 												name
+												type {
+													name
+													ofType {
+														name
+													}
+												}
 											}
 										}
 									}
@@ -179,79 +189,79 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 							}
 						}
 					}
-				}
-			}
-		`,
-		ContainsData: map[string]any{
-			"__schema": map[string]any{
-				"queryType": map[string]any{
-					"fields": []any{
-						map[string]any{
-							"name": "book",
-							"args": append(
-								defaultBookArgsWithoutFilter,
+				`,
+				ContainsData: map[string]any{
+					"__schema": map[string]any{
+						"queryType": map[string]any{
+							"fields": []any{
 								map[string]any{
-									"name": "filter",
-									"type": map[string]any{
-										"name": "bookFilterArg",
-										"inputFields": []any{
-											map[string]any{
-												"name": "_and",
-												"type": map[string]any{
-													"name": nil,
-													"ofType": map[string]any{
-														"name": "bookFilterArg",
+									"name": "book",
+									"args": append(
+										defaultBookArgsWithoutFilter,
+										map[string]any{
+											"name": "filter",
+											"type": map[string]any{
+												"name": "bookFilterArg",
+												"inputFields": []any{
+													map[string]any{
+														"name": "_and",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": "bookFilterArg",
+															},
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "_key",
-												"type": map[string]any{
-													"name":   "IDOperatorBlock",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "_not",
-												"type": map[string]any{
-													"name":   "bookFilterArg",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "_or",
-												"type": map[string]any{
-													"name": nil,
-													"ofType": map[string]any{
-														"name": "bookFilterArg",
+													map[string]any{
+														"name": "_key",
+														"type": map[string]any{
+															"name":   "IDOperatorBlock",
+															"ofType": nil,
+														},
 													},
-												},
-											},
-											map[string]any{
-												"name": "author",
-												"type": map[string]any{
-													"name":   "authorFilterArg",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "author_id",
-												"type": map[string]any{
-													"name":   "IDOperatorBlock",
-													"ofType": nil,
-												},
-											},
-											map[string]any{
-												"name": "name",
-												"type": map[string]any{
-													"name":   "StringOperatorBlock",
-													"ofType": nil,
+													map[string]any{
+														"name": "_not",
+														"type": map[string]any{
+															"name":   "bookFilterArg",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "_or",
+														"type": map[string]any{
+															"name": nil,
+															"ofType": map[string]any{
+																"name": "bookFilterArg",
+															},
+														},
+													},
+													map[string]any{
+														"name": "author",
+														"type": map[string]any{
+															"name":   "authorFilterArg",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "author_id",
+														"type": map[string]any{
+															"name":   "IDOperatorBlock",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
+														"name": "name",
+														"type": map[string]any{
+															"name":   "StringOperatorBlock",
+															"ofType": nil,
+														},
+													},
 												},
 											},
 										},
-									},
+									).tidy(),
 								},
-							).tidy(),
+							},
 						},
 					},
 				},
@@ -259,7 +269,7 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"book", "author"}, test)
 }
 
 var testFilterForOneToOneSchemaArgProps = map[string]any{
