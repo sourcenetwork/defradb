@@ -17,50 +17,56 @@ import (
 	simpleTests "github.com/sourcenetwork/defradb/tests/integration/mutation/one_to_one"
 )
 
+// This test documents incorrect behaviour. It should be possible to update book to point to author.
+// https://github.com/sourcenetwork/defradb/issues/1214
 func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Request: `mutation {
-					update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						_key
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 					"name": "Theif Lord"
 				}`,
 			},
+			testUtils.Request{
+				Request: `mutation {
+							update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+								_key
+							}
+						}`,
+				ExpectedError: "The given field does not exist",
+			},
 		},
-		ExpectedError: "The given field does not exist",
 	}
-
 	simpleTests.ExecuteTestCase(t, test)
 }
 
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "One to one create mutation, from the wrong side",
-		Request: `mutation {
-					update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
-						name
-					}
-				}`,
-		Docs: map[int][]string{
-			1: {
-				`{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 					"name": "John"
 				}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"name": "John Grisham",
+			testUtils.Request{
+				Request: `mutation {
+							update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+								name
+							}
+						}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+					},
+				},
 			},
 		},
 	}
-
 	simpleTests.ExecuteTestCase(t, test)
 }
