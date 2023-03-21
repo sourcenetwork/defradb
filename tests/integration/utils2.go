@@ -1115,13 +1115,13 @@ func assertIntrospectionResults(
 	resultantData := result.GQL.Data.(map[string]any)
 
 	if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
-		assert.Equal(t, action.ExpectedData, resultantData)
+		require.Equal(t, action.ExpectedData, resultantData)
 	}
 
 	if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
 		assertContains(t, action.ContainsData, resultantData)
 	} else {
-		assert.Equal(t, len(action.ExpectedData), len(resultantData))
+		require.Equal(t, len(action.ExpectedData), len(resultantData))
 
 		for k, result := range resultantData {
 			assert.Equal(t, action.ExpectedData[k], result)
