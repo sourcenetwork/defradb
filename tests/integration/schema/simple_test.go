@@ -12,188 +12,202 @@ package schema
 
 import (
 	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
+							name
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+					},
+				},
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-			`
-				type users {}
-			`,
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+				ExpectedError: "schema type already exists",
+			},
 		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-				}
-			}
-		`,
-		ExpectedError: "schema type already exists",
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-				type users {}
-			`,
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+					type users {}
+				`,
+				ExpectedError: "schema type already exists",
+			},
 		},
-		ExpectedError: "schema type already exists",
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-			`
-				type books {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "books") {
-					name
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name": "books",
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.SchemaUpdate{
+				Schema: `
+					type books {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "books") {
+							name
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "books",
+					},
+				},
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users", "books"}, test)
 }
 
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						type {
-						  name
-						  kind
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
 						}
 					}
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name":   "users",
-				"fields": defaultFields.tidy(),
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name":   "users",
+						"fields": defaultFields.tidy(),
+					},
+				},
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Name: NotAType
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-				}
-			}
-		`,
-		ExpectedError: "no type found for given name",
-	}
-
-	ExecuteRequestTestCase(t, test)
-}
-
-func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
-	test := RequestTestCase{
-		Schema: []string{
-			`
-				type users {
-					Name: String
-				}
-			`,
-		},
-		IntrospectionRequest: `
-			query IntrospectionQuery {
-				__type (name: "users") {
-					name
-					fields {
-						name
-						type {
-						  name
-						  kind
-						}
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Name: NotAType
 					}
-				}
-			}
-		`,
-		ExpectedData: map[string]any{
-			"__type": map[string]any{
-				"name": "users",
-				"fields": defaultFields.append(
-					field{
-						"name": "Name",
-						"type": map[string]any{
-							"kind": "SCALAR",
-							"name": "String",
-						},
-					},
-				).tidy(),
+				`,
+				ExpectedError: "no type found for given name",
 			},
 		},
 	}
 
-	ExecuteRequestTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
+
+func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query IntrospectionQuery {
+						__type (name: "users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "users",
+						"fields": defaultFields.append(
+							field{
+								"name": "Name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
