@@ -129,7 +129,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 											},
 										},
 									},
-								).tidy(),
+								).Tidy(),
 							},
 						},
 					},

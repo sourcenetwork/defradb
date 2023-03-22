@@ -33,9 +33,9 @@ func (fieldSet fields) Append(field Field) fields {
 	return result
 }
 
-// tidy sorts and casts the given fieldset into a format suitable
+// Tidy sorts and casts the given fieldset into a format suitable
 // for comparing against introspection result fields.
-func (fieldSet fields) tidy() []any {
+func (fieldSet fields) Tidy() []any {
 	return fieldSet.sort().array()
 }
 

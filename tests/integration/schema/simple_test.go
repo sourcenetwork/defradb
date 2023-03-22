@@ -140,7 +140,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name":   "users",
-						"fields": DefaultFields.tidy(),
+						"fields": DefaultFields.Tidy(),
 					},
 				},
 			},
@@ -203,7 +203,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 									"name": "String",
 								},
 							},
-						).tidy(),
+						).Tidy(),
 					},
 				},
 			},
