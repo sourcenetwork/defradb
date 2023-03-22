@@ -196,7 +196,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 					"__type": map[string]any{
 						"name": "users",
 						"fields": DefaultFields.Append(
-							field{
+							Field{
 								"name": "Name",
 								"type": map[string]any{
 									"kind": "SCALAR",

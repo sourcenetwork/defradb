@@ -12,8 +12,8 @@ package schema
 
 import "sort"
 
-type field = map[string]any
-type fields []field
+type Field = map[string]any
+type fields []Field
 
 func concat(fieldSets ...fields) fields {
 	result := fields{}
@@ -23,9 +23,9 @@ func concat(fieldSets ...fields) fields {
 	return result
 }
 
-// Append appends the given field onto a shallow clone
+// Append appends the given Field onto a shallow clone
 // of the given fieldset.
-func (fieldSet fields) Append(field field) fields {
+func (fieldSet fields) Append(field Field) fields {
 	result := make(fields, len(fieldSet)+1)
 	copy(result, fieldSet)
 
@@ -65,7 +65,7 @@ var DefaultFields = concat(
 	aggregateFields,
 )
 
-var keyField = field{
+var keyField = Field{
 	"name": "_key",
 	"type": map[string]any{
 		"kind": "SCALAR",
@@ -73,7 +73,7 @@ var keyField = field{
 	},
 }
 
-var versionField = field{
+var versionField = Field{
 	"name": "_version",
 	"type": map[string]any{
 		"kind": "LIST",
@@ -81,7 +81,7 @@ var versionField = field{
 	},
 }
 
-var groupField = field{
+var groupField = Field{
 	"name": "_group",
 	"type": map[string]any{
 		"kind": "LIST",
@@ -113,21 +113,21 @@ var aggregateFields = fields{
 	},
 }
 
-var cidArg = field{
+var cidArg = Field{
 	"name": "cid",
 	"type": map[string]any{
 		"name":        "String",
 		"inputFields": nil,
 	},
 }
-var dockeyArg = field{
+var dockeyArg = Field{
 	"name": "dockey",
 	"type": map[string]any{
 		"name":        "String",
 		"inputFields": nil,
 	},
 }
-var dockeysArg = field{
+var dockeysArg = Field{
 	"name": "dockeys",
 	"type": map[string]any{
 		"name":        nil,
@@ -139,7 +139,7 @@ var dockeysArg = field{
 	},
 }
 
-var groupByArg = field{
+var groupByArg = Field{
 	"name": "groupBy",
 	"type": map[string]any{
 		"name":        nil,
@@ -151,7 +151,7 @@ var groupByArg = field{
 	},
 }
 
-var limitArg = field{
+var limitArg = Field{
 	"name": "limit",
 	"type": map[string]any{
 		"name":        "Int",
@@ -160,7 +160,7 @@ var limitArg = field{
 	},
 }
 
-var offsetArg = field{
+var offsetArg = Field{
 	"name": "offset",
 	"type": map[string]any{
 		"name":        "Int",
@@ -174,7 +174,7 @@ type argDef struct {
 	typeName  string
 }
 
-func buildOrderArg(objectName string, fields []argDef) field {
+func buildOrderArg(objectName string, fields []argDef) Field {
 	inputFields := []any{
 		makeInputObject("_key", "Ordering", nil),
 	}
@@ -183,9 +183,9 @@ func buildOrderArg(objectName string, fields []argDef) field {
 		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
 	}
 
-	return field{
+	return Field{
 		"name": "order",
-		"type": field{
+		"type": Field{
 			"name":        objectName + "OrderArg",
 			"ofType":      nil,
 			"inputFields": inputFields,
@@ -193,7 +193,7 @@ func buildOrderArg(objectName string, fields []argDef) field {
 	}
 }
 
-func buildFilterArg(objectName string, fields []argDef) field {
+func buildFilterArg(objectName string, fields []argDef) Field {
 	filterArgName := objectName + "FilterArg"
 
 	inputFields := []any{
@@ -213,9 +213,9 @@ func buildFilterArg(objectName string, fields []argDef) field {
 		inputFields = append(inputFields, makeInputObject(field.fieldName, field.typeName, nil))
 	}
 
-	return field{
+	return Field{
 		"name": "filter",
-		"type": field{
+		"type": Field{
 			"name":        filterArgName,
 			"ofType":      nil,
 			"inputFields": inputFields,
@@ -225,8 +225,8 @@ func buildFilterArg(objectName string, fields []argDef) field {
 
 // trimField creates a new object using the provided defaults, but only containing
 // the provided properties. Function is recursive and will respect inner properties.
-func trimField(fullDefault field, properties map[string]any) field {
-	result := field{}
+func trimField(fullDefault Field, properties map[string]any) Field {
+	result := Field{}
 	for key, children := range properties {
 		switch childProps := children.(type) {
 		case map[string]any:
@@ -234,7 +234,7 @@ func trimField(fullDefault field, properties map[string]any) field {
 			var value any
 			if fullValue == nil {
 				value = nil
-			} else if fullField, isField := fullValue.(field); isField {
+			} else if fullField, isField := fullValue.(Field); isField {
 				value = trimField(fullField, childProps)
 			} else {
 				value = fullValue
