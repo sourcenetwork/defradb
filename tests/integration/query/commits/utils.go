@@ -11,6 +11,8 @@
 package commits
 
 import (
+	"strconv"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,12 +30,22 @@ func updateUserCollectionSchema() testUtils.SchemaUpdate {
 	}
 }
 
-func createJohnDoc() testUtils.CreateDoc {
+func createDoc(name string, age int) testUtils.CreateDoc {
 	return testUtils.CreateDoc{
 		CollectionID: 0,
 		Doc: `{
-			"Name": "John",
-			"Age": 21
-		}`,
+				"Name": "` + name + `",
+				"Age": ` + strconv.Itoa(age) + `
+			}`,
+	}
+}
+
+func updateAge(DocID int, age int) testUtils.UpdateDoc {
+	return testUtils.UpdateDoc{
+		CollectionID: 0,
+		DocID:        DocID,
+		Doc: `{
+				"Age": ` + strconv.Itoa(age) + `
+			}`,
 	}
 }

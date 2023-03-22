@@ -21,7 +21,7 @@ func TestQueryCommitsWithUnknownDockey(t *testing.T) {
 		Description: "Simple all commits query with unknown dockey",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "unknown dockey") {
@@ -41,7 +41,7 @@ func TestQueryCommitsWithDockey(t *testing.T) {
 		Description: "Simple all commits query with dockey",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -71,7 +71,7 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 		Description: "Simple all commits query with dockey, with links",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -117,14 +117,8 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 		Description: "Simple all commits query with dockey, multiple results",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-						"Age": 22
-					}`,
-			},
+			createDoc("John", 21),
+			updateAge(0, 22),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
@@ -169,14 +163,8 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 		Description: "Simple all commits query with dockey, multiple results and links",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-						"Age": 22
-					}`,
-			},
+			createDoc("John", 21),
+			updateAge(0, 22),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {

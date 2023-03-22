@@ -21,7 +21,7 @@ func TestQueryCommitsWithDockeyAndUnknownField(t *testing.T) {
 		Description: "Simple all commits query with dockey and unknown field",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "not a field") {
@@ -41,7 +41,7 @@ func TestQueryCommitsWithDockeyAndUnknownFieldId(t *testing.T) {
 		Description: "Simple all commits query with dockey and unknown field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "999999") {
@@ -63,7 +63,7 @@ func TestQueryCommitsWithDockeyAndField(t *testing.T) {
 		Description: "Simple all commits query with dockey and field",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "Age") {
@@ -85,7 +85,7 @@ func TestQueryCommitsWithDockeyAndFieldId(t *testing.T) {
 		Description: "Simple all commits query with dockey and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "1") {
@@ -111,7 +111,7 @@ func TestQueryCommitsWithDockeyAndCompositeFieldId(t *testing.T) {
 		Description: "Simple all commits query with dockey and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", field: "C") {

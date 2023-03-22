@@ -20,16 +20,8 @@ func TestQueryCommitsWithDockeyProperty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple commits query with dockey property",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: userCollectionGQLSchema,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"Name": "John",
-						"Age": 21
-					}`,
-			},
+			updateUserCollectionSchema(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits {

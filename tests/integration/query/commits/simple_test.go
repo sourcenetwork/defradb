@@ -21,7 +21,7 @@ func TestQueryCommits(t *testing.T) {
 		Description: "Simple all commits query",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits {
@@ -51,14 +51,8 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 		Description: "Simple all commits query, multiple docs",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"Name": "Shahzad",
-						"Age": 28
-					}`,
-			},
+			createDoc("John", 21),
+			createDoc("Shahzad", 28),
 			testUtils.Request{
 				Request: `query {
 						commits {
@@ -97,7 +91,7 @@ func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
 		Description: "Simple commits query yielding schemaVersionId",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: `query {
 						commits {

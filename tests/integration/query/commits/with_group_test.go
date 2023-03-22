@@ -21,14 +21,8 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 		Description: "Simple all commits query, group by height",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-						"Age": 22
-					}`,
-			},
+			createDoc("John", 21),
+			updateAge(0, 22),
 			testUtils.Request{
 				Request: ` {
 						commits(groupBy: [height]) {
@@ -55,14 +49,8 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 		Description: "Simple all commits query, group by height",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-						"Age": 22
-					}`,
-			},
+			createDoc("John", 21),
+			updateAge(0, 22),
 			testUtils.Request{
 				Request: ` {
 						commits(groupBy: [height]) {
@@ -112,7 +100,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 		Description: "Simple all commits query, group by cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
+			createDoc("John", 21),
 			testUtils.Request{
 				Request: ` {
 						commits(groupBy: [cid]) {
@@ -160,28 +148,10 @@ func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
 		Description: "Simple all commits query, group by dockey",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"Name": "Fred",
-						"Age": 25
-					}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-						"Age": 22
-					}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        1,
-				Doc: `{
-						"Age": 26
-					}`,
-			},
+			createDoc("John", 21),
+			createDoc("Fred", 25),
+			updateAge(0, 22),
+			updateAge(1, 26),
 			testUtils.Request{
 				Request: ` {
 						commits(groupBy: [dockey]) {
@@ -208,14 +178,8 @@ func TestQueryCommitsWithOrderedByDocKey(t *testing.T) {
 		Description: "Simple all commits query, grouped and ordered by height",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createJohnDoc(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"Name": "Fred",
-					"Age": 25
-				}`,
-			},
+			createDoc("John", 21),
+			createDoc("Fred", 25),
 			testUtils.Request{
 				Request: ` {
 					commits(groupBy: [dockey], order: {dockey: DESC}) {
