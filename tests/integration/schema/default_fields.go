@@ -23,9 +23,9 @@ func concat(fieldSets ...fields) fields {
 	return result
 }
 
-// append appends the given field onto a shallow clone
+// Append appends the given field onto a shallow clone
 // of the given fieldset.
-func (fieldSet fields) append(field field) fields {
+func (fieldSet fields) Append(field field) fields {
 	result := make(fields, len(fieldSet)+1)
 	copy(result, fieldSet)
 
