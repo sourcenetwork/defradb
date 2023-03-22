@@ -343,6 +343,8 @@ func (d *Datastore) commitHandler(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			// It is safe to ignore the error since the only error that could occure is if the
+			// datastore is already closed, in which case the purpose of the `Close` call is already covered.
 			_ = d.Close()
 			return
 		case c, open := <-d.commit:
