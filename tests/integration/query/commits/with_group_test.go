@@ -164,3 +164,83 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple all commits query, group by dockey",
+		Request: `query {
+					commits(groupBy: [dockey]) {
+						dockey
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Fred",
+					"Age": 25
+				}`,
+			},
+		},
+		Updates: map[int]map[int][]string{
+			0: {
+				0: {
+					`{
+						"Age": 22
+					}`,
+				},
+				1: {
+					`{
+						"Age": 26
+					}`,
+				},
+			},
+		},
+		Results: []map[string]any{
+			{
+				"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+			},
+			{
+				"dockey": "bae-b2103437-f5bd-52b6-99b1-5970412c5201",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryCommitsWithOrderedByDocKey(t *testing.T) {
+	test := testUtils.RequestTestCase{
+		Description: "Simple all commits query, grouped and ordered by height",
+		Request: `query {
+					commits(groupBy: [dockey], order: {dockey: DESC}) {
+						dockey
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+				`{
+					"Name": "Fred",
+					"Age": 25
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"dockey": "bae-b2103437-f5bd-52b6-99b1-5970412c5201",
+			},
+			{
+				"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

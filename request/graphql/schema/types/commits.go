@@ -107,6 +107,9 @@ var (
 				"cid": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
 				},
+				"dockey": &gql.InputObjectFieldConfig{
+					Type: OrderingEnum,
+				},
 			},
 		},
 	)
@@ -117,6 +120,7 @@ var (
 			Values: gql.EnumValueConfigMap{
 				"height": &gql.EnumValueConfig{Value: "height"},
 				"cid":    &gql.EnumValueConfig{Value: "cid"},
+				"dockey": &gql.EnumValueConfig{Value: "dockey"},
 			},
 		},
 	)
