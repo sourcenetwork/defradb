@@ -26,17 +26,17 @@ func TestQueryCommitsWithDockeyProperty(t *testing.T) {
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
+						"Name": "John",
+						"Age": 21
+					}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					commits {
-						cid
-						dockey
-					}
-				}`,
+						commits {
+							cid
+							dockey
+						}
+					}`,
 				Results: []map[string]any{
 					{
 						"cid":    "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",

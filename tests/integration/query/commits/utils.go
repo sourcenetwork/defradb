@@ -11,12 +11,10 @@
 package commits
 
 import (
-	"testing"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var userCollectionGQLSchema = (`
+const userCollectionGQLSchema = (`
 	type users {
 		Name: String
 		Age: Int
@@ -24,6 +22,18 @@ var userCollectionGQLSchema = (`
 	}
 `)
 
-func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
+func updateUserCollectionSchema() testUtils.SchemaUpdate {
+	return testUtils.SchemaUpdate{
+		Schema: userCollectionGQLSchema,
+	}
+}
+
+func createJohnDoc() testUtils.CreateDoc {
+	return testUtils.CreateDoc{
+		CollectionID: 0,
+		Doc: `{
+			"Name": "John",
+			"Age": 21
+		}`,
+	}
 }

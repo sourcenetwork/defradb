@@ -17,47 +17,37 @@ import (
 )
 
 func TestQueryCommitsWithUnknownDockey(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with unknown dockey",
-		Request: `query {
-					commits(dockey: "unknown dockey") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			createJohnDoc(),
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "unknown dockey") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: userCollectionGQLSchema,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
+			updateUserCollectionSchema(),
+			createJohnDoc(),
 			testUtils.Request{
 				Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-					}
-				}`,
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+						}
+					}`,
 				Results: []map[string]any{
 					{
 						"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
@@ -80,26 +70,18 @@ func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, with links",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: userCollectionGQLSchema,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
+			updateUserCollectionSchema(),
+			createJohnDoc(),
 			testUtils.Request{
 				Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						links {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							cid
-							name
+							links {
+								cid
+								name
+							}
 						}
-					}
-				}`,
+					}`,
 				Results: []map[string]any{
 					{
 						"cid":   "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
@@ -134,16 +116,8 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, multiple results",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: userCollectionGQLSchema,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
+			updateUserCollectionSchema(),
+			createJohnDoc(),
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
@@ -153,11 +127,11 @@ func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						height
-					}
-				}`,
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							height
+						}
+					}`,
 				Results: []map[string]any{
 					{
 						"cid":    "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
@@ -194,16 +168,8 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, multiple results and links",
 		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: userCollectionGQLSchema,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
+			updateUserCollectionSchema(),
+			createJohnDoc(),
 			testUtils.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
@@ -213,14 +179,14 @@ func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						links {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							cid
-							name
+							links {
+								cid
+								name
+							}
 						}
-					}
-				}`,
+					}`,
 				Results: []map[string]any{
 					{
 						"cid": "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
