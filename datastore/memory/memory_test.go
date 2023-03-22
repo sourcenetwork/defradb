@@ -66,6 +66,38 @@ func TestNewDatastore(t *testing.T) {
 	require.NotNil(t, s)
 }
 
+func TestCloseOperation(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+}
+
+func TestConsecutiveClose(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	err = s.Close()
+	require.ErrorIs(t, err, ErrClosed)
+}
+
+func TestCloseThroughContext(t *testing.T) {
+	ctx := context.Background()
+	newCtx, cancel := context.WithCancel(ctx)
+	s := newLoadedDatastore(newCtx)
+
+	cancel()
+
+	<-s.closing
+
+	err := s.Close()
+	require.ErrorIs(t, err, ErrClosed)
+}
+
 func TestGetOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
@@ -73,6 +105,16 @@ func TestGetOperation(t *testing.T) {
 	resp, err := s.Get(ctx, testKey1)
 	require.NoError(t, err)
 	require.Equal(t, testValue1, resp)
+}
+
+func TestGetOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+	err := s.Close()
+	require.NoError(t, err)
+
+	_, err = s.Get(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestGetOperationNotFound(t *testing.T) {
@@ -108,6 +150,17 @@ func TestDeleteOperation2(t *testing.T) {
 	require.ErrorIs(t, err, ds.ErrNotFound)
 }
 
+func TestDeleteOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	err = s.Delete(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
 func TestGetSizeOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
@@ -123,6 +176,17 @@ func TestGetSizeOperationNotFound(t *testing.T) {
 
 	_, err := s.GetSize(ctx, testKey3)
 	require.ErrorIs(t, err, ds.ErrNotFound)
+}
+
+func TestGetSizeOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	_, err = s.GetSize(ctx, testKey3)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestHasOperation(t *testing.T) {
@@ -143,6 +207,17 @@ func TestHasOperationNotFound(t *testing.T) {
 	require.Equal(t, false, resp)
 }
 
+func TestHasOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	_, err = s.Has(ctx, testKey3)
+	require.ErrorIs(t, err, ErrClosed)
+}
+
 func TestPutOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
@@ -153,6 +228,17 @@ func TestPutOperation(t *testing.T) {
 	resp, err := s.Get(ctx, testKey3)
 	require.NoError(t, err)
 	require.Equal(t, testValue3, resp)
+}
+
+func TestPutOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	err = s.Put(ctx, testKey3, testValue3)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestQueryOperation(t *testing.T) {
@@ -169,6 +255,20 @@ func TestQueryOperation(t *testing.T) {
 
 	require.Equal(t, testKey2.String(), result.Entry.Key)
 	require.Equal(t, testValue2, result.Entry.Value)
+}
+
+func TestQueryOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	_, err = s.Query(ctx, dsq.Query{
+		Limit:  1,
+		Offset: 1,
+	})
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestQueryOperationWithAddedItems(t *testing.T) {
@@ -240,20 +340,23 @@ func TestConcurrentWrite(t *testing.T) {
 	require.Equal(t, []byte("this is a test value 3"), resp)
 }
 
-func TestCloseOperationNotFound(t *testing.T) {
-	ctx := context.Background()
-	s := newLoadedDatastore(ctx)
-
-	err := s.Close()
-	require.NoError(t, err)
-}
-
-func TestSyncOperationNotFound(t *testing.T) {
+func TestSyncOperation(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 
 	err := s.Sync(ctx, testKey1)
 	require.NoError(t, err)
+}
+
+func TestSyncOperationWithStoreClosed(t *testing.T) {
+	ctx := context.Background()
+	s := newLoadedDatastore(ctx)
+
+	err := s.Close()
+	require.NoError(t, err)
+
+	err = s.Sync(ctx, testKey1)
+	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestPurge(t *testing.T) {
@@ -332,16 +435,11 @@ func TestPurgeBatching(t *testing.T) {
 	ctx := context.Background()
 	s := newLoadedDatastore(ctx)
 
-	wg := &sync.WaitGroup{}
 	for j := 0; j < 10; j++ {
 		for i := 1; i <= 1000; i++ {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, num int) {
-				_ = s.Put(ctx, ds.NewKey("test"), []byte(fmt.Sprintf("%d", num)))
-				wg.Done()
-			}(wg, i+(j*1000))
+			err := s.Put(ctx, ds.NewKey("test"), []byte(fmt.Sprintf("%d", i+(j*1000))))
+			require.NoError(t, err)
 		}
-		wg.Wait()
 	}
 
 	s.executePurge(ctx)

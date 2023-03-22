@@ -511,24 +511,13 @@ func (b *batch) commit() error {
 	return nil
 }
 
-func (b *batch) Cancel() error {
-	b.ds.closeLk.RLock()
-	defer b.ds.closeLk.RUnlock()
-	if b.ds.closed {
-		return ErrClosed
-	}
-
-	b.cancel()
-	return nil
-}
-
 func (b *batch) cancel() {
 	b.writeBatch.Cancel()
 	runtime.SetFinalizer(b, nil)
 }
 
-var _ ds.Datastore = (*txn)(nil)
 var _ ds.TTLDatastore = (*txn)(nil)
+var _ ds.Txn = (*txn)(nil)
 
 func (t *txn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	t.ds.closeLk.RLock()
@@ -664,7 +653,15 @@ func (t *txn) getSize(key ds.Key) (int, error) {
 	item, err := t.txn.Get(key.Bytes())
 	switch {
 	case err == nil:
-		return int(item.ValueSize()), nil
+		size := int(item.ValueSize())
+		if size == 0 {
+			val, err := item.ValueCopy(nil)
+			if err != nil {
+				return 0, err
+			}
+			size = len(val)
+		}
+		return size, nil
 	case errors.Is(err, badger.ErrKeyNotFound):
 		return -1, ds.ErrNotFound
 	default:

@@ -12,6 +12,7 @@ package memory
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -67,8 +68,12 @@ type Datastore struct {
 	version     *uint64
 	values      *btree.BTreeG[dsItem]
 	inFlightTxn *btree.BTreeG[dsTxn]
-	close       chan struct{}
 	commit      chan commit
+
+	closing   chan struct{}
+	closed    bool
+	closeLk   sync.RWMutex
+	closeOnce sync.Once
 }
 
 var _ ds.Datastore = (*Datastore)(nil)
@@ -82,7 +87,7 @@ func NewDatastore(ctx context.Context) *Datastore {
 		version:     &v,
 		values:      btree.NewBTreeG(byKeys),
 		inFlightTxn: btree.NewBTreeG(byDSVersion),
-		close:       make(chan struct{}),
+		closing:     make(chan struct{}),
 		commit:      make(chan commit),
 	}
 	go d.purgeOldVersions(ctx)
@@ -112,17 +117,29 @@ func (d *Datastore) newBasicBatch() ds.Batch {
 }
 
 func (d *Datastore) Close() error {
-	d.close <- struct{}{}
+	d.closeOnce.Do(func() {
+		close(d.closing)
+	})
+	d.closeLk.Lock()
+	defer d.closeLk.Unlock()
+	if d.closed {
+		return ErrClosed
+	}
+	d.closed = true
+	close(d.commit)
 	return nil
 }
 
 // Delete implements ds.Delete.
 func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
-	tx := d.newTransaction(false)
-	err = tx.Delete(ctx, key)
-	if err != nil {
-		return err
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
 	}
+	tx := d.newTransaction(false)
+	// An error can never happen at this stage so we explicitely ignore it
+	_ = tx.Delete(ctx, key)
 	return tx.Commit(ctx)
 }
 
@@ -140,6 +157,11 @@ func (d *Datastore) get(ctx context.Context, key ds.Key, version uint64) dsItem 
 
 // Get implements ds.Get.
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
 		return nil, ds.ErrNotFound
@@ -149,6 +171,11 @@ func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err erro
 
 // GetSize implements ds.GetSize.
 func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return 0, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	if result.key == "" || result.isDeleted {
 		return 0, ds.ErrNotFound
@@ -158,12 +185,22 @@ func (d *Datastore) GetSize(ctx context.Context, key ds.Key) (size int, err erro
 
 // Has implements ds.Has.
 func (d *Datastore) Has(ctx context.Context, key ds.Key) (exists bool, err error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return false, ErrClosed
+	}
 	result := d.get(ctx, key, d.getVersion())
 	return result.key != "" && !result.isDeleted, nil
 }
 
 // NewTransaction return a ds.Txn datastore based on Datastore.
 func (d *Datastore) NewTransaction(ctx context.Context, readOnly bool) (ds.Txn, error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	return d.newTransaction(readOnly), nil
 }
 
@@ -181,16 +218,24 @@ func (d *Datastore) newTransaction(readOnly bool) ds.Txn {
 
 // Put implements ds.Put.
 func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err error) {
-	tx := d.newTransaction(false)
-	err = tx.Put(ctx, key, value)
-	if err != nil {
-		return err
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
 	}
+	tx := d.newTransaction(false)
+	// An error can never happen at this stage so we explicitely ignore it
+	_ = tx.Put(ctx, key, value)
 	return tx.Commit(ctx)
 }
 
 // Query implements ds.Query.
 func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error) {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return nil, ErrClosed
+	}
 	re := make([]dsq.Entry, 0, d.values.Height())
 	iter := d.values.Iter()
 	for iter.Next() {
@@ -225,6 +270,11 @@ func (d *Datastore) Query(ctx context.Context, q dsq.Query) (dsq.Results, error)
 
 // Sync implements ds.Sync.
 func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
+	d.closeLk.RLock()
+	defer d.closeLk.RUnlock()
+	if d.closed {
+		return ErrClosed
+	}
 	return nil
 }
 
@@ -238,7 +288,7 @@ func (d *Datastore) purgeOldVersions(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-d.close:
+		case <-d.closing:
 			return
 		case <-time.After(time.Until(nextCompression)):
 			d.executePurge(ctx)
@@ -260,7 +310,6 @@ func (d *Datastore) executePurge(ctx context.Context) {
 		iter := d.values.Iter()
 		iter.Next()
 		item := iter.Item()
-
 		// fast forward to last inserted version and delete versions before it
 		total := 0
 		for iter.Next() {
@@ -294,6 +343,7 @@ func (d *Datastore) commitHandler(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			_ = d.Close()
 			return
 		case c, open := <-d.commit:
 			if !open {
@@ -335,11 +385,6 @@ func (d *Datastore) clearOldInFlightTxn(ctx context.Context) {
 			if now.After(iter.Item().expiresAt) {
 				itemsToDelete = append(itemsToDelete, iter.Item())
 				total++
-			}
-			// we don't want to delete more than 1000 items at a time
-			// to prevent loading too much into memory
-			if total >= 1000 {
-				break
 			}
 		}
 		iter.Release()
