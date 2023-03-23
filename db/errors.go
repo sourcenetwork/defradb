@@ -34,6 +34,7 @@ const (
 	errCannotMoveField               string = "moving fields is not currently supported"
 	errInvalidCRDTType               string = "only default or LWW (last writer wins) CRDT types are supported"
 	errCannotDeleteField             string = "deleting an existing field is not supported"
+	errFieldKindNotFound             string = "no type found for given name"
 )
 
 var (
@@ -79,6 +80,7 @@ var (
 	ErrCannotMoveField          = errors.New(errCannotMoveField)
 	ErrInvalidCRDTType          = errors.New(errInvalidCRDTType)
 	ErrCannotDeleteField        = errors.New(errCannotDeleteField)
+	ErrFieldKindNotFound        = errors.New(errFieldKindNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -164,6 +166,13 @@ func NewErrCannotAddRelationalField(name string, kind client.FieldKind) error {
 	return errors.New(
 		errCannotAddRelationalField,
 		errors.NewKV("Field", name),
+		errors.NewKV("Kind", kind),
+	)
+}
+
+func NewErrFieldKindNotFound(kind string) error {
+	return errors.New(
+		errFieldKindNotFound,
 		errors.NewKV("Kind", kind),
 	)
 }
