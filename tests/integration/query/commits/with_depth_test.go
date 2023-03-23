@@ -21,7 +21,13 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 		Description: "Simple all commits query with depth 1",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(depth: 1) {
@@ -51,8 +57,20 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 		Description: "Simple all commits query with depth 1, and doc updates",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			updateAge(0, 22),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(depth: 1) {
@@ -88,9 +106,27 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 		Description: "Simple all commits query with depth 2, and doc updates",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			updateAge(0, 22),
-			updateAge(0, 23),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	23
+				}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(depth: 2) {
@@ -137,8 +173,20 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 		Description: "Simple all commits query with depth 1",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			createDoc("Fred", 25),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"Fred",
+						"Age":	25
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(depth: 1) {

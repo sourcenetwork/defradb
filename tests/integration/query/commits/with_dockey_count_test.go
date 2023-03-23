@@ -21,7 +21,13 @@ func TestQueryCommitsWithDockeyAndLinkCount(t *testing.T) {
 		Description: "Simple latest commits query with dockey and link count",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {

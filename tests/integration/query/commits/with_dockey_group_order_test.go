@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
+func TestQueryCommitsOrderedAndGroupedByDocKey(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and typename",
+		Description: "Simple all commits query, grouped and ordered by dockey",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -28,25 +28,25 @@ func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
 						"Age":	21
 					}`,
 			},
-			testUtils.Request{
-				Request: `query {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-							cid
-							__typename
-						}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"Fred",
+						"Age":	25
 					}`,
+			},
+			testUtils.Request{
+				Request: ` {
+					commits(groupBy: [dockey], order: {dockey: DESC}) {
+						dockey
+					}
+				}`,
 				Results: []map[string]any{
 					{
-						"cid":        "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-						"__typename": "Commit",
+						"dockey": "bae-b2103437-f5bd-52b6-99b1-5970412c5201",
 					},
 					{
-						"cid":        "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-						"__typename": "Commit",
-					},
-					{
-						"cid":        "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
-						"__typename": "Commit",
+						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 				},
 			},

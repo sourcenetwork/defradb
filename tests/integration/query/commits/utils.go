@@ -11,8 +11,6 @@
 package commits
 
 import (
-	"strconv"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,25 +25,5 @@ const userCollectionGQLSchema = (`
 func updateUserCollectionSchema() testUtils.SchemaUpdate {
 	return testUtils.SchemaUpdate{
 		Schema: userCollectionGQLSchema,
-	}
-}
-
-func createDoc(name string, age int) testUtils.CreateDoc {
-	return testUtils.CreateDoc{
-		CollectionID: 0,
-		Doc: `{
-				"Name": "` + name + `",
-				"Age": ` + strconv.Itoa(age) + `
-			}`,
-	}
-}
-
-func updateAge(DocID int, age int) testUtils.UpdateDoc {
-	return testUtils.UpdateDoc{
-		CollectionID: 0,
-		DocID:        DocID,
-		Doc: `{
-				"Age": ` + strconv.Itoa(age) + `
-			}`,
 	}
 }

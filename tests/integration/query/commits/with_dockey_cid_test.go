@@ -21,7 +21,13 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDoc(t *testing.T) {
 		Description: "Simple all commits query with dockey and cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: ` {
 						commits(
@@ -44,8 +50,20 @@ func TestQueryCommitsWithDockeyAndCidForDifferentDocWithUpdate(t *testing.T) {
 		Description: "Simple all commits query with dockey and cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			updateAge(0, 22),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
 			testUtils.Request{
 				Request: ` {
 						commits(
@@ -68,8 +86,20 @@ func TestQueryCommitsWithDockeyAndCid(t *testing.T) {
 		Description: "Simple all commits query with dockey and cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			updateAge(0, 22),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
 			testUtils.Request{
 				Request: ` {
 						commits(

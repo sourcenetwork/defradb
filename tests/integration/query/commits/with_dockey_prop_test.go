@@ -21,25 +21,27 @@ func TestQueryCommitsWithDockeyProperty(t *testing.T) {
 		Description: "Simple commits query with dockey property",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits {
-							cid
 							dockey
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid":    "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
 						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 					{
-						"cid":    "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
 						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 					{
-						"cid":    "bafybeidcatznm2mlsymcytrh5fkpdrazensg5fsvn2uavcgiq2bf26lzey",
 						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 				},

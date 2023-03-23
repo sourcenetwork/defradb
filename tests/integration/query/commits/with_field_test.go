@@ -23,7 +23,13 @@ func TestQueryCommitsWithField(t *testing.T) {
 		Description: "Simple all commits query with field",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits (field: "Age") {
@@ -45,7 +51,13 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 		Description: "Simple all commits query with field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits (field: "1") {
@@ -71,7 +83,13 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 		Description: "Simple all commits query with dockey and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(field: "C") {
@@ -97,7 +115,13 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionId(t *testing.
 		Description: "Simple all commits query with dockey and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(field: "C") {

@@ -21,8 +21,20 @@ func TestQueryCommitsWithCid(t *testing.T) {
 		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
-			updateAge(0, 22),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(
@@ -49,7 +61,13 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(
@@ -75,7 +93,13 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 		Description: "query for a single block by invalid CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(cid: "fhbnjfahfhfhanfhga") {
@@ -97,7 +121,13 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 		Description: "query for a single block by invalid, short CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
@@ -119,7 +149,13 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 		Description: "query for a single block by unknown CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			createDoc("John", 21),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
