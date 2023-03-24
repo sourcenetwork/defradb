@@ -38,14 +38,14 @@ func TestQueryLatestCommitsWithDocKey(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
 				"links": []map[string]any{
 					{
-						"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
+						"cid":  "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
 						"name": "Age",
 					},
 					{
-						"cid":  "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
+						"cid":  "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
 						"name": "Name",
 					},
 				},
@@ -75,7 +75,7 @@ func TestQueryLatestCommitsWithDocKeyWithSchemaVersionIdField(t *testing.T) {
 		},
 		Results: []map[string]any{
 			{
-				"cid":             "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+				"cid":             "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
 				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
 			},
 		},

@@ -19,6 +19,7 @@ const (
 
 var (
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
+	ErrDeltaMissingDockey                  = errors.New("commit Delta missing dockey")
 	ErrFailedToFindScanNode                = errors.New("failed to find original scan node in plan graph")
 	ErrMissingQueryOrMutation              = errors.New("request is missing query or mutation operation statements")
 	ErrOperationDefinitionMissingSelection = errors.New("operationDefinition is missing selections")

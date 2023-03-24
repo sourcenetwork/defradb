@@ -265,7 +265,7 @@ func (c *collection) updateWithFilter(
 		}
 
 		// add successful updated doc to results
-		results.DocKeys = append(results.DocKeys, doc[request.DocKeyFieldName].(string))
+		results.DocKeys = append(results.DocKeys, doc[request.KeyFieldName].(string))
 		results.Count++
 	}
 

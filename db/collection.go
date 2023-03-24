@@ -67,7 +67,7 @@ func (db *db) newCollection(desc client.CollectionDescription) (*collection, err
 	}
 
 	docKeyField := desc.Schema.Fields[0]
-	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.DocKeyFieldName {
+	if docKeyField.Kind != client.FieldKind_DocKey || docKeyField.Name != request.KeyFieldName {
 		return nil, ErrSchemaFirstFieldDocKey
 	}
 
@@ -255,7 +255,7 @@ func (db *db) updateCollection(
 
 // validateUpdateCollection validates that the given collection description is a valid update.
 //
-// Will return true if the given desctiption differs from the current persisted state of the
+// Will return true if the given description differs from the current persisted state of the
 // collection. Will return an error if it fails validation.
 func (db *db) validateUpdateCollection(
 	ctx context.Context,
@@ -309,7 +309,7 @@ func (db *db) validateUpdateCollection(
 		var existingField client.FieldDescription
 		var fieldAlreadyExists bool
 		if proposedField.ID != client.FieldID(0) ||
-			proposedField.Name == request.DocKeyFieldName {
+			proposedField.Name == request.KeyFieldName {
 			existingField, fieldAlreadyExists = existingFieldsByID[proposedField.ID]
 		}
 
@@ -597,11 +597,13 @@ func (c *collection) CreateMany(ctx context.Context, docs []*client.Document) er
 	return c.commitImplicitTxn(ctx, txn)
 }
 
-func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+func (c *collection) getKeysFromDoc(
+	doc *client.Document,
+) (client.DocKey, core.PrimaryDataStoreKey, error) {
 	// DocKey verification
 	buf, err := doc.Bytes()
 	if err != nil {
-		return err
+		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
 	}
 	// @todo:  grab the cid Prefix from the DocKey internal CID if available
 	pref := cid.Prefix{
@@ -613,17 +615,26 @@ func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.
 	// And then feed it some data
 	doccid, err := pref.Sum(buf)
 	if err != nil {
-		return err
+		return client.DocKey{}, core.PrimaryDataStoreKey{}, err
 	}
 
 	dockey := client.NewDocKeyV0(doccid)
-	key := c.getPrimaryKeyFromDocKey(dockey)
-	if key.DocKey != doc.Key().String() {
-		return NewErrDocVerification(doc.Key().String(), key.DocKey)
+	primaryKey := c.getPrimaryKeyFromDocKey(dockey)
+	if primaryKey.DocKey != doc.Key().String() {
+		return client.DocKey{}, core.PrimaryDataStoreKey{},
+			NewErrDocVerification(doc.Key().String(), primaryKey.DocKey)
+	}
+	return dockey, primaryKey, nil
+}
+
+func (c *collection) create(ctx context.Context, txn datastore.Txn, doc *client.Document) error {
+	dockey, primaryKey, err := c.getKeysFromDoc(doc)
+	if err != nil {
+		return err
 	}
 
 	// check if doc already exists
-	exists, err := c.exists(ctx, txn, key)
+	exists, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -659,8 +670,8 @@ func (c *collection) Update(ctx context.Context, doc *client.Document) error {
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dockey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, dockey)
+	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
+	exists, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -699,8 +710,8 @@ func (c *collection) Save(ctx context.Context, doc *client.Document) error {
 	defer c.discardImplicitTxn(ctx, txn)
 
 	// Check if document already exists with key
-	dockey := c.getPrimaryKeyFromDocKey(doc.Key())
-	exists, err := c.exists(ctx, txn, dockey)
+	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
+	exists, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -728,7 +739,7 @@ func (c *collection) save(
 	//	=> 		Set/Publish new CRDT values
 	primaryKey := c.getPrimaryKeyFromDocKey(doc.Key())
 	links := make([]core.DAGLink, 0)
-	merge := make(map[string]any)
+	docProperties := make(map[string]any)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -745,14 +756,14 @@ func (c *collection) save(
 				return cid.Undef, client.NewErrFieldNotExist(k)
 			}
 
-			c, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
+			node, _, err := c.saveDocValue(ctx, txn, fieldKey, val)
 			if err != nil {
 				return cid.Undef, err
 			}
 			if val.IsDelete() {
-				merge[k] = nil
+				docProperties[k] = nil
 			} else {
-				merge[k] = val.Value()
+				docProperties[k] = val.Value()
 			}
 
 			// NOTE: We delay the final Clean() call until we know
@@ -766,7 +777,7 @@ func (c *collection) save(
 
 			link := core.DAGLink{
 				Name: k,
-				Cid:  c.Cid(),
+				Cid:  node.Cid(),
 			}
 			links = append(links, link)
 		}
@@ -776,7 +787,7 @@ func (c *collection) save(
 	if err != nil {
 		return cid.Undef, err
 	}
-	buf, err := em.Marshal(merge)
+	buf, err := em.Marshal(docProperties)
 	if err != nil {
 		return cid.Undef, nil
 	}
@@ -827,8 +838,8 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, dsKey)
+	primaryKey := c.getPrimaryKeyFromDocKey(key)
+	exists, err := c.exists(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -837,7 +848,7 @@ func (c *collection) Delete(ctx context.Context, key client.DocKey) (bool, error
 	}
 
 	// run delete, commit if successful
-	deleted, err := c.delete(ctx, txn, dsKey)
+	deleted, err := c.delete(ctx, txn, primaryKey)
 	if err != nil {
 		return false, err
 	}
@@ -911,8 +922,8 @@ func (c *collection) Exists(ctx context.Context, key client.DocKey) (bool, error
 	}
 	defer c.discardImplicitTxn(ctx, txn)
 
-	dsKey := c.getPrimaryKeyFromDocKey(key)
-	exists, err := c.exists(ctx, txn, dsKey)
+	primaryKey := c.getPrimaryKeyFromDocKey(key)
+	exists, err := c.exists(ctx, txn, primaryKey)
 	if err != nil && !errors.Is(err, ds.ErrNotFound) {
 		return false, err
 	}
@@ -964,7 +975,7 @@ func (c *collection) saveValueToMerkleCRDT(
 	args ...any) (ipld.Node, uint64, error) {
 	switch ctype {
 	case client.LWW_REGISTER:
-		datatype, err := c.db.crdtFactory.InstanceWithStores(
+		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
@@ -985,11 +996,11 @@ func (c *collection) saveValueToMerkleCRDT(
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		lwwreg := datatype.(*crdt.MerkleLWWRegister)
+		lwwreg := merkleCRDT.(*crdt.MerkleLWWRegister)
 		return lwwreg.Set(ctx, bytes)
 	case client.COMPOSITE:
 		key = key.WithFieldId(core.COMPOSITE_NAMESPACE)
-		datatype, err := c.db.crdtFactory.InstanceWithStores(
+		merkleCRDT, err := c.db.crdtFactory.InstanceWithStores(
 			txn,
 			core.NewCollectionSchemaVersionKey(c.Schema().VersionID),
 			c.db.events.Updates,
@@ -1014,7 +1025,7 @@ func (c *collection) saveValueToMerkleCRDT(
 		if !ok {
 			return nil, 0, ErrUnknownCRDTArgument
 		}
-		comp := datatype.(*crdt.MerkleCompositeDAG)
+		comp := merkleCRDT.(*crdt.MerkleCompositeDAG)
 		return comp.Set(ctx, bytes, links)
 	}
 	return nil, 0, ErrUnknownCRDT

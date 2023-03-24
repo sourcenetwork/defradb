@@ -76,7 +76,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.RequestTestCase{
-		Description: "Simple query with no filter, mutiple rows",
+		Description: "Simple query with no filter, multiple rows",
 		Request: `query {
 					users {
 						Name

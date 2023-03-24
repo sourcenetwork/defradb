@@ -123,7 +123,7 @@ type ReplicatorKey struct {
 var _ Key = (*ReplicatorKey)(nil)
 
 // Creates a new DataStoreKey from a string as best as it can,
-// splitting the input using '/' as a field deliminater.  It assumes
+// splitting the input using '/' as a field deliminator.  It assumes
 // that the input string is in the following format:
 //
 // /[CollectionId]/[InstanceType]/[DocKey]/[FieldId]

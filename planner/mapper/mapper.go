@@ -620,7 +620,7 @@ func getTopLevelInfo(
 	}
 
 	if selectRequest.Root == request.ObjectSelection {
-		mapping.Add(core.DocKeyFieldIndex, request.DocKeyFieldName)
+		mapping.Add(core.DocKeyFieldIndex, request.KeyFieldName)
 
 		desc, err := descriptionsRepo.getCollectionDesc(collectionName)
 		if err != nil {
@@ -695,7 +695,7 @@ func resolveInnerFilterDependencies(
 	newFields := []Requestable{}
 
 	for key := range source {
-		if strings.HasPrefix(key, "_") && key != request.DocKeyFieldName {
+		if strings.HasPrefix(key, "_") && key != request.KeyFieldName {
 			continue
 		}
 
@@ -901,7 +901,7 @@ func toFilterMap(
 	sourceClause any,
 	mapping *core.DocumentMapping,
 ) (connor.FilterKey, any) {
-	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.DocKeyFieldName {
+	if strings.HasPrefix(sourceKey, "_") && sourceKey != request.KeyFieldName {
 		key := &Operator{
 			Operation: sourceKey,
 		}
