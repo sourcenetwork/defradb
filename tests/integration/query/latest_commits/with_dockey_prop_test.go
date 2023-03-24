@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package commits
+package latest_commits
 
 import (
 	"testing"
@@ -16,9 +16,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
+func TestQueryLastCommitsWithDockeyProperty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with dockey and limit",
+		Description: "Simple latest commits query with dockey property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -28,32 +28,15 @@ func TestQueryCommitsWithDockeyAndLimit(t *testing.T) {
 						"Age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-					"Age":	22
-				}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-					"Age":	23
-				}`,
-			},
 			testUtils.Request{
-				Request: ` {
-						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f", limit: 2) {
-							cid
+				Request: `query {
+						latestCommits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							dockey
 						}
 					}`,
 				Results: []map[string]any{
 					{
-						"cid": "bafybeihvifwxwmfuyeupebhkalie5odlafnzdjpmwqz5kuo5zld63ishve",
-					},
-					{
-						"cid": "bafybeigtudzrntyslfdtukiobzen76iuhkmyo3x4eutx3igwzwhjekp2oi",
+						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
 					},
 				},
 			},

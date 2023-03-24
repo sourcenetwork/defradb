@@ -17,114 +17,129 @@ import (
 )
 
 func TestQueryCommits(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query",
-		Request: `query {
-					commits {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-			},
-			{
-				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+			testUtils.Request{
+				Request: `query {
+						commits {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+					},
+					{
+						"cid": "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+					},
+					{
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query, multiple docs",
-		Request: `query {
-					commits {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-				`{
-					"Name": "Shahzad",
-					"Age": 28
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeih23ppd7pcp2rbuntybstbt6hwhg4qqeoxl4hfelehmpxmljvtysm",
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"Shahzad",
+						"Age":	28
+					}`,
 			},
-			{
-				"cid": "bafybeifycjhxcrn3kspu3tajpk2qvlto5mmaxx22bb2tk5ly6dbhc43p5u",
-			},
-			{
-				"cid": "bafybeid5s677eie3naujdwf6s6ffs2auoamlro2zzt6uk5eldumcvhxkxa",
-			},
-			{
-				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-			},
-			{
-				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+			testUtils.Request{
+				Request: `query {
+						commits {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeibga7z63ol3yywevh6w3ybohszjqcalsb2m72w5tn6ukt7f3qbhfm",
+					},
+					{
+						"cid": "bafybeihldaumjvn55gnvydiupp4dtdjqdusjsprokwmqhtmazoaknpc3k4",
+					},
+					{
+						"cid": "bafybeidknf63hk7ixsq5ymh5emsnt47pr3bmly7vilzho763oahibnjuqi",
+					},
+					{
+						"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+					},
+					{
+						"cid": "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+					},
+					{
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithSchemaVersionIdField(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple commits query yielding schemaVersionId",
-		Request: `query {
-					commits {
-						cid
-						schemaVersionId
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":             "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
-			},
-			{
-				"cid":             "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
-			},
-			{
-				"cid":             "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+			testUtils.Request{
+				Request: `query {
+						commits {
+							cid
+							schemaVersionId
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid":             "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+					},
+					{
+						"cid":             "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+					},
+					{
+						"cid":             "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"schemaVersionId": "bafkreibwyhaiseplil6tayn7spazp3qmc7nkoxdjb7uoe5zvcac4pgbwhy",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

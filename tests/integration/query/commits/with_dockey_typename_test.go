@@ -17,37 +17,41 @@ import (
 )
 
 func TestQueryCommitsWithDockeyWithTypeName(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey and typename",
-		Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						__typename
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":        "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"__typename": "Commit",
-			},
-			{
-				"cid":        "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"__typename": "Commit",
-			},
-			{
-				"cid":        "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"__typename": "Commit",
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							__typename
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid":        "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"__typename": "Commit",
+					},
+					{
+						"cid":        "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"__typename": "Commit",
+					},
+					{
+						"cid":        "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"__typename": "Commit",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

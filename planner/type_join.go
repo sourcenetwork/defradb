@@ -365,7 +365,7 @@ func (n *typeJoinOne) valuesPrimary(doc core.Doc) core.Doc {
 	}
 
 	// create the collection key for the sub doc
-	slct := n.subType.(*selectTopNode).selectnode
+	slct := n.subType.(*selectTopNode).selectNode
 	desc := slct.sourceInfo.collectionDescription
 	subKeyIndexKey := base.MakeDocKey(desc, subDocKeyStr)
 

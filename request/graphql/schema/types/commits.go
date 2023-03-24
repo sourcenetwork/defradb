@@ -29,6 +29,7 @@ var (
 	// type Commit {
 	// 	Height: Int
 	// 	CID: String
+	// 	Dockey: String
 	// 	SchemaVersionID: String
 	// 	Delta: String
 	// 	Previous: [Commit]
@@ -44,6 +45,9 @@ var (
 				Type: gql.Int,
 			},
 			"cid": &gql.Field{
+				Type: gql.String,
+			},
+			"dockey": &gql.Field{
 				Type: gql.String,
 			},
 			"schemaVersionId": &gql.Field{
@@ -103,6 +107,9 @@ var (
 				"cid": &gql.InputObjectFieldConfig{
 					Type: OrderingEnum,
 				},
+				"dockey": &gql.InputObjectFieldConfig{
+					Type: OrderingEnum,
+				},
 			},
 		},
 	)
@@ -113,6 +120,7 @@ var (
 			Values: gql.EnumValueConfigMap{
 				"height": &gql.EnumValueConfig{Value: "height"},
 				"cid":    &gql.EnumValueConfig{Value: "cid"},
+				"dockey": &gql.EnumValueConfig{Value: "dockey"},
 			},
 		},
 	)

@@ -46,14 +46,14 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieqnthjlvr64aodivtvtwgqelpjjvkmceyz4aqerkk5h23kjoivmu",
+						"cid": "bafybeiekrh5ixb6obq6hcs55rwychiwmoen63ozvga7r2hvedc2qk7oe2e",
 						"links": []map[string]any{
 							{
-								"cid":  "bafybeihbnch3akfu22wlbq3es7vudxev5ymo2deq2inknxhbpoacd7x5aq",
+								"cid":  "bafybeicroiodf5qn46wx72zlusxhymafhxrgdrrt5ufp7bnybzw4nf4ntu",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeib6ujnjsuox6fnzrwoepvyobyxk26hlczefwrv2myuefbenlglyzy",
+								"cid":  "bafybeiboaciru4wshhoyfto4mfpzihevlvuvxmno2fhu5kk3svotdr7z3y",
 								"name": "Name",
 							},
 						},
@@ -100,6 +100,44 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionId(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithEmbeddedLatestCommitWithDockey(t *testing.T) {
+	const dockey = "bae-52b9170d-b77a-5887-b877-cbdbb99b009f"
+
+	test := testUtils.RequestTestCase{
+		Description: "Embedded commits query within object query with dockey",
+		Request: `query {
+					users {
+						Name
+						_key
+						_version {
+							dockey
+						}
+					}
+				}`,
+		Docs: map[int][]string{
+			0: {
+				`{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+		},
+		Results: []map[string]any{
+			{
+				"Name": "John",
+				"_key": dockey,
+				"_version": []map[string]any{
+					{
+						"dockey": dockey,
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Embedded, aliased, latest commits query within object query",
@@ -133,14 +171,14 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 				"Age":  uint64(21),
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeieqnthjlvr64aodivtvtwgqelpjjvkmceyz4aqerkk5h23kjoivmu",
+						"cid": "bafybeiekrh5ixb6obq6hcs55rwychiwmoen63ozvga7r2hvedc2qk7oe2e",
 						"L1": []map[string]any{
 							{
-								"cid":  "bafybeihbnch3akfu22wlbq3es7vudxev5ymo2deq2inknxhbpoacd7x5aq",
+								"cid":  "bafybeicroiodf5qn46wx72zlusxhymafhxrgdrrt5ufp7bnybzw4nf4ntu",
 								"name": "Age",
 							},
 							{
-								"cid":  "bafybeib6ujnjsuox6fnzrwoepvyobyxk26hlczefwrv2myuefbenlglyzy",
+								"cid":  "bafybeiboaciru4wshhoyfto4mfpzihevlvuvxmno2fhu5kk3svotdr7z3y",
 								"name": "Name",
 							},
 						},

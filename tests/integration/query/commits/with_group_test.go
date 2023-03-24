@@ -17,150 +17,212 @@ import (
 )
 
 func TestQueryCommitsWithGroupBy(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query, group by height",
-		Request: `query {
-					commits(groupBy: [height]) {
-						height
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [height]) {
+							height
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"height": int64(2),
+					},
+					{
+						"height": int64(1),
+					},
 				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"height": int64(2),
-			},
-			{
-				"height": int64(1),
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query, group by height",
-		Request: `query {
-					commits(groupBy: [height]) {
-						height
-						_group {
-							cid
-						}
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
-				},
 			},
-		},
-		Results: []map[string]any{
-			{
-				"height": int64(2),
-				"_group": []map[string]any{
-					{
-						"cid": "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
-					},
-					{
-						"cid": "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
-					},
-				},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
 			},
-			{
-				"height": int64(1),
-				"_group": []map[string]any{
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [height]) {
+							height
+							_group {
+								cid
+							}
+						}
+					}`,
+				Results: []map[string]any{
 					{
-						"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
+						"height": int64(2),
+						"_group": []map[string]any{
+							{
+								"cid": "bafybeigtudzrntyslfdtukiobzen76iuhkmyo3x4eutx3igwzwhjekp2oi",
+							},
+							{
+								"cid": "bafybeibwql353y3bpl24f25t53gl6zxcsp56uvmdrqrvweh6kv63un4pca",
+							},
+						},
 					},
 					{
-						"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-					},
-					{
-						"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+						"height": int64(1),
+						"_group": []map[string]any{
+							{
+								"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+							},
+							{
+								"cid": "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+							},
+							{
+								"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query, group by cid",
-		Request: `query {
-					commits(groupBy: [cid]) {
-						cid
-						_group {
-							height
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [cid]) {
+							cid
+							_group {
+								height
+							}
 						}
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"_group": []map[string]any{
+					}`,
+				Results: []map[string]any{
 					{
-						"height": int64(1),
+						"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
 					},
-				},
-			},
-			{
-				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"_group": []map[string]any{
 					{
-						"height": int64(1),
+						"cid": "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
 					},
-				},
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"_group": []map[string]any{
 					{
-						"height": int64(1),
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"_group": []map[string]any{
+							{
+								"height": int64(1),
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
+}
+
+func TestQueryCommitsWithGroupByDocKey(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple all commits query, group by dockey",
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"Fred",
+						"Age":	25
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        1,
+				Doc: `{
+					"Age":	26
+				}`,
+			},
+			testUtils.Request{
+				Request: ` {
+						commits(groupBy: [dockey]) {
+							dockey
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"dockey": "bae-52b9170d-b77a-5887-b877-cbdbb99b009f",
+					},
+					{
+						"dockey": "bae-b2103437-f5bd-52b6-99b1-5970412c5201",
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

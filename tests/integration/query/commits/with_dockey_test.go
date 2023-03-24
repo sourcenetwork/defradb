@@ -17,238 +17,254 @@ import (
 )
 
 func TestQueryCommitsWithUnknownDockey(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with unknown dockey",
-		Request: `query {
-					commits(dockey: "unknown dockey") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "unknown dockey") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{},
 			},
 		},
-		Results: []map[string]any{},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockey(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey",
-		Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-			},
-			{
-				"cid": "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid": "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+					},
+					{
+						"cid": "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+					},
+					{
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+					},
+				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndLinks(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, with links",
-		Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						links {
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
 							cid
-							name
+							links {
+								cid
+								name
+							}
 						}
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":   "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"links": []map[string]any{},
-			},
-			{
-				"cid":   "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"links": []map[string]any{},
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"links": []map[string]any{
+					}`,
+				Results: []map[string]any{
 					{
-						"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-						"name": "Age",
+						"cid":   "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"links": []map[string]any{},
 					},
 					{
-						"cid":  "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-						"name": "Name",
+						"cid":   "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"links": []map[string]any{},
+					},
+					{
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+								"name": "Age",
+							},
+							{
+								"cid":  "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+								"name": "Name",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 func TestQueryCommitsWithDockeyAndUpdate(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, multiple results",
-		Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						height
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							height
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"cid":    "bafybeigtudzrntyslfdtukiobzen76iuhkmyo3x4eutx3igwzwhjekp2oi",
+						"height": int64(2),
+					},
+					{
+						"cid":    "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"height": int64(1),
+					},
+					{
+						"cid":    "bafybeibwql353y3bpl24f25t53gl6zxcsp56uvmdrqrvweh6kv63un4pca",
+						"height": int64(2),
+					},
+					{
+						"cid":    "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"height": int64(1),
+					},
 				},
-			},
-		},
-		Results: []map[string]any{
-			{
-				"cid":    "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
-				"height": int64(2),
-			},
-			{
-				"cid":    "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"height": int64(1),
-			},
-			{
-				"cid":    "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"height": int64(1),
-			},
-			{
-				"cid":    "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
-				"height": int64(2),
-			},
-			{
-				"cid":    "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"height": int64(1),
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (first results includes link._head, second
 // includes link._Name).
 func TestQueryCommitsWithDockeyAndUpdateAndLinks(t *testing.T) {
-	test := testUtils.RequestTestCase{
+	test := testUtils.TestCase{
 		Description: "Simple all commits query with dockey, multiple results and links",
-		Request: `query {
-					commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
-						cid
-						links {
-							cid
-							name
-						}
-					}
-				}`,
-		Docs: map[int][]string{
-			0: {
-				`{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-		},
-		Updates: map[int]map[int][]string{
-			0: {
-				0: {
-					`{
-						"Age": 22
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"Name":	"John",
+						"Age":	21
 					}`,
-				},
 			},
-		},
-		Results: []map[string]any{
-			{
-				"cid": "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
-				"links": []map[string]any{
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"Age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(dockey: "bae-52b9170d-b77a-5887-b877-cbdbb99b009f") {
+							cid
+							links {
+								cid
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
 					{
-						"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-						"name": "_head",
-					},
-				},
-			},
-			{
-				"cid":   "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-				"links": []map[string]any{},
-			},
-			{
-				"cid":   "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-				"links": []map[string]any{},
-			},
-			{
-				"cid": "bafybeigeigzhjtf27o3wkdyq3exmnqhr3npt5psdq3pywpwxxdepiebpdi",
-				"links": []map[string]any{
-					{
-						"cid":  "bafybeihxc6ittcok3rnetguamxfzd3wa534z7zwqsaoppvawu7jx4rdy5u",
-						"name": "Age",
-					},
-					{
-						"cid":  "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-						"name": "_head",
-					},
-				},
-			},
-			{
-				"cid": "bafybeidr2z5ahvvss5j664gxyna5wjil5ndfjbmllnsewkjf6cnsvsmmqu",
-				"links": []map[string]any{
-					{
-						"cid":  "bafybeiaeic6vhiiw5zu6ju7e47cclvctn6t5pb36fj3mczchyhmctbrr6m",
-						"name": "Age",
+						"cid": "bafybeigtudzrntyslfdtukiobzen76iuhkmyo3x4eutx3igwzwhjekp2oi",
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+								"name": "_head",
+							},
+						},
 					},
 					{
-						"cid":  "bafybeibsaubd2ptp6qqsszv24p73j474amc4pll4oyssnpilofrl575hmy",
-						"name": "Name",
+						"cid":   "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+						"links": []map[string]any{},
+					},
+					{
+						"cid":   "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+						"links": []map[string]any{},
+					},
+					{
+						"cid": "bafybeibwql353y3bpl24f25t53gl6zxcsp56uvmdrqrvweh6kv63un4pca",
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeigtudzrntyslfdtukiobzen76iuhkmyo3x4eutx3igwzwhjekp2oi",
+								"name": "Age",
+							},
+							{
+								"cid":  "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+								"name": "_head",
+							},
+						},
+					},
+					{
+						"cid": "bafybeig32cpgkhikjerzp33wvbilrcbhm7xqpjeba5ptpgg2s5ivqlndba",
+						"links": []map[string]any{
+							{
+								"cid":  "bafybeih7athlviqvv255ujgk6mikxcwxp46n7yyaekxldrgsvgrkrgajtq",
+								"name": "Age",
+							},
+							{
+								"cid":  "bafybeifez5xzi6x4w6cahxzlhsjbzbarzgtoixfioqr5l4uh2akkgl6hhq",
+								"name": "Name",
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, []string{"users"}, test)
 }

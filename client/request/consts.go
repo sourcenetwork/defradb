@@ -32,7 +32,7 @@ const (
 
 	AverageFieldName = "_avg"
 	CountFieldName   = "_count"
-	DocKeyFieldName  = "_key"
+	KeyFieldName     = "_key"
 	GroupFieldName   = "_group"
 	SumFieldName     = "_sum"
 	VersionFieldName = "_version"
@@ -46,6 +46,7 @@ const (
 	LinksFieldName           = "links"
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
+	DockeyFieldName          = "dockey"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	DeltaFieldName           = "delta"
 
@@ -69,7 +70,7 @@ var (
 		CountFieldName:    true,
 		SumFieldName:      true,
 		AverageFieldName:  true,
-		DocKeyFieldName:   true,
+		KeyFieldName:      true,
 	}
 
 	Aggregates = map[string]struct{}{
@@ -86,6 +87,7 @@ var (
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
+		DockeyFieldName,
 		SchemaVersionIDFieldName,
 		DeltaFieldName,
 	}

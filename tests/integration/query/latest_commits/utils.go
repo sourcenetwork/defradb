@@ -24,6 +24,12 @@ var userCollectionGQLSchema = (`
 	}
 `)
 
+func updateUserCollectionSchema() testUtils.SchemaUpdate {
+	return testUtils.SchemaUpdate{
+		Schema: userCollectionGQLSchema,
+	}
+}
+
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
 	testUtils.ExecuteRequestTestCase(t, userCollectionGQLSchema, []string{"users"}, test)
 }

@@ -27,31 +27,31 @@ type dagScanNode struct {
 	documentIterator
 	docMapper
 
-	p *Planner
+	planner *Planner
 
 	depthVisited uint64
 	visitedNodes map[string]bool
 
 	queuedCids []*cid.Cid
 
-	fetcher fetcher.HeadFetcher
-	spans   core.Spans
-	parsed  *mapper.CommitSelect
+	fetcher      fetcher.HeadFetcher
+	spans        core.Spans
+	commitSelect *mapper.CommitSelect
 }
 
-func (p *Planner) DAGScan(parsed *mapper.CommitSelect) *dagScanNode {
+func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 	return &dagScanNode{
-		p:            p,
+		planner:      p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   []*cid.Cid{},
-		parsed:       parsed,
-		docMapper:    docMapper{&parsed.DocumentMapping},
+		commitSelect: commitSelect,
+		docMapper:    docMapper{&commitSelect.DocumentMapping},
 	}
 }
 
-func (p *Planner) CommitSelect(parsed *mapper.CommitSelect) (planNode, error) {
-	dagScan := p.DAGScan(parsed)
-	return p.SelectFromSource(&parsed.Select, dagScan, false, nil)
+func (p *Planner) CommitSelect(commitSelect *mapper.CommitSelect) (planNode, error) {
+	dagScan := p.DAGScan(commitSelect)
+	return p.SelectFromSource(&commitSelect.Select, dagScan, false, nil)
 }
 
 func (n *dagScanNode) Kind() string {
@@ -60,11 +60,11 @@ func (n *dagScanNode) Kind() string {
 
 func (n *dagScanNode) Init() error {
 	if len(n.spans.Value) == 0 {
-		if n.parsed.DocKey.HasValue() {
-			key := core.DataStoreKey{}.WithDocKey(n.parsed.DocKey.Value())
+		if n.commitSelect.DocKey.HasValue() {
+			key := core.DataStoreKey{}.WithDocKey(n.commitSelect.DocKey.Value())
 
-			if n.parsed.FieldName.HasValue() {
-				field := n.parsed.FieldName.Value()
+			if n.commitSelect.FieldName.HasValue() {
+				field := n.commitSelect.FieldName.Value()
 				key = key.WithFieldId(field)
 			}
 
@@ -72,7 +72,7 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.p.ctx, n.p.txn, n.spans, n.parsed.FieldName)
+	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.spans, n.commitSelect.FieldName)
 }
 
 func (n *dagScanNode) Start() error {
@@ -97,8 +97,8 @@ func (n *dagScanNode) Spans(spans core.Spans) {
 	copy(headSetSpans.Value, spans.Value)
 
 	var fieldId string
-	if n.parsed.FieldName.HasValue() {
-		fieldId = n.parsed.FieldName.Value()
+	if n.commitSelect.FieldName.HasValue() {
+		fieldId = n.commitSelect.FieldName.Value()
 	} else {
 		fieldId = core.COMPOSITE_NAMESPACE
 	}
@@ -123,21 +123,21 @@ func (n *dagScanNode) Source() planNode { return nil }
 func (n *dagScanNode) Explain() (map[string]any, error) {
 	explainerMap := map[string]any{}
 
-	// Add the field attribute to the explaination if it exists.
-	if n.parsed.FieldName.HasValue() {
-		explainerMap["field"] = n.parsed.FieldName.Value()
+	// Add the field attribute to the explanation if it exists.
+	if n.commitSelect.FieldName.HasValue() {
+		explainerMap["field"] = n.commitSelect.FieldName.Value()
 	} else {
 		explainerMap["field"] = nil
 	}
 
-	// Add the cid attribute to the explaination if it exists.
-	if n.parsed.Cid.HasValue() {
-		explainerMap["cid"] = n.parsed.Cid.Value()
+	// Add the cid attribute to the explanation if it exists.
+	if n.commitSelect.Cid.HasValue() {
+		explainerMap["cid"] = n.commitSelect.Cid.Value()
 	} else {
 		explainerMap["cid"] = nil
 	}
 
-	// Build the explaination of the spans attribute.
+	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.spans.HasValue {
@@ -159,7 +159,7 @@ func (n *dagScanNode) Explain() (map[string]any, error) {
 
 func (n *dagScanNode) Next() (bool, error) {
 	var currentCid *cid.Cid
-	store := n.p.txn.DAGstore()
+	store := n.planner.txn.DAGstore()
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
@@ -186,7 +186,7 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
-	block, err := store.Get(n.p.ctx, *currentCid)
+	block, err := store.Get(n.planner.ctx, *currentCid)
 	if err != nil {
 		return false, err
 	}
@@ -206,7 +206,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// HEAD paths.
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-	if !n.parsed.Depth.HasValue() || n.depthVisited < n.parsed.Depth.Value() {
+	if !n.commitSelect.Depth.HasValue() || n.depthVisited < n.commitSelect.Depth.Value() {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
 		n.queuedCids = append(make([]*cid.Cid, len(heads)), n.queuedCids...)
@@ -216,7 +216,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 	}
 
-	if n.parsed.Cid.HasValue() && currentCid.String() != n.parsed.Cid.Value() {
+	if n.commitSelect.Cid.HasValue() && currentCid.String() != n.commitSelect.Cid.Value() {
 		// If a specific cid has been requested, and the current item does not
 		// match, keep searching.
 		return n.Next()
@@ -264,9 +264,9 @@ All the dagScanNode endpoints use similar structures
 */
 
 func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.Link, error) {
-	commit := n.parsed.DocumentMapping.NewDoc()
+	commit := n.commitSelect.DocumentMapping.NewDoc()
 	cid := block.Cid()
-	n.parsed.DocumentMapping.SetFirstOfName(&commit, "cid", cid.String())
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "cid", cid.String())
 
 	// decode the delta, get the priority and payload
 	nd, err := dag.DecodeProtobuf(block.RawData())
@@ -287,20 +287,31 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	schemaVersionId, ok := delta["SchemaVersionID"].(string)
 	if ok {
-		n.parsed.DocumentMapping.SetFirstOfName(&commit, "schemaVersionId", schemaVersionId)
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "schemaVersionId", schemaVersionId)
 	}
 
-	n.parsed.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
-	n.parsed.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
+
+	dockey, ok := delta["DocKey"].([]byte)
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingDockey
+	}
+
+	dockeyObj, err := core.NewDataStoreKey(string(dockey))
+	if err != nil {
+		return core.Doc{}, nil, err
+	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "dockey", dockeyObj.DocKey)
 
 	heads := make([]*ipld.Link, 0)
 
 	// links
-	linksIndexes := n.parsed.DocumentMapping.IndexesByName[request.LinksFieldName]
+	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 
 	for _, linksIndex := range linksIndexes {
 		links := make([]core.Doc, len(nd.Links()))
-		linksMapping := n.parsed.DocumentMapping.ChildMappings[linksIndex]
+		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
 
 		for i, l := range nd.Links() {
 			link := linksMapping.NewDoc()
