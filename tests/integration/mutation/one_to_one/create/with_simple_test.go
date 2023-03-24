@@ -87,7 +87,8 @@ func TestMutationCreateOneToOne(t *testing.T) {
 							name
 						}
 					}`,
-					bookKey),
+					bookKey,
+				),
 				Results: []map[string]any{
 					{
 						"name": "John Grisham",
@@ -109,6 +110,25 @@ func TestMutationCreateOneToOne(t *testing.T) {
 						"name": "Painted House",
 						"author": map[string]any{
 							"name": "John Grisham",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						author {
+							name
+							published {
+								name
+							}
+						}
+					}`,
+				Results: []map[string]any{
+					{
+						"name": "John Grisham",
+						"published": map[string]any{
+							"name": "Painted House",
 						},
 					},
 				},
