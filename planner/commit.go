@@ -123,21 +123,21 @@ func (n *dagScanNode) Source() planNode { return nil }
 func (n *dagScanNode) Explain() (map[string]any, error) {
 	explainerMap := map[string]any{}
 
-	// Add the field attribute to the explaination if it exists.
+	// Add the field attribute to the explanation if it exists.
 	if n.commitSelect.FieldName.HasValue() {
 		explainerMap["field"] = n.commitSelect.FieldName.Value()
 	} else {
 		explainerMap["field"] = nil
 	}
 
-	// Add the cid attribute to the explaination if it exists.
+	// Add the cid attribute to the explanation if it exists.
 	if n.commitSelect.Cid.HasValue() {
 		explainerMap["cid"] = n.commitSelect.Cid.Value()
 	} else {
 		explainerMap["cid"] = nil
 	}
 
-	// Build the explaination of the spans attribute.
+	// Build the explanation of the spans attribute.
 	spansExplainer := []map[string]any{}
 	// Note: n.headset is `nil` for single commit selection query, so must check for it.
 	if n.spans.HasValue {
@@ -294,14 +294,15 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
 
 	dockey, ok := delta["DocKey"].([]byte)
-	if ok {
-		dockeyObj, err := core.NewDataStoreKey(string(dockey))
-		if err != nil {
-			return core.Doc{}, nil, err
-		}
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "dockey",
-			string(dockeyObj.InstanceType))
+	if !ok {
+		return core.Doc{}, nil, ErrDeltaMissingDockey
 	}
+
+	dockeyObj, err := core.NewDataStoreKey(string(dockey))
+	if err != nil {
+		return core.Doc{}, nil, err
+	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "dockey", dockeyObj.DocKey)
 
 	heads := make([]*ipld.Link, 0)
 

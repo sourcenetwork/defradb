@@ -255,7 +255,7 @@ func (db *db) updateCollection(
 
 // validateUpdateCollection validates that the given collection description is a valid update.
 //
-// Will return true if the given desctiption differs from the current persisted state of the
+// Will return true if the given description differs from the current persisted state of the
 // collection. Will return an error if it fails validation.
 func (db *db) validateUpdateCollection(
 	ctx context.Context,
