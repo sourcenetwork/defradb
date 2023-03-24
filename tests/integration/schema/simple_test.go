@@ -52,6 +52,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 					type users {}
 				`,
 			},
+			testUtils.SetupComplete{},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type users {}
