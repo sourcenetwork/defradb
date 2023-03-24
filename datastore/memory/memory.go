@@ -138,7 +138,7 @@ func (d *Datastore) Delete(ctx context.Context, key ds.Key) (err error) {
 		return ErrClosed
 	}
 	tx := d.newTransaction(false)
-	// An error can never happen at this stage so we explicitely ignore it
+	// An error can never happen at this stage so we explicitly ignore it
 	_ = tx.Delete(ctx, key)
 	return tx.Commit(ctx)
 }
