@@ -31,7 +31,7 @@ func TestMutationCreateSimpleReturnVersionCID(t *testing.T) {
 			{
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeictevbrytwpeyvd4dsx57jl7saop7i3oppq4hcauz3a66ll2chwty",
+						"cid": "bafybeig2pgnjph56u3pbj7cqhhoelhfhmtlab3ntrh3yfdbqsgwywitxme",
 					},
 				},
 			},
