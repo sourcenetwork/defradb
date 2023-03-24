@@ -224,7 +224,7 @@ func (d *Datastore) Put(ctx context.Context, key ds.Key, value []byte) (err erro
 		return ErrClosed
 	}
 	tx := d.newTransaction(false)
-	// An error can never happen at this stage so we explicitely ignore it
+	// An error can never happen at this stage so we explicitly ignore it
 	_ = tx.Put(ctx, key, value)
 	return tx.Commit(ctx)
 }
@@ -343,7 +343,7 @@ func (d *Datastore) commitHandler(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			// It is safe to ignore the error since the only error that could occure is if the
+			// It is safe to ignore the error since the only error that could occur is if the
 			// datastore is already closed, in which case the purpose of the `Close` call is already covered.
 			_ = d.Close()
 			return
