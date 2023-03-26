@@ -1,8 +1,8 @@
 type Book {
     name: String
     rating: Float
-    author: author
-    publisher: publisher
+    author: Author
+    publisher: Publisher
 }
 
 type Author {
