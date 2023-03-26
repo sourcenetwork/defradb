@@ -173,7 +173,7 @@ func TestMutationCreateOneToOneSecondarySide(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name

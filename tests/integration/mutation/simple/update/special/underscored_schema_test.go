@@ -17,20 +17,20 @@ import (
 )
 
 var myUserSchema = (`
-	type my_user {
+	type My_User {
 		name: String
 	}
 `)
 
 func executeTestCase(t *testing.T, test testUtils.RequestTestCase) {
-	testUtils.ExecuteRequestTestCase(t, myUserSchema, []string{"my_user"}, test)
+	testUtils.ExecuteRequestTestCase(t, myUserSchema, []string{"My_User"}, test)
 }
 
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple update of schema with underscored name",
 		Request: `mutation {
-			update_my_user(data: "{\"name\": \"Fred\"}") {
+			update_My_User(data: "{\"name\": \"Fred\"}") {
 				_key
 				name
 			}
