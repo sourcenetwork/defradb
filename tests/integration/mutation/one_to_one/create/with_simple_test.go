@@ -27,7 +27,7 @@ func TestMutationCreateOneToOneWrongSide(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-							create_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							create_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								_key
 							}
 						}`,
@@ -47,7 +47,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-							create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								name
 							}
 						}`,
@@ -70,7 +70,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 		Actions: []any{
 			testUtils.Request{
 				Request: `mutation {
-						create_book(data: "{\"name\": \"Painted House\"}") {
+						create_Book(data: "{\"name\": \"Painted House\"}") {
 							_key
 						}
 					}`,
@@ -83,7 +83,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: fmt.Sprintf(
 					`mutation {
-						create_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
+						create_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"%s\"}") {
 							name
 						}
 					}`,
@@ -97,7 +97,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						book {
+						Book {
 							name
 							author {
 								name

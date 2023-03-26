@@ -21,7 +21,7 @@ func TestMutationCreateSimpleReturnVersionCID(t *testing.T) {
 	test := testUtils.RequestTestCase{
 		Description: "Simple create mutation",
 		Request: `mutation {
-					create_user(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
+					create_User(data: "{\"name\": \"John\",\"age\": 27,\"points\": 42.1,\"verified\": true}") {
 						_version {
 							cid
 						}
@@ -31,7 +31,7 @@ func TestMutationCreateSimpleReturnVersionCID(t *testing.T) {
 			{
 				"_version": []map[string]any{
 					{
-						"cid": "bafybeig2pgnjph56u3pbj7cqhhoelhfhmtlab3ntrh3yfdbqsgwywitxme",
+						"cid": "bafybeicaraypd22b2ilmy3iymj4c7jkd3v4idtughzkpufyeimg573bl3u",
 					},
 				},
 			},

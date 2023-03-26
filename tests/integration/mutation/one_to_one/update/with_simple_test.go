@@ -31,7 +31,7 @@ func TestMutationUpdateOneToOneWrongSide(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-							update_book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							update_Book(data: "{\"name\": \"Painted House\",\"author_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								_key
 							}
 						}`,
@@ -56,7 +56,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-							update_author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
+							update_Author(data: "{\"name\": \"John Grisham\",\"published_id\": \"bae-fd541c25-229e-5280-b44b-e5c2af3e374d\"}") {
 								name
 							}
 						}`,

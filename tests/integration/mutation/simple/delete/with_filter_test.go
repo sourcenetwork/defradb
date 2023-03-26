@@ -24,7 +24,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Delete using filter - One matching document, that exists.",
 
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
+						delete_User(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
 					}`,
@@ -52,7 +52,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 		{
 			Description: "Delete using filter - Multiple matching documents that exist.",
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
+						delete_User(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
 					}`,
@@ -114,7 +114,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Delete using filter - Multiple matching documents that exist with alias.",
 
 			Request: `mutation {
-						delete_user(filter: {
+						delete_User(filter: {
 							_and: [
 								{age: {_lt: 26}},
 								{verified: {_eq: true}},
@@ -178,7 +178,7 @@ func TestDeletionOfDocumentsWithFilter_Success(t *testing.T) {
 			Description: "Delete using filter - Match everything in this collection.",
 
 			Request: `mutation {
-						delete_user(filter: {}) {
+						delete_User(filter: {}) {
 							DeletedKeyByFilter: _key
 						}
 					}`,
@@ -251,7 +251,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 			Description: "No delete with filter: because no document matches filter.",
 
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Lone"}}) {
+						delete_User(filter: {name: {_eq: "Lone"}}) {
 							_key
 						}
 					}`,
@@ -276,7 +276,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 			Description: "No delete with filter: because the collection is empty.",
 
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
+						delete_User(filter: {name: {_eq: "Shahzad"}}) {
 							_key
 						}
 					}`,
@@ -292,7 +292,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 			Description: "No delete with filter: because has no sub-selection.",
 
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Shahzad"}})
+						delete_User(filter: {name: {_eq: "Shahzad"}})
 					}`,
 
 			Docs: map[int][]string{
@@ -314,14 +314,14 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Results: []map[string]any{},
 
-			ExpectedError: "Field \"delete_user\" of type \"[user]\" must have a sub selection.",
+			ExpectedError: "Field \"delete_User\" of type \"[User]\" must have a sub selection.",
 		},
 
 		{
 			Description: "No delete with filter: because has no _key in sub-selection.",
 
 			Request: `mutation {
-						delete_user(filter: {name: {_eq: "Shahzad"}}) {
+						delete_User(filter: {name: {_eq: "Shahzad"}}) {
 						}
 					}`,
 
@@ -344,7 +344,7 @@ func TestDeletionOfDocumentsWithFilter_Failure(t *testing.T) {
 
 			Results: []map[string]any{},
 
-			ExpectedError: "Syntax Error GraphQL request (2:53) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_user(filter: {name: {_eq: \"Shahzad\"}}) {\n                                                       ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
+			ExpectedError: "Syntax Error GraphQL request (2:53) Unexpected empty IN {}\n\n1: mutation {\n2: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009delete_User(filter: {name: {_eq: \"Shahzad\"}}) {\n                                                       ^\n3: \\u0009\\u0009\\u0009\\u0009\\u0009\\u0009}\n",
 		},
 	}
 
