@@ -25,7 +25,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 	doc1, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-				"Name": "John"
+				"name": "John"
 			}`,
 		),
 	)
@@ -35,7 +35,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 	doc2, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-				"Name": "Shahzad"
+				"name": "Shahzad"
 			}`,
 		),
 	)
@@ -44,7 +44,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
-			"users": []func(c client.Collection){
+			"Users": []func(c client.Collection){
 				func(c client.Collection) {
 					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
@@ -55,7 +55,7 @@ func TestEventsSimpleWithUpdate(t *testing.T) {
 				},
 				func(c client.Collection) {
 					// Update John
-					doc1.Set("Name", "Johnnnnn")
+					doc1.Set("name", "Johnnnnn")
 					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
 				},
