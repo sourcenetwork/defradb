@@ -27,7 +27,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 	doc1, err := client.NewDocFromJSON(
 		[]byte(
 			`{
-				"Name": "John"
+				"name": "John"
 			}`,
 		),
 	)
@@ -36,7 +36,7 @@ func TestEventsSimpleWithDelete(t *testing.T) {
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection){
-			"users": []func(c client.Collection){
+			"Users": []func(c client.Collection){
 				func(c client.Collection) {
 					err = c.Save(context.Background(), doc1)
 					assert.Nil(t, err)
