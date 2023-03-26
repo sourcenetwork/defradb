@@ -35,7 +35,7 @@ func TestCollectionCreateSaveErrorsGivenRelationSetOnWrongSide(t *testing.T) {
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"book": []func(c client.Collection) error{
+			"Book": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					return c.Save(context.Background(), doc)
 				},
@@ -62,7 +62,7 @@ func TestCollectionCreateSaveCreatesDoc(t *testing.T) {
 
 	test := testUtils.TestCase{
 		CollectionCalls: map[string][]func(client.Collection) error{
-			"author": []func(c client.Collection) error{
+			"Author": []func(c client.Collection) error{
 				func(c client.Collection) error {
 					err := c.Save(context.Background(), doc)
 					if err != nil {
