@@ -211,6 +211,12 @@ func (db *db) updateCollection(
 			field.ID = client.FieldID(i)
 			desc.Schema.Fields[i] = field
 		}
+
+		if field.Typ == client.NONE_CRDT {
+			// If no CRDT Type has been provided, default to LWW_REGISTER.
+			field.Typ = client.LWW_REGISTER
+			desc.Schema.Fields[i] = field
+		}
 	}
 
 	globalSchemaBuf, err := json.Marshal(desc.Schema)

@@ -121,9 +121,6 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
 
-// Documentation test: This is undesirable behaviour and the test should be
-// updated once the behaviour has been fixed.
-// Issue: https://github.com/sourcenetwork/defradb/issues/1185
 func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -158,7 +155,6 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
 						Name
@@ -169,23 +165,6 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 					{
 						"Name":  "John",
 						"Email": "imnotyourbuddyguy@source.ca",
-					},
-				},
-			},
-			testUtils.Request{
-				// Even though 'Email' exists on both nodes, the value of the field has not
-				// successfully been synced.
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						Name
-						Email
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"Name":  "John",
-						"Email": nil,
 					},
 				},
 			},
