@@ -67,7 +67,7 @@ fi
 
 CHECK_SPACE="${DESCRIPTION::1}"; # First character
 CHECK_FIRST_UPPER_CASE="${DESCRIPTION:1:1}"; # Second character
-CHECK_LAST_LOWER_CASE_OR_NUM="${DESCRIPTION: -1}"; # Last character
+LAST_CHARACTER="${DESCRIPTION: -1}";
 
 # Validate that there is a space between the label and description.
 if [ "${CHECK_SPACE}" != " " ]; then
@@ -82,7 +82,7 @@ if [[ "${CHECK_FIRST_UPPER_CASE}" != [A-Z] ]]; then
 fi
 
 # Validate that the last character is not a period, comma, or whitespace.
-if [[ "${CHECK_LAST_LOWER_CASE_OR_NUM}" =~ [.,\ ] ]]; then
+if [[ "${LAST_CHARACTER}" =~ [.,\ ] ]]; then
     printf "Error: Last character is a period, comma, or whitespace.\n";
     exit 8;
 fi
