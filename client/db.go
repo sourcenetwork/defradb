@@ -56,6 +56,9 @@ type Store interface {
 	// The collections (including the schema version ID) will only be updated if any changes have actually
 	// been made, if the net result of the patch matches the current persisted description then no changes
 	// will be applied.
+	//
+	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
+	// [FieldKindStringToEnumMapping].
 	PatchSchema(context.Context, string) error
 
 	CreateCollection(context.Context, CollectionDescription) (Collection, error)

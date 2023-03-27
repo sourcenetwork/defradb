@@ -87,3 +87,84 @@ func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceName(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+// This is an odd test, but still a possibility and we should still cover it.
+func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndKindSubstitution(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, copy field, rename, re-type, and remove IDs",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				// Here we esentially use Name as a template, copying it, clearing the ID, and renaming and
+				// re-typing the clone.
+				Patch: `
+					[
+						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
+						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "Age" },
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "Integer" }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Age": 3
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						// It is important to test this with data, to ensure the type has been substituted correctly
+						"Age": uint64(3),
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
+
+// This is an odd test, but still a possibility and we should still cover it.
+func TestSchemaUpdatesCopyFieldWithRemoveIDAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, copy field, rename, re-type to invalid, and remove ID",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				// Here we esentially use Name as a template, copying it, clearing the ID, and renaming and
+				// re-typing the clone.
+				Patch: `
+					[
+						{ "op": "copy", "from": "/Users/Schema/Fields/1", "path": "/Users/Schema/Fields/2" },
+						{ "op": "remove", "path": "/Users/Schema/Fields/2/ID" },
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Name", "value": "Age" },
+						{ "op": "replace", "path": "/Users/Schema/Fields/2/Kind", "value": "NotAValidKind" }
+					]
+				`,
+				ExpectedError: "no type found for given name. Kind: NotAValidKind",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

@@ -157,6 +157,30 @@ const (
 	FieldKind_NILLABLE_STRING_ARRAY FieldKind = 21
 )
 
+// FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
+// their enum values.
+//
+// It is currently used to by [db.PatchSchema] to allow string representations of
+// [FieldKind] to be provided instead of their raw int values.  This useage may expand
+// in the future.  They currently roughly correspond to the GQL field types, but this
+// equality is not guarenteed.
+var FieldKindStringToEnumMapping = map[string]FieldKind{
+	"ID":         FieldKind_DocKey,
+	"Boolean":    FieldKind_BOOL,
+	"[Boolean]":  FieldKind_NILLABLE_BOOL_ARRAY,
+	"[Boolean!]": FieldKind_BOOL_ARRAY,
+	"Integer":    FieldKind_INT,
+	"[Integer]":  FieldKind_NILLABLE_INT_ARRAY,
+	"[Integer!]": FieldKind_INT_ARRAY,
+	"DateTime":   FieldKind_DATETIME,
+	"Float":      FieldKind_FLOAT,
+	"[Float]":    FieldKind_NILLABLE_FLOAT_ARRAY,
+	"[Float!]":   FieldKind_FLOAT_ARRAY,
+	"String":     FieldKind_STRING,
+	"[String]":   FieldKind_NILLABLE_STRING_ARRAY,
+	"[String!]":  FieldKind_STRING_ARRAY,
+}
+
 // RelationType describes the type of relation between two types.
 type RelationType uint8
 

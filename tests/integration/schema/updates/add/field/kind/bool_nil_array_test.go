@@ -93,3 +93,47 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind nillable bool array substitution with create",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[Boolean]"} }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Foo": [true, false, null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Foo
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						"Foo":  []immutable.Option[bool]{immutable.Some(true), immutable.Some(false), immutable.None[bool]()},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
