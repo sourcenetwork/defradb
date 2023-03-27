@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"strconv"
+
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -287,11 +289,12 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 	schemaVersionId, ok := delta["SchemaVersionID"].(string)
 	if ok {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "schemaVersionId", schemaVersionId)
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
+			request.SchemaVersionIDFieldName, schemaVersionId)
 	}
 
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "height", int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "delta", delta["Data"])
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta["Data"])
 
 	dockey, ok := delta["DocKey"].([]byte)
 	if !ok {
@@ -302,7 +305,15 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, "dockey", dockeyObj.DocKey)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
+		request.DockeyFieldName, dockeyObj.DocKey)
+
+	collectionId, err := strconv.Atoi(dockeyObj.CollectionId)
+	if err != nil {
+		return core.Doc{}, nil, err
+	}
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
+		request.CollectionIDFieldName, collectionId)
 
 	heads := make([]*ipld.Link, 0)
 
@@ -315,8 +326,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 
 		for i, l := range nd.Links() {
 			link := linksMapping.NewDoc()
-			linksMapping.SetFirstOfName(&link, "name", l.Name)
-			linksMapping.SetFirstOfName(&link, "cid", l.Cid.String())
+			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
+			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Cid.String())
 
 			links[i] = link
 		}
