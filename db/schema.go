@@ -90,6 +90,11 @@ func (db *db) patchSchema(ctx context.Context, txn datastore.Txn, patchString st
 	if err != nil {
 		return err
 	}
+	// Here we swap out any string representations of enums for their integer values
+	patch, err = substituteSchemaPatch(patch)
+	if err != nil {
+		return err
+	}
 
 	collectionsByName, err := db.getCollectionsByName(ctx, txn)
 	if err != nil {
@@ -143,4 +148,87 @@ func (db *db) getCollectionsByName(
 	}
 
 	return collectionsByName, nil
+}
+
+// substituteSchemaPatch handles any substitution of values that may be required before
+// the patch can be applied.
+//
+// For example Field [FieldKind] string representations will be replaced by the raw integer
+// value.
+func substituteSchemaPatch(patch jsonpatch.Patch) (jsonpatch.Patch, error) {
+	for _, patchOperation := range patch {
+		path, err := patchOperation.Path()
+		if err != nil {
+			return nil, err
+		}
+
+		if value, hasValue := patchOperation["value"]; hasValue {
+			if isField(path) {
+				// We unmarshal the full field-value into a map to ensure that all user
+				// specified properties are maintained.
+				var field map[string]any
+				err = json.Unmarshal(*value, &field)
+				if err != nil {
+					return nil, err
+				}
+
+				if kind, isString := field["Kind"].(string); isString {
+					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
+					if substituteFound {
+						field["Kind"] = substitute
+						substituteField, err := json.Marshal(field)
+						if err != nil {
+							return nil, err
+						}
+
+						substituteValue := json.RawMessage(substituteField)
+						patchOperation["value"] = &substituteValue
+					} else {
+						return nil, NewErrFieldKindNotFound(kind)
+					}
+				}
+			} else if isFieldKind(path) {
+				var kind any
+				err = json.Unmarshal(*value, &kind)
+				if err != nil {
+					return nil, err
+				}
+
+				if kind, isString := kind.(string); isString {
+					substitute, substituteFound := client.FieldKindStringToEnumMapping[kind]
+					if substituteFound {
+						substituteKind, err := json.Marshal(substitute)
+						if err != nil {
+							return nil, err
+						}
+
+						substituteValue := json.RawMessage(substituteKind)
+						patchOperation["value"] = &substituteValue
+					} else {
+						return nil, NewErrFieldKindNotFound(kind)
+					}
+				}
+			}
+		}
+	}
+
+	return patch, nil
+}
+
+// isField returns true if the given path points to a FieldDescription.
+func isField(path string) bool {
+	path = strings.TrimPrefix(path, "/")
+	elements := strings.Split(path, "/")
+	//nolint:goconst
+	return len(elements) == 4 && elements[len(elements)-2] == "Fields" && elements[len(elements)-3] == "Schema"
+}
+
+// isField returns true if the given path points to a FieldDescription.Kind property.
+func isFieldKind(path string) bool {
+	path = strings.TrimPrefix(path, "/")
+	elements := strings.Split(path, "/")
+	return len(elements) == 5 &&
+		elements[len(elements)-1] == "Kind" &&
+		elements[len(elements)-3] == "Fields" &&
+		elements[len(elements)-4] == "Schema"
 }

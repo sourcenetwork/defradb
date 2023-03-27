@@ -91,3 +91,47 @@ func TestSchemaUpdatesAddFieldKindIntArrayWithCreate(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaUpdatesAddFieldKindIntArraySubstitutionWithCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind int array substitution with create",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[Integer!]"} }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Foo": [3, 5, 8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Foo
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						"Foo":  []int64{3, 5, 8},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

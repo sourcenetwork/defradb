@@ -97,3 +97,51 @@ func TestSchemaUpdatesAddFieldKindNillableStringArrayWithCreate(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind nillable string array substitution with create",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "[String]"} }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Foo": ["hello", "پدر سگ", null]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Foo
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						"Foo": []immutable.Option[string]{
+							immutable.Some("hello"),
+							immutable.Some("پدر سگ"),
+							immutable.None[string](),
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

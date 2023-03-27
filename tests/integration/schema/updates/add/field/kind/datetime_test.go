@@ -91,3 +91,47 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind datetime substitution with create",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "DateTime"} }
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"Name": "John",
+					"Foo": "2017-07-23T03:46:56.647Z"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Foo
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Name": "John",
+						"Foo":  "2017-07-23T03:46:56.647Z",
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}

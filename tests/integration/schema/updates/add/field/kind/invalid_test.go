@@ -187,3 +187,27 @@ func TestSchemaUpdatesAddFieldKind198(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
 }
+
+func TestSchemaUpdatesAddFieldKindInvalidSubstitution(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with kind unsupported (198)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Schema/Fields/-", "value": {"Name": "Foo", "Kind": "InvalidKind"} }
+					]
+				`,
+				ExpectedError: "no type found for given name. Kind: InvalidKind",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, []string{"Users"}, test)
+}
