@@ -8,14 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package memory
+package badger
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	dsq "github.com/ipfs/go-datastore/query"
 
-var (
-	ErrReadOnlyTxn  = errors.New("read only transaction")
-	ErrTxnDiscarded = errors.New("transaction discarded")
-	//nolint:revive
-	ErrTxnConflict = errors.New("Transaction Conflict. Please retry")
-	ErrClosed      = errors.New("datastore closed")
+	"github.com/sourcenetwork/defradb/errors"
 )
+
+const errOrderType string = "invalid order type"
+
+func ErrOrderType(orderType dsq.Order) error {
+	return errors.New(errOrderType, errors.NewKV("Order type", orderType))
+}

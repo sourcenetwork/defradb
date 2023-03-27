@@ -117,7 +117,6 @@ func init() {
 
 var _ ds.Datastore = (*Datastore)(nil)
 var _ ds.TxnDatastore = (*Datastore)(nil)
-var _ ds.TTLDatastore = (*Datastore)(nil)
 var _ ds.GCDatastore = (*Datastore)(nil)
 var _ ds.Batching = (*Datastore)(nil)
 
@@ -271,58 +270,6 @@ func (d *Datastore) Sync(ctx context.Context, prefix ds.Key) error {
 	}
 
 	return d.DB.Sync()
-}
-
-func (d *Datastore) PutWithTTL(
-	ctx context.Context,
-	key ds.Key,
-	value []byte,
-	ttl time.Duration,
-) error {
-	d.closeLk.RLock()
-	defer d.closeLk.RUnlock()
-	if d.closed {
-		return ErrClosed
-	}
-
-	txn := d.newImplicitTransaction(false)
-	defer txn.discard()
-
-	if err := txn.putWithTTL(key, value, ttl); err != nil {
-		return err
-	}
-
-	return txn.commit()
-}
-
-func (d *Datastore) SetTTL(ctx context.Context, key ds.Key, ttl time.Duration) error {
-	d.closeLk.RLock()
-	defer d.closeLk.RUnlock()
-	if d.closed {
-		return ErrClosed
-	}
-
-	txn := d.newImplicitTransaction(false)
-	defer txn.discard()
-
-	if err := txn.setTTL(key, ttl); err != nil {
-		return err
-	}
-
-	return txn.commit()
-}
-
-func (d *Datastore) GetExpiration(ctx context.Context, key ds.Key) (time.Time, error) {
-	d.closeLk.RLock()
-	defer d.closeLk.RUnlock()
-	if d.closed {
-		return time.Time{}, ErrClosed
-	}
-
-	txn := d.newImplicitTransaction(false)
-	defer txn.discard()
-
-	return txn.getExpiration(key)
 }
 
 func (d *Datastore) Get(ctx context.Context, key ds.Key) (value []byte, err error) {
@@ -511,24 +458,12 @@ func (b *batch) commit() error {
 	return nil
 }
 
-func (b *batch) Cancel() error {
-	b.ds.closeLk.RLock()
-	defer b.ds.closeLk.RUnlock()
-	if b.ds.closed {
-		return ErrClosed
-	}
-
-	b.cancel()
-	return nil
-}
-
 func (b *batch) cancel() {
 	b.writeBatch.Cancel()
 	runtime.SetFinalizer(b, nil)
 }
 
-var _ ds.Datastore = (*txn)(nil)
-var _ ds.TTLDatastore = (*txn)(nil)
+var _ ds.Txn = (*txn)(nil)
 
 func (t *txn) Put(ctx context.Context, key ds.Key, value []byte) error {
 	t.ds.closeLk.RLock()
@@ -541,69 +476,6 @@ func (t *txn) Put(ctx context.Context, key ds.Key, value []byte) error {
 
 func (t *txn) put(key ds.Key, value []byte) error {
 	return t.txn.Set(key.Bytes(), value)
-}
-
-func (t *txn) Sync(ctx context.Context, prefix ds.Key) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return ErrClosed
-	}
-
-	return nil
-}
-
-func (t *txn) PutWithTTL(ctx context.Context, key ds.Key, value []byte, ttl time.Duration) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return ErrClosed
-	}
-	return t.putWithTTL(key, value, ttl)
-}
-
-func (t *txn) putWithTTL(key ds.Key, value []byte, ttl time.Duration) error {
-	return t.txn.SetEntry(badger.NewEntry(key.Bytes(), value).WithTTL(ttl))
-}
-
-func (t *txn) GetExpiration(ctx context.Context, key ds.Key) (time.Time, error) {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return time.Time{}, ErrClosed
-	}
-
-	return t.getExpiration(key)
-}
-
-func (t *txn) getExpiration(key ds.Key) (time.Time, error) {
-	item, err := t.txn.Get(key.Bytes())
-	if errors.Is(err, badger.ErrKeyNotFound) {
-		return time.Time{}, ds.ErrNotFound
-	} else if err != nil {
-		return time.Time{}, err
-	}
-	return time.Unix(int64(item.ExpiresAt()), 0), nil
-}
-
-func (t *txn) SetTTL(ctx context.Context, key ds.Key, ttl time.Duration) error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return ErrClosed
-	}
-
-	return t.setTTL(key, ttl)
-}
-
-func (t *txn) setTTL(key ds.Key, ttl time.Duration) error {
-	item, err := t.txn.Get(key.Bytes())
-	if err != nil {
-		return err
-	}
-	return item.Value(func(data []byte) error {
-		return t.putWithTTL(key, data, ttl)
-	})
 }
 
 func (t *txn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
@@ -664,7 +536,15 @@ func (t *txn) getSize(key ds.Key) (int, error) {
 	item, err := t.txn.Get(key.Bytes())
 	switch {
 	case err == nil:
-		return int(item.ValueSize()), nil
+		size := int(item.ValueSize())
+		if size == 0 {
+			val, err := item.ValueCopy(nil)
+			if err != nil {
+				return 0, err
+			}
+			size = len(val)
+		}
+		return size, nil
 	case errors.Is(err, badger.ErrKeyNotFound):
 		return -1, ds.ErrNotFound
 	default:
@@ -887,20 +767,6 @@ func (t *txn) Commit(ctx context.Context) error {
 }
 
 func (t *txn) commit() error {
-	return t.txn.Commit()
-}
-
-// Alias to commit
-func (t *txn) Close() error {
-	t.ds.closeLk.RLock()
-	defer t.ds.closeLk.RUnlock()
-	if t.ds.closed {
-		return ErrClosed
-	}
-	return t.close()
-}
-
-func (t *txn) close() error {
 	return t.txn.Commit()
 }
 
