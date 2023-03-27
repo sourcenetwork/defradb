@@ -308,12 +308,12 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
 		request.DockeyFieldName, dockeyObj.DocKey)
 
-	collectionId, err := strconv.Atoi(dockeyObj.CollectionId)
+	collectionID, err := strconv.Atoi(dockeyObj.CollectionID)
 	if err != nil {
 		return core.Doc{}, nil, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.CollectionIDFieldName, int64(collectionId))
+		request.CollectionIDFieldName, int64(collectionID))
 
 	heads := make([]*ipld.Link, 0)
 

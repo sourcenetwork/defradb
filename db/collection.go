@@ -1082,7 +1082,7 @@ func (c *collection) getPrimaryKeyFromDocKey(docKey client.DocKey) core.PrimaryD
 
 func (c *collection) getDSKeyFromDockey(docKey client.DocKey) core.DataStoreKey {
 	return core.DataStoreKey{
-		CollectionId: fmt.Sprint(c.colID),
+		CollectionID: fmt.Sprint(c.colID),
 		DocKey:       docKey.String(),
 		InstanceType: core.ValueKey,
 	}
@@ -1095,7 +1095,7 @@ func (c *collection) tryGetFieldKey(key core.PrimaryDataStoreKey, fieldName stri
 	}
 
 	return core.DataStoreKey{
-		CollectionId: key.CollectionId,
+		CollectionID: key.CollectionId,
 		DocKey:       key.DocKey,
 		FieldId:      strconv.FormatUint(uint64(fieldId), 10),
 	}, true
