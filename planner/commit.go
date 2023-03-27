@@ -313,7 +313,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block blocks.Block) (core.Doc, []*ipld.L
 		return core.Doc{}, nil, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.CollectionIDFieldName, collectionId)
+		request.CollectionIDFieldName, int64(collectionId))
 
 	heads := make([]*ipld.Link, 0)
 

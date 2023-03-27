@@ -18,7 +18,7 @@ import (
 
 func TestQueryCommitsWithCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query with dockey property",
+		Description: "Simple commits query with collectionId property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			updateCompaniesCollectionSchema(),
