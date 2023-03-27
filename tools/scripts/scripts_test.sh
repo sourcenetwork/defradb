@@ -34,7 +34,6 @@ TestReturnCode "${T1} 'feat:There is no space between label & desc.'" 6;
 TestReturnCode "${T1} 'feat:there is no space between label & desc.'" 6;
 TestReturnCode "${T1} 'ci: lowercase first character after label'" 7;
 TestReturnCode "${T1} 'ci: Last character should not be period.'" 8;
-TestReturnCode "${T1} 'ci: Last character is not lowercase alphabeT'" 8;
 TestReturnCode "${T1} 'ci: Last character is a space '" 8;
 TestReturnCode "${T1} 'bug: This is an invalid label'" 9;
 TestReturnCode "${T1} 'ci: Last character is a number v1.5.0'" 0;

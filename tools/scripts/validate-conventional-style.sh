@@ -81,9 +81,9 @@ if [[ "${CHECK_FIRST_UPPER_CASE}" != [A-Z] ]]; then
     exit 7;
 fi
 
-# Validate that the last character is a lower case alphabet or a number character.
-if [[ "${CHECK_LAST_LOWER_CASE_OR_NUM}" != [a-z0-9] ]]; then
-    printf "Error: Last character is neither a lowercase alphabet nor a number.\n";
+# Validate that the last character is not a period, comma, or whitespace.
+if [[ "${CHECK_LAST_LOWER_CASE_OR_NUM}" =~ [.,\ ] ]]; then
+    printf "Error: Last character is a period, comma, or whitespace.\n";
     exit 8;
 fi
 
